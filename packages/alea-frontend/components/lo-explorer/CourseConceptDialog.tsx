@@ -46,7 +46,7 @@ export function getSectionDetails(tocElems: FTML.TOCElem[]): SectionDetails[] {
   }
   return sections;
 }
-interface SectionDetails {
+export interface SectionDetails {
   name: string;
   id?: string;
   uri?: string;
