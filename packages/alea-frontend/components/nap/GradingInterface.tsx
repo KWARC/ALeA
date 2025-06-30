@@ -19,9 +19,11 @@ import {
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import {
+  AnswerClass,
   CreateAnswerClassRequest,
   createGrading,
   FTMLProblemWithSolution,
+  getAnswerInfo,
   getAnswersWithGrading,
   getCourseGradingItems,
   GradingInfo,
@@ -32,8 +34,9 @@ import {
 import { SafeHtml } from '@stex-react/react-utils';
 import {
   GradingContext,
+  GradingCreator,
   ProblemDisplay,
-  ShowGradingFor
+  ShowGradingFor,
 } from '@stex-react/stex-react-renderer';
 import {
   Dispatch,
@@ -190,7 +193,19 @@ function TriStateCheckbox({
     />
   );
 }
-
+function GradingProblem({
+  onNewGrading,
+  answerClasses,
+}: {
+  onNewGrading: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
+  answerClasses: AnswerClass[];
+}) {
+  return (
+    <Box>
+      <GradingCreator onNewGrading={onNewGrading} rawAnswerClasses={answerClasses}></GradingCreator>
+    </Box>
+  );
+}
 function GradingItemOrganizer({
   gradingItems,
   questionMap,
@@ -387,25 +402,15 @@ function GradingItemDisplay({
   const [problem, setProblem] = useState<FTMLProblemWithSolution | null>(
     questionMap[questionId] || null
   );
-  const [subProblemIdToAnswerId, setSubProblemIdToAnswerId] = useState<Record<string, number>>({});
-  const [subProblemInfoToGradingInfo, setSubProblemInfoToGradingInfo] = useState<
-    Record<string, GradingInfo[]>
-  >({});
-
+  const [answerClasses, setAnswerClasses] = useState<AnswerClass[]>();
   const refreshGradingInfo = useCallback(() => {
     setStudentResponse(undefined);
-    setSubProblemIdToAnswerId({});
-    setSubProblemInfoToGradingInfo({});
-    getAnswersWithGrading(
-      homeworkId,
-      questionId,
-      isPeerGrading ? null : studentId,
-      answerId,
-      courseId
-    ).then((r) => {
-      setStudentResponse(r.answers);
-      setSubProblemIdToAnswerId(r.subProblemIdToAnswerId);
-      setSubProblemInfoToGradingInfo(r.subProblemIdToGrades);
+    getAnswerInfo(answerId, courseId).then((r) => {
+      if (r.subProblemId === questionId) setAnswerClasses(problem.answerClasses);
+      else
+        setAnswerClasses(
+          problem.problem.subProblems.filter((c) => c.id === r.subProblemId)[0].answerClasses
+        );
     });
   }, [homeworkId, questionId, studentId]);
 
@@ -434,40 +439,22 @@ function GradingItemDisplay({
 
   return (
     <Box maxWidth={900}>
-      <GradingContext.Provider
-        value={{
-          isGrading: true,
-          showGrading: true,
-          showGradingFor: ShowGradingFor.INSTRUCTOR,
-          gradingInfo: { [questionId]: subProblemInfoToGradingInfo },
-          studentId,
-          onNewGrading: async (
-            subProblemId: string,
-            answerClasses: CreateAnswerClassRequest[],
-            customFeedback: string
-          ) => {
-            const answerId = subProblemIdToAnswerId[subProblemId];
-            if (!answerId) {
-              alert('No answerId found for subProblemId ' + subProblemId);
-              return;
-            }
-            await createGrading({ answerId, answerClasses, customFeedback });
-            refreshGradingInfo();
-          },
-          onNextGradingItem,
-          onPrevGradingItem,
+      <ProblemDisplay
+        isFrozen={true}
+        r={studentResponse}
+        // problemId={questionId} TODO ALEA4-P4
+        problem={problem}
+        onResponseUpdate={() => {
+          console.log('onResponseUpdate');
         }}
-      >
-        <ProblemDisplay
-          isFrozen={true}
-          r={studentResponse}
-          // problemId={questionId} TODO ALEA4-P4
-          problem={problem}
-          onResponseUpdate={() => {
-            console.log('onResponseUpdate');
-          }}
-        />
-      </GradingContext.Provider>
+      />
+      <GradingProblem
+        answerClasses={answerClasses}
+        onNewGrading={async (acs, feedback) => {
+          await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
+          refreshGradingInfo();
+        }}
+      ></GradingProblem>
     </Box>
   );
 }

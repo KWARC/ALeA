@@ -5,7 +5,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { getAllGradingsOrSetError } from './get-answers-with-grading';
+import { getAllGradingsOrSetError } from './get-answers-info';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;

@@ -102,6 +102,18 @@ export async function getAnswersWithGrading(
     })
     .then((c) => c.data as GetAnswersWithGradingResponse);
 }
+export async function getAnswerInfo(answerId: number, courseId: string) {
+  return axios
+    .get('/api/nap/get-answers-info', {
+      params: {
+        answerId,
+        courseId,
+        courseInstance: CURRENT_TERM,
+      },
+      headers: getAuthHeaders(),
+    })
+    .then((c) => c.data as { subProblemId: string });
+}
 
 export interface GetCourseGradingItemsResponse {
   gradingItems: GradingItem[];

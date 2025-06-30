@@ -17,6 +17,7 @@ export interface RecorrectionInfo {
 
 export interface FTMLProblemWithSolution {
   problem: FTMLProblemWithSubProblems;
+  answerClasses: AnswerClass[];
   solution?: string;
 }
 
@@ -54,7 +55,7 @@ export enum Tristate {
 export interface SubProblemData {
   solution: string;
   id: string;
-  answerclasses: AnswerClass[];
+  answerClasses: AnswerClass[];
 }
 export interface AnswerClass {
   className: string;
