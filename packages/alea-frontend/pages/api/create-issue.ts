@@ -1,8 +1,9 @@
+import { NotificationType } from '@stex-react/api';
 import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react/utils';
 import axios, { RawAxiosRequestHeaders } from 'axios';
 import { OpenAI } from 'openai';
 import { sendAlert } from './add-comment';
-import { checkIfPostOrSetError, getUserId } from './comment-utils';
+import { checkIfPostOrSetError, getUserId, sendNotification } from './comment-utils';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -18,6 +19,18 @@ function getHeaders(createNewIssueUrl: string): RawAxiosRequestHeaders {
   return {
     'PRIVATE-TOKEN': process.env['CONTENT_ISSUES_GITLAB_PAT'] as string,
   };
+}
+
+async function sendReportNotifications(userId: string | null = null, link: string) {
+  await sendNotification(
+    userId,
+    'You Reported an issue',
+    '',
+    'Sie haben ein Problem gemeldet',
+    '',
+    NotificationType.REPORT_PROBLEM,
+    link
+  );
 }
 
 async function generateIssueTitle(
@@ -100,7 +113,8 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
-  
+  const userId = await getUserId(req);
+
   const body = req.body;
 
   let generatedTitle = '';
@@ -124,7 +138,8 @@ export default async function handler(req, res) {
     }
   }
   if (issueCategory === 'DISPLAY' && !body.data.body) {
-    body.data.body = body.data.description ?? `User reported issue:\n\n${JSON.stringify(body.selectedText)}`;
+    body.data.body =
+      body.data.description ?? `User reported issue:\n\n${JSON.stringify(body.selectedText)}`;
     delete body.data.description;
   }
 
@@ -142,4 +157,5 @@ export default async function handler(req, res) {
   });
 
   await sendAlert(`A user-reported issue was created at ${issue_url}`);
+  await sendReportNotifications(userId, issue_url);
 }
