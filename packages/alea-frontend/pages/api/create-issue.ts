@@ -2,7 +2,7 @@ import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react
 import axios, { RawAxiosRequestHeaders } from 'axios';
 import { OpenAI } from 'openai';
 import { sendAlert } from './add-comment';
-import { getUserId } from './comment-utils';
+import { checkIfPostOrSetError, getUserId } from './comment-utils';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -99,8 +99,8 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 }
 
 export default async function handler(req, res) {
-  const userId = await getUserId(req);
-  if (req.method !== 'POST') return res.status(404);
+  if (!checkIfPostOrSetError(req, res)) return;
+  
   const body = req.body;
 
   let generatedTitle = '';
@@ -122,6 +122,10 @@ export default async function handler(req, res) {
     if (issueCategory === 'DISPLAY') {
       body.createNewIssueUrl = 'https://api.github.com/repos/slatex/ALeA/issues';
     }
+  }
+  if (issueCategory === 'DISPLAY' && !body.data.body) {
+    body.data.body = body.data.description ?? `User reported issue:\n\n${JSON.stringify(body.selectedText)}`;
+    delete body.data.description;
   }
 
   const headers = getHeaders(body.createNewIssueUrl);
