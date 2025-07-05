@@ -73,6 +73,67 @@ export async function handleEnrollment(userId: string, courseId: string, current
   }
 }
 
+export function ExamSchedule({ examDates }) {
+  if (!examDates?.length) return null;
+
+  const timeZone = 'Europe/Berlin';
+
+  return (
+    <Box
+      sx={{
+        px: { xs: 1, sm: 2 },
+        py: { xs: 1, sm: 1.5 },
+        mt: 2,
+        borderRadius: '8px',
+        background: 'linear-gradient(135deg, #fff3e0, #ffe0b2)',
+        border: '1px solid #ffcc80',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+        <QuizIcon sx={{ color: '#bf360c', fontSize: '20px' }} />
+        <Typography variant="h6" sx={{ fontWeight: 600, color: '#bf360c', fontSize: '1rem' }}>
+          Exam Schedule
+        </Typography>
+      </Box>
+
+      {examDates.map((exam, idx) => {
+        const hasTime = exam.examStartTime && exam.examEndTime;
+        const start = new Date(`${exam.examDate}T${exam.examStartTime || '00:00'}:00+02:00`);  //+02:00 is used because we assume Europe/Berlin time.
+        const end = new Date(`${exam.examDate}T${exam.examEndTime || '00:00'}:00+02:00`);
+
+        const formattedDate = start.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          timeZone,
+        });
+
+        const formattedStart = hasTime
+          ? start.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone,
+            })
+          : '';
+
+        const formattedEnd = hasTime
+          ? end.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone,
+            })
+          : '';
+
+        return (
+          <Typography key={idx} variant="body2" sx={{ color: '#e65100', mb: 1, fontWeight: 500 }}>
+            🗓 {formattedDate}
+            {hasTime && ` ⏰ ${formattedStart} – ${formattedEnd} (${timeZone})`}
+          </Typography>
+        );
+      })}
+    </Box>
+  );
+}
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -179,6 +240,8 @@ function CourseScheduleSection({
     () => semesterPeriods[CURRENT_TERM]?.courses.filter((c) => c.courseId === courseId) || [],
     [courseId]
   );
+
+  const examDates = semesterPeriods[CURRENT_TERM]?.examDates.filter((e) => e.courseId === courseId) || [];
 
   useEffect(() => {
     async function fetchNextLectureDates() {
@@ -311,6 +374,9 @@ function CourseScheduleSection({
             })}
           </Box>
         )}
+
+       <ExamSchedule examDates={examDates} />
+
 
         {userId && (
           <PersonalCalendarSection
