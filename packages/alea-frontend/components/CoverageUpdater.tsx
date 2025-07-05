@@ -42,8 +42,10 @@ function convertSnapToEntry(snap: LectureEntry, index: number): any {
     isQuizScheduled: snap.isQuizScheduled || false,
     slideUri: snap.slideUri || '',
     slideNumber: snap.slideNumber,
+    venue: snap.venue || '',
+    venueLink: snap.venueLink || '',
     autoDetected: snap.autoDetected || undefined,
-    lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms ,
+    lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms,
   };
 }
 
@@ -72,6 +74,8 @@ export function CoverageUpdater({
     isQuizScheduled: false,
     slideUri: '',
     slideNumber: undefined as number | undefined,
+    venue: '',
+    venueLink: '',
     lectureEndTimestamp_ms: Date.now(),
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -107,6 +111,8 @@ export function CoverageUpdater({
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
       lectureEndTimestamp_ms: undefined,
     });
     setEditIndex(null);
@@ -121,6 +127,8 @@ export function CoverageUpdater({
       isQuizScheduled: formData.isQuizScheduled,
       slideUri: formData.slideUri,
       slideNumber: formData.slideNumber,
+      venue: formData.venue,
+      venueLink: formData.venueLink,
       lectureEndTimestamp_ms: formData.lectureEndTimestamp_ms,
     };
     setFormData({
@@ -133,6 +141,8 @@ export function CoverageUpdater({
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
       lectureEndTimestamp_ms: Date.now(),
     });
     handleSaveSingle(newItem);
@@ -236,7 +246,7 @@ export function CoverageUpdater({
                       backgroundColor: 'white',
                       color: '#1a237e',
                       p: 2,
-                      border: '1px solid #ccc'
+                      border: '1px solid #ccc',
                     }}
                   >
                     <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
