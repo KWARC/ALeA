@@ -19,5 +19,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
   if (!results) return;
-  res.status(200).json(results[0] || []);
+  res.status(200).json(results[0]);
 }

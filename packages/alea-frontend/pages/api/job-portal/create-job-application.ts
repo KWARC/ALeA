@@ -14,11 +14,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const { jobPostId, applicationStatus } = req.body;
-  const jobApplicationExists = await executeQuery(
+  const results = await executeAndEndSet500OnError(
     'SELECT * FROM jobApplication WHERE jobPostId = ? AND applicantId = ?',
-    [jobPostId, userId]
+    [jobPostId, userId],
+    res
   );
-  if (jobApplicationExists) return res.status(200).send('Already applied');
+  if (!results) return;
+  if (results.length) return res.status(200).send('Already applied');
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobApplication 

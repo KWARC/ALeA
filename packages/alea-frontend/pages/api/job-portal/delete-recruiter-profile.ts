@@ -15,7 +15,8 @@ async function getRecruiterProfileByUserIdOrSet500OnError(userId: string, res: N
     [userId],
     res
   );
-  if (!results || !results.length) return;
+  if (!results) return;
+  if (!results.length) res.status(404).end();
   return results[0];
 }
 //risky , donot use unless necessary.

@@ -14,7 +14,8 @@ async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextAp
     [id],
     res
   );
-  if (!results || !results.length) return;
+  if (!results) return;
+  if (!results.length) res.status(404).end();
   return results[0];
 }
 export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {

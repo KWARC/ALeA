@@ -18,7 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [userId],
     res
   );
-  if (!results || !results.length) return;
+  if (!results) return;
+  if (!results.length) res.status(404).end();
   const student = results[0];
   let parsedSocialLinks: Record<string, string> = {};
 
