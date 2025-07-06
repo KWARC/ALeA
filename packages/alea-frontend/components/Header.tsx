@@ -5,6 +5,7 @@ import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/
 import AppBar from '@mui/material/AppBar';
 import { getUserInfo, isLoggedIn, logout } from '@stex-react/api';
 import { CountryFlag, useScrollDirection } from '@stex-react/react-utils';
+import { PRIMARY_COL } from '@stex-react/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -127,17 +128,18 @@ function LanguageButton() {
   );
 }
 
-export function Header() {
+export function Header({ headerBgColor }: { headerBgColor?: string }) {
   const loggedIn = isLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
-  const background =
-    process.env.NEXT_PUBLIC_SITE_VERSION === 'production'
-      ? undefined
-      : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
-      ? 'crimson !important'
-      : 'blue !important';
-
+  const background = headerBgColor
+    ? `${headerBgColor} !important`
+    : process.env.NEXT_PUBLIC_SITE_VERSION === 'production'
+    ? undefined
+    : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
+    ? 'crimson !important'
+    : 'blue !important';
+ 
   return (
     <AppBar
       position="sticky"
@@ -170,10 +172,10 @@ export function Header() {
         </Link>
         <Box>
           <Box display="flex" alignItems="center">
-            <NotificationButton />
+            <NotificationButton bgColor="#ced9f2" />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
-                <IconButton>
+                <IconButton sx={{ bgcolor: PRIMARY_COL, ml: '5px' }}>
                   <HelpIcon htmlColor="white" />
                 </IconButton>
               </Tooltip>
