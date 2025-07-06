@@ -1,9 +1,9 @@
 import { AccessControlList } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
+import { areMemberUsersAndAclIdsValid } from '../acl-utils/acl-common-utils';
 
-export async function createAclOrSet500OnError(
+export async function createAclOrSetError(
   acl: {
     id: string;
     description: string;
@@ -26,8 +26,9 @@ export async function createAclOrSet500OnError(
   ) {
     return res.status(422).send('Missing required fields.');
   }
-  if (!(await validateMemberAndAclIds(res, memberUserIds, memberACLIds)))
+  if (!(await areMemberUsersAndAclIdsValid(memberUserIds, memberACLIds))) {
     return res.status(422).send('Invalid items');
+  }
   const result = await executeAndEndSet500OnError(
     'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?,?, ?,?)',
     [id, description, updaterACLId, isOpen],
@@ -53,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
   const acl = req.body as AccessControlList;
   const { id, description, isOpen, updaterACLId, memberUserIds, memberACLIds } = acl;
-  const result = await createAclOrSet500OnError(
+  const result = await createAclOrSetError(
     {
       id,
       description,

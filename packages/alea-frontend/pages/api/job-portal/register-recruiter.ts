@@ -7,9 +7,9 @@ import { getOrganizationByDomainOrSet500OnError } from './get-org-by-domain';
 import { createOrganizationProfileOrSet500OnError } from './create-organization-profile';
 import { getOrganizationIdOrSet500OnError } from './get-organization-id';
 import { createRecruiterProfileOrSet500OnError } from './create-recruiter-profile';
-import { createAclOrSet500OnError } from '../access-control/create-acl';
+import { createAclOrSetError } from '../access-control/create-acl';
 import { addRemoveMemberOrSetError } from '../access-control/add-remove-member';
-import { deleteAclOrSet500OnError } from '../access-control/delete-acl';
+import { deleteAclOrSetError } from '../access-control/delete-acl';
 import { RecruiterData } from '@stex-react/api';
 import { deleteRecruiterProfileOrSetError } from './delete-recruiter-profile';
 import { deleteOrganizationProfileOrSetError } from './delete-organization-profile';
@@ -44,7 +44,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
       updaterACLId: `org${orgId}-recruiters`,
       isOpen: false,
     };
-    aclResult = await createAclOrSet500OnError(newAcl, res);
+    aclResult = await createAclOrSetError(newAcl, res);
     if (!aclResult) {
       throw new Error('Failed to create ACL');
     }
@@ -70,7 +70,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
       await deleteRecruiterProfileOrSetError(recruiter?.userId, res);
     }
     if (aclResult) {
-      await deleteAclOrSet500OnError(`org${orgId}-recruiters`, req, res);
+      await deleteAclOrSetError(`org${orgId}-recruiters`, req, res);
     }
     if (res.writableEnded) return;
     return res.status(500).send({

@@ -6,7 +6,7 @@ import {
 } from '../comment-utils';
 import {
   isCurrentUserMemberOfAClupdater,
-  validateMemberAndAclIds,
+  areMemberUsersAndAclIdsValid,
 } from '../acl-utils/acl-common-utils';
 import { recomputeMemberships } from './recompute-memberships';
 
@@ -17,10 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!id || !updaterACLId || isOpen === null || isOpen === undefined) {
     return res.status(422).send('Missing required fields.');
   }
-  if (!(await isCurrentUserMemberOfAClupdater(id, res, req))) return res.status(403).end();
-  if (!(await validateMemberAndAclIds(res, memberUserIds, memberACLIds)))
+  if (!(await isCurrentUserMemberOfAClupdater(id, req))) return res.status(403).end();
+  if (!(await areMemberUsersAndAclIdsValid(memberUserIds, memberACLIds))) {
     return res.status(422).send('Invalid items');
-
+  }
   const result = await executeTxnAndEndSet500OnError(
     res,
     'UPDATE AccessControlList SET description=?, updaterACLId=?, isOpen=? WHERE id=?',

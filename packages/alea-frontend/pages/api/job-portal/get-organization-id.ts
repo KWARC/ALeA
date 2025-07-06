@@ -6,7 +6,8 @@ export async function getOrganizationIdOrSet500OnError(
   res: NextApiResponse
 ) {
   if (!organizationName) {
-    return res.status(422).send('Missing organizationName.');
+     res.status(422).send('Missing organizationName.');
+     return;
   }
   const result: any = await executeDontEndSet500OnError(
     `SELECT id
@@ -16,7 +17,7 @@ export async function getOrganizationIdOrSet500OnError(
     res
   );
   if (!result || !result.length) return;
-  return result[0].id;
+  return result[0].id as string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

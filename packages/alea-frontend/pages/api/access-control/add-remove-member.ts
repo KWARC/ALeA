@@ -4,9 +4,16 @@ import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
+  executeQuery,
   getUserIdOrSetError,
 } from '../comment-utils';
 import { recomputeMemberships } from './recompute-memberships';
+
+// Returns false if the acl is not found or in case of db error.
+async function isAclOpen(aclId: string) {
+  const queryResult = await executeQuery('select isOpen from AccessControlList where id=?', [aclId]);
+  return !!(queryResult?.[0]?.isOpen);
+}
 
 export async function addRemoveMemberOrSetError(
   {
@@ -25,43 +32,36 @@ export async function addRemoveMemberOrSetError(
     return;
   }
 
-  const acl: AccessControlList = (
-    await executeAndEndSet500OnError(
-      'select isOpen from AccessControlList where id=?',
-      [aclId],
-      res
-    )
-  )?.[0];
 
-  let query = '';
-  let params: string[] = [];
+  let updateQuery = '';
+  let updateParams: string[] = [];
 
   if (toBeAdded) {
-    if (!(acl?.isOpen || (await isCurrentUserMemberOfAClupdater(aclId, res, req)))) {
+    if (!(await isAclOpen(aclId) || (await isCurrentUserMemberOfAClupdater(aclId, req)))) {
       res.status(403).end();
       return;
     }
 
-    if (isAclMember) query = 'select id from AccessControlList where id=?';
-    else query = 'select userId from userInfo where userId=?';
+    if (isAclMember) updateQuery = 'select id from AccessControlList where id=?';
+    else updateQuery = 'select userId from userInfo where userId=?';
 
-    const itemsExist = (await executeAndEndSet500OnError(query, [memberId], res))[0];
+    const itemsExist = (await executeAndEndSet500OnError(updateQuery, [memberId], res))[0];
     if (itemsExist?.length) {
       res.status(422).send('Invalid input');
       return;
     }
-    query = 'INSERT INTO ACLMembership (parentACLId, memberACLId, memberUserId) VALUES (?, ?, ?)';
-    params = isAclMember ? [aclId, memberId, null] : [aclId, null, memberId];
+    updateQuery = 'INSERT INTO ACLMembership (parentACLId, memberACLId, memberUserId) VALUES (?, ?, ?)';
+    updateParams = isAclMember ? [aclId, memberId, null] : [aclId, null, memberId];
   } else {
-    if (!(await isCurrentUserMemberOfAClupdater(aclId, res, req)) && memberId != userId) {
+    if (memberId != userId && !(await isCurrentUserMemberOfAClupdater(aclId, req))) {
       res.status(403).end();
       return;
     }
     const memberField = isAclMember ? 'memberACLId' : 'memberUserId';
-    query = `DELETE FROM ACLMembership WHERE parentACLId=? AND ${memberField} = ?`;
-    params = [aclId, memberId];
+    updateQuery = `DELETE FROM ACLMembership WHERE parentACLId=? AND ${memberField} = ?`;
+    updateParams = [aclId, memberId];
   }
-  const result = await executeAndEndSet500OnError(query, params, res);
+  const result = await executeAndEndSet500OnError(updateQuery, updateParams, res);
   if (!result) return;
   await recomputeMemberships();
   return true;
