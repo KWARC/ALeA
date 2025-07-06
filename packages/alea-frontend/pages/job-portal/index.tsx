@@ -24,7 +24,7 @@ const JobPortal: NextPage = () => {
   const showRecruiterButton = !isLogIn || isRecruiter;
   const [showAdminButton, setShowAdminButton] = useState(!isLogIn);
   const checkAccess = async () => {
-    const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.CREATE_JOB_TYPE, {
+    const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.MANAGE_JOB_TYPES, {
       instanceId: CURRENT_TERM,
     });
     console.log({ hasAccess });

@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     req,
     res,
     ResourceName.JOB_PORTAL_ORG,
-    Action.CREATE_JOB_POST,
+    Action.MANAGE_JOB_POSTS,
     { orgId: organizationId }
   );
   if (!userId) return;

@@ -66,7 +66,7 @@ const JobPostPage = () => {
       setRecruiter(recruiterData);
       const hasAccess = await canAccessResource(
         ResourceName.JOB_PORTAL_ORG,
-        Action.CREATE_JOB_POST,
+        Action.MANAGE_JOB_POSTS,
         { orgId: String(recruiterData.organizationId) }
       );
 

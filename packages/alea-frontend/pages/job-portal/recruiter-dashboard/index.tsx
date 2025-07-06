@@ -216,7 +216,7 @@ const RecruiterDashboard = () => {
   useEffect(() => {
     const checkAccess = async () => {
       setAccessCheckLoading(true);
-      const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.CREATE_JOB_POST, {
+      const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.MANAGE_JOB_POSTS, {
         instanceId: CURRENT_TERM,
       });
       if (!hasAccess) {

@@ -62,7 +62,7 @@ const ProfileForm = () => {
         setRecruiter(res);
         const hasAccess = await canAccessResource(
           ResourceName.JOB_PORTAL_ORG,
-          Action.CREATE_JOB_POST,
+          Action.MANAGE_JOB_POSTS,
           { orgId: String(res.organizationId) }
         );
         if (!hasAccess) {

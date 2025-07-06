@@ -13,8 +13,8 @@ export enum Action {
   ACCESS_CONTROL = 'ACCESS_CONTROL',
 
   APPLY = 'APPLY',
-  CREATE_JOB_POST = 'CREATE_JOB_POST',
-  CREATE_JOB_TYPE = 'CREATE_JOB_TYPE',
+  MANAGE_JOB_POSTS = 'CREATE_JOB_POST',
+  MANAGE_JOB_TYPES = 'CREATE_JOB_TYPE',
   TAKE = 'TAKE',
 }
 
@@ -191,7 +191,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
   },
   {
     name: ResourceName.JOB_PORTAL,
-    possibleActions: [Action.APPLY, Action.CREATE_JOB_TYPE],
+    possibleActions: [Action.APPLY, Action.MANAGE_JOB_TYPES],
     components: [
       { type: ComponentType.FIXED, value: 'instance' },
       { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
@@ -200,7 +200,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
   },
   {
     name: ResourceName.JOB_PORTAL_ORG,
-    possibleActions: [Action.MUTATE, Action.CREATE_JOB_POST, Action.ACCESS_CONTROL],
+    possibleActions: [Action.MUTATE, Action.MANAGE_JOB_POSTS, Action.ACCESS_CONTROL],
     components: [
       { type: ComponentType.FIXED, value: 'job-portal-org' },
       { name: 'orgId', type: ComponentType.VARIABLE },

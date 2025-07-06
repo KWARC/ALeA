@@ -113,7 +113,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkAccess = async () => {
       setAccessCheckLoading(true);
-      const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.CREATE_JOB_TYPE, {
+      const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.MANAGE_JOB_TYPES, {
         instanceId: CURRENT_TERM,
       });
       if (!hasAccess) {

@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     req,
     res,
     ResourceName.JOB_PORTAL,
-    Action.CREATE_JOB_TYPE,
+    Action.MANAGE_JOB_TYPES,
     { instanceId: instanceId }
   );
   if (!userId) return;
