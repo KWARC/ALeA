@@ -127,7 +127,7 @@ const OrganizationInfoCard = ({
   officePostalCode,
 }: {
   companyName: string;
-  isStartup: string;
+  isStartup: boolean;
   companyType: string;
   incorporationYear: string;
   website: string;
@@ -146,7 +146,9 @@ const OrganizationInfoCard = ({
       <strong>Organization:</strong> {companyName}
     </Typography>
     <Typography>
-      <strong>Startup:</strong> {isStartup}
+      <Typography>
+        <strong>Startup:</strong> {isStartup ? 'Yes' : 'No'}
+      </Typography>
     </Typography>
     <Typography>
       <strong>Company Type:</strong> {companyType || 'N/A'}
@@ -198,7 +200,7 @@ const RecruiterDashboard = () => {
     id: null,
     companyName: '',
     incorporationYear: '',
-    isStartup: '',
+    isStartup: false,
     about: '',
     website: '',
     companyType: '',

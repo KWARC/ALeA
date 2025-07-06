@@ -32,7 +32,7 @@ export interface OrganizationData {
   companyName: string;
   domain: string;
   incorporationYear?: string;
-  isStartup?: string;
+  isStartup?: boolean;
   about?: string;
   website?: string;
   companyType?: string;

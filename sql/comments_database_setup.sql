@@ -294,7 +294,7 @@ CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     companyName VARCHAR(255) , 
     incorporationYear YEAR ,
-    isStartup  ENUM('Yes', 'No'),
+    isStartup  BOOLEAN,
     website VARCHAR(255),
     about TEXT, 
     companyType VARCHAR(255),

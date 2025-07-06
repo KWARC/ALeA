@@ -143,8 +143,8 @@ const OrganizationInfoForm = ({
       value={formData.isStartup}
       onChange={(e) => onChange(e, 'organizationInfo')}
     >
-      <MenuItem value="Yes">Yes</MenuItem>
-      <MenuItem value="No">No</MenuItem>
+      <MenuItem value="true">Yes</MenuItem>
+      <MenuItem value="false">No</MenuItem>
     </TextField>
     <TextField
       label="Website"
@@ -293,6 +293,12 @@ const RecruiterProfileDialog = ({
     section: FormSection
   ) => {
     const { name, value } = e.target;
+
+    let parsedValue: string | boolean = value;
+    if (name === 'isStartup') {
+      parsedValue = value === 'true';
+    }
+
     setValidationErrors((prevErrors) => ({
       ...prevErrors,
       [name]: '',
@@ -301,7 +307,7 @@ const RecruiterProfileDialog = ({
       ...formData,
       [section]: {
         ...formData[section],
-        [name]: value,
+        [name]: parsedValue,
       },
     });
   };
