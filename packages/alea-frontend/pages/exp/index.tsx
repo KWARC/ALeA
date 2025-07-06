@@ -58,6 +58,7 @@ const ExperimentsHome: NextPage = () => {
               <InternalButtonLink href="/positiondata">
                 Concept Position Tracking
               </InternalButtonLink>
+              <InternalButtonLink href="/job-portal">Job Portal</InternalButtonLink>
             </Box>
             <Box>
               <h2>Paper Prototypes (What we are working towards)</h2>

@@ -102,7 +102,7 @@ export function useNotificationData() {
   return sortedItems;
 }
 
-function NotificationButton() {
+function NotificationButton({ bgColor }: { bgColor?: string }) {
   const router = useRouter();
   const { notification: t } = getLocaleObject(router);
   const [notificationSeenTime, setNotificationSeenTime] = useState<string | undefined>(undefined);
