@@ -1,14 +1,10 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getAuthHeaders, getSourceUrl } from '@stex-react/api';
+import { getAuthHeaders } from '@stex-react/api';
 import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react/utils';
 import axios from 'axios';
 
 const THREE_BACKTICKS = '```';
-
-export enum IssueType {
-  ERROR = 'ERROR',
-  SUGGESTION = 'SUGGESTION',
-}
 
 export enum IssueCategory {
   CONTENT = 'CONTENT',
@@ -16,12 +12,16 @@ export enum IssueCategory {
 }
 export interface SelectionContext {
   fragmentUri: FTML.URI;
-  fragmentKind: 'Section' | 'Paragraph' | 'Slide';
+  fragmentKind: 'Section' | 'Paragraph' | 'Slide' | 'Problem'; // Keep alingned with FTML.FragmentKind
   source?: string;
 }
 async function addSources(context: SelectionContext[]): Promise<SelectionContext[]> {
   return await Promise.all(
-    context.map((item) => getSourceUrl(item.fragmentUri).then((source) => ({ ...item, source })))
+    context.map((item) =>
+      getFlamsServer()
+        .sourceFile({ uri: item.fragmentUri })
+        .then((source) => ({ ...item, source }))
+    )
   );
 }
 
@@ -43,7 +43,6 @@ async function createSectionHierarchy(context: SelectionContext[]) {
 }
 
 async function createIssueBody(
-  type: IssueType,
   desc: string,
   selectedText: string,
   userName: string,
@@ -52,7 +51,7 @@ async function createIssueBody(
   const sectionHierarchy = await createSectionHierarchy(context);
   const user = userName || 'a user';
 
-  return `A content ${type.toString()} was logged by "${user}" at the following url:
+  return `An issue was logged by "${user}" at the following url:
 
 ${window.location.href}
 
@@ -79,53 +78,42 @@ function getNewIssueUrl(category: IssueCategory, projectId: string, context: Sel
 }
 
 async function createIssueData(
-  type: IssueType,
   category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
-  userName: string,
-  title?: string
+  userName: string
 ) {
-  const { filepath } = extractProjectAndFilepath(context[0]?.source);
-  const body = await createIssueBody(type, desc, selectedText, userName, context);
+  const body = await createIssueBody(desc, selectedText, userName, context);
   return {
-    title: title || `User reported ${type.toString()} ${filepath}`,
     ...(isGitlabIssue(category, context)
       ? { description: body }
       : { body, labels: ['user-reported'] }),
   };
 }
+
 export async function createNewIssue(
-  type: IssueType,
   category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
-  userName: string,
-  title?: string
+  userName: string
 ) {
   const withSourceContext = await addSources(context);
   const { project } = extractProjectAndFilepath(withSourceContext[0]?.source);
   const projectId = project || 'sTeX/meta-inf';
-  const data = await createIssueData(
-    type,
-    category,
-    desc,
-    selectedText,
-    withSourceContext,
-    userName,
-    title
-  );
+  const data = await createIssueData(category, desc, selectedText, withSourceContext, userName);
+
   try {
     const createNewIssueUrl = getNewIssueUrl(category, projectId, context);
     const response = await axios.post(
       '/api/create-issue',
       {
         data,
-        type,
         createNewIssueUrl,
-        category: category.toString(),
+        description: desc,
+        selectedText,
+        context: withSourceContext[0]?.source,
       },
       { headers: getAuthHeaders() }
     );

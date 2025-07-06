@@ -190,6 +190,7 @@ const QuizDashPage: NextPage = () => {
 
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
+  const notes = courseInfo?.notes;
 
   if (!courseInfo) {
     router.replace('/');
@@ -220,7 +221,7 @@ const QuizDashPage: NextPage = () => {
         imageLink={courseInfo.imageLink}
         courseId={courseId}
       />
-      <Box maxWidth="900px" m="auto" px="10px">
+      <Box fragment-uri={notes} fragment-kind="Section" maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{t.enrollmentMessage}</Alert>}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', m: '30px 0 15px' }}>
           <Typography variant="h4">{t.quizDashboard}</Typography>

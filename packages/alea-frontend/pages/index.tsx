@@ -3,7 +3,6 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import {
   getCourseInfo,
-  getFTMLQuiz,
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
@@ -24,6 +23,7 @@ import { useContext, useEffect, useState } from 'react';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -337,11 +337,6 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
   const [resourcesForInstructor, setResourcesForInstructor] = useState<CourseResourceAction[]>([]);
   useEffect(() => {
     updateUserInfoFromToken();
-    getFTMLQuiz(
-      'https://mathhub.info/?a=courses/FAU/AI/hwexam&p=general/quizzes&d=pretest&l=en'
-    ).then((quiz) => {
-      console.log('quiz', quiz);
-    });
   }, []);
 
   const {

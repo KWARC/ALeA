@@ -13,7 +13,7 @@ export * from './job-portal-api';
 // export * from './lms';
 export * from './lmp';
 export * from './misc';
-export * from './mmt';
+export * from './flams';
 export * from './my-profile';
 export * from './nap';
 export * from './nap-api';

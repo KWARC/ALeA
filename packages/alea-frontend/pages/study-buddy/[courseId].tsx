@@ -109,11 +109,22 @@ const StudyBuddyPage: NextPage = () => {
   }
 
   const notSignedUp = !fromServer;
+  const notes = courseInfo?.notes;
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`} bgColor={BG_COLOR}>
       <CourseHeader courseName={courseName} imageLink={courseInfo?.imageLink} courseId={courseId} />
-      <Box maxWidth="900px" m="auto" px="10px" display="flex" flexDirection="column">
+      <Box
+        fragment-uri={notes}
+        fragment-kind="Section"
+        sx={{
+          maxWidth: '900px',
+          m: 'auto',
+          px: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {notSignedUp || isEditing ? (
           !isLoading ? (
             <Card sx={{ mt: '20px' }}>

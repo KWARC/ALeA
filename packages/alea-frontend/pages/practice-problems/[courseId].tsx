@@ -1,5 +1,5 @@
 import { CircularProgress } from '@mui/material';
-import { getCourseInfo, getDocumentSections } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/api';
 import { FTML } from '@kwarc/ftml-viewer';
 import { CourseInfo } from '@stex-react/utils';
 import { NextPage } from 'next';
@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import ProblemList from '../../components/ProblemList';
 import MainLayout from '../../layouts/MainLayout';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CourseProblemsPage: NextPage = () => {
   const router = useRouter();
@@ -28,8 +29,7 @@ const CourseProblemsPage: NextPage = () => {
         return;
       }
       const { notes } = courseInfo;
-      const docSections = await getDocumentSections(notes);
-      const tocContent = docSections[1];
+      const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
       setSectionsData(tocContent);
     }
     fetchSectionData();

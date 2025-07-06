@@ -86,16 +86,21 @@ export interface LectureEntry {
   targetSectionUri?: string;
   isQuizScheduled?: boolean;
   slideUri?: string;
-  slideNumber?: number;  // Don't use this anywhere , use slideUri instead
-  autoDetected?:{
+  slideNumber?: number; // Don't use this anywhere , use slideUri instead
+  autoDetected?: {
     clipId?: string;
-    sectionUri?: string; 
-    slideUri?: string; 
-  }
+    sectionUri?: string;
+    slideUri?: string;
+  };
+  lectureEndTimestamp_ms?: number;
+  venue?: string;
+  venueLink?: string;
 }
+
 export interface CoverageTimeline {
   [courseId: string]: LectureEntry[];
 }
+
 
 export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
   'ai-1': createCourseInfo(

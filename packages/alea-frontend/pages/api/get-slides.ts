@@ -1,11 +1,6 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import {
-  Slide,
-  SlideType,
-  getCourseInfo,
-  getDocumentSections,
-  getSectionSlides,
-} from '@stex-react/api';
+import { Slide, SlideType, getCourseInfo } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const SLIDE_EXPIRY_TIME_MS = 20 * 60 * 1000; // 20 min
@@ -38,7 +33,7 @@ async function recursivelyExpandSlideElementsExcludeSections(
 
   for (const slideElem of slideElems) {
     if (slideElem.type === 'Inputref') {
-      const slidesData = await getSectionSlides(slideElem.uri);
+      const slidesData = await getFlamsServer().slides({ uri: slideElem.uri });
       if (slidesData?.length > 0) {
         const [css, slideElems] = slidesData;
         const result = await recursivelyExpandSlideElementsExcludeSections(slideElems, sectionId);
@@ -112,7 +107,7 @@ async function getSlidesFromToc(elems: FTML.TOCElem[], bySection: Record<string,
   for (const elem of elems) {
     if (elem.type === 'Section') {
       const secId = elem.id;
-      const slideData = await getSectionSlides(elem.uri);
+      const slideData = await getFlamsServer().slides({ uri: elem.uri });
       if (slideData) {
         const [css, slideElems] = slideData;
         const result = await recursivelyExpandSlideElementsExcludeSections(slideElems, secId);
@@ -131,7 +126,7 @@ async function getSlidesFromToc(elems: FTML.TOCElem[], bySection: Record<string,
 }
 
 async function computeSlidesForDoc(notesUri: string) {
-  const toc = (await getDocumentSections(notesUri))[1];
+  const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
   const bySection: { [sectionId: string]: SlidesWithCSS } = {};
   await getSlidesFromToc(toc, bySection);
   return bySection;

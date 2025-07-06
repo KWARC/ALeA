@@ -61,6 +61,7 @@ export interface GptSearchResult {
   archive: string;
   filepath: string;
   courseId: string;
+  uri: string;
 }
 
 export async function searchCourseNotes(query: string, courseId: string) {

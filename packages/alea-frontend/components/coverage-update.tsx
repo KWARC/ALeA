@@ -9,12 +9,7 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
-import {
-  getCourseInfo,
-  getCoverageTimeline,
-  getDocumentSections,
-  updateCoverageTimeline,
-} from '@stex-react/api';
+import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/api';
 import {
   convertHtmlStringToPlain,
   CourseInfo,
@@ -25,6 +20,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
@@ -73,8 +69,7 @@ const CoverageUpdateTab = () => {
       const { notes: notesUri } = courseInfo;
       setLoading(true);
       try {
-        const tocResp = await getDocumentSections(notesUri);
-        const docSections = tocResp[1];
+        const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const sections = docSections.flatMap((d) => getSecInfo(d));
         setSecInfo(
           sections.reduce((acc, s) => {

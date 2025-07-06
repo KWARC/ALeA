@@ -11,7 +11,7 @@ import { DocProblemBrowser } from './DocProblemBrowser';
 import { ExpandableContextMenu } from './ExpandableContextMenu';
 import { GradingCreator } from './GradingCreator';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
-import { PerSectionQuiz, UriProblemViewer } from './PerSectionQuiz';
+import { handleViewSource, PerSectionQuiz, UriProblemViewer } from './PerSectionQuiz';
 import { PracticeQuestions } from './PracticeQuestions';
 import { AnswerContext, ProblemDisplay } from './ProblemDisplay';
 import { ListStepper, QuizDisplay } from './QuizDisplay';
@@ -145,6 +145,7 @@ const PositionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export {
+  AnswerContext, 
   CompetencyTable,
   ConfigureLevelSlider,
   ContentDashboard,
@@ -153,10 +154,10 @@ export {
   DocProblemBrowser,
   ExpandableContextMenu,
   FixedPositionMenu,
-  GradingContext,
-  AnswerContext,
+  GradingContext, 
   GradingCreator,
   GradingDisplay,
+  handleViewSource,
   LayoutWithFixedMenu,
   LevelIcon,
   ListStepper,

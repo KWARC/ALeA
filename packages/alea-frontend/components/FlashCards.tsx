@@ -119,6 +119,8 @@ function FlashCardFront({
     <Box className={styles['front']}>
       &nbsp;
       <Box
+        fragment-uri={conceptUri}
+        fragment-kind="Section"
         sx={{
           width: 'max-content',
           m: '0 auto',
@@ -179,10 +181,12 @@ function FlashCardBack({
           }}
         >
           {definitionUri && (
-            <FTMLFragment
-              key={definitionUri}
-              fragment={{ type: 'FromBackend', uri: definitionUri }}
-            />
+            <Box fragment-uri={definitionUri} fragment-kind="Section">
+              <FTMLFragment
+                key={definitionUri}
+                fragment={{ type: 'FromBackend', uri: definitionUri }}
+              />
+            </Box>
           )}
         </Box>
       </Box>

@@ -2,7 +2,6 @@ import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { getSourceUrl } from '@stex-react/api';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -11,9 +10,11 @@ import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
 
 export function handleViewSource(problemUri: string) {
-  getSourceUrl(problemUri).then((sourceLink) => {
-    if (sourceLink) window.open(sourceLink, '_blank');
-  });
+  getFlamsServer()
+    .sourceFile({ uri: problemUri })
+    .then((sourceLink) => {
+      if (sourceLink) window.open(sourceLink, '_blank');
+    });
 }
 
 export function UriProblemViewer({
@@ -47,7 +48,7 @@ export function UriProblemViewer({
 
   const problemState = getProblemState(isSubmitted, solution, response);
   return (
-    <Box>
+    <Box fragment-uri={uri} fragment-kind="Problem">
       <FTMLFragment
         key={`${uri}-${problemState.type}`}
         fragment={{ type: 'FromBackend', uri }}
