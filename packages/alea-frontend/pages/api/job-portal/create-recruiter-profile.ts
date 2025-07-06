@@ -15,10 +15,13 @@ export async function createRecruiterProfileOrSet500OnError(
     email,
     position,
     organizationId,
-  }: { name: string; userId: string; email: string; position: string; organizationId: string },
+  }: { name: string; userId: string; email: string; position: string; organizationId: number },
   res: NextApiResponse
 ) {
-  if (!userId || isFauId(userId)) return;
+  if (!userId || isFauId(userId)) {
+    res.status(403).send('Invalid or unauthorized user');
+    return;
+  }
   if (!name || !email || !position || !organizationId)
     return res.status(422).send('Missing required fields');
   const result = await executeAndEndSet500OnError(

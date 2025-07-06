@@ -23,7 +23,11 @@ export async function getJobCategoryUsingIdOrSet500OnError(
     [id],
     res
   );
-  if (!results || !results.length) return;
+  if (!results) return;
+  if (!results.length) {
+    res.status(404).send('job category not found');
+    return;
+  }
   return results[0] as DbJobCategoryInfo;
 }
 

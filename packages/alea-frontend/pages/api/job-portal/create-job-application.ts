@@ -1,25 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  executeDontEndSet500OnError,
-} from '../comment-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError, executeQuery } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
-
-export async function checkJobApplicationExistsOrSet500OnError(
-  id: number,
-  userId: string,
-  res: NextApiResponse
-) {
-  const results: any = await executeDontEndSet500OnError(
-    'SELECT * FROM jobApplication WHERE jobPostId = ? AND applicantId = ?',
-    [id, userId],
-    res
-  );
-
-  return !!results?.length;
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -32,10 +14,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const { jobPostId, applicationStatus } = req.body;
-  const jobApplicationExists = await checkJobApplicationExistsOrSet500OnError(
-    jobPostId,
-    userId,
-    res
+  const jobApplicationExists = await executeQuery(
+    'SELECT * FROM jobApplication WHERE jobPostId = ? AND applicantId = ?',
+    [jobPostId, userId]
   );
   if (jobApplicationExists) return res.status(200).send('Already applied');
 

@@ -5,7 +5,6 @@ import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create
 import { checkInviteToOrgOrSet500OnError } from './check-org-invitations';
 import { getOrganizationByDomainOrSet500OnError } from './get-org-by-domain';
 import { createOrganizationProfileOrSet500OnError } from './create-organization-profile';
-import { getOrganizationIdOrSet500OnError } from './get-organization-id';
 import { createRecruiterProfileOrSet500OnError } from './create-recruiter-profile';
 import { createAclOrSetError } from '../access-control/create-acl';
 import { addRemoveMemberOrSetError } from '../access-control/add-remove-member';
@@ -14,6 +13,9 @@ import { RecruiterData } from '@stex-react/api';
 import { deleteRecruiterProfileOrSetError } from './delete-recruiter-profile';
 import { deleteOrganizationProfileOrSetError } from './delete-organization-profile';
 
+function getOrgAcl(orgId: number) {
+  return `org${orgId}-recruiters`;
+}
 export async function createNewOrganizationAndRecruiterOrSetError(
   companyName: string,
   domain: string,
@@ -22,26 +24,25 @@ export async function createNewOrganizationAndRecruiterOrSetError(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  let orgId: string;
+  let orgId: number;
   let aclResult: boolean | void;
   let recruiter: RecruiterData;
   try {
     const organizationData = { companyName, domain };
     const result = await createOrganizationProfileOrSet500OnError(organizationData, res);
     if (!result) throw new Error('Failed to create Organization Profile');
-    orgId = await getOrganizationIdOrSet500OnError(companyName, res);
-    if (!orgId) throw new Error('Failed to get Organization Id ');
+    orgId = result?.insertId;
     recruiter = await createRecruiterProfileOrSet500OnError(
       { ...recruiterData, userId: userId, organizationId: orgId },
       res
     );
     if (!recruiter) throw new Error('Failed to create Recruiter Profile');
     const newAcl = {
-      id: `org${orgId}-recruiters`,
+      id: getOrgAcl(orgId),
       description: `Recruiters of ${companyName}`,
       memberUserIds: [userId],
       memberACLIds: [],
-      updaterACLId: `org${orgId}-recruiters`,
+      updaterACLId: getOrgAcl(orgId),
       isOpen: false,
     };
     aclResult = await createAclOrSetError(newAcl, res);
@@ -50,7 +51,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
     }
     const resourceId = `/instance/${CURRENT_TERM}/orgId/${orgId}`;
     const actionId = 'CREATE_JOB_POST';
-    const aclId = `org${orgId}-recruiters`;
+    const aclId = getOrgAcl(orgId);
     const resourceAccessResult = await unsafeCreateResourceAccessUnlessForced(
       resourceId,
       actionId,
@@ -70,7 +71,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
       await deleteRecruiterProfileOrSetError(recruiter?.userId, res);
     }
     if (aclResult) {
-      await deleteAclOrSetError(`org${orgId}-recruiters`, req, res);
+      await deleteAclOrSetError(getOrgAcl(orgId), req, res);
     }
     if (res.writableEnded) return;
     return res.status(500).send({
@@ -81,7 +82,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
 
 export async function createRecruiterAndAddToAclOrSetError(
   recruiterData: { name: string; email: string; position: string },
-  orgId: string,
+  orgId: number,
   userId: string,
   req: NextApiRequest,
   res: NextApiResponse
@@ -95,7 +96,7 @@ export async function createRecruiterAndAddToAclOrSetError(
   const success = await addRemoveMemberOrSetError(
     {
       memberId: userId,
-      aclId: `org${orgId}-recruiters`,
+      aclId: getOrgAcl(orgId),
       isAclMember: false,
       toBeAdded: true,
     },

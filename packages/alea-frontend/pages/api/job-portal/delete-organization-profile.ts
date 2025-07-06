@@ -5,7 +5,7 @@ import {
   executeDontEndSet500OnError,
 } from '../comment-utils';
 import { OrganizationData } from '@stex-react/api';
-async function getOrganizationProfileByIdOrSet500OnError(id: string, res: NextApiResponse) {
+async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: OrganizationData[] = await executeDontEndSet500OnError(
     `SELECT id,companyName,incorporationYear,isStartup, about, companyType,officeAddress,officePostalCode,website,domain
       FROM organizationProfile 
@@ -17,7 +17,7 @@ async function getOrganizationProfileByIdOrSet500OnError(id: string, res: NextAp
   if (!results || !results.length) return;
   return results[0];
 }
-export async function deleteOrganizationProfileOrSetError(id: string, res: NextApiResponse) {
+export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {
   if (!id) return res.status(422).send('Organization id is missing');
   const orgProfile = await getOrganizationProfileByIdOrSet500OnError(id, res);
   if (!orgProfile) return;

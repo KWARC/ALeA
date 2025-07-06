@@ -397,6 +397,8 @@ CREATE TABLE jobApplication (
     CONSTRAINT fk_jobPost FOREIGN KEY (jobPostId) REFERENCES jobPost(id) ,
     CONSTRAINT fk_applicant FOREIGN KEY (applicantId) REFERENCES studentProfile(userId) 
 );
+--TODO--
+-- we will need to maintain all the actions made by applicant and recruiter on an application
 
 CREATE TABLE orgInvitations (
     id INT AUTO_INCREMENT PRIMARY KEY, 

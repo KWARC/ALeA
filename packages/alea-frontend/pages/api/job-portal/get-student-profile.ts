@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const results: any = await executeDontEndSet500OnError(
     `SELECT userId,name, resumeUrl, email, mobile, programme, yearOfAdmission, yearOfGraduation, 
         courses, grades,gpa,location, about,socialLinks
-    FROM studentprofile 
+    FROM studentProfile 
     WHERE userId = ? 
     `,
     [userId],

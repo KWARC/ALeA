@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     about,
   } = req.body;
   const result = await executeAndEndSet500OnError(
-    `UPDATE studentprofile 
+    `UPDATE studentProfile 
 SET name = ?, 
     email = ?, 
     mobile = ?, 

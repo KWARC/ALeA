@@ -1,18 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  executeDontEndSet500OnError,
-} from '../comment-utils';
-export async function getJobApplicationUsingIdOrSet500OnError(id: number, res: NextApiResponse) {
-  const results = await executeDontEndSet500OnError(
-    'SELECT * FROM jobApplication WHERE id = ?',
-    [id],
-    res
-  );
-  if (!results) return;
-  return results[0] || [];
-}
+import { checkIfPostOrSetError, executeAndEndSet500OnError, executeQuery } from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -27,8 +14,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!id) return res.status(422).send('Job Application Id is missing');
 
-  const currentJobApplication = await getJobApplicationUsingIdOrSet500OnError(id, res);
-  if (!currentJobApplication) return;
+  const currentJobApplication: any = await executeQuery(
+    'SELECT * FROM jobApplication WHERE id = ?',
+    [id]
+  );
+  if (!currentJobApplication) {
+    res.status(404).send('Job Application not found');
+    return;
+  }
   const { updatedAt } = currentJobApplication;
 
   const result = await executeAndEndSet500OnError(

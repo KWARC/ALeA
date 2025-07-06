@@ -9,7 +9,7 @@ import { RecruiterData } from '@stex-react/api';
 async function getRecruiterProfileByUserIdOrSet500OnError(userId: string, res: NextApiResponse) {
   const results: RecruiterData[] = await executeDontEndSet500OnError(
     `SELECT name,userId,email,position,mobile,altMobile,organizationId,socialLinks,about
-     FROM recruiterprofile 
+     FROM recruiterProfile 
      WHERE userId = ? 
      `,
     [userId],
@@ -24,7 +24,7 @@ export async function deleteRecruiterProfileOrSetError(userId: string, res: Next
   const recruiter = await getRecruiterProfileByUserIdOrSet500OnError(userId, res);
   if (!recruiter) return;
   const result = await executeAndEndSet500OnError(
-    'DELETE FROM recruiterprofile WHERE userId = ?',
+    'DELETE FROM recruiterProfile WHERE userId = ?',
     [userId],
     res
   );

@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } = req.body;
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO jobpost 
+    `INSERT INTO jobPost 
       (jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline) 
      VALUES (?,?,?, ?, ?, ?,?,?,?,?,?,?,?)`,
     [

@@ -79,6 +79,7 @@ export interface JobApplicationInfo {
   studentMessage?: string;
   recruiterMessage?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export type ApplicantWithProfile = JobApplicationInfo & {

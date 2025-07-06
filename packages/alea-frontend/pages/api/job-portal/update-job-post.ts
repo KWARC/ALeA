@@ -10,11 +10,15 @@ import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
 
 export async function getJobPostUsingIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: any = await executeDontEndSet500OnError(
-    'SELECT * FROM jobpost WHERE id = ?',
+    'SELECT * FROM jobPost WHERE id = ?',
     [id],
     res
   );
-  if (!results || !results.length) return;
+  if (!results) return;
+  if (results.length === 0) {
+    res.status(404).send('Job post not found');
+    return;
+  }
   return results[0];
 }
 
@@ -48,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { updatedAt } = currentJobPost;
 
   const result = await executeAndEndSet500OnError(
-    'UPDATE jobpost SET jobTitle = ?, trainingLocation = ?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt=? WHERE id = ?',
+    'UPDATE jobPost SET jobTitle = ?, trainingLocation = ?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt=? WHERE id = ?',
     [
       jobTitle,
       trainingLocation,

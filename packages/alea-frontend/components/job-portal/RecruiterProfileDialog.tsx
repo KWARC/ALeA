@@ -11,7 +11,6 @@ import {
   TextField,
 } from '@mui/material';
 import {
-  getOrganizationId,
   OrganizationData,
   RecruiterAndOrgData,
   RecruiterData,
@@ -247,6 +246,7 @@ const RecruiterProfileDialog = ({
 
   const {
     id,
+    userId,
     name,
     email,
     companyName,
@@ -272,7 +272,7 @@ const RecruiterProfileDialog = ({
       position: position,
       mobile: mobile,
       altMobile: altMobile,
-      userId: 'TODO JP',
+      userId: userId,
     },
     organizationInfo: {
       id: id,
@@ -336,7 +336,6 @@ const RecruiterProfileDialog = ({
     if (activeStep < steps.length - 1) {
       setActiveStep(activeStep + 1);
     } else {
-      const id = await getOrganizationId(formData.organizationInfo.companyName);
       await updateOrganizationProfile(formData.organizationInfo, id);
       await updateRecruiterProfile({
         ...formData.recruiterDetails,

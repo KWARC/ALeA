@@ -129,28 +129,26 @@ export async function registerRecruiter(
   );
   return resp.data;
 }
-export async function getOrganizationId(organizationName: string) {
-  const resp = await axios.get('/api/job-portal/get-organization-id', {
-    headers: getAuthHeaders(),
-    params: { organizationName },
-  });
-  return resp.data as number;
-}
+
 export type CreateJobCategoryRequest = Omit<JobCategoryInfo, 'id'>;
 export async function createJobCategory(data: CreateJobCategoryRequest) {
-  await axios.post('/api/job-portal/create-job-type', data, {
+  await axios.post('/api/job-portal/create-job-category', data, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function updateJobCategory(data: JobCategoryInfo) {
-  await axios.post('/api/job-portal/update-job-type', data, {
+  await axios.post('/api/job-portal/update-job-category', data, {
     headers: getAuthHeaders(),
   });
 }
 
-export async function deleteJobCategory(id: number) {
-  await axios.post('/api/job-portal/delete-job-type', { id }, { headers: getAuthHeaders() });
+export async function deleteJobCategory(id: number, instanceId?: string) {
+  await axios.post(
+    '/api/job-portal/delete-job-category',
+    { id, instanceId },
+    { headers: getAuthHeaders() }
+  );
 }
 
 export async function getJobCategories(instanceId: string) {
@@ -221,10 +219,13 @@ export async function getJobApplicationsByUserId() {
   });
   return resp.data as JobApplicationInfo[];
 }
-export async function getJobApplicationsByUserIdAndJobPostId(jobPostId: number, userId?: string) {
+export async function getJobApplicationsByUserIdAndJobPostId(jobPostId: number) {
+  //TODO
+  // Add acl check to know if this api is being called by ADMIN ,
+  //  then userID can be received as query as well
   const resp = await axios.get('/api/job-portal/get-job-application-by-userid-and-jobpostid', {
     headers: getAuthHeaders(),
-    params: { jobPostId, userId },
+    params: { jobPostId },
   });
   return resp.data as JobApplicationInfo[];
 }

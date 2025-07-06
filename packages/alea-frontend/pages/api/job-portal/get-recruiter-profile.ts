@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   const results: RecruiterData[] = await executeDontEndSet500OnError(
     `SELECT name,userId,email,position,hasDefinedOrg,mobile,altMobile,organizationId,socialLinks,about
-    FROM recruiterprofile 
+    FROM recruiterProfile 
     WHERE userId = ? 
     `,
     [userId],

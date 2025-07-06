@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     resumeUrl,
   } = req.body;
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO studentprofile 
+    `INSERT INTO stuentProfile 
       (name,userId, resumeUrl, email, mobile, programme, yearOfAdmission, yearOfGraduation, 
         courses, grades, about) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
