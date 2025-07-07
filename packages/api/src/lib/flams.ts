@@ -177,7 +177,7 @@ export const ALL_LO_TYPES = [
   'definition',
   'problem',
   'example',
-  'statement', // synomym: assertion
+  'statement', // synomym: assertion => now changed to ulo:proposition
 ] as const;
 export type LoType = (typeof ALL_LO_TYPES)[number];
 export interface SparqlResponse {
@@ -321,7 +321,7 @@ WHERE {
   FILTER(!CONTAINS(STR(?x), "?term")).
   FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:crossrefs, ulo:defines, ulo:example-for, ulo:specifies)).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -340,7 +340,7 @@ WHERE {
  FILTER(!CONTAINS(STR(?x), "?term")).
  FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:objective ,ulo:precondition )).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -350,7 +350,7 @@ export function getSparqlQueryForLoString(loString: string, loTypes?: LoType[]) 
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const query = `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
@@ -382,7 +382,7 @@ export function getSparqlQueryForNonDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';
@@ -429,7 +429,7 @@ export function getSparqlQueryForDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';

@@ -14,7 +14,7 @@ import {
   Phase,
   QuizStatsResponse,
   QuizWithStatus,
-  updateQuiz
+  updateQuiz,
 } from '@stex-react/api';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { SafeHtml } from '@stex-react/react-utils';
@@ -29,6 +29,7 @@ import { ExcusedAccordion } from './ExcusedAccordion';
 import { QuizFileReader } from './QuizFileReader';
 import { QuizStatsDisplay } from './QuizStatsDisplay';
 import { RecorrectionDialog } from './RecorrectionDialog';
+import { useRouter } from 'next/router';
 
 const NEW_QUIZ_ID = 'New';
 
@@ -137,6 +138,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [isUpdating, setIsUpdating] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
   const isNew = isNewQuiz(selectedQuizId);
+  const router = useRouter();
 
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedQuizId);
   const formErrorReason = getFormErrorReason(
@@ -266,25 +268,43 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           You don&apos;t have access to mutate this course Quizzes
         </Typography>
       )}
-      <Select
-        value={selectedQuizId}
-        onChange={(e) => {
-          const newQuizId = e.target.value;
-          onQuizIdChange?.(newQuizId);
-        }}
-      >
-        {accessType == 'MUTATE' ? (
-          <MenuItem value="New">New</MenuItem>
-        ) : (
-          <MenuItem value="New">Select Quiz</MenuItem>
-        )}
-        {quizzes.map((quiz) => (
-          <MenuItem key={quiz.id} value={quiz.id}>
-            <SafeHtml html={quiz.title} />
-            &nbsp;({quiz.id})
-          </MenuItem>
-        ))}
-      </Select>
+      <Box display="flex" justifyContent={'space-between'}>
+        <Select
+          value={selectedQuizId}
+          onChange={(e) => {
+            const newQuizId = e.target.value;
+            onQuizIdChange?.(newQuizId);
+          }}
+        >
+          {accessType == 'MUTATE' ? (
+            <MenuItem value="New">New</MenuItem>
+          ) : (
+            <MenuItem value="New">Select Quiz</MenuItem>
+          )}
+          {quizzes.map((quiz) => (
+            <MenuItem key={quiz.id} value={quiz.id}>
+              <SafeHtml html={quiz.title} />
+              &nbsp;({quiz.id})
+            </MenuItem>
+          ))}
+        </Select>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() =>
+            router.push({
+              pathname: '/quiz-gen',
+              query: {
+                courseId: courseId || '',
+                startSectionId: '',
+                endSectionId: '',
+              },
+            })
+          }
+        >
+          Create Quiz
+        </Button>
+      </Box>
 
       <h2>
         {isNew && accessType == 'MUTATE'

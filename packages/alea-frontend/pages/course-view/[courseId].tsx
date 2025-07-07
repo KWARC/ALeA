@@ -413,11 +413,7 @@ const CourseViewPage: NextPage = () => {
                   sectionTitle={selectedSectionTOC.title}
                 />
                 {isQuizMaker && (
-                  <QuizComponent
-                    courseId={courseId}
-                    sectionId={sectionId}
-                    sectionUri={selectedSectionTOC.uri}
-                  />
+                  <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
                 )}
               </Box>
             )}
