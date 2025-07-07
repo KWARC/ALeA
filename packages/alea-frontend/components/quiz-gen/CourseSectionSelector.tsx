@@ -13,12 +13,7 @@ import {
 import { useRouter } from 'next/router';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { CourseInfo } from '@stex-react/utils';
-import {
-  generateMoreQuizProblems,
-  generateQuizProblems,
-  getCourseInfo,
-  // getDocumentSections,
-} from '@stex-react/api';
+import { generateMoreQuizProblems, generateQuizProblems, getCourseInfo } from '@stex-react/api';
 import { getSectionDetails, SectionDetails } from '../lo-explorer/CourseConceptDialog';
 import { getFlamsServer } from '@kwarc/ftml-react';
 
