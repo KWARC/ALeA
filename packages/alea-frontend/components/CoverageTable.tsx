@@ -105,17 +105,44 @@ function CoverageRow({
             <Box
               maxWidth="600px"
               color="#1a237e"
-              border="1px solid #CCC"
-              p="10px"
-              borderRadius="5px"
-              boxShadow="2px 7px 31px 8px rgba(0, 0, 0, 0.33)"
+              border="2px solid #3f51b5"
+              p="12px"
+              borderRadius="8px"
+              boxShadow="0 4px 20px rgba(0, 0, 0, 0.15)"
+              bgcolor="white"
             >
               <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
-                <Typography fontWeight="bold" mb={1}>
-                  Lecture Timings
+                <Typography fontWeight="bold" display="inline">
+                  Lecture Timings:
                 </Typography>
-                {`${itemDate.format('HH:mm')} - ${endTime.format('HH:mm')}`}
+                <Typography display="inline">
+                  {`${itemDate.format('HH:mm')} - ${endTime.format('HH:mm')}`}
+                </Typography>
               </Box>
+              {item.venue && (
+                <>
+                  <Typography fontWeight="bold" mt={1} display="inline">
+                    Venue:
+                  </Typography>
+                  {item.venueLink ? (
+                    <a
+                      href={item.venueLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#1976d2',
+                        textDecoration: 'underline',
+                        fontWeight: 'bold',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {item.venue}
+                    </a>
+                  ) : (
+                    <Typography display="inline">{item.venue}</Typography>
+                  )}
+                </>
+              )}
             </Box>
           }
           arrow

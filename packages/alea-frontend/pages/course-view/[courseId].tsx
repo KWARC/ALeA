@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -8,7 +8,6 @@ import {
   ClipData,
   ClipInfo,
   getCourseInfo,
-  getDocumentSections,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -223,11 +222,13 @@ const CourseViewPage: NextPage = () => {
 
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
-    getDocumentSections(notes).then(([css, toc]) => {
-      setToc(toc);
-      setCourseSections(getSections(toc));
-      for (const e of css) FTML.injectCss(e);
-    });
+    getFlamsServer()
+      .contentToc({ uri: notes })
+      .then(([css, toc] = [[], []]) => {
+        setToc(toc);
+        setCourseSections(getSections(toc));
+        for (const e of css) FTML.injectCss(e);
+      });
     getSlideCounts(courseId).then(setSlideCounts);
     getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
   }, [router.isReady, courses, courseId]);

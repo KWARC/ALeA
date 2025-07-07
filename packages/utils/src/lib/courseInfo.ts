@@ -93,6 +93,8 @@ export interface LectureEntry {
     slideUri?: string;
   };
   lectureEndTimestamp_ms?: number;
+  venue?: string;
+  venueLink?: string;
 }
 
 export interface CoverageTimeline {

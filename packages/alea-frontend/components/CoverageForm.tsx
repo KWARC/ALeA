@@ -90,7 +90,6 @@ export function CoverageForm({
     });
   }, [formData.slideUri, formData.sectionUri, formData.slideNumber]);
 
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
@@ -105,7 +104,10 @@ export function CoverageForm({
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [hours, minutes] = e.target.value.split(':').map(Number);
-    const updatedTimestamp_ms = dayjs(formData.timestamp_ms).set('hour', hours).set('minute', minutes).valueOf();
+    const updatedTimestamp_ms = dayjs(formData.timestamp_ms)
+      .set('hour', hours)
+      .set('minute', minutes)
+      .valueOf();
     setFormData({ ...formData, timestamp_ms: updatedTimestamp_ms });
   };
 
@@ -223,6 +225,30 @@ export function CoverageForm({
           value={dayjs(formData.lectureEndTimestamp_ms).format('HH:mm')}
           onChange={handleEndTimeChange}
           placeholder="Enter End Time"
+          variant="outlined"
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Venue"
+          name="venue"
+          value={formData.venue || ''}
+          onChange={handleChange}
+          placeholder="Enter venue name"
+          variant="outlined"
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Venue Link"
+          name="venueLink"
+          value={formData.venueLink || ''}
+          onChange={handleChange}
+          placeholder="https://example.com"
           variant="outlined"
         />
       </Grid>

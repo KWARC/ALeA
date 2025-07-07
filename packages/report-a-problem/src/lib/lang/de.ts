@@ -5,6 +5,7 @@ export const de = {
   newIssueCreated: 'Neues Problem erstellt',
   somethingWrong: 'Etwas ist schief gelaufen!',
   seeIssue: 'SIEHE PROBLEM',
+  reportProblem: 'Problem melden',
 
   // dialog
   titleLabel: 'Titel (Optional)',

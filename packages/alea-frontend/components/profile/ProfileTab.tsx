@@ -1,5 +1,4 @@
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EditIcon from '@mui/icons-material/Edit';
 import GradingIcon from '@mui/icons-material/Grading';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -9,41 +8,13 @@ import {
   Box,
   Button,
   Card,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Stack,
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
-
-import { useState } from 'react';
 import { EditProfileDialog } from './EditProfileDialog';
+import { PersonalCalendarSection } from '../PersonalCalendar';
 
-function CalendarInstruction({ openCalendarDialog, setOpenCalendarDialog, t }) {
-  return (
-    <Dialog
-      open={openCalendarDialog}
-      onClose={() => setOpenCalendarDialog(false)}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>{t.calendar.howTo}</DialogTitle>
-      <DialogContent>
-        <DialogContentText component="div">
-          <ol>
-            <li>{t.calendar.stepOne}</li>
-            <li>{t.calendar.stepTwo}</li>
-            <li>{t.calendar.stepThree}</li>
-            <li>{t.calendar.stepFour}</li>
-            <li>{t.calendar.stepFive}</li>
-          </ol>
-        </DialogContentText>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export const ProfileTab = ({
   t,
@@ -53,7 +24,6 @@ export const ProfileTab = ({
   openEditDialog,
   handleProfileUpdate,
 }) => {
-  const [openCalendarDialog, setOpenCalendarDialog] = useState(false);
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
       <Box sx={{ flex: '1 1 50%' }}>
@@ -108,6 +78,15 @@ export const ProfileTab = ({
                     </Typography>
                   </Box>
                 ))}
+                {userInfo?.userId && (
+                  <Box sx={{ mt: 2 }}>
+                    <PersonalCalendarSection
+                      userId={userInfo.userId}
+                      hintGoogle={t.calendar.howToUseHintGoogle}
+                      hintApple={t.calendar.howToUseHintApple}
+                    />
+                  </Box>
+                )}
               </Stack>
             ) : (
               <Typography sx={{ color: 'text.secondary' }}>Loading...</Typography>
@@ -155,26 +134,8 @@ export const ProfileTab = ({
                 {t.learnerModelPriming}
               </Button>
             </Link>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<CalendarMonthIcon />}
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `https://courses.voll-ki.fau.de/api/calendar/create-calendar?userId=${userInfo?.userId}`
-                );
-                setOpenCalendarDialog(true);
-              }}
-            >
-              {t.calendar.copyCalendarUrl}
-            </Button>
           </Stack>
         </Card>
-        <CalendarInstruction
-          openCalendarDialog={openCalendarDialog}
-          setOpenCalendarDialog={setOpenCalendarDialog}
-          t={t}
-        />
       </Box>
     </Box>
   );

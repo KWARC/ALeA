@@ -75,7 +75,8 @@ export function ReportProblemPopover(props: Props) {
   const [newIssueUrl, setNewIssueUrl] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
 
-  const validContextForComments = isValidContextForComments(selectedContext);
+  const validContextForComments = isValidContextForComments(context);
+  const validSelectedContextForComments = isValidContextForComments(selectedContext);
 
   return (
     <>
@@ -146,8 +147,15 @@ export function ReportProblemPopover(props: Props) {
           }
         }}
       />
-      {validContextForComments && ncdOpen && (
-        <Dialog onClose={() => setNcdOpen(false)} open={ncdOpen} maxWidth="lg">
+      {validSelectedContextForComments && ncdOpen && (
+        <Dialog
+          onClose={() => {
+            setNcdOpen(false);
+            setSelectedContext([]);
+          }}
+          open={ncdOpen}
+          maxWidth="lg"
+        >
           <Box onClick={(e) => e.stopPropagation()}>
             <CommentNoteToggleView
               defaultPrivate={isPrivate}

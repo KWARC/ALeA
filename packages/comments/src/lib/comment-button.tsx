@@ -92,6 +92,7 @@ export function CommentButton({ url = '', fragmentKind }: { url?: string; fragme
   }, [url, open]);
 
   if (!url) return null;
+  if (!numPrivateNotes && !numPublicComments) return null;
 
   return (
     <Box>

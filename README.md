@@ -2,6 +2,8 @@
 
 This workspace contains the applications and library related to rendering of sTeX documents (more precisely, RusTeX generated xhtml) using React library. The package manager used here is npm, so install the dependencies using `npm install` before running any other commands. There are two applications in this workspace:
 
+📄 **Getting Started?** See [getting_started.md](getting_started.md)
+
 ## alea-frontend
 
 This is a next.js frontend.
@@ -112,30 +114,3 @@ Nx Cloud pairs with Nx in order to enable you to build and test code more rapidl
 Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
 
 Visit [Nx Cloud](https://nx.app/) to learn more.
-
-# Access Control List (ACL) Setup
-
-This guide provides step-by-step instructions to create and configure an Access Control List (ACL) in the system.
-
-## Step 1: Create a New ACL
-
-1. Go to the `/acl` endpoint in the application.
-2. Create a new ACL with the following details:
-   - **ACL ID**: `sys-admin`
-   - **Description**: `write-dexription`
-   - **Add Member ID**: Specify the member ID, e.g., `fake_joy`
-   - **Add Member ACL**: Leave empty if no additional ACLs are to be added.
-   - **Updater ACL**: Set this to `sys-admin`.
-
-## Step 2: Insert into `ResourceAccess`
-
-Run the following SQL query to add resource access control:
-
-   ```INSERT INTO ResourceAccess (resourceId, actionId, aclId) VALUES ('/**', 'ACCESS_CONTROL', 'sys-admin');```
-
-## Step 3: Assign Resource-Action Permissions
-
-1. Navigate to the **exp** page in the application.
-2. Locate and click on the **system-administrator** button.
-3. Follow the prompts to create a resource-action assignment by specifying the desired resources and actions that the `sys-admin` role should control.
-4. Save the changes.

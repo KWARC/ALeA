@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userId = await getUserIdIfAuthorizedOrSetError(
       req,
       res,
-      ResourceName.COURSE_NOTES,
+      ResourceName.COURSE_SYLLABUS,
       Action.MUTATE,
       {
         courseId,

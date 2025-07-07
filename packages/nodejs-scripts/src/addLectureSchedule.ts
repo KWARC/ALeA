@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'fs/promises';
+import { semesterPeriods } from '@stex-react/utils';
 
 export interface CourseScheduleInfo {
   lectureStart: string;
@@ -39,6 +40,8 @@ export async function addScheduleInfoToCurrentSem() {
     for (const courseId of Object.keys(json)) {
       if (Array.isArray(json[courseId])) {
         const schedule = courseSchedule[courseId] || defaultSchedule;
+        const currentSemCourses = semesterPeriods.SS25.courses;
+        const courseVenueInfo = currentSemCourses.find((c) => c.courseId === courseId);
         json[courseId] = json[courseId].map((entry: any) => {
           const lectureDate = new Date(entry.timestamp_ms);
 
@@ -54,6 +57,8 @@ export async function addScheduleInfoToCurrentSem() {
             ...entry,
             timestamp_ms: startDate.getTime(),
             lectureEndTimestamp_ms: endDate.getTime(),
+            venue: courseVenueInfo?.venue,
+            venueLink: courseVenueInfo?.venueLink,
           };
         });
       }

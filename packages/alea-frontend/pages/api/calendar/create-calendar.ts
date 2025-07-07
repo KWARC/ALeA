@@ -77,6 +77,25 @@ function generateSemesterAndHolidayEvents(): ICalEventData[] {
         description: `${holiday.name}`,
       });
     });
+    period.examDates.forEach((exam) => {
+      if (exam.examStartTime && exam.examEndTime) {
+        const startDateTime = new Date(`${exam.examDate}T${exam.examStartTime}`);
+        const endDateTime = new Date(`${exam.examDate}T${exam.examEndTime}`);
+        events.push({
+          start: startDateTime,
+          end: endDateTime,
+          summary: `Exam: ${exam.courseId}`,
+          description: `Exam for ${exam.courseId} in ${name}`,
+        });
+      } else {
+        events.push({
+          start: new Date(exam.examDate),
+          allDay: true,
+          summary: `Exam: ${exam.courseId}`,
+          description: `Exam for ${exam.courseId} in ${name}`,
+        });
+      }
+    });
   });
 
   return events;

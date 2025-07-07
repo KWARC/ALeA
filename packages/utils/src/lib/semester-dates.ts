@@ -8,6 +8,8 @@ interface Course {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  venue?: string;
+  venueLink?: string;
 }
 export interface SemesterPeriod {
   semesterStart: string;
@@ -16,6 +18,7 @@ export interface SemesterPeriod {
   lectureEnd: string;
   holidays: Holiday[];
   courses: Course[];
+  examDates: { courseId: string; examDate: string; examStartTime: string; examEndTime: string }[];
 }
 
 export const semesterPeriods: Record<string, SemesterPeriod> = {
@@ -35,11 +38,57 @@ export const semesterPeriods: Record<string, SemesterPeriod> = {
       { date: '2025-06-20', name: 'No Lecture' },
     ],
     courses: [
-      { courseId: 'krmt', dayOfWeek: 2, startTime: '12:15', endTime: '13:45' },
-      { courseId: 'smai', dayOfWeek: 2, startTime: '10:15', endTime: '11:50' },
-      { courseId: 'ai-2', dayOfWeek: 2, startTime: '16:15', endTime: '17:50' },
-      { courseId: 'ai-2', dayOfWeek: 3, startTime: '16:15', endTime: '17:50' },
-      { courseId: 'iwgs-2', dayOfWeek: 4, startTime: '16:15', endTime: '17:50' },
+      {
+        courseId: 'krmt',
+        dayOfWeek: 2,
+        startTime: '12:15',
+        endTime: '13:45',
+        venue: 'H15',
+        venueLink:
+          'https://www.campo.fau.de:443/qisserver/pages/startFlow.xhtml?_flowId=roomSchedule-flow&roomId=5095&roomType=3&currentTermId=564&time=&navigationPosition=organisation,hisinoneFacilities,hisinonesearchroom',
+      },
+      {
+        courseId: 'smai',
+        dayOfWeek: 2,
+        startTime: '10:15',
+        endTime: '11:50',
+        venue: 'H20',
+        venueLink:
+          'https://www.campo.fau.de:443/qisserver/pages/startFlow.xhtml?_flowId=showRoomDetail-flow&roomId=7761&roomType=3&context=showRoomDetails&navigationPosition=organisation,searchroom',
+      },
+      {
+        courseId: 'ai-2',
+        dayOfWeek: 2,
+        startTime: '16:15',
+        endTime: '17:50',
+        venue: 'H18',
+        venueLink:
+          'https://www.campo.fau.de:443/qisserver/pages/startFlow.xhtml?_flowId=showRoomDetail-flow&roomId=7785&roomType=3&context=showRoomDetails',
+      },
+      {
+        courseId: 'ai-2',
+        dayOfWeek: 3,
+        startTime: '16:15',
+        endTime: '17:50',
+        venue: 'H20',
+        venueLink:
+          'https://www.campo.fau.de:443/qisserver/pages/startFlow.xhtml?_flowId=showRoomDetail-flow&roomId=7761&roomType=3&context=showRoomDetails&navigationPosition=organisation,searchroom',
+      },
+      {
+        courseId: 'iwgs-2',
+        dayOfWeek: 4,
+        startTime: '16:15',
+        endTime: '17:50',
+        venue: 'KH 0.023 Lecture Hall Kollegienhaus',
+        venueLink:
+          'https://www.campo.fau.de:443/qisserver/pages/startFlow.xhtml?_flowId=showRoomDetail-flow&roomId=67&roomType=3&context=showRoomDetails&navigationPosition=organisation,searchroom',
+      },
+    ],
+    examDates: [
+      { courseId: 'krmt', examDate: '2025-07-28', examStartTime: '', examEndTime: '' },
+      { courseId: 'smai', examDate: '2025-07-22', examStartTime: '', examEndTime: '' },
+      { courseId: 'ai-2', examDate: '2025-07-30', examStartTime: '', examEndTime: '' },
+      { courseId: 'iwgs-2', examDate: '2025-07-24', examStartTime: '', examEndTime: '' },
     ],
   },
   'WS25-26': {
@@ -52,5 +101,6 @@ export const semesterPeriods: Record<string, SemesterPeriod> = {
       { date: '2025-11-01', name: 'All Saints Day' },
     ],
     courses: [],
+    examDates: [],
   },
 };

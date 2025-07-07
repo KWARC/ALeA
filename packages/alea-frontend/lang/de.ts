@@ -449,4 +449,11 @@ export const de = {
     loadingPreviewOfChanges: 'Laden der Vorschau der Änderungen...',
     ApplyRecorrection: 'Rekorrektur anwenden',
   },
+  calendarSection: {
+    schedule: 'Stundenplan',
+    personalCalendar: 'Persönlicher Kalender',
+    howToUse: 'So verwendest du es',
+    howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
+    howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
+  },
 };

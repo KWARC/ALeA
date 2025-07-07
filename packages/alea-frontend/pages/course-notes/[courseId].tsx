@@ -1,4 +1,4 @@
-import { FTMLDocument, FTMLSetup } from '@kwarc/ftml-react';
+import { FTMLDocument, FTMLSetup, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   Box,
@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material';
-import { getCourseInfo, getDocumentSections } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/api';
 import { CommentButton } from '@stex-react/comments';
 import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
@@ -111,7 +111,9 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    getDocumentSections(notes).then(([css, toc]) => {
+    getFlamsServer()
+    .contentToc({ uri: notes })
+    .then(([css, toc] = [[], []]) => {
       setToc(toc);
       uriToTitle.current = {};
       getSectionUriToTitle(toc, uriToTitle.current);

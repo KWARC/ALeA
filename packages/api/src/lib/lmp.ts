@@ -1,6 +1,6 @@
 import { deleteCookie, getCookie, setCookie } from '@stex-react/utils';
 import axios, { AxiosError } from 'axios';
-import { LoType } from './mmt';
+import { LoType } from './flams';
 
 export type CognitiveValueConfidence = NumericCognitiveValues;
 
@@ -182,7 +182,7 @@ export async function reportEvent(event: LMPEvent) {
   return await lmpRequest('lmp', 'lmp/input/events', 'POST', {}, event);
 }
 
-const SERVER_TO_ADDRESS = { 
+const SERVER_TO_ADDRESS = {
   lmp: process.env['NEXT_PUBLIC_LMP_URL'],
   auth: process.env['NEXT_PUBLIC_AUTH_SERVER_URL'],
 };
