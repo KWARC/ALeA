@@ -42,7 +42,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  'syllabus': { resource: ResourceName.COURSE_NOTES, actions: [Action.MUTATE] },
+  'syllabus': { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
 };
 function ChosenTab({
   tabName,

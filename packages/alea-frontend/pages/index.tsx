@@ -337,13 +337,6 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
   const [resourcesForInstructor, setResourcesForInstructor] = useState<CourseResourceAction[]>([]);
   useEffect(() => {
     updateUserInfoFromToken();
-    getFlamsServer()
-      .quiz({
-        uri: 'https://mathhub.info/?a=courses/FAU/AI/hwexam&p=general/quizzes&d=pretest&l=en',
-      })
-      .then((quiz) => {
-        console.log('quiz', quiz);
-      });
   }, []);
 
   const {

@@ -305,7 +305,10 @@ function CourseScheduleSection({
               </Typography>
             </Box>
             {nextLectureDateFormatted && (
-              <Typography variant="h6" sx={{ fontWeight: 600, color: fontColor, fontSize: '1rem', mb: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: fontColor, fontSize: '1rem', mb: 1 }}
+              >
                 Upcoming Lecture: {nextLectureDateFormatted}
               </Typography>
             )}
@@ -452,7 +455,7 @@ const CourseHomePage: NextPage = () => {
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
   const t = home.courseThumb;
 
-  const showSearchBar = false; // ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId); TODO ALEA4-N12
+  const showSearchBar = ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId);
   function handleSearch() {
     if (!searchQuery) return;
     router.push(`/search/${courseId}?query=${encodeURIComponent(searchQuery)}`);
@@ -482,7 +485,17 @@ const CourseHomePage: NextPage = () => {
         courseId={courseId}
       />
 
-      <Box maxWidth="900px" m="auto" px="10px" display="flex" flexDirection="column">
+      <Box
+        fragment-uri={notes}
+        fragment-kind="Section"
+        sx={{
+          maxWidth: '900px',
+          margin: 'auto',
+          px: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <Box
           display="grid"
           gridTemplateColumns="repeat(auto-fill,minmax(185px, 1fr))"
@@ -604,7 +617,9 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         )}
-        <FTMLDocument document={{ type: 'FromBackend', uri: landing, toc: undefined }} />
+        <Box fragment-uri={landing} fragment-kind="Section">
+          <FTMLDocument document={{ type: 'FromBackend', uri: landing, toc: undefined }} />
+        </Box>
         <RecordedSyllabus courseId={courseId} />
       </Box>
     </MainLayout>

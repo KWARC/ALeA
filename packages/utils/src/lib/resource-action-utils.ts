@@ -19,7 +19,7 @@ export enum ResourceName {
   EXPERIMENTAL = 'EXPERIMENTAL',
 
   // Resources related to specific courses.
-  COURSE_NOTES = 'COURSE_NOTES',
+  COURSE_SYLLABUS = 'COURSE_SYLLABUS',
   COURSE_QUIZ = 'COURSE_QUIZ',
   COURSE_COMMENTS = 'COURSE_COMMENTS',
   COURSE_STUDY_BUDDY = 'COURSE_STUDY_BUDDY',
@@ -43,7 +43,7 @@ export enum ComponentType {
 }
 
 export const COURSE_SPECIFIC_RESOURCENAMES = [
-  ResourceName.COURSE_NOTES,
+  ResourceName.COURSE_SYLLABUS,
   ResourceName.COURSE_QUIZ,
   ResourceName.COURSE_COMMENTS,
   ResourceName.COURSE_STUDY_BUDDY,
@@ -73,7 +73,7 @@ export interface ResourceActionPair {
 }
 
 export const INSTRUCTOR_RESOURCE_AND_ACTION = [
-  { resource: ResourceName.COURSE_NOTES, action: Action.MUTATE },
+  { resource: ResourceName.COURSE_SYLLABUS, action: Action.MUTATE },
   { resource: ResourceName.COURSE_QUIZ, action: Action.MUTATE },
   { resource: ResourceName.COURSE_STUDY_BUDDY, action: Action.MODERATE },
   { resource: ResourceName.COURSE_HOMEWORK, action: Action.MUTATE },
@@ -92,14 +92,14 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
     components: [{ type: ComponentType.FIXED, value: 'experimental' }],
   },
   {
-    name: ResourceName.COURSE_NOTES,
+    name: ResourceName.COURSE_SYLLABUS,
     possibleActions: [Action.MUTATE],
     components: [
       { type: ComponentType.FIXED, value: 'course' },
       { name: 'courseId', type: ComponentType.VARIABLE },
       { type: ComponentType.FIXED, value: 'instance' },
       { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
-      { type: ComponentType.FIXED, value: 'notes' },
+      { type: ComponentType.FIXED, value: 'syllabus' },
     ],
   },
   {
