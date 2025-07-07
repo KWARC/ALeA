@@ -17,9 +17,10 @@ import {
   generateMoreQuizProblems,
   generateQuizProblems,
   getCourseInfo,
-  getDocumentSections,
+  // getDocumentSections,
 } from '@stex-react/api';
 import { getSectionDetails, SectionDetails } from '../lo-explorer/CourseConceptDialog';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export const CourseSectionSelector = ({
   loading,
@@ -54,18 +55,28 @@ export const CourseSectionSelector = ({
   }, []);
 
   useEffect(() => {
-    if (!selectedCourseId) return;
-    const notes = courses[selectedCourseId]?.notes;
-    if (!notes) return;
-    setLoadingSections(true);
-    getDocumentSections(notes)
-      .then(([css, toc]) => {
+    const getSections = async () => {
+      if (!selectedCourseId) return;
+
+      const courseInfo = courses?.[selectedCourseId];
+      if (!courseInfo?.notes) return;
+      const notesUri = courseInfo.notes;
+
+      setLoadingSections(true);
+      try {
+        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const allSections = getSectionDetails(toc);
         setSections(allSections);
         setStartSectionId('');
         setEndSectionId('');
-      })
-      .finally(() => setLoadingSections(false));
+      } catch (error) {
+        console.error('Failed to fetch document sections:', error);
+      } finally {
+        setLoadingSections(false);
+      }
+    };
+
+    getSections();
   }, [selectedCourseId]);
 
   useEffect(() => {
