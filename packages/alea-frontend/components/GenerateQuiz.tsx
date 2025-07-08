@@ -24,8 +24,10 @@ import { QuestionSidebar } from './quiz-gen/QuizSidebar';
 
 export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProblem }) => {
   const isCorrectOption = (opt: string) => {
-    if (problemData.problemType.toLowerCase() === 'msq') {
-      return Array.isArray(problemData.correctAnswer) && problemData.correctAnswer.includes(opt);
+    if (problemData.problemType.toLowerCase() === 'mcq') {
+      const correctAnswers = (problemData as any).correctAnswers || problemData.correctAnswer;
+      if (Array.isArray(correctAnswers)) return correctAnswers.includes(opt);
+      return correctAnswers === opt;
     }
     return opt === problemData.correctAnswer;
   };
@@ -59,7 +61,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           border={'0.5px solid rgb(172, 178, 173)'}
         >
           <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
-            {problemData.problemType.toLowerCase() === 'msq' ? (
+            {problemData.problemType.toLowerCase() === 'mcq' ? (
               <Checkbox checked={correct} disabled />
             ) : (
               <Radio checked={correct} disabled />
@@ -96,8 +98,8 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           </IconButton>
         </Tooltip>
       </Box>
-      {(problemData.problemType.toLowerCase() === 'mcq' ||
-        problemData.problemType.toLowerCase() === 'msq') &&
+      {(problemData.problemType.toLowerCase() === 'scq' ||
+        problemData.problemType.toLowerCase() === 'mcq') &&
         renderOptionsWithFeedback()}
 
       {problemData.problemType === 'FILL_IN' && (
