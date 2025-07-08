@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { getFlamsServer } from '@kwarc/ftml-react';
 import {
   Box,
   Button,
@@ -10,13 +10,14 @@ import {
   Select,
   Typography,
 } from '@mui/material';
+import { generateMoreQuizProblems, generateQuizProblems, getCourseInfo } from '@stex-react/api';
+import { updateRouterQuery } from '@stex-react/react-utils';
+import { CourseInfo } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
-import { CourseInfo } from '@stex-react/utils';
-import { generateMoreQuizProblems, generateQuizProblems, getCourseInfo } from '@stex-react/api';
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { getSecInfo } from '../coverage-update';
 import { SecInfo } from 'packages/alea-frontend/types';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { getSecInfo } from '../coverage-update';
 
 export const CourseSectionSelector = ({
   loading,
@@ -34,15 +35,10 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
 }) => {
   const router = useRouter();
-  const {
-    courseId: routeCourseId,
-    startSectionId: routeStartSecId,
-    endSectionId: routeEndSecId,
-  } = router.query;
+  const courseId = router.query.courseId as string;
+  const startSectionId = router.query.startSectionId as string;
+  const endSectionId = router.query.endSectionId as string;
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
-  const [selectedCourseId, setSelectedCourseId] = useState((routeCourseId as string) ?? '');
-  const [startSectionId, setStartSectionId] = useState((routeStartSecId as string) ?? '');
-  const [endSectionId, setEndSectionId] = useState((routeEndSecId as string) ?? '');
   const [hasPriorProblems, setHasPriorProblems] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
 
@@ -52,9 +48,9 @@ export const CourseSectionSelector = ({
 
   useEffect(() => {
     const getSections = async () => {
-      if (!selectedCourseId) return;
+      if (!courseId) return;
 
-      const courseInfo = courses?.[selectedCourseId];
+      const courseInfo = courses?.[courseId as string];
       if (!courseInfo?.notes) return;
       const notesUri = courseInfo.notes;
 
@@ -65,8 +61,12 @@ export const CourseSectionSelector = ({
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );
         setSections(formattedSections);
-        setStartSectionId('');
-        setEndSectionId('');
+        const allSectionIds = formattedSections.map((s) => s.id);
+        if (!allSectionIds.includes(startSectionId)) {
+          updateRouterQuery(router, { startSectionId: '', endSectionId: '' }, true);
+        } else if (!allSectionIds.includes(endSectionId)) {
+          updateRouterQuery(router, { endSectionId: '' }, true);
+        }
       } catch (error) {
         console.error('Failed to fetch document sections:', error);
       } finally {
@@ -75,17 +75,17 @@ export const CourseSectionSelector = ({
     };
 
     getSections();
-  }, [selectedCourseId, courses]);
+  }, [courseId, courses]);
 
   useEffect(() => {
     setHasPriorProblems(false);
-  }, [startSectionId, endSectionId, selectedCourseId]);
+  }, [startSectionId, endSectionId, courseId]);
 
   const generateNewProblems = async (mode: 'initial' | 'more' = 'initial') => {
     setLoading(true);
     try {
       const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;
-      const response = await fetchFn(selectedCourseId, startSectionId, endSectionId);
+      const response = await fetchFn(courseId, startSectionId, endSectionId);
       if (!response?.length) {
         return;
       }
@@ -118,12 +118,18 @@ export const CourseSectionSelector = ({
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
-        <FormControl sx={{ minWidth: '100px' }}>
+        <FormControl sx={{ minWidth: '100px' }} key={courseId}>
           <InputLabel>Course</InputLabel>
           <Select
-            value={selectedCourseId}
+            value={courseId}
             label="Course"
-            onChange={(e) => setSelectedCourseId(e.target.value)}
+            onChange={(e) =>
+              updateRouterQuery(
+                router,
+                { courseId: e.target.value, startSectionId: '', endSectionId: '' },
+                true
+              )
+            }
           >
             {Object.keys(courses).map((courseId) => (
               <MenuItem key={courseId} value={courseId}>
@@ -145,7 +151,9 @@ export const CourseSectionSelector = ({
               <Select
                 value={startSectionId}
                 label="Start Section"
-                onChange={(e) => setStartSectionId(e.target.value)}
+                onChange={(e) =>
+                  updateRouterQuery(router, { startSectionId: e.target.value }, true)
+                }
               >
                 {sections.map((s) => (
                   <MenuItem key={s.title} value={s.id}>
@@ -160,7 +168,7 @@ export const CourseSectionSelector = ({
               <Select
                 value={endSectionId}
                 label="End Section"
-                onChange={(e) => setEndSectionId(e.target.value)}
+                onChange={(e) => updateRouterQuery(router, { endSectionId: e.target.value }, true)}
               >
                 {sections.map((s) => (
                   <MenuItem key={s.title} value={s.id}>
@@ -182,7 +190,7 @@ export const CourseSectionSelector = ({
             <Button
               variant="outlined"
               onClick={() => generateNewProblems('more')}
-              disabled={!selectedCourseId || !startSectionId || !endSectionId}
+              disabled={!courseId || !startSectionId || !endSectionId}
             >
               Generate More
             </Button>
@@ -190,7 +198,7 @@ export const CourseSectionSelector = ({
             <Button
               variant="contained"
               onClick={() => generateNewProblems('initial')}
-              disabled={!selectedCourseId || !startSectionId || !endSectionId}
+              disabled={!courseId || !startSectionId || !endSectionId}
             >
               Generate
             </Button>
