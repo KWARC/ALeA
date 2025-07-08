@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Box,
   List,
@@ -11,7 +10,8 @@ import {
 } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { FlatQuizProblem, getSectionNameFromId } from 'packages/alea-frontend/pages/quiz-gen';
-import { SectionDetails } from '../lo-explorer/CourseConceptDialog';
+import { SecInfo } from 'packages/alea-frontend/types';
+import { useState } from 'react';
 
 export const QuestionSidebar = ({
   problems,
@@ -22,7 +22,7 @@ export const QuestionSidebar = ({
   hideSections = false,
 }: {
   problems: FlatQuizProblem[];
-  sections?: SectionDetails[];
+  sections?: SecInfo[];
   latestGeneratedProblems: FlatQuizProblem[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
