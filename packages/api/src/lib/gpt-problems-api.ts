@@ -66,12 +66,15 @@ export interface GptSearchResult {
 
 export async function searchCourseNotes(query: string, courseId: string) {
   const encodedQuery = encodeURIComponent(query);
-  const resp = await axios.get(
-    `/api/gpt-redirect?query=${encodedQuery}&course_id=${courseId}&apiname=query_metadata`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      query: encodedQuery,
+      course_id: courseId,
+      apiname: 'query_metadata',
+      projectName: 'search',
+    },
+    headers: getAuthHeaders(),
+  });
   return resp.data as { sources: GptSearchResult[] };
 }
 
