@@ -21,7 +21,6 @@ export function computePointsFromFeedbackJson(
   problem: FTML.QuizProblem,
   feedbackJson?: { score_fraction: number }
 ) {
-  if(problem.total_points === 0) return 0;
   const fraction = feedbackJson?.score_fraction;
   if (fraction === undefined || fraction === null) return NaN;
   return fraction * (problem.total_points ?? 1);
