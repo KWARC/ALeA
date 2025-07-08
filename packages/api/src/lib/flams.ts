@@ -1,5 +1,5 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
 import { ProblemFeedbackJson } from '@kwarc/flams';
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   COURSES_INFO,
@@ -10,7 +10,6 @@ import {
   waitForNSeconds,
 } from '@stex-react/utils';
 import axios from 'axios';
-
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -108,7 +107,6 @@ export async function getCourseInfo(institution?: string) {
     return COURSES_INFO;
   }
 }
-
 
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
