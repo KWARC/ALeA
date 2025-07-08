@@ -296,8 +296,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
               pathname: '/quiz-gen',
               query: {
                 courseId: courseId || '',
-                startSectionId: '',
-                endSectionId: '',
+                startSectionId:  courseId === 'iwgs-2' ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=semweb/sec&d=semweb-intro&l=en&e=section' : '',
+                endSectionId: courseId === 'iwgs-2' ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=semweb/sec&d=cidoc-crm&l=en&e=section' : '',
               },
             })
           }
