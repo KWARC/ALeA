@@ -4,24 +4,27 @@ import { Folder } from '@mui/icons-material';
 import { ProblemJson, QuizProblem } from '@stex-react/api';
 import { QuizProblemViewer } from '../components/GenerateQuiz';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { SectionDetails } from '../components/lo-explorer/CourseConceptDialog';
 import { ListStepper } from '@stex-react/stex-react-renderer';
 import { FeedbackSection } from '../components/quiz-gen/Feedback';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
+import { SecInfo } from '../types';
 
 export type FlatQuizProblem = Omit<QuizProblem, 'problemJson'> & ProblemJson;
 
-export function getSectionNameFromId(id: string, sections: SectionDetails[]): string {
+export function getSectionNameFromId(id: string, sections: SecInfo[]): string {
   if (!sections) return 'Unknown Section';
-  return sections.find((s) => s.id === id)?.name || 'Unknown Section';
+  return (
+    sections.find((s) => s.id === id)?.title?.replace(/^[\s\u00A0]+|[\s\u00A0]+$/g, '') ||
+    'Unknown Section'
+  );
 }
 
 const QuizGen = () => {
   const [problems, setProblems] = useState<FlatQuizProblem[]>([]);
   const [latestGeneratedProblems, setLatestGeneratedProblems] = useState<FlatQuizProblem[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [sections, setSections] = useState<SectionDetails[]>([]);
+  const [sections, setSections] = useState<SecInfo[]>([]);
   const [loading, setLoading] = useState(false);
 
   const currentProblem = problems[currentIdx];

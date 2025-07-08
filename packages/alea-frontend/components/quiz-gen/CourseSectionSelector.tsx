@@ -14,8 +14,9 @@ import { useRouter } from 'next/router';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { CourseInfo } from '@stex-react/utils';
 import { generateMoreQuizProblems, generateQuizProblems, getCourseInfo } from '@stex-react/api';
-import { getSectionDetails, SectionDetails } from '../lo-explorer/CourseConceptDialog';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { getSecInfo } from '../coverage-update';
+import { SecInfo } from 'packages/alea-frontend/types';
 
 export const CourseSectionSelector = ({
   loading,
@@ -27,8 +28,8 @@ export const CourseSectionSelector = ({
 }: {
   loading: boolean;
   setLoading: (value: boolean) => void;
-  sections: SectionDetails[];
-  setSections: Dispatch<SetStateAction<SectionDetails[]>>;
+  sections: SecInfo[];
+  setSections: Dispatch<SetStateAction<SecInfo[]>>;
   setProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
 }) => {
@@ -60,8 +61,10 @@ export const CourseSectionSelector = ({
       setLoadingSections(true);
       try {
         const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
-        const allSections = getSectionDetails(toc);
-        setSections(allSections);
+        const formattedSections = toc.flatMap((entry) =>
+          getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
+        );
+        setSections(formattedSections);
         setStartSectionId('');
         setEndSectionId('');
       } catch (error) {
@@ -72,7 +75,7 @@ export const CourseSectionSelector = ({
     };
 
     getSections();
-  }, [selectedCourseId]);
+  }, [selectedCourseId, courses]);
 
   useEffect(() => {
     setHasPriorProblems(false);
@@ -145,8 +148,8 @@ export const CourseSectionSelector = ({
                 onChange={(e) => setStartSectionId(e.target.value)}
               >
                 {sections.map((s) => (
-                  <MenuItem key={s.name} value={s.id}>
-                    {s.name}
+                  <MenuItem key={s.title} value={s.id}>
+                    {s.title}
                   </MenuItem>
                 ))}
               </Select>
@@ -160,8 +163,8 @@ export const CourseSectionSelector = ({
                 onChange={(e) => setEndSectionId(e.target.value)}
               >
                 {sections.map((s) => (
-                  <MenuItem key={s.name} value={s.id}>
-                    {s.name}
+                  <MenuItem key={s.title} value={s.id}>
+                    {s.title}
                   </MenuItem>
                 ))}
               </Select>
