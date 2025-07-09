@@ -78,7 +78,6 @@ const CoverageUpdateTab = () => {
         try {
           const res = await fetch(`/api/get-durations?courseId=${courseId}`);
           const durationData = await res.json();
-          console.log("DurationData---",durationData);
           for (const uri in baseSecInfo) {
             if (durationData.sectionDurations?.[uri]) {
               baseSecInfo[uri].duration = durationData.sectionDurations[uri];
@@ -87,7 +86,6 @@ const CoverageUpdateTab = () => {
         } catch (durationError) {
           console.warn('Could not fetch durations:', durationError);
         }
-        console.log("BaseSectionInfo---",baseSecInfo);
         setSecInfo(baseSecInfo);
       } catch (error) {
         console.error('Failed to fetch all sections:', error);
