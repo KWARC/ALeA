@@ -88,7 +88,7 @@ const SearchCourseNotes = ({
         references.length > 0 && (
           <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
             <Box maxWidth="800px" m="0 auto" p="10px">
-              {references.map((reference) => (
+              {references.filter(reference => reference.uri).map((reference) => (
                 <Box
                   key={reference.uri}
                   sx={{
