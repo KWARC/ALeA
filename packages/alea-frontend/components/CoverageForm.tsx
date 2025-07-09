@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
-import React, { Dispatch, SetStateAction, useEffect } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { SlidePicker } from './SlideSelector';
 import { getSlides } from '@stex-react/api';
@@ -49,6 +49,8 @@ export function CoverageForm({
   onCancel,
   courseId,
 }: CoverageFormProps) {
+  const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
+
   useEffect(() => {
     const updatedData = { ...formData };
     let dataChanged = false;
@@ -122,8 +124,27 @@ export function CoverageForm({
     setFormData({ ...formData, isQuizScheduled: e.target.checked });
   };
 
+  const handleCheckboxSection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, sectionCompleted: e.target.checked });
+  };
+
   const handleSlideUriChange = (uri: string | undefined, slideNumber: number | undefined) => {
-    setFormData({ ...formData, slideUri: uri, slideNumber });
+    if (!formData.sectionUri || slideNumber === undefined || !uri) return;
+
+    const section = secInfo[formData.sectionUri];
+    if (!section) return;
+
+    getSlides(courseId, section.id).then(({ slides }) => {
+      const isLastSlide = slideNumber === slides.length;
+      console.log("Last Slide---",isLastSlide);
+      setIsLastSlideSelected(isLastSlide);
+      setFormData((prev) => ({
+        ...prev,
+        slideUri: uri,
+        slideNumber,
+        sectionCompleted: isLastSlide,
+      }));
+    });
   };
 
   const handleSectionChange = (event: any) => {
@@ -311,6 +332,24 @@ export function CoverageForm({
         />
       </Grid>
 
+      <Grid item xs={12}>
+        <Divider sx={{ my: 1 }} />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={formData.sectionCompleted || isLastSlideSelected}
+              onChange={handleCheckboxSection}
+              color="warning"
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+              <QuizIcon sx={{ mr: 0.5, color: 'warning.main' }} fontSize="small" />
+              Section Completed
+            </Typography>
+          }
+        />
+      </Grid>
       <Grid item xs={12}>
         <Divider sx={{ my: 1 }} />
         <FormControlLabel

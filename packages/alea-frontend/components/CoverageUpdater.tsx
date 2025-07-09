@@ -32,7 +32,7 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
 
 function convertSnapToEntry(snap: LectureEntry, index: number): any {
   return {
-    id: `${snap.timestamp_ms}-${index}`,
+    // id: `${snap.timestamp_ms}-${index}`,
     timestamp_ms: snap.timestamp_ms,
     sectionName: getSectionNameForUri(snap.sectionUri || '', {}),
     sectionUri: snap.sectionUri || '',
@@ -46,6 +46,7 @@ function convertSnapToEntry(snap: LectureEntry, index: number): any {
     venueLink: snap.venueLink || '',
     autoDetected: snap.autoDetected || undefined,
     lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms,
+    sectionCompleted: snap.sectionCompleted,
   };
 }
 
@@ -130,6 +131,7 @@ export function CoverageUpdater({
       venue: formData.venue,
       venueLink: formData.venueLink,
       lectureEndTimestamp_ms: formData.lectureEndTimestamp_ms,
+      sectionCompleted: formData.sectionCompleted,
     };
     setFormData({
       sectionName: '',
@@ -144,6 +146,7 @@ export function CoverageUpdater({
       venue: '',
       venueLink: '',
       lectureEndTimestamp_ms: Date.now(),
+      sectionCompleted: false,
     });
     handleSaveSingle(newItem);
   };
@@ -164,12 +167,15 @@ export function CoverageUpdater({
 
   const handleEditDialogSave = (data: FormData) => {
     if (editIndex === null) return;
+    const { sectionName, targetSectionName, ...cleanData } = formData;
+   
     const updatedSnaps = [...snaps];
     updatedSnaps[editIndex] = {
       ...data,
       autoDetected: snaps[editIndex].autoDetected,
     };
-    handleSaveSingle(data);
+
+    handleSaveSingle(cleanData);
     handleEditDialogClose();
   };
 

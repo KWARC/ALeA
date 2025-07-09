@@ -112,6 +112,10 @@ export function SlidePicker({
         const processedSlides = await getRelevantSlides(courseId, section.id, section.uri);
         console.log('6');
         setLocalAvailableSlides(processedSlides);
+         if (!slideUri && processedSlides.slides.length > 0) {
+        const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
+        setSlideUri(lastSlide.uri, lastSlide.index + 1);
+      }
       } catch (error) {
         console.log('7');
         handleFetchError(error);
@@ -129,9 +133,9 @@ export function SlidePicker({
   console.log('slideOptions', slideOptions);
   console.log('slideUri', slideUri);
 
-  const handleClearSection = () => {
-    setSlideUri(undefined, undefined);
-  };
+  // const handleClearSection = () => {
+  //   setSlideUri(undefined, undefined);
+  // };
 
   return (
     <>
@@ -166,7 +170,7 @@ export function SlidePicker({
               {sectionUri ? `Slides for: ${sectionDisplayName}` : 'No section selected'}
             </Typography>
           </Box>
-          {sectionUri && (
+          {/* {sectionUri && (
             <Box>
               <Button
                 variant="outlined"
@@ -179,7 +183,7 @@ export function SlidePicker({
                 Clear Selection
               </Button>
             </Box>
-          )}
+          )} */}
         </Box>
         <Box sx={{ p: 2 }}>
           {isLoading ? (
