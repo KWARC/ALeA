@@ -4,6 +4,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SaveIcon from '@mui/icons-material/Save';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 import {
   Box,
   Button,
@@ -136,7 +137,7 @@ export function CoverageForm({
 
     getSlides(courseId, section.id).then(({ slides }) => {
       const isLastSlide = slideNumber === slides.length;
-      console.log("Last Slide---",isLastSlide);
+      console.log('Last Slide---', isLastSlide);
       setIsLastSlideSelected(isLastSlide);
       setFormData((prev) => ({
         ...prev,
@@ -344,7 +345,7 @@ export function CoverageForm({
           }
           label={
             <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-              <QuizIcon sx={{ mr: 0.5, color: 'warning.main' }} fontSize="small" />
+              <DoneAllIcon sx={{ mr: 0.5, color: 'success.main' }} fontSize="small" />
               Section Completed
             </Typography>
           }

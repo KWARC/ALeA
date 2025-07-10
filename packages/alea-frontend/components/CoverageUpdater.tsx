@@ -30,7 +30,7 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
   return new Date(timestamp).setHours(12, 0, 0, 0);
 }
 
-function convertSnapToEntry(snap: LectureEntry, index: number): any {
+function convertSnapToEntry(snap: LectureEntry): any {
   return {
     // id: `${snap.timestamp_ms}-${index}`,
     timestamp_ms: snap.timestamp_ms,
@@ -180,7 +180,7 @@ export function CoverageUpdater({
   };
 
   const coverageEntries = snaps.map((snap, index) => {
-    const entry = convertSnapToEntry(snap, index);
+    const entry = convertSnapToEntry(snap);
     entry.sectionName = getSectionNameForUri(snap.sectionUri || '', secInfo);
     entry.targetSectionName = getSectionNameForUri(snap.targetSectionUri || '', secInfo);
     return entry;
