@@ -25,7 +25,7 @@ async function addSources(context: SelectionContext[]): Promise<SelectionContext
   );
 }
 
-async function createSectionHierarchy(context: SelectionContext[]) {
+function createSectionHierarchy(context: SelectionContext[]) {
   if (!context?.length) return '';
   let returnVal = '### The selected text was in the following section hierarchy:\n\n';
   if (context.length > 1) returnVal += '**_INNERMOST SECTION FIRST_**\n\n';
@@ -42,13 +42,13 @@ async function createSectionHierarchy(context: SelectionContext[]) {
   return returnVal;
 }
 
-async function createIssueBody(
+ function createIssueBody(
   desc: string,
   selectedText: string,
   userName: string,
   context: SelectionContext[]
 ) {
-  const sectionHierarchy = await createSectionHierarchy(context);
+  const sectionHierarchy =  createSectionHierarchy(context);
   const user = userName || 'a user';
 
   return `An issue was logged by "${user}" at the following url:
@@ -72,10 +72,10 @@ function isGitlabIssue(category: IssueCategory, context: SelectionContext[]) {
   return category === IssueCategory.CONTENT && context?.length > 0;
 }
 
-function getNewIssueUrl(category: IssueCategory, projectId: string, context: SelectionContext[]) {
-  if (!isGitlabIssue(category, context)) return 'https://api.github.com/repos/slatex/ALeA/issues';
-  return `https://gl.mathhub.info/api/v4/projects/${encodeURIComponent(projectId)}/issues`;
-}
+// function getNewIssueUrl(category: IssueCategory, projectId: string, context: SelectionContext[]) {
+//   if (!isGitlabIssue(category, context)) return 'https://api.github.com/repos/slatex/ALeA/issues';
+//   return `https://gl.mathhub.info/api/v4/projects/${encodeURIComponent(projectId)}/issues`;
+// }
 
 async function createIssueData(
   category: IssueCategory,
@@ -100,17 +100,17 @@ export async function createNewIssue(
   userName: string
 ) {
   const withSourceContext = await addSources(context);
-  const { project } = extractProjectAndFilepath(withSourceContext[0]?.source);
-  const projectId = project || 'sTeX/meta-inf';
-  const data = await createIssueData(category, desc, selectedText, withSourceContext, userName);
+  //const { project } = extractProjectAndFilepath(withSourceContext[0]?.source);
+  //const projectId = project || 'sTeX/meta-inf';
+  const data = createIssueData(category, desc, selectedText, withSourceContext, userName);
 
   try {
-    const createNewIssueUrl = getNewIssueUrl(category, projectId, context);
+    //const createNewIssueUrl = getNewIssueUrl(category, projectId, context);
     const response = await axios.post(
       '/api/create-issue',
       {
         data,
-        createNewIssueUrl,
+        //createNewIssueUrl,
         description: desc,
         selectedText,
         context: withSourceContext[0]?.source,
