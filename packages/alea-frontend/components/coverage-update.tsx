@@ -76,7 +76,7 @@ const CoverageUpdateTab = () => {
           return acc;
         }, {} as Record<FTML.DocumentURI, SecInfo>);
         try {
-          const res = await fetch(`/api/get-durations?courseId=${courseId}`);
+          const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
           const durationData = await res.json();
           for (const uri in baseSecInfo) {
             if (durationData.sectionDurations?.[uri]) {
