@@ -32,7 +32,6 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
 
 function convertSnapToEntry(snap: LectureEntry): any {
   return {
-    // id: `${snap.timestamp_ms}-${index}`,
     timestamp_ms: snap.timestamp_ms,
     sectionName: getSectionNameForUri(snap.sectionUri || '', {}),
     sectionUri: snap.sectionUri || '',
@@ -168,7 +167,6 @@ export function CoverageUpdater({
   const handleEditDialogSave = (data: FormData) => {
     if (editIndex === null) return;
     const { sectionName, targetSectionName, ...cleanData } = formData;
-   
     const updatedSnaps = [...snaps];
     updatedSnaps[editIndex] = {
       ...data,
