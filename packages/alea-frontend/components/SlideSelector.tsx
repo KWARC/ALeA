@@ -112,10 +112,10 @@ export function SlidePicker({
         const processedSlides = await getRelevantSlides(courseId, section.id, section.uri);
         console.log('6');
         setLocalAvailableSlides(processedSlides);
-         if (!slideUri && processedSlides.slides.length > 0) {
-        const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
-        setSlideUri(lastSlide.uri, lastSlide.index + 1);
-      }
+        if (!slideUri && processedSlides.slides.length > 0) {
+          const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
+          setSlideUri(lastSlide.uri, lastSlide.index + 1);
+        }
       } catch (error) {
         console.log('7');
         handleFetchError(error);
@@ -132,10 +132,6 @@ export function SlidePicker({
   console.log('selectedSlide', selectedSlide);
   console.log('slideOptions', slideOptions);
   console.log('slideUri', slideUri);
-
-  // const handleClearSection = () => {
-  //   setSlideUri(undefined, undefined);
-  // };
 
   return (
     <>
@@ -170,20 +166,6 @@ export function SlidePicker({
               {sectionUri ? `Slides for: ${sectionDisplayName}` : 'No section selected'}
             </Typography>
           </Box>
-          {/* {sectionUri && (
-            <Box>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<LayersClearIcon />}
-                onClick={handleClearSection}
-                size="small"
-                sx={{ mr: 1 }}
-              >
-                Clear Selection
-              </Button>
-            </Box>
-          )} */}
         </Box>
         <Box sx={{ p: 2 }}>
           {isLoading ? (

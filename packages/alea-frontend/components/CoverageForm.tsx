@@ -137,7 +137,6 @@ export function CoverageForm({
 
     getSlides(courseId, section.id).then(({ slides }) => {
       const isLastSlide = slideNumber === slides.length;
-      console.log('Last Slide---', isLastSlide);
       setIsLastSlideSelected(isLastSlide);
       setFormData((prev) => ({
         ...prev,
