@@ -72,19 +72,14 @@ function isGitlabIssue(category: IssueCategory, context: SelectionContext[]) {
   return category === IssueCategory.CONTENT && context?.length > 0;
 }
 
-// function getNewIssueUrl(category: IssueCategory, projectId: string, context: SelectionContext[]) {
-//   if (!isGitlabIssue(category, context)) return 'https://api.github.com/repos/slatex/ALeA/issues';
-//   return `https://gl.mathhub.info/api/v4/projects/${encodeURIComponent(projectId)}/issues`;
-// }
-
-async function createIssueData(
+function createIssueData(
   category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
   userName: string
 ) {
-  const body = await createIssueBody(desc, selectedText, userName, context);
+  const body = createIssueBody(desc, selectedText, userName, context);
   return {
     ...(isGitlabIssue(category, context)
       ? { description: body }
@@ -100,17 +95,13 @@ export async function createNewIssue(
   userName: string
 ) {
   const withSourceContext = await addSources(context);
-  //const { project } = extractProjectAndFilepath(withSourceContext[0]?.source);
-  //const projectId = project || 'sTeX/meta-inf';
   const data = createIssueData(category, desc, selectedText, withSourceContext, userName);
 
   try {
-    //const createNewIssueUrl = getNewIssueUrl(category, projectId, context);
     const response = await axios.post(
       '/api/create-issue',
       {
         data,
-        //createNewIssueUrl,
         description: desc,
         selectedText,
         context: withSourceContext[0]?.source,
