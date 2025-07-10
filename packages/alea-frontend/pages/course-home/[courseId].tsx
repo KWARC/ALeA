@@ -47,6 +47,7 @@ import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
+import { ExamSchedule } from '../../components/ExamSchedule';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -180,6 +181,9 @@ function CourseScheduleSection({
     [courseId]
   );
 
+  const examDates =
+    semesterPeriods[CURRENT_TERM]?.examDates.filter((e) => e.courseId === courseId) || [];
+
   useEffect(() => {
     async function fetchNextLectureDates() {
       try {
@@ -311,6 +315,8 @@ function CourseScheduleSection({
             })}
           </Box>
         )}
+
+        <ExamSchedule examDates={examDates} />
 
         {userId && (
           <PersonalCalendarSection

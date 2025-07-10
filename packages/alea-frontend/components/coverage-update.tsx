@@ -71,12 +71,22 @@ const CoverageUpdateTab = () => {
       try {
         const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const sections = docSections.flatMap((d) => getSecInfo(d));
-        setSecInfo(
-          sections.reduce((acc, s) => {
-            acc[s.uri] = s;
-            return acc;
-          }, {} as Record<FTML.DocumentURI, SecInfo>)
-        );
+        const baseSecInfo = sections.reduce((acc, s) => {
+          acc[s.uri] = s;
+          return acc;
+        }, {} as Record<FTML.DocumentURI, SecInfo>);
+        try {
+          const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
+          const durationData = await res.json();
+          for (const uri in baseSecInfo) {
+            if (durationData.sectionDurations?.[uri]) {
+              baseSecInfo[uri].duration = durationData.sectionDurations[uri];
+            }
+          }
+        } catch (durationError) {
+          console.warn('Could not fetch durations:', durationError);
+        }
+        setSecInfo(baseSecInfo);
       } catch (error) {
         console.error('Failed to fetch all sections:', error);
         setSaveMessage({

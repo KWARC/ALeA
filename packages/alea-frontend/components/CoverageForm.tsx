@@ -288,11 +288,28 @@ export function CoverageForm({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {Object.values(secInfo).map((section) => (
-              <MenuItem key={section.uri} value={section.uri}>
-                {section.title}
-              </MenuItem>
-            ))}
+            {Object.values(secInfo).map((section) => {
+              const duration = section.duration || 0;
+              const roundedMinutes = Math.ceil(duration / 60);
+
+              let displayTime = '';
+              if (roundedMinutes >= 60) {
+                const hours = Math.floor(roundedMinutes / 60);
+                const minutes = roundedMinutes % 60;
+                displayTime = ` (${hours} hr${hours > 1 ? 's' : ''}${
+                  minutes ? ` ${minutes} min${minutes > 1 ? 's' : ''}` : ''
+                })`;
+              } else if (roundedMinutes > 0) {
+                displayTime = ` (${roundedMinutes} min${roundedMinutes > 1 ? 's' : ''})`;
+              }
+
+              return (
+                <MenuItem key={section.uri} value={section.uri}>
+                  {section.title}
+                  {displayTime}
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
       </Grid>

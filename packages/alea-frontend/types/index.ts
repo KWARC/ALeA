@@ -4,4 +4,5 @@ export interface SecInfo {
   id: string;
   title: string;
   uri: FTML.DocumentURI;
+  duration?: number;
 }
