@@ -42,7 +42,7 @@ function createSectionHierarchy(context: SelectionContext[]) {
   return returnVal;
 }
 
- function createIssueBody(
+async function createIssueBody(
   desc: string,
   selectedText: string,
   userName: string,
@@ -95,7 +95,7 @@ export async function createNewIssue(
   userName: string
 ) {
   const withSourceContext = await addSources(context);
-  const data = createIssueData(category, desc, selectedText, withSourceContext, userName);
+  const data = await createIssueData(category, desc, selectedText, withSourceContext, userName);
 
   try {
     const response = await axios.post(
