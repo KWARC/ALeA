@@ -13,7 +13,7 @@ enum IssueCategory {
 }
 interface IssueClassification {
   title: string;
-  category: IssueCategory.CONTENT;
+  category: IssueCategory;
 }
 
 function getHeaders(createNewIssueUrl: string): RawAxiosRequestHeaders {
