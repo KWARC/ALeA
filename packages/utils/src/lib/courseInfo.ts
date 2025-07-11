@@ -92,6 +92,7 @@ export interface LectureEntry {
     clipId?: string;
     sectionUri?: string;
     slideUri?: string;
+    sectionCompleted?: boolean;
   };
   lectureEndTimestamp_ms?: number;
   venue?: string;

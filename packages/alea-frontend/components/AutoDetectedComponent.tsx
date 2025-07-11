@@ -1,12 +1,13 @@
-import { Box, Typography } from '@mui/material';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getSlideTitle } from './SlideSelector';
+import { Box, Typography } from '@mui/material';
 import { Slide } from '@stex-react/api';
+import { getSlideTitle } from './SlideSelector';
 interface AutoDetectedTooltipContentProps {
   autoDetected?: {
     clipId?: string;
     sectionUri?: FTML.DocumentURI;
     slideUri?: string;
+    sectionCompleted?: boolean;
   };
   getSectionName: (uri: FTML.DocumentURI) => string;
   showResolvedSectionName?: boolean;
@@ -35,6 +36,9 @@ export function AutoDetectedTooltipContent({
       </Typography>
       <Typography>
         <strong>Slide:</strong> {getSlideTitleFromUri(autoDetected.slideUri)}
+      </Typography>
+      <Typography>
+        <strong>Section Completed:</strong> {autoDetected.sectionCompleted ? '✅' : '⏳'}
       </Typography>
     </Box>
   );
