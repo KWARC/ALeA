@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
 import { SlidePicker } from './SlideSelector';
 import { getSlides } from '@stex-react/api';
@@ -50,7 +50,8 @@ export function CoverageForm({
   onCancel,
   courseId,
 }: CoverageFormProps) {
-  const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
+  // const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
+  const hasManuallyToggledCompletion = useRef(false);
 
   useEffect(() => {
     const updatedData = { ...formData };
@@ -126,30 +127,51 @@ export function CoverageForm({
   };
 
   const handleCheckboxSection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    hasManuallyToggledCompletion.current = true;
     setFormData({ ...formData, sectionCompleted: e.target.checked });
   };
 
-  const handleSlideUriChange = (uri: string | undefined, slideNumber: number | undefined) => {
-    if (!formData.sectionUri || slideNumber === undefined || !uri) return;
+  // const handleSlideUriChange = (uri: string | undefined, slideNumber: number | undefined) => {
+  //   if (!formData.sectionUri || slideNumber === undefined || !uri) return;
 
-    const section = secInfo[formData.sectionUri];
-    if (!section) return;
+  //   const section = secInfo[formData.sectionUri];
+  //   if (!section) return;
 
-    getSlides(courseId, section.id).then(({ slides }) => {
-      const isLastSlide = slideNumber === slides.length;
-      setIsLastSlideSelected(isLastSlide);
-      setFormData((prev) => ({
-        ...prev,
-        slideUri: uri,
-        slideNumber,
-        sectionCompleted: isLastSlide,
-      }));
+  //   getSlides(courseId, section.id).then(({ slides }) => {
+  //     const isLastSlide = slideNumber === slides.length;
+  //     setIsLastSlideSelected(isLastSlide);
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       slideUri: uri,
+  //       slideNumber,
+  //       sectionCompleted: isLastSlide,
+  //     }));
+  //   });
+  // };
+
+  const handleSlideUriChange = (
+    uri: string | undefined,
+    slideNumber: number | undefined,
+    isLastSlide?: boolean
+  ) => {
+    console.log('handleSlideUriChange', {
+      uri,
+      slideNumber,
+      isLastSlide,
+      manuallyToggled: hasManuallyToggledCompletion.current,
     });
+    if (!formData.sectionUri || slideNumber === undefined || !uri) return;
+    setFormData((prev) => ({
+      ...prev,
+      slideUri: uri,
+      slideNumber,
+      sectionCompleted: !!isLastSlide,
+    }));
   };
 
   const handleSectionChange = (event: any) => {
     const selectedUri = event.target.value as string;
-
+    hasManuallyToggledCompletion.current = false;
     if (!selectedUri) {
       setFormData({
         ...formData,
@@ -354,7 +376,7 @@ export function CoverageForm({
         <FormControlLabel
           control={
             <Checkbox
-              checked={formData.sectionCompleted || isLastSlideSelected}
+              checked={!!formData.sectionCompleted}
               onChange={handleCheckboxSection}
               color="warning"
             />

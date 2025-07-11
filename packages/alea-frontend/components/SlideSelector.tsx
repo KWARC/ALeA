@@ -54,7 +54,11 @@ interface SlidePickerProps {
   courseId: string;
   sectionUri: string;
   slideUri: string;
-  setSlideUri: (uri: string | undefined, slideNumber: number | undefined) => void;
+  setSlideUri: (
+    uri: string | undefined,
+    slideNumber: number | undefined,
+    isLastSlide?: boolean
+  ) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
 }
 
@@ -114,7 +118,7 @@ export function SlidePicker({
         setLocalAvailableSlides(processedSlides);
         if (!slideUri && processedSlides.slides.length > 0) {
           const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
-          setSlideUri(lastSlide.uri, lastSlide.index + 1);
+          setSlideUri(lastSlide.uri, lastSlide.index + 1,true);
         }
       } catch (error) {
         console.log('7');
@@ -204,7 +208,9 @@ export function SlidePicker({
                     <Button
                       key={slide.uri}
                       variant={slide.uri === selectedSlide?.uri ? 'contained' : 'outlined'}
-                      onClick={() => setSlideUri(slide.uri, idx + 1)}
+                      onClick={() =>
+                        setSlideUri(slide.uri, idx + 1, idx === slideOptions.length - 1)
+                      }
                       sx={{
                         minWidth: '140px',
                         fontWeight: slide.uri === selectedSlide?.uri ? 'bold' : 'normal',
