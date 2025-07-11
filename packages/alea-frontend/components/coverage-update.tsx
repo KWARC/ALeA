@@ -71,6 +71,7 @@ const CoverageUpdateTab = () => {
       try {
         const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const sections = docSections.flatMap((d) => getSecInfo(d));
+        console.log("Sections---",sections);
         const baseSecInfo = sections.reduce((acc, s) => {
           acc[s.uri] = s;
           return acc;

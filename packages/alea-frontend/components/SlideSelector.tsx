@@ -57,7 +57,8 @@ interface SlidePickerProps {
   setSlideUri: (
     uri: string | undefined,
     slideNumber: number | undefined,
-    isLastSlide?: boolean
+    isLastSlide?: boolean,
+    isLeaf?: boolean
   ) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
 }
@@ -118,7 +119,15 @@ export function SlidePicker({
         setLocalAvailableSlides(processedSlides);
         if (!slideUri && processedSlides.slides.length > 0) {
           const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
-          setSlideUri(lastSlide.uri, lastSlide.index + 1,true);
+          const currentId = section.id;
+
+          const isLeaf = !Object.values(secInfo).some(
+            (s) => s.id !== currentId && s.id.startsWith(`${currentId}/`)
+          );
+
+          console.log('Section:', section.title, 'ID:', currentId, 'isLeaf?', isLeaf);
+
+          setSlideUri(lastSlide.uri, lastSlide.index + 1, true, isLeaf);
         }
       } catch (error) {
         console.log('7');

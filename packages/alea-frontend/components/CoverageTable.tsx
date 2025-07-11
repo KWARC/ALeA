@@ -211,6 +211,13 @@ function CoverageRow({
           </span>
         </Tooltip>
       </TableCell>
+      <TableCell align="center">
+        {item.sectionUri ? (
+          <Tooltip title={item.sectionCompleted ? 'Section Completed' : 'Section Pending'}>
+            <span style={{ fontSize: '1.1rem' }}>{item.sectionCompleted ? '✅' : '⏳'}</span>
+          </Tooltip>
+        ) : null}
+      </TableCell>
       <TableCell
         sx={{
           maxWidth: '200px',
@@ -558,6 +565,7 @@ export function CoverageTable({
             <TableRow sx={{ bgcolor: 'primary.light' }}>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Section Completed</TableCell>
+              <TableCell align="center"></TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Target Section</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Clip</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Quiz</TableCell>

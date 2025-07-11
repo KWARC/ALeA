@@ -152,7 +152,8 @@ export function CoverageForm({
   const handleSlideUriChange = (
     uri: string | undefined,
     slideNumber: number | undefined,
-    isLastSlide?: boolean
+    isLastSlide?: boolean,
+    isLeaf?: boolean
   ) => {
     console.log('handleSlideUriChange', {
       uri,
@@ -161,11 +162,13 @@ export function CoverageForm({
       manuallyToggled: hasManuallyToggledCompletion.current,
     });
     if (!formData.sectionUri || slideNumber === undefined || !uri) return;
+    const shouldMarkComplete = !!isLastSlide && !!isLeaf && !hasManuallyToggledCompletion.current;
+    console.log('Decision => Mark section as completed?', shouldMarkComplete);
     setFormData((prev) => ({
       ...prev,
       slideUri: uri,
       slideNumber,
-      sectionCompleted: !!isLastSlide,
+      sectionCompleted: shouldMarkComplete,
     }));
   };
 
