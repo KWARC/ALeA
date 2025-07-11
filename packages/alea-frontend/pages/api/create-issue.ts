@@ -7,14 +7,13 @@ import { checkIfPostOrSetError, getUserId, sendNotification } from './comment-ut
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export interface IssueClassification {
-  title: string;
-  category: IssueCategory;
-}
-
-export enum IssueCategory {
+enum IssueCategory {
   CONTENT = 'CONTENT',
   DISPLAY = 'DISPLAY',
+}
+interface IssueClassification {
+  title: string;
+  category: IssueCategory.CONTENT;
 }
 
 function getHeaders(createNewIssueUrl: string): RawAxiosRequestHeaders {
@@ -146,26 +145,23 @@ export default async function handler(req, res) {
     );
     generatedTitle = classification.title;
     issueCategory = classification.category;
-
-    if (generatedTitle && body.data) {
-      body.data.title = generatedTitle;
-    }
-
-    body.createNewIssueUrl = getNewIssueUrl(
-      { category: issueCategory } as IssueClassification,
-      projectId,
-      body.context
-    );
   }
-  if (issueCategory === IssueCategory.DISPLAY && !body.data.body) {
-    body.data.body =
-      body.data.description ?? `User reported issue:\n\n${JSON.stringify(body.selectedText)}`;
-    delete body.data.description;
-  }
+
+  const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
+
+  const issuePayload = isGitlab
+    ? { description: body.data.body, title: generatedTitle }
+    : { body: body.data.body, labels: ['user-reported'], title: generatedTitle };
+
+  body.createNewIssueUrl = getNewIssueUrl(
+    { category: issueCategory } as IssueClassification,
+    projectId,
+    body.context
+  );
 
   const headers = getHeaders(body.createNewIssueUrl);
 
-  const response = await axios.post(body.createNewIssueUrl, body.data, {
+  const response = await axios.post(body.createNewIssueUrl, issuePayload, {
     headers,
   });
   const issue_url = response.data['web_url'] || response.data['html_url'];

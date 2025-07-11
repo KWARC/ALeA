@@ -6,10 +6,6 @@ import axios from 'axios';
 
 const THREE_BACKTICKS = '```';
 
-export enum IssueCategory {
-  CONTENT = 'CONTENT',
-  DISPLAY = 'DISPLAY',
-}
 export interface SelectionContext {
   fragmentUri: FTML.URI;
   fragmentKind: 'Section' | 'Paragraph' | 'Slide' | 'Problem'; // Keep alingned with FTML.FragmentKind
@@ -68,36 +64,26 @@ ${THREE_BACKTICKS}
 ${sectionHierarchy}`;
 }
 
-function isGitlabIssue(category: IssueCategory, context: SelectionContext[]) {
-  return category === IssueCategory.CONTENT && context?.length > 0;
-}
-
 async function createIssueData(
-  category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
   userName: string
 ) {
-  const body = await createIssueBody(desc, selectedText, userName, context);
-  return {
-    ...(isGitlabIssue(category, context)
-      ? { description: body }
-      : { body, labels: ['user-reported'] }),
-  };
+  const issueText = await createIssueBody(desc, selectedText, userName, context);
+  return issueText;
 }
 
 export async function createNewIssue(
-  category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
   userName: string
 ) {
   const withSourceContext = await addSources(context);
-  const data = await createIssueData(category, desc, selectedText, withSourceContext, userName);
+  const data = await createIssueData(desc, selectedText, withSourceContext, userName);
 
-  try { 
+  try {
     const response = await axios.post(
       '/api/create-issue',
       {
