@@ -25,7 +25,7 @@ async function addSources(context: SelectionContext[]): Promise<SelectionContext
   );
 }
 
-function createSectionHierarchy(context: SelectionContext[]) {
+async function createSectionHierarchy(context: SelectionContext[]) {
   if (!context?.length) return '';
   let returnVal = '### The selected text was in the following section hierarchy:\n\n';
   if (context.length > 1) returnVal += '**_INNERMOST SECTION FIRST_**\n\n';
@@ -42,13 +42,13 @@ function createSectionHierarchy(context: SelectionContext[]) {
   return returnVal;
 }
 
-function createIssueBody(
+async function createIssueBody(
   desc: string,
   selectedText: string,
   userName: string,
   context: SelectionContext[]
 ) {
-  const sectionHierarchy = createSectionHierarchy(context);
+  const sectionHierarchy = await createSectionHierarchy(context);
   const user = userName || 'a user';
 
   return `An issue was logged by "${user}" at the following url:
@@ -72,14 +72,14 @@ function isGitlabIssue(category: IssueCategory, context: SelectionContext[]) {
   return category === IssueCategory.CONTENT && context?.length > 0;
 }
 
-function createIssueData(
+async function createIssueData(
   category: IssueCategory,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
   userName: string
 ) {
-  const body = createIssueBody(desc, selectedText, userName, context);
+  const body = await createIssueBody(desc, selectedText, userName, context);
   return {
     ...(isGitlabIssue(category, context)
       ? { description: body }
@@ -95,9 +95,9 @@ export async function createNewIssue(
   userName: string
 ) {
   const withSourceContext = await addSources(context);
-  const data = createIssueData(category, desc, selectedText, withSourceContext, userName);
+  const data = await createIssueData(category, desc, selectedText, withSourceContext, userName);
 
-  try {
+  try { 
     const response = await axios.post(
       '/api/create-issue',
       {
