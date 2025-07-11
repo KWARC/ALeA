@@ -7,9 +7,13 @@ import { checkIfPostOrSetError, getUserId, sendNotification } from './comment-ut
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export interface IssueClassification {
+enum IssueCategory {
+  CONTENT = 'CONTENT',
+  DISPLAY = 'DISPLAY',
+}
+interface IssueClassification {
   title: string;
-  category: 'CONTENT' | 'DISPLAY';
+  category: IssueCategory;
 }
 
 function getHeaders(createNewIssueUrl: string): RawAxiosRequestHeaders {
@@ -19,6 +23,16 @@ function getHeaders(createNewIssueUrl: string): RawAxiosRequestHeaders {
   return {
     'PRIVATE-TOKEN': process.env['CONTENT_ISSUES_GITLAB_PAT'] as string,
   };
+}
+
+function isGitlabIssue(classification: IssueClassification, context: string) {
+  return classification.category === 'CONTENT' && context?.length > 0;
+}
+
+function getNewIssueUrl(classification: IssueClassification, projectId: string, context: string) {
+  if (!isGitlabIssue(classification, context))
+    return 'https://api.github.com/repos/slatex/ALeA/issues';
+  return `https://gl.mathhub.info/api/v4/projects/${encodeURIComponent(projectId)}/issues`;
 }
 
 async function sendReportNotifications(userId: string | null = null, link: string) {
@@ -39,7 +53,7 @@ async function generateIssueTitle(
   context: string
 ): Promise<IssueClassification> {
   if (!description || description.length <= 10) {
-    return { title: '', category: 'CONTENT' };
+    return { title: '', category: IssueCategory.CONTENT };
   }
 
   const prompt = `
@@ -90,7 +104,7 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
     }
 
     if (!['CONTENT', 'DISPLAY'].includes(classification.category)) {
-      classification.category = 'CONTENT';
+      classification.category = IssueCategory.CONTENT;
     }
 
     classification.title = classification.title.replace(/^["']|["']$/g, '').substring(0, 60);
@@ -101,12 +115,12 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
     if (!filepath) {
       return {
         title: `User created issue`,
-        category: 'CONTENT',
+        category: IssueCategory.CONTENT,
       };
     }
     return {
       title: `User reported issue in ${filepath}`,
-      category: 'CONTENT',
+      category: IssueCategory.CONTENT,
     };
   }
 }
@@ -118,7 +132,10 @@ export default async function handler(req, res) {
   const body = req.body;
 
   let generatedTitle = '';
-  let issueCategory = 'CONTENT';
+  let issueCategory = IssueCategory.CONTENT;
+
+  const { project } = extractProjectAndFilepath(body.context);
+  const projectId = project || 'sTeX/meta-inf';
 
   if (body.description && body.selectedText) {
     const classification = await generateIssueTitle(
@@ -128,24 +145,23 @@ export default async function handler(req, res) {
     );
     generatedTitle = classification.title;
     issueCategory = classification.category;
-
-    if (generatedTitle && body.data) {
-      body.data.title = generatedTitle;
-    }
-
-    if (issueCategory === 'DISPLAY') {
-      body.createNewIssueUrl = 'https://api.github.com/repos/slatex/ALeA/issues';
-    }
   }
-  if (issueCategory === 'DISPLAY' && !body.data.body) {
-    body.data.body =
-      body.data.description ?? `User reported issue:\n\n${JSON.stringify(body.selectedText)}`;
-    delete body.data.description;
-  }
+
+  const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
+
+  const issuePayload = isGitlab
+    ? { description: body.data.body, title: generatedTitle }
+    : { body: body.data.body, labels: ['user-reported'], title: generatedTitle };
+
+  body.createNewIssueUrl = getNewIssueUrl(
+    { category: issueCategory } as IssueClassification,
+    projectId,
+    body.context
+  );
 
   const headers = getHeaders(body.createNewIssueUrl);
 
-  const response = await axios.post(body.createNewIssueUrl, body.data, {
+  const response = await axios.post(body.createNewIssueUrl, issuePayload, {
     headers,
   });
   const issue_url = response.data['web_url'] || response.data['html_url'];
