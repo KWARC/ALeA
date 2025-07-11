@@ -169,7 +169,7 @@ function CoverageRow({
       >
         <Tooltip
           title={
-            secInfo[item.sectionUri]?.title ||
+            secInfo[item.sectionUri]?.title.trim() ||
             (shouldHighlightNoSection ? 'No Section - Please fill this field' : 'No Section')
           }
         >
@@ -219,7 +219,7 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip title={targetSectionTitle || item.targetSectionUri || 'No Target'}>
+        <Tooltip title={targetSectionTitle?.trim() || item.targetSectionUri || 'No Target'}>
           <Typography variant="body2">
             {targetSectionTitle?.trim() || item.targetSectionUri || <i>-</i>}
           </Typography>
