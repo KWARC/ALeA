@@ -31,6 +31,12 @@ export function getSlideTitle(slide: Slide, index: number) {
   return title || `Slide ${index + 1}`;
 }
 
+export function isLeafSectionId(sectionId: string, secInfo: Record<string, SecInfo>): boolean {
+  return !Object.values(secInfo).some(
+    (s) => s.id !== sectionId && s.id.startsWith(`${sectionId}/`)
+  );
+}
+
 const getRelevantSlides = async (
   courseId: string,
   sectionId: string,
@@ -121,9 +127,7 @@ export function SlidePicker({
           const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
           const currentId = section.id;
 
-          const isLeaf = !Object.values(secInfo).some(
-            (s) => s.id !== currentId && s.id.startsWith(`${currentId}/`)
-          );
+          const isLeaf = isLeafSectionId(section.id, secInfo);
 
           console.log('Section:', section.title, 'ID:', currentId, 'isLeaf?', isLeaf);
 
@@ -217,9 +221,15 @@ export function SlidePicker({
                     <Button
                       key={slide.uri}
                       variant={slide.uri === selectedSlide?.uri ? 'contained' : 'outlined'}
-                      onClick={() =>
-                        setSlideUri(slide.uri, idx + 1, idx === slideOptions.length - 1)
-                      }
+                      onClick={() => {
+                        const isLast = idx === slideOptions.length - 1;
+                        const currentId = section?.id;
+                        const isLeaf = currentId ? isLeafSectionId(currentId, secInfo) : false;
+                        setSlideUri(undefined, undefined);
+                        setTimeout(() => {
+                          setSlideUri(slide.uri, idx + 1, isLast,isLeaf);
+                        }, 0);
+                      }}
                       sx={{
                         minWidth: '140px',
                         fontWeight: slide.uri === selectedSlide?.uri ? 'bold' : 'normal',

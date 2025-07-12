@@ -23,7 +23,7 @@ import { LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
-import { SlidePicker } from './SlideSelector';
+import { isLeafSectionId, SlidePicker } from './SlideSelector';
 import { getSlides } from '@stex-react/api';
 
 export type FormData = LectureEntry & {
@@ -52,6 +52,7 @@ export function CoverageForm({
 }: CoverageFormProps) {
   // const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
   const hasManuallyToggledCompletion = useRef(false);
+  const [isLeafSection, setIsLeafSection] = useState(true);
 
   useEffect(() => {
     const updatedData = { ...formData };
@@ -182,18 +183,23 @@ export function CoverageForm({
         sectionName: '',
         slideUri: '',
         slideNumber: undefined,
+        sectionCompleted: false,
       });
+      setIsLeafSection(true); // Safe default
       return;
     }
 
     const selectedSection = secInfo[selectedUri];
     if (selectedSection) {
+     const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
+      setIsLeafSection(isLeaf);
       setFormData({
         ...formData,
         sectionUri: selectedUri,
         sectionName: selectedSection.title.trim(),
         slideUri: '',
         slideNumber: undefined,
+        sectionCompleted: isLeaf ? formData.sectionCompleted : false,
       });
     }
   };
@@ -382,6 +388,7 @@ export function CoverageForm({
               checked={!!formData.sectionCompleted}
               onChange={handleCheckboxSection}
               color="warning"
+              disabled={!isLeafSection}
             />
           }
           label={
