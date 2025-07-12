@@ -244,7 +244,7 @@ const MediaItem = ({
     const player = videojs(playerRef.current, {
       controls: !audioOnly,
       preload: 'auto',
-      autoplay: true,
+      autoplay: false,
       sources: [{ src: videoId, type: 'video/mp4' }],
     });
     videoPlayer.current = player;

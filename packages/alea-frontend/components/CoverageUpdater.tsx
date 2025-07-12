@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  IconButton,
   Paper,
   Typography,
   useTheme,
@@ -13,6 +14,9 @@ import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageForm, FormData } from './CoverageForm';
 import { CoverageTable } from './CoverageTable';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
+import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 
 export function getSectionNameForUri(
   uri: string,
@@ -38,6 +42,10 @@ function convertSnapToEntry(snap: LectureEntry, index: number): any {
     isQuizScheduled: snap.isQuizScheduled || false,
     slideUri: snap.slideUri || '',
     slideNumber: snap.slideNumber,
+    venue: snap.venue || '',
+    venueLink: snap.venueLink || '',
+    autoDetected: snap.autoDetected || undefined,
+    lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms,
   };
 }
 
@@ -45,10 +53,17 @@ interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];
   secInfo: Record<FTML.DocumentURI, SecInfo>;
-  handleSave: (snaps: LectureEntry[]) => void;
+  handleSaveSingle: (entry: LectureEntry) => void;
+  handleDeleteSingle: (timestamp_ms: number) => void;
 }
 
-export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: CoverageUpdaterProps) {
+export function CoverageUpdater({
+  courseId,
+  snaps,
+  secInfo,
+  handleSaveSingle,
+  handleDeleteSingle,
+}: CoverageUpdaterProps) {
   const [formData, setFormData] = useState<FormData>({
     sectionName: '',
     sectionUri: '',
@@ -59,10 +74,14 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
     isQuizScheduled: false,
     slideUri: '',
     slideNumber: undefined as number | undefined,
+    venue: '',
+    venueLink: '',
+    lectureEndTimestamp_ms: Date.now(),
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const theme = useTheme();
+  const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
   useEffect(() => {
     if (snaps.length > 0) {
       const lastSnapUri = snaps[snaps.length - 1]?.sectionUri;
@@ -77,8 +96,8 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
 
   const handleDeleteItem = (index: number) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
-    const updatedSnaps = snaps.filter((_, i) => i !== index);
-    handleSave(updatedSnaps);
+    const timestamp = snaps[index].timestamp_ms;
+    handleDeleteSingle(timestamp);
   };
 
   const handleCancelEdit = () => {
@@ -92,19 +111,25 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
+      lectureEndTimestamp_ms: undefined,
     });
     setEditIndex(null);
   };
 
   const handleSubmitForm = (formData: any) => {
     const newItem: LectureEntry = {
-      timestamp_ms: formData.selectedTimestamp,
+      timestamp_ms: Date.now(),
       sectionUri: formData.sectionUri,
       targetSectionUri: formData.targetSectionUri,
       clipId: formData.clipId,
       isQuizScheduled: formData.isQuizScheduled,
       slideUri: formData.slideUri,
       slideNumber: formData.slideNumber,
+      venue: formData.venue,
+      venueLink: formData.venueLink,
+      lectureEndTimestamp_ms: formData.lectureEndTimestamp_ms,
     };
     setFormData({
       sectionName: '',
@@ -116,8 +141,11 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
+      lectureEndTimestamp_ms: Date.now(),
     });
-    handleSave([...snaps, newItem]);
+    handleSaveSingle(newItem);
   };
 
   const handleEditDialogOpen = (entry: FormData, index: number) => {
@@ -135,12 +163,13 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
   };
 
   const handleEditDialogSave = (data: FormData) => {
-    if (editIndex === null) {
-      return;
-    }
+    if (editIndex === null) return;
     const updatedSnaps = [...snaps];
-    updatedSnaps[editIndex] = { ...data };
-    handleSave(updatedSnaps);
+    updatedSnaps[editIndex] = {
+      ...data,
+      autoDetected: snaps[editIndex].autoDetected,
+    };
+    handleSaveSingle(data);
     handleEditDialogClose();
   };
 
@@ -159,7 +188,24 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
             courseId={courseId}
             entries={snaps}
             secInfo={secInfo}
-            onEdit={(idx) => handleEditDialogOpen(coverageEntries[idx], idx)}
+            onEdit={(idx) => {
+              const entry = coverageEntries[idx];
+              const auto = entry.autoDetected;
+
+              const shouldPrefill =
+                entry.sectionUri === '' || entry.sectionUri === 'update-pending';
+
+              const merged = {
+                ...entry,
+                clipId: shouldPrefill ? auto?.clipId || '' : entry.clipId,
+                sectionUri: shouldPrefill ? auto?.sectionUri || '' : entry.sectionUri,
+                slideUri: shouldPrefill ? auto?.slideUri || '' : entry.slideUri,
+                slideNumber: shouldPrefill ? auto?.slideNumber : entry.slideNumber,
+                autoDetected: auto,
+              };
+
+              handleEditDialogOpen(merged, idx);
+            }}
             onDelete={handleDeleteItem}
           />
         </>
@@ -183,7 +229,45 @@ export function CoverageUpdater({ courseId, snaps, secInfo, handleSave }: Covera
         </Box>
       )}
       <Dialog open={editDialogOpen} onClose={handleEditDialogClose} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Coverage Entry</DialogTitle>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          Edit Coverage Entry
+          {formData.autoDetected && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="info.main" fontWeight="bold">
+                Auto-detected Data
+              </Typography>
+              <NoMaxWidthTooltip
+                title={
+                  <Box
+                    sx={{
+                      maxWidth: '600px',
+                      backgroundColor: 'white',
+                      color: '#1a237e',
+                      p: 2,
+                      border: '1px solid #ccc',
+                    }}
+                  >
+                    <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
+                      <Typography fontWeight="bold" mb={1}>
+                        Auto-detected Data
+                      </Typography>
+                      <AutoDetectedTooltipContent
+                        autoDetected={formData.autoDetected}
+                        getSectionName={getSectionName}
+                      />
+                    </Box>
+                  </Box>
+                }
+              >
+                <IconButton size="small" color="info">
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </NoMaxWidthTooltip>
+            </Box>
+          )}
+        </DialogTitle>
         <DialogContent>
           <br />
           <CoverageForm

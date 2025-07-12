@@ -187,7 +187,7 @@ export const SYSTEM_UPDATES = [
       'In the spirit of collaborative knowledge exchange, we have introduced our karma system. Ask questions, answer them, report errors, or provide clarifications - and earn karma points and badges along the way.  Every contribution counts, and together we can create a thriving community of learners.',
     header_de: 'Gute Taten schaffen positives Karma.',
     content_de:
-      'Im Sinne des gemeinschaftlichen Wissensaustausches haben wir unser Karma-System eingeführt. Stellen Sie Fragen, beantworten Sie sie, melden Sie Fehler oder geben Sie Erläuterungen – und sammeln Sie nebenbei Karma-Punkte und Abzeichen. Jeder Beitrag zählt, und gemeinsam können wir eine lebendige Lerngemeinschaft schaffen.',
+      'Im Sinne des gemeinschaftlichen Wissensaustausches haben wir unser Karma-System eingeführt. Stellen Sie eine Frage, beantworten Sie sie, melden Sie Fehler oder geben Sie Erläuterungen – und sammeln Sie nebenbei Karma-Punkte und Abzeichen. Jeder Beitrag zählt, und gemeinsam können wir eine lebendige Lerngemeinschaft schaffen.',
     postedTimestamp: '2023-06-14T19:20:00+05:30',
   },
   {

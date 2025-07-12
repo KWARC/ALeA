@@ -9,18 +9,18 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
-import { getAuthHeaders, getCourseInfo, getCoverageTimeline, getDocumentSections } from '@stex-react/api';
+import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/api';
 import {
   convertHtmlStringToPlain,
   CourseInfo,
   CoverageTimeline,
   LectureEntry,
 } from '@stex-react/utils';
-import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
@@ -55,7 +55,7 @@ const CoverageUpdateTab = () => {
   } | null>(null);
 
   useEffect(() => {
-    getCoverageTimeline().then(setCoverageTimeline);
+    getCoverageTimeline(true).then(setCoverageTimeline);
   }, []);
 
   useEffect(() => {
@@ -69,15 +69,24 @@ const CoverageUpdateTab = () => {
       const { notes: notesUri } = courseInfo;
       setLoading(true);
       try {
-        const tocResp = await getDocumentSections(notesUri);
-        const docSections = tocResp[1];
+        const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const sections = docSections.flatMap((d) => getSecInfo(d));
-        setSecInfo(
-          sections.reduce((acc, s) => {
-            acc[s.uri] = s;
-            return acc;
-          }, {} as Record<FTML.DocumentURI, SecInfo>)
-        );
+        const baseSecInfo = sections.reduce((acc, s) => {
+          acc[s.uri] = s;
+          return acc;
+        }, {} as Record<FTML.DocumentURI, SecInfo>);
+        try {
+          const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
+          const durationData = await res.json();
+          for (const uri in baseSecInfo) {
+            if (durationData.sectionDurations?.[uri]) {
+              baseSecInfo[uri].duration = durationData.sectionDurations[uri];
+            }
+          }
+        } catch (durationError) {
+          console.warn('Could not fetch durations:', durationError);
+        }
+        setSecInfo(baseSecInfo);
       } catch (error) {
         console.error('Failed to fetch all sections:', error);
         setSaveMessage({
@@ -98,13 +107,21 @@ const CoverageUpdateTab = () => {
     setSnaps(courseSnaps);
   }, [coverageTimeline, courseId, router.isReady]);
 
-  const handleSave = async (newSnaps: LectureEntry[]) => {
+  const handleSaveSingle = async (updatedEntry: LectureEntry) => {
     setLoading(true);
     try {
-      const body = { courseId, snaps: newSnaps };
-      const headers = getAuthHeaders();
-      await axios.post('/api/set-coverage-timeline', body, { headers });
-      setSnaps(newSnaps);
+      await updateCoverageTimeline({ courseId, updatedEntry });
+      setSnaps((prevSnaps) => {
+        const index = prevSnaps.findIndex((s) => s.timestamp_ms === updatedEntry.timestamp_ms);
+
+        if (index !== -1) {
+          const updated = [...prevSnaps];
+          updated[index] = updatedEntry;
+          return updated;
+        }
+        return [...prevSnaps, updatedEntry].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
+      });
+
       setSaveMessage({
         type: 'success',
         message: 'Coverage data saved successfully!',
@@ -115,6 +132,20 @@ const CoverageUpdateTab = () => {
         type: 'error',
         message: 'Failed to save coverage data. Please try again.',
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSingle = async (timestamp_ms: number) => {
+    setLoading(true);
+    try {
+      await updateCoverageTimeline({ courseId, timestamp_ms, action: 'delete' });
+      setSnaps((prev) => prev.filter((e) => e.timestamp_ms !== timestamp_ms));
+      setSaveMessage({ type: 'success', message: 'Coverage deleted successfully!' });
+    } catch (err) {
+      console.error(err);
+      setSaveMessage({ type: 'error', message: 'Failed to delete coverage' });
     } finally {
       setLoading(false);
     }
@@ -153,7 +184,8 @@ const CoverageUpdateTab = () => {
               courseId={courseId}
               snaps={snaps}
               secInfo={secInfo}
-              handleSave={handleSave}
+              handleSaveSingle={handleSaveSingle}
+              handleDeleteSingle={handleDeleteSingle}
             />
           </Box>
         </Paper>

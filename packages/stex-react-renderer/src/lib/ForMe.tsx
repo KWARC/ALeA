@@ -1,11 +1,11 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { getDefiniedaInSection, getLearningObjects, getSourceUrl } from '@stex-react/api';
+import { getDefiniedaInSection, getLearningObjects } from '@stex-react/api';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
-import { UriProblemViewer } from './PerSectionQuiz';
+import { handleViewSource, UriProblemViewer } from './PerSectionQuiz';
 import { ListStepper } from './QuizDisplay';
 
 export function ForMe({
@@ -68,12 +68,6 @@ export function ForMe({
     setIsSubmitted(problemUris.map(() => false));
     setResponses(problemUris.map(() => undefined));
   }, [problemUris]);
-
-  const handleViewSource = (uri: string) => {
-    getSourceUrl(uri).then((sourceLink) => {
-      if (sourceLink) window.open(sourceLink, '_blank');
-    });
-  };
 
   if (isLoadingProblemUris) return <LinearProgress />;
   if (!problemUris.length) {

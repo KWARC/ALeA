@@ -117,7 +117,7 @@ const MyCourseHistory = () => {
                 <i>{COURSE_DESCRIPTIONS[courseId].description[lang]}</i>
                 {!COURSE_DESCRIPTIONS[courseId].description[lang]?.length && (
                   <a
-                    href="https://github.com/slatex/sTeX-React/blob/main/packages/alea-frontend/pages/learner-model-init.tsx"
+                    href="https://github.com/slatex/ALeA/blob/main/packages/alea-frontend/pages/learner-model-init.tsx"
                     target="_blank"
                   >
                     <b>

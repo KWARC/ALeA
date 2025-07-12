@@ -1,13 +1,20 @@
-import InsightsIcon from '@mui/icons-material/Insights';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import EditIcon from '@mui/icons-material/Edit';
+import GradingIcon from '@mui/icons-material/Grading';
+import InsightsIcon from '@mui/icons-material/Insights';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import SchoolIcon from '@mui/icons-material/School';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import GradingIcon from '@mui/icons-material/Grading';
-import { Box, Button, Card, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  Stack,
+  Typography,
+} from '@mui/material';
 import Link from 'next/link';
-
 import { EditProfileDialog } from './EditProfileDialog';
+import { PersonalCalendarSection } from '../PersonalCalendar';
+
 
 export const ProfileTab = ({
   t,
@@ -56,15 +63,30 @@ export const ProfileTab = ({
                   <Box key={field.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       variant="body1"
-                      sx={{ fontWeight: 'bold', color: 'text.primary', minWidth: 160, display: 'flex', justifyContent: 'space-between' }}
+                      sx={{
+                        fontWeight: 'bold',
+                        color: 'text.primary',
+                        minWidth: 160,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
                     >
                       {field.label} <span>:</span>
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.primary' }}>
-                      { field.value || '-'}
+                      {field.value || '-'}
                     </Typography>
                   </Box>
                 ))}
+                {userInfo?.userId && (
+                  <Box sx={{ mt: 2 }}>
+                    <PersonalCalendarSection
+                      userId={userInfo.userId}
+                      hintGoogle={t.calendar.howToUseHintGoogle}
+                      hintApple={t.calendar.howToUseHintApple}
+                    />
+                  </Box>
+                )}
               </Stack>
             ) : (
               <Typography sx={{ color: 'text.secondary' }}>Loading...</Typography>

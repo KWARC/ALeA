@@ -4,6 +4,7 @@ import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import {
   canAccessResource,
   FTMLProblemWithSolution,
+  getCourseInfo,
   getQuiz,
   GetQuizResponse,
   getUserInfo,
@@ -11,12 +12,19 @@ import {
   Phase,
   UserInfo,
 } from '@stex-react/api';
+import { isEmptyResponse } from '@stex-react/quiz-utils';
 import { QuizDisplay } from '@stex-react/stex-react-renderer';
-import { Action, CURRENT_TERM, isFauId, localStore, ResourceName } from '@stex-react/utils';
+import {
+  Action,
+  CourseInfo,
+  CURRENT_TERM,
+  isFauId,
+  localStore,
+  ResourceName,
+} from '@stex-react/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { isEmptyResponse } from 'packages/quiz-utils/src/lib/quiz-utils';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import { getLocaleObject } from '../../lang/utils';
@@ -110,6 +118,7 @@ const QuizPage: NextPage = () => {
   const [moderatorPhase, setModeratorPhase] = useState<Phase>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [isModerator, setIsModerator] = useState<boolean>(false);
+  const [allCourses, setAllCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const clientQuizEndTimeMs = getClientEndTimeMs(quizInfo);
   const clientQuizStartTimeMs = getClientStartTimeMs(quizInfo);
 
@@ -196,6 +205,12 @@ const QuizPage: NextPage = () => {
     checkAccess();
   }, [courseId]);
 
+  useEffect(() => {
+    getCourseInfo().then(setAllCourses);
+  }, []);
+
+  const notesUri = allCourses?.[courseId]?.notes;
+
   if (!quizId) return null;
   if (forceFauLogin) {
     return (
@@ -253,27 +268,29 @@ const QuizPage: NextPage = () => {
             }}
           />
         ) : (
-          <QuizDisplay
-            isFrozen={phase !== Phase.STARTED}
-            showPerProblemTime={false}
-            problems={problems}
-            quizEndTs={clientQuizEndTimeMs}
-            existingResponses={quizInfo?.responses}
-            onResponse={async (problemId, response) => {
-              if (!quizId?.length || phase !== Phase.STARTED || isModerator) return;
-              if (isEmptyResponse(response)) return;
-              console.log('inserting response', problemId, response);
-              const answerAccepted = await insertQuizResponse(quizId, problemId, response);
-              if (!answerAccepted) {
-                alert('Answers are no longer being accepted');
-                location.reload();
-              }
-            }}
-            onSubmit={() => {
-              setFinished(true);
-              setFinishedInLocalStore(quizId);
-            }}
-          />
+          <Box fragment-uri={notesUri} fragment-kind="Problem">
+            <QuizDisplay
+              isFrozen={phase !== Phase.STARTED}
+              showPerProblemTime={false}
+              problems={problems}
+              quizEndTs={clientQuizEndTimeMs}
+              existingResponses={quizInfo?.responses}
+              onResponse={async (problemId, response) => {
+                if (!quizId?.length || phase !== Phase.STARTED || isModerator) return;
+                if (isEmptyResponse(response)) return;
+                console.log('inserting response', problemId, response);
+                const answerAccepted = await insertQuizResponse(quizId, problemId, response);
+                if (!answerAccepted) {
+                  alert('Answers are no longer being accepted');
+                  location.reload();
+                }
+              }}
+              onSubmit={() => {
+                setFinished(true);
+                setFinishedInLocalStore(quizId);
+              }}
+            />
+          </Box>
         )}
       </Box>
     </MainLayout>

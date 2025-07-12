@@ -42,7 +42,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  syllabus: { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
+  'syllabus': { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
 };
 function ChosenTab({
   tabName,
@@ -105,7 +105,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
   'study-buddy': '900px',
-  syllabus: '1200px',
+  'syllabus': '1200px',
 };
 
 const InstructorDash: NextPage = () => {
@@ -158,8 +158,20 @@ const InstructorDash: NextPage = () => {
           return undefined;
         }
       );
-      const tabs = (await Promise.all(tabAccessPromises$)).filter((t) => t);
-      setAccessibleTabs(tabs);
+      const tabs = (await Promise.all(tabAccessPromises$)).filter((t): t is TabName => !!t);
+
+      const tabOrder: TabName[] = [
+        'syllabus',
+        'quiz-dashboard',
+        'homework-manager',
+        'homework-grading',
+        'study-buddy',
+        'peer-review',
+        'access-control',
+      ];
+
+      const sortedTabs = tabOrder.filter((tab) => tabs.includes(tab));
+      setAccessibleTabs(sortedTabs);
     }
     checkTabAccess();
   }, [courseId]);
@@ -200,10 +212,16 @@ const InstructorDash: NextPage = () => {
         <Tabs
           value={currentTabIdx}
           onChange={handleChange}
+          variant="scrollable"
+          scrollButtons="auto"
           aria-label="Instructor Dashboard Tabs"
           sx={{
+            overflowX: 'auto',
             '& .MuiTabs-flexContainer': {
-              justifyContent: 'center',
+              justifyContent: {
+                xs: 'flex-start', 
+                md: 'center', 
+              },
             },
             '& .MuiTab-root': {
               fontSize: '14px',

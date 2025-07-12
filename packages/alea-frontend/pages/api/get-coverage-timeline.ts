@@ -9,13 +9,13 @@ export function getCoverageData(): CoverageTimeline {
   const currentSemPath = baseDir + '/' + CURRENT_SEM_FILE;
   const filePaths: string[] = [];
 
-  if (fs.existsSync(baseDir)) {
+  if (fs.existsSync(prevSemsDir)) {
     const prevFiles = fs.readdirSync(prevSemsDir);
     for (const file of prevFiles) {
-      const fullPath = prevSemsDir + '/' + file;
-      if (fs.lstatSync(fullPath).isFile()) {
-        filePaths.push(fullPath);
-      }
+     const fullPath = prevSemsDir + '/' + file;
+     if (fs.lstatSync(fullPath).isFile()) {
+       filePaths.push(fullPath);
+     }
     }
   }
   if (fs.existsSync(currentSemPath)) {

@@ -12,9 +12,10 @@ import { Action, CURRENT_TERM, ResourceActionPair } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AclDisplay from './AclDisplay';
+import { useStudentCount } from '../hooks/useStudentCount';
 
 const ALL_SHORT_IDS = [
-  'notes',
+  'syllabus',
   'quiz',
   'homework-crud',
   'homework-grading',
@@ -39,13 +40,13 @@ const EMPTY_ASSIGMENT = ALL_SHORT_IDS.reduce(
 );
 
 const staffAccessResources: Record<ShortId, string> = {
-  quiz: 'Quiz Management',
+  'quiz': 'Quiz Management',
   'quiz-preview': 'Quiz Preview',
   'homework-crud': 'Homework Create/Update',
   'homework-grading': 'Homework Grading',
-  notes: 'Notes Management',
+  'syllabus': 'Syllabus Management',
   'study-buddy': 'Study Buddy Management',
-  comments: 'Comments Moderation',
+  'comments': 'Comments Moderation',
 } as const;
 
 const studentAccessResources: Record<ShortId, string> = {
@@ -55,11 +56,11 @@ const studentAccessResources: Record<ShortId, string> = {
 
 const getAclShortIdToResourceActionPair = (courseId: string) =>
   ({
-    notes: {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/notes`,
+    'syllabus': {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
       actionId: Action.MUTATE,
     },
-    quiz: {
+    'quiz': {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
       actionId: Action.MUTATE,
     },
@@ -71,7 +72,7 @@ const getAclShortIdToResourceActionPair = (courseId: string) =>
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
       actionId: Action.INSTRUCTOR_GRADING,
     },
-    comments: {
+    'comments': {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
       actionId: Action.MODERATE,
     },
@@ -123,6 +124,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
   const [acls, setAcls] = useState<string[]>([]);
   const [newAclId, setNewAclId] = useState('');
   const [error, setError] = useState('');
+  const studentCount = useStudentCount(courseId, CURRENT_TERM);
   const handleAclClick = (aclId: string) => {
     router.push(`/acl/${aclId}`);
   };
@@ -248,6 +250,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
         ))}
       </Grid>
       <Typography variant="h5">Students</Typography>
+      <Typography variant='h6'>Enrolled Students: {studentCount}</Typography>
       <Grid container spacing={1}>
         {Object.entries(studentAccessResources).map(([shortId, displayName]) => (
           <Grid item xs={6} key={shortId}>

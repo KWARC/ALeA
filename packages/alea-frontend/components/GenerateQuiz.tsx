@@ -3,233 +3,290 @@ import {
   Box,
   Button,
   Typography,
-  RadioGroup,
   Radio,
-  FormControlLabel,
   Checkbox,
   TextField,
-  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Chip,
+  Card,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
-import { generateQuizProblems } from '@stex-react/api';
+import { PRIMARY_COL } from '@stex-react/utils';
+import { generateMoreQuizProblems, generateQuizProblems } from '@stex-react/api';
+import { FlatQuizProblem } from '../pages/quiz-gen';
+import { FeedbackSection } from './quiz-gen/Feedback';
+import { QuestionSidebar } from './quiz-gen/QuizSidebar';
 
-const Problem = ({
-  question,
-  chosenOption,
-  setChosenOption,
-  submitted,
-  onSubmit,
-  showSolution,
-}: {
-  question: QuizQuestion;
-  chosenOption: string | string[];
-  setChosenOption: (value: string | string[]) => void;
-  submitted: boolean;
-  onSubmit: () => void;
-  showSolution: boolean;
-}) => {
-  const isCorrect = () => {
-    if (question.questionType === 'msq') {
-      return (
-        JSON.stringify([...chosenOption].sort()) ===
-        JSON.stringify([...question.correctAnswer].sort())
-      );
+export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProblem }) => {
+  const isCorrectOption = (opt: string) => {
+    if (problemData.problemType.toLowerCase() === 'mcq') {
+      const correctAnswers = (problemData as any).correctAnswers || problemData.correctAnswer;
+      if (Array.isArray(correctAnswers)) return correctAnswers.includes(opt);
+      return correctAnswers === opt;
     }
-    return chosenOption === question.correctAnswer;
+    return opt === problemData.correctAnswer;
   };
+  const renderOptionsWithFeedback = () =>
+    problemData.options.map((opt, idx) => {
+      const correct = isCorrectOption(opt);
+      const icon = correct ? <CheckCircle color="success" /> : <Cancel color="error" />;
+      const label = correct ? 'Correct' : 'Incorrect';
+      const explanation =
+        problemData.optionExplanations?.[opt] ||
+        (correct ? 'This is correct.' : 'This is incorrect.');
+
+      const optionLabel = (
+        <Box display="flex" flexDirection="column">
+          <Typography>{opt}</Typography>
+          <Typography fontSize="0.875rem" mt={0.5}>
+            <Typography color={correct ? 'success' : 'error'}>Insights</Typography> {explanation}
+          </Typography>
+        </Box>
+      );
+
+      return (
+        <Box
+          key={idx}
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          mb={1.5}
+          p={1.5}
+          borderRadius={2}
+          border={'0.5px solid rgb(172, 178, 173)'}
+        >
+          <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+            {problemData.problemType.toLowerCase() === 'mcq' ? (
+              <Checkbox checked={correct} disabled />
+            ) : (
+              <Radio checked={correct} disabled />
+            )}
+            {optionLabel}
+          </Box>
+          <Chip
+            icon={icon}
+            label={label}
+            variant="outlined"
+            color={correct ? 'success' : 'error'}
+          />
+        </Box>
+      );
+    });
 
   return (
-    <Box my={2}>
-      <Typography variant="h6" mb={2}>
-        {question.question}
-      </Typography>
+    <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+      <Box display="flex" justifyContent="space-between" gap={1}>
+        <Typography variant="h6" mb={2}>
+          {problemData.problem}
+        </Typography>
+        <Tooltip title="Copy as STeX" arrow>
+          <IconButton
+            color="primary"
+            size="small"
+            onClick={() => navigator.clipboard.writeText(problemData?.problemStex)}
+            sx={{
+              marginRight: '8px',
+            }}
+            disabled={!problemData.problemStex}
+          >
+            <ContentCopy />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      {(problemData.problemType.toLowerCase() === 'scq' ||
+        problemData.problemType.toLowerCase() === 'mcq') &&
+        renderOptionsWithFeedback()}
 
-      {question.questionType === 'mcq' && (
-        <RadioGroup value={chosenOption} onChange={(e) => setChosenOption(e.target.value)}>
-          {question.options.map((opt, idx) => (
-            <FormControlLabel key={idx} value={opt} control={<Radio />} label={opt} />
-          ))}
-        </RadioGroup>
-      )}
-
-      {question.questionType === 'msq' && (
-        <Box>
-          {question.options.map((opt, idx) => (
-            <FormControlLabel
-              key={idx}
-              control={
-                <Checkbox
-                  checked={Array.isArray(chosenOption) && chosenOption.includes(opt)}
-                  onChange={(e) => {
-                    if (!Array.isArray(chosenOption)) return;
-
-                    const newSelection = e.target.checked
-                      ? [...chosenOption, opt]
-                      : chosenOption.filter((item) => item !== opt);
-                    setChosenOption(newSelection);
-                  }}
-                />
-              }
-              label={opt}
-            />
-          ))}
+      {problemData.problemType === 'FILL_IN' && (
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={2}
+          p={2}
+          bgcolor="#e3f2fd"
+          border="1px solid #64b5f6"
+          borderRadius={2}
+        >
+          <TextField
+            variant="outlined"
+            size="small"
+            value={
+              Array.isArray(problemData.correctAnswer)
+                ? problemData.correctAnswer.join(', ')
+                : problemData.correctAnswer
+            }
+            fullWidth
+            disabled
+            label="Correct Answer"
+          />
+          <Chip icon={<CheckCircle />} label="Correct" color="success" />
         </Box>
       )}
-
-      {question.questionType === 'fill' && (
-        <TextField
-          fullWidth
-          variant="outlined"
-          size="small"
-          value={chosenOption}
-          onChange={(e) => setChosenOption(e.target.value)}
-          placeholder="Type your answer here"
-        />
-      )}
-
-      {!submitted ? (
-        <Button onClick={onSubmit} variant="contained" sx={{ mt: 2 }}>
-          Submit
-        </Button>
-      ) : (
-        <Box mt={2}>
-          <Typography variant="subtitle1" color={isCorrect() ? 'green' : 'red'}>
-            {isCorrect() ? 'Correct!' : 'Incorrect.'}
-          </Typography>
-          {showSolution && (
-            <Box mt={1}>
-              <Typography>
-                <strong>Correct Answer:</strong>{' '}
-                {Array.isArray(question.correctAnswer)
-                  ? question.correctAnswer.join(', ')
-                  : question.correctAnswer}
-              </Typography>
-              <Typography mt={1}>
-                <strong>Feedback:</strong> {question.explanation}
-              </Typography>
-            </Box>
-          )}
-        </Box>
+      {problemData.explanation && (
+        <Typography fontSize="0.875rem" color="text.secondary" mt={0.5}>
+          <Typography component="span" sx={{ color: PRIMARY_COL, fontWeight: 500 }}>
+            Explanation:
+          </Typography>{' '}
+          {problemData.explanation}
+        </Typography>
       )}
     </Box>
   );
 };
 
-export type QuizQuestionType = 'mcq' | 'msq' | 'fill';
-export interface QuizQuestion {
-  question: string;
-  options?: string[];
-  questionType: QuizQuestionType;
-  correctAnswer?: string | string[];
-  explanation?: string;
-}
-interface QuestionResponse {
-  chosenOption: string | string[];
-  submitted: boolean;
-}
-
-const QuizComponent = ({
-  courseId,
-  sectionId,
-  sectionUri,
-}: {
-  courseId: string;
-  sectionId: string;
-  sectionUri: string;
-}) => {
+const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: string }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [problems, setPoblems] = useState<FlatQuizProblem[]>([]);
+  const [latestGeneratedQuestions, setLatestGeneratedQuestions] = useState<FlatQuizProblem[]>([]);
+  const [hasPriorProblems, setHasPriorProblems] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [questionResponses, setQuestionResponses] = useState<QuestionResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const handleGenerate = async (e) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleGenerate = async (mode: 'initial' | 'more' = 'initial', e: any) => {
     e.stopPropagation();
     setLoading(true);
-
     try {
-      const response = await generateQuizProblems(courseId, sectionId, sectionUri);
-      const quiz = response.quiz || [];
-      const formatted = quiz.map((q) => ({
-        ...q,
-        options: q.options || [],
-        questionType: q.questionType,
+      const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;
+      const response = await fetchFn(courseId, sectionId, sectionId);
+
+      if (!response?.length) {
+        return;
+      }
+      const parsed: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
+        ...rest,
+        ...problemJson,
       }));
-
-      setQuestions(formatted);
-
-      setQuestionResponses(
-        formatted.map((q) => ({
-          chosenOption: q.questionType === 'msq' ? [] : '',
-          submitted: false,
-        }))
-      );
-
+      setHasPriorProblems(true);
+      setLatestGeneratedQuestions(parsed);
+      setPoblems((prev) => (mode === 'more' ? [...prev, ...parsed] : parsed));
       setShowQuiz(true);
-    } catch (err) {
-      console.error('Failed to generate quiz:', err);
+    } catch (error) {
+      console.error('Error generating problems:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOptionChange = (value) => {
-    const updated = [...questionResponses];
-    updated[currentIdx].chosenOption = value;
-    setQuestionResponses(updated);
-  };
-
-  const handleSubmit = () => {
-    const updated = [...questionResponses];
-    updated[currentIdx].submitted = true;
-    setQuestionResponses(updated);
-  };
-
-  const currentQuestion = questions[currentIdx];
-  const { chosenOption, submitted } = questionResponses[currentIdx] || {};
+  const currentProblem = problems[currentIdx];
 
   return (
-    <Accordion expanded={showQuiz} onChange={() => setShowQuiz(!showQuiz)}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="h6" flexGrow={1}>
-          Generate Quiz Questions
-        </Typography>
-        {!showQuiz && (
-          <Button onClick={handleGenerate} variant="contained" size="small" disabled={loading}>
-            {loading ? 'Generating...' : 'Generate'}
-          </Button>
-        )}
-      </AccordionSummary>
+    <>
+      <Accordion expanded={showQuiz} onChange={() => setShowQuiz(!showQuiz)} sx={{ my: 1 }}>
+        <AccordionSummary
+          expandIcon={<ExpandMore />}
+          sx={{ display: 'flex', alignItems: 'center' }}
+        >
+          <Typography variant="h6" sx={{ flexGrow: 1, color: PRIMARY_COL }}>
+            Generate Quiz Problems
+          </Typography>
+          {showQuiz ? (
+            hasPriorProblems ? (
+              <Button
+                onClick={(e) => handleGenerate('more', e)}
+                variant="outlined"
+                size="small"
+                disabled={loading}
+              >
+                {loading ? 'Generating...' : 'Generate More'}
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => handleGenerate('initial', e)}
+                variant="contained"
+                size="small"
+                disabled={loading}
+              >
+                {loading ? 'Generating...' : 'Generate'}
+              </Button>
+            )
+          ) : hasPriorProblems ? (
+            <Button
+              onClick={(e) => handleGenerate('more', e)}
+              variant="outlined"
+              size="small"
+              disabled={loading}
+            >
+              {loading ? 'Generating...' : 'Generate More'}
+            </Button>
+          ) : (
+            <Button
+              onClick={(e) => handleGenerate('initial', e)}
+              variant="contained"
+              size="small"
+              disabled={loading}
+            >
+              {loading ? 'Generating...' : 'Generate'}
+            </Button>
+          )}
 
-      <AccordionDetails>
-        {questions.length > 0 && (
-          <Paper sx={{ borderRadius: 3, p: 1.5, boxShadow: '0px -2px 10px rgba(0, 0, 0, 0.25)' }}>
-            <Typography variant="h5" mb={1}>
-              Quiz - Question {currentIdx + 1} of {questions.length}
+          {showQuiz && (
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                setSidebarOpen(!sidebarOpen);
+              }}
+              sx={{ ml: 1 }}
+            >
+              <MenuOpen />
+            </IconButton>
+          )}
+        </AccordionSummary>
+
+        <AccordionDetails>
+          {problems.length === 0 ? (
+            <Typography variant="body1" color="textSecondary">
+              Click Generate to create problems.
             </Typography>
+          ) : (
+            <Box display="flex">
+              <Box flex={1} sx={{ overflow: 'auto' }}>
+                <Card
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h5" color={PRIMARY_COL}>
+                      Question {currentIdx + 1} of {problems.length}
+                    </Typography>
+                  </Box>
 
-            <ListStepper
-              idx={currentIdx}
-              listSize={questions.length}
-              onChange={(idx) => setCurrentIdx(idx)}
-            />
+                  <ListStepper
+                    idx={currentIdx}
+                    listSize={problems.length}
+                    onChange={(idx) => setCurrentIdx(idx)}
+                  />
 
-            <Problem
-              question={currentQuestion}
-              chosenOption={chosenOption}
-              setChosenOption={handleOptionChange}
-              submitted={submitted}
-              onSubmit={handleSubmit}
-              showSolution
-            />
-          </Paper>
-        )}
-      </AccordionDetails>
-    </Accordion>
+                  <QuizProblemViewer problemData={currentProblem} />
+
+                  <FeedbackSection
+                    key={currentProblem.problemId}
+                    problemId={currentProblem.problemId}
+                  />
+                </Card>
+              </Box>
+              {sidebarOpen && (
+                <QuestionSidebar
+                  problems={problems}
+                  latestGeneratedProblems={latestGeneratedQuestions}
+                  currentIdx={currentIdx}
+                  setCurrentIdx={setCurrentIdx}
+                  hideSections
+                />
+              )}
+            </Box>
+          )}
+        </AccordionDetails>
+      </Accordion>
+    </>
   );
 };
-
 export default QuizComponent;

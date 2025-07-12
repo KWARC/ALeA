@@ -3,6 +3,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Box,
   Button,
@@ -23,6 +24,10 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import QuizHandler from './QuizHandler';
+import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
+import { useStudentCount } from '../hooks/useStudentCount';
+import { getSectionNameForUri } from './CoverageUpdater';
+import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
@@ -32,7 +37,7 @@ interface CoverageRowProps {
   item: LectureEntry;
   quizMatch: QuizWithStatus | null;
   originalIndex: number;
-  onEdit: (index: number) => void;
+  onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
 }
@@ -62,6 +67,7 @@ function CoverageRow({
 }: CoverageRowProps) {
   const now = dayjs();
   const itemDate = dayjs(item.timestamp_ms);
+  const endTime = dayjs(item.lectureEndTimestamp_ms);
   const isPast = itemDate.isBefore(now, 'day');
   const isFuture = itemDate.isAfter(now, 'day');
   const isToday = itemDate.isSame(now, 'day');
@@ -94,16 +100,64 @@ function CoverageRow({
       }}
     >
       <TableCell>
-        <Typography
-          variant="body2"
-          fontWeight="medium"
-          sx={{
-            color: isPast ? 'success.main' : isFuture ? 'warning.main' : 'text.primary',
-            fontWeight: 'bold',
-          }}
+        <NoMaxWidthTooltip
+          title={
+            <Box
+              maxWidth="600px"
+              color="#1a237e"
+              border="2px solid #3f51b5"
+              p="12px"
+              borderRadius="8px"
+              boxShadow="0 4px 20px rgba(0, 0, 0, 0.15)"
+              bgcolor="white"
+            >
+              <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
+                <Typography fontWeight="bold" display="inline">
+                  Lecture Timings:
+                </Typography>
+                <Typography display="inline">
+                  {`${itemDate.format('HH:mm')} - ${endTime.format('HH:mm')}`}
+                </Typography>
+              </Box>
+              {item.venue && (
+                <>
+                  <Typography fontWeight="bold" mt={1} display="inline">
+                    Venue:
+                  </Typography>
+                  {item.venueLink ? (
+                    <a
+                      href={item.venueLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#1976d2',
+                        textDecoration: 'underline',
+                        fontWeight: 'bold',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {item.venue}
+                    </a>
+                  ) : (
+                    <Typography display="inline">{item.venue}</Typography>
+                  )}
+                </>
+              )}
+            </Box>
+          }
+          arrow
         >
-          {itemDate.format('YYYY-MM-DD')}
-        </Typography>
+          <Typography
+            variant="body2"
+            fontWeight="medium"
+            sx={{
+              color: isPast ? 'success.main' : isFuture ? 'warning.main' : 'text.primary',
+              fontWeight: 'bold',
+            }}
+          >
+            {itemDate.format('YYYY-MM-DD')}
+          </Typography>
+        </NoMaxWidthTooltip>
       </TableCell>
       <TableCell
         sx={{
@@ -119,24 +173,42 @@ function CoverageRow({
             (shouldHighlightNoSection ? 'No Section - Please fill this field' : 'No Section')
           }
         >
-          {shouldHighlightNoSection ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography
-                variant="body2"
-                sx={{ color: 'error.main', fontStyle: 'italic', fontWeight: 'bold' }}
+          <span>
+            {shouldHighlightNoSection ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+                onClick={() => onEdit(originalIndex, item.autoDetected)}
               >
-                Update pending
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: 'error.main', animation: 'blink 1.5s infinite' }}
-              >
-                ⚠️
-              </Typography>
-            </Box>
-          ) : (
-            formatSectionWithSlide(sectionTitle, item.slideNumber, item.slideUri)
-          )}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'error.main',
+                    fontStyle: 'italic',
+                    fontWeight: 'bold',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Update pending
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'error.main', animation: 'blink 1.5s infinite' }}
+                >
+                  ⚠️
+                </Typography>
+              </Box>
+            ) : (
+              formatSectionWithSlide(sectionTitle, item.slideNumber, item.slideUri)
+            )}
+          </span>
         </Tooltip>
       </TableCell>
       <TableCell
@@ -180,7 +252,10 @@ function CoverageRow({
           <IconButton
             size="small"
             color="primary"
-            onClick={() => onEdit(originalIndex)}
+            onClick={() => {
+              const useAutoDetected = !item.sectionUri;
+              onEdit(originalIndex, useAutoDetected ? item.autoDetected : undefined);
+            }}
             sx={{
               boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
               '&:hover': {
@@ -208,6 +283,43 @@ function CoverageRow({
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
+          <NoMaxWidthTooltip
+            title={
+              <Box
+                maxWidth="600px"
+                color="#1a237e"
+                border="1px solid #CCC"
+                p="10px"
+                borderRadius="5px"
+                boxShadow="2px 7px 31px 8px rgba(0, 0, 0, 0.33)"
+              >
+                <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  <Typography fontWeight="bold" mb={1}>
+                    Auto-detected Data
+                  </Typography>
+                  <AutoDetectedTooltipContent
+                    autoDetected={item.autoDetected}
+                    getSectionName={(uri) => getSectionNameForUri(uri, secInfo)}
+                  />
+                </Box>
+              </Box>
+            }
+          >
+            <IconButton
+              size="small"
+              color="info"
+              sx={{
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                },
+                transition: 'all 0.2s',
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </NoMaxWidthTooltip>
         </Box>
       </TableCell>
     </TableRow>
@@ -304,7 +416,7 @@ interface CoverageTableProps {
   courseId: string;
   entries: LectureEntry[];
   secInfo: Record<FTML.DocumentURI, SecInfo>;
-  onEdit: (index: number) => void;
+  onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
 }
 export function CoverageTable({
@@ -319,6 +431,7 @@ export function CoverageTable({
   const missingTargetsCount = countMissingTargetsInFuture(entries);
   const sortedEntries = [...entries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
   const [quizMatchMap, setQuizMatchMap] = useState<QuizMatchMap>({});
+  const studentCount = useStudentCount(courseId, CURRENT_TERM);
 
   useEffect(() => {
     async function fetchQuizzes() {
@@ -327,7 +440,7 @@ export function CoverageTable({
         const map: QuizMatchMap = {};
         entries.forEach((entry) => {
           const match = allQuizzes.find(
-            (quiz) => Math.abs(quiz.quizStartTs - entry.timestamp_ms) < 12 * 60 * 60 * 1000
+            (quiz) => Math.abs(quiz.quizStartTs - entry.timestamp_ms) < 6 * 60 * 60 * 1000
           );
           map[entry.timestamp_ms] = match || null;
         });
@@ -336,12 +449,18 @@ export function CoverageTable({
         console.error('Error fetching quizzes:', err);
       }
     }
-
     fetchQuizzes();
   }, [courseId]);
 
   return (
     <Box>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {studentCount !== null && (
+          <Typography variant="body1" color="text.secondary">
+            Total Students Enrolled: {studentCount}
+          </Typography>
+        )}
+      </Box>
       {targetUsed && (
         <Paper
           elevation={3}

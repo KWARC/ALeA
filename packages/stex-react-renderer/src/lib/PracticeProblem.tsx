@@ -37,6 +37,14 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   );
 
   useEffect(() => {
+    if (!sectionUri) return;
+    setPerSectionProblemUris(null);
+    setFormeProblemUris(null);
+    setForMeTabLabel(t.ForMe.replace('$1', '...'));
+    setPerSectionTabLabel(t.perSectionQuizButton.replace('$1', '...'));
+  }, [sectionUri]);
+
+  useEffect(() => {
     if (formeProblemUris?.length) {
       setForMeTabLabel(t.ForMe.replace('$1', formeProblemUris.length.toString()));
     }

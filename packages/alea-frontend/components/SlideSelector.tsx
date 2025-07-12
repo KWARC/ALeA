@@ -21,7 +21,7 @@ export interface SlideDataWithCSS {
 
 const EMPTY_SLIDE_DATA: SlideDataWithCSS = { slides: [], css: [] };
 
-function getSlideTitle(slide: Slide, index: number) {
+export function getSlideTitle(slide: Slide, index: number) {
   const uri = slide.slide?.uri;
   const title = getParamsFromUri(uri, ['d', 'e'])
     .map((p) => (p?.startsWith('section/') ? p.slice(8) : p))

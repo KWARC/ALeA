@@ -97,9 +97,10 @@ function QuizPerformanceTable({
               <TableCell sx={{ wordBreak: 'break-word' }}>
                 <b>{t.maxPoints}</b>
               </TableCell>
+              {/* Showing my score contributed to performance issues during the quiz.
               <TableCell sx={{ wordBreak: 'break-word' }}>
                 <b>{t.myScore}</b>
-              </TableCell>
+              </TableCell> */}
               <TableCell sx={{ wordBreak: 'break-word' }}>
                 <b>{t.averageScore}</b>
               </TableCell>
@@ -139,9 +140,9 @@ function QuizPerformanceTable({
                     </Tooltip>
                   </TableCell>
                   <TableCell>{previousQuizData?.quizInfo[quiz.quizId]?.maxPoints}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {previousQuizData?.quizInfo[quiz.quizId]?.score?.toFixed(2)}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     {previousQuizData?.quizInfo[quiz.quizId]?.averageScore?.toFixed(2)}
                   </TableCell>

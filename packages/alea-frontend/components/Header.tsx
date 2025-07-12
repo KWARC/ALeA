@@ -137,14 +137,12 @@ export function Header() {
       : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
       ? 'crimson !important'
       : 'blue !important';
-  const scrollDirection = useScrollDirection();
-  const forceShowBar = scrollDirection === 'up' && router.asPath.includes('course-notes');
 
   return (
     <AppBar
       position="sticky"
       sx={{
-        top: forceShowBar ? '0' : '-120px',
+        top: '-120px',
         transition: 'top 0.4s ease-out',
       }}
     >

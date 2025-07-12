@@ -2,10 +2,10 @@ import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstruct
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { IconButton, Menu, MenuItem } from '@mui/material';
-import { getSourceUrl } from '@stex-react/api';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export function ExpandableContextMenu({ uri }: { uri?: string }) {
   const t = getLocaleObject(useRouter());
@@ -25,7 +25,7 @@ export function ExpandableContextMenu({ uri }: { uri?: string }) {
   useEffect(() => {
     if (!uri) return;
     setSourceUrl(undefined);
-    getSourceUrl(uri).then(setSourceUrl);
+    getFlamsServer().sourceFile({ uri }).then(setSourceUrl);
   }, [uri]);
 
   if (!sourceUrl) return null;

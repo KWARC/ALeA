@@ -10,16 +10,15 @@ import {
   deleteQuiz,
   FTMLProblemWithSolution,
   getAllQuizzes,
-  getCourseInfo,
   getQuizStats,
   Phase,
   QuizStatsResponse,
   QuizWithStatus,
-  updateQuiz
+  updateQuiz,
 } from '@stex-react/api';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { SafeHtml } from '@stex-react/react-utils';
-import { Action, CourseInfo, CURRENT_TERM, ResourceName, roundToMinutes } from '@stex-react/utils';
+import { Action, CURRENT_TERM, ResourceName, roundToMinutes } from '@stex-react/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -30,6 +29,7 @@ import { ExcusedAccordion } from './ExcusedAccordion';
 import { QuizFileReader } from './QuizFileReader';
 import { QuizStatsDisplay } from './QuizStatsDisplay';
 import { RecorrectionDialog } from './RecorrectionDialog';
+import { useRouter } from 'next/router';
 
 const NEW_QUIZ_ID = 'New';
 
@@ -74,7 +74,8 @@ function getFormErrorReason(
   feedbackReleaseTs: number,
   manuallySetPhase: string,
   problems: Record<string, FTMLProblemWithSolution>,
-  title: string
+  title: string,
+  css: FTML.CSS[]
 ) {
   const phaseTimes = [quizStartTs, quizEndTs, feedbackReleaseTs].filter((ts) => ts !== 0);
   for (let i = 0; i < phaseTimes.length - 1; i++) {
@@ -82,6 +83,7 @@ function getFormErrorReason(
   }
   if (!problems || Object.keys(problems).length === 0) return 'No problems found.';
   if (title.length === 0) return 'No title set.';
+  if (!css.length) return 'CSS content is missing';
   return undefined;
 }
 
@@ -135,8 +137,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [accessType, setAccessType] = useState<'PREVIEW_ONLY' | 'MUTATE'>();
   const [isUpdating, setIsUpdating] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const isNew = isNewQuiz(selectedQuizId);
+  const router = useRouter();
 
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedQuizId);
   const formErrorReason = getFormErrorReason(
@@ -145,7 +147,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     feedbackReleaseTs,
     manuallySetPhase,
     problems,
-    title
+    title,
+    css
   );
 
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
@@ -158,12 +161,12 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         for (const css of q.css || []) FTML.injectCss(css);
       }
       setQuizzes(allQuizzes);
-      const validQuiz = allQuizzes.find((q) => q.id === quizId);
+      const validQuiz = allQuizzes.find((q) => q.id === quizId);  
       if (quizId !== NEW_QUIZ_ID && (!quizId || !validQuiz) && allQuizzes.length > 0) {
         onQuizIdChange?.(allQuizzes[0].id);
       }
     }
-    fetchQuizzes().catch((err) => console.error("Failed to fetch Quiz", err));
+    fetchQuizzes().catch((err) => console.error('Failed to fetch Quiz', err));
   }, [courseId, courseTerm, onQuizIdChange, quizId]);
 
   useEffect(() => {
@@ -185,6 +188,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setManuallySetPhase(Phase.UNSET);
       setTitle('');
       setProblems({});
+      setCss([]);
       setCourseTerm(CURRENT_TERM);
       return;
     }
@@ -197,6 +201,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setManuallySetPhase(selected.manuallySetPhase);
     setTitle(selected.title);
     setProblems(selected.problems);
+    setCss(selected.css || []);
     setCourseTerm(selected.courseTerm);
   }, [selectedQuizId, quizzes]);
 
@@ -204,9 +209,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setQuizEndTs((prev) => Math.max(prev, quizStartTs));
     setFeedbackReleaseTs((prev) => Math.max(prev, quizStartTs, quizEndTs));
   }, [quizStartTs, quizEndTs]);
-  useEffect(() => {
-    getCourseInfo().then(setCourses);
-  }, []);
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
@@ -266,25 +268,43 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           You don&apos;t have access to mutate this course Quizzes
         </Typography>
       )}
-      <Select
-        value={selectedQuizId}
-        onChange={(e) => {
-          const newQuizId = e.target.value;
-          onQuizIdChange?.(newQuizId);
-        }}
-      >
-        {accessType == 'MUTATE' ? (
-          <MenuItem value="New">New</MenuItem>
-        ) : (
-          <MenuItem value="New">Select Quiz</MenuItem>
-        )}
-        {quizzes.map((quiz) => (
-          <MenuItem key={quiz.id} value={quiz.id}>
-            <SafeHtml html={quiz.title} />
-            &nbsp;({quiz.id})
-          </MenuItem>
-        ))}
-      </Select>
+      <Box display="flex" justifyContent={'space-between'}>
+        <Select
+          value={selectedQuizId}
+          onChange={(e) => {
+            const newQuizId = e.target.value;
+            onQuizIdChange?.(newQuizId);
+          }}
+        >
+          {accessType == 'MUTATE' ? (
+            <MenuItem value="New">New</MenuItem>
+          ) : (
+            <MenuItem value="New">Select Quiz</MenuItem>
+          )}
+          {quizzes.map((quiz) => (
+            <MenuItem key={quiz.id} value={quiz.id}>
+              <SafeHtml html={quiz.title} />
+              &nbsp;({quiz.id})
+            </MenuItem>
+          ))}
+        </Select>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() =>
+            router.push({
+              pathname: '/quiz-gen',
+              query: {
+                courseId: courseId || '',
+                startSectionId:  courseId === 'iwgs-2' ? 'ch-ontologies/section/semweb-intro/section' : '',
+                endSectionId: courseId === 'iwgs-2' ? 'ch-ontologies/section/cidoc-crm/section' : '',
+              },
+            })
+          }
+        >
+          Create Quiz
+        </Button>
+      </Box>
 
       <h2>
         {isNew && accessType == 'MUTATE'
@@ -349,7 +369,12 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           {formErrorReason}
         </Typography>
       )}
-      <br />
+
+      {!css?.length && Object.keys(problems).length > 0 && (
+        <Typography sx={{ color: 'red' }} fontWeight="bold">
+          CSS content is missing. Please try refreshing and re-uploading the quiz file.
+        </Typography>
+      )}
       <Box display="flex" gap={2} alignItems="center" mt={2} mb={2}>
         {accessType == 'MUTATE' && (
           <Button

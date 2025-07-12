@@ -28,7 +28,7 @@ export const de = {
     newHome: {
       alea: 'ALᴇA: Adaptiver Lernassistent',
       aleaDesc:
-        'Kurse, die sich an die Präferenzen und Kompetenzen der Lernenden anpassen, abhängig von bestimmten Kursen .',
+        'Kurse, die sich an die Präferenzen und Kompetenzen der Lernenden anpassen, abhängig vom jeweiligen Inhalt.',
       signUpNow: 'Jetzt registrieren',
       exploreOurCourse: 'Entdecken Sie unsere Kurse',
       publications: 'Veröffentlichungen',
@@ -37,7 +37,7 @@ export const de = {
       partneredWith:
         'Hochwertige Bildungsinhalte + entwickelt an + angesehenen Institutionen weltweit',
       vollKiProjectInfo:
-        'Das VoLL-KI-Projekt wird vom Bundesministerium für Bildung und Forschung (BMBF) unter der Fördernummer 16DHBKI089 mit fast 5 Millionen Euro gefördert und läuft von Dezember 2021 bis November 2025.',
+        'Das VoLL-KI-Projekt wird vom Bundesministerium für Forschung, Technologie und Raumfahrt (BMFTR) unter der Fördernummer 16DHBKI089 mit fast 5 Millionen Euro gefördert und läuft von Dezember 2021 bis November 2025.',
     },
   },
   login: {
@@ -118,6 +118,7 @@ export const de = {
     enrollmentMessage:
       'Bitte melden Sie sich für den Kurs an, um auf Quiz und Hausaufgaben zuzugreifen.',
     getEnrolled: 'sich einschreiben',
+    numberofStudentEnrolled: 'Studenten sind bereits eingeschrieben',
   },
   homework: {
     homeworkDashboard: 'Hausaufgaben-Dashboard',
@@ -173,13 +174,22 @@ export const de = {
     confirmation: 'Bestätigung',
     confirmText: 'Meine Daten löschen',
     purgeInstruction: 'Geben Sie diesen Text zur Bestätigung in das Feld unten ein',
+    calendar: {
+      copyCalendarUrl: 'Kalender-URL kopieren',
+      howTo: 'So fügen Sie den Kalender zu Google Kalender hinzu',
+      stepOne: 'Die URL wurde in Ihre Zwischenablage kopiert.',
+      stepTwo: 'Öffnen Sie Google Kalender in Ihrem Browser.',
+      stepThree: 'Klicken Sie links auf „Weitere Kalender“ → „+“. ',
+      stepFour: 'Wählen Sie „Per URL“. ',
+      stepFive: 'Fügen Sie die kopierte URL ein und klicken Sie auf „Kalender hinzufügen“. ',
+    },
   },
   myLearnerModel: {
     learnerModel: 'Lernendenmodell',
     description1:
       'Anhand Ihrer Interaktionen mit dem System bemühen wir uns, Ihre Kompetenz in Bezug auf verschiedene Konzepte einzuschätzen. Wir verwenden das erweiterte Bloom-Modell ',
     description2:
-      ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie sechs Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch bekannt als Lernenden-Modell) wird in allen semantischen Diensten im VoLl-KI SSFC-System verwendet.',
+      ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie sechs Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch bekannt als Lernenden-Modell) wird in allen semantischen Diensten im ALeA.',
   },
   courseView: {
     notes: 'Notizen',
@@ -423,7 +433,7 @@ export const de = {
     prepareUpcomingQuiz: 'Bevorstehendes Quiz vorbereiten',
     latestHomework: 'neueste Hausaufgaben',
     noHomeworkAvailable: 'Keine Hausaufgaben verfügbar',
-    progress: 'Fortschritt'
+    progress: 'Fortschritt',
   },
   recorrection: {
     quizRecorrection: 'Quiz-Rekorrektur',
@@ -438,5 +448,12 @@ export const de = {
     noChangetoApply: 'Keine Änderungen zum Anwenden gefunden',
     loadingPreviewOfChanges: 'Laden der Vorschau der Änderungen...',
     ApplyRecorrection: 'Rekorrektur anwenden',
+  },
+  calendarSection: {
+    schedule: 'Stundenplan',
+    personalCalendar: 'Persönlicher Kalender',
+    howToUse: 'So verwendest du es',
+    howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
+    howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
 };

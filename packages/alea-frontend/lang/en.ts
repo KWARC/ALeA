@@ -38,7 +38,7 @@ export const en = {
       partneredWith:
         'Top-tier educational content + developed at + esteemed institutions worldwide',
       vollKiProjectInfo:
-        'The VoLL-KI Project is funded by the German Ministry of Research and education (BMBF) under the grant 16DHBKI089 with almost 5 Million Euro and runs Dec. 2021 to November 2025.',
+        'The VoLL-KI Project is funded by the Federal Ministry of Research, Technology and Space (BMFTR) under the grant 16DHBKI089 with almost 5 Million Euro and runs Dec. 2021 to November 2025.',
     },
   },
   login: {
@@ -147,6 +147,7 @@ export const en = {
     practiceProblems: 'Practice Problems',
     enrollmentMessage: 'Please enroll in the course to access quizzes and homework.',
     getEnrolled: 'Get Enrolled',
+    numberofStudentEnrolled: 'students are already enrolled',
   },
   homework: {
     homeworkDashboard: 'Homework Dashboard',
@@ -198,13 +199,22 @@ export const en = {
     confirmation: 'Confirmation',
     confirmText: 'Purge my data',
     purgeInstruction: 'Enter this text in the box below to confirm',
+    calendar: {
+      copyCalendarUrl: 'Copy Calendar URL',
+      howTo: 'How to Add Calendar to Google Calendar',
+      stepOne: 'The URL has been copied to your clipboard.',
+      stepTwo: 'Open Google Calendar in your browser.',
+      stepThree: 'On the left, click on “Other calendars” → “+”.',
+      stepFour: 'Select “From URL”.',
+      stepFive: 'Paste the copied URL and click “Add calendar”.',
+    },
   },
   myLearnerModel: {
     learnerModel: 'Learner Model',
     description1:
       'Using your interactions with the system, we strive to estimate your competency of various concepts. We use the Bloom extended model',
     description2:
-      ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in the VoLL-KI SSFC System.',
+      ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in ALeA.',
   },
   courseView: {
     notes: 'Notes',
@@ -447,7 +457,17 @@ export const en = {
     prepareUpcomingQuiz: 'Prepare Upcoming Quiz',
     latestHomework: 'Latest Homework',
     noHomeworkAvailable: 'No homework available',
-    progress: 'Progress'
+    progress: 'Progress',
+  },
+  syllabus: {
+    syllabusEntries: 'Syllabus Entries',
+    noSyllabusEntriesYet: 'No syllabus entries yet',
+    editsectionentry: 'Edit Section Entry',
+    addnewsection: 'Add New Section',
+    prepareUpcomingQuiz: 'Prepare Upcoming Quiz',
+    latestHomework: 'Latest Homework',
+    noHomeworkAvailable: 'No homework available',
+    progress: 'Progress',
   },
   recorrection: {
     quizRecorrection: 'Quiz Recorrection',
@@ -461,5 +481,12 @@ export const en = {
     noChangetoApply: 'No changes to apply',
     loadingPreviewOfChanges: 'Loading preview of changes...',
     ApplyRecorrection: 'Apply Recorrection',
+  },
+  calendarSection: {
+    schedule: 'Schedule',
+    personalCalendar: 'Personal Calendar',
+    howToUse: 'How to use',
+    howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
+    howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
 };

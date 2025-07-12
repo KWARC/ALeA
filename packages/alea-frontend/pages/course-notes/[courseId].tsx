@@ -1,4 +1,4 @@
-import { FTMLDocument, FTMLSetup } from '@kwarc/ftml-react';
+import { FTMLDocument, FTMLSetup, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   Box,
@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material';
-import { getCourseInfo, getDocumentSections } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/api';
 import { CommentButton } from '@stex-react/comments';
 import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
@@ -111,7 +111,9 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    getDocumentSections(notes).then(([css, toc]) => {
+    getFlamsServer()
+    .contentToc({ uri: notes })
+    .then(([css, toc] = [[], []]) => {
       setToc(toc);
       uriToTitle.current = {};
       getSectionUriToTitle(toc, uriToTitle.current);
@@ -150,27 +152,35 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <FTMLSetup>
-        <FTMLDocument
-          key={notes}
-          document={{ type: 'FromBackend', uri: notes, toc: { Predefined: toc }, gottos }}
-          onFragment={(uri, kind) => {
-            if (kind.type === 'Section' || kind.type === 'Slide' || kind.type === 'Paragraph') {
-              return (ch) => (
-                <FragmentWrap
-                  uri={uri}
-                  fragmentKind={kind.type}
-                  children={ch}
-                  uriToTitle={uriToTitle.current}
-                />
-              );
-            }
-          }}
-          onSectionTitle={(uri, lvl) => {
-            return <TrafficLightIndicator sectionUri={uri} />;
-          }}
-        />
-      </FTMLSetup>
+      <Box
+        sx={{
+          height: 'calc(100vh - 120px)',
+          overflow: 'auto',
+          position: 'relative',
+        }}
+      >
+        <FTMLSetup>
+          <FTMLDocument
+            key={notes}
+            document={{ type: 'FromBackend', uri: notes, toc: { Predefined: toc }, gottos }}
+            onFragment={(uri, kind) => {
+              if (kind.type === 'Section' || kind.type === 'Slide' || kind.type === 'Paragraph') {
+                return (ch) => (
+                  <FragmentWrap
+                    uri={uri}
+                    fragmentKind={kind.type}
+                    children={ch}
+                    uriToTitle={uriToTitle.current}
+                  />
+                );
+              }
+            }}
+            onSectionTitle={(uri, lvl) => {
+              return <TrafficLightIndicator sectionUri={uri} />;
+            }}
+          />
+        </FTMLSetup>
+      </Box>
     </MainLayout>
   );
 };

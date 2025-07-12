@@ -1,6 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box, CircularProgress } from '@mui/material';
-import { getDocumentSections } from '@stex-react/api';
 import { BG_COLOR, shouldUseDrawer } from '@stex-react/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -9,6 +8,7 @@ import { ContentDashboard } from './ContentDashboard';
 import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export function DocProblemBrowser({
   notesDocUri,
@@ -46,9 +46,11 @@ export function DocProblemBrowser({
 
   useEffect(() => {
     if (!notesDocUri) return;
-    getDocumentSections(notesDocUri).then(([_, toc]) => {
-      setToc(toc);
-    });
+    getFlamsServer()
+      .contentToc({ uri: notesDocUri })
+      .then(([_, toc] = [[], []]) => {
+        setToc(toc);
+      });
   }, [notesDocUri]);
 
   useEffect(() => {

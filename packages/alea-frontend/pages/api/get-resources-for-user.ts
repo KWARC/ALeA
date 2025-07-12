@@ -19,10 +19,7 @@ function getValidActionsForResource(resourceName: ResourceName): Action[] {
   return resource.possibleActions;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = await getUserIdOrSetError(req, res);
-  if (!userId) return;
-
+export async function getAuthorizedCourseResources(userId: string) {
   const courseIds = Object.keys(await getCourseInfo());
   const resourceNames = COURSE_SPECIFIC_RESOURCENAMES;
 
@@ -37,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
   );
 
-  const authorizedResourceActions = (
+  const validResourceActions = (
     await Promise.all(
       resourceActions.map(async ({ name, courseId, actions }) => {
         const validActions = [];
@@ -53,5 +50,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     )
   ).filter((resource) => resource !== null);
+  return validResourceActions;
+}
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
+  const authorizedResourceActions = await getAuthorizedCourseResources(userId);
+
   return res.status(200).json(authorizedResourceActions);
 }

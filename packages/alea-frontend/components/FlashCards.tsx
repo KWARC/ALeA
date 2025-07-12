@@ -119,6 +119,8 @@ function FlashCardFront({
     <Box className={styles['front']}>
       &nbsp;
       <Box
+        fragment-uri={conceptUri}
+        fragment-kind="Section"
         sx={{
           width: 'max-content',
           m: '0 auto',
@@ -132,7 +134,7 @@ function FlashCardFront({
               sx={{
                 '& *': {
                   fontSize: `${idx === 0 ? 32 : 20}px !important`,
-                  overflowX: 'unset !important', // Fix for https://github.com/slatex/sTeX-React/issues/63
+                  overflowX: 'unset !important', // Fix for https://github.com/slatex/ALeA/issues/63
                 },
               }}
             >
@@ -179,10 +181,12 @@ function FlashCardBack({
           }}
         >
           {definitionUri && (
-            <FTMLFragment
-              key={definitionUri}
-              fragment={{ type: 'FromBackend', uri: definitionUri }}
-            />
+            <Box fragment-uri={definitionUri} fragment-kind="Section">
+              <FTMLFragment
+                key={definitionUri}
+                fragment={{ type: 'FromBackend', uri: definitionUri }}
+              />
+            </Box>
           )}
         </Box>
       </Box>

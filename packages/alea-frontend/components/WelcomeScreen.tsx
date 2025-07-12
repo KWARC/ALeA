@@ -24,7 +24,6 @@ import {
   getCourseInstanceThreads,
   getCourseQuizList,
   getCoverageTimeline,
-  getDocumentSections,
   getHomeworkList,
   getUserInfo,
   QuestionStatus,
@@ -52,6 +51,7 @@ import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 interface ColorInfo {
   color: string;
@@ -81,7 +81,7 @@ const getResourceDisplayText = (name: ResourceName, router: NextRouter) => {
   if (name === ResourceName.COURSE_HOMEWORK) {
     return r.homework;
   }
-  if (name === ResourceName.COURSE_NOTES) {
+  if (name === ResourceName.COURSE_SYLLABUS) {
     return r.updatesyllabus;
   }
   return name.replace('COURSE_', ' ').replace('_', ' ');
@@ -102,7 +102,7 @@ const getColoredDescription = (text: string, colorInfo?: ColorInfo) => {
 
 const getResourceIcon = (name: ResourceName) => {
   switch (name) {
-    case ResourceName.COURSE_NOTES:
+    case ResourceName.COURSE_SYLLABUS:
       return <ArticleIcon sx={{ fontSize: '15px' }} />;
     case ResourceName.COURSE_QUIZ:
       return <QuizIcon sx={{ fontSize: '15px' }} />;
@@ -264,7 +264,7 @@ export async function getLastUpdatedNotes(
       const notesUri = allCourses[courseId]?.notes;
 
       if (notesUri) {
-        const tocResp = await getDocumentSections(notesUri);
+        const tocResp = await getFlamsServer().contentToc({ uri: notesUri });
         const docSections = tocResp[1];
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const secInfo = sections.reduce((acc, s) => {
@@ -424,7 +424,7 @@ async function getLastUpdatedDescriptions({
   let colorInfo = undefined;
 
   switch (name) {
-    case ResourceName.COURSE_NOTES:
+    case ResourceName.COURSE_SYLLABUS:
       ({ description, timeAgo, timestamp, colorInfo } = await getLastUpdatedNotes(
         courseId,
         router
@@ -491,7 +491,7 @@ const handleResourceClick = (
 
   const { courseId, name } = resource;
   let url = '';
-  if (name === ResourceName.COURSE_NOTES) {
+  if (name === ResourceName.COURSE_SYLLABUS) {
     url = `instructor-dash/${courseId}?tab=syllabus`;
   } else if (name === ResourceName.COURSE_HOMEWORK) {
     if (action === Action.INSTRUCTOR_GRADING) {
