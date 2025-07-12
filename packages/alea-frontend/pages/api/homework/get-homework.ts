@@ -21,7 +21,7 @@ import {
 import {
   convertToSubProblemIdToAnswerId,
   getAllGradingsOrSetError,
-} from '../nap/get-answers-with-grading';
+} from '../nap/get-answers-info';
 
 function getPhaseAppropriateProblems(
   problems: { [problemId: string]: FTMLProblemWithSolution },
