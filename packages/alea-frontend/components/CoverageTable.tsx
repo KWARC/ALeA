@@ -15,19 +15,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { getAllQuizzes, QuizWithStatus } from '@stex-react/api';
+import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { SecInfo } from '../types';
-import QuizHandler from './QuizHandler';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { useStudentCount } from '../hooks/useStudentCount';
-import { getSectionNameForUri } from './CoverageUpdater';
+import { SecInfo } from '../types';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
+import { getSectionNameForUri } from './CoverageUpdater';
+import QuizHandler from './QuizHandler';
 import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
@@ -59,6 +58,45 @@ const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slide
     </Box>
   );
 };
+
+const tooltipBoxProps = {
+  maxWidth: '600px',
+  color: '#1a237e',
+  border: '2px solid #3f51b5',
+  p: '12px',
+  borderRadius: '8px',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+  bgcolor: 'white',
+};
+
+function SectionTooltipContent({
+  shouldHighlightNoSection,
+  secInfo,
+  sectionUri,
+  sectionCompleted,
+}: {
+  shouldHighlightNoSection: boolean;
+  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  sectionUri: string;
+  sectionCompleted: boolean;
+}) {
+  const sectionId = secInfo[sectionUri]?.id;
+  if (!sectionId) return shouldHighlightNoSection ? 'No Section - Please fill this field' : null;
+
+  return (
+    <Box {...tooltipBoxProps}>
+      <span style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>
+        {sectionCompleted !== undefined && (
+          <>
+            {sectionCompleted ? '✅ Completed' : '⏳ In Progress'}
+            <br />
+          </>
+        )}
+        {getSectionHierarchy(sectionId, secInfo)}&nbsp;
+      </span>
+    </Box>
+  );
+}
 
 function CoverageRow({
   item,
@@ -106,15 +144,7 @@ function CoverageRow({
       <TableCell>
         <NoMaxWidthTooltip
           title={
-            <Box
-              maxWidth="600px"
-              color="#1a237e"
-              border="2px solid #3f51b5"
-              p="12px"
-              borderRadius="8px"
-              boxShadow="0 4px 20px rgba(0, 0, 0, 0.15)"
-              bgcolor="white"
-            >
+            <Box {...tooltipBoxProps}>
               <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
                 <Typography fontWeight="bold" display="inline">
                   Lecture Timings:
@@ -171,10 +201,14 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip
+        <NoMaxWidthTooltip
           title={
-            secInfo[item.sectionUri]?.title.trim() ||
-            (shouldHighlightNoSection ? 'No Section - Please fill this field' : 'No Section')
+            <SectionTooltipContent
+              shouldHighlightNoSection={shouldHighlightNoSection}
+              secInfo={secInfo}
+              sectionUri={item.sectionUri}
+              sectionCompleted={item.sectionCompleted}
+            />
           }
         >
           <span>
@@ -213,38 +247,8 @@ function CoverageRow({
               formatSectionWithSlide(sectionTitle, item.slideNumber, item.slideUri)
             )}
           </span>
-        </Tooltip>
+        </NoMaxWidthTooltip>
       </TableCell>
-      <TableCell align="center">
-        {item.sectionUri
-          ? (() => {
-              const sectionId = secInfo[item.sectionUri]?.id;
-              const hierarchy = sectionId
-                ? getSectionHierarchy(sectionId, secInfo)
-                : 'Unknown section';
-
-              const statusText = item.sectionCompleted ? '✅ Completed' : '⏳ In Progress';
-
-              return (
-                <Tooltip
-                  title={
-                    <span style={{ fontSize: '0.85rem' }}>
-                      {statusText}
-                      <br />
-                      {hierarchy}
-                    </span>
-                  }
-                  arrow
-                >
-                  <span style={{ fontSize: '1.1rem', cursor: 'pointer', display: 'inline-block' }}>
-                    {item.sectionCompleted ? '✅' : '⏳'}
-                  </span>
-                </Tooltip>
-              );
-            })()
-          : null}
-      </TableCell>
-
       <TableCell
         sx={{
           maxWidth: '200px',
@@ -253,11 +257,19 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip title={targetSectionTitle?.trim() || item.targetSectionUri || 'No Target'}>
+        <NoMaxWidthTooltip
+          title={
+            <SectionTooltipContent
+              shouldHighlightNoSection={shouldHighlightNoSection}
+              secInfo={secInfo}
+              sectionUri={item.targetSectionUri}
+            />
+          }
+        >
           <Typography variant="body2">
             {targetSectionTitle?.trim() || item.targetSectionUri || <i>-</i>}
           </Typography>
-        </Tooltip>
+        </NoMaxWidthTooltip>
       </TableCell>
       <TableCell>
         {item.clipId?.length ? (
