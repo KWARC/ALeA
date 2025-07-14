@@ -16,6 +16,7 @@ import { MystEditor } from '@stex-react/myst';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
+import { ShowSubProblemAnswer, SubProblemAnswer } from './SubProblemAnswer';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -161,7 +162,7 @@ function AnswerAccepter({
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
   const serverAnswer =
-    previousAnswer[masterProblemId].responses.find((c) => c.subProblemId === problemId)?.answer ??
+    previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)?.answer ??
     null;
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
@@ -210,12 +211,15 @@ function AnswerAccepter({
           onValueChange={onAnswerChange}
         />
       </Box>
+
       <IconButton disabled={isFrozen} onClick={onSaveClick} sx={{ ml: 2 }}>
         <SaveIcon />
       </IconButton>
+      <ShowSubProblemAnswer problemId={masterProblemId} subproblemId={problemId}></ShowSubProblemAnswer>
     </Box>
   );
 }
+
 export function ProblemDisplay({
   uri,
   problem,
