@@ -9,31 +9,31 @@ import {
   Typography,
 } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { FlatQuizProblem, getSectionNameFromIdOrUri } from 'packages/alea-frontend/pages/quiz-gen';
-import { SecInfo } from 'packages/alea-frontend/types';
 import { useMemo, useState } from 'react';
+import { FlatQuizProblem, getSectionNameFromIdOrUri } from '../../pages/quiz-gen';
+import { SecInfo } from '../../types';
 import { UrlNameExtractor } from '../LoListDisplay';
 
 export const QuestionSidebar = ({
   problems,
   sections = [],
-  generatedProblems,
+  generatedProblems = [],
   latestGeneratedProblems,
-  viewMode,
+  viewMode = 'all',
   currentIdx,
   setCurrentIdx,
   hideSections = false,
-  existingProblems,
+  existingProblems = [],
 }: {
   problems: any;
   sections?: SecInfo[];
-  viewMode: 'generated' | 'existing' | 'all';
-  generatedProblems: FlatQuizProblem[];
+  viewMode?: 'generated' | 'existing' | 'all';
+  generatedProblems?: FlatQuizProblem[];
   latestGeneratedProblems: FlatQuizProblem[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
   hideSections?: boolean;
-  existingProblems: { uri: string; sectionUri: string }[];
+  existingProblems?: { uri: string; sectionUri: string }[];
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 

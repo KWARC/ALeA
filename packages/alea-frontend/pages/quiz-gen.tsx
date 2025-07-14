@@ -102,7 +102,7 @@ const QuizGen = () => {
       : viewMode === 'existing'
       ? setExistingIdx
       : setAllIdx;
-  const problems: ProblemItem[] = useMemo(() => {
+  const problems: ProblemItem[] = [];/*useMemo(() => {
     if (viewMode === 'generated') {
       return generatedProblems.map((p) => ({ type: 'generated', data: p } as const));
     }
@@ -114,15 +114,15 @@ const QuizGen = () => {
       ...generatedProblems.map((p) => ({ type: 'generated', data: p } as const)),
       ...existingProblemUris.map((data) => ({ type: 'existing', data } as const)),
     ];
-  }, [viewMode, generatedProblems, existingProblemUris]);
+  }, [viewMode, generatedProblems, existingProblemUris]);*/
 
   const currentProblem = problems[currentIdx] ?? problems[0];
   console.log({ currentProblem });
   const handleClick = () => {
-    const url = `/course-view/${currentProblem.data?.courseId}?sectionId=${encodeURIComponent(
-      currentProblem.data?.sectionId
-    )}`;
-    window.open(url, '_blank');
+    // const url = `/course-view/${currentProblem.data?.courseId}?sectionId=${encodeURIComponent(
+    //   currentProblem.data?.sectionId
+    // )}`;
+    // window.open(url, '_blank');
   };
   console.log({ currentProblem });
 
@@ -187,7 +187,7 @@ const QuizGen = () => {
                   <Chip
                     icon={<Folder style={{ color: '#bbdefb' }} />}
                     label={`Section: ${getSectionNameFromIdOrUri(
-                      currentProblem.data?.sectionId || currentProblem.data?.sectionUri,
+                      currentProblem.data?.sectionId, //  || currentProblem.data?.sectionUri,
                       sections
                     )}`}
                     variant="outlined"
