@@ -28,6 +28,7 @@ import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { useStudentCount } from '../hooks/useStudentCount';
 import { getSectionNameForUri } from './CoverageUpdater';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
+import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
@@ -40,18 +41,20 @@ interface CoverageRowProps {
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
+  entries: LectureEntry[];
 }
 
 const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slideUri?: string) => {
   if (!sectionName) return <i>-</i>;
-
   if (!slideUri) return <Typography variant="body2">{sectionName.trim()}</Typography>;
+
+  const slideTitle = getSlideTitle({ slide: { uri: slideUri } } as any, (slideNumber || 1) - 1);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <SlideshowIcon sx={{ fontSize: 16, color: 'success.main' }} />
       <Typography variant="body2">
-        <strong>Slide {slideNumber}</strong> of {sectionName.trim()}
+        <strong>{slideTitle}</strong> of {sectionName.trim()}
       </Typography>
     </Box>
   );
@@ -64,6 +67,7 @@ function CoverageRow({
   onEdit,
   onDelete,
   secInfo,
+  entries,
 }: CoverageRowProps) {
   const now = dayjs();
   const itemDate = dayjs(item.timestamp_ms);
@@ -169,7 +173,7 @@ function CoverageRow({
       >
         <Tooltip
           title={
-            secInfo[item.sectionUri]?.title ||
+            secInfo[item.sectionUri]?.title.trim() ||
             (shouldHighlightNoSection ? 'No Section - Please fill this field' : 'No Section')
           }
         >
@@ -211,6 +215,36 @@ function CoverageRow({
           </span>
         </Tooltip>
       </TableCell>
+      <TableCell align="center">
+        {item.sectionUri
+          ? (() => {
+              const sectionId = secInfo[item.sectionUri]?.id;
+              const hierarchy = sectionId
+                ? getSectionHierarchy(sectionId, secInfo)
+                : 'Unknown section';
+
+              const statusText = item.sectionCompleted ? '✅ Completed' : '⏳ In Progress';
+
+              return (
+                <Tooltip
+                  title={
+                    <span style={{ fontSize: '0.85rem' }}>
+                      {statusText}
+                      <br />
+                      {hierarchy}
+                    </span>
+                  }
+                  arrow
+                >
+                  <span style={{ fontSize: '1.1rem', cursor: 'pointer', display: 'inline-block' }}>
+                    {item.sectionCompleted ? '✅' : '⏳'}
+                  </span>
+                </Tooltip>
+              );
+            })()
+          : null}
+      </TableCell>
+
       <TableCell
         sx={{
           maxWidth: '200px',
@@ -219,7 +253,7 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip title={targetSectionTitle || item.targetSectionUri || 'No Target'}>
+        <Tooltip title={targetSectionTitle?.trim() || item.targetSectionUri || 'No Target'}>
           <Typography variant="body2">
             {targetSectionTitle?.trim() || item.targetSectionUri || <i>-</i>}
           </Typography>
@@ -579,6 +613,7 @@ export function CoverageTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   secInfo={secInfo}
+                  entries={entries}
                 />
               );
             })}
