@@ -7,7 +7,165 @@ export const SYSTEM_UPDATES = [
     content_de: '',
     postedTimestamp: '2023-02-11T00:20:00+05:30',
     }*/
-    {
+  {
+    id: 'section-time-taken',
+    header: 'Actual Section Completion Time',
+    content:
+      'Displays the actual time professors took to complete each section in the syllabus view.',
+    header_de: 'Tatsächliche Abschlusszeit für Abschnitte',
+    content_de:
+      'Zeigt im Lehrplan die tatsächliche Zeit an, die Professoren zum Abschluss jedes Abschnitts benötigt haben.',
+    postedTimestamp: '2025-07-08T00:20:00+05:30',
+  },
+  {
+    id: 'venue-in-syllabus',
+    header: 'Venue Information in Syllabus',
+    content: 'Course venues are now displayed in the syllabus section on the homepage.',
+    header_de: 'Veranstaltungsort im Lehrplan',
+    content_de: 'Die Kursorte werden jetzt im Lehrplanbereich auf der Startseite angezeigt.',
+    postedTimestamp: '2025-07-04T00:20:00+05:30',
+  },
+  {
+    id: 'course-calendar',
+    header: 'Course Calendar for Students',
+    content:
+      'A calendar now shows all scheduled lecture dates and times for better course planning.',
+    header_de: 'Kurskalender für Studierende',
+    content_de:
+      'Ein Kalender zeigt jetzt alle geplanten Vorlesungstermine und -zeiten für eine bessere Kursplanung an.',
+    postedTimestamp: '2025-07-03T00:20:00+05:30',
+  },
+  {
+    id: 'exam-schedule',
+    header: 'Exam Schedule Available',
+    content: 'Exam dates are now shown directly on the course homepage.',
+    header_de: 'Prüfungsplan verfügbar',
+    content_de: 'Die Prüfungstermine werden jetzt direkt auf der Kurs-Startseite angezeigt.',
+    postedTimestamp: '2025-07-03T00:20:00+05:30',
+  },
+  {
+    id: 'student-count-tabs',
+    header: 'Student Count and Tab Navigation Fix',
+    content:
+      'Shows number of enrolled students in the instructor dashboard and fixes tab-switching issues on small screens.',
+    header_de: 'Anzahl der Studierenden und Tab-Navigation behoben',
+    content_de:
+      'Zeigt die Anzahl der eingeschriebenen Studierenden im Dozenten-Dashboard und behebt Tab-Wechselprobleme auf kleinen Bildschirmen.',
+    postedTimestamp: '2025-06-20T00:20:00+05:30',
+  },
+  {
+    id: 'report-issue-auto-title',
+    header: 'New Report Issue UI with Auto Title',
+    content:
+      'Users can now report issues using a redesigned UI. Titles and categories are auto-generated (optional).',
+    header_de: 'Neue Problem melden-Oberfläche mit automatischem Titel',
+    content_de:
+      'Nutzer können Probleme jetzt über eine neu gestaltete Oberfläche melden. Titel und Kategorien werden automatisch generiert (optional).',
+    postedTimestamp: '2025-06-16T00:20:00+05:30',
+  },
+  {
+    id: 'quiz-generation',
+    header: 'Quiz Generation Support',
+    content: 'Instructors can now generate quizzes with improved automation and control.',
+    header_de: 'Quiz-Erstellung unterstützt',
+    content_de:
+      'Dozenten können nun Quiz mit verbesserter Automatisierung und Kontrolle erstellen.',
+    postedTimestamp: '2025-06-10T00:20:00+05:30',
+  },
+
+  
+  {
+    id: 'auto-lecture-progress',
+    header: 'Auto-Fill Lecture Details from Video',
+    content:
+      'Lecture section, slide, and timestamp info is now extracted from videos and pre-filled in the syllabus form for efficiency and consistency.',
+    header_de: 'Automatisches Ausfüllen von Vorlesungsdetails aus Videos',
+    content_de:
+      'Abschnitts-, Folien- und Zeitstempelinformationen werden automatisch aus Videos extrahiert und im Lehrplanformular vorausgefüllt.',
+    postedTimestamp: '2025-06-09T00:20:00+05:30',
+  },
+  {
+    id: 'lecture-progress',
+    header: 'Lecture Progress Added',
+    content:
+      'Track lecture progress based on targeted sections to see how far ahead or behind a lecture is.',
+    header_de: 'Vorlesungsfortschritt hinzugefügt',
+    content_de:
+      'Verfolgen Sie den Fortschritt der Vorlesung anhand der Zielabschnitte, um zu sehen, wie weit eine Vorlesung voraus oder im Rückstand ist.',
+    postedTimestamp: '2025-06-09T00:20:00+05:30',
+  },
+
+  {
+    id: 'quiz-dashboard-link',
+    header: 'Quiz Dashboard Redirection',
+    content:
+      'Instead of showing the schedule, instructors are now redirected to the quiz dashboard.',
+    header_de: 'Weiterleitung zum Quiz-Dashboard',
+    content_de:
+      'Anstatt den Zeitplan anzuzeigen, werden Dozenten nun zum Quiz-Dashboard weitergeleitet.',
+    postedTimestamp: '2025-06-04T00:20:00+05:30',
+  },
+  {
+    id: 'homework-answering',
+    header: 'Homework Answering Enabled',
+    content: 'Homework answering functionality is now available for instructors.',
+    header_de: 'Hausaufgabenbeantwortung aktiviert',
+    content_de: 'Die Funktion zur Beantwortung von Hausaufgaben ist nun für Dozenten verfügbar.',
+    postedTimestamp: '2025-06-03T00:20:00+05:30',
+  },
+  {
+    id: 'excused-students-summary',
+    header: 'Excused Students and End Semester Summary',
+    content:
+      'Instructors can maintain excused lists per quiz and customize the end semester summary, including excluding certain quizzes.',
+    header_de: 'Entschuldigte Studierende und Semesterzusammenfassung',
+    content_de:
+      'Dozenten können Listen entschuldigter Studierender pro Quiz führen und die Semesterzusammenfassung individuell anpassen, z. B. bestimmte Quiz ausschließen.',
+    postedTimestamp: '2025-05-28T00:20:00+05:30',
+  },
+  {
+    id: 're-correction-preview',
+    header: 'Self Re-Correction for Instructors',
+    content:
+      'Instructors can now enter re-correction data and preview its effects before applying it.',
+    header_de: 'Selbstständige Nachkorrektur für Dozenten',
+    content_de:
+      'Dozenten können nun Nachkorrekturdaten eingeben und eine Vorschau der Auswirkungen anzeigen, bevor sie diese anwenden.',
+    postedTimestamp: '2025-05-23T00:20:00+05:30',
+  },
+
+  {
+    id: 'personalised-problems',
+    header: 'Personalised Problem Section',
+    content:
+      'A “For Me” section has been added to show problems tailored to each student’s learning path.',
+    header_de: 'Personalisierter Aufgabenbereich',
+    content_de:
+      'Ein „Für mich“-Bereich wurde hinzugefügt, um Aufgaben anzuzeigen, die auf den individuellen Lernfortschritt jedes Studierenden zugeschnitten sind.',
+    postedTimestamp: '2025-05-15T00:20:00+05:30',
+  },
+  {
+    id: 'study-buddy',
+    header: 'Study Buddy Integration',
+    content:
+      'A Study Buddy button now appears on the homepage if you’re logged in using your FAU account.',
+    header_de: 'Study-Buddy-Integration',
+    content_de:
+      'Eine Schaltfläche für Study Buddy erscheint nun auf der Startseite, wenn Sie mit Ihrem FAU-Konto angemeldet sind.',
+    postedTimestamp: '2025-04-09T00:20:00+05:30',
+  },
+  {
+    id: 'new-profile-ui',
+    header: 'Updated Profile Page',
+    content:
+      'The profile page has been redesigned with an improved user interface for easier navigation and editing.',
+    header_de: 'Aktualisierte Profilseite',
+    content_de:
+      'Die Profilseite wurde mit einer verbesserten Benutzeroberfläche für einfachere Navigation und Bearbeitung neu gestaltet.',
+    postedTimestamp: '2025-04-08T00:20:00+05:30',
+  },
+
+  {
     id: 'ALᴇA-2025-survey',
     header: 'Only one week left for the ALᴇA 2025 survey',
     content: `Help us to evaluate ALᴇA by participating in this fifteen minute survey.
