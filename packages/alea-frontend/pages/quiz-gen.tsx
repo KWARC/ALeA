@@ -19,6 +19,7 @@ import { FeedbackSection } from '../components/quiz-gen/Feedback';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
 import { SecInfo } from '../types';
+import { useRouter } from 'next/router';
 function HiddenFeedback({ problemId }: { problemId: number }) {
   const [feedback, setFeedback] = useState<any>(null);
   const [show, setShow] = useState(false);
@@ -92,6 +93,9 @@ const QuizGen = () => {
   const [viewMode, setViewMode] = useState<'all' | 'generated' | 'existing'>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const courseId = router.query.courseId as string;
 
   const currentIdx =
     viewMode === 'generated' ? generatedIdx : viewMode === 'existing' ? existingIdx : allIdx;
@@ -102,7 +106,7 @@ const QuizGen = () => {
       : viewMode === 'existing'
       ? setExistingIdx
       : setAllIdx;
-  const problems: ProblemItem[] = [];/*useMemo(() => {
+  const problems = useMemo(() => {
     if (viewMode === 'generated') {
       return generatedProblems.map((p) => ({ type: 'generated', data: p } as const));
     }
@@ -114,15 +118,15 @@ const QuizGen = () => {
       ...generatedProblems.map((p) => ({ type: 'generated', data: p } as const)),
       ...existingProblemUris.map((data) => ({ type: 'existing', data } as const)),
     ];
-  }, [viewMode, generatedProblems, existingProblemUris]);*/
+  }, [viewMode, generatedProblems, existingProblemUris]);
 
   const currentProblem = problems[currentIdx] ?? problems[0];
   console.log({ currentProblem });
   const handleClick = () => {
-    // const url = `/course-view/${currentProblem.data?.courseId}?sectionId=${encodeURIComponent(
-    //   currentProblem.data?.sectionId
-    // )}`;
-    // window.open(url, '_blank');
+    const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(
+      (currentProblem.data as any).sectionId
+    )}`;
+    window.open(url, '_blank');
   };
   console.log({ currentProblem });
 
@@ -133,6 +137,7 @@ const QuizGen = () => {
           Quiz Builder
         </Typography>
         <CourseSectionSelector
+          courseId={courseId}
           setLoading={setLoading}
           sections={sections}
           setSections={setSections}
@@ -187,7 +192,8 @@ const QuizGen = () => {
                   <Chip
                     icon={<Folder style={{ color: '#bbdefb' }} />}
                     label={`Section: ${getSectionNameFromIdOrUri(
-                      currentProblem.data?.sectionId, //  || currentProblem.data?.sectionUri,
+                      (currentProblem.data as any)?.sectionId ||
+                        (currentProblem.data as any).sectionUri,
                       sections
                     )}`}
                     variant="outlined"

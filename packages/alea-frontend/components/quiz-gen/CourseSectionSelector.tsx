@@ -28,7 +28,7 @@ import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
 
 export const CourseSectionSelector = ({
-  // loading,
+  courseId,
   setLoading,
   sections,
   setSections,
@@ -36,7 +36,7 @@ export const CourseSectionSelector = ({
   setGeneratedProblems,
   setLatestGeneratedProblems,
 }: {
-  // loading: boolean;
+  courseId: string;
   setLoading: (value: boolean) => void;
   sections: SecInfo[];
   setSections: Dispatch<SetStateAction<SecInfo[]>>;
@@ -45,7 +45,6 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
 }) => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
   const startSectionId = router.query.startSectionId as string;
   const endSectionId = router.query.endSectionId as string;
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
