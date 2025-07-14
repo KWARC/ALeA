@@ -30,25 +30,6 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
   return new Date(timestamp).setHours(12, 0, 0, 0);
 }
 
-// function convertSnapToEntry(snap: LectureEntry): any {
-//   return {
-//     timestamp_ms: snap.timestamp_ms,
-//     sectionName: getSectionNameForUri(snap.sectionUri || '', {}),
-//     sectionUri: snap.sectionUri || '',
-//     targetSectionName: getSectionNameForUri(snap.targetSectionUri || '', {}),
-//     targetSectionUri: snap.targetSectionUri || '',
-//     clipId: snap.clipId || '',
-//     isQuizScheduled: snap.isQuizScheduled || false,
-//     slideUri: snap.slideUri || '',
-//     slideNumber: snap.slideNumber,
-//     venue: snap.venue || '',
-//     venueLink: snap.venueLink || '',
-//     autoDetected: snap.autoDetected || undefined,
-//     lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms,
-//     sectionCompleted: snap.sectionCompleted,
-//   };
-// }
-
 function convertSnapToEntry(snap: LectureEntry): FormData {
   return {
     ...snap,

@@ -78,7 +78,6 @@ const CoverageUpdateTab = () => {
         const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         setToc(docSections);
         const sections = docSections.flatMap((d) => getSecInfo(d));
-        console.log('Sections---', sections);
         const baseSecInfo = sections.reduce((acc, s) => {
           acc[s.uri] = s;
           return acc;
@@ -223,7 +222,6 @@ const CoverageUpdateTab = () => {
                     selectedSection=""
                     onClose={() => setShowDashboard(false)}
                     onSectionClick={(sectionId: string) => {
-                      console.log('Section clicked:', sectionId);
                       setShowDashboard(false);
                     }}
                   />

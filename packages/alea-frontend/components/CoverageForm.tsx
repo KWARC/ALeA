@@ -132,38 +132,14 @@ export function CoverageForm({
     setFormData({ ...formData, sectionCompleted: e.target.checked });
   };
 
-  //   if (!formData.sectionUri || slideNumber === undefined || !uri) return;
-
-  //   const section = secInfo[formData.sectionUri];
-  //   if (!section) return;
-
-  //   getSlides(courseId, section.id).then(({ slides }) => {
-  //     const isLastSlide = slideNumber === slides.length;
-  //     setIsLastSlideSelected(isLastSlide);
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       slideUri: uri,
-  //       slideNumber,
-  //       sectionCompleted: isLastSlide,
-  //     }));
-  //   });
-  // };
-
   const handleSlideUriChange = (
     uri: string | undefined,
     slideNumber: number | undefined,
     isLastSlide?: boolean,
     isLeaf?: boolean
   ) => {
-    console.log('handleSlideUriChange', {
-      uri,
-      slideNumber,
-      isLastSlide,
-      manuallyToggled: hasManuallyToggledCompletion.current,
-    });
     if (!formData.sectionUri || slideNumber === undefined || !uri) return;
     const shouldMarkComplete = !!isLastSlide && !!isLeaf && !hasManuallyToggledCompletion.current;
-    console.log('Decision => Mark section as completed?', shouldMarkComplete);
     setFormData((prev) => ({
       ...prev,
       slideUri: uri,
