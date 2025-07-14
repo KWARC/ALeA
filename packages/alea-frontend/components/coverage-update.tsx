@@ -5,8 +5,10 @@ import {
   Box,
   CircularProgress,
   Container,
+  IconButton,
   Paper,
   Snackbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/api';
@@ -21,6 +23,8 @@ import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { ContentDashboard } from '@stex-react/stex-react-renderer';
+import { MenuBook } from '@mui/icons-material';
 
 export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
@@ -49,6 +53,8 @@ const CoverageUpdateTab = () => {
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [loading, setLoading] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+   const [toc, setToc] = useState<FTML.TOCElem[]>([]);
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -71,7 +77,7 @@ const CoverageUpdateTab = () => {
       try {
         const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
         const sections = docSections.flatMap((d) => getSecInfo(d));
-        console.log("Sections---",sections);
+        console.log('Sections---', sections);
         const baseSecInfo = sections.reduce((acc, s) => {
           acc[s.uri] = s;
           return acc;
@@ -168,10 +174,68 @@ const CoverageUpdateTab = () => {
             overflow: 'hidden',
           }}
         >
-          <Typography variant="h4" component="h1" gutterBottom color="primary">
-            Syllabus for {courseId}
-          </Typography>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+          >
+            <Typography variant="h4" component="h1" color="primary">
+              Syllabus for {courseId}
+            </Typography>
 
+            <Box
+              onMouseEnter={() => setShowDashboard(true)}
+              onMouseLeave={() => setShowDashboard(false)}
+              sx={{ position: 'relative' }}
+            >
+              <Tooltip title="View Course Content" arrow>
+                <IconButton
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  <MenuBook />
+                </IconButton>
+              </Tooltip>
+
+              {showDashboard && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    zIndex: 1300,
+                    mt: 1,
+                    width: 320,
+                    maxHeight: 400,
+                    backgroundColor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    border: 1,
+                    borderColor: 'divider',
+                    overflow: 'auto',
+                  }}
+                >
+                  <ContentDashboard
+                    key={courseId}
+                    courseId={courseId}
+                    toc={Object.values(secInfo).map((section) => ({
+                      type: 'Section' as const,
+                      id: section.id,
+                      title: section.title,
+                      uri: section.uri,
+                      children: [],
+                    }))}
+                    selectedSection=""
+                    onClose={() => setShowDashboard(false)}
+                    onSectionClick={(sectionId: string) => {
+                      console.log('Section clicked:', sectionId);
+                      setShowDashboard(false);
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Box>
           <Snackbar
             open={!!saveMessage}
             autoHideDuration={8000}

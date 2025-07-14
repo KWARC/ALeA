@@ -57,7 +57,6 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
   };
 }
 
-
 interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];

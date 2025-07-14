@@ -28,6 +28,7 @@ import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { useStudentCount } from '../hooks/useStudentCount';
 import { getSectionNameForUri } from './CoverageUpdater';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
+import { getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
@@ -40,18 +41,20 @@ interface CoverageRowProps {
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
+  entries: LectureEntry[];
 }
 
 const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slideUri?: string) => {
   if (!sectionName) return <i>-</i>;
-
   if (!slideUri) return <Typography variant="body2">{sectionName.trim()}</Typography>;
+
+  const slideTitle = getSlideTitle({ slide: { uri: slideUri } } as any, (slideNumber || 1) - 1);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <SlideshowIcon sx={{ fontSize: 16, color: 'success.main' }} />
       <Typography variant="body2">
-        <strong>Slide {slideNumber}</strong> of {sectionName.trim()}
+        <strong>{slideTitle}</strong> of {sectionName.trim()}
       </Typography>
     </Box>
   );
@@ -64,6 +67,7 @@ function CoverageRow({
   onEdit,
   onDelete,
   secInfo,
+  entries
 }: CoverageRowProps) {
   const now = dayjs();
   const itemDate = dayjs(item.timestamp_ms);
@@ -587,6 +591,7 @@ export function CoverageTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   secInfo={secInfo}
+                  entries={entries} 
                 />
               );
             })}
