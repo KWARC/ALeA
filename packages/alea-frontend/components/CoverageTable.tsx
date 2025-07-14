@@ -28,7 +28,7 @@ import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { useStudentCount } from '../hooks/useStudentCount';
 import { getSectionNameForUri } from './CoverageUpdater';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
-import { getSlideTitle } from './SlideSelector';
+import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
@@ -67,7 +67,7 @@ function CoverageRow({
   onEdit,
   onDelete,
   secInfo,
-  entries
+  entries,
 }: CoverageRowProps) {
   const now = dayjs();
   const itemDate = dayjs(item.timestamp_ms);
@@ -216,12 +216,35 @@ function CoverageRow({
         </Tooltip>
       </TableCell>
       <TableCell align="center">
-        {item.sectionUri ? (
-          <Tooltip title={item.sectionCompleted ? 'Section Completed' : 'Section Pending'}>
-            <span style={{ fontSize: '1.1rem' }}>{item.sectionCompleted ? '✅' : '⏳'}</span>
-          </Tooltip>
-        ) : null}
+        {item.sectionUri
+          ? (() => {
+              const sectionId = secInfo[item.sectionUri]?.id;
+              const hierarchy = sectionId
+                ? getSectionHierarchy(sectionId, secInfo)
+                : 'Unknown section';
+
+              const statusText = item.sectionCompleted ? '✅ Completed' : '⏳ In Progress';
+
+              return (
+                <Tooltip
+                  title={
+                    <span style={{ fontSize: '0.85rem' }}>
+                      {statusText}
+                      <br />
+                      {hierarchy}
+                    </span>
+                  }
+                  arrow
+                >
+                  <span style={{ fontSize: '1.1rem', cursor: 'pointer', display: 'inline-block' }}>
+                    {item.sectionCompleted ? '✅' : '⏳'}
+                  </span>
+                </Tooltip>
+              );
+            })()
+          : null}
       </TableCell>
+
       <TableCell
         sx={{
           maxWidth: '200px',
@@ -569,7 +592,6 @@ export function CoverageTable({
             <TableRow sx={{ bgcolor: 'primary.light' }}>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Section Completed</TableCell>
-              <TableCell align="center"></TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Target Section</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Clip</TableCell>
               <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Quiz</TableCell>
@@ -591,7 +613,7 @@ export function CoverageTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   secInfo={secInfo}
-                  entries={entries} 
+                  entries={entries}
                 />
               );
             })}

@@ -37,6 +37,22 @@ export function isLeafSectionId(sectionId: string, secInfo: Record<string, SecIn
   );
 }
 
+export function getSectionHierarchy(sectionId: string, secInfo: Record<string, SecInfo>): string {
+  const parts = sectionId.split('/');
+  const hierarchyTitles: string[] = [];
+
+  for (let i = 1; i <= parts.length; i++) {
+    const partialId = parts.slice(0, i).join('/');
+    const section = Object.values(secInfo).find((s) => s.id === partialId);
+    if (section?.title) {
+      hierarchyTitles.push(section.title.trim());
+    }
+  }
+
+  return hierarchyTitles.join(' / ');
+}
+
+
 const getRelevantSlides = async (
   courseId: string,
   sectionId: string,

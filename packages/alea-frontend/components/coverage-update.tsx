@@ -54,7 +54,7 @@ const CoverageUpdateTab = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
-   const [toc, setToc] = useState<FTML.TOCElem[]>([]);
+  const [toc, setToc] = useState<FTML.TOCElem[]>([]);
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -76,6 +76,7 @@ const CoverageUpdateTab = () => {
       setLoading(true);
       try {
         const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        setToc(docSections);
         const sections = docSections.flatMap((d) => getSecInfo(d));
         console.log('Sections---', sections);
         const baseSecInfo = sections.reduce((acc, s) => {
@@ -218,13 +219,7 @@ const CoverageUpdateTab = () => {
                   <ContentDashboard
                     key={courseId}
                     courseId={courseId}
-                    toc={Object.values(secInfo).map((section) => ({
-                      type: 'Section' as const,
-                      id: section.id,
-                      title: section.title,
-                      uri: section.uri,
-                      children: [],
-                    }))}
+                    toc={toc}
                     selectedSection=""
                     onClose={() => setShowDashboard(false)}
                     onSectionClick={(sectionId: string) => {

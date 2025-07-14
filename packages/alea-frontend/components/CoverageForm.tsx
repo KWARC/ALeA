@@ -132,7 +132,6 @@ export function CoverageForm({
     setFormData({ ...formData, sectionCompleted: e.target.checked });
   };
 
-  // const handleSlideUriChange = (uri: string | undefined, slideNumber: number | undefined) => {
   //   if (!formData.sectionUri || slideNumber === undefined || !uri) return;
 
   //   const section = secInfo[formData.sectionUri];
