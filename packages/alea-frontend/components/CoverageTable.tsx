@@ -78,7 +78,7 @@ function SectionTooltipContent({
   shouldHighlightNoSection: boolean;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
   sectionUri: string;
-  sectionCompleted: boolean;
+  sectionCompleted?: boolean;
 }) {
   const sectionId = secInfo[sectionUri]?.id;
   if (!sectionId) return shouldHighlightNoSection ? 'No Section - Please fill this field' : null;
