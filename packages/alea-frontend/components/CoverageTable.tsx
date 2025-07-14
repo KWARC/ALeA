@@ -207,7 +207,7 @@ function CoverageRow({
               shouldHighlightNoSection={shouldHighlightNoSection}
               secInfo={secInfo}
               sectionUri={item.sectionUri}
-              sectionCompleted={item.sectionCompleted}
+              sectionCompleted={!!item.sectionCompleted}
             />
           }
         >
