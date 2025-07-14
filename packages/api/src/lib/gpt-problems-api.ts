@@ -149,3 +149,26 @@ export async function postFeedback(data: {
   });
   return resp.data;
 }
+export async function getFeedback(problemId: number) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'get-feedback',
+      projectName: 'quiz-gen',
+      problemId,
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data;
+}
+
+export async function getCourseGeneratedProblemsBySection(courseId: string) {
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      courseId: courseId,
+      apiname: 'generated-problems-count-by-section',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as Record<string, number>;
+}

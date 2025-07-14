@@ -1,5 +1,6 @@
 import { getFlamsServer } from '@kwarc/ftml-react';
 import {
+  Badge,
   Box,
   Button,
   CircularProgress,
@@ -8,30 +9,39 @@ import {
   MenuItem,
   Paper,
   Select,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { generateMoreQuizProblems, generateQuizProblems, getCourseInfo } from '@stex-react/api';
+import {
+  generateMoreQuizProblems,
+  generateQuizProblems,
+  getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
+  getCourseInfo,
+} from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { SecInfo } from 'packages/alea-frontend/types';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getSecInfo } from '../coverage-update';
+import axios from 'axios';
 
 export const CourseSectionSelector = ({
-  loading,
+  // loading,
   setLoading,
   sections,
   setSections,
-  setProblems,
+  setExistingProblemUris,
+  setGeneratedProblems,
   setLatestGeneratedProblems,
 }: {
-  loading: boolean;
+  // loading: boolean;
   setLoading: (value: boolean) => void;
   sections: SecInfo[];
   setSections: Dispatch<SetStateAction<SecInfo[]>>;
-  setProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
+  setExistingProblemUris: any;
+  setGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
 }) => {
   const router = useRouter();
@@ -40,7 +50,11 @@ export const CourseSectionSelector = ({
   const endSectionId = router.query.endSectionId as string;
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
   const [hasPriorProblems, setHasPriorProblems] = useState(false);
+  const existingProblemsCache = useRef<Record<string, { uri: string; sectionUri: string }[]>>({});
+  const [generatedProblemsCount, setGeneratedProblemsCount] = useState<Record<string, number>>({});
+  const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
@@ -78,11 +92,72 @@ export const CourseSectionSelector = ({
   }, [courseId, courses]);
 
   useEffect(() => {
+    if (!router.isReady) return;
+
+    if (startSectionId && !endSectionId) {
+      updateRouterQuery(router, { endSectionId: startSectionId }, false);
+    } else if (endSectionId && !startSectionId) {
+      updateRouterQuery(router, { startSectionId: endSectionId }, false);
+    }
+  }, [startSectionId, endSectionId, router]);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (!courseId) return;
+
+      const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
+      const existingCountsResp = await axios.get(
+        `/api/get-course-problem-counts?courseId=${courseId}`
+      );
+      setGeneratedProblemsCount(generatedCounts);
+      setExistingProblemsCount(existingCountsResp.data);
+    };
+
+    fetchCounts();
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!startSectionId || !endSectionId || !courseId || !sections.length) return;
+
+    const fetchInitialData = async () => {
+      setLoading(true);
+      const sectionUri = sections.find((s) => s.id === startSectionId)?.uri;
+      if (!sectionUri) return;
+      if (existingProblemsCache.current[sectionUri]) {
+        setExistingProblemUris(existingProblemsCache.current[sectionUri]);
+      } else {
+        try {
+          const resp = await axios.get(
+            `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
+          );
+          const uris: string[] = resp.data;
+
+          const enrichedProblems = uris.map((uri) => ({
+            uri,
+            sectionUri,
+          }));
+
+          existingProblemsCache.current[sectionUri] = enrichedProblems;
+          setExistingProblemUris(enrichedProblems);
+        } catch (err) {
+          console.error('Failed to fetch existing problems:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      await generateNewProblems('initial');
+    };
+
+    fetchInitialData();
+  }, [startSectionId, endSectionId, courseId, sections]);
+
+  useEffect(() => {
     setHasPriorProblems(false);
   }, [startSectionId, endSectionId, courseId]);
 
   const generateNewProblems = async (mode: 'initial' | 'more' = 'initial') => {
-    setLoading(true);
+    setGenerating(true);
     try {
       const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;
       const response = await fetchFn(courseId, startSectionId, endSectionId);
@@ -95,11 +170,13 @@ export const CourseSectionSelector = ({
       }));
       setHasPriorProblems(true);
       setLatestGeneratedProblems(parsedProblems);
-      setProblems((prev) => (mode === 'more' ? [...prev, ...parsedProblems] : parsedProblems));
+      setGeneratedProblems((prev) =>
+        mode === 'more' ? [...prev, ...parsedProblems] : parsedProblems
+      );
     } catch (error) {
       console.error(' Error generating problems:', error);
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
   };
 
@@ -157,7 +234,42 @@ export const CourseSectionSelector = ({
               >
                 {sections.map((s) => (
                   <MenuItem key={s.title} value={s.id}>
-                    {s.title}
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      width="100%"
+                    >
+                      <span>{s.title}</span>
+
+                      <Box
+                        display="flex"
+                        borderRadius={4}
+                        overflow="hidden"
+                        boxShadow={1}
+                        fontSize="0.75rem"
+                        sx={{
+                          border: '1px solid #ccc',
+                        }}
+                      >
+                        <Tooltip title="Existing problems">
+                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                            {existingProblemsCount[s.uri] || 0}
+                          </Box>
+                        </Tooltip>
+                        <Tooltip title="Generated problems">
+                          <Box
+                            px={1.2}
+                            py={0.3}
+                            bgcolor="success.main"
+                            color="white"
+                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                          >
+                            {generatedProblemsCount[s.uri] || 0}
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                    </Box>
                   </MenuItem>
                 ))}
               </Select>
@@ -172,7 +284,42 @@ export const CourseSectionSelector = ({
               >
                 {sections.map((s) => (
                   <MenuItem key={s.title} value={s.id}>
-                    {s.title}
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      width="100%"
+                    >
+                      <span>{s.title}</span>
+
+                      <Box
+                        display="flex"
+                        borderRadius={4}
+                        overflow="hidden"
+                        boxShadow={1}
+                        fontSize="0.75rem"
+                        sx={{
+                          border: '1px solid #ccc',
+                        }}
+                      >
+                        <Tooltip title="Existing problems">
+                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                            {existingProblemsCount[s.uri] || 0}
+                          </Box>
+                        </Tooltip>
+                        <Tooltip title="Generated problems">
+                          <Box
+                            px={1.2}
+                            py={0.3}
+                            bgcolor="success.main"
+                            color="white"
+                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                          >
+                            {generatedProblemsCount[s.uri] || 0}
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                    </Box>{' '}
                   </MenuItem>
                 ))}
               </Select>
@@ -181,7 +328,7 @@ export const CourseSectionSelector = ({
         )}
 
         <Box display="flex">
-          {loading ? (
+          {generating ? (
             <Button variant="contained" disabled>
               <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               Generating...
