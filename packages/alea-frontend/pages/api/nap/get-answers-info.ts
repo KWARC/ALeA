@@ -1,17 +1,6 @@
-import { GradingAnswerClass, GradingInfo, ProblemResponse, ReviewType } from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { GradingAnswerClass, GradingInfo, ReviewType } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
-import {
-  checkIfQueryParameterExistOrSetError,
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../comment-utils';
-import {
-  getAllAnswersForHomeworkOrSetError,
-  getAllAnswersForQuestion,
-  getHomeworkOrSetError,
-} from '../homework/get-homework';
+import { checkIfQueryParameterExistOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 export async function getAllGradingsOrSetError(
   subProblemToAnswerIds: Record<string, number>,

@@ -96,7 +96,7 @@ const HomeworkDocPage: React.FC = () => {
               showGradingFor: ShowGradingFor.INSTRUCTOR,
               isGrading: false,
               showGrading: true,
-              gradingInfo: hwInfo?.gradingInfo || {},
+              gradingInfo: /*hwInfo?.gradingInfo || TODO(Behrooz)*/ {},
               studentId: 'fake_abc',
             }}
           >
