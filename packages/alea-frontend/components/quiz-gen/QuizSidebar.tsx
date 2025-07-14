@@ -9,33 +9,81 @@ import {
   Typography,
 } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { FlatQuizProblem, getSectionNameFromId } from 'packages/alea-frontend/pages/quiz-gen';
+import { FlatQuizProblem, getSectionNameFromIdOrUri } from 'packages/alea-frontend/pages/quiz-gen';
 import { SecInfo } from 'packages/alea-frontend/types';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { UrlNameExtractor } from '../LoListDisplay';
 
 export const QuestionSidebar = ({
   problems,
   sections = [],
+  generatedProblems,
   latestGeneratedProblems,
+  viewMode,
   currentIdx,
   setCurrentIdx,
   hideSections = false,
+  existingProblems,
 }: {
-  problems: FlatQuizProblem[];
+  problems: any;
   sections?: SecInfo[];
+  viewMode: 'generated' | 'existing' | 'all';
+  generatedProblems: FlatQuizProblem[];
   latestGeneratedProblems: FlatQuizProblem[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
   hideSections?: boolean;
+  existingProblems: { uri: string; sectionUri: string }[];
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
-  const remainingProblems = problems.filter((p) => !latestGeneratedProblems.includes(p));
+
+  const remainingProblems = generatedProblems.filter(
+    (p) => !latestGeneratedProblems.some((latest) => latest.problemId === p.problemId)
+  );
+
   const tabs = [
     `Latest (${latestGeneratedProblems.length})`,
     `Earlier (${remainingProblems.length})`,
   ];
-  const showTabs = latestGeneratedProblems.length > 0 && remainingProblems.length > 0;
-  const currentTabProbs = tabIndex === 0 ? latestGeneratedProblems : remainingProblems;
+
+  const showTabs =
+    viewMode === 'generated' && latestGeneratedProblems.length > 0 && remainingProblems.length > 0;
+
+  const hasRemaining = remainingProblems.length > 0;
+
+  const currentTabProbs: any = useMemo(() => {
+    if (viewMode === 'generated') {
+      if (!hasRemaining) {
+        return generatedProblems.map((p) => ({
+          type: 'generated',
+          data: p,
+        }));
+      }
+
+      return tabIndex === 0
+        ? latestGeneratedProblems.map((p) => ({ type: 'generated', data: p }))
+        : remainingProblems.map((p) => ({ type: 'generated', data: p }));
+    }
+
+    if (viewMode === 'existing') {
+      return existingProblems.map((data) => ({
+        type: 'existing',
+        data: data,
+      }));
+    }
+
+    return [
+      ...generatedProblems.map((p) => ({ type: 'generated', data: p })),
+      ...existingProblems.map((data) => ({ type: 'existing', data: data })),
+    ];
+  }, [
+    viewMode,
+    tabIndex,
+    generatedProblems,
+    latestGeneratedProblems,
+    remainingProblems,
+    existingProblems,
+  ]);
 
   return (
     <Box
@@ -45,7 +93,7 @@ export const QuestionSidebar = ({
       pr={1}
       borderLeft="1px solid #ddd"
       boxShadow="-4px 0 12px rgba(0, 0, 0, 0.05)"
-      maxHeight={'100vh'}
+      maxHeight="100vh"
       overflow="auto"
     >
       <Typography
@@ -63,6 +111,7 @@ export const QuestionSidebar = ({
       >
         🧠 Questions
       </Typography>
+
       {showTabs && (
         <Tabs
           value={tabIndex}
@@ -78,16 +127,35 @@ export const QuestionSidebar = ({
 
       {currentTabProbs.length > 0 ? (
         <List dense component="ul">
-          {currentTabProbs.map((p, idx) => {
-            const isSelected = problems[currentIdx]?.problemId === p.problemId;
+          {currentTabProbs.map((item, idx) => {
+            const isSelected = currentIdx === idx;
+
+            const content =
+              item.type === 'generated' ? (
+                <Tooltip title={item.data.problem}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={isSelected ? 600 : 500}
+                    color="#0d47a1"
+                  >
+                    Q{idx + 1}: {item.data.problem.slice(0, 50)}...
+                  </Typography>
+                </Tooltip>
+              ) : (
+                <Typography variant="subtitle2" fontWeight={isSelected ? 600 : 500} color="#0d47a1">
+                  Q{idx + 1}: <UrlNameExtractor url={item.data?.uri} />
+                </Typography>
+              );
+
+            const sectionText =
+              item.type === 'generated'
+                ? getSectionNameFromIdOrUri(item.data.sectionId, sections)
+                : '';
 
             return (
               <ListItemButton
                 key={idx}
-                onClick={() => {
-                  const actualIndex = problems.findIndex((q) => q.problemId === p.problemId);
-                  setCurrentIdx(actualIndex);
-                }}
+                onClick={() => setCurrentIdx(idx)}
                 selected={isSelected}
                 sx={{
                   borderRadius: 2,
@@ -104,32 +172,22 @@ export const QuestionSidebar = ({
                 }}
               >
                 <ListItemText
-                  primary={
-                    <Tooltip title={p.problem}>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={isSelected ? 600 : 500}
-                        color="#0d47a1"
-                      >
-                        Q{idx + 1}: {p.problem.slice(0, 50)}...
-                      </Typography>
-                    </Tooltip>
-                  }
+                  primary={content}
                   secondary={
-                    !hideSections ? (
+                    item.type === 'generated' &&
+                    !hideSections &&
+                    sectionText && (
                       <Typography
                         variant="caption"
                         sx={{
                           color: isSelected ? '#339fd1' : 'text.secondary',
                           fontWeight: 800,
                           wordBreak: 'break-word',
-                          whiteSpace: 'normal',
-                          overflowWrap: 'break-word',
                         }}
                       >
-                        Section: {getSectionNameFromId(p.sectionId, sections)}
+                        Section: {sectionText}
                       </Typography>
-                    ) : null
+                    )
                   }
                 />
               </ListItemButton>
