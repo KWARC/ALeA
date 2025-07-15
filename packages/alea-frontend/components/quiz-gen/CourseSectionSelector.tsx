@@ -1,6 +1,5 @@
 import { getFlamsServer } from '@kwarc/ftml-react';
 import {
-  Badge,
   Box,
   Button,
   CircularProgress,
@@ -13,43 +12,52 @@ import {
   Typography,
 } from '@mui/material';
 import {
+  fetchGeneratedProblems,
   generateMoreQuizProblems,
-  generateQuizProblems,
   getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo } from '@stex-react/utils';
 import { useRouter } from 'next/router';
-import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
+import { ExistingProblem, FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { SecInfo } from 'packages/alea-frontend/types';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
 
+function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
+  if (!sections?.length) return;
+  const startIdx = sections.findIndex((s) => s.uri === startUri);
+  const endIdx = sections.findIndex((s) => s.uri === endUri);
+  if (startIdx === -1 || endIdx === -1) return [];
+  const [from, to] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+  return sections.slice(from, to + 1);
+}
 export const CourseSectionSelector = ({
   courseId,
-  setLoading,
   sections,
   setSections,
   setExistingProblemUris,
   setGeneratedProblems,
   setLatestGeneratedProblems,
+  loading,
+  setLoading,
 }: {
   courseId: string;
-  setLoading: (value: boolean) => void;
   sections: SecInfo[];
   setSections: Dispatch<SetStateAction<SecInfo[]>>;
-  setExistingProblemUris: any;
+  setExistingProblemUris: Dispatch<React.SetStateAction<ExistingProblem[]>>;
   setGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
+  loading: boolean;
+  setLoading: (value: boolean) => void;
 }) => {
   const router = useRouter();
-  const startSectionId = router.query.startSectionId as string;
-  const endSectionId = router.query.endSectionId as string;
+  const startSectionUri = (router.query.startSectionUri as string) || '';
+  const endSectionUri = (router.query.endSectionUri as string) || '';
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
-  const [hasPriorProblems, setHasPriorProblems] = useState(false);
-  const existingProblemsCache = useRef<Record<string, { uri: string; sectionUri: string }[]>>({});
+  const existingProblemsCache = useRef<Record<string, ExistingProblem[]>>({});
   const [generatedProblemsCount, setGeneratedProblemsCount] = useState<Record<string, number>>({});
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
@@ -62,11 +70,9 @@ export const CourseSectionSelector = ({
   useEffect(() => {
     const getSections = async () => {
       if (!courseId) return;
-
       const courseInfo = courses?.[courseId as string];
       if (!courseInfo?.notes) return;
       const notesUri = courseInfo.notes;
-
       setLoadingSections(true);
       try {
         const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
@@ -75,9 +81,9 @@ export const CourseSectionSelector = ({
         );
         setSections(formattedSections);
         const allSectionIds = formattedSections.map((s) => s.id);
-        if (!allSectionIds.includes(startSectionId)) {
+        if (!allSectionIds.includes(startSectionUri)) {
           updateRouterQuery(router, { startSectionId: '', endSectionId: '' }, true);
-        } else if (!allSectionIds.includes(endSectionId)) {
+        } else if (!allSectionIds.includes(endSectionUri)) {
           updateRouterQuery(router, { endSectionId: '' }, true);
         }
       } catch (error) {
@@ -91,19 +97,8 @@ export const CourseSectionSelector = ({
   }, [courseId, courses]);
 
   useEffect(() => {
-    if (!router.isReady) return;
-
-    if (startSectionId && !endSectionId) {
-      updateRouterQuery(router, { endSectionId: startSectionId }, false);
-    } else if (endSectionId && !startSectionId) {
-      updateRouterQuery(router, { startSectionId: endSectionId }, false);
-    }
-  }, [startSectionId, endSectionId, router]);
-
-  useEffect(() => {
     const fetchCounts = async () => {
       if (!courseId) return;
-
       const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
       const existingCountsResp = await axios.get(
         `/api/get-course-problem-counts?courseId=${courseId}`
@@ -111,55 +106,64 @@ export const CourseSectionSelector = ({
       setGeneratedProblemsCount(generatedCounts);
       setExistingProblemsCount(existingCountsResp.data);
     };
-
     fetchCounts();
   }, [courseId]);
 
   useEffect(() => {
-    if (!startSectionId || !endSectionId || !courseId || !sections.length) return;
-
+    if (!startSectionUri || !endSectionUri || !courseId || !sections.length) return;
     const fetchInitialData = async () => {
       setLoading(true);
-      const sectionUri = sections.find((s) => s.id === startSectionId)?.uri;
-      if (!sectionUri) return;
-      if (existingProblemsCache.current[sectionUri]) {
-        setExistingProblemUris(existingProblemsCache.current[sectionUri]);
-      } else {
-        try {
-          const resp = await axios.get(
-            `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
-          );
-          const uris: string[] = resp.data;
-
-          const enrichedProblems = uris.map((uri) => ({
-            uri,
-            sectionUri,
-          }));
-
-          existingProblemsCache.current[sectionUri] = enrichedProblems;
-          setExistingProblemUris(enrichedProblems);
-        } catch (err) {
-          console.error('Failed to fetch existing problems:', err);
-        } finally {
-          setLoading(false);
+      try {
+        const rangeSections = getSectionRange(startSectionUri, endSectionUri, sections);
+        const allExisting: ExistingProblem[] = [];
+        for (const section of rangeSections) {
+          const { id: sectionId, uri: sectionUri } = section;
+          if (existingProblemsCache.current[sectionUri]) {
+            allExisting.push(...existingProblemsCache.current[sectionUri]);
+          } else {
+            try {
+              const resp = await axios.get(
+                `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
+              );
+              const problemUris: string[] = resp.data;
+              const enrichedProblems = problemUris.map((uri) => ({
+                uri,
+                sectionUri,
+                sectionId,
+              }));
+              existingProblemsCache.current[sectionUri] = enrichedProblems;
+              allExisting.push(...enrichedProblems);
+            } catch (err) {
+              console.error(`Failed to fetch existing problems for ${sectionUri}:`, err);
+            }
+          }
         }
+        setExistingProblemUris(allExisting);
+        const generatedProblemsResp = await fetchGeneratedProblems(
+          courseId,
+          startSectionUri,
+          endSectionUri
+        );
+        const parsedProblems: FlatQuizProblem[] = generatedProblemsResp.map(
+          ({ problemJson, ...rest }) => ({
+            ...rest,
+            ...problemJson,
+          })
+        );
+        setGeneratedProblems(parsedProblems);
+      } catch (err) {
+        console.error('Error in fetchInitialData:', err);
+      } finally {
+        setLoading(false);
       }
-
-      await generateNewProblems('initial');
     };
-
     fetchInitialData();
-  }, [startSectionId, endSectionId, courseId, sections]);
+  }, [courseId, startSectionUri, endSectionUri, sections]);
 
-  useEffect(() => {
-    setHasPriorProblems(false);
-  }, [startSectionId, endSectionId, courseId]);
-
-  const generateNewProblems = async (mode: 'initial' | 'more' = 'initial') => {
+  const generateNewProblems = async () => {
     setGenerating(true);
     try {
-      const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;
-      const response = await fetchFn(courseId, startSectionId, endSectionId);
+      const response = await generateMoreQuizProblems(courseId, startSectionUri, endSectionUri);
       if (!response?.length) {
         return;
       }
@@ -167,11 +171,8 @@ export const CourseSectionSelector = ({
         ...rest,
         ...problemJson,
       }));
-      setHasPriorProblems(true);
       setLatestGeneratedProblems(parsedProblems);
-      setGeneratedProblems((prev) =>
-        mode === 'more' ? [...prev, ...parsedProblems] : parsedProblems
-      );
+      setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
     } catch (error) {
       console.error(' Error generating problems:', error);
     } finally {
@@ -225,14 +226,19 @@ export const CourseSectionSelector = ({
             <FormControl sx={{ minWidth: '250px', flex: '1 1 auto' }}>
               <InputLabel>Start Section</InputLabel>
               <Select
-                value={startSectionId}
+                value={startSectionUri}
                 label="Start Section"
-                onChange={(e) =>
-                  updateRouterQuery(router, { startSectionId: e.target.value }, true)
-                }
+                onChange={(e) => {
+                  const newStart = e.target.value;
+                  const updates: Record<string, string> = { startSectionUri: newStart };
+                  if (!endSectionUri) {
+                    updates.endSectionUri = newStart;
+                  }
+                  updateRouterQuery(router, updates, true);
+                }}
               >
                 {sections.map((s) => (
-                  <MenuItem key={s.title} value={s.id}>
+                  <MenuItem key={s.title} value={s.uri}>
                     <Box
                       display="flex"
                       alignItems="center"
@@ -277,12 +283,19 @@ export const CourseSectionSelector = ({
             <FormControl sx={{ minWidth: '250px', flex: '1 1 auto' }}>
               <InputLabel>End Section</InputLabel>
               <Select
-                value={endSectionId}
+                value={endSectionUri}
                 label="End Section"
-                onChange={(e) => updateRouterQuery(router, { endSectionId: e.target.value }, true)}
+                onChange={(e) => {
+                  const newEnd = e.target.value;
+                  const updates: Record<string, string> = { endSectionUri: newEnd };
+                  if (!startSectionUri) {
+                    updates.startSectionUri = newEnd;
+                  }
+                  updateRouterQuery(router, updates, true);
+                }}
               >
                 {sections.map((s) => (
-                  <MenuItem key={s.title} value={s.id}>
+                  <MenuItem key={s.title} value={s.uri}>
                     <Box
                       display="flex"
                       alignItems="center"
@@ -332,19 +345,11 @@ export const CourseSectionSelector = ({
               <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               Generating...
             </Button>
-          ) : hasPriorProblems ? (
-            <Button
-              variant="outlined"
-              onClick={() => generateNewProblems('more')}
-              disabled={!courseId || !startSectionId || !endSectionId}
-            >
-              Generate More
-            </Button>
           ) : (
             <Button
               variant="contained"
-              onClick={() => generateNewProblems('initial')}
-              disabled={!courseId || !startSectionId || !endSectionId}
+              onClick={() => generateNewProblems()}
+              disabled={!courseId || !startSectionUri || !endSectionUri || loading}
             >
               Generate
             </Button>

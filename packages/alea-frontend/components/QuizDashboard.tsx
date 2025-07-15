@@ -161,7 +161,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         for (const css of q.css || []) FTML.injectCss(css);
       }
       setQuizzes(allQuizzes);
-      const validQuiz = allQuizzes.find((q) => q.id === quizId);  
+      const validQuiz = allQuizzes.find((q) => q.id === quizId);
       if (quizId !== NEW_QUIZ_ID && (!quizId || !validQuiz) && allQuizzes.length > 0) {
         onQuizIdChange?.(allQuizzes[0].id);
       }
@@ -296,8 +296,14 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
               pathname: '/quiz-gen',
               query: {
                 courseId: courseId || '',
-                startSectionId:  courseId === 'iwgs-2' ? 'ch-ontologies/section/semweb-intro/section' : '',
-                endSectionId: courseId === 'iwgs-2' ? 'ch-ontologies/section/cidoc-crm/section' : '',
+                startSectionUri:
+                  courseId === 'iwgs-2'
+                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/sec&d=RDBMS&l=en&e=section'
+                    : '',
+                endSectionUri:
+                  courseId === 'iwgs-2'
+                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/sec&d=RDBMS&l=en&e=section'
+                    : '',
               },
             })
           }

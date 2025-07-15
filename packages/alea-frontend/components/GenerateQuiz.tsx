@@ -273,7 +273,10 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   />
                 </Card>
               </Box>
-              {sidebarOpen && (
+
+              {/*
+                //TODO quiz-gen
+                 {sidebarOpen && (
                 <QuestionSidebar
                   problems={problems}
                   latestGeneratedProblems={latestGeneratedQuestions}
@@ -281,7 +284,7 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   setCurrentIdx={setCurrentIdx}
                   hideSections
                 />
-              )}
+              )} */}
             </Box>
           )}
         </AccordionDetails>
