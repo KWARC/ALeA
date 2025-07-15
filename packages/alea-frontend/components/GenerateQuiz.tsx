@@ -17,7 +17,7 @@ import {
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { generateMoreQuizProblems, generateQuizProblems } from '@stex-react/api';
+import { generateQuizProblems } from '@stex-react/api';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';
@@ -152,7 +152,8 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
     e.stopPropagation();
     setLoading(true);
     try {
-      const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;
+      // const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;//TODO Quiz-Gen
+      const fetchFn = generateQuizProblems;
       const response = await fetchFn(courseId, sectionId, sectionId);
 
       if (!response?.length) {
@@ -273,7 +274,10 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   />
                 </Card>
               </Box>
-              {sidebarOpen && (
+
+              {/*
+                //TODO quiz-gen
+                 {sidebarOpen && (
                 <QuestionSidebar
                   problems={problems}
                   latestGeneratedProblems={latestGeneratedQuestions}
@@ -281,7 +285,7 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   setCurrentIdx={setCurrentIdx}
                   hideSections
                 />
-              )}
+              )} */}
             </Box>
           )}
         </AccordionDetails>

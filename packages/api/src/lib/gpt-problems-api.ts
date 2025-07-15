@@ -93,39 +93,39 @@ export interface ProblemJson {
 export interface QuizProblem {
   problemId: number;
   courseId: string;
-  sectionId: string;
+  sectionId: string; //TODO see again
+  sectionUri: string;
   problemStex: string;
   problemJson: ProblemJson;
 }
+export async function fetchGeneratedProblems(
+  courseId: string,
+  startSectionUri: string,
+  endSectionUri: string
+) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'fetch-generated-problems',
+      projectName: 'quiz-gen',
+      courseId,
+      startSectionUri,
+      endSectionUri,
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as QuizProblem[];
+}
 export async function generateQuizProblems(
   courseId: string,
-  startSectionId: string,
-  endSectionId: string
+  startSectionUri: string,
+  endSectionUri: string
 ) {
   const resp = await axios.post(
     '/api/gpt-redirect',
-    { courseId, startSectionId, endSectionId },
+    { courseId, startSectionUri, endSectionUri },
     {
       params: {
         apiname: 'generate',
-        projectName: 'quiz-gen',
-      },
-      headers: getAuthHeaders(),
-    }
-  );
-  return resp.data as QuizProblem[];
-}
-export async function generateMoreQuizProblems(
-  courseId: string,
-  startSectionId: string,
-  endSectionId: string
-) {
-  const resp = await axios.post(
-    '/api/gpt-redirect',
-    { courseId, startSectionId, endSectionId },
-    {
-      params: {
-        apiname: 'generate-more',
         projectName: 'quiz-gen',
       },
       headers: getAuthHeaders(),
