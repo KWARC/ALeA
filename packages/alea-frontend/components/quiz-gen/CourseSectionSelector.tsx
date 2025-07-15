@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import {
   fetchGeneratedProblems,
-  generateMoreQuizProblems,
+  generateQuizProblems,
   getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
 } from '@stex-react/api';
@@ -138,7 +138,8 @@ export const CourseSectionSelector = ({
             }
           }
         }
-        setExistingProblemUris(allExisting);
+        const uniqueExisting = Array.from(new Map(allExisting.map((p) => [p.uri, p])).values());
+        setExistingProblemUris(uniqueExisting);
         const generatedProblemsResp = await fetchGeneratedProblems(
           courseId,
           startSectionUri,
@@ -163,7 +164,7 @@ export const CourseSectionSelector = ({
   const generateNewProblems = async () => {
     setGenerating(true);
     try {
-      const response = await generateMoreQuizProblems(courseId, startSectionUri, endSectionUri);
+      const response = await generateQuizProblems(courseId, startSectionUri, endSectionUri);
       if (!response?.length) {
         return;
       }

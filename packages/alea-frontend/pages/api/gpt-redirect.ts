@@ -1,8 +1,6 @@
 import axios, { Method } from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getUserId } from './comment-utils';
 
-const INJECT_USERID_APIS = new Set(['post-feedback']);
 function apiNameToPath(apiName: string, projectName?: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_GPT_URL ?? '';
   return projectName ? `${baseUrl}/${projectName}/${apiName}` : `${baseUrl}/api/${apiName}`;
@@ -10,7 +8,7 @@ function apiNameToPath(apiName: string, projectName?: string): string {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { method, body } = req;
+    const { method, body, headers } = req;
     const { apiname, projectName, ...otherQueryParams } = req.query; // The URL to forward the request to
 
     if (!apiname || typeof apiname !== 'string') {
@@ -23,23 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       queryString ? `?${queryString}` : ''
     }`;
 
-    const isBodyMethod = method?.toUpperCase() !== 'GET';
-    const userId = await getUserId(req);
-    let finalBody = body;
-    if (isBodyMethod && INJECT_USERID_APIS.has(apiname)) {
-      finalBody = { ...body, userId };
-    }
-
-    const headers: Record<string, string> = {
-      Authorization: req.headers.authorization || '',
-      ...(isBodyMethod && { 'Content-Type': 'application/json' }),
-    };
-
     const axiosConfig = {
       method: method as Method,
       url,
       headers,
-      data: finalBody,
+      data: body,
     };
     console.log('Proxying request:', axiosConfig);
 

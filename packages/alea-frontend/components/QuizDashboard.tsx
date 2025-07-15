@@ -298,11 +298,11 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
                 courseId: courseId || '',
                 startSectionUri:
                   courseId === 'iwgs-2'
-                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/sec&d=RDBMS&l=en&e=section'
+                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=semweb/sec&d=cidoc-crm&l=en&e=section'
                     : '',
                 endSectionUri:
                   courseId === 'iwgs-2'
-                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/sec&d=RDBMS&l=en&e=section'
+                    ? 'https://mathhub.info?a=courses/FAU/IWGS/course&p=wisski/sec&d=wisski-drupal&l=en&e=section'
                     : '',
               },
             })

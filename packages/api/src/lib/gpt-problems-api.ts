@@ -117,30 +117,12 @@ export async function fetchGeneratedProblems(
 }
 export async function generateQuizProblems(
   courseId: string,
-  startSectionId: string,
-  endSectionId: string
+  startSectionUri: string,
+  endSectionUri: string
 ) {
   const resp = await axios.post(
     '/api/gpt-redirect',
-    { courseId, startSectionId, endSectionId },
-    {
-      params: {
-        apiname: 'generate',
-        projectName: 'quiz-gen',
-      },
-      headers: getAuthHeaders(),
-    }
-  );
-  return resp.data as QuizProblem[];
-}
-export async function generateMoreQuizProblems(
-  courseId: string,
-  startSectionId: string,
-  endSectionId: string
-) {
-  const resp = await axios.post(
-    '/api/gpt-redirect',
-    { courseId, startSectionId, endSectionId },
+    { courseId, startSectionUri, endSectionUri },
     {
       params: {
         apiname: 'generate',
