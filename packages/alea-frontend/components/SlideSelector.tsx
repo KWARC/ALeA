@@ -1,6 +1,5 @@
 import { FTMLFragment } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
 import { getSlides, Slide } from '@stex-react/api';
 import { getParamsFromUri, PRIMARY_COL } from '@stex-react/utils';
@@ -48,10 +47,8 @@ export function getSectionHierarchy(sectionId: string, secInfo: Record<string, S
       hierarchyTitles.push(section.title.trim());
     }
   }
-
-  return hierarchyTitles.join(' / ');
+  return hierarchyTitles.map((title, idx) => ' '.repeat(idx * 2) + `↳ ${title}`).join('\n');
 }
-
 
 const getRelevantSlides = async (
   courseId: string,
@@ -243,7 +240,7 @@ export function SlidePicker({
                         const isLeaf = currentId ? isLeafSectionId(currentId, secInfo) : false;
                         setSlideUri(undefined, undefined);
                         setTimeout(() => {
-                          setSlideUri(slide.uri, idx + 1, isLast,isLeaf);
+                          setSlideUri(slide.uri, idx + 1, isLast, isLeaf);
                         }, 0);
                       }}
                       sx={{
