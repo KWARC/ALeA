@@ -72,6 +72,27 @@ function CustomApp({ Component, pageProps }: AppProps) {
         clearInterval(interval);
       }
     }, 10);
+    const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
+    const pollBuildId = setInterval(async () => {
+      try {
+        const res = await fetch('/api/build-id');
+        const { buildId: latestBuildId } = await res.json();
+        console.log('Current Build ID:', currentBuildId, 'Latest Build ID:', latestBuildId);
+
+        if (currentBuildId && latestBuildId !== currentBuildId) {
+          console.log(`🔄 New build detected: ${currentBuildId} → ${latestBuildId}`);
+          window.location.reload();
+        }
+      } catch (error) {
+        console.debug('Build ID check failed:', error);
+      }
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(pollBuildId);
+    };
+    
   }, []);
 
   if (!readyToRender) return <CircularProgress />;
