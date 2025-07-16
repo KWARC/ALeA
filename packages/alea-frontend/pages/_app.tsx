@@ -79,7 +79,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
         const { buildId: latestBuildId } = await res.json();
 
         if (currentBuildId && latestBuildId !== currentBuildId) {
-          alert(`Refreshing to switching to a newer version of the application`);
+          alert(`Refreshing to switch to a newer version of the application`);
           window.location.reload();
         }
       } catch (error) {
