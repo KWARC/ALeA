@@ -257,6 +257,7 @@ export function ProblemDisplay({
         border: '1px solid #CCC',
         p: '10px',
         userSelect: 'none',
+        maxWidth: '1000px',
         overflowX: 'auto',
       }}
     >
