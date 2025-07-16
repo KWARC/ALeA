@@ -103,7 +103,11 @@ function CustomApp({ Component, pageProps }: AppProps) {
         <ThemeProvider theme={theme}>
           <MathJaxContext>
             <PositionProvider>
-              <Component {...pageProps} />
+              <div
+                style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+              >
+                <Component {...pageProps} />
+              </div>
             </PositionProvider>
           </MathJaxContext>
         </ThemeProvider>
