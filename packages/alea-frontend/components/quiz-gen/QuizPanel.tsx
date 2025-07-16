@@ -1,16 +1,19 @@
 import { Folder, OpenInNew } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
+import { useState } from 'react';
 import {
   ExistingProblem,
   FlatQuizProblem,
   getSectionNameFromIdOrUri,
   isExisting,
   isGenerated,
-} from 'packages/alea-frontend/pages/quiz-gen';
-import { SecInfo } from 'packages/alea-frontend/types';
+} from '../../pages/quiz-gen';
+import { SecInfo } from '../../types';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import { FeedbackSection, HiddenFeedback } from './Feedback';
+import { VariantConfig, VariantDialog } from './VariantDialog';
 
 export const handleGoToSection = (courseId: string, sectionId: string) => {
   const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
@@ -31,6 +34,34 @@ export function QuizPanel({
   courseId: string;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
+  const [variantDialogOpen, setVariantDialogOpen] = useState(false);
+  const [variantConfig, setVariantConfig] = useState<VariantConfig>({
+    variantTypes: [],
+    difficulty: '',
+    formatType: '',
+    customPrompt: '',
+  });
+
+  const handleOpenVariantDialog = () => setVariantDialogOpen(true);
+  const handleCloseVariantDialog = () => setVariantDialogOpen(false);
+
+  const handleCreateVariant = () => {
+    const payload = {
+      variantTypes: variantConfig.variantTypes,
+      difficulty: variantConfig.variantTypes.includes('difficulty')
+        ? variantConfig.difficulty
+        : undefined,
+      formatType: variantConfig.variantTypes.includes('formatShift')
+        ? variantConfig.formatType
+        : undefined,
+      customPrompt: variantConfig.customPrompt.trim() || undefined,
+    };
+    console.log('Creating multi-variant payload:', payload);
+
+    // TODO: call backend API
+
+    handleCloseVariantDialog();
+  };
 
   if (!currentProblem) {
     return (
@@ -70,6 +101,9 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
+          <Tooltip title="Create a new Variant">
+            <MoreVertIcon onClick={handleOpenVariantDialog} />
+          </Tooltip>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -104,6 +138,14 @@ export function QuizPanel({
 
         {isGenerated(currentProblem) && <HiddenFeedback problemId={currentProblem.problemId} />}
       </Card>
+
+      <VariantDialog
+        open={variantDialogOpen}
+        onClose={handleCloseVariantDialog}
+        variantConfig={variantConfig}
+        setVariantConfig={setVariantConfig}
+        onCreate={handleCreateVariant}
+      />
     </Box>
   );
 }
