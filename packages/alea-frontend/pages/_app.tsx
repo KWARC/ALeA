@@ -77,10 +77,9 @@ function CustomApp({ Component, pageProps }: AppProps) {
       try {
         const res = await fetch('/api/build-id');
         const { buildId: latestBuildId } = await res.json();
-        console.log('Current Build ID:', currentBuildId, 'Latest Build ID:', latestBuildId);
 
         if (currentBuildId && latestBuildId !== currentBuildId) {
-          console.log(`🔄 New build detected: ${currentBuildId} → ${latestBuildId}`);
+          console.log(`New build detected: ${currentBuildId} → ${latestBuildId}`);
           window.location.reload();
         }
       } catch (error) {

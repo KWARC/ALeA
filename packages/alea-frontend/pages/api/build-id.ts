@@ -3,6 +3,6 @@ export default function handler(req, res) {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.status(200).json({
-    buildId: process.env.NEXT_PUBLIC_BUILD_ID ?? new Date().toISOString(),
+    buildId: process.env.NEXT_PUBLIC_BUILD_ID,
   });
 }
