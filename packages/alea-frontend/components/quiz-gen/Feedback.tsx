@@ -1,15 +1,18 @@
-import { ThumbDown, ThumbUp } from '@mui/icons-material';
+import { Feedback, Person, ThumbDown, ThumbUp } from '@mui/icons-material';
 import {
   Box,
   Button,
   Checkbox,
+  Chip,
+  CircularProgress,
   FormControlLabel,
   IconButton,
+  Paper,
   TextField,
   Typography,
 } from '@mui/material';
-import { postFeedback } from '@stex-react/api';
-import { useState } from 'react';
+import { getFeedback, postFeedback } from '@stex-react/api';
+import { useEffect, useRef, useState } from 'react';
 
 const FEEDBACK_REASONS = [
   'Question is unclear',
@@ -107,3 +110,121 @@ export const FeedbackSection = ({ problemId }: { problemId: number }) => {
     </Box>
   );
 };
+
+interface FeedbackEntry {
+  comments?: string;
+  createdAt: string;
+  rating: boolean;
+  reasons?: string[];
+  userId?: string;
+}
+
+export function HiddenFeedback({ problemId }: { problemId: number }) {
+  const [feedbacks, setFeedbacks] = useState<FeedbackEntry[]>([]);
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const lastFetchedProblemId = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.shiftKey && e.key === 'F')) return;
+      setShow((prev) => !prev);
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!show) return;
+    if (lastFetchedProblemId.current === problemId) return;
+    setFeedbacks([]);
+    setLoading(true);
+    getFeedback(problemId)
+      .then((data) => {
+        if (!data) return;
+        setFeedbacks(Array.isArray(data) ? data : [data]);
+        lastFetchedProblemId.current = problemId;
+      })
+      .finally(() => setLoading(false));
+  }, [problemId, show]);
+
+  if (!show) return null;
+
+  return (
+    <Box mt={3}>
+      <Typography variant="h6" gutterBottom>
+        <Feedback color="primary" sx={{ mr: 1, verticalAlign: 'middle' }} />
+        Feedbacks ({loading ? 'Loading...' : feedbacks.length})
+      </Typography>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" p={2}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Box display="flex" gap={2} flexDirection="column">
+          {feedbacks.map((fb, index) => (
+            <Paper
+              key={index}
+              elevation={2}
+              sx={{
+                p: 2,
+                borderLeft: '6px solid #007BFF',
+                backgroundColor: '#f9f9ff',
+                borderRadius: 2,
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                {new Date(fb.createdAt).toLocaleString()}
+              </Typography>
+
+              <Typography variant="body2" gutterBottom>
+                <strong>Rating:</strong>{' '}
+                <Chip
+                  label={fb.rating ? 'Helpful' : 'Not Helpful'}
+                  color={fb.rating ? 'success' : 'error'}
+                  size="small"
+                />
+              </Typography>
+
+              {fb.reasons?.length > 0 && (
+                <Typography variant="body2" gutterBottom>
+                  <strong>Reasons:</strong>
+                  {fb.reasons.map((reason, i) => (
+                    <Chip
+                      key={i}
+                      label={reason}
+                      color="info"
+                      size="small"
+                      sx={{ mr: 1, mb: 0.5 }}
+                    />
+                  ))}
+                </Typography>
+              )}
+
+              {fb.comments && (
+                <Typography variant="body2" gutterBottom>
+                  <strong>Comments:</strong> {fb.comments}
+                </Typography>
+              )}
+
+              <Box display="flex" alignItems="center" gap={1} mt={1}>
+                <Typography variant="body2">
+                  <strong>User:</strong>
+                </Typography>
+                <Chip
+                  label={fb.userId ?? 'Anonymous'}
+                  icon={<Person />}
+                  color={fb.userId ? 'primary' : 'default'}
+                  variant="outlined"
+                  size="small"
+                />
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}

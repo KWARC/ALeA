@@ -10,12 +10,17 @@ import {
 } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useMemo, useState } from 'react';
-import { FlatQuizProblem, getSectionNameFromIdOrUri } from '../../pages/quiz-gen';
+import {
+  ExistingProblem,
+  FlatQuizProblem,
+  getSectionNameFromIdOrUri,
+  isGenerated,
+} from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { UrlNameExtractor } from '../LoListDisplay';
+import { QuizViewMode } from './ViewModeSelector';
 
 export const QuestionSidebar = ({
-  problems,
   sections = [],
   generatedProblems = [],
   latestGeneratedProblems,
@@ -25,57 +30,28 @@ export const QuestionSidebar = ({
   hideSections = false,
   existingProblems = [],
 }: {
-  problems: any;
   sections?: SecInfo[];
-  viewMode?: 'generated' | 'existing' | 'all';
+  viewMode?: QuizViewMode;
   generatedProblems?: FlatQuizProblem[];
   latestGeneratedProblems: FlatQuizProblem[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
   hideSections?: boolean;
-  existingProblems?: { uri: string; sectionUri: string }[];
+  existingProblems?: ExistingProblem[];
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const remainingProblems = generatedProblems.filter(
     (p) => !latestGeneratedProblems.some((latest) => latest.problemId === p.problemId)
   );
-
-  const tabs = [
-    `Latest (${latestGeneratedProblems.length})`,
-    `Earlier (${remainingProblems.length})`,
-  ];
-
-  const showTabs =
-    viewMode === 'generated' && latestGeneratedProblems.length > 0 && remainingProblems.length > 0;
-
-  const hasRemaining = remainingProblems.length > 0;
-
-  const currentTabProbs: any = useMemo(() => {
+  const hasLatestProblems = latestGeneratedProblems.length > 0;
+  const currentTabProbs: (FlatQuizProblem | ExistingProblem)[] = useMemo(() => {
     if (viewMode === 'generated') {
-      if (!hasRemaining) {
-        return generatedProblems.map((p) => ({
-          type: 'generated',
-          data: p,
-        }));
-      }
-
-      return tabIndex === 0
-        ? latestGeneratedProblems.map((p) => ({ type: 'generated', data: p }))
-        : remainingProblems.map((p) => ({ type: 'generated', data: p }));
+      if (!hasLatestProblems) return generatedProblems;
+      return tabIndex === 0 ? latestGeneratedProblems : remainingProblems;
     }
-
-    if (viewMode === 'existing') {
-      return existingProblems.map((data) => ({
-        type: 'existing',
-        data: data,
-      }));
-    }
-
-    return [
-      ...generatedProblems.map((p) => ({ type: 'generated', data: p })),
-      ...existingProblems.map((data) => ({ type: 'existing', data: data })),
-    ];
+    if (viewMode === 'existing') return existingProblems;
+    return [...generatedProblems, ...existingProblems];
   }, [
     viewMode,
     tabIndex,
@@ -84,6 +60,12 @@ export const QuestionSidebar = ({
     remainingProblems,
     existingProblems,
   ]);
+  const tabs = [
+    `Latest (${latestGeneratedProblems.length})`,
+    `Earlier (${remainingProblems.length})`,
+  ];
+  const showTabs =
+    viewMode === 'generated' && latestGeneratedProblems.length > 0 && remainingProblems.length > 0;
 
   return (
     <Box
@@ -130,27 +112,26 @@ export const QuestionSidebar = ({
           {currentTabProbs.map((item, idx) => {
             const isSelected = currentIdx === idx;
 
-            const content =
-              item.type === 'generated' ? (
-                <Tooltip title={item.data.problem}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight={isSelected ? 600 : 500}
-                    color="#0d47a1"
-                  >
-                    Q{idx + 1}: {item.data.problem.slice(0, 50)}...
-                  </Typography>
-                </Tooltip>
-              ) : (
+            const content = isGenerated(item) ? (
+              <Tooltip title={item.problem}>
                 <Typography variant="subtitle2" fontWeight={isSelected ? 600 : 500} color="#0d47a1">
-                  Q{idx + 1}: <UrlNameExtractor url={item.data?.uri} />
+                  Q{idx + 1}: {item.problem.slice(0, 50)}...
                 </Typography>
-              );
+              </Tooltip>
+            ) : (
+              <Typography
+                variant="subtitle2"
+                display="inline"
+                fontWeight={isSelected ? 600 : 500}
+                color="#0d47a1"
+              >
+                Q{idx + 1}: <UrlNameExtractor url={item.uri} />
+              </Typography>
+            );
 
-            const sectionText =
-              item.type === 'generated'
-                ? getSectionNameFromIdOrUri(item.data.sectionId, sections)
-                : '';
+            const sectionText = isGenerated(item)
+              ? getSectionNameFromIdOrUri(item.sectionId, sections) //TODO check again
+              : getSectionNameFromIdOrUri(item.sectionUri, sections);
 
             return (
               <ListItemButton
@@ -174,7 +155,6 @@ export const QuestionSidebar = ({
                 <ListItemText
                   primary={content}
                   secondary={
-                    item.type === 'generated' &&
                     !hideSections &&
                     sectionText && (
                       <Typography
