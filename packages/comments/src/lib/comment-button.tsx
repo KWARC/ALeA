@@ -4,12 +4,13 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { Box, Button, Dialog, DialogActions, IconButton, Tooltip } from '@mui/material';
 import { Comment } from '@stex-react/api';
 import { MystViewer } from '@stex-react/myst';
+import { useCommentRefresh } from '@stex-react/utils';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
-import { CommentNoteToggleView } from './comment-note-toggle-view';
-import { getLocaleObject } from './lang/utils';
-import { getPrivateNotes, getPublicCommentTrees } from './comment-store-manager';
+import { useEffect, useState } from 'react';
 import { getTotalComments } from './comment-helpers';
+import { CommentNoteToggleView } from './comment-note-toggle-view';
+import { getPrivateNotes, getPublicCommentTrees } from './comment-store-manager';
+import { getLocaleObject } from './lang/utils';
 
 function buttonProps(backgroundColor: string) {
   return {
@@ -75,6 +76,7 @@ export function CommentButton({ url = '', fragmentKind }: { url?: string; fragme
   const [topComment, setTopComment] = useState<Comment | undefined>(undefined);
   const [topNote, setTopNote] = useState<Comment | undefined>(undefined);
   const t = getLocaleObject(useRouter());
+  const { refreshKey } = useCommentRefresh();
 
   useEffect(() => {
     if (!url) {
@@ -89,7 +91,7 @@ export function CommentButton({ url = '', fragmentKind }: { url?: string; fragme
       setNumPrivateNotes(getTotalComments(comments));
       setTopNote(comments?.[0]);
     });
-  }, [url, open]);
+  }, [url, open, refreshKey]);
 
   if (!url) return null;
   if (!numPrivateNotes && !numPublicComments) return null;

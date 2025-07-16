@@ -8,6 +8,7 @@ import { PRIMARY_COL, SECONDARY_COL } from '@stex-react/utils';
 import { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 import './styles.scss';
+import { CommentRefreshProvider } from '@stex-react/utils';
 
 const instance = createInstance({
   urlBase: 'https://matomo.kwarc.info',
@@ -78,17 +79,19 @@ function CustomApp({ Component, pageProps }: AppProps) {
 
   console.log('rendering after: ', Date.now() - initStartTime, 'ms');
   return (
-    <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
-      <MatomoProvider value={instance}>
-        <ThemeProvider theme={theme}>
-          <MathJaxContext>
-            <PositionProvider>
-              <Component {...pageProps} />
-            </PositionProvider>
-          </MathJaxContext>
-        </ThemeProvider>
-      </MatomoProvider>
-    </ServerLinksContext.Provider>
+    <CommentRefreshProvider>
+      <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
+        <MatomoProvider value={instance}>
+          <ThemeProvider theme={theme}>
+            <MathJaxContext>
+              <PositionProvider>
+                <Component {...pageProps} />
+              </PositionProvider>
+            </MathJaxContext>
+          </ThemeProvider>
+        </MatomoProvider>
+      </ServerLinksContext.Provider>
+    </CommentRefreshProvider>
   );
 }
 
