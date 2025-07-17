@@ -89,6 +89,22 @@ export const VariantDialog = ({
     }
   }, [variantConfig.variantTypes]);
 
+  const handleCreateAndReturn = () => {
+  const selectedTypes = variantConfig.variantTypes;
+
+  const payload: any = {
+    ...variantConfig,
+  };
+
+  if (selectedTypes.includes('shuffle') && problemId) {
+    payload.shuffleProblemId = problemId;
+    payload.selectedOptions = selectedOptions;
+  }
+
+  onCreate(payload); 
+};
+
+
   const renderSwitchToggle = (title, typeKey, instructionKey, placeholder, optionsList = []) => {
     const isActive = variantConfig.variantTypes.includes(typeKey);
 
@@ -298,7 +314,7 @@ export const VariantDialog = ({
         <Button
           variant="contained"
           color="primary"
-          onClick={onCreate}
+          onClick={handleCreateAndReturn}
           sx={{ textTransform: 'none', borderRadius: 2, px: 3 }}
         >
           Create Variant

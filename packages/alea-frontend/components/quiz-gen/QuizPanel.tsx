@@ -45,20 +45,8 @@ export function QuizPanel({
   const handleOpenVariantDialog = () => setVariantDialogOpen(true);
   const handleCloseVariantDialog = () => setVariantDialogOpen(false);
 
-  const handleCreateVariant = () => {
-    const payload = {
-      variantTypes: variantConfig.variantTypes,
-      difficulty: variantConfig.variantTypes.includes('difficulty')
-        ? variantConfig.difficulty
-        : undefined,
-      formatType: variantConfig.variantTypes.includes('formatShift')
-        ? variantConfig.formatType
-        : undefined,
-      customPrompt: variantConfig.customPrompt.trim() || undefined,
-      rephraseInstruction: variantConfig.rephraseInstruction,
-      shuffleInstruction: variantConfig.shuffleInstruction,
-      conceptualInstruction: variantConfig.conceptualInstruction,
-    };
+  const handleCreateVariant = (payload: any) =>{
+
 
     console.log('Creating multi-variant payload:', payload);
 
@@ -149,7 +137,7 @@ export function QuizPanel({
         variantConfig={variantConfig}
         setVariantConfig={setVariantConfig}
         onCreate={handleCreateVariant}
-        problemData={currentProblem}
+        problemData={currentProblem as FlatQuizProblem}
       />
     </Box>
   );
