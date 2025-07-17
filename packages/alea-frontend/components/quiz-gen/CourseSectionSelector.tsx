@@ -70,7 +70,7 @@ export const CourseSectionSelector = ({
     startSecUri: string;
     endSecUri: string;
   }>({ startSecUri: '', endSecUri: '' });
-  const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
+  // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
@@ -137,8 +137,6 @@ export const CourseSectionSelector = ({
     if (!startSectionUri || !endSectionUri || !courseId || !sections.length) return;
     const fetchInitialData = async () => {
       setLoading(true);
-      const { startSecUri, endSecUri } = upcomingQuizSyllabus;
-      if (startSectionUri !== startSecUri || endSectionUri !== endSecUri) setUseQuizSyllabus(false);
       try {
         const rangeSections = getSectionRange(startSectionUri, endSectionUri, sections);
         const allExisting: ExistingProblem[] = [];
@@ -185,13 +183,7 @@ export const CourseSectionSelector = ({
       }
     };
     fetchInitialData();
-  }, [courseId, startSectionUri, endSectionUri, sections, upcomingQuizSyllabus]);
-
-  useEffect(() => {
-    if (!useQuizSyllabus || !upcomingQuizSyllabus) return;
-    const { startSecUri, endSecUri } = upcomingQuizSyllabus;
-    updateRouterQuery(router, { startSectionUri: startSecUri, endSectionUri: endSecUri }, true);
-  }, [useQuizSyllabus, upcomingQuizSyllabus]);
+  }, [courseId, startSectionUri, endSectionUri, sections]);
 
   const generateNewProblems = async () => {
     setGenerating(true);
@@ -227,33 +219,29 @@ export const CourseSectionSelector = ({
         <Typography variant="h5" fontWeight="bold" color="primary">
           Select Course and Sections
         </Typography>
-        <Tooltip title="Automatically select sections based on upcoming quiz syllabus" arrow>
-          <Box
-            display="flex"
-            alignItems="center"
-            flexWrap="wrap"
-            gap={1}
-            px={1.5}
-            py={0.5}
-            borderRadius={2}
-            bgcolor="#f5f5f5"
+
+        <Tooltip title="Auto-select sections from upcoming quiz syllabus" arrow>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              if (!upcomingQuizSyllabus) return;
+              const { startSecUri, endSecUri } = upcomingQuizSyllabus;
+              updateRouterQuery(
+                router,
+                { startSectionUri: startSecUri, endSectionUri: endSecUri },
+                true
+              );
+            }}
+            sx={{
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              fontSize: '0.875rem',
+            }}
           >
-            <Switch
-              checked={useQuizSyllabus}
-              onChange={(e) => setUseQuizSyllabus(e.target.checked)}
-              color="primary"
-              sx={{
-                padding: '6px',
-                '& .MuiSwitch-thumb': {
-                  width: 18,
-                  height: 18,
-                },
-              }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              Upcoming Quiz Syllabus
-            </Typography>
-          </Box>
+            Quiz Syllabus
+          </Button>
         </Tooltip>
       </Box>
       <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
