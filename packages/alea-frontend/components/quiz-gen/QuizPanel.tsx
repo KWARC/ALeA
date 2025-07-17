@@ -149,6 +149,7 @@ export function QuizPanel({
         variantConfig={variantConfig}
         setVariantConfig={setVariantConfig}
         onCreate={handleCreateVariant}
+        problemData={currentProblem}
       />
     </Box>
   );

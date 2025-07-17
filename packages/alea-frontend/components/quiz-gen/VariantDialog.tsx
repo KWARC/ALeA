@@ -1,17 +1,23 @@
 import {
   Box,
   Button,
+  Checkbox,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
+import { useEffect, useState } from 'react';
 
 export interface VariantConfig {
   variantTypes: string[];
@@ -29,15 +35,19 @@ interface VariantDialogProps {
   variantConfig: VariantConfig;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   onCreate: () => void;
+  problemData?: FlatQuizProblem;
 }
 
-export const VariantDialog: React.FC<VariantDialogProps> = ({
+export const VariantDialog = ({
   open,
   onClose,
   variantConfig,
   setVariantConfig,
   onCreate,
-}) => {
+  problemData,
+}: VariantDialogProps) => {
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+
   const toggleVariantType = (type: string) => {
     setVariantConfig((prev) => {
       const alreadySelected = prev.variantTypes.includes(type);
@@ -50,7 +60,7 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
     });
   };
 
-  const handleConfigChange = (field: keyof VariantConfig, value: string) => {
+  const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -60,7 +70,105 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
       difficulty: '',
       formatType: '',
       customPrompt: '',
+      rephraseInstruction: '',
+      shuffleInstruction: '',
+      conceptualInstruction: '',
     });
+  };
+  let problemId: number | undefined;
+  let mcqOptions: string[] = [];
+
+  if (problemData) {
+    problemId = problemData?.problemId;
+    mcqOptions = problemData?.options || [];
+  }
+
+  useEffect(() => {
+    if (variantConfig.variantTypes.includes('shuffle')) {
+      setSelectedOptions(mcqOptions);
+    }
+  }, [variantConfig.variantTypes]);
+
+  const renderSwitchToggle = (title, typeKey, instructionKey, placeholder, optionsList = []) => {
+    const isActive = variantConfig.variantTypes.includes(typeKey);
+
+    const handleSwitchChange = (checked: boolean) => {
+      setVariantConfig((prev) => {
+        let newTypes = [...prev.variantTypes];
+
+        if (checked) {
+          if (!newTypes.includes(typeKey)) newTypes.push(typeKey);
+
+          if (typeKey === 'shuffle') newTypes = newTypes.filter((t) => t !== 'conceptual');
+          if (typeKey === 'conceptual') newTypes = newTypes.filter((t) => t !== 'shuffle');
+        } else {
+          newTypes = newTypes.filter((t) => t !== typeKey);
+        }
+
+        return { ...prev, variantTypes: newTypes };
+      });
+    };
+
+    return (
+      <>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography sx={{ fontWeight: 500 }}>{title}</Typography>
+          <Switch
+            checked={isActive}
+            onChange={(e) => handleSwitchChange(e.target.checked)}
+            color="primary"
+          />
+        </Box>
+
+        <Collapse in={isActive}>
+          <TextField
+            sx={{ mb: optionsList.length ? 2 : 3 }}
+            label={`${title} Instructions`}
+            placeholder={placeholder}
+            value={variantConfig[instructionKey] || ''}
+            onChange={(e) =>
+              setVariantConfig((prev) => ({
+                ...prev,
+                [instructionKey]: e.target.value,
+              }))
+            }
+            fullWidth
+            multiline
+            minRows={2}
+          />
+
+          {optionsList.length > 0 && (
+            <Box sx={{ pl: 1, mb: 2 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                Select which options to include:
+              </Typography>
+              {optionsList.map((opt, idx) => {
+                const checked = selectedOptions.includes(opt);
+                return (
+                  <FormControlLabel
+                    key={idx}
+                    control={
+                      <Checkbox
+                        checked={checked}
+                        onChange={(e) => {
+                          setSelectedOptions(
+                            (prev) =>
+                              e.target.checked
+                                ? [...prev, opt] // add if checked
+                                : prev.filter((o) => o !== opt) // remove if unchecked
+                          );
+                        }}
+                      />
+                    }
+                    label={`${idx + 1}. ${opt}`}
+                  />
+                );
+              })}
+            </Box>
+          )}
+        </Collapse>
+      </>
+    );
   };
 
   return (
@@ -77,103 +185,38 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
       </DialogTitle>
 
       <DialogContent>
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            bgcolor: '#f8f9fa',
-            borderRadius: 2,
-            border: '1px solid #e0e0e0',
-          }}
-        >
-          <Button
-            variant={variantConfig.variantTypes.includes('rephrase') ? 'contained' : 'outlined'}
-            onClick={() => toggleVariantType('rephrase')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
-          >
-            Rephrase Variant
-          </Button>
-          {variantConfig.variantTypes.includes('rephrase') && (
-            <TextField
-              label="Rephrase Instructions"
-              placeholder="e.g., simplify language, keep same meaning"
-              value={variantConfig.rephraseInstruction || ''}
-              onChange={(e) =>
-                setVariantConfig((prev) => ({ ...prev, rephraseInstruction: e.target.value }))
-              }
-              fullWidth
-              multiline
-              minRows={2}
-              sx={{ mt: 1 }}
-            />
-          )}
-        </Box>
+        {renderSwitchToggle(
+          'Rephrase Variant',
+          'rephrase',
+          'rephraseInstruction',
+          'e.g., simplify language, keep same meaning'
+        )}
+
+        {renderSwitchToggle(
+          'Distractor Shuffle',
+          'shuffle',
+          'shuffleInstruction',
+          'e.g., randomize but keep correct answer intact',
+          mcqOptions
+        )}
+
+        {renderSwitchToggle(
+          'Recontextualize Problem',
+          'conceptual',
+          'conceptualInstruction',
+          'e.g., apply concept in a real-world scenario'
+        )}
 
         <Box
           sx={{
-            mb: 3,
+            display: 'flex',
+            gap: 2,
+            mb: 1,
             p: 2,
-            bgcolor: '#f8f9fa',
+            bgcolor: '#fafafa',
             borderRadius: 2,
-            border: '1px solid #e0e0e0',
           }}
         >
-          <Button
-            variant={variantConfig.variantTypes.includes('shuffle') ? 'contained' : 'outlined'}
-            onClick={() => toggleVariantType('shuffle')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
-          >
-            Distractor Shuffle
-          </Button>
-          {variantConfig.variantTypes.includes('shuffle') && (
-            <TextField
-              label="Distractor Shuffle Instructions"
-              placeholder="e.g., randomize but keep correct answer intact"
-              value={variantConfig.shuffleInstruction || ''}
-              onChange={(e) =>
-                setVariantConfig((prev) => ({ ...prev, shuffleInstruction: e.target.value }))
-              }
-              fullWidth
-              multiline
-              minRows={2}
-              sx={{ mt: 1 }}
-            />
-          )}
-        </Box>
-
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            bgcolor: '#f8f9fa',
-            borderRadius: 2,
-            border: '1px solid #e0e0e0',
-          }}
-        >
-          <Button
-            variant={variantConfig.variantTypes.includes('conceptual') ? 'contained' : 'outlined'}
-            onClick={() => toggleVariantType('conceptual')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
-          >
-            Conceptual Twist
-          </Button>
-          {variantConfig.variantTypes.includes('conceptual') && (
-            <TextField
-              label="Conceptual Twist Instructions"
-              placeholder="e.g., apply concept in a real-world scenario"
-              value={variantConfig.conceptualInstruction || ''}
-              onChange={(e) =>
-                setVariantConfig((prev) => ({ ...prev, conceptualInstruction: e.target.value }))
-              }
-              fullWidth
-              multiline
-              minRows={2}
-              sx={{ mt: 1 }}
-            />
-          )}
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 2, mb: 1, p: 2, bgcolor: '#fafafa', borderRadius: 2 }}>
           <FormControl fullWidth>
             <InputLabel>Difficulty Variant</InputLabel>
             <Select
@@ -185,7 +228,7 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
                 setVariantConfig((prev) => ({ ...prev, difficulty: e.target.value }));
               }}
             >
-              <MenuItem value="none">None</MenuItem>
+              <MenuItem value="">None</MenuItem>
               <MenuItem value="easy">Easy</MenuItem>
               <MenuItem value="medium">Medium</MenuItem>
               <MenuItem value="hard">Hard</MenuItem>
@@ -211,7 +254,6 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
           </FormControl>
         </Box>
 
-        {/* ✅ Clear Selection */}
         <Button
           size="small"
           onClick={clearSelection}
@@ -220,7 +262,6 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
           Clear Selection
         </Button>
 
-        {/* ✅ General Pretext */}
         <TextField
           label="Pretext Instructions (optional)"
           placeholder="e.g., general notes for all variants"
