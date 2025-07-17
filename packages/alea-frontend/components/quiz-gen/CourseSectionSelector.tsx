@@ -70,7 +70,6 @@ export const CourseSectionSelector = ({
     startSecUri: string;
     endSecUri: string;
   }>({ startSecUri: '', endSecUri: '' });
-  // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
