@@ -8,6 +8,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Switch,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -16,15 +17,17 @@ import {
   generateQuizProblems,
   getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
+  getCoverageTimeline,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
-import { CourseInfo } from '@stex-react/utils';
+import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { ExistingProblem, FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { SecInfo } from 'packages/alea-frontend/types';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
+import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -62,9 +65,23 @@ export const CourseSectionSelector = ({
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
+  const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
+    startSecUri: string;
+    endSecUri: string;
+  }>({ startSecUri: '', endSecUri: '' });
+  // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
+  }, []);
+  useEffect(() => {
+    async function fetchCoverageTimeline() {
+      const coverageTimeline = await getCoverageTimeline(true);
+      if (!coverageTimeline) return;
+      setCoverageTimeline(coverageTimeline);
+    }
+    fetchCoverageTimeline();
   }, []);
 
   useEffect(() => {
@@ -80,11 +97,11 @@ export const CourseSectionSelector = ({
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );
         setSections(formattedSections);
-        const allSectionIds = formattedSections.map((s) => s.id);
-        if (!allSectionIds.includes(startSectionUri)) {
-          updateRouterQuery(router, { startSectionId: '', endSectionId: '' }, true);
-        } else if (!allSectionIds.includes(endSectionUri)) {
-          updateRouterQuery(router, { endSectionId: '' }, true);
+        const allSectionUris = formattedSections.map((s) => s.uri);
+        if (!allSectionUris.includes(startSectionUri)) {
+          updateRouterQuery(router, { startSectionUri: '', endSectionUri: '' }, true);
+        } else if (!allSectionUris.includes(endSectionUri)) {
+          updateRouterQuery(router, { endSectionUri: '' }, true);
         }
       } catch (error) {
         console.error('Failed to fetch document sections:', error);
@@ -96,6 +113,13 @@ export const CourseSectionSelector = ({
     getSections();
   }, [courseId, courses]);
 
+  useEffect(() => {
+    const timeline = coverageTimeline[courseId];
+    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    if (syllabus) {
+      setUpcomingQuizSyllabus(syllabus);
+    }
+  }, [coverageTimeline, courseId, sections]);
   useEffect(() => {
     const fetchCounts = async () => {
       if (!courseId) return;
@@ -191,10 +215,35 @@ export const CourseSectionSelector = ({
         border: '0.5px solid rgb(197, 199, 207)',
       }}
     >
-      <Typography variant="h5" fontWeight="bold" mb={3} color="primary">
-        Select Course and Sections
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1} mb={3}>
+        <Typography variant="h5" fontWeight="bold" color="primary">
+          Select Course and Sections
+        </Typography>
 
+        <Tooltip title="Auto-select sections from upcoming quiz syllabus" arrow>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              if (!upcomingQuizSyllabus) return;
+              const { startSecUri, endSecUri } = upcomingQuizSyllabus;
+              updateRouterQuery(
+                router,
+                { startSectionUri: startSecUri, endSectionUri: endSecUri },
+                true
+              );
+            }}
+            sx={{
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              fontSize: '0.875rem',
+            }}
+          >
+            Quiz Syllabus
+          </Button>
+        </Tooltip>
+      </Box>
       <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
         <FormControl sx={{ minWidth: '100px' }} key={courseId}>
           <InputLabel>Course</InputLabel>
