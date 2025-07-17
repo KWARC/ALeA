@@ -28,8 +28,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (with fallback)
+        run: |
+          echo "🛠️ Installing dependencies using npm ci..."
+          if npm ci; then
+            echo "✅ Installed dependencies successfully with npm ci."
+          else
+            echo "⚠️ npm ci failed. Retrying with --legacy-peer-deps due to peer dependency conflicts..."
+            npm ci --legacy-peer-deps
+          fi
 
       - name: Cache Nx build outputs
         uses: actions/cache@v4
