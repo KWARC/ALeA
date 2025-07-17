@@ -18,6 +18,9 @@ export interface VariantConfig {
   difficulty?: string;
   formatType?: string;
   customPrompt: string;
+  rephraseInstruction?: string;
+  shuffleInstruction?: string;
+  conceptualInstruction?: string;
 }
 
 interface VariantDialogProps {
@@ -76,8 +79,6 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
       <DialogContent>
         <Box
           sx={{
-            display: 'flex',
-            gap: 1,
             mb: 3,
             p: 2,
             bgcolor: '#f8f9fa',
@@ -88,38 +89,91 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
           <Button
             variant={variantConfig.variantTypes.includes('rephrase') ? 'contained' : 'outlined'}
             onClick={() => toggleVariantType('rephrase')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, minWidth: 100 }}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
           >
-            Rephrase
+            Rephrase Variant
           </Button>
-
-          <Button
-            variant={variantConfig.variantTypes.includes('shuffle') ? 'contained' : 'outlined'}
-            onClick={() => toggleVariantType('shuffle')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, minWidth: 100 }}
-          >
-            Distractor Shuffle
-          </Button>
-
-          <Button
-            variant={variantConfig.variantTypes.includes('conceptual') ? 'contained' : 'outlined'}
-            onClick={() => toggleVariantType('conceptual')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, minWidth: 100 }}
-          >
-            Conceptual Twist
-          </Button>
+          {variantConfig.variantTypes.includes('rephrase') && (
+            <TextField
+              label="Rephrase Instructions"
+              placeholder="e.g., simplify language, keep same meaning"
+              value={variantConfig.rephraseInstruction || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({ ...prev, rephraseInstruction: e.target.value }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+              sx={{ mt: 1 }}
+            />
+          )}
         </Box>
 
         <Box
           sx={{
-            display: 'flex',
-            gap: 2,
-            mb: 1,
+            mb: 3,
             p: 2,
-            bgcolor: '#fafafa',
+            bgcolor: '#f8f9fa',
             borderRadius: 2,
+            border: '1px solid #e0e0e0',
           }}
         >
+          <Button
+            variant={variantConfig.variantTypes.includes('shuffle') ? 'contained' : 'outlined'}
+            onClick={() => toggleVariantType('shuffle')}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
+          >
+            Distractor Shuffle
+          </Button>
+          {variantConfig.variantTypes.includes('shuffle') && (
+            <TextField
+              label="Distractor Shuffle Instructions"
+              placeholder="e.g., randomize but keep correct answer intact"
+              value={variantConfig.shuffleInstruction || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({ ...prev, shuffleInstruction: e.target.value }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+              sx={{ mt: 1 }}
+            />
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            bgcolor: '#f8f9fa',
+            borderRadius: 2,
+            border: '1px solid #e0e0e0',
+          }}
+        >
+          <Button
+            variant={variantConfig.variantTypes.includes('conceptual') ? 'contained' : 'outlined'}
+            onClick={() => toggleVariantType('conceptual')}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500, mb: 1 }}
+          >
+            Conceptual Twist
+          </Button>
+          {variantConfig.variantTypes.includes('conceptual') && (
+            <TextField
+              label="Conceptual Twist Instructions"
+              placeholder="e.g., apply concept in a real-world scenario"
+              value={variantConfig.conceptualInstruction || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({ ...prev, conceptualInstruction: e.target.value }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+              sx={{ mt: 1 }}
+            />
+          )}
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2, mb: 1, p: 2, bgcolor: '#fafafa', borderRadius: 2 }}>
           <FormControl fullWidth>
             <InputLabel>Difficulty Variant</InputLabel>
             <Select
@@ -131,7 +185,7 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
                 setVariantConfig((prev) => ({ ...prev, difficulty: e.target.value }));
               }}
             >
-              <MenuItem value="">None</MenuItem>
+              <MenuItem value="none">None</MenuItem>
               <MenuItem value="easy">Easy</MenuItem>
               <MenuItem value="medium">Medium</MenuItem>
               <MenuItem value="hard">Hard</MenuItem>
@@ -149,14 +203,15 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
                 setVariantConfig((prev) => ({ ...prev, formatType: e.target.value }));
               }}
             >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="mcqToFill">MCQ → Fill in the Blank</MenuItem>
-              <MenuItem value="fillToMsq">Fill in the Blank → MSQ</MenuItem>
-              <MenuItem value="msqToTf">MSQ → True/False</MenuItem>
+              <MenuItem value="none">None</MenuItem>
+              <MenuItem value="scq">SCQ</MenuItem>
+              <MenuItem value="msq">MCQ</MenuItem>
+              <MenuItem value="fillBlanks">Fill in the blanks</MenuItem>
             </Select>
           </FormControl>
         </Box>
 
+        {/* ✅ Clear Selection */}
         <Button
           size="small"
           onClick={clearSelection}
@@ -165,9 +220,10 @@ export const VariantDialog: React.FC<VariantDialogProps> = ({
           Clear Selection
         </Button>
 
+        {/* ✅ General Pretext */}
         <TextField
-          label="Pretext Instructions"
-          placeholder="E.g., simplify language, add a real-world scenario, remove hints..."
+          label="Pretext Instructions (optional)"
+          placeholder="e.g., general notes for all variants"
           value={variantConfig.customPrompt}
           onChange={(e) => handleConfigChange('customPrompt', e.target.value)}
           fullWidth

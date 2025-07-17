@@ -55,7 +55,11 @@ export function QuizPanel({
         ? variantConfig.formatType
         : undefined,
       customPrompt: variantConfig.customPrompt.trim() || undefined,
+      rephraseInstruction: variantConfig.rephraseInstruction,
+      shuffleInstruction: variantConfig.shuffleInstruction,
+      conceptualInstruction: variantConfig.conceptualInstruction,
     };
+
     console.log('Creating multi-variant payload:', payload);
 
     // TODO: call backend API
