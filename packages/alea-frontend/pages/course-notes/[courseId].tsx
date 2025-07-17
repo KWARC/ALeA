@@ -90,10 +90,7 @@ const CourseNotesPage: NextPage = () => {
   const [hasResults, setHasResults] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.shiftKey && e.key.toLowerCase() === 'f') ||
-        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f')
-      ) {
+      if (e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
