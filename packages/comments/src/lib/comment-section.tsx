@@ -15,6 +15,7 @@ import { CURRENT_TERM } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import styles from './comments.module.scss';
 import { getLocaleObject } from './lang/utils';
+import { useCommentRefresh } from '@stex-react/utils';
 
 function RenderTree({
   comment,
@@ -162,6 +163,7 @@ export function CommentSection({
   const [canAddComment, setCanAddComment] = useState(false);
   const [canModerate, setCanModerate] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshKey } = useCommentRefresh();
 
   const filteredComments = getFilteredComments(commentsFromStore, filters);
   const numComments = filteredComments.reduce((sum, comment) => sum + treeSize(comment), 0);
@@ -173,7 +175,7 @@ export function CommentSection({
 
   useEffect(() => {
     getPublicCommentTrees(uri).then((c) => setCommentsFromStore(c));
-  }, [uri, filters]);
+  }, [uri, filters, refreshKey]);
 
   const refreshComments = async () => {
     setIsRefreshing(true);
