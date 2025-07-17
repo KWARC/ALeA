@@ -15,7 +15,7 @@ const SearchCourseNotes = ({
   courseId: string;
   query?: string;
   onClose?: any;
-  setHasResults: (val: boolean) => void;
+  setHasResults?: (val: boolean) => void;
 }) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>(query);

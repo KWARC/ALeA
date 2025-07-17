@@ -2,7 +2,10 @@ import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
+import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import {
   canAccessResource,
   ClipData,
@@ -33,12 +36,13 @@ import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
+import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
+import { SearchDialog } from '../course-notes/[courseId]';
 
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -192,6 +196,26 @@ const CourseViewPage: NextPage = () => {
   const [toc, setToc] = useState<FTML.TOCElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [hasResults, setHasResults] = useState(false);
+  const handleSearchClick = () => setDialogOpen(true);
+  const handleDialogClose = () => setDialogOpen(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.shiftKey && e.key.toLowerCase() === 'f') ||
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f')
+      ) {
+        e.preventDefault();
+        setDialogOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
@@ -311,6 +335,32 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
+      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+        <IconButton
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 64,
+            right: 24,
+            zIndex: 2002,
+            bgcolor: 'white',
+            boxShadow: 3,
+            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+          }}
+          onClick={handleSearchClick}
+          size="large"
+          aria-label="Open search dialog"
+        >
+          <SearchIcon fontSize="large" />
+        </IconButton>
+      </Tooltip>
+      <SearchDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        courseId={courseId}
+        hasResults={hasResults}
+        setHasResults={setHasResults}
+      />
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (

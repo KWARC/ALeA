@@ -21,8 +21,9 @@ import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
+import Tooltip from '@mui/material/Tooltip';
 
-const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
+export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
       <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
@@ -89,7 +90,10 @@ const CourseNotesPage: NextPage = () => {
   const [hasResults, setHasResults] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      if (
+        (e.shiftKey && e.key.toLowerCase() === 'f') ||
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f')
+      ) {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -155,24 +159,32 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <IconButton
-        color="primary"
-        sx={{
-          position: 'fixed',
-          bottom: 64,
-          right: 24,
-          zIndex: 2002,
-          bgcolor: 'white',
-          boxShadow: 3,
-          '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
-        }}
-        onClick={handleSearchClick}
-        size="large"
-        aria-label="Open search dialog"
-      >
-        <SearchIcon fontSize="large" />
-      </IconButton>
-      <SearchDialog open={dialogOpen} onClose={handleDialogClose} courseId={courseId} hasResults={hasResults} setHasResults={setHasResults} />
+      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+        <IconButton
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 64,
+            right: 24,
+            zIndex: 2002,
+            bgcolor: 'white',
+            boxShadow: 3,
+            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+          }}
+          onClick={handleSearchClick}
+          size="large"
+          aria-label="Open search dialog"
+        >
+          <SearchIcon fontSize="large" />
+        </IconButton>
+      </Tooltip>
+      <SearchDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        courseId={courseId}
+        hasResults={hasResults}
+        setHasResults={setHasResults}
+      />
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
