@@ -327,6 +327,7 @@ export function QuizDisplay({
             {t.problem} {problemIdx + 1} {t.of} {problemIds.length}&nbsp;
             <FTMLFragment
               key={problem.problem.html ?? ''}
+              allowHovers={isFrozen}
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',

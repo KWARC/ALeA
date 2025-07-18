@@ -15,7 +15,7 @@ import { getUserInfo } from '@stex-react/api';
 import { handleViewSource } from '@stex-react/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { createNewIssue, IssueCategory, SelectionContext } from './issueCreator';
+import { createNewIssue, SelectionContext } from './issueCreator';
 import { getLocaleObject } from './lang/utils';
 
 export function ReportProblemDialog({
@@ -124,7 +124,6 @@ export function ReportProblemDialog({
             setIsCreating(true);
             try {
               const issueLink = await createNewIssue(
-                IssueCategory.CONTENT,
                 description,
                 selectedText,
                 context,

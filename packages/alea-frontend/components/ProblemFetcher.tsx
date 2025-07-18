@@ -35,6 +35,7 @@ const ProblemFetcher = ({
             preconditions: [],
             objectives: [],
           },
+          answerClasses: [],
           solution: '',
         };
         /*const problemHtml = await getLearningObjectShtml(problemUri);

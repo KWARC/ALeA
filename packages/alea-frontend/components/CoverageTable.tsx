@@ -15,19 +15,19 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { getAllQuizzes, QuizWithStatus } from '@stex-react/api';
+import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { SecInfo } from '../types';
-import QuizHandler from './QuizHandler';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { useStudentCount } from '../hooks/useStudentCount';
-import { getSectionNameForUri } from './CoverageUpdater';
+import { SecInfo } from '../types';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
+import { getSectionNameForUri } from './CoverageUpdater';
+import QuizHandler from './QuizHandler';
+import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
@@ -40,22 +40,63 @@ interface CoverageRowProps {
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
   secInfo: Record<FTML.DocumentURI, SecInfo>;
+  entries: LectureEntry[];
 }
 
 const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slideUri?: string) => {
   if (!sectionName) return <i>-</i>;
-
   if (!slideUri) return <Typography variant="body2">{sectionName.trim()}</Typography>;
+
+  const slideTitle = getSlideTitle({ slide: { uri: slideUri } } as any, (slideNumber || 1) - 1);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <SlideshowIcon sx={{ fontSize: 16, color: 'success.main' }} />
       <Typography variant="body2">
-        <strong>Slide {slideNumber}</strong> of {sectionName.trim()}
+        <strong>{slideTitle}</strong> of {sectionName.trim()}
       </Typography>
     </Box>
   );
 };
+
+const tooltipBoxProps = {
+  maxWidth: '600px',
+  color: '#1a237e',
+  border: '2px solid #3f51b5',
+  p: '12px',
+  borderRadius: '8px',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+  bgcolor: 'white',
+};
+
+function SectionTooltipContent({
+  shouldHighlightNoSection,
+  secInfo,
+  sectionUri,
+  sectionCompleted,
+}: {
+  shouldHighlightNoSection: boolean;
+  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  sectionUri: string;
+  sectionCompleted?: boolean;
+}) {
+  const sectionId = secInfo[sectionUri]?.id;
+  if (!sectionId) return shouldHighlightNoSection ? 'No Section - Please fill this field' : null;
+
+  const statusString =
+    sectionCompleted !== undefined
+      ? sectionCompleted
+        ? ' (✅ Completed)'
+        : ' (⏳ In Progress)'
+      : '';
+  return (
+    <Box {...tooltipBoxProps}>
+      <span style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>
+        {getSectionHierarchy(sectionId, secInfo) + statusString}
+      </span>
+    </Box>
+  );
+}
 
 function CoverageRow({
   item,
@@ -64,6 +105,7 @@ function CoverageRow({
   onEdit,
   onDelete,
   secInfo,
+  entries,
 }: CoverageRowProps) {
   const now = dayjs();
   const itemDate = dayjs(item.timestamp_ms);
@@ -102,15 +144,7 @@ function CoverageRow({
       <TableCell>
         <NoMaxWidthTooltip
           title={
-            <Box
-              maxWidth="600px"
-              color="#1a237e"
-              border="2px solid #3f51b5"
-              p="12px"
-              borderRadius="8px"
-              boxShadow="0 4px 20px rgba(0, 0, 0, 0.15)"
-              bgcolor="white"
-            >
+            <Box {...tooltipBoxProps}>
               <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
                 <Typography fontWeight="bold" display="inline">
                   Lecture Timings:
@@ -167,10 +201,14 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip
+        <NoMaxWidthTooltip
           title={
-            secInfo[item.sectionUri]?.title ||
-            (shouldHighlightNoSection ? 'No Section - Please fill this field' : 'No Section')
+            <SectionTooltipContent
+              shouldHighlightNoSection={shouldHighlightNoSection}
+              secInfo={secInfo}
+              sectionUri={item.sectionUri}
+              sectionCompleted={!!item.sectionCompleted}
+            />
           }
         >
           <span>
@@ -209,7 +247,7 @@ function CoverageRow({
               formatSectionWithSlide(sectionTitle, item.slideNumber, item.slideUri)
             )}
           </span>
-        </Tooltip>
+        </NoMaxWidthTooltip>
       </TableCell>
       <TableCell
         sx={{
@@ -219,11 +257,19 @@ function CoverageRow({
           whiteSpace: 'nowrap',
         }}
       >
-        <Tooltip title={targetSectionTitle || item.targetSectionUri || 'No Target'}>
+        <NoMaxWidthTooltip
+          title={
+            <SectionTooltipContent
+              shouldHighlightNoSection={shouldHighlightNoSection}
+              secInfo={secInfo}
+              sectionUri={item.targetSectionUri}
+            />
+          }
+        >
           <Typography variant="body2">
             {targetSectionTitle?.trim() || item.targetSectionUri || <i>-</i>}
           </Typography>
-        </Tooltip>
+        </NoMaxWidthTooltip>
       </TableCell>
       <TableCell>
         {item.clipId?.length ? (
@@ -579,6 +625,7 @@ export function CoverageTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   secInfo={secInfo}
+                  entries={entries}
                 />
               );
             })}
