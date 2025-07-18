@@ -31,7 +31,7 @@ export interface VariantConfig {
   rephraseSubtypes?: string[];
 
   modifyChoiceMode?: 'add' | 'remove';
-  shuffleInstruction?: string;
+  modifyChoiceInstruction?: string;
 
   conceptualInstruction?: string;
 }
@@ -47,7 +47,7 @@ interface VariantDialogProps {
     formatType?: string;
     customPrompt?: string;
     rephraseInstruction?: string;
-    shuffleInstruction?: string;
+    modifyChoiceInstruction?: string;
     conceptualInstruction?: string;
     shuffleProblemId?: number;
     selectedOptions?: string[];
@@ -88,7 +88,7 @@ export const VariantDialog = ({
       formatType: '',
       customPrompt: '',
       rephraseInstruction: '',
-      shuffleInstruction: '',
+      modifyChoiceInstruction: '',
       conceptualInstruction: '',
     });
   };
@@ -315,7 +315,7 @@ export const VariantDialog = ({
       </DialogTitle>
       <DialogContent>
         {renderSwitchToggle(
-          'Rephrase Variant',
+          'Rephrase',
           'rephrase',
           'rephraseInstruction',
           'e.g., simplify language, keep same meaning'
@@ -324,7 +324,7 @@ export const VariantDialog = ({
         {renderSwitchToggle(
           'Modify Choices',
           'options',
-          'shuffleInstruction',
+          'modifyChoiceInstruction',
           'e.g., randomize but keep correct answer intact',
           mcqOptions
         )}
@@ -350,7 +350,7 @@ export const VariantDialog = ({
           }}
         >
           <FormControl fullWidth>
-            <InputLabel sx={{ fontWeight: 500 }}>Difficulty Variant</InputLabel>
+            <InputLabel sx={{ fontWeight: 500 }}>Difficulty Level</InputLabel>
             <Select
               value={variantConfig.difficulty || ''}
               onChange={(e) => {
