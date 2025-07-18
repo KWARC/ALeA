@@ -112,7 +112,10 @@ export default async function handler(
   const quizTimes = getQuizTimes(quizInfo);
   const problems = getPhaseAppropriateProblems(quizInfo.problems, isModerator, phase);
   const responses = await getUserQuizResponseOrSetError(quizId, userId, res);
-  if (!responses) return;
+  if (!responses) {
+    res.status(500).send('The responses are empty pls create the grading database and table.');
+    return;
+  }
 
   res.status(200).json({
     courseId,

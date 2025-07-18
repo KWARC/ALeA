@@ -323,7 +323,7 @@ export function ShowSubProblemAnswer({
 }) {
   const { showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
   if (!showGrading) return <></>;
-  const gradingInfo = g[problemId][subproblemId]?.filter((c) => {
+  const gradingInfo = g?.[problemId]?.[subproblemId]?.filter((c) => {
     if (showGradingFor === ShowGradingFor.INSTRUCTOR && c.reviewType === ReviewType.INSTRUCTOR)
       return c;
     if (showGradingFor === ShowGradingFor.PEER && c.reviewType === ReviewType.PEER) return c;

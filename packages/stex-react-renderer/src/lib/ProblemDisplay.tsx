@@ -16,7 +16,7 @@ import { MystEditor } from '@stex-react/myst';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
-import { ShowSubProblemAnswer } from './SubProblemAnswer';
+import { ShowSubProblemAnswer, SubProblemAnswer } from './SubProblemAnswer';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -113,7 +113,8 @@ export function ProblemViewer({
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
-  });
+  });  
+  const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
       key={uri}
@@ -123,11 +124,9 @@ export function ProblemViewer({
       onProblem={(response) => {
         onResponseUpdate?.(response);
       }}
-      /*
-       TODO (Behrooz): This is needed only for non-autogradable problems.
-      onFragment={(problemId, kind) => {
+      {...(!isNap?{onFragment:(problemId, kind) => {
         if (kind.type === 'Problem') {
-          return (ch) => (
+          return (ch: React.ReactNode) => (
             <Box>
               {ch}
               <AnswerAccepter
@@ -140,8 +139,7 @@ export function ProblemViewer({
             </Box>
           );
         }
-      }}
-      */
+      }}:{}) }
     />
   );
 }
