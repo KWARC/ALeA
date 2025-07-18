@@ -113,9 +113,7 @@ export function ProblemViewer({
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
-  });
-  console.log(problem);
-  
+  });  
   const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
