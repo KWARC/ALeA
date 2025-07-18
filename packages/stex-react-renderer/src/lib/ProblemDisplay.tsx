@@ -114,6 +114,9 @@ export function ProblemViewer({
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
+  console.log(problem);
+  
+  const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
       key={uri}
@@ -123,11 +126,9 @@ export function ProblemViewer({
       onProblem={(response) => {
         onResponseUpdate?.(response);
       }}
-      /*
-       TODO (Behrooz): This is needed only for non-autogradable problems.
-      onFragment={(problemId, kind) => {
+      {...(!isNap?{onFragment:(problemId, kind) => {
         if (kind.type === 'Problem') {
-          return (ch) => (
+          return (ch: React.ReactNode) => (
             <Box>
               {ch}
               <AnswerAccepter
@@ -140,8 +141,7 @@ export function ProblemViewer({
             </Box>
           );
         }
-      }}
-      */
+      }}:{}) }
     />
   );
 }
@@ -215,7 +215,10 @@ function AnswerAccepter({
       <IconButton disabled={isFrozen} onClick={onSaveClick} sx={{ ml: 2 }}>
         <SaveIcon />
       </IconButton>
-      <ShowSubProblemAnswer problemId={masterProblemId} subproblemId={problemId}></ShowSubProblemAnswer>
+      <ShowSubProblemAnswer
+        problemId={masterProblemId}
+        subproblemId={problemId}
+      ></ShowSubProblemAnswer>
     </Box>
   );
 }
