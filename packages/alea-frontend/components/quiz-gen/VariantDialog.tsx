@@ -18,11 +18,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { useEffect, useState } from 'react';
-import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
-import { QuizProblemViewer } from '../GenerateQuiz';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
+import { useEffect, useState } from 'react';
+import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
@@ -59,7 +57,7 @@ interface VariantDialogProps {
     shuffleProblemId?: number;
     selectedOptions?: string[];
   }) => void;
-  problemData?: (FlatQuizProblem | ExistingProblem);
+  problemData?: FlatQuizProblem | ExistingProblem;
 }
 
 export const VariantDialog = ({
@@ -117,11 +115,11 @@ export const VariantDialog = ({
       problemId = problemData.problemId;
       mcqOptions = problemData.options || [];
       STeX = problemData.problemStex;
-      problemUri = problemData.sectionUri; 
+      problemUri = problemData.sectionUri;
     } else {
       problemUri = problemData.uri;
-      mcqOptions = []; 
-      STeX = undefined; 
+      mcqOptions = [];
+      STeX = undefined;
     }
   }
 
@@ -343,14 +341,14 @@ export const VariantDialog = ({
           flexDirection: 'column',
         }}
       >
-        <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
-          <Grid
-            item
-            xs={6}
+        <Box sx={{ flex: 1, display: 'flex', gap: 2, overflow: 'hidden', minHeight: 0 }}>
+          <Box
             sx={{
-              height: '100%',
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
+              minHeight: 0,
+              overflow: 'hidden',
             }}
           >
             <Box
@@ -410,9 +408,10 @@ export const VariantDialog = ({
                 }}
               >
                 <FormControl fullWidth>
-                  <InputLabel sx={{ fontWeight: 500 }}>Difficulty Level</InputLabel>
+                  <InputLabel>Difficulty Level</InputLabel>
                   <Select
                     value={variantConfig.difficulty || ''}
+                    label="Difficulty Level"
                     onChange={(e) => {
                       if (!variantConfig.variantTypes.includes('difficulty')) {
                         toggleVariantType('difficulty');
@@ -434,9 +433,10 @@ export const VariantDialog = ({
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel sx={{ fontWeight: 500 }}>Format Shift</InputLabel>
+                  <InputLabel >Format Shift</InputLabel>
                   <Select
                     value={variantConfig.formatType || ''}
+                    label="Format Shift"
                     onChange={(e) => {
                       if (!variantConfig.variantTypes.includes('formatShift')) {
                         toggleVariantType('formatShift');
@@ -522,15 +522,15 @@ export const VariantDialog = ({
                 </Typography>
               </Box>
             </Box>
-          </Grid>
+          </Box>
 
-          <Grid
-            item
-            xs={6}
+          <Box
             sx={{
-              height: '100%',
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
+              minHeight: 0,
+              overflow: 'hidden',
             }}
           >
             <Box
@@ -542,6 +542,7 @@ export const VariantDialog = ({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexShrink: 0,
+                mb: 1,
               }}
             >
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -574,15 +575,33 @@ export const VariantDialog = ({
               }}
             >
               {previewMode === 'json' ? (
-                <pre style={{ width: '100%' }}><UriProblemViewer uri={problemUri} /></pre>
+                isGenerated(problemData) ? (
+                  <pre style={{ width: '100%' }}>{JSON.stringify(problemData, null, 2)}</pre>
+                ) : isExisting(problemData) ? (
+                  <pre style={{ width: '100%' }}>
+                    <UriProblemViewer uri={problemUri} />
+                  </pre>
+                ) : (
+                  <Typography variant="body2">No problem data available.</Typography>
+                )
               ) : (
-                <Typography variant="body2">
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.5,
+                    overflow: 'auto',
+                  }}
+                >
                   {STeX ? STeX : 'No STeX available for this problem.'}
                 </Typography>
               )}
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
