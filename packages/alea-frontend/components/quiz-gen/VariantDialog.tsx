@@ -16,7 +16,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography,
+  Typography
 } from '@mui/material';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
@@ -433,7 +433,7 @@ export const VariantDialog = ({
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel >Format Shift</InputLabel>
+                  <InputLabel>Format Shift</InputLabel>
                   <Select
                     value={variantConfig.formatType || ''}
                     label="Format Shift"
@@ -576,11 +576,31 @@ export const VariantDialog = ({
             >
               {previewMode === 'json' ? (
                 isGenerated(problemData) ? (
-                  <pre style={{ width: '100%' }}>{JSON.stringify(problemData, null, 2)}</pre>
+                  <Box
+                    component="pre"
+                    sx={{
+                      width: '100%',
+                      overflow: 'hidden',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      m: 0,
+                    }}
+                  >
+                    {JSON.stringify(problemData, null, 2)}
+                  </Box>
                 ) : isExisting(problemData) ? (
-                  <pre style={{ width: '100%' }}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    my={1.5}
+                    p={1.5}
+                  >
                     <UriProblemViewer uri={problemUri} />
-                  </pre>
+                  </Box>
                 ) : (
                   <Typography variant="body2">No problem data available.</Typography>
                 )
