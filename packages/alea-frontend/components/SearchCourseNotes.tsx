@@ -10,10 +10,12 @@ const SearchCourseNotes = ({
   courseId,
   query,
   onClose,
+  setHasResults,
 }: {
   courseId: string;
   query?: string;
   onClose?: any;
+  setHasResults?: (val: boolean) => void;
 }) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>(query);
@@ -24,12 +26,18 @@ const SearchCourseNotes = ({
   }, []);
 
   async function handleSearch() {
-    if (!searchQuery || !courseId) return;
+    if (!searchQuery || !courseId) {
+      setHasResults(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const response = await searchCourseNotes(searchQuery, courseId);
       setReferences(response?.sources || []);
+      setHasResults((response?.sources?.length || 0) > 0);
     } catch (error) {
+      setReferences([]);
+      setHasResults(false);
       console.error('Error fetching search results:', error);
     } finally {
       setIsLoading(false);
@@ -88,7 +96,7 @@ const SearchCourseNotes = ({
         references.length > 0 && (
           <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
             <Box maxWidth="800px" m="0 auto" p="10px">
-              {references.map((reference) => (
+              {references.filter(reference => reference.uri).map((reference) => (
                 <Box
                   key={reference.uri}
                   sx={{

@@ -1,7 +1,7 @@
-import {FTML} from '@kwarc/ftml-viewer';
+import { FTML } from '@kwarc/ftml-viewer';
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
-import { Comment, getUserInfo} from '@stex-react/api';
+import { Comment, getUserInfo } from '@stex-react/api';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getPrivateNotes, refreshAllComments } from './comment-store-manager';
@@ -9,6 +9,7 @@ import { CommentReply } from './CommentReply';
 import styles from './comments.module.scss';
 import { CommentView } from './CommentView';
 import { getLocaleObject } from './lang/utils';
+import { useCommentRefresh } from '@stex-react/utils';
 
 export function NotesView({
   uri,
@@ -24,6 +25,7 @@ export function NotesView({
   const t = getLocaleObject(useRouter());
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState([] as Comment[]);
+  const { refreshKey } = useCommentRefresh();
 
   const refreshNotes = () => {
     refreshAllComments().then((_) => {
@@ -36,7 +38,7 @@ export function NotesView({
   useEffect(() => {
     if (!userId) return;
     getPrivateNotes(uri).then((c) => setNotes(c));
-  }, [uri, userId]);
+  }, [uri, userId, refreshKey]);
 
   if (!userId)
     return (
@@ -78,11 +80,7 @@ export function NotesView({
       )}
 
       {notes.map((note) => (
-        <CommentView
-          key={note.commentId}
-          comment={note}
-          onUpdate={() => refreshNotes()}
-        />
+        <CommentView key={note.commentId} comment={note} onUpdate={() => refreshNotes()} />
       ))}
     </div>
   );

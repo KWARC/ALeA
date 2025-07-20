@@ -19,38 +19,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  conceptUriToName,
-  getCourseInfo,
-  getDefiniedaInSection,
-  getSectionDependencies,
-} from '@stex-react/api';
-import { FTML } from '@kwarc/ftml-viewer';
+import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@stex-react/api';
 import { CourseInfo } from '@stex-react/utils';
 import React, { useEffect, useState } from 'react';
 import { getFlamsServer } from '@kwarc/ftml-react';
-
-export function getSectionDetails(tocElems: FTML.TOCElem[]): SectionDetails[] {
-  const sections: SectionDetails[] = [];
-  for (const tocElem of tocElems) {
-    if (tocElem.type === 'Section') {
-      sections.push({
-        name: tocElem.title,
-        id: tocElem.id,
-        uri: tocElem.uri,
-      });
-    }
-    if ('children' in tocElem && Array.isArray(tocElem.children)) {
-      sections.push(...getSectionDetails(tocElem.children));
-    }
-  }
-  return sections;
-}
-interface SectionDetails {
-  name: string;
-  id?: string;
-  uri?: string;
-}
+import { getSecInfo } from '../coverage-update';
+import { SecInfo } from 'packages/alea-frontend/types';
 
 export const CourseConceptsDialog = ({
   open,
@@ -63,11 +37,11 @@ export const CourseConceptsDialog = ({
 }) => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [allSectionDetails, setAllSectionDetails] = useState<{
-    [courseId: string]: SectionDetails[];
+    [courseId: string]: SecInfo[];
   }>({});
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedCourseSections, setSelectedCourseSections] = useState<SectionDetails[]>([]);
-  const [selectedSection, setSelectedSection] = useState<SectionDetails | null>(null);
+  const [selectedCourseSections, setSelectedCourseSections] = useState<SecInfo[]>([]);
+  const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [sectionConcepts, setSectionConcepts] = useState<{ label: string; value: string }[]>([]);
   const [processedOptions, setProcessedOptions] = useState<{ label: string; value: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -80,13 +54,12 @@ export const CourseConceptsDialog = ({
 
   useEffect(() => {
     async function getCourseSections() {
-      const secDetails: Record<string, SectionDetails[]> = {};
+      const secDetails: Record<string, SecInfo[]> = {};
       for (const courseId of Object.keys(courses)) {
-        const notes = courses?.[courseId]?.notes;
-        if (!notes) continue;
-        secDetails[courseId] = getSectionDetails(
-          (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? []
-        );
+        const notesUri = courses?.[courseId]?.notes;
+        if (!notesUri) continue;
+        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        secDetails[courseId] = toc.flatMap((entry) => getSecInfo(entry));
       }
       setAllSectionDetails(secDetails);
     }
@@ -100,8 +73,10 @@ export const CourseConceptsDialog = ({
   };
 
   const handleSectionChange = async (event: SelectChangeEvent) => {
-    const sectionName = event.target.value;
-    const selectedSection = selectedCourseSections.find((section) => section.name === sectionName);
+    const sectionTitle = event.target.value;
+    const selectedSection = selectedCourseSections.find(
+      (section) => section.title === sectionTitle
+    );
     if (selectedSection) {
       setSelectedSection(selectedSection);
     }
@@ -166,13 +141,13 @@ export const CourseConceptsDialog = ({
               <InputLabel id="section-select-label">Choose Section</InputLabel>
               <Select
                 labelId="section-select-label"
-                value={selectedSection?.name}
+                value={selectedSection?.title}
                 onChange={handleSectionChange}
                 label="Choose Section"
               >
                 {selectedCourseSections.map((section, idx) => (
-                  <MenuItem key={idx} value={section.name}>
-                    {section.name}
+                  <MenuItem key={idx} value={section.title}>
+                    {section.title}
                   </MenuItem>
                 ))}
               </Select>

@@ -16,6 +16,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
+import { FTMLFragment } from '@kwarc/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());
@@ -101,14 +102,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
             borderRadius="5px"
             mb="15px"
           >
-            <Box maxWidth="600px" m="0 auto 30px" p="10px">
-              {/* TODO ALEA4-M1
-                <ExpandableContent
-                  contentUrl={XhtmlContentUrl(fileLoc.archive, fileLoc.filepath)}
-                  noFurtherExpansion={true}
-                />
-                */}
-            </Box>
+            <FTMLFragment fragment={{ type: 'FromBackend', uri: uri }} />
           </Box>
         ) : (
           <Button onClick={() => setShowContent(true)} variant="contained" sx={{ mb: '15px' }}>

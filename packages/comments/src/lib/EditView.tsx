@@ -14,6 +14,8 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
+import { useCommentRefresh } from '@stex-react/utils';
+import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {
   uri?: FTML.URI;
@@ -48,6 +50,7 @@ export function EditView({
   const [needsResponse, setNeedsResponse] = useState(true);
   const t = getLocaleObject(router);
   const courseId = router.query['courseId'] as string;
+  const { triggerRefresh } = useCommentRefresh();
 
   useEffect(() => {
     getUserInfo().then((userInfo) => {
@@ -89,6 +92,10 @@ export function EditView({
         await editComment(existingComment.commentId, inputText);
       } else {
         await addComment(getNewComment());
+        if (uri) {
+          clearCommentStore(uri);
+        }
+        triggerRefresh();
       }
       onUpdate();
     } catch (err) {

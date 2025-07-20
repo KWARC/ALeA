@@ -10,21 +10,19 @@ import {
 import { AnswerClass, CreateAnswerClassRequest } from '@stex-react/api';
 import { DEFAULT_ANSWER_CLASSES } from '@stex-react/quiz-utils';
 import { useRouter } from 'next/router';
-import { ChangeEvent, SyntheticEvent, useContext, useEffect, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
-import { GradingContext } from './SubProblemAnswer';
 export function GradingCreator({
-  subProblemId,
   rawAnswerClasses = [],
   showPoints = false,
+  onNewGrading,
 }: {
-  subProblemId: string;
   rawAnswerClasses: AnswerClass[];
   showPoints?: boolean;
+  onNewGrading?: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
 }) {
   const router = useRouter();
   const t = getLocaleObject(router).quiz;
-  const { onNewGrading } = useContext(GradingContext);
   const [answerClasses, setAnswerClasses] = useState(
     [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c) => ({
       count: 0,
@@ -83,7 +81,7 @@ export function GradingCreator({
         count: c.count,
       }))
       .filter((c) => c.count > 0);
-    onNewGrading?.(subProblemId, acs, feedback);
+    onNewGrading?.(acs, feedback);
     setFeedBack('');
     setSelectAnswerClass(answerClasses[0]);
   }

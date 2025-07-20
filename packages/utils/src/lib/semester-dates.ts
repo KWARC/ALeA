@@ -85,10 +85,10 @@ export const semesterPeriods: Record<string, SemesterPeriod> = {
       },
     ],
     examDates: [
-      { courseId: 'krmt', examDate: '2025-07-28', examStartTime: '', examEndTime: '' },
+      /*{ courseId: 'krmt', examDate: '2025-07-28', examStartTime: '', examEndTime: '' },
       { courseId: 'smai', examDate: '2025-07-22', examStartTime: '', examEndTime: '' },
       { courseId: 'ai-2', examDate: '2025-07-30', examStartTime: '', examEndTime: '' },
-      { courseId: 'iwgs-2', examDate: '2025-07-24', examStartTime: '', examEndTime: '' },
+      { courseId: 'iwgs-2', examDate: '2025-07-24', examStartTime: '', examEndTime: '' },*/
     ],
   },
   'WS25-26': {

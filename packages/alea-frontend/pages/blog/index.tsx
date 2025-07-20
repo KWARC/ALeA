@@ -116,6 +116,9 @@ function convertToPostSnippets(blogData: BlogPost[]): PostSnippet[] {
 }
 
 export async function getStaticProps() {
+  if (!fs.existsSync('../../static/blogData.json')) {
+    return { props: { postSnippets: [] } };
+  }
   const data = fs.readFileSync('../../static/blogData.json', 'utf8');
   const jsonData = JSON.parse(data);
   const postSnippets = convertToPostSnippets(jsonData);

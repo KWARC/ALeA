@@ -1,5 +1,5 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
 import { ProblemFeedbackJson } from '@kwarc/flams';
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   COURSES_INFO,
@@ -10,7 +10,6 @@ import {
   waitForNSeconds,
 } from '@stex-react/utils';
 import axios from 'axios';
-
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -109,7 +108,6 @@ export async function getCourseInfo(institution?: string) {
   }
 }
 
-
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
   return `<span data-ftml-term="OMID" data-ftml-head="${conceptUri}" data-ftml-comp>${name}</span>`;
@@ -177,7 +175,7 @@ export const ALL_LO_TYPES = [
   'definition',
   'problem',
   'example',
-  'statement', // synomym: assertion
+  'statement', // synomym: assertion => now changed to ulo:proposition
 ] as const;
 export type LoType = (typeof ALL_LO_TYPES)[number];
 export interface SparqlResponse {
@@ -321,7 +319,7 @@ WHERE {
   FILTER(!CONTAINS(STR(?x), "?term")).
   FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:crossrefs, ulo:defines, ulo:example-for, ulo:specifies)).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -340,7 +338,7 @@ WHERE {
  FILTER(!CONTAINS(STR(?x), "?term")).
  FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:objective ,ulo:precondition )).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -350,7 +348,7 @@ export function getSparqlQueryForLoString(loString: string, loTypes?: LoType[]) 
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const query = `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
@@ -382,7 +380,7 @@ export function getSparqlQueryForNonDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';
@@ -429,7 +427,7 @@ export function getSparqlQueryForDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';
