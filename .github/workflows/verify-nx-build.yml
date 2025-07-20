@@ -47,4 +47,7 @@ jobs:
             ${{ runner.os }}-nx-
 
       - name: Build the project (verify it compiles)
-        run: npm run build
+        env:
+          NEXT_PUBLIC_FLAMS_URL: https://mathhub.info
+
+        run: npm run build alea-frontend

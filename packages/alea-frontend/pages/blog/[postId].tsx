@@ -145,6 +145,9 @@ const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
 export default BlogPostPage;
 
 export async function getStaticPaths() {
+  if(!fs.existsSync('../../static/blogData.json')) {
+    return { paths: [], fallback: true };
+  }
   const data = fs.readFileSync('../../static/blogData.json', 'utf-8');
   const jsonData = JSON.parse(data);
   const paths = jsonData.map((blog: BlogPost) => ({
