@@ -19,9 +19,10 @@ import {
   Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
+import { QuizProblemViewer } from '../GenerateQuiz';
+import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
@@ -58,7 +59,7 @@ interface VariantDialogProps {
     shuffleProblemId?: number;
     selectedOptions?: string[];
   }) => void;
-  problemData?: FlatQuizProblem | ExistingProblem;
+  problemData?: (FlatQuizProblem | ExistingProblem);
 }
 
 export const VariantDialog = ({
@@ -541,7 +542,6 @@ export const VariantDialog = ({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexShrink: 0,
-                mb: 1,
               }}
             >
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -565,48 +565,21 @@ export const VariantDialog = ({
             <Box
               sx={{
                 flex: 1,
-                border: previewMode === 'json' ? '1px solid #30363d' : '1px solid #d1d9e0',
+                bgcolor: '#f8f9fa',
+                border: '2px dashed #ccc',
+                borderRadius: 2,
+                p: 2,
+                overflow: 'auto',
                 minHeight: 0,
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.1)',
               }}
             >
-              {!previewMode && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    textAlign: 'center',
-                    color: 'text.secondary',
-                    opacity: 0.6,
-                  }}
-                ></Box>
+              {previewMode === 'json' ? (
+                <pre style={{ width: '100%' }}><UriProblemViewer uri={problemUri} /></pre>
+              ) : (
+                <Typography variant="body2">
+                  {STeX ? STeX : 'No STeX available for this problem.'}
+                </Typography>
               )}
-
-              <Box
-                sx={{ flex: 1, p: 3, overflow: 'auto', bgcolor: 'white', border: '1px solid #ddd' }}
-              >
-                {previewMode === 'json' ? (
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    my={1.5}
-                    p={1.5}
-                  >
-                    <UriProblemViewer uri={problemUri} />
-                  </Box>
-                ) : STeX ? (
-                  <Typography variant="body2" component="div">
-                    {STeX}
-                  </Typography>
-                ) : (
-                  <Box sx={{ textAlign: 'center', color: 'text.secondary', mt: 5 }}>
-                    <Typography>No STeX Available</Typography>
-                  </Box>
-                )}
-              </Box>
             </Box>
           </Grid>
         </Grid>
