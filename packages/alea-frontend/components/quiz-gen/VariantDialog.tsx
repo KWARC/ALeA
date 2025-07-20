@@ -16,7 +16,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
@@ -531,21 +531,23 @@ export const VariantDialog = ({
               flexDirection: 'column',
               minHeight: 0,
               overflow: 'hidden',
+              border: '1px solid #e0e0e0',
+              borderRadius: 2,
+              bgcolor: '#fff',
             }}
           >
             <Box
               sx={{
                 p: 2,
-                bgcolor: 'grey.50',
-                borderBottom: '1px solid #ddd',
+                bgcolor: '#f6f8fa',
+                borderBottom: '1px solid #e5e7eb',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexShrink: 0,
-                mb: 1,
               }}
             >
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Preview
               </Typography>
 
@@ -554,6 +556,7 @@ export const VariantDialog = ({
                   JSON
                 </Typography>
                 <Switch
+                  size="small"
                   checked={previewMode === 'stex'}
                   onChange={(e) => setPreviewMode(e.target.checked ? 'stex' : 'json')}
                 />
@@ -566,12 +569,11 @@ export const VariantDialog = ({
             <Box
               sx={{
                 flex: 1,
-                bgcolor: '#f8f9fa',
-                border: '2px dashed #ccc',
-                borderRadius: 2,
+                bgcolor: '#f9fafb',
                 p: 2,
                 overflow: 'auto',
                 minHeight: 0,
+                fontFamily: 'monospace',
               }}
             >
               {previewMode === 'json' ? (
@@ -580,12 +582,12 @@ export const VariantDialog = ({
                     component="pre"
                     sx={{
                       width: '100%',
-                      overflow: 'hidden',
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-word',
-                      fontFamily: 'monospace',
-                      fontSize: '14px',
+                      fontFamily: 'JetBrains Mono, Consolas, monospace',
+                      fontSize: '13px',
                       lineHeight: 1.6,
+                      color: '#374151',
                       m: 0,
                     }}
                   >
@@ -593,16 +595,31 @@ export const VariantDialog = ({
                   </Box>
                 ) : isExisting(problemData) ? (
                   <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    my={1.5}
-                    p={1.5}
+                    sx={{
+                      p: 2,
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 1,
+                      bgcolor: '#fff',
+                    }}
                   >
                     <UriProblemViewer uri={problemUri} />
                   </Box>
                 ) : (
-                  <Typography variant="body2">No problem data available.</Typography>
+                  <Box
+                    sx={{
+                      textAlign: 'center',
+                      color: 'text.secondary',
+                      mt: 4,
+                      opacity: 0.7,
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 400 }}>
+                      📄 No problem data available
+                    </Typography>
+                    <Typography variant="body2">
+                      Select a question variant to see its preview
+                    </Typography>
+                  </Box>
                 )
               ) : (
                 <Typography
@@ -613,7 +630,8 @@ export const VariantDialog = ({
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '0.9rem',
                     lineHeight: 1.5,
-                    overflow: 'auto',
+                    color: '#111827',
+                    p: 1,
                   }}
                 >
                   {STeX ? STeX : 'No STeX available for this problem.'}
