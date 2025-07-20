@@ -61,40 +61,114 @@ export interface GptSearchResult {
   archive: string;
   filepath: string;
   courseId: string;
+  uri: string;
 }
 
 export async function searchCourseNotes(query: string, courseId: string) {
   const encodedQuery = encodeURIComponent(query);
-  const resp = await axios.get(
-    `/api/gpt-redirect?query=${encodedQuery}&course_id=${courseId}&apiname=query_metadata`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      query: encodedQuery,
+      course_id: courseId,
+      apiname: 'query_metadata',
+      projectName: 'search',
+    },
+    headers: getAuthHeaders(),
+  });
   return resp.data as { sources: GptSearchResult[] };
 }
-export type QuizQuestionType = 'mcq' | 'msq' | 'fill';
-export interface QuizQuestion {
-  question: string;
-  options?: string[];
-  questionType: QuizQuestionType;
-  correctAnswer?: string | string[];
+
+export type QuizProblemType = 'MCQ' | 'MSQ' | 'FILL_IN';
+interface OptionExplanations {
+  [option: string]: string;
+}
+export interface ProblemJson {
+  problem: string;
+  problemType: QuizProblemType;
+  options: string[];
+  optionExplanations?: OptionExplanations;
+  correctAnswer: string | string[];
   explanation?: string;
 }
-interface QuizResponse {
-  quiz: QuizQuestion[];
+export interface QuizProblem {
+  problemId: number;
+  courseId: string;
+  sectionId: string; //TODO see again
+  sectionUri: string;
+  problemStex: string;
+  problemJson: ProblemJson;
+}
+export async function fetchGeneratedProblems(
+  courseId: string,
+  startSectionUri: string,
+  endSectionUri: string
+) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'fetch-generated-problems',
+      projectName: 'quiz-gen',
+      courseId,
+      startSectionUri,
+      endSectionUri,
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as QuizProblem[];
 }
 export async function generateQuizProblems(
   courseId: string,
-  sectionId: string,
-  sectionUri: string
+  startSectionUri: string,
+  endSectionUri: string
 ) {
   const resp = await axios.post(
-    `/api/gpt-redirect?apiname=generate-quiz-problems`,
-    { courseId, sectionId, sectionUri },
+    '/api/gpt-redirect',
+    { courseId, startSectionUri, endSectionUri },
     {
+      params: {
+        apiname: 'generate',
+        projectName: 'quiz-gen',
+      },
       headers: getAuthHeaders(),
     }
   );
-  return resp.data as QuizResponse;
+  return resp.data as QuizProblem[];
+}
+
+export async function postFeedback(data: {
+  problemId: number;
+  rating: boolean;
+  reasons?: string[];
+  comments?: string;
+}) {
+  const resp = await axios.post(`/api/gpt-redirect`, data, {
+    params: {
+      apiname: 'post-feedback',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data;
+}
+export async function getFeedback(problemId: number) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'get-feedback',
+      projectName: 'quiz-gen',
+      problemId,
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data;
+}
+
+export async function getCourseGeneratedProblemsBySection(courseId: string) {
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      courseId: courseId,
+      apiname: 'generated-problems-count-by-section',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as Record<string, number>;
 }

@@ -1,17 +1,11 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import {
-  ClipData,
-  ClipInfo,
-  ClipMetaData,
-  getCourseInfo,
-  getDocumentSections,
-  SectionInfo,
-} from '@stex-react/api';
+import { ClipData, ClipInfo, ClipMetaData, getCourseInfo, SectionInfo } from '@stex-react/api';
 import { LectureEntry } from '@stex-react/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000;
 export const CACHED_VIDEO_SLIDESMAP: Record<
@@ -179,8 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { notes } = courses[courseId];
 
-  const tocContent = (await getDocumentSections(notes))[1];
-
+  const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
   const allSections: SectionInfo[] = [];
   for (const elem of tocContent) {
     const elemSections = getAllSections(elem);

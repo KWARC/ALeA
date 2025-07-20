@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (with fallback)
+        run: |
+          echo "🛠️ Installing dependencies using npm ci..."
+          if npm ci; then
+            echo "✅ Installed dependencies successfully with npm ci."
+          else
+            echo "⚠️ npm ci failed. Retrying with --legacy-peer-deps due to peer dependency conflicts..."
+            npm ci --legacy-peer-deps
+          fi
+
+      - name: Cache Nx build outputs
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/nx
+          key: ${{ runner.os }}-nx-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
+      - name: Build the project (verify it compiles)
+        env:
+          NEXT_PUBLIC_FLAMS_URL: https://mathhub.info
+
+        run: npm run build alea-frontend

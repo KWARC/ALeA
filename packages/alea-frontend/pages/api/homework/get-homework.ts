@@ -21,7 +21,7 @@ import {
 import {
   convertToSubProblemIdToAnswerId,
   getAllGradingsOrSetError,
-} from '../nap/get-answers-with-grading';
+} from '../nap/get-answers-info';
 
 function getPhaseAppropriateProblems(
   problems: { [problemId: string]: FTMLProblemWithSolution },
@@ -174,5 +174,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.status(200).json({ homework, responses, gradingInfo } as GetHomeworkResponse);
+  res.status(200).json({ homework, responses, gradingInfo } /*as GetHomeworkResponse TODO(Behrooz)*/);
 }

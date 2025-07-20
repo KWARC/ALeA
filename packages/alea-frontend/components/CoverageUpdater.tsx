@@ -30,20 +30,11 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
   return new Date(timestamp).setHours(12, 0, 0, 0);
 }
 
-function convertSnapToEntry(snap: LectureEntry, index: number): any {
+function convertSnapToEntry(snap: LectureEntry): FormData {
   return {
-    id: `${snap.timestamp_ms}-${index}`,
-    timestamp_ms: snap.timestamp_ms,
+    ...snap,
     sectionName: getSectionNameForUri(snap.sectionUri || '', {}),
-    sectionUri: snap.sectionUri || '',
     targetSectionName: getSectionNameForUri(snap.targetSectionUri || '', {}),
-    targetSectionUri: snap.targetSectionUri || '',
-    clipId: snap.clipId || '',
-    isQuizScheduled: snap.isQuizScheduled || false,
-    slideUri: snap.slideUri || '',
-    slideNumber: snap.slideNumber,
-    autoDetected: snap.autoDetected || undefined,
-    lectureEndTimestamp_ms: snap.lectureEndTimestamp_ms ,
   };
 }
 
@@ -72,7 +63,10 @@ export function CoverageUpdater({
     isQuizScheduled: false,
     slideUri: '',
     slideNumber: undefined as number | undefined,
+    venue: '',
+    venueLink: '',
     lectureEndTimestamp_ms: Date.now(),
+    sectionCompleted:false
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -107,6 +101,8 @@ export function CoverageUpdater({
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
       lectureEndTimestamp_ms: undefined,
     });
     setEditIndex(null);
@@ -121,7 +117,10 @@ export function CoverageUpdater({
       isQuizScheduled: formData.isQuizScheduled,
       slideUri: formData.slideUri,
       slideNumber: formData.slideNumber,
+      venue: formData.venue,
+      venueLink: formData.venueLink,
       lectureEndTimestamp_ms: formData.lectureEndTimestamp_ms,
+      sectionCompleted: formData.sectionCompleted,
     };
     setFormData({
       sectionName: '',
@@ -133,7 +132,10 @@ export function CoverageUpdater({
       isQuizScheduled: false,
       slideUri: '',
       slideNumber: undefined,
+      venue: '',
+      venueLink: '',
       lectureEndTimestamp_ms: Date.now(),
+      sectionCompleted: false,
     });
     handleSaveSingle(newItem);
   };
@@ -154,17 +156,19 @@ export function CoverageUpdater({
 
   const handleEditDialogSave = (data: FormData) => {
     if (editIndex === null) return;
+    const { sectionName, targetSectionName, ...cleanData } = formData;
     const updatedSnaps = [...snaps];
     updatedSnaps[editIndex] = {
       ...data,
       autoDetected: snaps[editIndex].autoDetected,
     };
-    handleSaveSingle(data);
+
+    handleSaveSingle(cleanData);
     handleEditDialogClose();
   };
 
   const coverageEntries = snaps.map((snap, index) => {
-    const entry = convertSnapToEntry(snap, index);
+    const entry = convertSnapToEntry(snap);
     entry.sectionName = getSectionNameForUri(snap.sectionUri || '', secInfo);
     entry.targetSectionName = getSectionNameForUri(snap.targetSectionUri || '', secInfo);
     return entry;
@@ -180,7 +184,7 @@ export function CoverageUpdater({
             secInfo={secInfo}
             onEdit={(idx) => {
               const entry = coverageEntries[idx];
-              const auto = entry.autoDetected;
+              const auto: typeof entry.autoDetected & { slideNumber?: number } = entry.autoDetected;
 
               const shouldPrefill =
                 entry.sectionUri === '' || entry.sectionUri === 'update-pending';
@@ -236,7 +240,7 @@ export function CoverageUpdater({
                       backgroundColor: 'white',
                       color: '#1a237e',
                       p: 2,
-                      border: '1px solid #ccc'
+                      border: '1px solid #ccc',
                     }}
                   >
                     <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>

@@ -4,6 +4,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SaveIcon from '@mui/icons-material/Save';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 import {
   Box,
   Button,
@@ -20,9 +21,9 @@ import {
 } from '@mui/material';
 import { LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';
-import React, { Dispatch, SetStateAction, useEffect } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
-import { SlidePicker } from './SlideSelector';
+import { isLeafSectionId, SlidePicker } from './SlideSelector';
 import { getSlides } from '@stex-react/api';
 
 export type FormData = LectureEntry & {
@@ -49,6 +50,10 @@ export function CoverageForm({
   onCancel,
   courseId,
 }: CoverageFormProps) {
+  // const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
+  const hasManuallyToggledCompletion = useRef(false);
+  const [isLeafSection, setIsLeafSection] = useState(true);
+
   useEffect(() => {
     const updatedData = { ...formData };
     let dataChanged = false;
@@ -90,7 +95,6 @@ export function CoverageForm({
     });
   }, [formData.slideUri, formData.sectionUri, formData.slideNumber]);
 
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
@@ -105,7 +109,10 @@ export function CoverageForm({
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [hours, minutes] = e.target.value.split(':').map(Number);
-    const updatedTimestamp_ms = dayjs(formData.timestamp_ms).set('hour', hours).set('minute', minutes).valueOf();
+    const updatedTimestamp_ms = dayjs(formData.timestamp_ms)
+      .set('hour', hours)
+      .set('minute', minutes)
+      .valueOf();
     setFormData({ ...formData, timestamp_ms: updatedTimestamp_ms });
   };
 
@@ -120,13 +127,30 @@ export function CoverageForm({
     setFormData({ ...formData, isQuizScheduled: e.target.checked });
   };
 
-  const handleSlideUriChange = (uri: string | undefined, slideNumber: number | undefined) => {
-    setFormData({ ...formData, slideUri: uri, slideNumber });
+  const handleCheckboxSection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    hasManuallyToggledCompletion.current = true;
+    setFormData({ ...formData, sectionCompleted: e.target.checked });
+  };
+
+  const handleSlideUriChange = (
+    uri: string | undefined,
+    slideNumber: number | undefined,
+    isLastSlide?: boolean,
+    isLeaf?: boolean
+  ) => {
+    if (!formData.sectionUri || slideNumber === undefined || !uri) return;
+    const shouldMarkComplete = !!isLastSlide && !!isLeaf && !hasManuallyToggledCompletion.current;
+    setFormData((prev) => ({
+      ...prev,
+      slideUri: uri,
+      slideNumber,
+      sectionCompleted: shouldMarkComplete,
+    }));
   };
 
   const handleSectionChange = (event: any) => {
     const selectedUri = event.target.value as string;
-
+    hasManuallyToggledCompletion.current = false;
     if (!selectedUri) {
       setFormData({
         ...formData,
@@ -134,18 +158,23 @@ export function CoverageForm({
         sectionName: '',
         slideUri: '',
         slideNumber: undefined,
+        sectionCompleted: false,
       });
+      setIsLeafSection(true); // Safe default
       return;
     }
 
     const selectedSection = secInfo[selectedUri];
     if (selectedSection) {
+     const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
+      setIsLeafSection(isLeaf);
       setFormData({
         ...formData,
         sectionUri: selectedUri,
         sectionName: selectedSection.title.trim(),
         slideUri: '',
         slideNumber: undefined,
+        sectionCompleted: isLeaf ? formData.sectionCompleted : false,
       });
     }
   };
@@ -228,6 +257,30 @@ export function CoverageForm({
       </Grid>
 
       <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Venue"
+          name="venue"
+          value={formData.venue || ''}
+          onChange={handleChange}
+          placeholder="Enter venue name"
+          variant="outlined"
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Venue Link"
+          name="venueLink"
+          value={formData.venueLink || ''}
+          onChange={handleChange}
+          placeholder="https://example.com"
+          variant="outlined"
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
         <FormControl fullWidth>
           <InputLabel id="section-name-select-label">Section (actually) Completed</InputLabel>
           <Select
@@ -240,11 +293,28 @@ export function CoverageForm({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {Object.values(secInfo).map((section) => (
-              <MenuItem key={section.uri} value={section.uri}>
-                {section.title}
-              </MenuItem>
-            ))}
+            {Object.values(secInfo).map((section) => {
+              const duration = section.duration || 0;
+              const roundedMinutes = Math.ceil(duration / 60);
+
+              let displayTime = '';
+              if (roundedMinutes >= 60) {
+                const hours = Math.floor(roundedMinutes / 60);
+                const minutes = roundedMinutes % 60;
+                displayTime = ` (${hours} hr${hours > 1 ? 's' : ''}${
+                  minutes ? ` ${minutes} min${minutes > 1 ? 's' : ''}` : ''
+                })`;
+              } else if (roundedMinutes > 0) {
+                displayTime = ` (${roundedMinutes} min${roundedMinutes > 1 ? 's' : ''})`;
+              }
+
+              return (
+                <MenuItem key={section.uri} value={section.uri}>
+                  {section.title}
+                  {displayTime}
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
       </Grid>
@@ -285,6 +355,25 @@ export function CoverageForm({
         />
       </Grid>
 
+      <Grid item xs={12}>
+        <Divider sx={{ my: 1 }} />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={!!formData.sectionCompleted}
+              onChange={handleCheckboxSection}
+              color="warning"
+              disabled={!isLeafSection}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+              <DoneAllIcon sx={{ mr: 0.5, color: 'success.main' }} fontSize="small" />
+              Section Completed
+            </Typography>
+          }
+        />
+      </Grid>
       <Grid item xs={12}>
         <Divider sx={{ my: 1 }} />
         <FormControlLabel

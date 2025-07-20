@@ -1,5 +1,6 @@
-import { FTMLDocument, FTMLSetup } from '@kwarc/ftml-react';
+import { FTMLDocument, FTMLSetup, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
@@ -9,7 +10,8 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material';
-import { getCourseInfo, getDocumentSections } from '@stex-react/api';
+import IconButton from '@mui/material/IconButton';
+import { getCourseInfo } from '@stex-react/api';
 import { CommentButton } from '@stex-react/comments';
 import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
@@ -19,15 +21,20 @@ import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
+import Tooltip from '@mui/material/Tooltip';
 
-const SearchDialog = ({ open, onClose, courseId }) => {
+export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
       <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
         {courseId.toUpperCase()}
       </DialogTitle>
-      <DialogContent>
-        <SearchCourseNotes courseId={courseId || ''} onClose={onClose} />
+      <DialogContent sx={{ p: 1 }}>
+        <SearchCourseNotes
+          courseId={courseId || ''}
+          onClose={onClose}
+          setHasResults={setHasResults}
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} variant="contained">
@@ -36,29 +43,6 @@ const SearchDialog = ({ open, onClose, courseId }) => {
       </DialogActions>
     </Dialog>
   );
-  /*
-  <SearchDialog open={dialogOpen} onClose={handleDialogClose} courseId={courseId} />
-  const [dialogOpen, setDialogOpen] = useState(false);
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        setDialogOpen(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  const handleSearchClick = () => {
-    setDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-  };*/
 };
 
 const FragmentWrap: React.FC<{
@@ -102,6 +86,26 @@ const CourseNotesPage: NextPage = () => {
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TOCElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [hasResults, setHasResults] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setDialogOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+  const handleSearchClick = () => {
+    setDialogOpen(true);
+  };
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
@@ -111,11 +115,13 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    getDocumentSections(notes).then(([css, toc]) => {
-      setToc(toc);
-      uriToTitle.current = {};
-      getSectionUriToTitle(toc, uriToTitle.current);
-    });
+    getFlamsServer()
+      .contentToc({ uri: notes })
+      .then(([css, toc] = [[], []]) => {
+        setToc(toc);
+        uriToTitle.current = {};
+        getSectionUriToTitle(toc, uriToTitle.current);
+      });
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
@@ -150,6 +156,32 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
+      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+        <IconButton
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 64,
+            right: 24,
+            zIndex: 2002,
+            bgcolor: 'white',
+            boxShadow: 3,
+            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+          }}
+          onClick={handleSearchClick}
+          size="large"
+          aria-label="Open search dialog"
+        >
+          <SearchIcon fontSize="large" />
+        </IconButton>
+      </Tooltip>
+      <SearchDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        courseId={courseId}
+        hasResults={hasResults}
+        setHasResults={setHasResults}
+      />
       <Box
         sx={{
           height: 'calc(100vh - 120px)',

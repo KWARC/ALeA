@@ -1,12 +1,14 @@
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
 import { initialize } from '@kwarc/ftml-react';
+import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { MathJaxContext } from '@stex-react/mathjax';
 import { PositionProvider, ServerLinksContext } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@stex-react/utils';
 import { AppProps } from 'next/app';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './styles.scss';
+import { CommentRefreshProvider } from '@stex-react/utils';
 
 const instance = createInstance({
   urlBase: 'https://matomo.kwarc.info',
@@ -50,28 +52,70 @@ const theme = createTheme({
   },
 });
 
+let flamsInitialized = false;
+const initStartTime = Date.now();
+// this code runs earlier if its not in the useEffect
+initialize(process.env.NEXT_PUBLIC_FLAMS_URL, false)
+  .then(() => {
+    console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
+    flamsInitialized = true;
+  })
+  .catch((err) => {
+    console.error(`FTML initialization failed: [${process.env.NEXT_PUBLIC_FLAMS_URL}]`, err);
+  });
+
 function CustomApp({ Component, pageProps }: AppProps) {
+  const [readyToRender, setReadyToRender] = useState(false);
   useEffect(() => {
-    initialize(process.env.NEXT_PUBLIC_FLAMS_URL, false)
-      .then(() => {
-        console.log('FTML initialized');
-      })
-      .catch((err) => {
-        console.error(`FTML initialization failed: [${process.env.NEXT_PUBLIC_FLAMS_URL}]`, err);
-      });
+    const interval = setInterval(() => {
+      if (flamsInitialized) {
+        setReadyToRender(true);
+        clearInterval(interval);
+      }
+    }, 10);
+    const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
+    const pollBuildId = setInterval(async () => {
+      try {
+        const res = await fetch('/api/build-id');
+        const { buildId: latestBuildId } = await res.json();
+
+        if (currentBuildId && latestBuildId !== currentBuildId) {
+          alert(`Refreshing to switch to a newer version of the application`);
+          window.location.reload();
+        }
+      } catch (error) {
+        console.debug('Build ID check failed:', error);
+      }
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(pollBuildId);
+    };
+    
   }, []);
+
+  if (!readyToRender) return <CircularProgress />;
+
+  console.log('rendering after: ', Date.now() - initStartTime, 'ms');
   return (
-    <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
-      <MatomoProvider value={instance}>
-        <ThemeProvider theme={theme}>
-          <MathJaxContext>
-            <PositionProvider>
-              <Component {...pageProps} />
-            </PositionProvider>
-          </MathJaxContext>
-        </ThemeProvider>
-      </MatomoProvider>
-    </ServerLinksContext.Provider>
+    <CommentRefreshProvider>
+      <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
+        <MatomoProvider value={instance}>
+          <ThemeProvider theme={theme}>
+            <MathJaxContext>
+              <PositionProvider>
+               <div
+                 style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+               >
+                <Component {...pageProps} />
+                </div>
+              </PositionProvider>
+            </MathJaxContext>
+          </ThemeProvider>
+        </MatomoProvider>
+      </ServerLinksContext.Provider>
+    </CommentRefreshProvider>
   );
 }
 

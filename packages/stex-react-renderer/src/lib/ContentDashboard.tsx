@@ -329,14 +329,14 @@ function getPerSectionLectureInfo(topLevel: FTML.TOCElem, lectureData: LectureEn
   if (!lectureData?.length) return perSectionLectureInfo;
   const [preOrdered, postOrdered] = getOrderedSections(topLevel);
   const firstSectionNotStarted = lectureData.map((snap) => {
-    const isPartial = !!snap.slideUri && !!snap.slideNumber;
+    const isPartial = snap.sectionCompleted === false;
     if (!isPartial)
       return getNextSectionInPreOrderNotAChild(snap.sectionUri, preOrdered, postOrdered);
     return getNextSectionInList(snap.sectionUri, preOrdered);
   });
 
   const lastSectionCompleted = lectureData.map((snap) => {
-    const isPartial = !!snap.slideUri && !!snap.slideNumber;
+    const isPartial = snap.sectionCompleted === false;
     if (isPartial)
       return getPrevSectionInPostOrderNotAChild(snap.sectionUri, preOrdered, postOrdered);
     return snap.sectionUri;
@@ -367,8 +367,11 @@ function getPerSectionLectureInfo(topLevel: FTML.TOCElem, lectureData: LectureEn
     if (currLecIdx >= lectureData.length) break;
     const currentSnap = lectureData[currLecIdx];
     if (!currentSnap.sectionUri) break;
-    perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
-    perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
+    if (currentSnap.sectionCompleted) {
+      perSectionLectureInfo[secUri] ??= {};
+      perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
+      perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
+    }
 
     while (secUri === lastSectionCompleted[currLecIdx]) currLecIdx++;
     if (!firstSectionNotStarted[currLecIdx]) break;

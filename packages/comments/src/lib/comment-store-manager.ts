@@ -34,6 +34,10 @@ function getExistingOrNewStore(uri: FTML.URI) {
   return newStore;
 }
 
+export function clearCommentStore(uri: FTML.URI) {
+  COMMENT_STORE_MAP.delete(uri);
+}
+
 export async function refreshAllComments() {
   const uris: FTML.URI[] = [];
   COMMENT_STORE_MAP.forEach((_value, key) => uris.push(key));

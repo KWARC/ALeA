@@ -16,6 +16,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
+import { FTMLFragment } from '@kwarc/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());
@@ -40,10 +41,8 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   }, [courseId]);
 
   if (!threadComments?.length) return null;
-  const fileLoc = {
-    archive: threadComments[0].archive,
-    filepath: threadComments[0].filepath,
-  };
+
+  const uri = threadComments[0].uri;
 
   const currentState = threadComments[0].questionStatus;
   if (isLoading) return <CircularProgress />;
@@ -94,18 +93,16 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
           ) : null}
         </Box>
       </Box>
-      {fileLoc.archive &&
-        fileLoc.filepath &&
+      {uri &&
         (showContent ? (
-          <Box bgcolor="#DDD" borderRadius="5px" mb="15px">
-            <Box maxWidth="600px" m="0 auto 30px" p="10px">
-              {/* TODO ALEA4-M1
-                <ExpandableContent
-                  contentUrl={XhtmlContentUrl(fileLoc.archive, fileLoc.filepath)}
-                  noFurtherExpansion={true}
-                />
-                */}
-            </Box>
+          <Box
+            fragment-uri={uri}
+            fragment-kind="Section"
+            bgcolor="#DDD"
+            borderRadius="5px"
+            mb="15px"
+          >
+            <FTMLFragment fragment={{ type: 'FromBackend', uri: uri }} />
           </Box>
         ) : (
           <Button onClick={() => setShowContent(true)} variant="contained" sx={{ mb: '15px' }}>
@@ -113,7 +110,11 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
             <VisibilityIcon />
           </Button>
         ))}
-      <CommentTree comments={threadComments} uri={threadComments[0].uri} refreshComments={() => doUpdate()} />
+      <CommentTree
+        comments={threadComments}
+        uri={threadComments[0].uri}
+        refreshComments={() => doUpdate()}
+      />
     </>
   );
 }

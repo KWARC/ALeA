@@ -1,4 +1,5 @@
-import { FLAMSServer, ProblemFeedbackJson } from '@kwarc/flams';
+import { ProblemFeedbackJson } from '@kwarc/flams';
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   COURSES_INFO,
@@ -10,20 +11,10 @@ import {
 } from '@stex-react/utils';
 import axios from 'axios';
 
-const server = new FLAMSServer(process.env['NEXT_PUBLIC_FLAMS_URL']!);
-
-export async function getDocumentSections(notesUri: string) {
-  return (await server.contentToc({ uri: notesUri })) ?? [[], []];
-}
-
-export async function getFTMLQuiz(uri: string): Promise<FTML.Quiz | undefined> {
-  return await server.quiz({ uri });
-}
-
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
 ): Promise<ProblemFeedbackJson[][] | undefined> {
-  return await server.batchGradeHex(...submissions);
+  return await getFlamsServer().batchGradeHex(...submissions);
 }
 
 export function computePointsFromFeedbackJson(
@@ -50,7 +41,7 @@ let CACHED_INSTITUTION_INDEX: FTML.Institution[] | undefined = undefined;
 
 export async function getDocIdx(institution?: string) {
   if (!CACHED_ARCHIVE_INDEX) {
-    const res = await server.index();
+    const res = await getFlamsServer().index();
     if (res) {
       CACHED_INSTITUTION_INDEX = res[0] as FTML.Institution[];
       CACHED_ARCHIVE_INDEX = res[1] as FTML.ArchiveIndex[];
@@ -117,14 +108,6 @@ export async function getCourseInfo(institution?: string) {
   }
 }
 
-export async function getSectionSlides(sectionUri: string) {
-  return await server.slides({ uri: sectionUri });
-}
-
-export async function getSourceUrl(uri: string) {
-  return await server.sourceFile({ uri });
-}
-
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
   return `<span data-ftml-term="OMID" data-ftml-head="${conceptUri}" data-ftml-comp>${name}</span>`;
@@ -152,7 +135,7 @@ export async function getProblemsForConcept(conceptUri: string) {
   const MAX_RETRIES = 3;
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      const learningObjects = await server.learningObjects({ uri: conceptUri }, true);
+      const learningObjects = await getFlamsServer().learningObjects({ uri: conceptUri }, true);
       if (!learningObjects) return [];
       return learningObjects.filter((obj) => obj[1].type === 'Problem').map((obj) => obj[0]);
     } catch (error) {
@@ -192,7 +175,7 @@ export const ALL_LO_TYPES = [
   'definition',
   'problem',
   'example',
-  'statement', // synomym: assertion
+  'statement', // synomym: assertion => now changed to ulo:proposition
 ] as const;
 export type LoType = (typeof ALL_LO_TYPES)[number];
 export interface SparqlResponse {
@@ -336,7 +319,7 @@ WHERE {
   FILTER(!CONTAINS(STR(?x), "?term")).
   FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:crossrefs, ulo:defines, ulo:example-for, ulo:specifies)).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -355,7 +338,7 @@ WHERE {
  FILTER(!CONTAINS(STR(?x), "?term")).
  FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:objective ,ulo:precondition )).
-  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement)).
+  FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
 }
 `;
 }
@@ -365,7 +348,7 @@ export function getSparqlQueryForLoString(loString: string, loTypes?: LoType[]) 
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const query = `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
@@ -397,7 +380,7 @@ export function getSparqlQueryForNonDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';
@@ -444,7 +427,7 @@ export function getSparqlQueryForDimConceptsAsLoRelation(
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
-      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:statement';
+      : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
   const loStringFilter = loString
     ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
     : '';

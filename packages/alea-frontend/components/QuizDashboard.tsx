@@ -3,7 +3,16 @@ import { OpenInNew } from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/Update';
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+} from '@mui/material';
 import {
   canAccessResource,
   createQuiz,
@@ -11,15 +20,23 @@ import {
   FTMLProblemWithSolution,
   getAllQuizzes,
   getCourseInfo,
+  getCoverageTimeline,
   getQuizStats,
   Phase,
   QuizStatsResponse,
   QuizWithStatus,
-  updateQuiz
+  updateQuiz,
 } from '@stex-react/api';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { SafeHtml } from '@stex-react/react-utils';
-import { Action, CourseInfo, CURRENT_TERM, ResourceName, roundToMinutes } from '@stex-react/utils';
+import {
+  Action,
+  CoverageTimeline,
+  CURRENT_TERM,
+  LectureEntry,
+  ResourceName,
+  roundToMinutes,
+} from '@stex-react/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -30,6 +47,10 @@ import { ExcusedAccordion } from './ExcusedAccordion';
 import { QuizFileReader } from './QuizFileReader';
 import { QuizStatsDisplay } from './QuizStatsDisplay';
 import { RecorrectionDialog } from './RecorrectionDialog';
+import { useRouter } from 'next/router';
+import { getFlamsServer } from '@kwarc/ftml-react';
+import { getSecInfo } from './coverage-update';
+import { SecInfo } from '../types';
 
 const NEW_QUIZ_ID = 'New';
 
@@ -74,7 +95,8 @@ function getFormErrorReason(
   feedbackReleaseTs: number,
   manuallySetPhase: string,
   problems: Record<string, FTMLProblemWithSolution>,
-  title: string
+  title: string,
+  css: FTML.CSS[]
 ) {
   const phaseTimes = [quizStartTs, quizEndTs, feedbackReleaseTs].filter((ts) => ts !== 0);
   for (let i = 0; i < phaseTimes.length - 1; i++) {
@@ -82,6 +104,7 @@ function getFormErrorReason(
   }
   if (!problems || Object.keys(problems).length === 0) return 'No problems found.';
   if (title.length === 0) return 'No title set.';
+  if (!css.length) return 'CSS content is missing';
   return undefined;
 }
 
@@ -106,6 +129,47 @@ const QuizDurationInfo = ({ quizStartTs, quizEndTs, feedbackReleaseTs }) => {
     </Box>
   );
 };
+export function getUpcomingQuizSyllabus(
+  coverageTimeline: LectureEntry[],
+  sections: SecInfo[]
+): { startSecUri: string; endSecUri: string } | null {
+  if (!coverageTimeline || !Array.isArray(sections) || sections.length === 0) return null;
+
+  const upcomingQuizEntry = coverageTimeline.find(
+    (entry) => entry.isQuizScheduled && entry.timestamp_ms >= Date.now()
+  );
+  if (!upcomingQuizEntry) return null;
+
+  const upcomingIndex = coverageTimeline.findIndex((e) => e === upcomingQuizEntry);
+  const endSecUri =
+    coverageTimeline
+      .slice(0, upcomingIndex)
+      .reverse()
+      .find((entry) => entry.sectionUri)?.sectionUri || '';
+
+  let lastQuizEndUri = '';
+  for (let i = upcomingIndex - 1; i >= 0; i--) {
+    const entry = coverageTimeline[i];
+    if (entry.isQuizScheduled) {
+      lastQuizEndUri = coverageTimeline[i - 1]?.sectionUri || '';
+      break;
+    }
+  }
+
+  const lastQuizIndex = sections.findIndex((s) => s.uri === lastQuizEndUri);
+  let startSecUri =
+    lastQuizIndex !== -1 && lastQuizIndex + 1 < sections.length
+      ? sections[lastQuizIndex + 1].uri
+      : '';
+
+  const endIndex = sections.findIndex((s) => s.uri === endSecUri);
+  const startIndex = sections.findIndex((s) => s.uri === startSecUri);
+  if (startIndex === -1 || endIndex === -1) return null;
+  if (startIndex > endIndex) {
+    startSecUri = endSecUri;
+  }
+  return { startSecUri, endSecUri };
+}
 
 interface QuizDashboardProps {
   courseId: string;
@@ -121,6 +185,12 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [quizEndTs, setQuizEndTs] = useState<number>(roundToMinutes(Date.now()));
   const [feedbackReleaseTs, setFeedbackReleaseTs] = useState<number>(roundToMinutes(Date.now()));
   const [courseTerm, setCourseTerm] = useState<string>(CURRENT_TERM);
+  const [sections, setSections] = useState<SecInfo[]>([]);
+  const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
+  const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
+    startSecUri: string;
+    endSecUri: string;
+  }>({ startSecUri: '', endSecUri: '' });
   const [manuallySetPhase, setManuallySetPhase] = useState<Phase>(Phase.UNSET);
   const [css, setCss] = useState<FTML.CSS[]>([]);
   const [quizzes, setQuizzes] = useState<QuizWithStatus[]>([]);
@@ -135,8 +205,9 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [accessType, setAccessType] = useState<'PREVIEW_ONLY' | 'MUTATE'>();
   const [isUpdating, setIsUpdating] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
+  const [syllabusLoading, setSyllabusLoading] = useState(false);
   const isNew = isNewQuiz(selectedQuizId);
+  const router = useRouter();
 
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedQuizId);
   const formErrorReason = getFormErrorReason(
@@ -145,7 +216,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     feedbackReleaseTs,
     manuallySetPhase,
     problems,
-    title
+    title,
+    css
   );
 
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
@@ -163,7 +235,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         onQuizIdChange?.(allQuizzes[0].id);
       }
     }
-    fetchQuizzes().catch((err) => console.error("Failed to fetch Quiz", err));
+    fetchQuizzes().catch((err) => console.error('Failed to fetch Quiz', err));
   }, [courseId, courseTerm, onQuizIdChange, quizId]);
 
   useEffect(() => {
@@ -185,6 +257,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setManuallySetPhase(Phase.UNSET);
       setTitle('');
       setProblems({});
+      setCss([]);
       setCourseTerm(CURRENT_TERM);
       return;
     }
@@ -197,6 +270,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setManuallySetPhase(selected.manuallySetPhase);
     setTitle(selected.title);
     setProblems(selected.problems);
+    setCss(selected.css || []);
     setCourseTerm(selected.courseTerm);
   }, [selectedQuizId, quizzes]);
 
@@ -204,9 +278,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setQuizEndTs((prev) => Math.max(prev, quizStartTs));
     setFeedbackReleaseTs((prev) => Math.max(prev, quizStartTs, quizEndTs));
   }, [quizStartTs, quizEndTs]);
-  useEffect(() => {
-    getCourseInfo().then(setCourses);
-  }, []);
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
@@ -232,6 +303,42 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     }
     checkHasAccessAndGetTypeOfAccess();
   }, []);
+
+  useEffect(() => {
+    async function loadAll() {
+      setSyllabusLoading(true);
+      try {
+        const [courseData, timelineData] = await Promise.all([
+          getCourseInfo(),
+          getCoverageTimeline(),
+        ]);
+        setCoverageTimeline(timelineData);
+        const courseInfo = courseData?.[courseId];
+        if (courseInfo?.notes) {
+          const toc = (await getFlamsServer().contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
+          const formattedSections = toc.flatMap((entry) =>
+            getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
+          );
+          setSections(formattedSections);
+        }
+      } catch (err) {
+        console.error('Syllabus load error', err);
+      } finally {
+        setSyllabusLoading(false);
+      }
+    }
+    if (courseId) {
+      loadAll();
+    }
+  }, [courseId]);
+
+  useEffect(() => {
+    const timeline = coverageTimeline[courseId];
+    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    if (syllabus) {
+      setUpcomingQuizSyllabus(syllabus);
+    }
+  }, [coverageTimeline, courseId, sections]);
 
   if (!selectedQuiz && !isNew) return <>Error</>;
 
@@ -266,25 +373,45 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           You don&apos;t have access to mutate this course Quizzes
         </Typography>
       )}
-      <Select
-        value={selectedQuizId}
-        onChange={(e) => {
-          const newQuizId = e.target.value;
-          onQuizIdChange?.(newQuizId);
-        }}
-      >
-        {accessType == 'MUTATE' ? (
-          <MenuItem value="New">New</MenuItem>
-        ) : (
-          <MenuItem value="New">Select Quiz</MenuItem>
-        )}
-        {quizzes.map((quiz) => (
-          <MenuItem key={quiz.id} value={quiz.id}>
-            <SafeHtml html={quiz.title} />
-            &nbsp;({quiz.id})
-          </MenuItem>
-        ))}
-      </Select>
+      <Box display="flex" justifyContent={'space-between'}>
+        <Select
+          value={selectedQuizId}
+          onChange={(e) => {
+            const newQuizId = e.target.value;
+            onQuizIdChange?.(newQuizId);
+          }}
+        >
+          {accessType == 'MUTATE' ? (
+            <MenuItem value="New">New</MenuItem>
+          ) : (
+            <MenuItem value="New">Select Quiz</MenuItem>
+          )}
+          {quizzes.map((quiz) => (
+            <MenuItem key={quiz.id} value={quiz.id}>
+              <SafeHtml html={quiz.title} />
+              &nbsp;({quiz.id})
+            </MenuItem>
+          ))}
+        </Select>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={syllabusLoading}
+          onClick={() =>
+            router.push({
+              pathname: '/quiz-gen',
+              query: {
+                courseId: courseId || '',
+                startSectionUri: upcomingQuizSyllabus.startSecUri,
+                endSectionUri: upcomingQuizSyllabus.endSecUri,
+              },
+            })
+          }
+          startIcon={syllabusLoading ? <CircularProgress size={20} color="inherit" /> : null}
+        >
+          Create Quiz
+        </Button>
+      </Box>
 
       <h2>
         {isNew && accessType == 'MUTATE'
@@ -349,7 +476,12 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           {formErrorReason}
         </Typography>
       )}
-      <br />
+
+      {!css?.length && Object.keys(problems).length > 0 && (
+        <Typography sx={{ color: 'red' }} fontWeight="bold">
+          CSS content is missing. Please try refreshing and re-uploading the quiz file.
+        </Typography>
+      )}
       <Box display="flex" gap={2} alignItems="center" mt={2} mb={2}>
         {accessType == 'MUTATE' && (
           <Button

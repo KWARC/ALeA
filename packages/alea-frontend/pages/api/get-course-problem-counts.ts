@@ -1,5 +1,6 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getCourseInfo, getDocumentSections, getProblemsForSection } from '@stex-react/api';
+import { getCourseInfo, getProblemsForSection } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 
@@ -51,7 +52,7 @@ function collectSectionUris(toc: FTML.TOCElem[]): FTML.DocumentElementURI[] {
 }
 
 async function fetchProblems(notesUri: string): Promise<Record<FTML.DocumentElementURI, string[]>> {
-  const tocContent = (await getDocumentSections(notesUri))[1];
+  const tocContent = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
   const sectionUris = collectSectionUris(tocContent);
 
   const problems: Record<FTML.DocumentElementURI, string[]> = {};

@@ -19,7 +19,6 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { GradingCreator } from './GradingCreator';
 import { getLocaleObject } from './lang/utils';
 import { ListStepper } from './QuizDisplay';
 
@@ -70,7 +69,7 @@ export function GradingDisplay({
 }) {
   return (
     <Box mt={1}>
-      <i>Score: </i> {gradingInfo.totalPoints}
+      <i>Score: </i> {gradingInfo?.totalPoints}
       {/* /gradingInfo.maxPoints*/}
       {gradingInfo.customFeedback && (
         <Box sx={{ bgcolor: '#CCC', px: '3px', borderRadius: '3px', fontSize: 'medium' }}>
@@ -111,7 +110,8 @@ export function GradingManager({
 }) {
   const { isGrading, showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
   const gradingInfo = useMemo(() => {
-    const allGradings = g?.[problemId]?.[subProblemId] ?? [];
+    // const allGradings = g?.[problemId]?.[subProblemId] ?? [];
+    const allGradings: GradingInfo[] = [];
     return isGrading
       ? allGradings
       : allGradings.filter((c) => {
@@ -145,7 +145,7 @@ export function GradingManager({
         <IconButton onClick={() => setIsCreatingNew(false)}>
           <Cancel />
         </IconButton>
-        <GradingCreator subProblemId={subProblemId} rawAnswerClasses={[]} />
+        {/* <GradingCreator subProblemId={subProblemId} rawAnswerClasses={[]} /> */}
       </>
     );
   }
@@ -260,7 +260,7 @@ export function SubProblemAnswer({
               <MystEditor
                 editorProps={{ border: canSaveAnswer ? '2px solid red' : undefined }}
                 name={`answer-${questionId}-${subProblemId}`}
-                placeholder={t.answer + '...'}
+                placeholder={'...'}
                 value={answer}
                 onValueChange={onAnswerChanged}
               />
@@ -312,5 +312,25 @@ export function SubProblemAnswer({
       )}
       {!isGrading && solutionBox}
     </>
+  );
+}
+export function ShowSubProblemAnswer({
+  problemId,
+  subproblemId,
+}: {
+  problemId: string;
+  subproblemId: string;
+}) {
+  const { showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
+  if (!showGrading) return <></>;
+  const gradingInfo = g[problemId][subproblemId]?.filter((c) => {
+    if (showGradingFor === ShowGradingFor.INSTRUCTOR && c.reviewType === ReviewType.INSTRUCTOR)
+      return c;
+    if (showGradingFor === ShowGradingFor.PEER && c.reviewType === ReviewType.PEER) return c;
+    if (showGradingFor === ShowGradingFor.SELF && c.reviewType === ReviewType.SELF) return c;
+    return c;
+  });
+  return (
+    <Box>{showGrading ? gradingInfo?.map((c) => <GradingDisplay gradingInfo={c} />) : <></>}</Box>
   );
 }

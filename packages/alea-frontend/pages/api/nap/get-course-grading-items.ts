@@ -6,7 +6,6 @@ import { checkIfGetOrSetError, getUserIdOrSetError } from '../comment-utils';
 import { getGradingItemsOrSetError } from '../common-homework-utils';
 import { getAllHomeworksOrSetError } from '../homework/get-homework-list';
 
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
   const courseId = req.query.courseId as string;
@@ -32,12 +31,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       },
     ]);
-    if (!isStudent) return;
+    if (!isStudent) return res.status(403).end();
   }
+
   const homeworks = await getAllHomeworksOrSetError(courseId, instanceId, true, res);
-  if (!homeworks) return;
+
+  if (!homeworks) return res.status(404).end();
+
   const gradingItems = await getGradingItemsOrSetError(courseId, instanceId, !isInstructor, res);
-  if (!gradingItems) return;
+  if (!gradingItems) return res.status(404).end();
+
   res.status(200).json({
     homeworks,
     gradingItems,
