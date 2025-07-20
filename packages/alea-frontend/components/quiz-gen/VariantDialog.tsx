@@ -1,25 +1,26 @@
 import {
-    Box,
-    Button,
-    Checkbox,
-    Collapse,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    FormControlLabel,
-    InputLabel,
-    MenuItem,
-    Radio,
-    RadioGroup,
-    Select,
-    Switch,
-    TextField,
-    Typography,
+  Box,
+  Button,
+  Checkbox,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
+import Grid from "@mui/material/Grid";
 
 export interface VariantConfig {
   variantTypes: string[];
@@ -99,8 +100,6 @@ export const VariantDialog = ({
     'Add/Remove Distractors',
   ];
 
-  const MODIFY_CHOICES_OPTIONS = ['add', 'remove'];
-
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
 
@@ -122,7 +121,7 @@ export const VariantDialog = ({
       ...variantConfig,
     };
 
-    if (selectedTypes.includes('shuffle') && problemId) {
+    if (selectedTypes.includes('options') && problemId) {
       payload.shuffleProblemId = problemId;
       payload.selectedOptions = selectedOptions;
     }
@@ -140,8 +139,8 @@ export const VariantDialog = ({
         if (checked) {
           if (!newTypes.includes(typeKey)) newTypes.push(typeKey);
 
-          if (typeKey === 'shuffle') newTypes = newTypes.filter((t) => t !== 'conceptual');
-          if (typeKey === 'conceptual') newTypes = newTypes.filter((t) => t !== 'shuffle');
+          if (typeKey === 'options') newTypes = newTypes.filter((t) => t !== 'conceptual');
+          if (typeKey === 'conceptual') newTypes = newTypes.filter((t) => t !== 'options');
         } else {
           newTypes = newTypes.filter((t) => t !== typeKey);
         }
@@ -302,7 +301,7 @@ export const VariantDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
         sx={{
           pb: 1,
@@ -313,155 +312,181 @@ export const VariantDialog = ({
       >
         Create Question Variant
       </DialogTitle>
+
       <DialogContent>
-        {renderSwitchToggle(
-          'Rephrase',
-          'rephrase',
-          'rephraseInstruction',
-          'e.g., simplify language, keep same meaning'
-        )}
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            {renderSwitchToggle(
+              'Rephrase',
+              'rephrase',
+              'rephraseInstruction',
+              'e.g., simplify language, keep same meaning'
+            )}
 
-        {renderSwitchToggle(
-          'Modify Choices',
-          'options',
-          'modifyChoiceInstruction',
-          'e.g., randomize but keep correct answer intact',
-          mcqOptions
-        )}
+            {renderSwitchToggle(
+              'Modify Choices',
+              'options',
+              'modifyChoiceInstruction',
+              'e.g., randomize but keep correct answer intact',
+              mcqOptions
+            )}
 
-        {renderSwitchToggle(
-          'Thematic Reskinning',
-          'conceptual',
-          'conceptualInstruction',
-          'e.g., apply concept in a real-world scenario'
-        )}
+            {renderSwitchToggle(
+              'Thematic Reskinning',
+              'conceptual',
+              'conceptualInstruction',
+              'e.g., apply concept in a real-world scenario'
+            )}
 
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            mb: 3,
-            p: 3,
-            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'grey.200',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          }}
-        >
-          <FormControl fullWidth>
-            <InputLabel sx={{ fontWeight: 500 }}>Difficulty Level</InputLabel>
-            <Select
-              value={variantConfig.difficulty || ''}
-              onChange={(e) => {
-                if (!variantConfig.variantTypes.includes('difficulty')) {
-                  toggleVariantType('difficulty');
-                }
-                setVariantConfig((prev) => ({ ...prev, difficulty: e.target.value }));
-              }}
+            <Box
               sx={{
-                borderRadius: 2,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'grey.300',
+                display: 'flex',
+                gap: 2,
+                mb: 3,
+                p: 3,
+                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'grey.200',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              }}
+            >
+              <FormControl fullWidth>
+                <InputLabel sx={{ fontWeight: 500 }}>Difficulty Level</InputLabel>
+                <Select
+                  value={variantConfig.difficulty || ''}
+                  onChange={(e) => {
+                    if (!variantConfig.variantTypes.includes('difficulty')) {
+                      toggleVariantType('difficulty');
+                    }
+                    setVariantConfig((prev) => ({ ...prev, difficulty: e.target.value }));
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'grey.300',
+                    },
+                  }}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="easy">Easy</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="hard">Hard</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel sx={{ fontWeight: 500 }}>Format Shift</InputLabel>
+                <Select
+                  value={variantConfig.formatType || ''}
+                  onChange={(e) => {
+                    if (!variantConfig.variantTypes.includes('formatShift')) {
+                      toggleVariantType('formatShift');
+                    }
+                    setVariantConfig((prev) => ({ ...prev, formatType: e.target.value }));
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'grey.300',
+                    },
+                  }}
+                >
+                  <MenuItem value="none">None</MenuItem>
+                  <MenuItem value="scq">SCQ</MenuItem>
+                  <MenuItem value="msq">MCQ</MenuItem>
+                  <MenuItem value="fillBlanks">Fill in the blanks</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Button
+              size="small"
+              onClick={clearSelection}
+              sx={{
+                color: 'error.main',
+                textTransform: 'none',
+                mb: 2,
+                '&:hover': {
+                  bgcolor: 'error.50',
+                  color: 'error.dark',
                 },
               }}
             >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="easy">Easy</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="hard">Hard</MenuItem>
-            </Select>
-          </FormControl>
+              Clear All Selection
+            </Button>
 
-          <FormControl fullWidth>
-            <InputLabel sx={{ fontWeight: 500 }}>Format Shift</InputLabel>
-            <Select
-              value={variantConfig.formatType || ''}
-              onChange={(e) => {
-                if (!variantConfig.variantTypes.includes('formatShift')) {
-                  toggleVariantType('formatShift');
-                }
-                setVariantConfig((prev) => ({ ...prev, formatType: e.target.value }));
-              }}
+            <TextField
+              label="Pretext Instructions (optional)"
+              placeholder="e.g., general notes for all variants"
+              value={variantConfig.customPrompt}
+              onChange={(e) => handleConfigChange('customPrompt', e.target.value)}
+              fullWidth
+              multiline
+              minRows={3}
               sx={{
-                borderRadius: 2,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'grey.300',
-                },
+                mb: 2,
+                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+              }}
+            />
+
+            <Box
+              sx={{
+                p: 3,
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                borderRadius: 3,
+                border: '1px solid #90caf9',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)',
               }}
             >
-              <MenuItem value="none">None</MenuItem>
-              <MenuItem value="scq">SCQ</MenuItem>
-              <MenuItem value="msq">MCQ</MenuItem>
-              <MenuItem value="fillBlanks">Fill in the blanks</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'primary.main',
+                  fontWeight: 600,
+                  mb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                Configuration Summary
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                <strong>Active Variants:</strong>{' '}
+                {variantConfig.variantTypes.join(', ') || 'None selected'}
+                {variantConfig.variantTypes.includes('difficulty') &&
+                  ` | Difficulty: ${variantConfig.difficulty}`}
+                {variantConfig.variantTypes.includes('formatShift') &&
+                  ` | Format: ${variantConfig.formatType}`}
+                {variantConfig.customPrompt &&
+                  ` | Custom Instructions: "${variantConfig.customPrompt.substring(0, 50)}..."`}
+              </Typography>
+            </Box>
+          </Grid>
 
-        <Button
-          size="small"
-          onClick={clearSelection}
-          sx={{
-            color: 'error.main',
-            textTransform: 'none',
-            mb: 2,
-            '&:hover': {
-              bgcolor: 'error.50',
-              color: 'error.dark',
-            },
-          }}
-        >
-          Clear All Selection
-        </Button>
-
-        <TextField
-          label="Pretext Instructions (optional)"
-          placeholder="e.g., general notes for all variants"
-          value={variantConfig.customPrompt}
-          onChange={(e) => handleConfigChange('customPrompt', e.target.value)}
-          fullWidth
-          multiline
-          minRows={3}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': { borderRadius: 2 },
-          }}
-        />
-
-        <Box
-          sx={{
-            p: 3,
-            background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-            borderRadius: 3,
-            border: '1px solid #90caf9',
-            boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'primary.main',
-              fontWeight: 600,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            Configuration Summary
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-            <strong>Active Variants:</strong>{' '}
-            {variantConfig.variantTypes.join(', ') || 'None selected'}
-            {variantConfig.variantTypes.includes('difficulty') &&
-              ` | Difficulty: ${variantConfig.difficulty}`}
-            {variantConfig.variantTypes.includes('formatShift') &&
-              ` | Format: ${variantConfig.formatType}`}
-            {variantConfig.customPrompt &&
-              ` | Custom Instructions: "${variantConfig.customPrompt.substring(0, 50)}..."`}
-          </Typography>
-        </Box>
+          {/* RIGHT COLUMN: CANVAS PREVIEW */}
+          <Grid item xs={6}>
+            <Box
+              sx={{
+                height: '100%',
+                bgcolor: '#f8f9fa',
+                border: '2px dashed #ccc',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '600px',
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                CANVAS PREVIEW AREA
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </DialogContent>
+
       <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
         <Button onClick={onClose} sx={{ textTransform: 'none' }}>
           Cancel
