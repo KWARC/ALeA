@@ -1,4 +1,4 @@
-import { Folder, OpenInNew } from '@mui/icons-material';
+import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
@@ -45,9 +45,7 @@ export function QuizPanel({
   const handleOpenVariantDialog = () => setVariantDialogOpen(true);
   const handleCloseVariantDialog = () => setVariantDialogOpen(false);
 
-  const handleCreateVariant = (payload: any) =>{
-
-
+  const handleCreateVariant = (payload: any) => {
     console.log('Creating multi-variant payload:', payload);
 
     // TODO: call backend API
@@ -94,7 +92,7 @@ export function QuizPanel({
             />
           </Tooltip>
           <Tooltip title="Create a new Variant">
-            <MoreVertIcon onClick={handleOpenVariantDialog} />
+            <PublishedWithChanges onClick={handleOpenVariantDialog} />
           </Tooltip>
         </Box>
 

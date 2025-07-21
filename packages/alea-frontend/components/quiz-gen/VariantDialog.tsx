@@ -9,6 +9,7 @@ import {
   DialogTitle,
   FormControl,
   FormControlLabel,
+  IconButton,
   InputLabel,
   MenuItem,
   Radio,
@@ -18,9 +19,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
+import { QuizProblemViewer } from '../GenerateQuiz';
+import { Edit, Save } from '@mui/icons-material';
+import { getFlamsServer } from '@kwarc/ftml-react';
+import axios from 'axios';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
@@ -70,7 +76,9 @@ export const VariantDialog = ({
 }: VariantDialogProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
-
+  const [modifiedProblemData, setModifiedProblemData] = useState(null);
+  const [selectedTheme, setSelectedTheme] = useState<string>('');
+  const THEME_OPTIONS = ['Library', 'Movies', 'E-Commerce', 'Other'];
   const toggleVariantType = (type: string) => {
     setVariantConfig((prev) => {
       const alreadySelected = prev.variantTypes.includes(type);
@@ -104,12 +112,29 @@ export const VariantDialog = ({
     'Numerical Substitution',
     'Add/Remove Distractors',
   ];
+  async function fetchRawStexFromUri(problemUri: string) {
+    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+
+    if (!sourceLink) return null;
+
+    const rawStexLink = sourceLink.replace('-/blob', '-/raw');
+    console.log({ rawStexLink });
+    const response = await axios.get(rawStexLink);
+    console.log({ response });
+    return response.data;
+  }
 
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
   let STeX: string | undefined;
   let problemUri: string | undefined;
-
+  const [stex, setStex] = useState(undefined);
+  useEffect(() => {
+    if (!isFlatQuizProblem(problemData))
+      fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
+        setStex(fetchedSTeX);
+      });
+  }, [problemData]);
   if (problemData) {
     if (isFlatQuizProblem(problemData)) {
       problemId = problemData.problemId;
@@ -119,10 +144,10 @@ export const VariantDialog = ({
     } else {
       problemUri = problemData.uri;
       mcqOptions = [];
-      STeX = undefined;
+      STeX = stex;
     }
   }
-
+  console.log({ STeX });
   useEffect(() => {
     if (variantConfig.variantTypes.includes('shuffle')) {
       setSelectedOptions(mcqOptions);
@@ -143,7 +168,81 @@ export const VariantDialog = ({
 
     onCreate(payload);
   };
+  const reskinProblemByTheme = (theme: string, original: FlatQuizProblem): FlatQuizProblem => {
+    const base = { ...original };
 
+    if (theme === 'Library') {
+      return {
+        ...base,
+        problem:
+          'You have a table Books with attributes BookID, Title, and Genre. Write an SQL query to retrieve the titles of all books in the "Science Fiction" genre.',
+        correctAnswer: "SELECT Title FROM Books WHERE Genre = 'Science Fiction';",
+        options: [
+          "SELECT Title FROM Books WHERE Genre = 'Science Fiction';",
+          "SELECT Title FROM Books WHERE Genre == 'Science Fiction'",
+          "SELECT BookID FROM Books WHERE Genre = 'Science Fiction'",
+        ],
+        optionExplanations: {
+          "SELECT Title FROM Books WHERE Genre = 'Science Fiction';":
+            'Correct: Proper syntax and correct attribute.',
+          "SELECT Title FROM Books WHERE Genre == 'Science Fiction'":
+            "Incorrect: SQL uses '=' not '=='.",
+          "SELECT BookID FROM Books WHERE Genre = 'Science Fiction'":
+            'Incorrect: Returns ID, not title.',
+        },
+      };
+    }
+
+    if (theme === 'Movies') {
+      return {
+        ...base,
+        problem:
+          'You have a table Movies with attributes MovieID, Title, and Genre. Write an SQL query to find the titles of all movies in the "Drama" genre.',
+        correctAnswer: "SELECT Title FROM Movies WHERE Genre = 'Drama';",
+        options: [
+          "SELECT Title FROM Movies WHERE Genre = 'Drama';",
+          "SELECT Title FROM Movies WHERE Genre == 'Drama'",
+          "SELECT MovieID FROM Movies WHERE Genre = 'Drama'",
+        ],
+        optionExplanations: {
+          "SELECT Title FROM Movies WHERE Genre = 'Drama';":
+            'Correct: SQL syntax is valid and retrieves titles.',
+          "SELECT Title FROM Movies WHERE Genre == 'Drama'": "Incorrect: Uses '==' instead of '='.",
+          "SELECT MovieID FROM Movies WHERE Genre = 'Drama'":
+            'Incorrect: Fetches IDs instead of titles.',
+        },
+      };
+    }
+
+    if (theme === 'E-Commerce') {
+      return {
+        ...base,
+        problem:
+          'You have a table Products with attributes ProductID, ProductName, and Category. Write an SQL query to get the names of all products in the "Electronics" category.',
+        correctAnswer: "SELECT ProductName FROM Products WHERE Category = 'Electronics';",
+        options: [
+          "SELECT ProductName FROM Products WHERE Category = 'Electronics';",
+          "SELECT ProductName FROM Products WHERE Category == 'Electronics'",
+          "SELECT ProductID FROM Products WHERE Category = 'Electronics'",
+        ],
+        optionExplanations: {
+          "SELECT ProductName FROM Products WHERE Category = 'Electronics';":
+            'Correct: Selects the right column and syntax.',
+          "SELECT ProductName FROM Products WHERE Category == 'Electronics'":
+            "Incorrect: '==' is not valid SQL.",
+          "SELECT ProductID FROM Products WHERE Category = 'Electronics'":
+            'Incorrect: Returns ID, not name.',
+        },
+      };
+    }
+
+    return base;
+  };
+  const [editingSTeX, setEditingSTeX] = useState(false);
+  const [editableSTeX, setEditableSTeX] = useState(STeX || '');
+  useEffect(() => {
+    setEditableSTeX(STeX);
+  }, [STeX]);
   const renderSwitchToggle = (title, typeKey, instructionKey, placeholder, optionsList = []) => {
     const isActive = variantConfig.variantTypes.includes(typeKey);
 
@@ -298,6 +397,34 @@ export const VariantDialog = ({
                   </Box>
                 )}
               </>
+            )}
+            {typeKey === 'conceptual' && (
+              <Box sx={{ pl: 1, mb: 2 }}>
+                <Select
+                  value={selectedTheme}
+                  onChange={(e) => {
+                    const newTheme = e.target.value;
+                    setSelectedTheme(newTheme);
+                    const themedProblem = reskinProblemByTheme(
+                      newTheme,
+                      problemData as FlatQuizProblem
+                    );
+                    setModifiedProblemData(themedProblem);
+                  }}
+                  displayEmpty
+                  fullWidth
+                  size="small"
+                >
+                  <MenuItem value="" disabled>
+                    Choose a Problem Theme
+                  </MenuItem>
+                  {THEME_OPTIONS.map((theme) => (
+                    <MenuItem key={theme} value={theme}>
+                      {theme}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Box>
             )}
 
             <TextField
@@ -553,7 +680,7 @@ export const VariantDialog = ({
 
               <Box display="flex" alignItems="center" gap={1}>
                 <Typography variant="body2" color="text.secondary">
-                  JSON
+                  Rendered
                 </Typography>
                 <Switch
                   size="small"
@@ -561,7 +688,7 @@ export const VariantDialog = ({
                   onChange={(e) => setPreviewMode(e.target.checked ? 'stex' : 'json')}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  STeX
+                  Source
                 </Typography>
               </Box>
             </Box>
@@ -591,7 +718,13 @@ export const VariantDialog = ({
                       m: 0,
                     }}
                   >
-                    {JSON.stringify(problemData, null, 2)}
+                    <QuizProblemViewer
+                      problemData={
+                        !modifiedProblemData
+                          ? (problemData as FlatQuizProblem)
+                          : (modifiedProblemData as FlatQuizProblem)
+                      }
+                    />
                   </Box>
                 ) : isExisting(problemData) ? (
                   <Box
@@ -621,21 +754,56 @@ export const VariantDialog = ({
                     </Typography>
                   </Box>
                 )
+              ) : editingSTeX ? (
+                <Box sx={{ position: 'relative' }}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={6}
+                    maxRows={30}
+                    value={editableSTeX}
+                    onChange={(e) => setEditableSTeX(e.target.value)}
+                    variant="outlined"
+                    sx={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '0.9rem',
+                      lineHeight: 1.5,
+                      color: '#111827',
+                      backgroundColor: '#fff',
+                    }}
+                  />
+                  <IconButton
+                    onClick={() => setEditingSTeX(false)}
+                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                    aria-label="Save"
+                  >
+                    <Save />
+                  </IconButton>
+                </Box>
               ) : (
-                <Typography
-                  variant="body2"
-                  component="pre"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: '0.9rem',
-                    lineHeight: 1.5,
-                    color: '#111827',
-                    p: 1,
-                  }}
-                >
-                  {STeX ? STeX : 'No STeX available for this problem.'}
-                </Typography>
+                <Box sx={{ position: 'relative' }}>
+                  <Typography
+                    variant="body2"
+                    component="pre"
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '0.9rem',
+                      lineHeight: 1.5,
+                      color: '#111827',
+                      p: 1,
+                    }}
+                  >
+                    {STeX || 'No STeX available for this problem.'}
+                  </Typography>
+                  <IconButton
+                    onClick={() => setEditingSTeX(true)}
+                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                    aria-label="Edit"
+                  >
+                    <Edit />
+                  </IconButton>
+                </Box>
               )}
             </Box>
           </Box>
@@ -643,17 +811,41 @@ export const VariantDialog = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
-        <Button onClick={onClose} sx={{ textTransform: 'none' }}>
-          Cancel
+        {/* <Button onClick={onClose} sx={{ textTransform: 'none' }}></Button> */}
+        <Button
+          onClick={() => {
+            console.log('');
+          }}
+          sx={{ textTransform: 'none' }}
+        >
+          Start New Edit
         </Button>
         <Button
+          onClick={() => {
+            console.log('saved as draft');
+          }}
+          sx={{ textTransform: 'none' }}
+        >
+          Save As Draft
+        </Button>
+        <Button
+          onClick={() => {
+            console.log('Finalize');
+            onClose();
+          }}
+          sx={{ textTransform: 'none' }}
+        >
+          Finalize
+        </Button>
+
+        {/* <Button
           variant="contained"
           color="primary"
           onClick={handleCreateAndReturn}
           sx={{ textTransform: 'none', borderRadius: 2, px: 3 }}
         >
           Create Variant
-        </Button>
+        </Button> */}
       </DialogActions>
     </Dialog>
   );
