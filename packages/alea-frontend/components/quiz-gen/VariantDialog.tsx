@@ -15,6 +15,7 @@ import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
+import { checkThematicReskin } from '@stex-react/api';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
@@ -64,6 +65,9 @@ export const VariantDialog = ({
   const [stex, setStex] = useState(undefined);
   const [editingSTeX, setEditingSTeX] = useState(false);
   const [editableSTeX, setEditableSTeX] = useState('');
+  const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const thematicCache = new Map<string, { canReskin: boolean; themes: string[] }>();//cache for thematic reskinning
+
 
   const toggleVariantType = (type: string) => {
     setVariantConfig((prev) => {
@@ -116,6 +120,45 @@ export const VariantDialog = ({
       });
   }, [problemData]);
 
+  useEffect(() => {
+  if (!problemData) return;
+
+  const cacheKey = isFlatQuizProblem(problemData)
+    ? `id:${problemData.problemId}`
+    : `uri:${problemData.uri}`;
+
+  const fetchReskinAvailability = async () => {
+    // ✅ Check cache first
+    if (thematicCache.has(cacheKey)) {
+      const cached = thematicCache.get(cacheKey)!;
+      console.log("✅ Loaded from cache:", cached.themes);
+      if (cached.canReskin && cached.themes.length) {
+        setAvailableThemes(cached.themes); // update UI from cache
+      }
+      return;
+    }
+
+    // ✅ Otherwise call API
+    const payload = isFlatQuizProblem(problemData)
+      ? { problemId: problemData.problemId }
+      : { problemUri: problemData.uri };
+
+    const res = await checkThematicReskin(payload);
+
+    // ✅ Store in cache
+    thematicCache.set(cacheKey, { canReskin: res.canReskin, themes: res.themes || [] });
+
+    if (res.canReskin && res.themes?.length) {
+      console.log("✅ API result:", res.themes);
+      setAvailableThemes(res.themes);
+    }
+  };
+
+  fetchReskinAvailability();
+}, [problemData]);
+
+
+
   if (problemData) {
     if (isFlatQuizProblem(problemData)) {
       problemId = problemData.problemId;
@@ -130,7 +173,7 @@ export const VariantDialog = ({
   }
 
   useEffect(() => {
-    if (variantConfig.variantTypes.includes('shuffle')) {
+    if (variantConfig.variantTypes.includes('options')) {
       setSelectedOptions(mcqOptions);
     }
   }, [variantConfig.variantTypes]);
@@ -231,6 +274,7 @@ export const VariantDialog = ({
                 instructionKey="conceptualInstruction"
                 placeholder="e.g., apply concept in a real-world scenario"
                 variantConfig={variantConfig}
+                themes={availableThemes} 
                 setVariantConfig={setVariantConfig}
               />
 

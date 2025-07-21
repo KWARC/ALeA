@@ -172,3 +172,26 @@ export async function getCourseGeneratedProblemsBySection(courseId: string) {
   });
   return resp.data as Record<string, number>;
 }
+
+export interface ThematicReskinResponse {
+  canReskin: boolean;
+  themes?: string[];
+}
+
+export async function checkThematicReskin(payload: {
+  problemId?: number;
+  problemUri?: string;
+}) {
+  const resp = await axios.post(
+    `/api/gpt-redirect`,
+    payload,
+    {
+      params: {
+        apiname: 'check-thematic-reskin',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  return resp.data as ThematicReskinResponse;
+}

@@ -1,5 +1,4 @@
 import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useState } from 'react';

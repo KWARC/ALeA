@@ -1,7 +1,8 @@
-import { Box, Collapse, Switch, TextField, Typography } from '@mui/material';
+import { Box, Chip, Collapse, Switch, TextField, Typography } from '@mui/material';
 import { ModifyChoicesOptions } from './ModifyChoicesOptions';
 import { RephraseSuboptions } from './RephraseSuboptions';
 import { VariantConfig } from './VariantDialog';
+import { useState } from 'react';
 
 interface SwitchToggleProps {
   title: string;
@@ -9,6 +10,7 @@ interface SwitchToggleProps {
   instructionKey: string;
   placeholder: string;
   variantConfig: VariantConfig;
+  themes?: string[];
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
@@ -21,12 +23,14 @@ export const SwitchToggle = ({
   instructionKey,
   placeholder,
   variantConfig,
+  themes = [],
   setVariantConfig,
   mcqOptions = [],
   selectedOptions = [],
   setSelectedOptions,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -109,6 +113,25 @@ export const SwitchToggle = ({
               selectedOptions={selectedOptions}
               setSelectedOptions={setSelectedOptions}
             />
+          )}
+
+          {typeKey === 'conceptual' && themes && themes.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Choose a Problem Theme
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {themes.map((theme) => (
+                  <Chip
+                    key={theme}
+                    label={theme}
+                    clickable
+                    color={selectedTheme === theme ? 'primary' : 'default'}
+                    onClick={() => setSelectedTheme(theme)}
+                  />
+                ))}
+              </Box>
+            </Box>
           )}
 
           <TextField
