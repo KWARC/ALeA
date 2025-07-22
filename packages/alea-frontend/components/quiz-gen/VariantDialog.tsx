@@ -121,41 +121,38 @@ export const VariantDialog = ({
   }, [problemData]);
 
   useEffect(() => {
-  if (!problemData) return;
+  if (!open ||!problemData) return;
 
   const cacheKey = isFlatQuizProblem(problemData)
     ? `id:${problemData.problemId}`
     : `uri:${problemData.uri}`;
 
   const fetchReskinAvailability = async () => {
-    // ✅ Check cache first
     if (thematicCache.has(cacheKey)) {
       const cached = thematicCache.get(cacheKey)!;
-      console.log("✅ Loaded from cache:", cached.themes);
+      console.log("Loaded from cache:", cached.themes);
       if (cached.canReskin && cached.themes.length) {
-        setAvailableThemes(cached.themes); // update UI from cache
+        setAvailableThemes(cached.themes);
       }
       return;
     }
 
-    // ✅ Otherwise call API
     const payload = isFlatQuizProblem(problemData)
       ? { problemId: problemData.problemId }
       : { problemUri: problemData.uri };
 
     const res = await checkThematicReskin(payload);
 
-    // ✅ Store in cache
     thematicCache.set(cacheKey, { canReskin: res.canReskin, themes: res.themes || [] });
 
     if (res.canReskin && res.themes?.length) {
-      console.log("✅ API result:", res.themes);
+      console.log("API result:", res.themes);
       setAvailableThemes(res.themes);
     }
   };
 
   fetchReskinAvailability();
-}, [problemData]);
+}, [open, problemData]);
 
 
 
