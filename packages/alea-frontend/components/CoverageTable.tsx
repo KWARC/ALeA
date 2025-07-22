@@ -83,16 +83,16 @@ function SectionTooltipContent({
   const sectionId = secInfo[sectionUri]?.id;
   if (!sectionId) return shouldHighlightNoSection ? 'No Section - Please fill this field' : null;
 
+  const statusString =
+    sectionCompleted !== undefined
+      ? sectionCompleted
+        ? ' (✅ Completed)'
+        : ' (⏳ In Progress)'
+      : '';
   return (
     <Box {...tooltipBoxProps}>
       <span style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>
-        {sectionCompleted !== undefined && (
-          <>
-            {sectionCompleted ? '✅ Completed' : '⏳ In Progress'}
-            <br />
-          </>
-        )}
-        {getSectionHierarchy(sectionId, secInfo)}&nbsp;
+        {getSectionHierarchy(sectionId, secInfo) + statusString}
       </span>
     </Box>
   );
