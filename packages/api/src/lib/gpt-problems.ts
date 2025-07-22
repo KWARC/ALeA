@@ -46,7 +46,7 @@ export interface CreateGptProblemsResponse {
   runId: string;
   runTime: string;
   runner: string;
-  completions_tools: GptCompletionData[]; 
+  completions_tools: GptCompletionData[];
   completions: GptCompletionData[];
 }
 
@@ -55,12 +55,7 @@ export interface GptRun {
   response: CreateGptProblemsResponse;
 }
 
-export type LikertType =
-  | 'ambiguous'
-  | 'appropriate'
-  | 'difficult'
-  | 'relevant'
-  | 'useful';
+export type LikertType = 'ambiguous' | 'appropriate' | 'difficult' | 'relevant' | 'useful';
 
 export interface LikertRating {
   label: string;
@@ -69,7 +64,7 @@ export interface LikertRating {
 }
 
 export const LikertLabels: { [key in LikertType]: string[] } = {
-  appropriate: [  
+  appropriate: [
     // Template: Level of Appropriateness
     'Absolutely inappropriate',
     'Inappropriate',
@@ -115,16 +110,16 @@ export const LikertLabels: { [key in LikertType]: string[] } = {
     'Somewhat useful',
     'Very useful',
   ],
-  
 };
 
-export const LikertScaleSize: { [key in LikertType]: number } = Object.keys(
-  LikertLabels
-).reduce((acc, likertTypeStr) => {
-  const likertType = likertTypeStr as LikertType;
-  acc[likertType] = LikertLabels[likertType].length;
-  return acc;
-}, {} as { [key in LikertType]: number });
+export const LikertScaleSize: { [key in LikertType]: number } = Object.keys(LikertLabels).reduce(
+  (acc, likertTypeStr) => {
+    const likertType = likertTypeStr as LikertType;
+    acc[likertType] = LikertLabels[likertType].length;
+    return acc;
+  },
+  {} as { [key in LikertType]: number }
+);
 
 export interface ProblemEval {
   relevanceToMaterial?: LikertRating;
@@ -155,4 +150,58 @@ export interface CompletionEval {
   textDescription?: string;
   problemEvals: ProblemEval[];
   updateTime: string;
+}
+
+export interface RephraseVariant {
+  variantType: 'rephrase';
+  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping';
+}
+
+export interface ReskinVariant {
+  variantType: 'reskin';
+  theme: string;
+}
+
+export interface ModifyChoicesVariant {
+  variantType: 'modify_choices';
+  optionsToModify: string[];
+}
+
+export interface VariantBase {
+  mode: 'variant';
+  problemId: number;
+  instruction?: string;
+}
+
+export type VariantGenerationParams =
+  | (VariantBase & RephraseVariant)
+  | (VariantBase & ReskinVariant)
+  | (VariantBase & ModifyChoicesVariant);
+
+interface NewGenerationParams {
+  mode: 'new';
+  courseId: string;
+  startSectionUri: string;
+  endSectionUri: string;
+}
+interface CopyGenerationParams {
+  mode: 'copy';
+  problemId: number;
+}
+
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
+
+export interface PossibleVariantsResult {
+  rephrase: {
+    applicable: boolean;
+    types?: string[];
+    reskin: {
+      applicable: boolean;
+      themes?: string[];
+    };
+    modify_choices: {
+      applicable: boolean;
+      optionsToModify?: string[];
+    };
+  };
 }
