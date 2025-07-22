@@ -1,5 +1,4 @@
-import { Edit, Save } from '@mui/icons-material';
-import { Box, IconButton, Switch, TextField, Typography } from '@mui/material';
+import { Box, Switch, TextField, Typography } from '@mui/material';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
@@ -9,9 +8,6 @@ interface PreviewSectionProps {
   setPreviewMode: (mode: 'json' | 'stex') => void;
   problemData?: FlatQuizProblem | ExistingProblem;
   problemUri?: string;
-  STeX?: string;
-  editingSTeX: boolean;
-  setEditingSTeX: (editing: boolean) => void;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
 }
@@ -21,9 +17,6 @@ export const PreviewSection = ({
   setPreviewMode,
   problemData,
   problemUri,
-  STeX,
-  editingSTeX,
-  setEditingSTeX,
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
@@ -126,7 +119,7 @@ export const PreviewSection = ({
               <Typography variant="body2">Select a question variant to see its preview</Typography>
             </Box>
           )
-        ) : editingSTeX ? (
+        ) : (
           <Box sx={{ position: 'relative' }}>
             <TextField
               fullWidth
@@ -144,37 +137,6 @@ export const PreviewSection = ({
                 backgroundColor: '#fff',
               }}
             />
-            <IconButton
-              onClick={() => setEditingSTeX(false)}
-              sx={{ position: 'absolute', top: 8, right: 8 }}
-              aria-label="Save"
-            >
-              <Save />
-            </IconButton>
-          </Box>
-        ) : (
-          <Box sx={{ position: 'relative' }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{
-                whiteSpace: 'pre-wrap',
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '0.9rem',
-                lineHeight: 1.5,
-                color: '#111827',
-                p: 1,
-              }}
-            >
-              {STeX || 'No STeX available for this problem.'}
-            </Typography>
-            <IconButton
-              onClick={() => setEditingSTeX(true)}
-              sx={{ position: 'absolute', top: 8, right: 8 }}
-              aria-label="Edit"
-            >
-              <Edit />
-            </IconButton>
           </Box>
         )}
       </Box>

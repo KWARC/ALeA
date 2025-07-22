@@ -320,9 +320,6 @@ export const VariantDialog = ({
             setPreviewMode={setPreviewMode}
             problemData={problemData}
             problemUri={problemUri}
-            STeX={STeX}
-            editingSTeX={editingSTeX}
-            setEditingSTeX={setEditingSTeX}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />
