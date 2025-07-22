@@ -1,16 +1,17 @@
-import { Box, Chip, Collapse, Switch, TextField, Typography } from '@mui/material';
+import { Box, Collapse, Switch, TextField, Typography } from '@mui/material';
 import { ModifyChoicesOptions } from './ModifyChoicesOptions';
 import { RephraseSuboptions } from './RephraseSuboptions';
-import { VariantConfig } from './VariantDialog';
-import { useState } from 'react';
+import { ThematicReskinOptions } from './ThematicReskinOptions';
+import { VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
   title: string;
-  typeKey: string;
+  typeKey: VariantType;
   instructionKey: string;
   placeholder: string;
   variantConfig: VariantConfig;
   themes?: string[];
+  themesLoading?: boolean;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
@@ -24,13 +25,13 @@ export const SwitchToggle = ({
   placeholder,
   variantConfig,
   themes = [],
+  themesLoading = false,
   setVariantConfig,
   mcqOptions = [],
   selectedOptions = [],
   setSelectedOptions,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
-  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -39,8 +40,12 @@ export const SwitchToggle = ({
       if (checked) {
         if (!newTypes.includes(typeKey)) newTypes.push(typeKey);
 
-        if (typeKey === 'options') newTypes = newTypes.filter((t) => t !== 'conceptual');
-        if (typeKey === 'conceptual') newTypes = newTypes.filter((t) => t !== 'options');
+        if (typeKey === 'modifyChoice') {
+          newTypes = newTypes.filter((t) => t !== 'conceptual');
+        }
+        if (typeKey === 'conceptual') {
+          newTypes = newTypes.filter((t) => t !== 'modifyChoice');
+        }
       } else {
         newTypes = newTypes.filter((t) => t !== typeKey);
       }
@@ -105,7 +110,7 @@ export const SwitchToggle = ({
             <RephraseSuboptions variantConfig={variantConfig} setVariantConfig={setVariantConfig} />
           )}
 
-          {typeKey === 'options' && setSelectedOptions && (
+          {typeKey === 'modifyChoice' && setSelectedOptions && (
             <ModifyChoicesOptions
               variantConfig={variantConfig}
               setVariantConfig={setVariantConfig}
@@ -115,23 +120,13 @@ export const SwitchToggle = ({
             />
           )}
 
-          {typeKey === 'conceptual' && themes && themes.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Choose a Problem Theme
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {themes.map((theme) => (
-                  <Chip
-                    key={theme}
-                    label={theme}
-                    clickable
-                    color={selectedTheme === theme ? 'primary' : 'default'}
-                    onClick={() => setSelectedTheme(theme)}
-                  />
-                ))}
-              </Box>
-            </Box>
+          {typeKey === 'conceptual' && (
+            <ThematicReskinOptions
+              themes={themes || []}
+              themesLoading={themesLoading}
+              variantConfig={variantConfig}
+              setVariantConfig={setVariantConfig}
+            />
           )}
 
           <TextField
