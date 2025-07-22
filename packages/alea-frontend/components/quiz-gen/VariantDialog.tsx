@@ -8,6 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
+import { checkThematicReskin } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -15,14 +16,15 @@ import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
-import { checkThematicReskin } from '@stex-react/api';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
 }
 
+export type VariantType = 'rephrase' | 'modifyChoice' | 'conceptual';
+
 export interface VariantConfig {
-  variantTypes: string[];
+  variantTypes: VariantType[];
   difficulty?: string;
   formatType?: string;
   customPrompt: string;
@@ -31,6 +33,7 @@ export interface VariantConfig {
   modifyChoiceMode?: 'add' | 'remove';
   modifyChoiceInstruction?: string;
   conceptualInstruction?: string;
+  selectedTheme?: string;
 }
 
 interface VariantDialogProps {
@@ -39,15 +42,19 @@ interface VariantDialogProps {
   variantConfig: VariantConfig;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   onCreate: (payload: {
-    variantTypes: string[];
-    difficulty?: string;
-    formatType?: string;
-    customPrompt?: string;
-    rephraseInstruction?: string;
-    modifyChoiceInstruction?: string;
-    conceptualInstruction?: string;
-    shuffleProblemId?: number;
-    selectedOptions?: string[];
+    problemId: number;
+    variantConfig: {
+      variantTypes: VariantType[];
+      difficulty?: string;
+      formatType?: string;
+      customPrompt: string;
+      rephraseInstruction?: string;
+      rephraseSubtypes?: string[];
+      modifyChoiceMode?: 'add' | 'remove';
+      modifyChoiceInstruction?: string;
+      conceptualInstruction?: string;
+      selectedTheme?: string;
+    };
   }) => void;
   problemData?: FlatQuizProblem | ExistingProblem;
 }
@@ -63,13 +70,10 @@ export const VariantDialog = ({
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [stex, setStex] = useState(undefined);
-  const [editingSTeX, setEditingSTeX] = useState(false);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const thematicCache = new Map<string, { canReskin: boolean; themes: string[] }>();//cache for thematic reskinning
 
-
-  const toggleVariantType = (type: string) => {
+  const toggleVariantType = (type: VariantType) => {
     setVariantConfig((prev) => {
       const alreadySelected = prev.variantTypes.includes(type);
       return {
@@ -121,43 +125,25 @@ export const VariantDialog = ({
   }, [problemData]);
 
   useEffect(() => {
-  if (!problemData) return;
+    if (!open || !problemData) return;
 
-  const cacheKey = isFlatQuizProblem(problemData)
-    ? `id:${problemData.problemId}`
-    : `uri:${problemData.uri}`;
+    const fetchReskinAvailability = async () => {
+      const payload = isFlatQuizProblem(problemData)
+        ? { problemId: problemData.problemId }
+        : { problemUri: problemData.uri };
 
-  const fetchReskinAvailability = async () => {
-    // ✅ Check cache first
-    if (thematicCache.has(cacheKey)) {
-      const cached = thematicCache.get(cacheKey)!;
-      console.log("✅ Loaded from cache:", cached.themes);
-      if (cached.canReskin && cached.themes.length) {
-        setAvailableThemes(cached.themes); // update UI from cache
+      const res = await checkThematicReskin(payload);
+
+      if (res.canReskin && res.themes?.length) {
+        console.log('API result:', res.themes);
+        setAvailableThemes(res.themes);
+      } else {
+        setAvailableThemes([]);
       }
-      return;
-    }
+    };
 
-    // ✅ Otherwise call API
-    const payload = isFlatQuizProblem(problemData)
-      ? { problemId: problemData.problemId }
-      : { problemUri: problemData.uri };
-
-    const res = await checkThematicReskin(payload);
-
-    // ✅ Store in cache
-    thematicCache.set(cacheKey, { canReskin: res.canReskin, themes: res.themes || [] });
-
-    if (res.canReskin && res.themes?.length) {
-      console.log("✅ API result:", res.themes);
-      setAvailableThemes(res.themes);
-    }
-  };
-
-  fetchReskinAvailability();
-}, [problemData]);
-
-
+    fetchReskinAvailability();
+  }, [open, problemData]);
 
   if (problemData) {
     if (isFlatQuizProblem(problemData)) {
@@ -173,7 +159,7 @@ export const VariantDialog = ({
   }
 
   useEffect(() => {
-    if (variantConfig.variantTypes.includes('options')) {
+    if (variantConfig.variantTypes.includes('modifyChoice')) {
       setSelectedOptions(mcqOptions);
     }
   }, [variantConfig.variantTypes]);
@@ -183,16 +169,17 @@ export const VariantDialog = ({
   }, [STeX]);
 
   const handleCreateAndReturn = () => {
-    const selectedTypes = variantConfig.variantTypes;
-    const payload: any = {
-      ...variantConfig,
-    };
-
-    if (selectedTypes.includes('options') && problemId) {
-      payload.shuffleProblemId = problemId;
-      payload.selectedOptions = selectedOptions;
+    if (!problemId) {
+      console.error('Cannot create variant without problemId');
+      return;
     }
 
+    const payload = {
+      problemId,
+      variantConfig: {
+        ...variantConfig,
+      },
+    };
     onCreate(payload);
   };
 
@@ -258,7 +245,7 @@ export const VariantDialog = ({
 
               <SwitchToggle
                 title="Modify Choices"
-                typeKey="options"
+                typeKey="modifyChoice"
                 instructionKey="modifyChoiceInstruction"
                 placeholder="e.g., randomize but keep correct answer intact"
                 variantConfig={variantConfig}
@@ -274,7 +261,7 @@ export const VariantDialog = ({
                 instructionKey="conceptualInstruction"
                 placeholder="e.g., apply concept in a real-world scenario"
                 variantConfig={variantConfig}
-                themes={availableThemes} 
+                themes={availableThemes}
                 setVariantConfig={setVariantConfig}
               />
 
@@ -323,9 +310,6 @@ export const VariantDialog = ({
             setPreviewMode={setPreviewMode}
             problemData={problemData}
             problemUri={problemUri}
-            STeX={STeX}
-            editingSTeX={editingSTeX}
-            setEditingSTeX={setEditingSTeX}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />
@@ -344,6 +328,7 @@ export const VariantDialog = ({
         <Button
           onClick={() => {
             console.log('saved as draft');
+            handleCreateAndReturn();
           }}
           sx={{ textTransform: 'none' }}
         >

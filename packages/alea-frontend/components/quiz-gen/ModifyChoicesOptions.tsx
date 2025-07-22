@@ -16,6 +16,17 @@ export const ModifyChoicesOptions = ({
   selectedOptions,
   setSelectedOptions,
 }: ModifyChoicesOptionsProps) => {
+  const mode = variantConfig.modifyChoiceMode;
+
+  const handleModeChange = (newMode: 'add' | 'remove') => {
+    setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: newMode }));
+    if (newMode === 'add') {
+      setSelectedOptions(mcqOptions);
+    } else {
+      setSelectedOptions([]);
+    }
+  };
+
   return (
     <>
       <Box sx={{ pl: 1, mb: 2 }}>
@@ -23,14 +34,8 @@ export const ModifyChoicesOptions = ({
           Modify Choices Mode:
         </Typography>
         <RadioGroup
-          value={variantConfig.modifyChoiceMode || ''}
-          onChange={(e) => {
-            const mode = e.target.value as 'add' | 'remove';
-            setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: mode }));
-            if (mode === 'add') {
-              setSelectedOptions(mcqOptions);
-            }
-          }}
+          value={mode || ''}
+          onChange={(e) => handleModeChange(e.target.value as 'add' | 'remove')}
         >
           <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
           <FormControlLabel value="remove" control={<Radio />} label="Remove Distractors" />
@@ -40,27 +45,24 @@ export const ModifyChoicesOptions = ({
       {mcqOptions.length > 0 && (
         <Box sx={{ pl: 1, mb: 2 }}>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-            Select which options to modify:
+            Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
           </Typography>
-          {mcqOptions.map((opt, idx) => {
-            const checked = selectedOptions.includes(opt);
-            return (
-              <FormControlLabel
-                key={idx}
-                control={
-                  <Checkbox
-                    checked={checked}
-                    onChange={(e) =>
-                      setSelectedOptions((prev) =>
-                        e.target.checked ? [...prev, opt] : prev.filter((o) => o !== opt)
-                      )
-                    }
-                  />
-                }
-                label={`${idx + 1}. ${opt}`}
-              />
-            );
-          })}
+          {mcqOptions.map((opt, idx) => (
+            <FormControlLabel
+              key={`${idx}-${opt}`}
+              control={
+                <Checkbox
+                  checked={selectedOptions.includes(opt)}
+                  onChange={(e) =>
+                    setSelectedOptions((prev) =>
+                      e.target.checked ? [...prev, opt] : prev.filter((o) => o !== opt)
+                    )
+                  }
+                />
+              }
+              label={`${idx + 1}. ${opt}`}
+            />
+          ))}
         </Box>
       )}
     </>
