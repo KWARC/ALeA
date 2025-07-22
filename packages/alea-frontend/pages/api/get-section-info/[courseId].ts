@@ -20,13 +20,29 @@ export async function populateVideoToSlidesMap() {
   const dirPath = process.env.VIDEO_TO_SLIDES_MAP_DIR;
   if (!dirPath) return;
   const files = await readdir(dirPath);
+  //   for (const file of files) {
+  //     if (file.endsWith('_updated_extracted_content.json')) {
+  //       const courseId = file.replace('_updated_extracted_content.json', '');
+  //       const filePath = `${dirPath}/${file}`;
+  //       const fileData = await readFile(filePath, 'utf-8');
+  //       const data = JSON.parse(fileData);
+  //       CACHED_VIDEO_SLIDESMAP[courseId] = data;
+  //     }
+  //   }
+  //   CACHE_REFRESH_TIME = Date.now();
+  // }
   for (const file of files) {
-    if (file.endsWith('_updated_extracted_content.json')) {
-      const courseId = file.replace('_updated_extracted_content.json', '');
-      const filePath = `${dirPath}/${file}`;
+    const match = file.match(/^(.+?)_(.+?)_updated_extracted_content\.json$/);
+    if (match) {
+      const courseId = match[1];
+      const semesterKey = match[2];
+      const filePath = `${dirPath}/${files}`;
       const fileData = await readFile(filePath, 'utf-8');
       const data = JSON.parse(fileData);
-      CACHED_VIDEO_SLIDESMAP[courseId] = data;
+      if (!CACHED_VIDEO_SLIDESMAP[courseId]) {
+        CACHED_VIDEO_SLIDESMAP[courseId] = {};
+      }
+      CACHED_VIDEO_SLIDESMAP[courseId][semesterKey] = data;
     }
   }
   CACHE_REFRESH_TIME = Date.now();

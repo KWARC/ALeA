@@ -85,9 +85,15 @@ const CoverageUpdateTab = () => {
         try {
           const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
           const durationData = await res.json();
-          for (const uri in baseSecInfo) {
-            if (durationData.sectionDurations?.[uri]) {
-              baseSecInfo[uri].duration = durationData.sectionDurations[uri];
+          console.log('DurationData:', durationData);
+          for (const semKey in durationData) {
+            const semDurations = durationData[semKey];
+            if (!semDurations || !semDurations.sectionDurations) continue;
+
+            for (const uri in semDurations.sectionDurations) {
+              const duration = semDurations.sectionDurations[uri];
+              baseSecInfo[uri] = baseSecInfo[uri] || ({} as SecInfo);
+              baseSecInfo[uri].duration = (baseSecInfo[uri].duration || 0) + duration;
             }
           }
         } catch (durationError) {
