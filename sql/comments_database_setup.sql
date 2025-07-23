@@ -47,18 +47,18 @@ CREATE TABLE updateHistory (
     previousHiddenStatus enum('UNHIDDEN', 'SPAM', 'INCORRECT', 'IRRELEVANT', 'ABUSE','OTHER'),
     previousHiddenJustification varchar(255),
     previousQuestionStatus ENUM('UNANSWERED', 'ANSWERED', 'ACCEPTED', 'OTHER'),
-    
+
     updatedTimestamp timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE points (
     points int,
     reason varchar(255),
-    
+
     userId varchar(255),
 	commentId int unique,
     granterId varchar(255),
-    
+
 	grantTimestamp timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
@@ -99,7 +99,7 @@ CREATE TABLE StudyBuddyUsers (
 
     active BOOLEAN NOT NULL,
     email VARCHAR(255) NOT NULL,
-    
+
     userName VARCHAR(255),
     intro VARCHAR(1023),
     studyProgram VARCHAR(255),
@@ -164,7 +164,7 @@ CREATE TABLE ResourceAccess(
     PRIMARY KEY (resourceId, actionId),
     FOREIGN KEY(aclId) REFERENCES AccessControlList(id),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP    
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 ALTER TABLE StudyBuddyConnections ADD CONSTRAINT StudyBuddyConnections_fk0 FOREIGN KEY (senderId) REFERENCES StudyBuddyUsers(userId);
@@ -195,7 +195,7 @@ CREATE TABLE Grading  (
   id int UNSIGNED NOT NULL AUTO_INCREMENT,
   checkerId varchar(255) NOT NULL,
   reviewType enum('SELF', 'INSTRUCTOR', 'PEER') NOT NULL,
-  
+
   answerId int UNSIGNED NOT NULL,
   customFeedback TEXT NULL,
   totalPoints float NOT NULL,
@@ -237,11 +237,11 @@ CREATE TABLE ReviewRequest   (
 CREATE TABLE homework (
     id INT PRIMARY KEY AUTO_INCREMENT,
     versionNo INT,
-    title VARCHAR(1023),          
+    title VARCHAR(1023),
     givenTs TIMESTAMP,
-    dueTs TIMESTAMP,                  
-    feedbackReleaseTs TIMESTAMP,                  
-    courseId VARCHAR(255),                
+    dueTs TIMESTAMP,
+    feedbackReleaseTs TIMESTAMP,
+    courseId VARCHAR(255),
     courseInstance VARCHAR(255),
     problems JSON,
     css JSON,
@@ -254,24 +254,52 @@ CREATE TABLE homework (
 CREATE TABLE homeworkHistory (
     id INT,
     versionNo INT,
-    title VARCHAR(255),          
+    title VARCHAR(255),
     givenTs TIMESTAMP,
-    dueTs TIMESTAMP,                  
-    feedbackReleaseTs TIMESTAMP,                  
-    courseId VARCHAR(255),                
+    dueTs TIMESTAMP,
+    feedbackReleaseTs TIMESTAMP,
+    courseId VARCHAR(255),
     courseInstance VARCHAR(255),
     problems JSON,
     updaterId VARCHAR(255),
-    
+
     createdAt TIMESTAMP,
-    
-    PRIMARY KEY (id, versionNo)   
+
+    PRIMARY KEY (id, versionNo)
 );
 
 CREATE TABLE excused(
     id int PRIMARY KEY AUTO_INCREMENT,
     userId varchar(255) NOT NULL,
     quizId varchar(255) NOT NULL,
-    courseId VARCHAR(255) NOT NULL,                
+    courseId VARCHAR(255) NOT NULL,
     courseInstance VARCHAR(255) NOT NULL
 );
+
+
+/* University admin*/
+
+
+CREATE TABLE semester_info (
+  university_id VARCHAR(50),
+  instance_id VARCHAR(50),
+  semester_start DATE,
+  semester_end DATE,
+  lecture_start_date DATE,
+  lecture_end_date DATE,
+  updated_by VARCHAR(255),
+  updated_timestamp TIMESTAMP,
+  PRIMARY KEY (university_id, instance_id)
+);
+
+CREATE TABLE holidays (
+  university_id VARCHAR(50),
+  instance_id VARCHAR(50),
+  holidays JSON,
+  PRIMARY KEY (university_id, instance_id),
+  FOREIGN KEY (university_id, instance_id)
+    REFERENCES semester_info(university_id, instance_id)
+    ON DELETE CASCADE
+);
+
+
