@@ -159,7 +159,7 @@ export interface RephraseVariant {
 
 export interface ReskinVariant {
   variantType: 'reskin';
-  theme: string;
+  theme: string[];
 }
 
 export interface ModifyChoicesVariant {
@@ -195,13 +195,13 @@ export interface PossibleVariantsResult {
   rephrase: {
     applicable: boolean;
     types?: string[];
-    reskin: {
-      applicable: boolean;
-      themes?: string[];
-    };
-    modify_choices: {
-      applicable: boolean;
-      optionsToModify?: string[];
-    };
+  };
+  reskin: {
+    applicable: boolean;
+    themes?: string[];
+  };
+  modify_choices: {
+    applicable: boolean;
+    optionsToModify?: string[];
   };
 }

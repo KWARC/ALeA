@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants } from '@stex-react/api';
+import { checkPossibleVariants, generateQuizProblems } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -72,6 +72,9 @@ export const VariantDialog = ({
   const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>();
+  const [choicesApplicable, setChoicesApplicable] = useState<boolean>();
+  const [reskinApplicable, setReskinApplicable] = useState<boolean>();
 
   const toggleVariantType = (type: VariantType) => {
     setVariantConfig((prev) => {
@@ -113,13 +116,37 @@ export const VariantDialog = ({
   }
   useEffect(() => {
     const checkVariants = async () => {
-      if (!(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
+      if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
       const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
       console.log({ result });
+      setRephraseApplicable(result.rephrase.applicable);
+      setChoicesApplicable(result.modify_choices.applicable);
+      setReskinApplicable(result.reskin.applicable);
+      setAvailableThemes(result.reskin.themes);
       return result;
     };
+
     checkVariants();
-  }, [problemData]);
+  }, [open, problemData]);
+
+  useEffect(() => {
+    if (reskinApplicable == true) {
+      const createVariants = async () => {
+        if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
+        const flatProblem = problemData as FlatQuizProblem;
+
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: flatProblem.problemId,
+          variantType: 'reskin',
+          theme: availableThemes,
+        });
+        console.log({ result });
+        return result;
+      };
+      createVariants();
+    }
+  }, [open, problemData]);
 
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
