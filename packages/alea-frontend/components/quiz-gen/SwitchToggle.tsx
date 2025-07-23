@@ -1,7 +1,5 @@
-import { Box, Collapse, Switch, TextField, Typography } from '@mui/material';
-import { ModifyChoicesOptions } from './ModifyChoicesOptions';
-import { RephraseSuboptions } from './RephraseSuboptions';
-import { ThematicReskinOptions } from './ThematicReskinOptions';
+import { Box, Checkbox, Chip, Collapse, FormControlLabel, LinearProgress, Radio, RadioGroup, Switch, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
@@ -18,6 +16,13 @@ interface SwitchToggleProps {
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
+const REPHRASE_SUBOPTIONS = [
+  'Technical Rephrasing',
+  'Entity Swapping',
+  'Numerical Substitution',
+  'Add/Remove Distractors',
+];
+
 export const SwitchToggle = ({
   title,
   typeKey,
@@ -32,6 +37,9 @@ export const SwitchToggle = ({
   setSelectedOptions,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(
+    variantConfig.selectedTheme || null
+  );
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -53,6 +61,132 @@ export const SwitchToggle = ({
       return { ...prev, variantTypes: newTypes };
     });
   };
+
+  const handleModeChange = (newMode: 'add' | 'remove') => {
+    setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: newMode }));
+    if (newMode === 'add') {
+      setSelectedOptions?.(mcqOptions);
+    } else {
+      setSelectedOptions?.([]);
+    }
+  };
+
+  const handleSelectTheme = (theme: string) => {
+    setSelectedTheme(theme);
+    setVariantConfig((prev) => ({
+      ...prev,
+      selectedTheme: theme,
+    }));
+  };
+
+  useEffect(() => {
+    if (variantConfig.selectedTheme) {
+      setSelectedTheme(variantConfig.selectedTheme);
+    }
+  }, [variantConfig.selectedTheme]);
+
+  const renderRephraseSuboptions = () => (
+    <Box sx={{ pl: 1, mb: 2 }}>
+      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+        Select Rephrase Types:
+      </Typography>
+      {REPHRASE_SUBOPTIONS.map((opt) => {
+        const checked = variantConfig.rephraseSubtypes?.includes(opt) ?? false;
+        return (
+          <FormControlLabel
+            key={opt}
+            control={
+              <Checkbox
+                checked={checked}
+                onChange={(e) => {
+                  setVariantConfig((prev) => ({
+                    ...prev,
+                    rephraseSubtypes: e.target.checked
+                      ? [...(prev.rephraseSubtypes ?? []), opt]
+                      : (prev.rephraseSubtypes ?? []).filter((o) => o !== opt),
+                  }));
+                }}
+              />
+            }
+            label={opt}
+          />
+        );
+      })}
+    </Box>
+  );
+
+  const renderModifyChoicesOptions = () => {
+    const mode = variantConfig.modifyChoiceMode;
+
+    return (
+      <>
+        <Box sx={{ pl: 1, mb: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Modify Choices Mode:
+          </Typography>
+          <RadioGroup
+            value={mode || ''}
+            onChange={(e) => handleModeChange(e.target.value as 'add' | 'remove')}
+          >
+            <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
+            <FormControlLabel value="remove" control={<Radio />} label="Remove Distractors" />
+          </RadioGroup>
+        </Box>
+
+        {mcqOptions.length > 0 && (
+          <Box sx={{ pl: 1, mb: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
+            </Typography>
+            {mcqOptions.map((opt, idx) => (
+              <FormControlLabel
+                key={`${idx}-${opt}`}
+                control={
+                  <Checkbox
+                    checked={selectedOptions.includes(opt)}
+                    onChange={(e) =>
+                      setSelectedOptions?.((prev) =>
+                        e.target.checked ? [...prev, opt] : prev.filter((o) => o !== opt)
+                      )
+                    }
+                  />
+                }
+                label={`${idx + 1}. ${opt}`}
+              />
+            ))}
+          </Box>
+        )}
+      </>
+    );
+  };
+
+  const renderThematicReskinOptions = () => (
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        Choose a Problem Theme
+      </Typography>
+
+      {themesLoading ? (
+        <LinearProgress sx={{ width: '100%', my: 1 }} />
+      ) : themes.length > 0 ? (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {themes.map((theme) => (
+            <Chip
+              key={theme}
+              label={theme}
+              clickable
+              color={selectedTheme === theme ? 'primary' : 'default'}
+              onClick={() => handleSelectTheme(theme)}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No alternative themes available
+        </Typography>
+      )}
+    </Box>
+  );
 
   return (
     <Box
@@ -106,28 +240,11 @@ export const SwitchToggle = ({
             borderColor: 'grey.200',
           }}
         >
-          {typeKey === 'rephrase' && (
-            <RephraseSuboptions variantConfig={variantConfig} setVariantConfig={setVariantConfig} />
-          )}
+          {typeKey === 'rephrase' && renderRephraseSuboptions()}
 
-          {typeKey === 'modifyChoice' && setSelectedOptions && (
-            <ModifyChoicesOptions
-              variantConfig={variantConfig}
-              setVariantConfig={setVariantConfig}
-              mcqOptions={mcqOptions}
-              selectedOptions={selectedOptions}
-              setSelectedOptions={setSelectedOptions}
-            />
-          )}
+          {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
-          {typeKey === 'conceptual' && (
-            <ThematicReskinOptions
-              themes={themes || []}
-              themesLoading={themesLoading}
-              variantConfig={variantConfig}
-              setVariantConfig={setVariantConfig}
-            />
-          )}
+          {typeKey === 'conceptual' && renderThematicReskinOptions()}
 
           <TextField
             sx={{ mb: 2 }}
