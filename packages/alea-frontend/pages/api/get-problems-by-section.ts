@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCategorizedProblems } from './get-categorized-problem';
-import { getCourseInfo, getDocumentSections } from '@stex-react/api';
+import { getCourseInfo} from '@stex-react/api';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sectionUri = req.query.sectionUri as string;
@@ -16,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).end();
   }
 
-  const [, toc] = await getDocumentSections(notesUri);
+  const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
   const problems = await getCategorizedProblems(sectionUri, toc);
 
   res.status(200).json(problems);
