@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
-import { checkThematicReskin } from '@stex-react/api';
+import { checkPossibleVariants } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -111,6 +111,15 @@ export const VariantDialog = ({
     console.log({ response });
     return response.data;
   }
+  useEffect(() => {
+    const checkVariants = async () => {
+      if (!(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
+      const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
+      console.log({ result });
+      return result;
+    };
+    checkVariants();
+  }, [problemData]);
 
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
@@ -124,26 +133,33 @@ export const VariantDialog = ({
       });
   }, [problemData]);
 
-  useEffect(() => {
-    if (!open || !problemData) return;
+  // useEffect(() => {
+  //   if (!open || !problemData) return;
 
-    const fetchReskinAvailability = async () => {
-      const payload = isFlatQuizProblem(problemData)
-        ? { problemId: problemData.problemId }
-        : { problemUri: problemData.uri };
+  //   const fetchReskinAvailability = async () => {
+  //     // const payload = isFlatQuizProblem(problemData)
+  //     //   ? { problemId: problemData.problemId }
+  //     //   : { problemUri: problemData.uri };
 
-      const res = await checkThematicReskin(payload);
+  //     // const res = await checkThematicReskin(payload);
+  //     const res = await checkPossibleVariants(problemId);
+  //     // const response = await generateQuizProblems({
+  //     //     mode: 'new',
+  //     //     courseId,
+  //     //     startSectionUri,
+  //     //     endSectionUri,
+  //     //   });
 
-      if (res.canReskin && res.themes?.length) {
-        console.log('API result:', res.themes);
-        setAvailableThemes(res.themes);
-      } else {
-        setAvailableThemes([]);
-      }
-    };
+  //     if (res.canReskin && res.themes?.length) {
+  //       console.log('API result:', res.themes);
+  //       setAvailableThemes(res.themes);
+  //     } else {
+  //       setAvailableThemes([]);
+  //     }
+  //   };
 
-    fetchReskinAvailability();
-  }, [open, problemData]);
+  //   fetchReskinAvailability();
+  // }, [open, problemData]);
 
   if (problemData) {
     if (isFlatQuizProblem(problemData)) {
