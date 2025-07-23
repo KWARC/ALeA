@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants } from '@stex-react/api';
+import { checkPossibleVariants, QuizProblem } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -19,6 +19,17 @@ import { VariantConfigSection } from './VariantConfigSection';
 
 function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
   return (data as FlatQuizProblem).problemId !== undefined;
+}
+
+function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
+  return {
+    problemId: qp.problemId,
+    courseId: qp.courseId,
+    sectionId: qp.sectionId,
+    sectionUri: qp.sectionUri,
+    problemStex: qp.problemStex,
+    ...qp.problemJson, // merges problem, problemType, options, correctAnswer, etc.
+  };
 }
 
 export type VariantType = 'rephrase' | 'modifyChoice' | 'conceptual';
@@ -75,6 +86,9 @@ export const VariantDialog = ({
   const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(true);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(true);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(true);
+  const [previewProblemData, setPreviewProblemData] = useState<
+    FlatQuizProblem | ExistingProblem | null
+  >(null);
 
   const toggleVariantType = (type: VariantType) => {
     setVariantConfig((prev) => {
@@ -128,25 +142,6 @@ export const VariantDialog = ({
 
     checkVariants();
   }, [open, problemData]);
-
-  // useEffect(() => {
-  //   if (reskinApplicable == true) {
-  //     const createVariants = async () => {
-  //       if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
-  //       const flatProblem = problemData as FlatQuizProblem;
-
-  //       const result = await generateQuizProblems({
-  //         mode: 'variant',
-  //         problemId: flatProblem.problemId,
-  //         variantType: 'reskin',
-  //         theme: availableThemes,
-  //       });
-  //       console.log("new reskin",{ result });
-  //       return result;
-  //     };
-  //     createVariants();
-  //   }
-  // }, [open, problemData]);
 
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
@@ -284,6 +279,10 @@ export const VariantDialog = ({
                   themes={availableThemes}
                   setVariantConfig={setVariantConfig}
                   problemData={problemData}
+                  onVariantGenerated={(newVariant) => {
+                    const flat = flattenQuizProblem(newVariant);
+                    setPreviewProblemData(flat);
+                  }}
                 />
               )}
 
@@ -330,7 +329,7 @@ export const VariantDialog = ({
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={problemData}
+            problemData={previewProblemData ?? problemData}
             problemUri={problemUri}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}

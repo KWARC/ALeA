@@ -1,5 +1,6 @@
-import { Box, Switch, TextField, Typography } from '@mui/material';
+import { Box, CircularProgress, Switch, TextField, Typography } from '@mui/material';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
+import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
 
@@ -20,6 +21,15 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (problemData) {
+      setLoading(true);
+      const timer = setTimeout(() => setLoading(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [problemData]);
   return (
     <Box
       sx={{
@@ -71,6 +81,21 @@ export const PreviewSection = ({
           minHeight: 0,
         }}
       >
+        {loading && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              bgcolor: 'rgba(255,255,255,0.6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
         {previewMode === 'json' ? (
           isGenerated(problemData) ? (
             <Box

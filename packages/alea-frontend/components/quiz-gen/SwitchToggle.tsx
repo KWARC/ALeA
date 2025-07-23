@@ -28,6 +28,7 @@ interface SwitchToggleProps {
   selectedOptions?: string[];
   problemData?: FlatQuizProblem | ExistingProblem;
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
+  onVariantGenerated?: (newVariant: QuizProblem) => void;
 }
 
 const REPHRASE_SUBOPTIONS = [
@@ -49,6 +50,7 @@ export const SwitchToggle = ({
   selectedOptions = [],
   setSelectedOptions,
   problemData,
+  onVariantGenerated,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
@@ -93,7 +95,6 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-
     if (typeKey === 'conceptual' && problemData && (problemData as FlatQuizProblem).problemId) {
       const flatProblem = problemData as FlatQuizProblem;
 
@@ -108,7 +109,8 @@ export const SwitchToggle = ({
       console.log('Reskin variant result:', result);
       if (result.length > 0) {
         const newVariant: QuizProblem = result[0];
-        setNewProblemData(newVariant); // Not flatten problemData after Reskin
+        setNewProblemData(newVariant);
+        onVariantGenerated?.(newVariant);
       }
     }
   };
