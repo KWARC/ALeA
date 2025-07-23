@@ -250,7 +250,6 @@ export const VariantDialog = ({
               }}
             >
               {rephraseApplicable && (
-                
                 <SwitchToggle
                   title="Rephrase"
                   typeKey="rephrase"
@@ -284,6 +283,7 @@ export const VariantDialog = ({
                   variantConfig={variantConfig}
                   themes={availableThemes}
                   setVariantConfig={setVariantConfig}
+                  problemData={problemData}
                 />
               )}
 
@@ -351,6 +351,7 @@ export const VariantDialog = ({
           onClick={() => {
             console.log('saved as draft');
             handleCreateAndReturn();
+            clearSelection();
           }}
           sx={{ textTransform: 'none' }}
         >
@@ -360,6 +361,7 @@ export const VariantDialog = ({
           onClick={() => {
             console.log('Finalize');
             onClose();
+            clearSelection();
           }}
           sx={{ textTransform: 'none' }}
         >

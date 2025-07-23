@@ -23,7 +23,6 @@ interface SwitchToggleProps {
   placeholder: string;
   variantConfig: VariantConfig;
   themes?: string[];
-  themesLoading?: boolean;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
@@ -45,7 +44,6 @@ export const SwitchToggle = ({
   placeholder,
   variantConfig,
   themes = [],
-  themesLoading = false,
   setVariantConfig,
   mcqOptions = [],
   selectedOptions = [],
@@ -56,6 +54,7 @@ export const SwitchToggle = ({
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
+  const [themesLoading, setThemesLoading] = useState<boolean>(false);
   const [newProblemData, setNewProblemData] = useState<QuizProblem | null>(null);
 
   const handleSwitchChange = (checked: boolean) => {
@@ -95,7 +94,6 @@ export const SwitchToggle = ({
       selectedTheme: theme,
     }));
 
-    // ✅ If conceptual reskinning is active
     if (typeKey === 'conceptual' && problemData && (problemData as FlatQuizProblem).problemId) {
       const flatProblem = problemData as FlatQuizProblem;
 
@@ -110,7 +108,7 @@ export const SwitchToggle = ({
       console.log('Reskin variant result:', result);
       if (result.length > 0) {
         const newVariant: QuizProblem = result[0];
-        setNewProblemData(newVariant); // ❌ do NOT flatten
+        setNewProblemData(newVariant); // Not flatten problemData after Reskin
       }
     }
   };
@@ -150,6 +148,14 @@ export const SwitchToggle = ({
       })}
     </Box>
   );
+
+  useEffect(() => {
+    if (themes.length === 0) {
+      setThemesLoading(true);
+    } else {
+      setThemesLoading(false);
+    }
+  }, [themes]);
 
   const renderModifyChoicesOptions = () => {
     const mode = variantConfig.modifyChoiceMode;
@@ -203,7 +209,9 @@ export const SwitchToggle = ({
       </Typography>
 
       {themesLoading ? (
-        <LinearProgress />
+        <Box sx={{ width: '100%', my: 1 }}>
+          <LinearProgress />
+        </Box>
       ) : themes.length > 0 ? (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {themes.map((theme) => (
