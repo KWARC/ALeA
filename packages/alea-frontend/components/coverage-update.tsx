@@ -85,7 +85,6 @@ const CoverageUpdateTab = () => {
         try {
           const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
           const durationData = await res.json();
-          console.log('DurationData:', durationData);
           for (const semKey in durationData) {
             const semDurations = durationData[semKey];
             if (!semDurations || !semDurations.sectionDurations) continue;
