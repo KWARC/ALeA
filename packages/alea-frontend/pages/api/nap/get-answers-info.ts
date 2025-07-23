@@ -1,9 +1,6 @@
 import { GradingAnswerClass, GradingInfo, ReviewType } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfQueryParameterExistOrSetError,
-  executeAndEndSet500OnError,
-} from '../comment-utils';
+import { checkIfQueryParameterExistOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 export async function getAllGradingsOrSetError(
   subProblemToAnswerIds: Record<string, number>,
