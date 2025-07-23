@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants, generateQuizProblems } from '@stex-react/api';
+import { checkPossibleVariants } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -72,9 +72,9 @@ export const VariantDialog = ({
   const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>();
-  const [choicesApplicable, setChoicesApplicable] = useState<boolean>();
-  const [reskinApplicable, setReskinApplicable] = useState<boolean>();
+  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(true);
+  const [choicesApplicable, setChoicesApplicable] = useState<boolean>(true);
+  const [reskinApplicable, setReskinApplicable] = useState<boolean>(true);
 
   const toggleVariantType = (type: VariantType) => {
     setVariantConfig((prev) => {
@@ -129,24 +129,24 @@ export const VariantDialog = ({
     checkVariants();
   }, [open, problemData]);
 
-  useEffect(() => {
-    if (reskinApplicable == true) {
-      const createVariants = async () => {
-        if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
-        const flatProblem = problemData as FlatQuizProblem;
+  // useEffect(() => {
+  //   if (reskinApplicable == true) {
+  //     const createVariants = async () => {
+  //       if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
+  //       const flatProblem = problemData as FlatQuizProblem;
 
-        const result = await generateQuizProblems({
-          mode: 'variant',
-          problemId: flatProblem.problemId,
-          variantType: 'reskin',
-          theme: availableThemes,
-        });
-        console.log({ result });
-        return result;
-      };
-      createVariants();
-    }
-  }, [open, problemData]);
+  //       const result = await generateQuizProblems({
+  //         mode: 'variant',
+  //         problemId: flatProblem.problemId,
+  //         variantType: 'reskin',
+  //         theme: availableThemes,
+  //       });
+  //       console.log("new reskin",{ result });
+  //       return result;
+  //     };
+  //     createVariants();
+  //   }
+  // }, [open, problemData]);
 
   let problemId: number | undefined;
   let mcqOptions: string[] = [];
@@ -159,34 +159,6 @@ export const VariantDialog = ({
         setStex(fetchedSTeX);
       });
   }, [problemData]);
-
-  // useEffect(() => {
-  //   if (!open || !problemData) return;
-
-  //   const fetchReskinAvailability = async () => {
-  //     // const payload = isFlatQuizProblem(problemData)
-  //     //   ? { problemId: problemData.problemId }
-  //     //   : { problemUri: problemData.uri };
-
-  //     // const res = await checkThematicReskin(payload);
-  //     const res = await checkPossibleVariants(problemId);
-  //     // const response = await generateQuizProblems({
-  //     //     mode: 'new',
-  //     //     courseId,
-  //     //     startSectionUri,
-  //     //     endSectionUri,
-  //     //   });
-
-  //     if (res.canReskin && res.themes?.length) {
-  //       console.log('API result:', res.themes);
-  //       setAvailableThemes(res.themes);
-  //     } else {
-  //       setAvailableThemes([]);
-  //     }
-  //   };
-
-  //   fetchReskinAvailability();
-  // }, [open, problemData]);
 
   if (problemData) {
     if (isFlatQuizProblem(problemData)) {
@@ -277,36 +249,43 @@ export const VariantDialog = ({
                 },
               }}
             >
-              <SwitchToggle
-                title="Rephrase"
-                typeKey="rephrase"
-                instructionKey="rephraseInstruction"
-                placeholder="e.g., simplify language, keep same meaning"
-                variantConfig={variantConfig}
-                setVariantConfig={setVariantConfig}
-              />
+              {rephraseApplicable && (
+                
+                <SwitchToggle
+                  title="Rephrase"
+                  typeKey="rephrase"
+                  instructionKey="rephraseInstruction"
+                  placeholder="e.g., simplify language, keep same meaning"
+                  variantConfig={variantConfig}
+                  setVariantConfig={setVariantConfig}
+                />
+              )}
 
-              <SwitchToggle
-                title="Modify Choices"
-                typeKey="modifyChoice"
-                instructionKey="modifyChoiceInstruction"
-                placeholder="e.g., randomize but keep correct answer intact"
-                variantConfig={variantConfig}
-                setVariantConfig={setVariantConfig}
-                mcqOptions={mcqOptions}
-                selectedOptions={selectedOptions}
-                setSelectedOptions={setSelectedOptions}
-              />
+              {choicesApplicable && (
+                <SwitchToggle
+                  title="Modify Choices"
+                  typeKey="modifyChoice"
+                  instructionKey="modifyChoiceInstruction"
+                  placeholder="e.g., randomize but keep correct answer intact"
+                  variantConfig={variantConfig}
+                  setVariantConfig={setVariantConfig}
+                  mcqOptions={mcqOptions}
+                  selectedOptions={selectedOptions}
+                  setSelectedOptions={setSelectedOptions}
+                />
+              )}
 
-              <SwitchToggle
-                title="Thematic Reskinning"
-                typeKey="conceptual"
-                instructionKey="conceptualInstruction"
-                placeholder="e.g., apply concept in a real-world scenario"
-                variantConfig={variantConfig}
-                themes={availableThemes}
-                setVariantConfig={setVariantConfig}
-              />
+              {reskinApplicable && (
+                <SwitchToggle
+                  title="Thematic Reskinning"
+                  typeKey="conceptual"
+                  instructionKey="conceptualInstruction"
+                  placeholder="e.g., apply concept in a real-world scenario"
+                  variantConfig={variantConfig}
+                  themes={availableThemes}
+                  setVariantConfig={setVariantConfig}
+                />
+              )}
 
               <VariantConfigSection
                 variantConfig={variantConfig}

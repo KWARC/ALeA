@@ -159,7 +159,7 @@ export interface RephraseVariant {
 
 export interface ReskinVariant {
   variantType: 'reskin';
-  theme: string[];
+  theme: string;
 }
 
 export interface ModifyChoicesVariant {

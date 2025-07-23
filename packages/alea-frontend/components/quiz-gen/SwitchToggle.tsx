@@ -1,5 +1,19 @@
-import { Box, Checkbox, Chip, Collapse, FormControlLabel, LinearProgress, Radio, RadioGroup, Switch, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Checkbox,
+  Chip,
+  Collapse,
+  FormControlLabel,
+  LinearProgress,
+  Radio,
+  RadioGroup,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
+import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
 import { VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
@@ -13,6 +27,7 @@ interface SwitchToggleProps {
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
+  problemData?: FlatQuizProblem | ExistingProblem;
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
@@ -35,11 +50,13 @@ export const SwitchToggle = ({
   mcqOptions = [],
   selectedOptions = [],
   setSelectedOptions,
+  problemData,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
+  const [newProblemData, setNewProblemData] = useState<QuizProblem | null>(null);
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -71,12 +88,31 @@ export const SwitchToggle = ({
     }
   };
 
-  const handleSelectTheme = (theme: string) => {
+  const handleSelectTheme = async (theme: string) => {
     setSelectedTheme(theme);
     setVariantConfig((prev) => ({
       ...prev,
       selectedTheme: theme,
     }));
+
+    // ✅ If conceptual reskinning is active
+    if (typeKey === 'conceptual' && problemData && (problemData as FlatQuizProblem).problemId) {
+      const flatProblem = problemData as FlatQuizProblem;
+
+      console.log('Generating single reskin variant for theme:', theme);
+      const result = await generateQuizProblems({
+        mode: 'variant',
+        problemId: flatProblem.problemId,
+        variantType: 'reskin',
+        theme,
+      });
+
+      console.log('Reskin variant result:', result);
+      if (result.length > 0) {
+        const newVariant: QuizProblem = result[0];
+        setNewProblemData(newVariant); // ❌ do NOT flatten
+      }
+    }
   };
 
   useEffect(() => {
@@ -167,7 +203,7 @@ export const SwitchToggle = ({
       </Typography>
 
       {themesLoading ? (
-        <LinearProgress sx={{ width: '100%', my: 1 }} />
+        <LinearProgress />
       ) : themes.length > 0 ? (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {themes.map((theme) => (
