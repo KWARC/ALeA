@@ -4,13 +4,11 @@ import { VariantConfig } from './VariantDialog';
 interface VariantConfigSectionProps {
   variantConfig: VariantConfig;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
-  toggleVariantType: (type: string) => void;
 }
 
 export const VariantConfigSection = ({
   variantConfig,
   setVariantConfig,
-  toggleVariantType,
 }: VariantConfigSectionProps) => {
   return (
     <Box
@@ -31,12 +29,12 @@ export const VariantConfigSection = ({
         <Select
           value={variantConfig.difficulty || ''}
           label="Difficulty Level"
-          onChange={(e) => {
-            if (!variantConfig.variantTypes.includes('difficulty')) {
-              toggleVariantType('difficulty');
-            }
-            setVariantConfig((prev) => ({ ...prev, difficulty: e.target.value }));
-          }}
+          onChange={(e) =>
+            setVariantConfig((prev) => ({
+              ...prev,
+              difficulty: e.target.value === 'none' ? '' : e.target.value,
+            }))
+          }
           sx={{
             borderRadius: 2,
             '& .MuiOutlinedInput-notchedOutline': {
@@ -56,12 +54,12 @@ export const VariantConfigSection = ({
         <Select
           value={variantConfig.formatType || ''}
           label="Format Shift"
-          onChange={(e) => {
-            if (!variantConfig.variantTypes.includes('formatShift')) {
-              toggleVariantType('formatShift');
-            }
-            setVariantConfig((prev) => ({ ...prev, formatType: e.target.value }));
-          }}
+          onChange={(e) =>
+            setVariantConfig((prev) => ({
+              ...prev,
+              difficulty: e.target.value === 'none' ? '' : e.target.value,
+            }))
+          }
           sx={{
             borderRadius: 2,
             '& .MuiOutlinedInput-notchedOutline': {

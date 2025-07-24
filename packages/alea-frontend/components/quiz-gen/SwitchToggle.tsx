@@ -2,7 +2,6 @@ import {
   Box,
   Checkbox,
   Chip,
-  CircularProgress,
   Collapse,
   FormControlLabel,
   LinearProgress,
@@ -10,7 +9,7 @@ import {
   RadioGroup,
   Switch,
   TextField,
-  Typography,
+  Typography
 } from '@mui/material';
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
@@ -30,7 +29,7 @@ interface SwitchToggleProps {
   problemData?: FlatQuizProblem | ExistingProblem;
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
   onVariantGenerated?: (newVariant: QuizProblem) => void;
-  onLoadingChange?: (loading: boolean) => void; 
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const REPHRASE_SUBOPTIONS = [
@@ -70,12 +69,16 @@ export const SwitchToggle = ({
 
         if (typeKey === 'modifyChoice') {
           newTypes = newTypes.filter((t) => t !== 'conceptual');
+          setSelectedOptions?.(mcqOptions);
         }
         if (typeKey === 'conceptual') {
           newTypes = newTypes.filter((t) => t !== 'modifyChoice');
         }
       } else {
         newTypes = newTypes.filter((t) => t !== typeKey);
+        if (typeKey === 'modifyChoice') {
+        setSelectedOptions?.([]);
+      }
       }
 
       return { ...prev, variantTypes: newTypes };

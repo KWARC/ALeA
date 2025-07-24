@@ -31,12 +31,10 @@ export const ConfigurationSummary = ({ variantConfig }: ConfigurationSummaryProp
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
         <strong>Active Variants:</strong> {variantConfig.variantTypes.join(', ') || 'None selected'}
-        {variantConfig.variantTypes.includes('difficulty') &&
-          ` | Difficulty: ${variantConfig.difficulty}`}
-        {variantConfig.variantTypes.includes('formatShift') &&
-          ` | Format: ${variantConfig.formatType}`}
+        {variantConfig.difficulty && ` | Difficulty: ${variantConfig.difficulty}`}
+        {variantConfig.formatType && ` | Format: ${variantConfig.formatType}`}
         {variantConfig.customPrompt &&
-          ` | Custom Instructions: "${variantConfig.customPrompt.substring(0, 50)}..."`}
+          ` | Custom Instructions: " ${variantConfig.customPrompt.substring(0, 50)} "`}
       </Typography>
     </Box>
   );
