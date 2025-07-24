@@ -7,14 +7,14 @@ interface ConfigurationSummaryProps {
 
 export const ConfigurationSummary = ({ variantConfig }: ConfigurationSummaryProps) => {
   const VARIANT_LABELS: Record<string, string> = {
-  rephrase: 'Rephrase',
-  modifyChoice: 'Modify Choices',
-  thematicReskin: 'Thematic Reskin',
-};
-const activeVariants =
-  variantConfig.variantTypes.length > 0
-    ? variantConfig.variantTypes.map((v) => VARIANT_LABELS[v] || v).join(' | ')
-    : 'None selected';
+    rephrase: 'Rephrase',
+    modifyChoice: 'Modify Choices',
+    thematicReskin: 'Thematic Reskin',
+  };
+  const activeVariants =
+    variantConfig.variantTypes.length > 0
+      ? variantConfig.variantTypes.map((v) => VARIANT_LABELS[v] || v).join(' | ')
+      : 'None selected';
   return (
     <Box
       sx={{
