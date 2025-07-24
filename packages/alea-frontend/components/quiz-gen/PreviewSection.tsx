@@ -11,6 +11,7 @@ interface PreviewSectionProps {
   problemUri?: string;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
+  loading?: boolean; 
 }
 
 export const PreviewSection = ({
@@ -20,16 +21,17 @@ export const PreviewSection = ({
   problemUri,
   editableSTeX,
   setEditableSTeX,
+  loading = false,
 }: PreviewSectionProps) => {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (problemData) {
-      setLoading(true);
-      const timer = setTimeout(() => setLoading(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [problemData]);
+  // useEffect(() => {
+  //   if (problemData) {
+  //     setLoading(true);
+  //     const timer = setTimeout(() => setLoading(false), 500);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [problemData]);
   return (
     <Box
       sx={{

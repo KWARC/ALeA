@@ -2,6 +2,7 @@ import {
   Box,
   Checkbox,
   Chip,
+  CircularProgress,
   Collapse,
   FormControlLabel,
   LinearProgress,
@@ -29,6 +30,7 @@ interface SwitchToggleProps {
   problemData?: FlatQuizProblem | ExistingProblem;
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
   onVariantGenerated?: (newVariant: QuizProblem) => void;
+  onLoadingChange?: (loading: boolean) => void; 
 }
 
 const REPHRASE_SUBOPTIONS = [
@@ -51,13 +53,15 @@ export const SwitchToggle = ({
   setSelectedOptions,
   problemData,
   onVariantGenerated,
+  onLoadingChange,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
   const [themesLoading, setThemesLoading] = useState<boolean>(false);
-  const [newProblemData, setNewProblemData] = useState<QuizProblem | null>(null);
+  // const [newProblemData, setNewProblemData] = useState<QuizProblem | null>(null);
+  // const [loadingTheme, setLoadingTheme] = useState(false);
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -99,18 +103,27 @@ export const SwitchToggle = ({
       const flatProblem = problemData as FlatQuizProblem;
 
       console.log('Generating single reskin variant for theme:', theme);
-      const result = await generateQuizProblems({
-        mode: 'variant',
-        problemId: flatProblem.problemId,
-        variantType: 'reskin',
-        theme,
-      });
+      onLoadingChange?.(true);
+      // setLoadingTheme(true);
 
-      console.log('Reskin variant result:', result);
-      if (result.length > 0) {
-        const newVariant: QuizProblem = result[0];
-        setNewProblemData(newVariant);
-        onVariantGenerated?.(newVariant);
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: flatProblem.problemId,
+          variantType: 'reskin',
+          theme,
+        });
+
+        console.log('Reskin variant result:', result);
+        if (result.length > 0) {
+          const newVariant: QuizProblem = result[0];
+          // setNewProblemData(newVariant);
+          onVariantGenerated?.(newVariant);
+        }
+      } finally {
+        // ✅ Always hide loader
+        // setLoadingTheme(false);
+        onLoadingChange?.(false);
       }
     }
   };
@@ -225,6 +238,7 @@ export const SwitchToggle = ({
               onClick={() => handleSelectTheme(theme)}
             />
           ))}
+          {/* {loadingTheme && <CircularProgress size={20} sx={{ ml: 2 }} />} */}
         </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">

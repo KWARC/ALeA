@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  LinearProgress,
   TextField,
 } from '@mui/material';
 import { checkPossibleVariants, QuizProblem } from '@stex-react/api';
@@ -83,9 +84,11 @@ export const VariantDialog = ({
   const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(true);
-  const [choicesApplicable, setChoicesApplicable] = useState<boolean>(true);
-  const [reskinApplicable, setReskinApplicable] = useState<boolean>(true);
+  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
+  const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
+  const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [previewProblemData, setPreviewProblemData] = useState<
     FlatQuizProblem | ExistingProblem | null
   >(null);
@@ -131,13 +134,18 @@ export const VariantDialog = ({
   useEffect(() => {
     const checkVariants = async () => {
       if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
-      const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
-      console.log({ result });
-      setRephraseApplicable(result.rephrase.applicable);
-      setChoicesApplicable(result.modify_choices.applicable);
-      setReskinApplicable(result.reskin.applicable);
-      setAvailableThemes(result.reskin.themes);
-      return result;
+      setVariantOptionsLoading(true);
+      try {
+        const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
+        console.log({ result });
+        setRephraseApplicable(result.rephrase.applicable);
+        setChoicesApplicable(result.modify_choices.applicable);
+        setReskinApplicable(result.reskin.applicable);
+        setAvailableThemes(result.reskin.themes);
+        return result;
+      } finally {
+        setVariantOptionsLoading(false);
+      }
     };
 
     checkVariants();
@@ -244,48 +252,54 @@ export const VariantDialog = ({
                 },
               }}
             >
-              {rephraseApplicable && (
-                <SwitchToggle
-                  title="Rephrase"
-                  typeKey="rephrase"
-                  instructionKey="rephraseInstruction"
-                  placeholder="e.g., simplify language, keep same meaning"
-                  variantConfig={variantConfig}
-                  setVariantConfig={setVariantConfig}
-                />
-              )}
+              {variantOptionsLoading ? (
+                  <LinearProgress />
+              ) : (
+                <>
+                  {rephraseApplicable && (
+                    <SwitchToggle
+                      title="Rephrase"
+                      typeKey="rephrase"
+                      instructionKey="rephraseInstruction"
+                      placeholder="e.g., simplify language, keep same meaning"
+                      variantConfig={variantConfig}
+                      setVariantConfig={setVariantConfig}
+                    />
+                  )}
 
-              {choicesApplicable && (
-                <SwitchToggle
-                  title="Modify Choices"
-                  typeKey="modifyChoice"
-                  instructionKey="modifyChoiceInstruction"
-                  placeholder="e.g., randomize but keep correct answer intact"
-                  variantConfig={variantConfig}
-                  setVariantConfig={setVariantConfig}
-                  mcqOptions={mcqOptions}
-                  selectedOptions={selectedOptions}
-                  setSelectedOptions={setSelectedOptions}
-                />
-              )}
+                  {choicesApplicable && (
+                    <SwitchToggle
+                      title="Modify Choices"
+                      typeKey="modifyChoice"
+                      instructionKey="modifyChoiceInstruction"
+                      placeholder="e.g., randomize but keep correct answer intact"
+                      variantConfig={variantConfig}
+                      setVariantConfig={setVariantConfig}
+                      mcqOptions={mcqOptions}
+                      selectedOptions={selectedOptions}
+                      setSelectedOptions={setSelectedOptions}
+                    />
+                  )}
 
-              {reskinApplicable && (
-                <SwitchToggle
-                  title="Thematic Reskinning"
-                  typeKey="conceptual"
-                  instructionKey="conceptualInstruction"
-                  placeholder="e.g., apply concept in a real-world scenario"
-                  variantConfig={variantConfig}
-                  themes={availableThemes}
-                  setVariantConfig={setVariantConfig}
-                  problemData={problemData}
-                  onVariantGenerated={(newVariant) => {
-                    const flat = flattenQuizProblem(newVariant);
-                    setPreviewProblemData(flat);
-                  }}
-                />
+                  {reskinApplicable && (
+                    <SwitchToggle
+                      title="Thematic Reskinning"
+                      typeKey="conceptual"
+                      instructionKey="conceptualInstruction"
+                      placeholder="e.g., apply concept in a real-world scenario"
+                      variantConfig={variantConfig}
+                      themes={availableThemes}
+                      setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setPreviewProblemData(flat);
+                      }}
+                    />
+                  )}
+                </>
               )}
-
               <VariantConfigSection
                 variantConfig={variantConfig}
                 setVariantConfig={setVariantConfig}
@@ -333,6 +347,7 @@ export const VariantDialog = ({
             problemUri={problemUri}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
+            loading={previewLoading}
           />
         </Box>
       </DialogContent>
