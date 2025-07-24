@@ -1,7 +1,24 @@
+import { deleteAcl } from '@stex-react/api';
 import { Action, ResourceActionPair, ResourceName } from '@stex-react/utils';
 import axios from 'axios';
 import { AccessControlList, ResourceAction } from './access-control';
 import { getAuthHeaders } from './lmp';
+
+export async function hasAclAssociatedResources(aclId: string): Promise<boolean> {
+  try {
+    const response = await axios.get<{ hasResources: boolean }>(
+      `/api/access-control/check-acl-resources?aclId=${aclId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data.hasResources;
+  } catch (error) {
+    console.error(`Error checking if ACL ${aclId} has associated resources:`, error);
+    return false; // Assume false on error, or handle as per your error policy
+  }
+}
+
+
+
 
 export async function getAllAclIds(): Promise<string[]> {
   const resp = await axios.get('/api/access-control/get-all-acl-ids');
@@ -17,14 +34,17 @@ export async function createAcl(newAcl: CreateACLRequest): Promise<void> {
   await axios.post('/api/access-control/create-acl', newAcl);
 }
 
+export async function deleteAcl(aclId: string): Promise<void> {
+  await axios.post('/api/access-control/delete-acl', { id: aclId }, { headers: getAuthHeaders() }); // <--- CORRECTED URL
+}
+
+
 export async function getAcl(aclId: string): Promise<AccessControlList> {
   const resp = await axios.get(`/api/access-control/get-acl?id=${aclId}`);
   return resp.data as AccessControlList;
 }
 
-export async function getAclUserDetails(
-  aclId: string
-) {
+export async function getAclUserDetails(aclId: string) {
   const resp = await axios.get(`/api/access-control/get-acl-userdetails?id=${aclId}`);
   return resp.data as { fullName: string; userId: string }[];
 }

@@ -1,3 +1,4 @@
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -8,7 +9,12 @@ import {
   Typography,
   InputAdornment,
   IconButton,
-  Alert,
+  Alert, // Added Alert
+  Dialog, // Added Dialog
+  DialogActions, // Added DialogActions
+  DialogContent, // Added DialogContent
+  DialogContentText, // Added DialogContentText
+  DialogTitle, // Added DialogTitle
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import GroupIcon from '@mui/icons-material/Group';
@@ -16,7 +22,7 @@ import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import MainLayout from '../../../layouts/MainLayout';
-import { UpdateACLRequest, getAcl, isValid, updateAcl } from '@stex-react/api';
+import { UpdateACLRequest, getAcl, isValid, updateAcl, deleteAcl } from '@stex-react/api'; // Added deleteAcl
 
 const UpdateAcl: NextPage = () => {
   const router = useRouter();
@@ -33,6 +39,11 @@ const UpdateAcl: NextPage = () => {
   const [isInvalid, setIsInvalid] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
+
+  // State for deletion dialog and error
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   useEffect(() => {
     const fetchAclDetails = async () => {
       if (query.aclId) {
@@ -45,7 +56,8 @@ const UpdateAcl: NextPage = () => {
           setUpdaterACLId(acl.updaterACLId);
           setIsOpen(acl.isOpen);
         } catch (e) {
-          console.log(e);
+          console.error("Error fetching ACL details:", e); // Use console.error
+          setError("Failed to load ACL details."); // Set a user-friendly error
         }
       }
     };
@@ -104,9 +116,9 @@ const UpdateAcl: NextPage = () => {
     try {
       await updateAcl(updatedAcl);
       router.replace(`/acl/${aclId}`);
-    } catch (e) {
-      console.error(e);
-      setError(e.message);
+    } catch (e: any) { // Type e as any for error.message
+      console.error("Error updating ACL:", e);
+      setError(e.response?.data?.message || 'Failed to update ACL.'); // More robust error message
     }
   };
 
@@ -116,6 +128,38 @@ const UpdateAcl: NextPage = () => {
       isValidUpdater = updaterACLId === aclId || (await isValid(updaterACLId));
     }
     setIsUpdaterACLValid(isValidUpdater);
+  };
+
+  // Deletion Handlers
+  const handleDeleteClick = () => {
+    setDeleteError(''); // Clear any previous errors
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setDeleteError(''); // Clear error on cancel
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      if (aclId) { // Ensure aclId is available before attempting deletion
+        await deleteAcl(aclId);
+        setDeleteDialogOpen(false);
+        router.push('/acl'); // Redirect to the ACL list after deletion
+      } else {
+        console.warn("ACL ID is missing for deletion.");
+        setDeleteError("Cannot delete ACL: ID is missing.");
+      }
+    } catch (err: any) { // Type err as any for err.response
+      console.error("Error deleting ACL:", err);
+      setDeleteError(err.response?.data?.message || 'Failed to delete ACL. It might be assigned to resources or have other dependencies.');
+      // Keep dialog open to show error, or close after a delay
+    } finally {
+      // You might choose to keep the dialog open to show the error,
+      // or close it if the error is handled by a global snackbar etc.
+      // For now, it stays open to show the error.
+    }
   };
 
   return (
@@ -132,6 +176,7 @@ const UpdateAcl: NextPage = () => {
         <Typography fontSize={24} m="10px 0px">
           Update ACL
         </Typography>
+
         <TextField
           label="ACL ID"
           variant="outlined"
@@ -141,6 +186,7 @@ const UpdateAcl: NextPage = () => {
           sx={{ mb: '20px' }}
           fullWidth
         />
+
         <TextField
           label="Description"
           variant="outlined"
@@ -150,6 +196,7 @@ const UpdateAcl: NextPage = () => {
           sx={{ mb: '20px' }}
           fullWidth
         />
+
         <Box mb="20px">
           <TextField
             label="Add Member ID"
@@ -176,6 +223,7 @@ const UpdateAcl: NextPage = () => {
             ))}
           </Box>
         </Box>
+
         <Box mb="20px">
           <TextField
             label="Add Member ACL"
@@ -196,13 +244,14 @@ const UpdateAcl: NextPage = () => {
               ),
             }}
           />
-          {isInvalid ? <Typography color="error">{isInvalid}</Typography> : null}
+          {isInvalid && <Typography color="error">{isInvalid}</Typography>}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
             {memberACLIds.map((acl, index) => (
               <Chip key={index} label={acl} onDelete={() => handleRemoveMemberACL(acl)} />
             ))}
           </Box>
         </Box>
+
         <TextField
           label="Updater ACL"
           variant="outlined"
@@ -215,22 +264,75 @@ const UpdateAcl: NextPage = () => {
           error={isUpdaterACLValid === false}
           helperText={isUpdaterACLValid === false ? 'Updater ACL is invalid' : ''}
         />
+
         <FormControlLabel
           control={<Checkbox checked={isOpen} onChange={(e) => setIsOpen(e.target.checked)} />}
           label="Is Open"
           sx={{ mb: '20px' }}
         />
-        <Button
-          sx={{ m: '20px' }}
-          variant="contained"
-          color="primary"
-          onClick={handleSubmit}
-          disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+
+        {error && (
+          <Alert severity="error" sx={{ flexGrow: 1, mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            gap: '16px', // Added gap for spacing between buttons
+          }}
         >
-          Update
-        </Button>
-        {error && <Alert severity="error">{'Some thing went wrong'}</Alert>}
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: '#203360', color: '#ffffff', mb: 2 }}
+            onClick={handleSubmit}
+            disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+          >
+            Update
+          </Button>
+          {/* Delete Button */}
+          <Button
+            variant="contained"
+            color="error" // Use color="error" for red
+            startIcon={<DeleteIcon />}
+            onClick={handleDeleteClick}
+            sx={{ mb: 2 }} // Consistent margin-bottom
+          >
+            Delete
+          </Button>
+        </Box>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-acl-dialog-title" // Unique ID for this dialog
+        aria-describedby="delete-acl-dialog-description"
+      >
+        <DialogTitle id="delete-acl-dialog-title">Confirm Deletion</DialogTitle>
+        <DialogContent>
+          {deleteError && ( // Display error message if it exists
+            <Alert severity='error' sx={{ mb: 2 }}>{deleteError}</Alert>
+          )}
+          <DialogContentText id="delete-acl-dialog-description">
+            Are you sure you want to delete this ACL: **{aclId}**? This action cannot be undone.
+            If this ACL is assigned to any resource or is a member of another ACL, deletion will be rejected by the server.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainLayout>
   );
 };
