@@ -289,6 +289,7 @@ CREATE TABLE semester_info (
   lecture_end_date DATE,
   updated_by VARCHAR(255),
   updated_timestamp TIMESTAMP,
+  time_zone VARCHAR(100),
   PRIMARY KEY (university_id, instance_id)
 );
 
