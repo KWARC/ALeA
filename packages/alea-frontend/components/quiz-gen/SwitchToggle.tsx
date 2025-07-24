@@ -56,12 +56,10 @@ export const SwitchToggle = ({
   onLoadingChange,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
+  const [themesLoading, setThemesLoading] = useState<boolean>(false);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
-  const [themesLoading, setThemesLoading] = useState<boolean>(false);
-  // const [newProblemData, setNewProblemData] = useState<QuizProblem | null>(null);
-  // const [loadingTheme, setLoadingTheme] = useState(false);
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -104,7 +102,6 @@ export const SwitchToggle = ({
 
       console.log('Generating single reskin variant for theme:', theme);
       onLoadingChange?.(true);
-      // setLoadingTheme(true);
 
       try {
         const result = await generateQuizProblems({
@@ -117,12 +114,9 @@ export const SwitchToggle = ({
         console.log('Reskin variant result:', result);
         if (result.length > 0) {
           const newVariant: QuizProblem = result[0];
-          // setNewProblemData(newVariant);
           onVariantGenerated?.(newVariant);
         }
       } finally {
-        // ✅ Always hide loader
-        // setLoadingTheme(false);
         onLoadingChange?.(false);
       }
     }
@@ -238,7 +232,6 @@ export const SwitchToggle = ({
               onClick={() => handleSelectTheme(theme)}
             />
           ))}
-          {/* {loadingTheme && <CircularProgress size={20} sx={{ ml: 2 }} />} */}
         </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">
