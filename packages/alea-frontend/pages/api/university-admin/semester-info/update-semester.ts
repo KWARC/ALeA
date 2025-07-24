@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing universityId or instanceId' });
   }
 
-  const result = await executeQuery(
+  const result = (await executeQuery(
     `
     UPDATE semester_info
     SET
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       universityId,
       instanceId,
     ]
-  ) as { affectedRows?: number } | { error: any };
+  )) as { affectedRows?: number } | { error: any };
 
   if ('error' in result) {
     return res.status(500).json({ message: 'Database error', error: result.error });
