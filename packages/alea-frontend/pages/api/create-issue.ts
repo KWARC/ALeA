@@ -150,8 +150,8 @@ export default async function handler(req, res) {
   const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
 
   const issuePayload = isGitlab
-    ? { description: body.data.body, title: generatedTitle }
-    : { body: body.data.body, labels: ['user-reported'], title: generatedTitle };
+    ? { description: body.data, title: generatedTitle }
+    : { body: body.data, labels: ['user-reported'], title: generatedTitle };
 
   body.createNewIssueUrl = getNewIssueUrl(
     { category: issueCategory } as IssueClassification,
