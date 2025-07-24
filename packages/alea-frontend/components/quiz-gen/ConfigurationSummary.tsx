@@ -1,11 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { VariantConfig } from './VariantDialog';
 
-interface ConfigurationSummaryProps {
-  variantConfig: VariantConfig;
-}
-
-export const ConfigurationSummary = ({ variantConfig }: ConfigurationSummaryProps) => {
+export const ConfigurationSummary = ({ variantConfig }: { variantConfig: VariantConfig }) => {
   const VARIANT_LABELS: Record<string, string> = {
     rephrase: 'Rephrase',
     modifyChoice: 'Modify Choices',

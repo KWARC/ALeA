@@ -57,7 +57,7 @@ export const VariantConfigSection = ({
           onChange={(e) =>
             setVariantConfig((prev) => ({
               ...prev,
-              difficulty: e.target.value === 'none' ? '' : e.target.value,
+              formatType: e.target.value === 'none' ? '' : e.target.value,
             }))
           }
           sx={{
