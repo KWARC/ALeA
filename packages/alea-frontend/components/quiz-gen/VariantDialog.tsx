@@ -33,7 +33,7 @@ function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
   };
 }
 
-export type VariantType = 'rephrase' | 'modifyChoice' | 'conceptual';
+export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 
 export interface VariantConfig {
   variantTypes: VariantType[];
@@ -44,7 +44,7 @@ export interface VariantConfig {
   rephraseSubtypes?: string[];
   modifyChoiceMode?: 'add' | 'remove';
   modifyChoiceInstruction?: string;
-  conceptualInstruction?: string;
+  thematicReskinInstruction?: string;
   selectedTheme?: string;
 }
 
@@ -64,7 +64,7 @@ interface VariantDialogProps {
       rephraseSubtypes?: string[];
       modifyChoiceMode?: 'add' | 'remove';
       modifyChoiceInstruction?: string;
-      conceptualInstruction?: string;
+      thematicReskinInstruction?: string;
       selectedTheme?: string;
     };
   }) => void;
@@ -93,17 +93,10 @@ export const VariantDialog = ({
     FlatQuizProblem | ExistingProblem | null
   >(null);
 
-  const toggleVariantType = (type: VariantType) => {
-    setVariantConfig((prev) => {
-      const alreadySelected = prev.variantTypes.includes(type);
-      return {
-        ...prev,
-        variantTypes: alreadySelected
-          ? prev.variantTypes.filter((t) => t !== type)
-          : [...prev.variantTypes, type],
-      };
-    });
-  };
+  const problemId = isFlatQuizProblem(problemData) ? problemData.problemId : undefined;
+  const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
+  const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
+  const problemUri = isFlatQuizProblem(problemData) ? problemData.sectionUri : problemData?.uri;
 
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
@@ -117,7 +110,7 @@ export const VariantDialog = ({
       customPrompt: '',
       rephraseInstruction: '',
       modifyChoiceInstruction: '',
-      conceptualInstruction: '',
+      thematicReskinInstruction: '',
     });
   };
 
@@ -131,6 +124,7 @@ export const VariantDialog = ({
     console.log({ response });
     return response.data;
   }
+
   useEffect(() => {
     const checkVariants = async () => {
       if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
@@ -151,36 +145,12 @@ export const VariantDialog = ({
     checkVariants();
   }, [open, problemData]);
 
-  let problemId: number | undefined;
-  let mcqOptions: string[] = [];
-  let STeX: string | undefined;
-  let problemUri: string | undefined;
-
   useEffect(() => {
     if (!isFlatQuizProblem(problemData))
       fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
         setStex(fetchedSTeX);
       });
   }, [problemData]);
-
-  if (problemData) {
-    if (isFlatQuizProblem(problemData)) {
-      problemId = problemData.problemId;
-      mcqOptions = problemData.options || [];
-      STeX = problemData.problemStex;
-      problemUri = problemData.sectionUri;
-    } else {
-      problemUri = problemData.uri;
-      mcqOptions = [];
-      STeX = stex;
-    }
-  }
-
-  useEffect(() => {
-    if (variantConfig.variantTypes.includes('modifyChoice')) {
-      setSelectedOptions(mcqOptions);
-    }
-  }, [variantConfig.variantTypes]);
 
   useEffect(() => {
     setEditableSTeX(STeX);
@@ -253,7 +223,7 @@ export const VariantDialog = ({
               }}
             >
               {variantOptionsLoading ? (
-                  <LinearProgress />
+                <LinearProgress />
               ) : (
                 <>
                   {rephraseApplicable && (
@@ -284,8 +254,8 @@ export const VariantDialog = ({
                   {reskinApplicable && (
                     <SwitchToggle
                       title="Thematic Reskinning"
-                      typeKey="conceptual"
-                      instructionKey="conceptualInstruction"
+                      typeKey="thematicReskin"
+                      instructionKey="thematicReskinInstruction"
                       placeholder="e.g., apply concept in a real-world scenario"
                       variantConfig={variantConfig}
                       themes={availableThemes}
@@ -303,7 +273,6 @@ export const VariantDialog = ({
               <VariantConfigSection
                 variantConfig={variantConfig}
                 setVariantConfig={setVariantConfig}
-                toggleVariantType={toggleVariantType}
               />
 
               <Button

@@ -6,6 +6,15 @@ interface ConfigurationSummaryProps {
 }
 
 export const ConfigurationSummary = ({ variantConfig }: ConfigurationSummaryProps) => {
+  const VARIANT_LABELS: Record<string, string> = {
+  rephrase: 'Rephrase',
+  modifyChoice: 'Modify Choices',
+  thematicReskin: 'Thematic Reskin',
+};
+const activeVariants =
+  variantConfig.variantTypes.length > 0
+    ? variantConfig.variantTypes.map((v) => VARIANT_LABELS[v] || v).join(' | ')
+    : 'None selected';
   return (
     <Box
       sx={{
@@ -30,7 +39,7 @@ export const ConfigurationSummary = ({ variantConfig }: ConfigurationSummaryProp
         Configuration Summary
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-        <strong>Active Variants:</strong> {variantConfig.variantTypes.join(', ') || 'None selected'}
+        <strong>Active Variants:</strong> {activeVariants}
         {variantConfig.difficulty && ` | Difficulty: ${variantConfig.difficulty}`}
         {variantConfig.formatType && ` | Format: ${variantConfig.formatType}`}
         {variantConfig.customPrompt &&

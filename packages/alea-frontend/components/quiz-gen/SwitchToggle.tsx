@@ -68,10 +68,10 @@ export const SwitchToggle = ({
         if (!newTypes.includes(typeKey)) newTypes.push(typeKey);
 
         if (typeKey === 'modifyChoice') {
-          newTypes = newTypes.filter((t) => t !== 'conceptual');
+          newTypes = newTypes.filter((t) => t !== 'thematicReskin');
           setSelectedOptions?.(mcqOptions);
         }
-        if (typeKey === 'conceptual') {
+        if (typeKey === 'thematicReskin') {
           newTypes = newTypes.filter((t) => t !== 'modifyChoice');
         }
       } else {
@@ -100,7 +100,7 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-    if (typeKey === 'conceptual' && problemData && (problemData as FlatQuizProblem).problemId) {
+    if (typeKey === 'thematicReskin' && problemData && (problemData as FlatQuizProblem).problemId) {
       const flatProblem = problemData as FlatQuizProblem;
 
       console.log('Generating single reskin variant for theme:', theme);
@@ -300,7 +300,7 @@ export const SwitchToggle = ({
 
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
-          {typeKey === 'conceptual' && renderThematicReskinOptions()}
+          {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
 
           <TextField
             sx={{ mb: 2 }}
