@@ -22,6 +22,7 @@ export async function createSemester(semesterData: {
   lectureStartDate: string;
   lectureEndDate: string;
   updatedBy: string;
+  timeZone: string;
 }) {
   const response = await axios.post(`${SEMESTER_BASE_URL}/create-semester`, semesterData);
   return response.data;
@@ -36,6 +37,7 @@ export async function updateSemester(semesterData: {
   lectureStartDate: string;
   lectureEndDate: string;
   updatedBy: string;
+  timeZone: string;
 }) {
   const response = await axios.post(`${SEMESTER_BASE_URL}/update-semester`, semesterData);
   return response.data;

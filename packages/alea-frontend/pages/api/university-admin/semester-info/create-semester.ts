@@ -10,10 +10,11 @@ export default async function handler(req, res) {
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    updatedBy
+    updatedBy,
+    timeZone,
   } = req.body;
 
-  if (!universityId || !instanceId || !semesterStart || !semesterEnd || !lectureStartDate || !lectureEndDate || !updatedBy) {
+  if (!universityId || !instanceId || !semesterStart || !semesterEnd || !lectureStartDate || !lectureEndDate || !updatedBy || !timeZone) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -33,9 +34,9 @@ export default async function handler(req, res) {
 
   const result = await executeQuery(
     `INSERT INTO semester_info
-      (university_id, instance_id, semester_start, semester_end, lecture_start_date, lecture_end_date, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, updatedBy]
+      (university_id, instance_id, semester_start, semester_end, lecture_start_date, lecture_end_date, updated_by,time_zone)
+     VALUES (?, ?, ?, ?, ?, ?, ?,?)`,
+    [universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, updatedBy, timeZone]
   ) as { error?: any };  // You only care about possible error in result
 
   if (result.error) {

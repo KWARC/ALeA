@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     lectureStartDate,
     lectureEndDate,
     updatedBy,
+    timeZone,
   } = req.body;
 
   if (!universityId || !instanceId) {
@@ -26,6 +27,7 @@ export default async function handler(req, res) {
       lecture_start_date = ?,
       lecture_end_date = ?,
       updated_by = ?,
+      time_zone = ?,
       updated_timestamp = CURRENT_TIMESTAMP
     WHERE university_id = ? AND instance_id = ?
     `,
@@ -35,6 +37,7 @@ export default async function handler(req, res) {
       lectureStartDate,
       lectureEndDate,
       updatedBy,
+      timeZone || null,
       universityId,
       instanceId,
     ]
