@@ -16,15 +16,16 @@ export async function getSpecificAclIds(resourceActionPairs: ResourceActionPair[
 export async function createAcl(newAcl: CreateACLRequest): Promise<void> {
   await axios.post('/api/access-control/create-acl', newAcl);
 }
+export async function deleteAcl(aclId: string): Promise<void> {
+  await axios.post('/api/access-control/delete-acl', { id: aclId });
+}
 
 export async function getAcl(aclId: string): Promise<AccessControlList> {
   const resp = await axios.get(`/api/access-control/get-acl?id=${aclId}`);
   return resp.data as AccessControlList;
 }
 
-export async function getAclUserDetails(
-  aclId: string
-) {
+export async function getAclUserDetails(aclId: string) {
   const resp = await axios.get(`/api/access-control/get-acl-userdetails?id=${aclId}`);
   return resp.data as { fullName: string; userId: string }[];
 }

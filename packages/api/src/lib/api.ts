@@ -8,6 +8,8 @@ export * from './gpt-problems';
 export * from './gpt-problems-api';
 export * from './homework';
 export * from './homework-api';
+export * from './job-portal';
+export * from './job-portal-api';
 export * from './lmp';
 export * from './misc';
 export * from './flams';
