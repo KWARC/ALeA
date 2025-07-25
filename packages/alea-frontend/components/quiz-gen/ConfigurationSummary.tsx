@@ -26,10 +26,7 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
         sx={{
           color: 'primary.main',
           fontWeight: 600,
-          mb: 1,
-          display: 'flex',
           alignItems: 'center',
-          gap: 1,
         }}
       >
         Configuration Summary

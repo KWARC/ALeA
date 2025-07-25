@@ -12,7 +12,7 @@ import {
 import { SecInfo } from '../../types';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import { FeedbackSection, HiddenFeedback } from './Feedback';
-import { VariantConfig, VariantDialog } from './VariantDialog';
+import { VariantDialog } from './VariantDialog';
 
 export const handleGoToSection = (courseId: string, sectionId: string) => {
   const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
@@ -34,13 +34,6 @@ export function QuizPanel({
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
-  const [variantConfig, setVariantConfig] = useState<VariantConfig>({
-    variantTypes: [],
-    difficulty: '',
-    formatType: '',
-    customPrompt: '',
-  });
-
   const handleOpenVariantDialog = () => setVariantDialogOpen(true);
   const handleCloseVariantDialog = () => setVariantDialogOpen(false);
 
@@ -130,9 +123,7 @@ export function QuizPanel({
 
       <VariantDialog
         open={variantDialogOpen}
-        onClose={handleCloseVariantDialog}
-        variantConfig={variantConfig}
-        setVariantConfig={setVariantConfig}
+        onClose={() => setVariantDialogOpen(false)}
         onCreate={handleCreateVariant}
         problemData={currentProblem}
       />

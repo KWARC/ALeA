@@ -154,7 +154,7 @@ export interface CompletionEval {
 
 export interface RephraseVariant {
   variantType: 'rephrase';
-  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping';
+  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping'; // camel_casing here
 }
 
 export interface ReskinVariant {

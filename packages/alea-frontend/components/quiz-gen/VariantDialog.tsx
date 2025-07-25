@@ -51,34 +51,24 @@ export interface VariantConfig {
 interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
-  variantConfig: VariantConfig;
-  setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
-  onCreate: (payload: {
-    problemId: number;
-    variantConfig: {
-      variantTypes: VariantType[];
-      difficulty?: string;
-      formatType?: string;
-      customPrompt: string;
-      rephraseInstruction?: string;
-      rephraseSubtypes?: string[];
-      modifyChoiceMode?: 'add' | 'remove';
-      modifyChoiceInstruction?: string;
-      thematicReskinInstruction?: string;
-      selectedTheme?: string;
-    };
-  }) => void;
+  onCreate: (payload: { problemId: number; variantConfig: VariantConfig }) => void;
   problemData?: FlatQuizProblem | ExistingProblem;
 }
 
-export const VariantDialog = ({
-  open,
-  onClose,
-  variantConfig,
-  setVariantConfig,
-  onCreate,
-  problemData,
-}: VariantDialogProps) => {
+export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantDialogProps) => {
+  const [variantConfig, setVariantConfig] = useState<VariantConfig>({
+    variantTypes: [],
+    difficulty: '',
+    formatType: '',
+    customPrompt: '',
+    rephraseInstruction: '',
+    rephraseSubtypes: [],
+    modifyChoiceMode: undefined,
+    modifyChoiceInstruction: '',
+    thematicReskinInstruction: '',
+    selectedTheme: '',
+  });
+
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [stex, setStex] = useState(undefined);
@@ -119,9 +109,7 @@ export const VariantDialog = ({
     if (!sourceLink) return null;
 
     const rawStexLink = sourceLink.replace('-/blob', '-/raw');
-    console.log({ rawStexLink });
     const response = await axios.get(rawStexLink);
-    console.log({ response });
     return response.data;
   }
 
@@ -131,7 +119,6 @@ export const VariantDialog = ({
       setVariantOptionsLoading(true);
       try {
         const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
-        console.log({ result });
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -187,14 +174,12 @@ export const VariantDialog = ({
       <DialogContent
         sx={{
           height: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
         <Box sx={{ flex: 1, display: 'flex', gap: 2, overflow: 'hidden', minHeight: 0 }}>
           <Box
             sx={{
-              flex: 1,
+              flex: 0.7,
               display: 'flex',
               flexDirection: 'column',
               minHeight: 0,
@@ -324,7 +309,7 @@ export const VariantDialog = ({
       <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
         <Button
           onClick={() => {
-            console.log('');
+            onClose();
           }}
           sx={{ textTransform: 'none' }}
         >
@@ -332,7 +317,6 @@ export const VariantDialog = ({
         </Button>
         <Button
           onClick={() => {
-            console.log('saved as draft');
             handleCreateAndReturn();
             clearSelection();
           }}
@@ -342,7 +326,6 @@ export const VariantDialog = ({
         </Button>
         <Button
           onClick={() => {
-            console.log('Finalize');
             onClose();
             clearSelection();
           }}

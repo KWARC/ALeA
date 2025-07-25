@@ -9,7 +9,7 @@ import {
   RadioGroup,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
@@ -77,10 +77,9 @@ export const SwitchToggle = ({
       } else {
         newTypes = newTypes.filter((t) => t !== typeKey);
         if (typeKey === 'modifyChoice') {
-        setSelectedOptions?.([]);
+          setSelectedOptions?.([]);
+        }
       }
-      }
-
       return { ...prev, variantTypes: newTypes };
     });
   };
@@ -102,8 +101,6 @@ export const SwitchToggle = ({
     }));
     if (typeKey === 'thematicReskin' && problemData && (problemData as FlatQuizProblem).problemId) {
       const flatProblem = problemData as FlatQuizProblem;
-
-      console.log('Generating single reskin variant for theme:', theme);
       onLoadingChange?.(true);
 
       try {
@@ -114,7 +111,6 @@ export const SwitchToggle = ({
           theme,
         });
 
-        console.log('Reskin variant result:', result);
         if (result.length > 0) {
           const newVariant: QuizProblem = result[0];
           onVariantGenerated?.(newVariant);

@@ -70,7 +70,6 @@ export const PreviewSection = ({
           borderRadius: 2,
           p: 2,
           overflow: 'auto',
-          minHeight: 0,
         }}
       >
         {loading && (
@@ -90,37 +89,9 @@ export const PreviewSection = ({
         )}
         {previewMode === 'json' ? (
           isGenerated(problemData) ? (
-            <Box
-              component="pre"
-              sx={{
-                width: '100%',
-                overflow: 'hidden',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                lineHeight: 1.6,
-                m: 0,
-              }}
-            >
-              <QuizProblemViewer problemData={problemData} />
-            </Box>
+            <QuizProblemViewer problemData={problemData} />
           ) : isExisting(problemData) ? (
-            <Box
-              component="pre"
-              sx={{
-                width: '100%',
-                overflow: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                lineHeight: 1.6,
-                m: 0,
-              }}
-            >
-              <UriProblemViewer uri={problemUri} />
-            </Box>
+            <UriProblemViewer uri={problemUri} />
           ) : (
             <Box
               sx={{
@@ -137,24 +108,22 @@ export const PreviewSection = ({
             </Box>
           )
         ) : (
-          <Box sx={{ position: 'relative' }}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={6}
-              maxRows={30}
-              value={editableSTeX}
-              onChange={(e) => setEditableSTeX(e.target.value)}
-              variant="outlined"
-              sx={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '0.9rem',
-                lineHeight: 1.5,
-                color: '#111827',
-                backgroundColor: '#fff',
-              }}
-            />
-          </Box>
+          <TextField
+            fullWidth
+            multiline
+            minRows={6}
+            maxRows={30}
+            value={editableSTeX}
+            onChange={(e) => setEditableSTeX(e.target.value)}
+            variant="outlined"
+            sx={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.9rem',
+              lineHeight: 1.5,
+              color: '#111827',
+              backgroundColor: '#fff',
+            }}
+          />
         )}
       </Box>
     </Box>
