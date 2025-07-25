@@ -203,7 +203,7 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -332,7 +332,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
