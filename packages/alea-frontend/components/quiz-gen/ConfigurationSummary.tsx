@@ -7,10 +7,15 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
     modifyChoice: 'Modify Choices',
     thematicReskin: 'Thematic Reskin',
   };
-  const activeVariants =
-    variantConfig.variantTypes.length > 0
-      ? variantConfig.variantTypes.map((v) => VARIANT_LABELS[v] || v).join(' | ')
-      : 'None selected';
+  const variantTypeLabels = variantConfig.variantTypes
+    .map((v) => VARIANT_LABELS[v] || v)
+    .join(' | ');
+
+  const hasAnySelection =
+    variantConfig.variantTypes.length > 0 ||
+    !!variantConfig.difficulty ||
+    !!variantConfig.formatType ||
+    !!variantConfig.customPrompt;
   return (
     <Box
       sx={{
@@ -31,13 +36,20 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
       >
         Configuration Summary
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-        <strong>Active Variants:</strong> {activeVariants}
-        {variantConfig.difficulty && ` | Difficulty: ${variantConfig.difficulty}`}
-        {variantConfig.formatType && ` | Format: ${variantConfig.formatType}`}
-        {variantConfig.customPrompt &&
-          ` | Custom Instructions: " ${variantConfig.customPrompt.substring(0, 50)} "`}
-      </Typography>
+
+      {!hasAnySelection ? (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <strong>None selected</strong>
+        </Typography>
+      ) : (
+        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+          {variantTypeLabels && <strong>Active Variants:</strong>} {variantTypeLabels}
+          {variantConfig.difficulty && ` | Difficulty: ${variantConfig.difficulty}`}
+          {variantConfig.formatType && ` | Format: ${variantConfig.formatType}`}
+          {variantConfig.customPrompt &&
+            ` | Custom Instructions: " ${variantConfig.customPrompt.substring(0, 50)} "`}
+        </Typography>
+      )}
     </Box>
   );
 };
