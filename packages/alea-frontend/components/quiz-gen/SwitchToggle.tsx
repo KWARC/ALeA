@@ -128,8 +128,8 @@ export const SwitchToggle = ({
   }, [variantConfig.selectedTheme]);
 
   const renderRephraseSuboptions = () => (
-    <Box sx={{ pl: 1, mb: 2 }}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+    <Box pl={1} mb={2}>
+      <Typography variant="subtitle2" color="text.secondary" mb={1}>
         Select Rephrase Types:
       </Typography>
       {REPHRASE_SUBOPTIONS.map((opt) => {
@@ -170,8 +170,8 @@ export const SwitchToggle = ({
 
     return (
       <>
-        <Box sx={{ pl: 1, mb: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+        <Box pl={1} mb={2}>
+          <Typography variant="subtitle2" color="text.secondary" mb={1}>
             Modify Choices Mode:
           </Typography>
           <RadioGroup
@@ -185,7 +185,7 @@ export const SwitchToggle = ({
 
         {mcqOptions.length > 0 && (
           <Box sx={{ pl: 1, mb: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary" mb={1}>
               Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
             </Typography>
             {mcqOptions.map((opt, idx) => (
@@ -211,17 +211,17 @@ export const SwitchToggle = ({
   };
 
   const renderThematicReskinOptions = () => (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+    <Box mb={2}>
+      <Typography variant="subtitle2" mb={1}>
         Choose a Problem Theme
       </Typography>
 
       {themesLoading ? (
-        <Box sx={{ width: '100%', my: 1 }}>
+        <Box width="100%" my={1}>
           <LinearProgress />
         </Box>
       ) : themes.length > 0 ? (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box display="flex" flexWrap="wrap" gap={1}>
           {themes.map((theme) => (
             <Chip
               key={theme}
@@ -242,12 +242,12 @@ export const SwitchToggle = ({
 
   return (
     <Box
+      mb={2}
+      border="1px solid"
+      borderColor={isActive ? 'primary.main' : 'grey.300'}
+      borderRadius={2}
+      overflow="hidden"
       sx={{
-        mb: 2,
-        border: '1px solid',
-        borderColor: isActive ? 'primary.main' : 'grey.300',
-        borderRadius: 2,
-        overflow: 'hidden',
         transition: 'all 0.3s ease',
         '&:hover': {
           borderColor: isActive ? 'primary.dark' : 'grey.400',
@@ -259,9 +259,9 @@ export const SwitchToggle = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
+        p={2}
+        bgcolor={isActive ? 'primary.50' : 'grey.50'}
         sx={{
-          p: 2,
-          bgcolor: isActive ? 'primary.50' : 'grey.50',
           cursor: 'pointer',
           transition: 'all 0.3s ease',
           '&:hover': {
@@ -269,29 +269,14 @@ export const SwitchToggle = ({
           },
         }}
       >
-        <Typography sx={{ fontWeight: 600, color: isActive ? 'primary.main' : 'text.primary' }}>
+        <Typography fontWeight={600} color={isActive ? 'primary.main' : 'text.primary'}>
           {title}
         </Typography>
-        <Switch
-          checked={isActive}
-          onChange={(e) => handleSwitchChange(e.target.checked)}
-          sx={{
-            '& .MuiSwitch-thumb': {
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            },
-          }}
-        />
+        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)} />
       </Box>
 
       <Collapse in={isActive}>
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: 'background.paper',
-            borderTop: '1px solid',
-            borderColor: 'grey.200',
-          }}
-        >
+        <Box p={2} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
           {typeKey === 'rephrase' && renderRephraseSuboptions()}
 
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}

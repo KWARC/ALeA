@@ -9,7 +9,7 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants, QuizProblem } from '@stex-react/api';
+import { checkPossibleVariants, generateQuizProblems, QuizProblem } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -53,9 +53,16 @@ interface VariantDialogProps {
   onClose: () => void;
   onCreate: (payload: { problemId: number; variantConfig: VariantConfig }) => void;
   problemData?: FlatQuizProblem | ExistingProblem;
+  courseId: string;
 }
 
-export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantDialogProps) => {
+export const VariantDialog = ({
+  open,
+  onClose,
+  onCreate,
+  problemData,
+  courseId,
+}: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
     difficulty: '',
@@ -87,7 +94,6 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
   const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
   const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
   const problemUri = isFlatQuizProblem(problemData) ? problemData.sectionUri : problemData?.uri;
-
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -107,7 +113,6 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
   async function fetchRawStexFromUri(problemUri: string) {
     const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
     if (!sourceLink) return null;
-
     const rawStexLink = sourceLink.replace('-/blob', '-/raw');
     const response = await axios.get(rawStexLink);
     return response.data;
@@ -131,6 +136,24 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
 
     checkVariants();
   }, [open, problemData]);
+
+  useEffect(() => { //TODO : Creating copy of existing problem in db
+    const createCopyExisting = async () => {
+      if (!open || !(problemData as ExistingProblem) || !courseId) return;
+
+      console.log('existing data', problemData);
+      // const result = await generateQuizProblems({
+      //   mode: 'copy',
+      //   uri: (problemData as ExistingProblem).uri,
+      //   courseId:courseId,
+      //   sectionUri: problemData.sectionId,
+      //   sectionId: problemData.sectionUri,
+      // });
+      // console.log('resulting copy', result);
+      // return result;
+    };
+    createCopyExisting();
+  }, [open, problemData, courseId]);
 
   useEffect(() => {
     if (!isFlatQuizProblem(problemData))
@@ -176,34 +199,19 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
           height: '80vh',
         }}
       >
-        <Box sx={{ flex: 1, display: 'flex', gap: 2, overflow: 'hidden', minHeight: 0 }}>
-          <Box
-            sx={{
-              flex: 0.7,
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-              overflow: 'hidden',
-            }}
-          >
+        <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
+          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
             <Box
+              flex={1}
+              overflow="auto"
+              pr={1}
               sx={{
-                flex: 1,
-                overflowY: 'auto',
-                pr: 1,
-                '&::-webkit-scrollbar': {
-                  width: '6px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '3px',
-                },
+                '&::-webkit-scrollbar': { width: '6px' },
+                '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '3px' },
                 '&::-webkit-scrollbar-thumb': {
                   background: '#c1c1c1',
                   borderRadius: '3px',
-                  '&:hover': {
-                    background: '#a1a1a1',
-                  },
+                  '&:hover': { background: '#a1a1a1' },
                 },
               }}
             >
@@ -267,10 +275,7 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
                   color: 'error.main',
                   textTransform: 'none',
                   mb: 2,
-                  '&:hover': {
-                    bgcolor: 'error.50',
-                    color: 'error.dark',
-                  },
+                  '&:hover': { bgcolor: 'error.50', color: 'error.dark' },
                 }}
               >
                 Clear All Selection
@@ -306,7 +311,7 @@ export const VariantDialog = ({ open, onClose, onCreate, problemData }: VariantD
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
+      <DialogActions sx={{ p: 3, gap: 1 }}>
         <Button
           onClick={() => {
             onClose();

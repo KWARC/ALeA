@@ -154,7 +154,7 @@ export interface CompletionEval {
 
 export interface RephraseVariant {
   variantType: 'rephrase';
-  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping'; // camel_casing here
+  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping'; // camel_casing here  
 }
 
 export interface ReskinVariant {
@@ -186,7 +186,10 @@ interface NewGenerationParams {
 }
 interface CopyGenerationParams {
   mode: 'copy';
-  problemId: number;
+  courseId: string;
+  uri: string;
+  sectionUri: string;
+  sectionId: string;
 }
 
 export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;

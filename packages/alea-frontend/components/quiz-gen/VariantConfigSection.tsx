@@ -10,17 +10,19 @@ export const VariantConfigSection = ({
   variantConfig,
   setVariantConfig,
 }: VariantConfigSectionProps) => {
+  const normalizeSelect = (value: string) => (value === 'none' ? '' : value);
   return (
     <Box
+      display="flex"
+      gap={2}
+      mb={3}
+      p={3}
+      border="1px solid"
+      borderRadius={3}
+      borderColor="divider"
       sx={{
-        display: 'flex',
-        gap: 2,
-        mb: 3,
-        p: 3,
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-        borderRadius: 3,
-        border: '1px solid',
-        borderColor: 'grey.200',
+        background: (theme) =>
+          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
       }}
     >
@@ -32,7 +34,7 @@ export const VariantConfigSection = ({
           onChange={(e) =>
             setVariantConfig((prev) => ({
               ...prev,
-              difficulty: e.target.value === 'none' ? '' : e.target.value,
+              difficulty: normalizeSelect(e.target.value),
             }))
           }
           sx={{
@@ -57,7 +59,7 @@ export const VariantConfigSection = ({
           onChange={(e) =>
             setVariantConfig((prev) => ({
               ...prev,
-              formatType: e.target.value === 'none' ? '' : e.target.value,
+              formatType: normalizeSelect(e.target.value),
             }))
           }
           sx={{

@@ -23,28 +23,19 @@ export const PreviewSection = ({
   loading = false,
 }: PreviewSectionProps) => {
   return (
-    <Box
-      sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        overflow: 'hidden',
-      }}
-    >
+    <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
       <Box
-        sx={{
-          p: 2,
-          bgcolor: 'grey.50',
-          borderBottom: '1px solid #ddd',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexShrink: 0,
-          mb: 1,
-        }}
+        p={2}
+        bgcolor="grey.50"
+        borderBottom="1px solid"
+        borderColor="divider"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        flexShrink={0}
+        mb={1}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle1" fontWeight={600}>
           Preview
         </Typography>
 
@@ -63,30 +54,16 @@ export const PreviewSection = ({
       </Box>
 
       <Box
-        sx={{
-          flex: 1,
-          bgcolor: '#f8f9fa',
-          border: '2px dashed #ccc',
-          borderRadius: 2,
-          p: 2,
-          overflow: 'auto',
-        }}
+        flex={1}
+        bgcolor="background.default"
+        border="2px dashed"
+        borderColor="divider"
+        borderRadius={2}
+        p={2}
+        overflow="auto"
+        position="relative"
       >
-        {loading && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              bgcolor: 'rgba(255,255,255,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
+        {loading && <CircularProgress />}
         {previewMode === 'json' ? (
           isGenerated(problemData) ? (
             <QuizProblemViewer problemData={problemData} />

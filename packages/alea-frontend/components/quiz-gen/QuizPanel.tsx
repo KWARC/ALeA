@@ -126,6 +126,7 @@ export function QuizPanel({
         onClose={() => setVariantDialogOpen(false)}
         onCreate={handleCreateVariant}
         problemData={currentProblem}
+        courseId={courseId}
       />
     </Box>
   );

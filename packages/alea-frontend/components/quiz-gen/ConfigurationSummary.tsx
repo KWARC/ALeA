@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, capitalize, Typography } from '@mui/material';
 import { VariantConfig } from './VariantDialog';
 
 export const ConfigurationSummary = ({ variantConfig }: { variantConfig: VariantConfig }) => {
@@ -16,6 +16,7 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
     !!variantConfig.difficulty ||
     !!variantConfig.formatType ||
     !!variantConfig.customPrompt;
+
   return (
     <Box
       sx={{
@@ -43,11 +44,11 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
         </Typography>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-          {variantTypeLabels && <strong>Active Variants:</strong>} {variantTypeLabels}
-          {variantConfig.difficulty && ` | Difficulty: ${variantConfig.difficulty}`}
-          {variantConfig.formatType && ` | Format: ${variantConfig.formatType}`}
+          <strong>Active Variants:</strong> {variantTypeLabels}
+          {variantConfig.difficulty && ` | Difficulty: ${capitalize(variantConfig.difficulty)}`}
+          {variantConfig.formatType && ` | Format: ${capitalize(variantConfig.formatType)}`}
           {variantConfig.customPrompt &&
-            ` | Custom Instructions: " ${variantConfig.customPrompt.substring(0, 50)} "`}
+            ` | Custom Instructions: "${variantConfig.customPrompt.substring(0, 50)}"`}
         </Typography>
       )}
     </Box>
