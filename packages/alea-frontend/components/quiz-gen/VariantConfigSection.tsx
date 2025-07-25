@@ -42,7 +42,7 @@ export const VariantConfigSection = ({
             },
           }}
         >
-          <MenuItem value="">None</MenuItem>
+          <MenuItem value="none">None</MenuItem>
           <MenuItem value="easy">Easy</MenuItem>
           <MenuItem value="medium">Medium</MenuItem>
           <MenuItem value="hard">Hard</MenuItem>
