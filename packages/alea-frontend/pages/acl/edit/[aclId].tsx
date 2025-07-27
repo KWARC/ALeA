@@ -9,12 +9,12 @@ import {
   Typography,
   InputAdornment,
   IconButton,
-  Alert, // Added Alert
-  Dialog, // Added Dialog
-  DialogActions, // Added DialogActions
-  DialogContent, // Added DialogContent
-  DialogContentText, // Added DialogContentText
-  DialogTitle, // Added DialogTitle
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import GroupIcon from '@mui/icons-material/Group';
@@ -22,7 +22,7 @@ import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import MainLayout from '../../../layouts/MainLayout';
-import { UpdateACLRequest, getAcl, isValid, updateAcl, deleteAcl } from '@stex-react/api'; // Added deleteAcl
+import { UpdateACLRequest, getAcl, isValid, updateAcl, deleteAcl } from '@stex-react/api';
 
 const UpdateAcl: NextPage = () => {
   const router = useRouter();
@@ -40,7 +40,6 @@ const UpdateAcl: NextPage = () => {
   const [error, setError] = useState<string>('');
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
 
-  // State for deletion dialog and error
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -56,8 +55,8 @@ const UpdateAcl: NextPage = () => {
           setUpdaterACLId(acl.updaterACLId);
           setIsOpen(acl.isOpen);
         } catch (e) {
-          console.error("Error fetching ACL details:", e); // Use console.error
-          setError("Failed to load ACL details."); // Set a user-friendly error
+          console.error('Error fetching ACL details:', e);
+          setError('Failed to load ACL details.');
         }
       }
     };
@@ -116,9 +115,9 @@ const UpdateAcl: NextPage = () => {
     try {
       await updateAcl(updatedAcl);
       router.replace(`/acl/${aclId}`);
-    } catch (e: any) { // Type e as any for error.message
-      console.error("Error updating ACL:", e);
-      setError(e.response?.data?.message || 'Failed to update ACL.'); // More robust error message
+    } catch (e: any) {
+      console.error('Error updating ACL:', e);
+      setError(e.response?.data?.message || 'Failed to update ACL.');
     }
   };
 
@@ -130,35 +129,33 @@ const UpdateAcl: NextPage = () => {
     setIsUpdaterACLValid(isValidUpdater);
   };
 
-  // Deletion Handlers
   const handleDeleteClick = () => {
-    setDeleteError(''); // Clear any previous errors
+    setDeleteError('');
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
-    setDeleteError(''); // Clear error on cancel
+    setDeleteError('');
   };
 
   const handleDeleteConfirm = async () => {
     try {
-      if (aclId) { // Ensure aclId is available before attempting deletion
+      if (aclId) {
         await deleteAcl(aclId);
         setDeleteDialogOpen(false);
-        router.push('/acl'); // Redirect to the ACL list after deletion
+        router.push('/acl');
       } else {
-        console.warn("ACL ID is missing for deletion.");
-        setDeleteError("Cannot delete ACL: ID is missing.");
+        console.warn('ACL ID is missing for deletion.');
+        setDeleteError('Cannot delete ACL: ID is missing.');
       }
-    } catch (err: any) { // Type err as any for err.response
-      console.error("Error deleting ACL:", err);
-      setDeleteError(err.response?.data?.message || 'Failed to delete ACL. It might be assigned to resources or have other dependencies.');
-      // Keep dialog open to show error, or close after a delay
+    } catch (err: any) {
+      console.error('Error deleting ACL:', err);
+      setDeleteError(
+        err.response?.data?.message ||
+          'Failed to delete ACL. It might be assigned to resources or have other dependencies.'
+      );
     } finally {
-      // You might choose to keep the dialog open to show the error,
-      // or close it if the error is handled by a global snackbar etc.
-      // For now, it stays open to show the error.
     }
   };
 
@@ -283,7 +280,7 @@ const UpdateAcl: NextPage = () => {
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
-            gap: '16px', // Added gap for spacing between buttons
+            gap: '16px',
           }}
         >
           <Button
@@ -294,34 +291,36 @@ const UpdateAcl: NextPage = () => {
           >
             Update
           </Button>
-          {/* Delete Button */}
+
           <Button
             variant="contained"
-            color="error" // Use color="error" for red
+            color="error"
             startIcon={<DeleteIcon />}
             onClick={handleDeleteClick}
-            sx={{ mb: 2 }} // Consistent margin-bottom
+            sx={{ mb: 2 }}
           >
             Delete
           </Button>
         </Box>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
-        aria-labelledby="delete-acl-dialog-title" // Unique ID for this dialog
+        aria-labelledby="delete-acl-dialog-title"
         aria-describedby="delete-acl-dialog-description"
       >
         <DialogTitle id="delete-acl-dialog-title">Confirm Deletion</DialogTitle>
         <DialogContent>
-          {deleteError && ( // Display error message if it exists
-            <Alert severity='error' sx={{ mb: 2 }}>{deleteError}</Alert>
+          {deleteError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {deleteError}
+            </Alert>
           )}
           <DialogContentText id="delete-acl-dialog-description">
-            Are you sure you want to delete this ACL: **{aclId}**? This action cannot be undone.
-            If this ACL is assigned to any resource or is a member of another ACL, deletion will be rejected by the server.
+            Are you sure you want to delete this ACL: **{aclId}**? This action cannot be undone. If
+            this ACL is assigned to any resource or is a member of another ACL, deletion will be
+            rejected by the server.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

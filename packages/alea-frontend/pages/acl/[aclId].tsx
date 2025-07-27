@@ -1,5 +1,4 @@
-// pages/acl/[aclId].tsx
-import { Edit, Delete as DeleteIcon, PersonAdd, PersonRemove } from '@mui/icons-material';
+import { Edit, Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -24,8 +23,7 @@ import {
   isMember,
   isUserMember,
   deleteAcl,
-  addRemoveMember,
-  hasAclAssociatedResources, // IMPORT THE NEW FUNCTION HERE
+  hasAclAssociatedResources,
 } from '@stex-react/api';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -53,18 +51,14 @@ const AclId: NextPage = () => {
   const [allMemberNamesAndIds, setAllMemberNamesAndIds] = useState<any[]>([]);
   const [showAllMembers, setShowAllMembers] = useState<boolean>(false);
 
-  // NEW STATE: To store if the ACL has associated resources
   const [hasAssociatedResources, setHasAssociatedResources] = useState<boolean>(false);
-
-
-  const [memberToModifyId, setMemberToModifyId] = useState<string>('');
-  const [addRemoveMemberError, setAddRemoveMemberError] = useState<string>('');
-  const [addRemoveMemberSuccess, setAddRemoveMemberSuccess] = useState<string>('');
-
 
   const handleOpenDeleteDialog = () => {
     setDeleteError('');
-    setDeleteDialogOpen(true);
+
+    if (!hasAssociatedResources) {
+      setDeleteDialogOpen(true);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -75,8 +69,11 @@ const AclId: NextPage = () => {
         router.push('/acl');
       }
     } catch (e: any) {
-      console.error("Error deleting ACL:", e);
-      setDeleteError(e.response?.data?.message || 'Failed to delete ACL. It might be assigned to resources or have other dependencies.');
+      console.error('Error deleting ACL:', e);
+      setDeleteError(
+        e.response?.data?.message ||
+          'Failed to delete ACL. It might be assigned to resources or have other dependencies.'
+      );
     }
   };
 
@@ -97,7 +94,7 @@ const AclId: NextPage = () => {
       setDirectMembersNamesAndIds(aclUserDetails);
       setAcls(Array.from(aclIds));
     } catch (e) {
-      console.error("Error fetching ACL members:", e);
+      console.error('Error fetching ACL members:', e);
     }
   }
 
@@ -107,7 +104,7 @@ const AclId: NextPage = () => {
         const data: { fullName: string; userId: string }[] = await getAllAclMembers(aclId);
         setAllMemberNamesAndIds(data);
       } catch (e) {
-        console.error("Error fetching all ACL members:", e);
+        console.error('Error fetching all ACL members:', e);
       }
     }
     setShowAllMembers(!showAllMembers);
@@ -122,53 +119,21 @@ const AclId: NextPage = () => {
           : `${userIdInput} is not a member of this ACL.`
       );
     } catch (e) {
-      console.error("Error checking user membership:", e);
+      console.error('Error checking user membership:', e);
       setMembershipStatus(`Error checking membership for ${userIdInput}.`);
     }
   }
 
-  const handleAddRemoveMember = async (toBeAdded: boolean) => {
-    setAddRemoveMemberError('');
-    setAddRemoveMemberSuccess('');
-    if (!memberToModifyId) {
-      setAddRemoveMemberError('Please enter a User ID or ACL ID to add/remove.');
-      return;
-    }
-    if (!aclId) {
-      setAddRemoveMemberError('ACL ID is missing.');
-      return;
-    }
-
-    try {
-      const isAclMember = !memberToModifyId.includes('@');
-
-      await addRemoveMember({
-        memberId: memberToModifyId,
-        aclId: aclId,
-        isAclMember: isAclMember,
-        toBeAdded: toBeAdded,
-      });
-
-      setAddRemoveMemberSuccess(`Successfully ${toBeAdded ? 'added' : 'removed'} ${memberToModifyId}.`);
-      setMemberToModifyId('');
-      getMembers();
-      getAllMembersOfAcl();
-    } catch (e: any) {
-      console.error(`Error ${toBeAdded ? 'adding' : 'removing'} member:`, e);
-      setAddRemoveMemberError(e.response?.data?.message || `Failed to ${toBeAdded ? 'add' : 'remove'} member.`);
-    }
-  };
-
   useEffect(() => {
     if (aclId) {
-      getMembers(); // Fetches basic ACL data and updaterACLId
+      getMembers();
 
       const fetchStatusAndResources = async () => {
         try {
           const userMemberStatus = await isUserMember(aclId);
           setUserIsMember(userMemberStatus);
         } catch (error) {
-          console.error("Error checking user membership:", error);
+          console.error('Error checking user membership:', error);
           setUserIsMember(false);
         }
 
@@ -177,26 +142,25 @@ const AclId: NextPage = () => {
             const updaterMemberStatus = await isUserMember(updaterACLId);
             setIsUpdaterMember(updaterMemberStatus);
           } catch (error) {
-            console.error("Error checking updater membership:", error);
+            console.error('Error checking updater membership:', error);
             setIsUpdaterMember(false);
           }
         } else {
-            setIsUpdaterMember(false);
+          setIsUpdaterMember(false);
         }
 
-        // NEW: Fetch resource association status
         try {
           const hasResources = await hasAclAssociatedResources(aclId);
           setHasAssociatedResources(hasResources);
         } catch (error) {
-          console.error("Error fetching ACL resource association:", error);
-          setHasAssociatedResources(false); // Default to false or handle as needed
+          console.error('Error fetching ACL resource association:', error);
+          setHasAssociatedResources(false);
         }
       };
       fetchStatusAndResources();
     }
     setShowAllMembers(false);
-  }, [aclId, updaterACLId]); // Depend on aclId and updaterACLId for re-fetching
+  }, [aclId, updaterACLId]);
 
   return (
     <MainLayout>
@@ -265,49 +229,35 @@ const AclId: NextPage = () => {
                     Edit
                   </Button>
 
-                  {/* MODIFIED: Conditionally render Delete button based on hasAssociatedResources */}
-                  {!hasAssociatedResources && (
-                    <Button
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        backgroundColor: '#d32f2f',
-                        color: '#ffffff',
-                        '&:hover': {
-                          backgroundColor: '#b00020',
-                        },
-                        flexShrink: 0,
-                      }}
-                      variant='contained'
-                      startIcon={<DeleteIcon />}
-                      onClick={handleOpenDeleteDialog}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                  {hasAssociatedResources && ( // Optionally, show a disabled button or tooltip for why it's hidden
-                    <Tooltip title="Cannot delete: This ACL is associated with resources.">
-                      <span> {/* Wrap for Tooltip on disabled button */}
-                        <Button
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            backgroundColor: '#d32f2f',
-                            color: '#ffffff',
-                            '&:hover': {
-                              backgroundColor: '#b00020',
-                            },
-                            flexShrink: 0,
-                          }}
-                          variant='contained'
-                          startIcon={<DeleteIcon />}
-                          disabled // Disable the button
-                        >
-                          Delete
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  )}
+                  <Tooltip
+                    title={
+                      hasAssociatedResources
+                        ? 'Cannot delete: This ACL is associated with resources.'
+                        : 'Delete this ACL'
+                    }
+                  >
+                    <span>
+                      {' '}
+                      <Button
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          backgroundColor: '#d32f2f',
+                          color: '#ffffff',
+                          '&:hover': {
+                            backgroundColor: '#b00020',
+                          },
+                          flexShrink: 0,
+                        }}
+                        variant="contained"
+                        startIcon={<DeleteIcon />}
+                        onClick={handleOpenDeleteDialog}
+                        disabled={hasAssociatedResources}
+                      >
+                        Delete
+                      </Button>
+                    </span>
+                  </Tooltip>
                 </>
               )}
             </Box>
@@ -339,8 +289,15 @@ const AclId: NextPage = () => {
             </Typography>
           )}
 
-          {/* Check Membership Section */}
-          <Box sx={{ marginTop: '32px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <Box
+            sx={{
+              marginTop: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+            }}
+          >
             <TextField
               label="User ID"
               variant="outlined"
@@ -356,48 +313,6 @@ const AclId: NextPage = () => {
             <Typography sx={{ marginTop: '16px' }}>{membershipStatus}</Typography>
           )}
 
-          {/* NEW SECTION: Add/Remove Members (Visible only if current user is an updater) */}
-          {isUpdaterMember && (
-            <Box sx={{ marginTop: '32px' }}>
-              <Typography variant="h6" color="secondary" gutterBottom>
-                Manage Members
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', mb: 2 }}>
-                <TextField
-                  label="Member User/ACL ID"
-                  variant="outlined"
-                  size="small"
-                  value={memberToModifyId}
-                  onChange={(e) => setMemberToModifyId(e.target.value)}
-                  sx={{ minWidth: '200px' }}
-                />
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<PersonAdd />}
-                  onClick={() => handleAddRemoveMember(true)}
-                >
-                  Add Member
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<PersonRemove />}
-                  onClick={() => handleAddRemoveMember(false)}
-                >
-                  Remove Member
-                </Button>
-              </Box>
-              {addRemoveMemberSuccess && (
-                <Alert severity='success' sx={{ mb: 2 }}>{addRemoveMemberSuccess}</Alert>
-              )}
-              {addRemoveMemberError && (
-                <Alert severity='error' sx={{ mb: 2 }}>{addRemoveMemberError}</Alert>
-              )}
-            </Box>
-          )}
-
-          {/* Member ACLs List */}
           {acls.length !== 0 && (
             <Box sx={{ marginTop: '32px' }}>
               <Typography variant="h6" color="secondary" gutterBottom>
@@ -420,7 +335,6 @@ const AclId: NextPage = () => {
             </Box>
           )}
 
-          {/* Direct Members List */}
           {directMembersNamesAndIds.length !== 0 && (
             <Box sx={{ marginTop: '32px' }}>
               <Typography variant="h6" color="secondary" gutterBottom>
@@ -429,9 +343,7 @@ const AclId: NextPage = () => {
               <List>
                 {directMembersNamesAndIds.map((user, index) => (
                   <React.Fragment key={user.userId}>
-                    <ListItem
-                      sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                    >
+                    <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
                       <ListItemText
                         primary={
                           <>
@@ -440,14 +352,15 @@ const AclId: NextPage = () => {
                         }
                       />
                     </ListItem>
-                    {index < directMembersNamesAndIds.length - 1 && <Divider sx={{ width: '100%' }} />}
+                    {index < directMembersNamesAndIds.length - 1 && (
+                      <Divider sx={{ width: '100%' }} />
+                    )}
                   </React.Fragment>
                 ))}
               </List>
             </Box>
           )}
 
-          {/* Toggle All Members Button */}
           <Button
             sx={{
               mt: '32px',
@@ -465,7 +378,6 @@ const AclId: NextPage = () => {
             {showAllMembers ? 'Hide All Members' : 'Show All Members'}
           </Button>
 
-          {/* All Members List (conditionally rendered) */}
           {allMemberNamesAndIds.length !== 0 && showAllMembers && (
             <Box sx={{ marginTop: '32px' }}>
               <Typography variant="h6" color="secondary" gutterBottom>
@@ -474,9 +386,7 @@ const AclId: NextPage = () => {
               <List>
                 {allMemberNamesAndIds.map((user, index) => (
                   <React.Fragment key={user.userId}>
-                    <ListItem
-                      sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                    >
+                    <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
                       <ListItemText primary={`${user.fullName} (${user.userId})`} />
                     </ListItem>
                     {index < allMemberNamesAndIds.length - 1 && <Divider sx={{ width: '100%' }} />}
@@ -488,7 +398,6 @@ const AclId: NextPage = () => {
         </Box>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
@@ -498,12 +407,15 @@ const AclId: NextPage = () => {
         <DialogTitle id="acl-delete-dialog-title">Confirm ACL Deletion</DialogTitle>
         <DialogContent>
           {deleteError && (
-            <Alert severity='error' sx={{ mb: 2 }}>{deleteError}</Alert>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {deleteError}
+            </Alert>
           )}
 
           <DialogContentText id="acl-delete-dialog-description">
-            Are you sure you want to delete ACL: **{aclId}**? This action cannot be undone.
-            If this ACL is assigned to any resource or is a member of another ACL, deletion will be rejected by the server.
+            Are you sure you want to delete ACL: **{aclId}**? This action cannot be undone. If this
+            ACL is assigned to any resource or is a member of another ACL, deletion will be rejected
+            by the server.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

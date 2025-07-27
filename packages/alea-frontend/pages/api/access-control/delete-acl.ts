@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!id || typeof id !== 'string') return res.status(422).send('Missing id.');
   if (!(await isCurrentUserMemberOfAClupdater(id, res, req))) return res.status(403).end();
 
-  if(await checkResourcesassociatedOrSet500OnError (id,res))return res.status(403).end();
+if (await checkResourcesassociatedOrSet500OnError(id, res)) return ;
 
   const result = await executeTxnAndEndSet500OnError(
     res,

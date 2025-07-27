@@ -32,8 +32,13 @@ const CreateACl: NextPage = () => {
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
   const router = useRouter();
 
-  const handleAddMemberId = (event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>) => {
-    if ((event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') || event.type === 'click') {
+  const handleAddMemberId = (
+    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
+  ) => {
+    if (
+      (event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') ||
+      event.type === 'click'
+    ) {
       if (tempMemberUserId) {
         setMemberUserIds([...memberUserIds, tempMemberUserId]);
         setTempMemberUserId('');
@@ -45,14 +50,19 @@ const CreateACl: NextPage = () => {
     setMemberUserIds(memberUserIds.filter((id) => id !== idToRemove));
   };
 
-  const handleAddMemberACL = async (event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>) => {
-    if ((event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') || event.type === 'click') {
+  const handleAddMemberACL = async (
+    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
+  ) => {
+    if (
+      (event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') ||
+      event.type === 'click'
+    ) {
       const res = await isValid(tempMemberACL);
       if (tempMemberACL && res) {
         setMemberACLIds([...memberACLIds, tempMemberACL]);
         setTempMemberACL('');
         setIsInvalid('');
-      }else{
+      } else {
         setIsInvalid(`${tempMemberACL} is not a valid ACL.`);
       }
     }
@@ -80,7 +90,6 @@ const CreateACl: NextPage = () => {
       setError(e.message);
     }
   };
-
 
   const handleUpdaterACLIdBlur = async () => {
     let isValidUpdater = !!updaterACLId;
@@ -144,11 +153,7 @@ const CreateACl: NextPage = () => {
           />
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
             {memberUserIds.map((id, index) => (
-              <Chip
-                key={index}
-                label={id}
-                onDelete={() => handleRemoveMemberId(id)}
-              />
+              <Chip key={index} label={id} onDelete={() => handleRemoveMemberId(id)} />
             ))}
           </Box>
         </Box>
@@ -172,18 +177,10 @@ const CreateACl: NextPage = () => {
               ),
             }}
           />
-          {
-          isInvalid
-            ? <Typography color="error">{isInvalid}</Typography>
-            : null
-          }
+          {isInvalid ? <Typography color="error">{isInvalid}</Typography> : null}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
             {memberACLIds.map((acl, index) => (
-              <Chip
-                key={index}
-                label={acl}
-                onDelete={() => handleRemoveMemberACL(acl)}
-              />
+              <Chip key={index} label={acl} onDelete={() => handleRemoveMemberACL(acl)} />
             ))}
           </Box>
         </Box>
@@ -191,7 +188,7 @@ const CreateACl: NextPage = () => {
           label="Updater ACL"
           variant="outlined"
           value={updaterACLId}
-          onChange={e => setUpdaterACLId(e.target.value)}
+          onChange={(e) => setUpdaterACLId(e.target.value)}
           onBlur={handleUpdaterACLIdBlur}
           size="small"
           sx={{ mb: '20px' }}
@@ -201,25 +198,27 @@ const CreateACl: NextPage = () => {
         />
 
         <FormControlLabel
-          control={
-            <Checkbox
-              checked={isOpen}
-              onChange={(e) => setIsOpen(e.target.checked)}
-            />
-          }
+          control={<Checkbox checked={isOpen} onChange={(e) => setIsOpen(e.target.checked)} />}
           label="Is Open"
           sx={{ mb: '20px' }}
         />
-        <Button
-          sx={{ m: '20px' }}
-          variant="contained"
-          color="primary"
-          onClick={handleSubmit}
-          disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+        {error && <Alert severity="error">{'Something went wrong'}</Alert>}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+          }}
         >
-          Create
-        </Button>
-        {error && <Alert severity="error">{"Something went wrong"}</Alert>}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+          >
+            Create
+          </Button>
+        </Box>
       </Box>
     </MainLayout>
   );
