@@ -32,6 +32,8 @@ import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
 
+console.log("shubham");
+
 const AclId: NextPage = () => {
   const router = useRouter();
   const { query } = router;
@@ -226,7 +228,7 @@ const AclId: NextPage = () => {
                     startIcon={<Edit />}
                     onClick={() => router.push(`/acl/edit/${aclId}`)}
                   >
-                    Edit
+                    Edit 
                   </Button>
 
                   <Tooltip
