@@ -1,4 +1,3 @@
-import { deleteAcl } from '@stex-react/api';
 import { Action, ResourceActionPair, ResourceName } from '@stex-react/utils';
 import axios from 'axios';
 import { AccessControlList, ResourceAction } from './access-control';
@@ -13,12 +12,9 @@ export async function hasAclAssociatedResources(aclId: string): Promise<boolean>
     return response.data.hasResources;
   } catch (error) {
     console.error(`Error checking if ACL ${aclId} has associated resources:`, error);
-    return false; // Assume false on error, or handle as per your error policy
+    return false;
   }
 }
-
-
-
 
 export async function getAllAclIds(): Promise<string[]> {
   const resp = await axios.get('/api/access-control/get-all-acl-ids');
@@ -35,9 +31,8 @@ export async function createAcl(newAcl: CreateACLRequest): Promise<void> {
 }
 
 export async function deleteAcl(aclId: string): Promise<void> {
-  await axios.post('/api/access-control/delete-acl', { id: aclId }, { headers: getAuthHeaders() }); // <--- CORRECTED URL
+  await axios.post('/api/access-control/delete-acl', { id: aclId }, { headers: getAuthHeaders() });
 }
-
 
 export async function getAcl(aclId: string): Promise<AccessControlList> {
   const resp = await axios.get(`/api/access-control/get-acl?id=${aclId}`);

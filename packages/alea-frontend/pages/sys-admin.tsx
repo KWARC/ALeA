@@ -217,7 +217,6 @@ const SysAdmin: NextPage = () => {
     setNewAclId(aclId);
   };
 
-  // This is the correct handleDeleteClick for table rows
   function handleDeleteClickForEntry(resId: string, actionId: string) {
     setDeleteDialogOpen(true);
     setDeleteResource({ resourceId: resId, actionId: actionId });
@@ -225,12 +224,11 @@ const SysAdmin: NextPage = () => {
 
   function handleDeleteCancel() {
     setDeleteDialogOpen(false);
-    setDeleteResource(null); // Clear deleteResource on cancel
+    setDeleteResource(null);
   }
 
   async function handleDeleteConfirm() {
     try {
-      // Ensure deleteResource is not null before proceeding
       if (deleteResource) {
         await deleteResourceAction(deleteResource.resourceId, deleteResource.actionId);
         setResourceActions((prev) =>
@@ -241,17 +239,16 @@ const SysAdmin: NextPage = () => {
           )
         );
         setDeleteDialogOpen(false);
-        setDeleteResource(null); // Clear deleteResource after successful delete
+        setDeleteResource(null);
       } else {
         console.warn('Attempted to confirm delete with no resource selected.');
         setDeleteDialogOpen(false);
       }
     } catch (e) {
-      console.error(e); // Use console.error for errors
-      // You might want to set an error state here to show a snackbar to the user
-      // setError(e.response?.data?.message || 'Failed to delete resource action.');
-      setDeleteDialogOpen(false); // Close dialog even on error
-      setDeleteResource(null); // Clear deleteResource on error
+      console.error(e);
+
+      setDeleteDialogOpen(false);
+      setDeleteResource(null);
     }
   }
 
@@ -269,9 +266,6 @@ const SysAdmin: NextPage = () => {
   const handleActionClick = (actionId: Action) => {
     setActionId(actionId);
   };
-
-  // Removed the problematic duplicate handleDeleteClick and associated functions/buttons.
-  // The dialog content will now correctly reflect resource action deletion.
 
   return (
     <MainLayout>
@@ -527,7 +521,7 @@ const SysAdmin: NextPage = () => {
                         <EditIcon />
                       </IconButton>
                     )}
-                    <IconButton 
+                    <IconButton
                       color="warning"
                       onClick={() => handleDeleteClickForEntry(entry.resourceId, entry.actionId)}
                     >

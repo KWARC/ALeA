@@ -5,7 +5,7 @@ import { CACHE_STORE } from './cache-store';
 
 export async function checkResourcesassociatedOrSet500OnError(
   aclId: string,
-  res: any // Use a more specific type if available, e.g., NextApiResponse
+  res: any 
 ): Promise<boolean> {
   const resourceId = await executeAndEndSet500OnError(
     'select resourceId from resourceaccess where aclId=?',
