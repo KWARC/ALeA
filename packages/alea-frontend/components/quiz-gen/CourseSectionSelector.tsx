@@ -146,8 +146,11 @@ export const CourseSectionSelector = ({
           if (existingProblemsCache.current[sectionUri]) {
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
-            try {
-             const problemUris: string[] = await getProblemsBySections(courseId, sectionUri);
+             try {
+              const resp = await axios.get(
+                `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
+              );
+              const problemUris: string[] = resp.data;
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
