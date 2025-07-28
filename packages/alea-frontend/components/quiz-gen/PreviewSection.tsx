@@ -63,7 +63,21 @@ export const PreviewSection = ({
         overflow="auto"
         position="relative"
       >
-        {loading && <CircularProgress />}
+        {loading && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              bgcolor: 'rgba(255,255,255,0.6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
         {previewMode === 'json' ? (
           isGenerated(problemData) ? (
             <QuizProblemViewer problemData={problemData} />

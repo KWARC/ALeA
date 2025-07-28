@@ -212,6 +212,8 @@ export const VariantDialog = ({
       <DialogContent
         sx={{
           height: '80vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
