@@ -101,7 +101,11 @@ export function DocProblemBrowser({
           </>
         )}
         {selectedSection?.uri && (
-          <PerSectionQuiz sectionUri={selectedSection.uri} showButtonFirst={false} />
+          <PerSectionQuiz
+            courseId={courseId!}
+            sectionUri={selectedSection.uri}
+            showButtonFirst={false}
+          />
         )}
         <br />
         <b style={{ color: 'red' }}>{t.warning}</b>
