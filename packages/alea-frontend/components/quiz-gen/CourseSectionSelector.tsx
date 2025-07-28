@@ -28,6 +28,7 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
+import { getProblemsBySection } from 'packages/alea-frontend/pages/api/get-course-problem-counts';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -146,10 +147,7 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await axios.get(
-                `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
-              );
-              const problemUris: string[] = resp.data;
+             const problemUris: string[] = await getProblemsBySections(courseId, sectionUri);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
