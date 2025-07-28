@@ -49,7 +49,7 @@ const PerSectionQuizPage: React.FC = () => {
             </span>
           </b>
         </Box>
-        <PerSectionQuiz sectionUri={sectionUri} showButtonFirst={false} />
+        <PerSectionQuiz courseId={courseId} sectionUri={sectionUri} showButtonFirst={false} />
         <br />
         <Box textAlign="left" mx="auto" mt="20px">
           <b style={{ color: 'red' }}>{t.warning}&nbsp;</b>
