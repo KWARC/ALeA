@@ -23,7 +23,6 @@ export async function checkResourcesassociatedOrSet500OnError(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const id = req.body.id as string;
-  console.log("id",id);
   if (!id || typeof id !== 'string') return res.status(422).send('Missing id.');
   if (!(await isCurrentUserMemberOfAClupdater(id, res, req))) return res.status(403).end();
 
