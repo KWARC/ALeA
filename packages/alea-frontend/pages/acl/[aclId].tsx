@@ -32,7 +32,7 @@ import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
 
-console.log("shubham");
+
 
 const AclId: NextPage = () => {
   const router = useRouter();
