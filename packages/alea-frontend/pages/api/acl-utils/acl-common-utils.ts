@@ -16,16 +16,12 @@ export async function checkResourcesassociatedOrSet500OnError(
   if (resourceId?.length) return true;
   return false;
 }
-
-
 export function getCacheKey(aclId: string) {
   return `acl-membership:${aclId}`;
 }
-
 export async function isMemberOfAcl(acl: string, userId: string) {
   return await CACHE_STORE.isMemberOfSet(getCacheKey(acl), userId);
 }
-
 export async function isCurrentUserMemberOfAClupdater(aclId: string, res, req): Promise<boolean> {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return false;
