@@ -137,20 +137,35 @@ export const VariantDialog = ({
     checkVariants();
   }, [open, problemData]);
 
-  useEffect(() => { //TODO : Creating copy of existing problem in db
+  useEffect(() => {
+    //TODO : Creating copy of existing problem in db
     const createCopyExisting = async () => {
-      if (!open || !(problemData as ExistingProblem) || !courseId) return;
+      if (
+        !open ||
+        !(problemData as ExistingProblem) ||
+        !courseId ||
+        (problemData as FlatQuizProblem).problemId
+      )
+        return;
 
       console.log('existing data', problemData);
-      // const result = await generateQuizProblems({
-      //   mode: 'copy',
-      //   uri: (problemData as ExistingProblem).uri,
-      //   courseId:courseId,
-      //   sectionUri: problemData.sectionId,
-      //   sectionId: problemData.sectionUri,
-      // });
-      // console.log('resulting copy', result);
-      // return result;
+      try {
+        const result = await generateQuizProblems({
+          mode: 'copy',
+          problemUri: (problemData as ExistingProblem).uri,
+          courseId: courseId,
+          sectionId: problemData.sectionId,
+          sectionUri: problemData.sectionUri,
+        });
+        console.log('resulting copy', result);
+        setRephraseApplicable(result.rephrase.applicable);
+        setChoicesApplicable(result.modify_choices.applicable);
+        setReskinApplicable(result.reskin.applicable);
+        setAvailableThemes(result.reskin.themes);
+        return result;
+      } finally {
+        setVariantOptionsLoading(false);
+      }
     };
     createCopyExisting();
   }, [open, problemData, courseId]);

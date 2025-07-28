@@ -187,7 +187,7 @@ interface NewGenerationParams {
 interface CopyGenerationParams {
   mode: 'copy';
   courseId: string;
-  uri: string;
+  problemUri: string;
   sectionUri: string;
   sectionId: string;
 }
