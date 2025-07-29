@@ -34,10 +34,10 @@ const SearchCourseNotes = ({
     try {
       const response = await searchCourseNotes(searchQuery, courseId);
       setReferences(response?.sources || []);
-      setHasResults((response?.sources?.length || 0) > 0);
+      setHasResults?.((response?.sources?.length || 0) > 0);
     } catch (error) {
       setReferences([]);
-      setHasResults(false);
+      setHasResults?.(false);
       console.error('Error fetching search results:', error);
     } finally {
       setIsLoading(false);
@@ -76,6 +76,7 @@ const SearchCourseNotes = ({
           fullWidth
           variant="outlined"
           placeholder={`Search in ${courseId.toUpperCase() || 'the'} notes`}
+          value={searchQuery}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
