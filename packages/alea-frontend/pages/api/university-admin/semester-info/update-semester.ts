@@ -1,7 +1,10 @@
-import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
+import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
 
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
+
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
 
   const {
     universityId,
@@ -20,16 +23,16 @@ export default async function handler(req, res) {
 
   const result = (await executeQuery(
     `
-    UPDATE semester_info
+    UPDATE semesterInfo
     SET
-      semester_start = ?,
-      semester_end = ?,
-      lecture_start_date = ?,
-      lecture_end_date = ?,
-      updated_by = ?,
-      time_zone = ?,
-      updated_timestamp = CURRENT_TIMESTAMP
-    WHERE university_id = ? AND instance_id = ?
+      semesterStart = ?,
+      semesterEnd = ?,
+      lectureStartDate = ?,
+      lectureEndDate = ?,
+      updatedBy = ?,
+      timeZone = ?,
+      updatedTimestamp = CURRENT_TIMESTAMP
+    WHERE universityId = ? AND instanceId = ?
     `,
     [
       semesterStart,

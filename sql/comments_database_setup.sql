@@ -280,27 +280,28 @@ CREATE TABLE excused(
 /* University admin*/
 
 
-CREATE TABLE semester_info (
-  university_id VARCHAR(50),
-  instance_id VARCHAR(50),
-  semester_start DATE,
-  semester_end DATE,
-  lecture_start_date DATE,
-  lecture_end_date DATE,
-  updated_by VARCHAR(255),
-  updated_timestamp TIMESTAMP,
-  time_zone VARCHAR(100),
-  PRIMARY KEY (university_id, instance_id)
+CREATE TABLE semesterInfo (
+  universityId VARCHAR(50),
+  instanceId VARCHAR(50),
+  semesterStart DATE,
+  semesterEnd DATE,
+  lectureStartDate DATE,
+  lectureEndDate DATE,
+  updatedBy VARCHAR(255),
+  updatedTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  timeZone VARCHAR(100),
+  PRIMARY KEY (universityId, instanceId)
 );
 
 CREATE TABLE holidays (
-  university_id VARCHAR(50),
-  instance_id VARCHAR(50),
+  universityId VARCHAR(50),
+  instanceId VARCHAR(50),
   holidays JSON,
-  PRIMARY KEY (university_id, instance_id),
-  FOREIGN KEY (university_id, instance_id)
-    REFERENCES semester_info(university_id, instance_id)
+  PRIMARY KEY (universityId, instanceId),
+  FOREIGN KEY (universityId, instanceId)
+    REFERENCES semesterInfo(universityId, instanceId)
     ON DELETE CASCADE
 );
+
 
 

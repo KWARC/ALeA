@@ -1,7 +1,10 @@
-import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
+import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
 
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
+
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
 
   const { universityId, instanceId } = req.body;
 
@@ -11,8 +14,8 @@ export default async function handler(req, res) {
 
   const result = await executeQuery(
     `
-    DELETE FROM semester_info
-    WHERE university_id = ? AND instance_id = ?
+    DELETE FROM semesterInfo
+    WHERE universityId = ? AND instanceId = ?
     `,
     [universityId, instanceId]
   );
