@@ -92,7 +92,7 @@ export function PerSectionQuiz({
   cachedProblemUris?: string[] | null;
   setCachedProblemUris?: (uris: string[]) => void;
   category?: 'syllabus' | 'adventurous';
-  courseId: string;
+  courseId?: string;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);
@@ -103,36 +103,41 @@ export function PerSectionQuiz({
   const [show, setShow] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
-  const [syllabusUris, setSyllabusUris] = useState<string[]>([]);
-  const [adventurousUris, setAdventurousUris] = useState<string[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
+  const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (cachedProblemUris) return;
     // if(!sectionUri)return;
     setIsLoadingProblemUris(true);
-    getProblemsBySection(sectionUri, courseId).then((resp) => {
-      const problems: { category: string; problemId: string }[] = resp.data;
 
-      const syllabus = problems.filter((p) => p.category === 'syllabus').map((p) => p.problemId);
-      const adventurous = problems
-        .filter((p) => p.category === 'adventurous')
-        .map((p) => p.problemId);
+    getProblemsBySection(sectionUri, courseId)
+      .then((problems: { category: string; problemId: string }[]) => {
+        const categoryMap: Record<string, string[]> = {};
 
-      setSyllabusUris(syllabus);
-      setAdventurousUris(adventurous);
+        for (const p of problems) {
+          if (!categoryMap[p.category]) categoryMap[p.category] = [];
+          categoryMap[p.category].push(p.problemId);
+        }
+        setCategoryMap(categoryMap);
 
-      if (setCachedProblemUris) {
-        setCachedProblemUris([...syllabus, ...adventurous]);
-      }
+        if (setCachedProblemUris) {
+          const all = Object.values(categoryMap).flat();
+          setCachedProblemUris(all);
+        }
 
-      const selected = tabIndex === 0 ? syllabus : adventurous;
-      setProblemUris(selected);
-      setIsSubmitted(selected.map(() => false));
-      setResponses(selected.map(() => undefined));
+        const selectedCategory = Object.keys(categoryMap)[tabIndex] || Object.keys(categoryMap)[0];
+        const selected = categoryMap[selectedCategory] || [];
 
-      setIsLoadingProblemUris(false);
-    }, console.error);
+        setProblemUris(selected);
+        setIsSubmitted(selected.map(() => false));
+        setResponses(selected.map(() => undefined));
+
+        setIsLoadingProblemUris(false);
+      })
+      .catch((err) => {
+        setIsLoadingProblemUris(false);
+      });
   }, [sectionUri, courseId, cachedProblemUris]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
@@ -183,16 +188,24 @@ export function PerSectionQuiz({
           value={tabIndex}
           onChange={(_, idx) => {
             setTabIndex(idx);
-            const selected = idx === 0 ? syllabusUris : adventurousUris;
+            const selectedCategory = Object.keys(categoryMap)[idx];
+            const selected = categoryMap[selectedCategory] || [];
             setProblemUris(selected);
             setIsSubmitted(selected.map(() => false));
             setResponses(selected.map(() => undefined));
           }}
         >
-          <Tab label="Syllabus" />
-          <Tab label="I'm Adventurous" />
+          {Object.keys(categoryMap).map((cat) => {
+            const label =
+              cat === 'adventurous'
+                ? "I'm Adventurous"
+                : cat === 'syllabus'
+                ? 'Syllabus'
+                : cat[0].toUpperCase() + cat.slice(1);
+            return <Tab key={cat} label={label} />;
+          })}
         </Tabs>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
           <ListStepper
             idx={problemIdx}
             listSize={problemUris.length}

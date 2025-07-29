@@ -9,6 +9,7 @@ import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { getProblemCountsByCourse } from '@stex-react/api';
 
 export function DocProblemBrowser({
   notesDocUri,
@@ -56,7 +57,7 @@ export function DocProblemBrowser({
   useEffect(() => {
     if (!courseId) return;
 
-    axios.get(`/api/get-course-problem-counts/${courseId}`).then((resp) => {
+    getProblemCountsByCourse(courseId).then((resp) => {
       console.log(resp.data);
       setProblemCounts(resp.data);
     });

@@ -24,4 +24,4 @@ export * from './quiz-api';
 export * from './request-aggregator';
 export * from './study-buddy';
 export * from './study-buddy-api';
-export * from './get-problems-by-section-api';
+export * from './problem-api';

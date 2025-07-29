@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
+import { getProblemCountsByCourse } from '@stex-react/api';
 
 interface TitleMetadata {
   uri?: string;
@@ -15,7 +16,10 @@ interface TitleMetadata {
   sectionTitle: string;
 }
 
-const extractTitlesAndSectionUri = (toc: FTML.TOCElem | null, chapterTitle = ''): TitleMetadata[] => {
+const extractTitlesAndSectionUri = (
+  toc: FTML.TOCElem | null,
+  chapterTitle = ''
+): TitleMetadata[] => {
   if (!toc || toc.type === 'Paragraph' || toc.type === 'Slide') {
     return [];
   }
@@ -48,9 +52,8 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
   useEffect(() => {
     if (!courseId) return;
-    axios
-      .get(`/api/get-course-problem-counts?courseId=${courseId}`)
-      .then((resp) => setProblemCounts(resp.data))
+    getProblemCountsByCourse(courseId)
+      .then((data) => setProblemCounts(data))
       .catch((err) => console.error('Error fetching problem counts:', err));
   }, [courseId]);
 
@@ -72,7 +75,9 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
   const seeSectionProblems = (sectionUri?: string, sectionTitle?: string) => {
     router.push(
-      `/per-section-quiz?sectionUri=${encodeURIComponent(sectionUri)}&courseId=${courseId}&sectionTitle=${encodeURIComponent(sectionTitle)}`
+      `/per-section-quiz?sectionUri=${encodeURIComponent(
+        sectionUri
+      )}&courseId=${courseId}&sectionTitle=${encodeURIComponent(sectionTitle)}`
     );
   };
 

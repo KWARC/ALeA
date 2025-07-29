@@ -18,6 +18,8 @@ import {
   getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
   getCoverageTimeline,
+  getProblemCountsByCourse,
+  getProblemsBySection,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
@@ -28,7 +30,6 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
-import { getProblemsBySection } from 'packages/alea-frontend/pages/api/get-course-problem-counts';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -125,9 +126,7 @@ export const CourseSectionSelector = ({
     const fetchCounts = async () => {
       if (!courseId) return;
       const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
-      const existingCountsResp = await axios.get(
-        `/api/get-course-problem-counts?courseId=${courseId}`
-      );
+      const existingCountsResp = await getProblemCountsByCourse(courseId);
       setGeneratedProblemsCount(generatedCounts);
       setExistingProblemsCount(existingCountsResp.data);
     };
@@ -146,10 +145,8 @@ export const CourseSectionSelector = ({
           if (existingProblemsCache.current[sectionUri]) {
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
-             try {
-              const resp = await axios.get(
-                `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
-              );
+            try {
+              const resp = await getProblemsBySection(sectionUri, courseId);
               const problemUris: string[] = resp.data;
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
