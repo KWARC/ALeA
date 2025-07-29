@@ -118,6 +118,29 @@ export const SwitchToggle = ({
       } finally {
         onLoadingChange?.(false);
       }
+    } else if (
+      typeKey === 'thematicReskin' &&
+      problemData &&
+      (problemData as ExistingProblem).uri
+    ) {
+      const flatProblem = problemData as ExistingProblem;
+      onLoadingChange?.(true);
+
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemUri: flatProblem.uri,
+          variantType: 'reskin',
+          theme,
+        });
+
+        if (result.length > 0) {
+          const newVariant: QuizProblem = result[0];
+          onVariantGenerated?.(newVariant);
+        }
+      } finally {
+        onLoadingChange?.(false);
+      }
     }
   };
 

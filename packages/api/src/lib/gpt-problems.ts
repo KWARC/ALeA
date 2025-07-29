@@ -169,7 +169,8 @@ export interface ModifyChoicesVariant {
 
 export interface VariantBase {
   mode: 'variant';
-  problemId: number;
+  problemId?: number;
+  problemUri?: string;
   instruction?: string;
 }
 

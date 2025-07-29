@@ -160,10 +160,10 @@ export const VariantDialog = ({
           sectionUri: problemData.sectionUri,
         });
         console.log('resulting copy', result);
-        setRephraseApplicable(result.variantCheck.rephrase.applicable);
-        setChoicesApplicable(result.variantCheck.modify_choices.applicable);
-        setReskinApplicable(result.variantCheck.reskin.applicable);
-        setAvailableThemes(result.variantCheck.reskin.themes);
+        setRephraseApplicable(result.rephrase.applicable);
+        setChoicesApplicable(result.modify_choices.applicable);
+        setReskinApplicable(result.reskin.applicable);
+        setAvailableThemes(result.reskin.themes);
         return result;
       } finally {
         setVariantOptionsLoading(false);
