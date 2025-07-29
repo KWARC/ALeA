@@ -292,6 +292,7 @@ export const VariantDialog = ({
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
                         setPreviewProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
                       }}
                     />
                   )}
