@@ -85,8 +85,6 @@ export const PreviewSection = ({
           <TextField
             fullWidth
             multiline
-            minRows={6}
-            maxRows={30}
             value={editableSTeX}
             onChange={(e) => setEditableSTeX(e.target.value)}
             variant="outlined"
@@ -96,6 +94,7 @@ export const PreviewSection = ({
               lineHeight: 1.5,
               color: '#111827',
               backgroundColor: '#fff',
+              minHeight: '300px',
             }}
           />
         )}
