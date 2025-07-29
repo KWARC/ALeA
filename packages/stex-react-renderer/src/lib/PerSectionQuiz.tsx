@@ -105,40 +105,43 @@ export function PerSectionQuiz({
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
   const [tabIndex, setTabIndex] = useState(0);
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
-
   useEffect(() => {
     if (cachedProblemUris) return;
     // if(!sectionUri)return;
     setIsLoadingProblemUris(true);
 
     getProblemsBySection(sectionUri, courseId)
-      .then((problems: { category: string; problemId: string }[]) => {
+      .then((problems) => {
         const categoryMap: Record<string, string[]> = {};
-
         for (const p of problems) {
           if (!categoryMap[p.category]) categoryMap[p.category] = [];
           categoryMap[p.category].push(p.problemId);
         }
         setCategoryMap(categoryMap);
 
-        if (setCachedProblemUris) {
-          const all = Object.values(categoryMap).flat();
-          setCachedProblemUris(all);
+        let selected: string[] = [];
+        if (category) {
+          selected = categoryMap[category] || [];
+          if (setCachedProblemUris) {
+            setCachedProblemUris(selected);
+          }
+        } else {
+          const selectedCategory =
+            Object.keys(categoryMap)[tabIndex] || Object.keys(categoryMap)[0];
+          selected = categoryMap[selectedCategory] || [];
+          if (setCachedProblemUris) {
+            const all = Object.values(categoryMap).flat();
+            setCachedProblemUris(all);
+          }
         }
-
-        const selectedCategory = Object.keys(categoryMap)[tabIndex] || Object.keys(categoryMap)[0];
-        const selected = categoryMap[selectedCategory] || [];
 
         setProblemUris(selected);
         setIsSubmitted(selected.map(() => false));
         setResponses(selected.map(() => undefined));
-
         setIsLoadingProblemUris(false);
       })
-      .catch((err) => {
-        setIsLoadingProblemUris(false);
-      });
-  }, [sectionUri, courseId, cachedProblemUris]);
+      .catch(() => setIsLoadingProblemUris(false));
+  }, [sectionUri, courseId, cachedProblemUris, category, tabIndex]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
   if (!problemUris.length) {
@@ -184,27 +187,29 @@ export function PerSectionQuiz({
         <Typography fontWeight="bold" textAlign="left">
           {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
         </Typography>
-        <Tabs
-          value={tabIndex}
-          onChange={(_, idx) => {
-            setTabIndex(idx);
-            const selectedCategory = Object.keys(categoryMap)[idx];
-            const selected = categoryMap[selectedCategory] || [];
-            setProblemUris(selected);
-            setIsSubmitted(selected.map(() => false));
-            setResponses(selected.map(() => undefined));
-          }}
-        >
-          {Object.keys(categoryMap).map((cat) => {
-            const label =
-              cat === 'adventurous'
-                ? "I'm Adventurous"
-                : cat === 'syllabus'
-                ? 'Syllabus'
-                : cat[0].toUpperCase() + cat.slice(1);
-            return <Tab key={cat} label={label} />;
-          })}
-        </Tabs>
+        {!category && (
+          <Tabs
+            value={tabIndex}
+            onChange={(_, idx) => {
+              setTabIndex(idx);
+              const selectedCategory = Object.keys(categoryMap)[idx];
+              const selected = categoryMap[selectedCategory] || [];
+              setProblemUris(selected);
+              setIsSubmitted(selected.map(() => false));
+              setResponses(selected.map(() => undefined));
+            }}
+          >
+            {Object.keys(categoryMap).map((cat) => {
+              const label =
+                cat === 'adventurous'
+                  ? "I'm Adventurous"
+                  : cat === 'syllabus'
+                  ? 'Syllabus'
+                  : cat[0].toUpperCase() + cat.slice(1);
+              return <Tab key={cat} label={label} />;
+            })}
+          </Tabs>
+        )}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
           <ListStepper
             idx={problemIdx}
