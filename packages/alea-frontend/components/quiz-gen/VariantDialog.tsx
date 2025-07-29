@@ -2,6 +2,7 @@ import { getFlamsServer } from '@kwarc/ftml-react';
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -149,6 +150,7 @@ export const VariantDialog = ({
         return;
 
       console.log('existing data', problemData);
+      setVariantOptionsLoading(true);
       try {
         const result = await generateQuizProblems({
           mode: 'copy',
@@ -158,10 +160,10 @@ export const VariantDialog = ({
           sectionUri: problemData.sectionUri,
         });
         console.log('resulting copy', result);
-        setRephraseApplicable(result.rephrase.applicable);
-        setChoicesApplicable(result.modify_choices.applicable);
-        setReskinApplicable(result.reskin.applicable);
-        setAvailableThemes(result.reskin.themes);
+        setRephraseApplicable(result.variantCheck.rephrase.applicable);
+        setChoicesApplicable(result.variantCheck.modify_choices.applicable);
+        setReskinApplicable(result.variantCheck.reskin.applicable);
+        setAvailableThemes(result.variantCheck.reskin.themes);
         return result;
       } finally {
         setVariantOptionsLoading(false);
@@ -216,6 +218,21 @@ export const VariantDialog = ({
           flexDirection: 'column',
         }}
       >
+        {previewLoading && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(255,255,255,0.6)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
         <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
           <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
             <Box
@@ -323,7 +340,6 @@ export const VariantDialog = ({
             problemUri={problemUri}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
-            loading={previewLoading}
           />
         </Box>
       </DialogContent>
