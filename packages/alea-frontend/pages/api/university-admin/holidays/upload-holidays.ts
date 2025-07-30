@@ -12,6 +12,7 @@ function formatDateToDDMMYYYY(date: string): string | null {
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
 
+  //TODO: We will use getUserIdAuthoriseSetError
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 

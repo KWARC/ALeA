@@ -3,6 +3,7 @@ import { executeQuery, checkIfGetOrSetError, getUserIdOrSetError } from '../../c
 export default async function handler(req, res) {
   if (!checkIfGetOrSetError(req, res)) return;
 
+  //TODO: We will use getUserIdAuthoriseSetError
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 

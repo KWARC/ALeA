@@ -81,8 +81,8 @@ export async function deleteSemester(universityId: string, instanceId: string) {
 
 /* ====== HOLIDAYS APIs ====== */
 
-export async function getHolidays(universityId: string, instanceId: string) {
-  const response = await axios.get(`${HOLIDAYS_BASE_URL}/list-holidays`, {
+export async function getHolidaysInfo(universityId: string, instanceId: string) {
+  const response = await axios.get(`${HOLIDAYS_BASE_URL}/get-holidays-info`, {
     params: { universityId, instanceId },
     headers: getAuthHeaders(),
   });
@@ -104,7 +104,7 @@ export async function editHoliday(data: EditHolidayRequest) {
 }
 
 export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
-  const response = await axios.post(`/api/university-admin/holidays/delete-holiday`, data, {
+  const response = await axios.post(`/api/university-admin/holidays/delete-single-holiday`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;
@@ -112,7 +112,7 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
 
 
 export async function deleteAllHolidays(universityId: string, instanceId: string) {
-  const response = await axios.post(`${HOLIDAYS_BASE_URL}/delete-holidays`, {
+  const response = await axios.post(`${HOLIDAYS_BASE_URL}/delete-all-holidays`, {
     universityId,
     instanceId,
   }, {
