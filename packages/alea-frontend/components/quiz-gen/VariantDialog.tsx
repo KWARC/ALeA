@@ -119,65 +119,52 @@ export const VariantDialog = ({
   }
 
   useEffect(() => {
-    const checkVariants = async () => {
-      if (!open || !(problemData as FlatQuizProblem).problemId) return;
-      setVariantOptionsLoading(true);
-      try {
-        const copyResult = await generateQuizProblems({
-          mode: 'copy',
-          problemId: (problemData as FlatQuizProblem).problemId,
-        });
-        console.log("generated copied",copyResult);
-        const result = await checkPossibleVariants(copyResult[0].problemId);
-        setRephraseApplicable(result.rephrase.applicable);
-        setChoicesApplicable(result.modify_choices.applicable);
-        setReskinApplicable(result.reskin.applicable);
-        setAvailableThemes(result.reskin.themes);
-      } finally {
-        setVariantOptionsLoading(false);
-      }
-    };
-
-    checkVariants();
-  }, [open, problemData]);
-
-  useEffect(() => {
-    const createCopyExisting = async () => {
-      if (
-        !open ||
-        !(problemData as ExistingProblem) ||
-        !courseId ||
-        (problemData as FlatQuizProblem).problemId
-      )
-        return;
-
-      setVariantOptionsLoading(true);
-      try {
-        const copyResult = await generateQuizProblems({
-          mode: 'copy',
-          problemUri: (problemData as ExistingProblem).uri,
-          courseId: courseId,
-          sectionId: problemData.sectionId,
-          sectionUri: problemData.sectionUri,
-        });
-        const result = await checkPossibleVariants(copyResult[0].problemId);
-        setRephraseApplicable(result.rephrase.applicable);
-        setChoicesApplicable(result.modify_choices.applicable);
-        setReskinApplicable(result.reskin.applicable);
-        setAvailableThemes(result.reskin.themes);
-      } finally {
-        setVariantOptionsLoading(false);
-      }
-    };
-    createCopyExisting();
-  }, [open, problemData, courseId]);
-
-  useEffect(() => {
     if (!isFlatQuizProblem(problemData))
       fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
         setStex(fetchedSTeX);
       });
   }, [problemData]);
+  
+  useEffect(() => {
+    const createCopyAndCheckVariants = async () => {
+      if (!open || !problemData) return;
+
+      setVariantOptionsLoading(true);
+
+      try {
+        let copyResult;
+
+        if ('problemId' in problemData) {
+          copyResult = await generateQuizProblems({
+            mode: 'copy',
+            problemId: problemData.problemId,
+          });
+        } else if ('uri' in problemData && courseId) {
+          copyResult = await generateQuizProblems({
+            mode: 'copy',
+            problemUri: problemData.uri,
+            courseId,
+            sectionId: problemData.sectionId,
+            sectionUri: problemData.sectionUri,
+          });
+        }
+
+        const copied = copyResult?.[0];
+        if (!copied) return;
+
+        const result = await checkPossibleVariants(copied.problemId);
+        console.log(result);
+        setRephraseApplicable(result.rephrase.applicable);
+        setChoicesApplicable(result.modify_choices.applicable);
+        setReskinApplicable(result.reskin.applicable);
+        setAvailableThemes(result.reskin.themes);
+      } finally {
+        setVariantOptionsLoading(false);
+      }
+    };
+
+    createCopyAndCheckVariants();
+  }, [open, problemData, courseId]);
 
   useEffect(() => {
     setEditableSTeX(STeX);
