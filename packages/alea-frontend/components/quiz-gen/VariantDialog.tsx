@@ -94,7 +94,6 @@ export const VariantDialog = ({
   const problemId = isFlatQuizProblem(problemData) ? problemData.problemId : undefined;
   const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
   const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
-  const problemUri = isFlatQuizProblem(problemData) ? problemData.sectionUri : problemData?.uri;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -121,7 +120,7 @@ export const VariantDialog = ({
 
   useEffect(() => {
     const checkVariants = async () => {
-      if (!open || !(problemData as FlatQuizProblem).problemId) return; //will check later for exisitngProblems
+      if (!open || !(problemData as FlatQuizProblem).problemId) return;
       setVariantOptionsLoading(true);
       try {
         const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
@@ -129,7 +128,6 @@ export const VariantDialog = ({
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
         setAvailableThemes(result.reskin.themes);
-        return result;
       } finally {
         setVariantOptionsLoading(false);
       }
@@ -139,7 +137,6 @@ export const VariantDialog = ({
   }, [open, problemData]);
 
   useEffect(() => {
-    //TODO : Creating copy of existing problem in db
     const createCopyExisting = async () => {
       if (
         !open ||
@@ -149,7 +146,6 @@ export const VariantDialog = ({
       )
         return;
 
-      console.log('existing data', problemData);
       setVariantOptionsLoading(true);
       try {
         const result = await generateQuizProblems({
@@ -159,12 +155,10 @@ export const VariantDialog = ({
           sectionId: problemData.sectionId,
           sectionUri: problemData.sectionUri,
         });
-        console.log('resulting copy', result);
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
         setAvailableThemes(result.reskin.themes);
-        return result;
       } finally {
         setVariantOptionsLoading(false);
       }
@@ -338,7 +332,6 @@ export const VariantDialog = ({
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
             problemData={previewProblemData ?? problemData}
-            problemUri={problemUri}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />

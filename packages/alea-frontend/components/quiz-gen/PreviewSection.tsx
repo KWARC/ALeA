@@ -7,7 +7,6 @@ interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
   setPreviewMode: (mode: 'json' | 'stex') => void;
   problemData?: FlatQuizProblem | ExistingProblem;
-  problemUri?: string;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
 }
@@ -16,7 +15,6 @@ export const PreviewSection = ({
   previewMode,
   setPreviewMode,
   problemData,
-  problemUri,
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
@@ -65,7 +63,7 @@ export const PreviewSection = ({
           isGenerated(problemData) ? (
             <QuizProblemViewer problemData={problemData} />
           ) : isExisting(problemData) ? (
-            <UriProblemViewer uri={problemUri} />
+            <UriProblemViewer uri={problemData.uri} />
           ) : (
             <Box
               sx={{
