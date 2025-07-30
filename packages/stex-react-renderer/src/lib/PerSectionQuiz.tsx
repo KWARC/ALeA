@@ -106,7 +106,7 @@ export function PerSectionQuiz({
       )
       .then((resp) => {
         const filtered = resp.data
-          .filter((p: any) => p.category === category)
+          .filter((p: any) => !category || p.category === category)
           .map((p: any) => p.problemId);
 
         setProblemUris(filtered);
