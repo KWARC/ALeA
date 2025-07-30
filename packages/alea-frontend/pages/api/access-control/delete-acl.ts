@@ -6,18 +6,16 @@ import {
 } from '../comment-utils';
 import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 
-export async function checkResourcesassociatedOrSet500OnError(
-  aclId: string,
-  res
-): Promise<boolean> {
+export async function checkResourceAssociatedOrSet500OnError(aclId: string, res){
   const resourceId = await executeAndEndSet500OnError(
-    'select resourceId from resourceaccess where aclId=?',
+    'select resourceId from resourceAccess  where aclId=?',
     [aclId],
     res
   );
+  if(!resourceId)return;
+   return{used:resourceId.length>0}
 
-  if (resourceId?.length) return true;
-  return false;
+ 
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -25,8 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const id = req.body.id as string;
   if (!id || typeof id !== 'string') return res.status(422).send('Missing id.');
   if (!(await isCurrentUserMemberOfAClupdater(id, res, req))) return res.status(403).end();
+const check = await checkResourceAssociatedOrSet500OnError(id, res);
+if(!check)return;
 
-if (await checkResourcesassociatedOrSet500OnError(id, res)) return ;
+  if (check.used) {
+    return res
+      .status(400)
+      .json({ error: 'Resources are still linked with this ACL.cannot delete.' });
+  }
 
   const result = await executeTxnAndEndSet500OnError(
     res,
