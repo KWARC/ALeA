@@ -30,7 +30,7 @@ function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     sectionId: qp.sectionId,
     sectionUri: qp.sectionUri,
     problemStex: qp.problemStex,
-    ...qp.problemJson, // merges problem, problemType, options, correctAnswer, etc.
+    ...qp.problemJson, 
   };
 }
 
@@ -153,7 +153,6 @@ export const VariantDialog = ({
         if (!copied) return;
 
         const result = await checkPossibleVariants(copied.problemId);
-        console.log(result);
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
