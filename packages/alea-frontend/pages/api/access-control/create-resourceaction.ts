@@ -7,6 +7,29 @@ import {
 import { canUpdateAccessControlEntries } from './resource-utils';
 import { recomputeMemberships } from './recompute-memberships';
 
+export async function unsafeCreateResourceAccessUnlessForced(
+  resourceId: string,
+  actionId: string,
+  aclId: string,
+  res: NextApiResponse
+): Promise<any> {
+  const existingQuery = `SELECT resourceId, actionId, aclId FROM ResourceAccess WHERE resourceId = ? AND actionId = ? AND aclId = ?`;
+  const isExists: [{ resourceId: string; actionId: string; aclId: string }] =
+    await executeAndEndSet500OnError(existingQuery, [resourceId, actionId, aclId], res);
+  if (isExists.length > 0) {
+    return res.status(409).send('already exists');
+  }
+  const resourceQuery = `INSERT INTO ResourceAccess (aclId, resourceId, actionId) VALUES (?, ?, ?)`;
+  const result = await executeAndEndSet500OnError(
+    resourceQuery,
+    [aclId, resourceId, actionId],
+    res
+  );
+  if (!result) return;
+  await recomputeMemberships();
+  return true;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
@@ -16,18 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!(await canUpdateAccessControlEntries(res, resourceId, userId)))
     return res.status(403).send('unauthorized');
 
-  const existingQuery = `SELECT resourceId, actionId, aclId FROM ResourceAccess WHERE resourceId = ? AND actionId = ? AND aclId = ?`;
-  const isExists: [{ resourceId: string; actionId: string; aclId: string }] =
-    await executeAndEndSet500OnError(existingQuery, [resourceId, actionId, aclId], res);
-  if (isExists.length > 0) return res.status(409).send('already exists');
-
-  const resourceQuery = `INSERT INTO ResourceAccess (aclId, resourceId, actionId) VALUES (?, ?, ?)`;
-  const result = await executeAndEndSet500OnError(
-    resourceQuery,
-    [aclId, resourceId, actionId],
-    res
-  );
+  const result = await unsafeCreateResourceAccessUnlessForced(resourceId, actionId, aclId, res);
   if (!result) return;
-  await recomputeMemberships();
   res.status(200).send('created');
 }

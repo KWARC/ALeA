@@ -12,9 +12,9 @@ import { useRouter } from 'next/router';
 import { ReactNode } from 'react';
 
 import Diversity3 from '@mui/icons-material/Diversity3';
+import { PARTNERED_UNIVERSITIES } from '..';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES } from '..';
 
 const UniversityDetail = {
   FAU: {
@@ -130,7 +130,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
             </Link>
           </Tooltip>
 
-          {(
+          {
             <Tooltip title={t.quizzes}>
               <Link href={quizzesLink} passHref>
                 <ColoredIconButton>
@@ -138,7 +138,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
                 </ColoredIconButton>
               </Link>
             </Tooltip>
-          )}
+          }
 
           <Tooltip title={t.studyBuddy}>
             <Link href={`/study-buddy/${courseId}`} passHref>
@@ -188,7 +188,10 @@ const StudentHomePage: NextPage = ({
               ) : null}
             </Tooltip>
           </Link>
-
+          <br />
+          <Button variant="contained" sx={{ mt: 2 }} onClick={() => router.push('/job-portal')}>
+            Job Portal
+          </Button>
           <h2>{`${t.courseSection} (${CURRENT_TERM})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)

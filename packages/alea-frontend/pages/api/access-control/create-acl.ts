@@ -1,12 +1,19 @@
 import { AccessControlList } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
+import { areMemberUsersAndAclIdsValid } from '../acl-utils/acl-common-utils';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!checkIfPostOrSetError(req, res)) return;
-  const acl = req.body as AccessControlList;
-
+export async function createAclOrSetError(
+  acl: {
+    id: string;
+    description: string;
+    isOpen: boolean;
+    updaterACLId: string;
+    memberUserIds: string[];
+    memberACLIds: string[];
+  },
+  res: NextApiResponse
+) {
   const { id, description, isOpen, updaterACLId, memberUserIds, memberACLIds } = acl;
 
   if (
@@ -19,12 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ) {
     return res.status(422).send('Missing required fields.');
   }
-  if (!(await validateMemberAndAclIds(res, memberUserIds, memberACLIds)))
+  if (!(await areMemberUsersAndAclIdsValid(memberUserIds, memberACLIds))) {
     return res.status(422).send('Invalid items');
-  const updaterId = req.body.updaterACLId ?? id;
+  }
   const result = await executeAndEndSet500OnError(
     'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?,?, ?,?)',
-    [id, description, updaterId, isOpen],
+    [id, description, updaterACLId, isOpen],
     res
   );
   if (!result) return;
@@ -41,5 +48,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const resp = await executeAndEndSet500OnError(memberQuery, memberQueryParams, res);
     if (!resp) return;
   }
+  return true;
+}
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!checkIfPostOrSetError(req, res)) return;
+  const acl = req.body as AccessControlList;
+  const { id, description, isOpen, updaterACLId, memberUserIds, memberACLIds } = acl;
+  const result = await createAclOrSetError(
+    {
+      id,
+      description,
+      isOpen,
+      updaterACLId: updaterACLId ?? id,
+      memberUserIds,
+      memberACLIds,
+    },
+    res
+  );
+  if (!result) return;
   res.status(201).end();
 }
