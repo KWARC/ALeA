@@ -6,7 +6,7 @@ import { getAuthHeaders } from './lmp';
 export async function hasAclAssociatedResources(aclId: string): Promise<boolean> {
   try {
     const response = await axios.get<{ hasResources: boolean }>(
-      `/api/access-control/check-acl-resources?aclId=${aclId}`,
+      `/api/access-control/has-acl-associated-resources?aclId=${aclId}`,
       { headers: getAuthHeaders() }
     );
     return response.data.hasResources;
