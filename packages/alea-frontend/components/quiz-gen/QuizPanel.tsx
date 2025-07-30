@@ -1,16 +1,18 @@
-import { Folder, OpenInNew } from '@mui/icons-material';
+import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
 import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
+import { useState } from 'react';
 import {
   ExistingProblem,
   FlatQuizProblem,
   getSectionNameFromIdOrUri,
   isExisting,
   isGenerated,
-} from 'packages/alea-frontend/pages/quiz-gen';
-import { SecInfo } from 'packages/alea-frontend/types';
+} from '../../pages/quiz-gen';
+import { SecInfo } from '../../types';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import { FeedbackSection, HiddenFeedback } from './Feedback';
+import { VariantDialog } from './VariantDialog';
 
 export const handleGoToSection = (courseId: string, sectionId: string) => {
   const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
@@ -31,6 +33,17 @@ export function QuizPanel({
   courseId: string;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
+  const [variantDialogOpen, setVariantDialogOpen] = useState(false);
+  const handleOpenVariantDialog = () => setVariantDialogOpen(true);
+  const handleCloseVariantDialog = () => setVariantDialogOpen(false);
+
+  const handleCreateVariant = (payload: any) => {
+    console.log('Creating multi-variant payload:', payload);
+
+    // TODO: call backend API
+
+    handleCloseVariantDialog();
+  };
 
   if (!currentProblem) {
     return (
@@ -70,6 +83,9 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
+          <Tooltip title="Create a new Variant">
+            <PublishedWithChanges onClick={handleOpenVariantDialog} />
+          </Tooltip>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -104,6 +120,14 @@ export function QuizPanel({
 
         {isGenerated(currentProblem) && <HiddenFeedback problemId={currentProblem.problemId} />}
       </Card>
+
+      <VariantDialog
+        open={variantDialogOpen}
+        onClose={() => setVariantDialogOpen(false)}
+        onCreate={handleCreateVariant}
+        problemData={currentProblem}
+        courseId={courseId}
+      />
     </Box>
   );
 }
