@@ -123,7 +123,12 @@ export const VariantDialog = ({
       if (!open || !(problemData as FlatQuizProblem).problemId) return;
       setVariantOptionsLoading(true);
       try {
-        const result = await checkPossibleVariants((problemData as FlatQuizProblem).problemId);
+        const copyResult = await generateQuizProblems({
+          mode: 'copy',
+          problemId: (problemData as FlatQuizProblem).problemId,
+        });
+        console.log("generated copied",copyResult);
+        const result = await checkPossibleVariants(copyResult[0].problemId);
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -148,13 +153,14 @@ export const VariantDialog = ({
 
       setVariantOptionsLoading(true);
       try {
-        const result = await generateQuizProblems({
+        const copyResult = await generateQuizProblems({
           mode: 'copy',
           problemUri: (problemData as ExistingProblem).uri,
           courseId: courseId,
           sectionId: problemData.sectionId,
           sectionUri: problemData.sectionUri,
         });
+        const result = await checkPossibleVariants(copyResult[0].problemId);
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);

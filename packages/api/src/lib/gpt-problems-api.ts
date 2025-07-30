@@ -130,7 +130,7 @@ export async function generateQuizProblems(generationParams: GenerationParams) {
       headers: getAuthHeaders(),
     }
   );
-  return resp.data as any; //TODO 
+  return resp.data as QuizProblem[];
 }
 
 export async function checkPossibleVariants(problemId: number) {

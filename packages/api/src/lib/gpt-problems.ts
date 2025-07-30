@@ -187,10 +187,11 @@ interface NewGenerationParams {
 }
 interface CopyGenerationParams {
   mode: 'copy';
-  courseId: string;
-  problemUri: string;
-  sectionUri: string;
-  sectionId: string;
+  problemId?: number;
+  courseId?: string;
+  problemUri?: string;
+  sectionUri?: string;
+  sectionId?: string;
 }
 
 export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
