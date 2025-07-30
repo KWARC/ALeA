@@ -73,12 +73,16 @@ export function PerSectionQuiz({
   showHideButton = false,
   cachedProblemUris,
   setCachedProblemUris,
+  category,
+  courseId,
 }: {
   sectionUri: string;
   showButtonFirst?: boolean;
   showHideButton?: boolean;
   cachedProblemUris?: string[] | null;
   setCachedProblemUris?: (uris: string[]) => void;
+  category?: 'syllabus' | 'adventurous';
+  courseId?: string;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);
@@ -95,17 +99,25 @@ export function PerSectionQuiz({
     //  if (!sectionUri) return;
     setIsLoadingProblemUris(true);
     axios
-      .get(`/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`)
+      .get(
+        `/api/get-problems-by-section?sectionUri=${encodeURIComponent(
+          sectionUri
+        )}&courseId=${courseId}`
+      )
       .then((resp) => {
-        setProblemUris(resp.data);
+        const filtered = resp.data
+          .filter((p: any) => !category || p.category === category)
+          .map((p: any) => p.problemId);
+
+        setProblemUris(filtered);
         if (setCachedProblemUris) {
-          setCachedProblemUris(resp.data);
+          setCachedProblemUris(filtered);
         }
         setIsLoadingProblemUris(false);
-        setIsSubmitted(resp.data.map(() => false));
-        setResponses(resp.data.map(() => undefined));
+        setIsSubmitted(filtered.map(() => false));
+        setResponses(filtered.map(() => undefined));
       }, console.error);
-  }, [sectionUri, cachedProblemUris, setCachedProblemUris]);
+  }, [sectionUri, cachedProblemUris, setCachedProblemUris, category]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
   if (!problemUris.length) {

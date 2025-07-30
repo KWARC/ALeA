@@ -22,11 +22,12 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   const router = useRouter();
   const { quiz: t } = getLocaleObject(router);
   const [tabValue, setTabValue] = useState(0);
+  const courseId = router.query.courseId as string;
 
   // Caching states
-  const [perSectionProblemUris, setPerSectionProblemUris] = useState<string[] | null>(null);
   const [formeProblemUris, setFormeProblemUris] = useState<string[] | null>(null);
-
+  const [syllabusUris, setSyllabusUris] = useState<string[] | null>(null);
+  const [adventurousUris, setAdventurousUris] = useState<string[] | null>(null);
   const handleTabChange = React.useCallback((event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   }, []);
@@ -35,37 +36,58 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   const [perSectionTabLabel, setPerSectionTabLabel] = useState(
     t.perSectionQuizButton.replace('$1', '...')
   );
-
+  const [adventurousTabLabel, setAdventurousTabLabel] = useState(
+    t.adventurousproblems.replace('$1', '...')
+  );
   useEffect(() => {
     if (!sectionUri) return;
-    setPerSectionProblemUris(null);
     setFormeProblemUris(null);
+    setSyllabusUris(null);
+    setAdventurousUris(null);
     setForMeTabLabel(t.ForMe.replace('$1', '...'));
     setPerSectionTabLabel(t.perSectionQuizButton.replace('$1', '...'));
+    setAdventurousTabLabel(t.adventurousproblems.replace('$1', '...'));
   }, [sectionUri]);
 
   useEffect(() => {
     if (formeProblemUris?.length) {
       setForMeTabLabel(t.ForMe.replace('$1', formeProblemUris.length.toString()));
     }
-    if (perSectionProblemUris?.length) {
-      setPerSectionTabLabel(
-        t.perSectionQuizButton.replace('$1', perSectionProblemUris.length.toString())
+    if (syllabusUris?.length) {
+      setPerSectionTabLabel(t.perSectionQuizButton.replace('$1', syllabusUris.length.toString()));
+    }
+    if (adventurousUris?.length) {
+      setAdventurousTabLabel(
+        t.adventurousproblems.replace('$1', adventurousUris.length.toString())
       );
     }
-  }, [formeProblemUris, perSectionProblemUris, t.ForMe, t.perSectionQuizButton]);
+  }, [
+    formeProblemUris,
+    syllabusUris,
+    adventurousUris,
+    t.ForMe,
+    t.perSectionQuizButton,
+    t.adventurousproblems,
+  ]);
 
   useEffect(() => {
-    if (isAccordionOpen) {
-      if (!sectionUri) return;
-      setShowProblems(true);
-      setTabValue(0);
-      setTimeout(() => setTabValue(1), 0);
-    }
-  }, [isAccordionOpen, sectionUri]);
+    if (!sectionUri || !courseId) return;
+
+    setShowProblems(true);
+    setTabValue(0);
+    setTimeout(() => setTabValue(1), 0);
+  }, [isAccordionOpen, sectionUri, courseId]);
 
   if (isAccordionOpen) {
-    if (formeProblemUris?.length === 0 && perSectionProblemUris?.length === 0) {
+    const isLoadingAny =
+      formeProblemUris === null || syllabusUris === null || adventurousUris === null;
+
+    if (
+      !isLoadingAny &&
+      (formeProblemUris?.length ?? 0) === 0 &&
+      (syllabusUris?.length ?? 0) === 0 &&
+      (adventurousUris?.length ?? 0) === 0
+    ) {
       return (
         <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary', mb: 2 }}>
           No practice problems available
@@ -129,6 +151,7 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
             >
               <Tab label={forMeTabLabel} />
               <Tab label={perSectionTabLabel} />
+              <Tab label={adventurousTabLabel} />
             </Tabs>
             <VisibilityOffIcon
               onClick={() => setShowProblems(false)}
@@ -147,15 +170,30 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
               />
             </Box>
           )}
-
           {tabValue === 1 && (
             <Box mb={2}>
               <PerSectionQuiz
                 sectionUri={sectionUri}
+                courseId={courseId}
+                cachedProblemUris={syllabusUris}
                 showHideButton={false}
                 showButtonFirst={false}
-                cachedProblemUris={perSectionProblemUris}
-                setCachedProblemUris={setPerSectionProblemUris}
+                setCachedProblemUris={setSyllabusUris}
+                category="syllabus"
+              />
+            </Box>
+          )}
+
+          {tabValue === 2 && (
+            <Box mb={2}>
+              <PerSectionQuiz
+                sectionUri={sectionUri}
+                courseId={courseId}
+                cachedProblemUris={adventurousUris}
+                showHideButton={false}
+                showButtonFirst={false}
+                setCachedProblemUris={setAdventurousUris}
+                category="adventurous"
               />
             </Box>
           )}
