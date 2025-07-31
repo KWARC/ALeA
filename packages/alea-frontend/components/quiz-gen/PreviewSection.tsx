@@ -3,6 +3,7 @@ import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import InfoIcon from '@mui/icons-material/Info';
+import { useEffect, useMemo } from 'react';
 
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
@@ -19,9 +20,15 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
-  const originalSTeX = isGenerated(problemData) ? problemData.problemStex : '';
+  
+const isModified = useMemo(() => {
+  const original = isGenerated(problemData) ? problemData.problemStex : '';
+  return editableSTeX !== original;
+}, [editableSTeX, problemData]);
 
-  const isModified = editableSTeX !== originalSTeX;
+useEffect(() => {
+  setPreviewMode(isModified ? "stex" : "json");
+}, [isModified]);
 
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">

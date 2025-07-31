@@ -199,8 +199,11 @@ interface CopyGenerationParams {
   sectionUri?: string;
   sectionId?: string;
 }
-
-export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
+interface FinalizeProblemParams {
+  mode: 'finalize';
+problemId:number;
+}
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams | FinalizeProblemParams;
 
 export interface PossibleVariantsResult {
   rephrase: {

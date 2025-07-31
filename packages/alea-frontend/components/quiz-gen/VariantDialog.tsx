@@ -30,6 +30,7 @@ function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     sectionId: qp.sectionId,
     sectionUri: qp.sectionUri,
     problemStex: qp.problemStex,
+    manualEdits:qp.manualEdits,
     ...qp.problemJson, 
   };
 }
@@ -130,7 +131,7 @@ export const VariantDialog = ({
       setVariantOptionsLoading(true);
 
       try {
-        let copyResult;
+        let copyResult:QuizProblem[];
 
         if ('problemId' in problemData) {
           copyResult = await generateQuizProblems({
@@ -148,9 +149,9 @@ export const VariantDialog = ({
         }
 
         const copiedProblem = copyResult?.[0];
-
+        if(copiedProblem?.manualEdits?.length>0) 
+        setEditableSTeX(copiedProblem?.manualEdits[copiedProblem?.manualEdits.length-1]);
         setPreviewProblemData(flattenQuizProblem(copiedProblem));
-        // setEditableSTeX(copiedProblem.manual_edit);
         if (!copiedProblem) return;
         //const result = await checkPossibleVariants(copiedProblem.problemId);
         const result = {
@@ -183,15 +184,8 @@ export const VariantDialog = ({
   }, [open, problemData, courseId]);
 
   useEffect(() => {
-    const manualEditedProblem = problemData as FlatQuizProblem;
-    console.log({ manualEditedProblem });
-    if (manualEditedProblem?.manualEdits?.length) {
-      setEditableSTeX(manualEditedProblem.manualEdits[manualEditedProblem.manualEdits.length - 1]);
-    } else {
-      setEditableSTeX(STeX);
-    }
-  }, [STeX, problemData,open]);
-
+    setEditableSTeX(STeX);
+  }, [STeX]);
   const saveManualEdit = async () => {
     if (!previewProblemData) {
       console.error('Cannot create variant without problemId');
@@ -205,20 +199,12 @@ export const VariantDialog = ({
     });
     console.log('result', result);
   };
-
-  const handleCreateAndReturn = () => {
-    if (!problemId) {
-      console.error('Cannot create variant without problemId');
-      return;
-    }
-
-    const payload = {
-      problemId,
-      variantConfig: {
-        ...variantConfig,
-      },
-    };
-    onCreate(payload);
+  const finalizeProblem = async () => {
+    if (editableSTeX)await saveManualEdit();
+    await generateQuizProblems({
+      mode: 'finalize',
+      problemId: previewProblemData.problemId,
+    });
   };
 
   return (
@@ -377,8 +363,8 @@ export const VariantDialog = ({
           Start New Edit
         </Button>
         <Button
-          onClick={() => {
-            saveManualEdit();
+          onClick={async () => {
+           await saveManualEdit();
             clearSelection();
           }}
           sx={{ textTransform: 'none' }}
@@ -386,7 +372,8 @@ export const VariantDialog = ({
           Save As Draft
         </Button>
         <Button
-          onClick={() => {
+          onClick={async () => {
+          await finalizeProblem();
             onClose();
             clearSelection();
           }}
