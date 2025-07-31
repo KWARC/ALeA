@@ -388,13 +388,13 @@ const AclId: NextPage = () => {
           )}
         </Box>
       </Box>
-       <ConfirmationDialog
-              open={deleteDialogOpen}
-              onClose={handleDeleteCancel}
-              onConfirm={handleDeleteConfirm}
-              error={deleteError}
-              aclId={aclId}
-            />
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        error={deleteError}
+        aclId={aclId}
+      />
     </MainLayout>
   );
 };
