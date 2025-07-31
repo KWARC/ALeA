@@ -15,7 +15,7 @@ import {
 import {
   fetchGeneratedProblems,
   generateQuizProblems,
-  getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
+  getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
   getCoverageTimeline,
 } from '@stex-react/api';
@@ -149,7 +149,7 @@ export const CourseSectionSelector = ({
               const resp = await axios.get(
                 `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
               );
-              const problemUris: string[] = resp.data;
+              const problemUris: string[] = resp.data.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
@@ -188,7 +188,12 @@ export const CourseSectionSelector = ({
   const generateNewProblems = async () => {
     setGenerating(true);
     try {
-      const response = await generateQuizProblems(courseId, startSectionUri, endSectionUri);
+      const response = await generateQuizProblems({
+        mode: 'new',
+        courseId,
+        startSectionUri,
+        endSectionUri,
+      });
       if (!response?.length) {
         return;
       }

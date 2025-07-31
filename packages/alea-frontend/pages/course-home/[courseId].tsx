@@ -192,7 +192,7 @@ function CourseScheduleSection({
         const entries = (timeline[courseId] || [])
           .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
           .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
-        setNextLectureStartTime(entries[0].timestamp_ms);
+        setNextLectureStartTime(entries[0]?.timestamp_ms);
       } catch (error) {
         console.error('Failed to fetch lecture timeline:', error);
       }
