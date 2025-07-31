@@ -99,6 +99,7 @@ export interface QuizProblem {
   sectionUri: string;
   problemStex: string;
   problemJson: ProblemJson;
+  manualEdits?:string[];
 }
 export async function fetchGeneratedProblems(
   courseId: string,

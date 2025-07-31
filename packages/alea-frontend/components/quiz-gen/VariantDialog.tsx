@@ -87,9 +87,7 @@ export const VariantDialog = ({
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
-  const [previewProblemData, setPreviewProblemData] = useState<
-    FlatQuizProblem | ExistingProblem | null
-  >(null);
+  const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
   const problemId = isFlatQuizProblem(problemData) ? problemData.problemId : undefined;
   const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
@@ -124,7 +122,7 @@ export const VariantDialog = ({
         setStex(fetchedSTeX);
       });
   }, [problemData]);
-  
+
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
       if (!open || !problemData) return;
@@ -149,10 +147,29 @@ export const VariantDialog = ({
           });
         }
 
-        const copied = copyResult?.[0];
-        if (!copied) return;
+        const copiedProblem = copyResult?.[0];
 
-        const result = await checkPossibleVariants(copied.problemId);
+        setPreviewProblemData(flattenQuizProblem(copiedProblem));
+        // setEditableSTeX(copiedProblem.manual_edit);
+        if (!copiedProblem) return;
+        //const result = await checkPossibleVariants(copiedProblem.problemId);
+        const result = {
+          modify_choices: {
+            applicable: true,
+          },
+          rephrase: {
+            applicable: true,
+          },
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+        };
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -166,8 +183,28 @@ export const VariantDialog = ({
   }, [open, problemData, courseId]);
 
   useEffect(() => {
-    setEditableSTeX(STeX);
-  }, [STeX]);
+    const manualEditedProblem = problemData as FlatQuizProblem;
+    console.log({ manualEditedProblem });
+    if (manualEditedProblem?.manualEdits?.length) {
+      setEditableSTeX(manualEditedProblem.manualEdits[manualEditedProblem.manualEdits.length - 1]);
+    } else {
+      setEditableSTeX(STeX);
+    }
+  }, [STeX, problemData,open]);
+
+  const saveManualEdit = async () => {
+    if (!previewProblemData) {
+      console.error('Cannot create variant without problemId');
+      return;
+    }
+    const result = await generateQuizProblems({
+      mode: 'variant',
+      problemId: previewProblemData.problemId,
+      variantType: 'manual_edit',
+      stex: editableSTeX,
+    });
+    console.log('result', result);
+  };
 
   const handleCreateAndReturn = () => {
     if (!problemId) {
@@ -341,7 +378,7 @@ export const VariantDialog = ({
         </Button>
         <Button
           onClick={() => {
-            handleCreateAndReturn();
+            saveManualEdit();
             clearSelection();
           }}
           sx={{ textTransform: 'none' }}
