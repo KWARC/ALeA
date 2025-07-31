@@ -25,12 +25,12 @@ function isCacheValid(cacheEntry: { timestamp: number }): boolean {
 }
 
 function getSections(tocElems: FTML.TOCElem[]): string[] {
-  const sectionIds: string[] = [];
+  const sectionUris: string[] = [];
   for (const tocElem of tocElems) {
-    if (tocElem.type === 'Section') sectionIds.push(tocElem.uri);
-    if ('children' in tocElem) sectionIds.push(...getSections(tocElem.children));
+    if (tocElem.type === 'Section') sectionUris.push(tocElem.uri);
+    if ('children' in tocElem) sectionUris.push(...getSections(tocElem.children));
   }
-  return sectionIds;
+  return sectionUris;
 }
 
 async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Set<string>> {
