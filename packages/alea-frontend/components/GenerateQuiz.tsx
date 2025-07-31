@@ -154,7 +154,12 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
     try {
       // const fetchFn = mode === 'more' ? generateMoreQuizProblems : generateQuizProblems;//TODO Quiz-Gen
       const fetchFn = generateQuizProblems;
-      const response = await fetchFn(courseId, sectionId, sectionId);
+      const response = await fetchFn({
+        mode: 'new',
+        courseId,
+        startSectionUri: sectionId, //TODO later
+        endSectionUri: sectionId, //TODO later
+      });
 
       if (!response?.length) {
         return;
