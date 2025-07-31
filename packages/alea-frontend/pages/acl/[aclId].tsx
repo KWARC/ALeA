@@ -1,4 +1,3 @@
-import { Edit, Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -9,12 +8,6 @@ import {
   TextField,
   Tooltip,
   Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Alert,
 } from '@mui/material';
 import {
   getAcl,
@@ -25,18 +18,20 @@ import {
   deleteAcl,
   hasAclAssociatedResources,
 } from '@stex-react/api';
+import EditIcon from '@mui/icons-material/Edit';
+import { Delete } from '@mui/icons-material';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
+import { ConfirmationDialog } from './edit/ConfirmationDialog';
 
 const AclId: NextPage = () => {
   const router = useRouter();
   const { query } = router;
   const aclId = query.aclId as string;
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [acls, setAcls] = useState<string[]>([]);
@@ -50,12 +45,10 @@ const AclId: NextPage = () => {
   const [isUpdaterMember, setIsUpdaterMember] = useState<boolean>(false);
   const [allMemberNamesAndIds, setAllMemberNamesAndIds] = useState<any[]>([]);
   const [showAllMembers, setShowAllMembers] = useState<boolean>(false);
-
   const [hasAssociatedResources, setHasAssociatedResources] = useState<boolean>(false);
 
   const handleOpenDeleteDialog = () => {
     setDeleteError('');
-
     if (!hasAssociatedResources) {
       setDeleteDialogOpen(true);
     }
@@ -136,7 +129,6 @@ const AclId: NextPage = () => {
           console.error('Error checking user membership:', error);
           setUserIsMember(false);
         }
-
         if (updaterACLId) {
           try {
             const updaterMemberStatus = await isUserMember(updaterACLId);
@@ -148,7 +140,6 @@ const AclId: NextPage = () => {
         } else {
           setIsUpdaterMember(false);
         }
-
         try {
           const hasResources = await hasAclAssociatedResources(aclId);
           setHasAssociatedResources(hasResources);
@@ -223,7 +214,7 @@ const AclId: NextPage = () => {
                       flexShrink: 0,
                     }}
                     variant="contained"
-                    startIcon={<Edit />}
+                    startIcon={<EditIcon />}
                     onClick={() => router.push(`/acl/edit/${aclId}`)}
                   >
                     Edit
@@ -250,7 +241,7 @@ const AclId: NextPage = () => {
                           flexShrink: 0,
                         }}
                         variant="contained"
-                        startIcon={<DeleteIcon />}
+                        startIcon={<Delete />}
                         onClick={handleOpenDeleteDialog}
                         disabled={hasAssociatedResources}
                       >
@@ -397,38 +388,14 @@ const AclId: NextPage = () => {
           )}
         </Box>
       </Box>
-
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby="acl-delete-dialog-title"
-        aria-describedby="acl-delete-dialog-description"
-      >
-        <DialogTitle id="acl-delete-dialog-title">Confirm ACL Deletion</DialogTitle>
-        <DialogContent>
-          {deleteError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {deleteError}
-            </Alert>
-          )}
-
-          <DialogContentText id="acl-delete-dialog-description">
-            Are you sure you want to delete ACL: **{aclId}**? This action cannot be undone. If this
-            ACL is assigned to any resource or is a member of another ACL, deletion will be rejected
-            by the server.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteConfirm} color="secondary" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+       <ConfirmationDialog
+              open={deleteDialogOpen}
+              onClose={handleDeleteCancel}
+              onConfirm={handleDeleteConfirm}
+              error={deleteError}
+              aclId={aclId}
+            />
     </MainLayout>
   );
 };
-
 export default AclId;

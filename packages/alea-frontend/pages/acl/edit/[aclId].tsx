@@ -1,4 +1,3 @@
-import { Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -10,36 +9,38 @@ import {
   InputAdornment,
   IconButton,
   Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import GroupIcon from '@mui/icons-material/Group';
 import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import MainLayout from '../../../layouts/MainLayout';
-import { UpdateACLRequest, getAcl, isValid, updateAcl, deleteAcl } from '@stex-react/api';
+import {
+  UpdateACLRequest,
+  getAcl,
+  isValid,
+  updateAcl,
+  deleteAcl,
+  hasAclAssociatedResources,
+} from '@stex-react/api';
+import { ConfirmationDialog } from '../edit/ConfirmationDialog';
 
 const UpdateAcl: NextPage = () => {
   const router = useRouter();
   const { query } = router;
-
-  const [aclId, setAclId] = useState<string | ''>('');
-  const [description, setDescription] = useState<string | ''>('');
+  const [aclId, setAclId] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [memberUserIds, setMemberUserIds] = useState<string[]>([]);
   const [memberACLIds, setMemberACLIds] = useState<string[]>([]);
-  const [updaterACLId, setUpdaterACLId] = useState<string | ''>('');
+  const [updaterACLId, setUpdaterACLId] = useState<string>('');
   const [isOpen, setIsOpen] = useState(false);
   const [tempMemberUserId, setTempMemberUserId] = useState<string>('');
   const [tempMemberACL, setTempMemberACL] = useState<string>('');
   const [isInvalid, setIsInvalid] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
-
+  const [isUpdaterACLValid, setIsUpdaterACLValid] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -140,22 +141,22 @@ const UpdateAcl: NextPage = () => {
   };
 
   const handleDeleteConfirm = async () => {
+    setDeleteError('');
+    if (!aclId) {
+      setDeleteError('ACL ID missing. Deletion aborted.');
+      return;
+    }
     try {
-      if (aclId) {
-        await deleteAcl(aclId);
-        setDeleteDialogOpen(false);
-        router.push('/acl');
-      } else {
-        console.warn('ACL ID is missing for deletion.');
-        setDeleteError('Cannot delete ACL: ID is missing.');
+      if (await hasAclAssociatedResources(aclId)) {
+        setDeleteError('ACL is linked to resources. Cannot delete.');
+        return;
       }
+      await deleteAcl(aclId);
+      setDeleteDialogOpen(false);
+      router.push('/acl');
     } catch (err: any) {
-      console.error('Error deleting ACL:', err);
-      setDeleteError(
-        err.response?.data?.message ||
-          'Failed to delete ACL. It might be assigned to resources or have other dependencies.'
-      );
-    } finally {
+      console.error('Deletion error:', err);
+      setDeleteError(err?.response?.data?.message || 'Deletion failed due to an unexpected error.');
     }
   };
 
@@ -269,7 +270,7 @@ const UpdateAcl: NextPage = () => {
         />
 
         {error && (
-          <Alert severity="error" sx={{ flexGrow: 1, mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
@@ -295,7 +296,7 @@ const UpdateAcl: NextPage = () => {
           <Button
             variant="contained"
             color="error"
-            startIcon={<DeleteIcon />}
+            startIcon={<Delete />}
             onClick={handleDeleteClick}
             sx={{ mb: 2 }}
           >
@@ -304,36 +305,14 @@ const UpdateAcl: NextPage = () => {
         </Box>
       </Box>
 
-      <Dialog
+      <ConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
-        aria-labelledby="delete-acl-dialog-title"
-        aria-describedby="delete-acl-dialog-description"
-      >
-        <DialogTitle id="delete-acl-dialog-title">Confirm Deletion</DialogTitle>
-        <DialogContent>
-          {deleteError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {deleteError}
-            </Alert>
-          )}
-          <DialogContentText id="delete-acl-dialog-description">
-            Are you sure you want to delete this ACL: **{aclId}**? This action cannot be undone. If
-            this ACL is assigned to any resource or is a member of another ACL, deletion will be
-            rejected by the server.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDeleteConfirm}
+        error={deleteError}
+        aclId={aclId}
+      />
     </MainLayout>
   );
 };
-
 export default UpdateAcl;

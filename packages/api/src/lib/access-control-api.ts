@@ -4,16 +4,11 @@ import { AccessControlList, ResourceAction } from './access-control';
 import { getAuthHeaders } from './lmp';
 
 export async function hasAclAssociatedResources(aclId: string): Promise<boolean> {
-  try {
-    const response = await axios.get<{ hasResources: boolean }>(
-      `/api/access-control/has-acl-associated-resources?aclId=${aclId}`,
-      { headers: getAuthHeaders() }
-    );
-    return response.data.hasResources;
-  } catch (error) {
-    console.error(`Error checking if ACL ${aclId} has associated resources:`, error);
-    return false;
-  }
+  const response = await axios.get<{ hasResources: boolean }>(
+    `/api/access-control/has-acl-associated-resources?aclId=${aclId}`,
+    { headers: getAuthHeaders() }
+  );
+  return response.data.hasResources;
 }
 
 export async function getAllAclIds(): Promise<string[]> {
