@@ -16,7 +16,7 @@ const userId = await getUserIdOrSetError(req, res);
   const result = await executeQuery(
     `
     SELECT holidays
-    FROM holidays
+    FROM semesterInfo
     WHERE universityId = ? AND instanceId = ?
     `,
     [universityId, instanceId]
@@ -38,11 +38,11 @@ const userId = await getUserIdOrSetError(req, res);
 
   await executeQuery(
     `
-    UPDATE holidays
-    SET holidays = ?
+    UPDATE semesterInfo
+    SET holidays = ?, userId = ?
     WHERE universityId = ? AND instanceId = ?
     `,
-    [JSON.stringify(filtered), universityId, instanceId]
+    [JSON.stringify(filtered), userId, universityId, instanceId]
   );
 
   res.status(200).json({

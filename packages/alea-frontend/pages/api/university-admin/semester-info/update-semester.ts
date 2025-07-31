@@ -14,12 +14,12 @@ export default async function handler(req, res) {
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    updatedBy,
+    // updatedBy,
     timeZone,
   } = req.body;
 
-  if (!universityId || !instanceId) {
-    return res.status(400).json({ message: 'Missing universityId or instanceId' });
+  if (!universityId || !instanceId || !userId) {
+    return res.status(400).json({ message: 'Missing universityId, instanceId, or userId ' });
   }
 
   const result = (await executeQuery(
@@ -30,9 +30,9 @@ export default async function handler(req, res) {
       semesterEnd = ?,
       lectureStartDate = ?,
       lectureEndDate = ?,
-      updatedBy = ?,
+      userId = ?,
       timeZone = ?,
-      updatedTimestamp = CURRENT_TIMESTAMP
+      updatedAt = CURRENT_TIMESTAMP
     WHERE universityId = ? AND instanceId = ?
     `,
     [
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       semesterEnd,
       lectureStartDate,
       lectureEndDate,
-      updatedBy,
+      userId,
       timeZone || null,
       universityId,
       instanceId,

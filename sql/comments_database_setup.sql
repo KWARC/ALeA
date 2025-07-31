@@ -283,24 +283,16 @@ CREATE TABLE excused(
 CREATE TABLE semesterInfo (
   universityId VARCHAR(50),
   instanceId VARCHAR(50),
-  semesterStart DATE,
-  semesterEnd DATE,
-  lectureStartDate DATE,
-  lectureEndDate DATE,
-  updatedBy VARCHAR(255),
-  updatedTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  semesterStart TIMESTAMP,
+  semesterEnd TIMESTAMP,
+  lectureStartDate TIMESTAMP,
+  lectureEndDate TIMESTAMP,
+  holidays JSON NOT NULL,
   timeZone VARCHAR(100),
+  userId VARCHAR(255),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (universityId, instanceId)
-);
-
-CREATE TABLE holidays (
-  universityId VARCHAR(50),
-  instanceId VARCHAR(50),
-  holidays JSON,
-  PRIMARY KEY (universityId, instanceId),
-  FOREIGN KEY (universityId, instanceId)
-    REFERENCES semesterInfo(universityId, instanceId)
-    ON DELETE CASCADE
 );
 
 

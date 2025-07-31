@@ -10,7 +10,7 @@ export interface SemesterData {
   semesterEnd: string;
   lectureStartDate: string;
   lectureEndDate: string;
-  updatedBy: string;
+  userId: string;
   timeZone: string;
 }
 
@@ -23,6 +23,7 @@ export interface UploadHolidaysRequest {
   universityId: string;
   instanceId: string;
   holidays: Holiday[];
+  userId: string;
 }
 
 export interface EditHolidayRequest {
@@ -30,6 +31,7 @@ export interface EditHolidayRequest {
   instanceId: string;
   originalDate: string;
   updatedHoliday: Holiday;
+  userId?: string;
 }
 
 export interface DeleteSingleHolidayRequest {
@@ -43,7 +45,7 @@ export interface DeleteSingleHolidayRequest {
 /* ====== CONSTANTS ====== */
 
 const SEMESTER_BASE_URL = '/api/university-admin/semester-info';
-const HOLIDAYS_BASE_URL = '/api/university-admin/holidays';
+const HOLIDAYS_BASE_URL = '/api/university-admin/semester-info';
 
 /* ====== SEMESTER APIs ====== */
 
@@ -104,7 +106,7 @@ export async function editHoliday(data: EditHolidayRequest) {
 }
 
 export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
-  const response = await axios.post(`/api/university-admin/holidays/delete-single-holiday`, data, {
+  const response = await axios.post(`/api/university-admin/semester-info/delete-single-holiday`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;

@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   const { universityId, instanceId, holidays } = req.body;
 
-  if (!universityId || !instanceId || !Array.isArray(holidays)) {
+  if (!universityId || !instanceId || !Array.isArray(holidays) || !userId){
     return res.status(400).json({ message: 'Missing or invalid data' });
   }
 
@@ -36,12 +36,13 @@ export default async function handler(req, res) {
 
   const result = await executeQuery(
     `
-    INSERT INTO holidays (universityId, instanceId, holidays)
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE holidays = VALUES(holidays)
+    UPDATE semesterInfo
+    SET holidays = ?, userId = ?
+    WHERE universityId = ? AND instanceId = ?
     `,
-    [universityId, instanceId, JSON.stringify(formattedHolidays)]
+    [JSON.stringify(formattedHolidays), userId, universityId, instanceId]
   );
+
 
   res.status(200).json({
     success: true,

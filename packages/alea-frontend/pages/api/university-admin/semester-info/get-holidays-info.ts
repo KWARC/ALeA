@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const result = (await executeQuery(
     `
     SELECT holidays
-    FROM holidays
+    FROM semesterInfo
     WHERE universityId = ? AND instanceId = ?
     `,
     [universityId, instanceId]

@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    updatedBy,
+    // userId,
     timeZone,
   } = req.body;
 
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     !semesterEnd ||
     !lectureStartDate ||
     !lectureEndDate ||
-    !updatedBy ||
+    !userId ||
     !timeZone
   ) {
     return res.status(400).json({ message: 'Missing required fields' });
@@ -49,8 +49,8 @@ export default async function handler(req, res) {
 
   const result = (await executeQuery(
     `INSERT INTO semesterInfo
-      (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, updatedBy, timeZone)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, userId, timeZone, holidays)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       universityId,
       instanceId,
@@ -58,8 +58,9 @@ export default async function handler(req, res) {
       semesterEnd,
       lectureStartDate,
       lectureEndDate,
-      updatedBy,
+      userId,
       timeZone,
+      JSON.stringify([]), // Set holidays to an empty JSON array
     ]
   )) as { error?: any };
 
