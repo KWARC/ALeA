@@ -50,8 +50,8 @@ import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
-import { calculateLectureProgress } from './CoverageTable';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { calculateLectureProgress } from './CalculateLectureProgress';
 
 interface ColorInfo {
   color: string;

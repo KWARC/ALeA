@@ -91,9 +91,40 @@ const CoverageUpdateTab = () => {
 
             for (const uri in semDurations.sectionDurations) {
               const duration = semDurations.sectionDurations[uri];
-              baseSecInfo[uri] = baseSecInfo[uri] || ({} as SecInfo);
-              baseSecInfo[uri].duration = (baseSecInfo[uri].duration || 0) + duration;
+              if (!baseSecInfo[uri]) continue;
+
+              if (!baseSecInfo[uri].durations) {
+                baseSecInfo[uri].durations = {};
+              }
+
+              baseSecInfo[uri].durations[semKey] = duration;
             }
+          }
+
+          const semesterKeys = Object.keys(durationData).sort();
+          const latestSemester = semesterKeys[semesterKeys.length - 1];
+          const normalizedLatest = latestSemester.trim().toLowerCase();
+
+          for (const uri in baseSecInfo) {
+            const durations = baseSecInfo[uri].durations;
+            if (!durations) continue;
+
+            const previousSemesters = Object.entries(durations).filter(
+              ([key]) => key.trim().toLowerCase() !== normalizedLatest
+            );
+
+            const average =
+              previousSemesters.length > 0
+                ? previousSemesters.reduce((sum, [_, val]) => sum + val, 0) /
+                  previousSemesters.length
+                : null;
+
+            const latestDuration = durations[latestSemester] ?? null;
+
+            baseSecInfo[uri].averagePastDuration = average;
+            baseSecInfo[uri].latestDuration = latestDuration;
+
+            const sectionTitle = baseSecInfo[uri].title || uri;
           }
         } catch (durationError) {
           console.warn('Could not fetch durations:', durationError);
