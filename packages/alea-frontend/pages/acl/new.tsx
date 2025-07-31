@@ -95,7 +95,7 @@ const CreateACl: NextPage = () => {
     let isValidUpdater = !!updaterACLId;
     if (isValidUpdater) {
       isValidUpdater = updaterACLId === aclId || (await isValid(updaterACLId));
-      
+
     }
     setIsUpdaterACLValid(isValidUpdater);
   };
