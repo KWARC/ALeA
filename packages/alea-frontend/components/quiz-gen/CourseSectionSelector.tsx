@@ -149,7 +149,7 @@ export const CourseSectionSelector = ({
               const resp = await axios.get(
                 `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
               );
-              const problemUris: string[] = resp.data;
+              const problemUris: string[] = resp.data.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
