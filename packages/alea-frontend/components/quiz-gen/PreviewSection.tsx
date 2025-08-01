@@ -20,15 +20,14 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
-  
-const isModified = useMemo(() => {
-  const original = isGenerated(problemData) ? problemData.problemStex : '';
-  return editableSTeX !== original;
-}, [editableSTeX, problemData]);
+  const isModified = useMemo(() => {
+    const original = isGenerated(problemData) ? problemData.problemStex : '';
+    return editableSTeX !== original;
+  }, [editableSTeX, problemData]);
 
-useEffect(() => {
-  setPreviewMode(isModified ? "stex" : "json");
-}, [isModified]);
+  useEffect(() => {
+    setPreviewMode(isModified ? 'stex' : 'json');
+  }, [isModified]);
 
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">

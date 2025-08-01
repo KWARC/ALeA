@@ -10,7 +10,12 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import {  finalizeProblem, generateQuizProblems, QuizProblem, saveProblemDraft } from '@stex-react/api';
+import {
+  finalizeProblem,
+  generateQuizProblems,
+  QuizProblem,
+  saveProblemDraft,
+} from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -30,8 +35,8 @@ function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     sectionId: qp.sectionId,
     sectionUri: qp.sectionUri,
     problemStex: qp.problemStex,
-    manualEdits:qp.manualEdits,
-    ...qp.problemJson, 
+    manualEdits: qp.manualEdits,
+    ...qp.problemJson,
   };
 }
 
@@ -90,7 +95,6 @@ export const VariantDialog = ({
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
-  const problemId = isFlatQuizProblem(problemData) ? problemData.problemId : undefined;
   const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
   const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
   const handleConfigChange = (field, value) => {
@@ -131,7 +135,7 @@ export const VariantDialog = ({
       setVariantOptionsLoading(true);
 
       try {
-        let copyResult:QuizProblem[];
+        let copyResult: QuizProblem[];
 
         if ('problemId' in problemData) {
           copyResult = await generateQuizProblems({
@@ -149,8 +153,13 @@ export const VariantDialog = ({
         }
 
         const copiedProblem = copyResult?.[0];
-        if(copiedProblem?.manualEdits?.length>0) 
-        setEditableSTeX(copiedProblem?.manualEdits[copiedProblem?.manualEdits.length-1]);
+        console.log({ copiedProblem });
+        if (copiedProblem?.manualEdits?.length > 0) {
+          setEditableSTeX(copiedProblem.manualEdits[copiedProblem.manualEdits.length - 1]);
+        } else {
+          setEditableSTeX(copiedProblem?.problemStex || '');
+        }
+
         setPreviewProblemData(flattenQuizProblem(copiedProblem));
         if (!copiedProblem) return;
         //const result = await checkPossibleVariants(copiedProblem.problemId);
@@ -191,14 +200,11 @@ export const VariantDialog = ({
       console.error('Cannot create variant without problemId');
       return;
     }
-    const result = await saveProblemDraft(
-       previewProblemData.problemId,
-      editableSTeX,
-    );
+    const result = await saveProblemDraft(previewProblemData.problemId, editableSTeX);
     console.log('result', result);
   };
   const markProblemFinal = async () => {
-    if (editableSTeX)await saveProblemDraft(previewProblemData.problemId,editableSTeX);
+    if (editableSTeX) await saveProblemDraft(previewProblemData.problemId, editableSTeX);
     await finalizeProblem(previewProblemData.problemId);
   };
 
@@ -359,7 +365,7 @@ export const VariantDialog = ({
         </Button>
         <Button
           onClick={async () => {
-           await saveManualEdit();
+            await saveManualEdit();
             clearSelection();
           }}
           sx={{ textTransform: 'none' }}

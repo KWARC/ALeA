@@ -36,7 +36,6 @@ export function QuizPanel({
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const handleOpenVariantDialog = () => setVariantDialogOpen(true);
   const handleCloseVariantDialog = () => setVariantDialogOpen(false);
-  console.log({currentProblem});
   const handleCreateVariant = (payload: any) => {
     console.log('Creating multi-variant payload:', payload);
 
