@@ -13,11 +13,24 @@ import { SecInfo } from '../../types';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import { FeedbackSection, HiddenFeedback } from './Feedback';
 import { VariantDialog } from './VariantDialog';
+import { generateQuizProblems, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
 
 export const handleGoToSection = (courseId: string, sectionId: string) => {
   const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
   window.open(url, '_blank');
 };
+
+export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
+  return {
+    problemId: qp.problemId,
+    courseId: qp.courseId,
+    sectionId: qp.sectionId,
+    sectionUri: qp.sectionUri,
+    problemStex: qp.problemStex,
+    manualEdits: qp.manualEdits,
+    ...qp.problemJson,
+  };
+}
 
 export function QuizPanel({
   problems,
@@ -34,14 +47,51 @@ export function QuizPanel({
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
-  const handleOpenVariantDialog = () => setVariantDialogOpen(true);
-  const handleCloseVariantDialog = () => setVariantDialogOpen(false);
-  const handleCreateVariant = (payload: any) => {
-    console.log('Creating multi-variant payload:', payload);
+  const [copiedProblem, setCopiedProblem] = useState<FlatQuizProblem | null>(null);
 
-    // TODO: call backend API
+  const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
+    if (!problemData) return;
+    try {
+      let copiedProblem: QuizProblem | undefined;
 
-    handleCloseVariantDialog();
+      if ('problemId' in problemData) {
+        const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
+        copiedProblem =
+          draft && Object.keys(draft).length > 0
+            ? draft
+            : (await generateQuizProblems({ mode: 'copy', problemId: problemData.problemId }))?.[0];
+      } else if ('uri' in problemData && courseId) {
+        const draft = await getLatestProblemDraft({
+          courseId,
+          sectionId: problemData.sectionId,
+          sectionUri: problemData.sectionUri,
+          problemUri: problemData.uri,
+        });
+        copiedProblem =
+          draft && Object.keys(draft).length > 0
+            ? draft
+            : (
+                await generateQuizProblems({
+                  mode: 'copy',
+                  courseId,
+                  sectionId: problemData.sectionId,
+                  sectionUri: problemData.sectionUri,
+                  problemUri: problemData.uri,
+                })
+              )?.[0];
+      }
+
+      if (!copiedProblem) return;
+
+      setCopiedProblem(flattenQuizProblem(copiedProblem));
+    } finally {
+      console.log('hello');
+    }
+  };
+
+  const handleOpenVariantDialog = async () => {
+    await createCopyAndCheckVariants(currentProblem);
+    setVariantDialogOpen(true);
   };
 
   if (!currentProblem) {
@@ -123,8 +173,7 @@ export function QuizPanel({
       <VariantDialog
         open={variantDialogOpen}
         onClose={() => setVariantDialogOpen(false)}
-        onCreate={handleCreateVariant}
-        problemData={currentProblem}
+        problemData={copiedProblem}
         courseId={courseId}
       />
     </Box>

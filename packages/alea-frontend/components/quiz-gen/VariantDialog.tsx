@@ -1,4 +1,3 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
 import {
   Box,
   Button,
@@ -11,35 +10,17 @@ import {
   TextField,
 } from '@mui/material';
 import {
+  checkPossibleVariants,
   finalizeProblem,
-  generateQuizProblems,
-  getLatestProblemDraft,
-  QuizProblem,
-  saveProblemDraft,
+  saveProblemDraft
 } from '@stex-react/api';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
+import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
-
-function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
-  return (data as FlatQuizProblem).problemId !== undefined;
-}
-
-function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
-  return {
-    problemId: qp.problemId,
-    courseId: qp.courseId,
-    sectionId: qp.sectionId,
-    sectionUri: qp.sectionUri,
-    problemStex: qp.problemStex,
-    manualEdits: qp.manualEdits,
-    ...qp.problemJson,
-  };
-}
 
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 
@@ -59,15 +40,13 @@ export interface VariantConfig {
 interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (payload: { problemId: number; variantConfig: VariantConfig }) => void;
-  problemData?: FlatQuizProblem | ExistingProblem;
+  problemData: FlatQuizProblem;
   courseId: string;
 }
 
 export const VariantDialog = ({
   open,
   onClose,
-  onCreate,
   problemData,
   courseId,
 }: VariantDialogProps) => {
@@ -86,7 +65,6 @@ export const VariantDialog = ({
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
-  // const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
   const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
@@ -96,8 +74,8 @@ export const VariantDialog = ({
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
-  const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
-  const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex:'';
+  const mcqOptions =problemData?.options || [];
+  const STeX = problemData?.problemStex|| '';
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -114,73 +92,21 @@ export const VariantDialog = ({
     });
   };
 
-  // async function fetchRawStexFromUri(problemUri: string) {
-  //   const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
-  //   if (!sourceLink) return null;
-  //   const rawStexLink = sourceLink.replace('-/blob', '-/raw');
-  //   const response = await axios.get(rawStexLink);
-  //   return response.data;
-  // }
-
-  // useEffect(() => {
-  //   if (!isFlatQuizProblem(problemData))
-  //     fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
-  //       setStex(fetchedSTeX);
-  //     });
-  // }, [problemData]);
-
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
-        let copiedProblem: QuizProblem;
-        if ('problemId' in problemData) {
-          console.log('in');
-          const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
-          console.log({ draft });
-          if (draft && Object.keys(draft).length > 0) {
-            copiedProblem = draft;
-          } else {
-            const generated = await generateQuizProblems({
-              mode: 'copy',
-              problemId: problemData.problemId,
-            });
-            copiedProblem = generated?.[0];
-          }
-        } else if ('uri' in problemData && courseId) {
-          const draft = await getLatestProblemDraft({
-            courseId,
-            sectionId: problemData.sectionId,
-            sectionUri: problemData.sectionUri,
-            problemUri: problemData.uri,
-          });
 
-          if (draft && Object.keys(draft).length > 0) {
-            copiedProblem = draft;
-          } else {
-            const generated = await generateQuizProblems({
-              mode: 'copy',
-              courseId,
-              sectionId: problemData.sectionId,
-              sectionUri: problemData.sectionUri,
-              problemUri: problemData.uri,
-            });
-
-            copiedProblem = generated?.[0];
-          }
-        }
-
-        console.log({ copiedProblem });
-        if (copiedProblem?.manualEdits?.length > 0) {
-          setEditableSTeX(copiedProblem.manualEdits[copiedProblem.manualEdits.length - 1]);
+        console.log({ problemData });
+        if (problemData?.manualEdits?.length > 0) {
+          setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
         } else {
-          setEditableSTeX(copiedProblem.problemStex);
+          setEditableSTeX(problemData.problemStex);
         }
-
-        setPreviewProblemData(flattenQuizProblem(copiedProblem));
-        if (!copiedProblem) return;
-        //const result = await checkPossibleVariants(copiedProblem.problemId);
+        
+        if (!problemData) return;
+        //const result = await checkPossibleVariants(problemData.problemId);
         const result = {
           modify_choices: {
             applicable: true,
@@ -366,7 +292,7 @@ export const VariantDialog = ({
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={previewProblemData}
+            problemData={previewProblemData ??problemData}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />

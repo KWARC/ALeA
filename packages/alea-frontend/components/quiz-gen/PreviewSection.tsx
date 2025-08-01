@@ -1,9 +1,8 @@
-import { Box, Switch, TextField, Tooltip, Typography } from '@mui/material';
-import { UriProblemViewer } from '@stex-react/stex-react-renderer';
-import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
-import { QuizProblemViewer } from '../GenerateQuiz';
 import InfoIcon from '@mui/icons-material/Info';
+import { Box, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import { useEffect, useMemo } from 'react';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
+import { QuizProblemViewer } from '../GenerateQuiz';
 
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
