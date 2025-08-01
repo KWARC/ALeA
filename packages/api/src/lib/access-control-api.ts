@@ -169,8 +169,6 @@ export async function addRemoveMember({
 }
 
 export type UpdateACLRequest = Omit<AccessControlList, 'updatedAt' | 'createdAt'>;
-
 export type CreateACLRequest = Omit<AccessControlList, 'createdAt' | 'updatedAt'>;
-
 export type CreateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
 export type UpdateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
