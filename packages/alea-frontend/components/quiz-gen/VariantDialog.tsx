@@ -18,7 +18,7 @@ import {
   saveProblemDraft,
 } from '@stex-react/api';
 import axios from 'axios';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
@@ -86,7 +86,7 @@ export const VariantDialog = ({
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
-  const [stex, setStex] = useState(undefined);
+  // const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
   const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
@@ -97,7 +97,7 @@ export const VariantDialog = ({
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
   const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
-  const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
+  const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex:'';
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -114,20 +114,20 @@ export const VariantDialog = ({
     });
   };
 
-  async function fetchRawStexFromUri(problemUri: string) {
-    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
-    if (!sourceLink) return null;
-    const rawStexLink = sourceLink.replace('-/blob', '-/raw');
-    const response = await axios.get(rawStexLink);
-    return response.data;
-  }
+  // async function fetchRawStexFromUri(problemUri: string) {
+  //   const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+  //   if (!sourceLink) return null;
+  //   const rawStexLink = sourceLink.replace('-/blob', '-/raw');
+  //   const response = await axios.get(rawStexLink);
+  //   return response.data;
+  // }
 
-  useEffect(() => {
-    if (!isFlatQuizProblem(problemData))
-      fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
-        setStex(fetchedSTeX);
-      });
-  }, [problemData]);
+  // useEffect(() => {
+  //   if (!isFlatQuizProblem(problemData))
+  //     fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
+  //       setStex(fetchedSTeX);
+  //     });
+  // }, [problemData]);
 
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
@@ -135,47 +135,47 @@ export const VariantDialog = ({
       setVariantOptionsLoading(true);
       try {
         let copiedProblem: QuizProblem;
-    if ('problemId' in problemData) {
-      console.log("in");
-    const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
-    console.log({draft});
-    if (draft && Object.keys(draft).length > 0) {
-      copiedProblem = draft;
-    } else {
-      const generated = await generateQuizProblems({
-        mode: 'copy',
-        problemId: problemData.problemId,
-      });
-      copiedProblem = generated?.[0];
-    }
-  } else if ('uri' in problemData && courseId) {
-    const draft = await getLatestProblemDraft({
-      courseId,
-      sectionId: problemData.sectionId,
-      sectionUri: problemData.sectionUri,
-      problemUri: problemData.uri,
-    });
+        if ('problemId' in problemData) {
+          console.log('in');
+          const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
+          console.log({ draft });
+          if (draft && Object.keys(draft).length > 0) {
+            copiedProblem = draft;
+          } else {
+            const generated = await generateQuizProblems({
+              mode: 'copy',
+              problemId: problemData.problemId,
+            });
+            copiedProblem = generated?.[0];
+          }
+        } else if ('uri' in problemData && courseId) {
+          const draft = await getLatestProblemDraft({
+            courseId,
+            sectionId: problemData.sectionId,
+            sectionUri: problemData.sectionUri,
+            problemUri: problemData.uri,
+          });
 
-    if (draft && Object.keys(draft).length > 0) {
-      copiedProblem = draft;
-    } else {
-      const generated = await generateQuizProblems({
-        mode: 'copy',
-        courseId,
-        sectionId: problemData.sectionId,
-        sectionUri: problemData.sectionUri,
-        problemUri: problemData.uri,
-      });
+          if (draft && Object.keys(draft).length > 0) {
+            copiedProblem = draft;
+          } else {
+            const generated = await generateQuizProblems({
+              mode: 'copy',
+              courseId,
+              sectionId: problemData.sectionId,
+              sectionUri: problemData.sectionUri,
+              problemUri: problemData.uri,
+            });
 
-      copiedProblem = generated?.[0];
-    }
-  }
+            copiedProblem = generated?.[0];
+          }
+        }
 
         console.log({ copiedProblem });
         if (copiedProblem?.manualEdits?.length > 0) {
           setEditableSTeX(copiedProblem.manualEdits[copiedProblem.manualEdits.length - 1]);
         } else {
-          setEditableSTeX(copiedProblem?.problemStex || '');
+          setEditableSTeX(copiedProblem.problemStex);
         }
 
         setPreviewProblemData(flattenQuizProblem(copiedProblem));
@@ -213,6 +213,7 @@ export const VariantDialog = ({
   useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
+
   const saveManualEdit = async () => {
     if (!previewProblemData) {
       console.error('Cannot create variant without problemId');
@@ -315,7 +316,7 @@ export const VariantDialog = ({
                       variantConfig={variantConfig}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
-                      problemData={problemData}
+                      problemData={previewProblemData}
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
@@ -365,7 +366,7 @@ export const VariantDialog = ({
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={previewProblemData ?? problemData}
+            problemData={previewProblemData}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />

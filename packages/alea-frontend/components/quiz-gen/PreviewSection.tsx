@@ -8,7 +8,7 @@ import { useEffect, useMemo } from 'react';
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
   setPreviewMode: (mode: 'json' | 'stex') => void;
-  problemData?: FlatQuizProblem | ExistingProblem;
+  problemData?: FlatQuizProblem;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
 }
@@ -21,7 +21,7 @@ export const PreviewSection = ({
   setEditableSTeX,
 }: PreviewSectionProps) => {
   const isModified = useMemo(() => {
-    const original = isGenerated(problemData) ? problemData.problemStex : '';
+    const original = problemData?.problemStex;
     return editableSTeX !== original;
   }, [editableSTeX, problemData]);
 
@@ -77,10 +77,8 @@ export const PreviewSection = ({
         position="relative"
       >
         {previewMode === 'json' ? (
-          isGenerated(problemData) ? (
+          problemData ? (
             <QuizProblemViewer problemData={problemData} />
-          ) : isExisting(problemData) ? (
-            <UriProblemViewer uri={problemData.uri} />
           ) : (
             <Box
               sx={{
