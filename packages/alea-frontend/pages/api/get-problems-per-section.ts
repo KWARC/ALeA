@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const courseId = req.query.courseId as string | undefined;
 
   if (!sectionUri) {
-    return res.status(422).send('Missing required query params: sectionUri or courseId');
+    return res.status(422).send('Missing required query param: sectionUri');
   }
 
   let toc = [];
