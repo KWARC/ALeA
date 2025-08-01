@@ -15,7 +15,7 @@ import {
 import {
   fetchGeneratedProblems,
   generateQuizProblems,
-  getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
+  getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
   getCoverageTimeline,
   getCourseProblemCounts,
@@ -186,7 +186,12 @@ export const CourseSectionSelector = ({
   const generateNewProblems = async () => {
     setGenerating(true);
     try {
-      const response = await generateQuizProblems(courseId, startSectionUri, endSectionUri);
+      const response = await generateQuizProblems({
+        mode: 'new',
+        courseId,
+        startSectionUri,
+        endSectionUri,
+      });
       if (!response?.length) {
         return;
       }

@@ -3,7 +3,9 @@ import {
   CompletionEval,
   CreateGptProblemsRequest,
   CreateGptProblemsResponse,
+  GenerationParams,
   GptRun,
+  PossibleVariantsResult,
   Template,
 } from './gpt-problems';
 import { getAuthHeaders } from './lmp';
@@ -115,14 +117,11 @@ export async function fetchGeneratedProblems(
   });
   return resp.data as QuizProblem[];
 }
-export async function generateQuizProblems(
-  courseId: string,
-  startSectionUri: string,
-  endSectionUri: string
-) {
+
+export async function generateQuizProblems(generationParams: GenerationParams) {
   const resp = await axios.post(
     '/api/gpt-redirect',
-    { courseId, startSectionUri, endSectionUri },
+    { generationParams },
     {
       params: {
         apiname: 'generate',
@@ -132,6 +131,21 @@ export async function generateQuizProblems(
     }
   );
   return resp.data as QuizProblem[];
+}
+
+export async function checkPossibleVariants(problemId: number) {
+  const resp = await axios.post(
+    '/api/gpt-redirect',
+    { problemId },
+    {
+      params: {
+        apiname: 'check-possible-variants',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  return resp.data as PossibleVariantsResult;
 }
 
 export async function postFeedback(data: {
@@ -161,7 +175,7 @@ export async function getFeedback(problemId: number) {
   return resp.data;
 }
 
-export async function getCourseGeneratedProblemsBySection(courseId: string) {
+export async function getCourseGeneratedProblemsCountBySection(courseId: string) {
   const resp = await axios.get('/api/gpt-redirect', {
     params: {
       courseId: courseId,
