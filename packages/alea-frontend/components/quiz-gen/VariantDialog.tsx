@@ -141,16 +141,17 @@ export const VariantDialog = ({
   }, [STeX]);
 
   const saveManualEdit = async () => {
-    if (!previewProblemData) {
+    if (!problemData) {
       console.error('Cannot create variant without problemId');
       return;
     }
-    const result = await saveProblemDraft(previewProblemData.problemId, editableSTeX);
+    const result = await saveProblemDraft(problemData.problemId, editableSTeX);
     console.log('result', result);
   };
+  
   const markProblemFinal = async () => {
-    if (editableSTeX) await saveProblemDraft(previewProblemData.problemId, editableSTeX);
-    await finalizeProblem(previewProblemData.problemId);
+    if (editableSTeX) await saveProblemDraft(problemData.problemId, editableSTeX);
+    await finalizeProblem(problemData.problemId);
   };
 
   return (
@@ -242,7 +243,7 @@ export const VariantDialog = ({
                       variantConfig={variantConfig}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
-                      problemData={previewProblemData}
+                      problemData={problemData}
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
