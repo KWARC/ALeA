@@ -19,7 +19,7 @@ import {
   getCourseInfo,
   getCoverageTimeline,
   getCourseProblemCounts,
-  getProblemsPerSections,
+  getProblemsPerSection,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
@@ -146,7 +146,7 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await getProblemsPerSections(sectionUri);
+              const resp = await getProblemsPerSection(sectionUri);
               const problemUris: string[] = resp.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,

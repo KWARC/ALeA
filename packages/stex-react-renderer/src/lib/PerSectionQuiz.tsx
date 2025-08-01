@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
-import { getProblemsPerSections } from '@stex-react/api';
+import { getProblemsPerSection } from '@stex-react/api';
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -115,7 +115,7 @@ export function PerSectionQuiz({
 
     setIsLoadingProblemUris(true);
 
-    getProblemsPerSections(sectionUri, courseId)
+    getProblemsPerSection(sectionUri, courseId)
       .then((problems) => {
         const map: Record<string, string[]> = {};
         for (const p of problems) {
