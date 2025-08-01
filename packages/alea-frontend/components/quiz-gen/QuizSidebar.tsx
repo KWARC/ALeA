@@ -115,7 +115,7 @@ export const QuestionSidebar = ({
             const content = isGenerated(item) ? (
               <Tooltip title={item.problem}>
                 <Typography variant="subtitle2" fontWeight={isSelected ? 600 : 500} color="#0d47a1">
-                  Q{idx + 1}: {item.problem.slice(0, 50)}...
+                  Q{idx + 1}: {item?.problem?.slice(0, 50)}...
                 </Typography>
               </Tooltip>
             ) : (

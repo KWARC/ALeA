@@ -13,11 +13,12 @@ import {
 import {
   finalizeProblem,
   generateQuizProblems,
+  getLatestProblemDraft,
   QuizProblem,
   saveProblemDraft,
 } from '@stex-react/api';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
@@ -131,28 +132,45 @@ export const VariantDialog = ({
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
       if (!open || !problemData) return;
-
       setVariantOptionsLoading(true);
-
       try {
-        let copyResult: QuizProblem[];
+        let copiedProblem: QuizProblem;
+    if ('problemId' in problemData) {
+      console.log("in");
+    const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
+    console.log({draft});
+    if (draft && Object.keys(draft).length > 0) {
+      copiedProblem = draft;
+    } else {
+      const generated = await generateQuizProblems({
+        mode: 'copy',
+        problemId: problemData.problemId,
+      });
+      copiedProblem = generated?.[0];
+    }
+  } else if ('uri' in problemData && courseId) {
+    const draft = await getLatestProblemDraft({
+      courseId,
+      sectionId: problemData.sectionId,
+      sectionUri: problemData.sectionUri,
+      problemUri: problemData.uri,
+    });
 
-        if ('problemId' in problemData) {
-          copyResult = await generateQuizProblems({
-            mode: 'copy',
-            problemId: problemData.problemId,
-          });
-        } else if ('uri' in problemData && courseId) {
-          copyResult = await generateQuizProblems({
-            mode: 'copy',
-            problemUri: problemData.uri,
-            courseId,
-            sectionId: problemData.sectionId,
-            sectionUri: problemData.sectionUri,
-          });
-        }
+    if (draft && Object.keys(draft).length > 0) {
+      copiedProblem = draft;
+    } else {
+      const generated = await generateQuizProblems({
+        mode: 'copy',
+        courseId,
+        sectionId: problemData.sectionId,
+        sectionUri: problemData.sectionUri,
+        problemUri: problemData.uri,
+      });
 
-        const copiedProblem = copyResult?.[0];
+      copiedProblem = generated?.[0];
+    }
+  }
+
         console.log({ copiedProblem });
         if (copiedProblem?.manualEdits?.length > 0) {
           setEditableSTeX(copiedProblem.manualEdits[copiedProblem.manualEdits.length - 1]);

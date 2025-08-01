@@ -98,8 +98,8 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           </IconButton>
         </Tooltip>
       </Box>
-      {(problemData.problemType.toLowerCase() === 'scq' ||
-        problemData.problemType.toLowerCase() === 'mcq') &&
+      {(problemData?.problemType?.toLowerCase() === 'scq' ||
+        problemData?.problemType?.toLowerCase() === 'mcq') &&
         renderOptionsWithFeedback()}
 
       {problemData.problemType === 'FILL_IN' && (

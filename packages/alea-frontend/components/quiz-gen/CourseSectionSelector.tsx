@@ -258,7 +258,7 @@ export const CourseSectionSelector = ({
             onChange={(e) =>
               updateRouterQuery(
                 router,
-                { courseId: e.target.value, startSectionId: '', endSectionId: '' },
+                { courseId: e.target.value, startSectionUri: '', endSectionUri: '' },
                 true
               )
             }

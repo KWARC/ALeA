@@ -118,6 +118,29 @@ export async function fetchGeneratedProblems(
   });
   return resp.data as QuizProblem[];
 }
+type ByProblemId = {
+  problemId: number;
+};
+
+type ByProblemUri = {
+  courseId: string;
+  sectionId: string;
+  sectionUri: string;
+  problemUri: string;
+};
+
+export async function getLatestProblemDraft(draftParams: ByProblemId | ByProblemUri) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'get-latest-problem-draft',
+      projectName: 'quiz-gen',
+      ...draftParams
+     },
+    headers: getAuthHeaders(),
+  });
+
+  return resp.data as QuizProblem;
+}
 
 export async function generateQuizProblems(generationParams: GenerationParams) {
   const resp = await axios.post(
