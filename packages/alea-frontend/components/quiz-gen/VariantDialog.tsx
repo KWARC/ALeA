@@ -75,7 +75,7 @@ export const VariantDialog = ({
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
   const mcqOptions =problemData?.options || [];
-  const STeX = problemData?.problemStex|| '';
+  const STeX = problemData?.problemStex ;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -145,8 +145,7 @@ export const VariantDialog = ({
       console.error('Cannot create variant without problemId');
       return;
     }
-    const result = await saveProblemDraft(problemData.problemId, editableSTeX);
-    console.log('result', result);
+    await saveProblemDraft(problemData.problemId, editableSTeX);
   };
   
   const markProblemFinal = async () => {
@@ -303,6 +302,7 @@ export const VariantDialog = ({
       <DialogActions sx={{ p: 3, gap: 1 }}>
         <Button
           onClick={() => {
+            clearSelection();
             onClose();
           }}
           sx={{ textTransform: 'none' }}
