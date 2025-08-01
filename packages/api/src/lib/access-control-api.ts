@@ -3,6 +3,14 @@ import axios from 'axios';
 import { AccessControlList, ResourceAction } from './access-control';
 import { getAuthHeaders } from './lmp';
 
+export async function hasAclAssociatedResources(aclId: string): Promise<boolean> {
+  const response = await axios.get<{ hasResources: boolean }>(
+    `/api/access-control/has-acl-associated-resources?aclId=${aclId}`,
+    { headers: getAuthHeaders() }
+  );
+  return response.data.hasResources;
+}
+
 export async function getAllAclIds(): Promise<string[]> {
   const resp = await axios.get('/api/access-control/get-all-acl-ids');
   return resp.data as string[];
@@ -17,14 +25,16 @@ export async function createAcl(newAcl: CreateACLRequest): Promise<void> {
   await axios.post('/api/access-control/create-acl', newAcl);
 }
 
+export async function deleteAcl(aclId: string): Promise<void> {
+  await axios.post('/api/access-control/delete-acl', { id: aclId }, { headers: getAuthHeaders() });
+}
+
 export async function getAcl(aclId: string): Promise<AccessControlList> {
   const resp = await axios.get(`/api/access-control/get-acl?id=${aclId}`);
   return resp.data as AccessControlList;
 }
 
-export async function getAclUserDetails(
-  aclId: string
-) {
+export async function getAclUserDetails(aclId: string) {
   const resp = await axios.get(`/api/access-control/get-acl-userdetails?id=${aclId}`);
   return resp.data as { fullName: string; userId: string }[];
 }
@@ -159,8 +169,6 @@ export async function addRemoveMember({
 }
 
 export type UpdateACLRequest = Omit<AccessControlList, 'updatedAt' | 'createdAt'>;
-
 export type CreateACLRequest = Omit<AccessControlList, 'createdAt' | 'updatedAt'>;
-
 export type CreateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
 export type UpdateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
