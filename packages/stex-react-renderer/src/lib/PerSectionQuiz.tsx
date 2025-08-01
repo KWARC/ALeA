@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
-import { getProblemsBySection } from '@stex-react/api';
+import { getProblemsPerSections } from '@stex-react/api';
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -106,31 +106,46 @@ export function PerSectionQuiz({
   const [tabIndex, setTabIndex] = useState(0);
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   useEffect(() => {
-    if (cachedProblemUris) return;
-    // if(!sectionUri)return;
+    if (cachedProblemUris && cachedProblemUris.length > 0) {
+      setProblemUris(cachedProblemUris);
+      setIsSubmitted(cachedProblemUris.map(() => false));
+      setResponses(cachedProblemUris.map(() => undefined));
+      return;
+    }
+
     setIsLoadingProblemUris(true);
 
-    getProblemsBySection(sectionUri, courseId)
+    getProblemsPerSections(sectionUri, courseId)
       .then((problems) => {
-        const categoryMap: Record<string, string[]> = {};
+        const map: Record<string, string[]> = {};
         for (const p of problems) {
-          if (!categoryMap[p.category]) categoryMap[p.category] = [];
-          categoryMap[p.category].push(p.problemId);
+          if (!map[p.category]) map[p.category] = [];
+          map[p.category].push(p.problemId);
         }
-        setCategoryMap(categoryMap);
+        setCategoryMap(map);
 
         let selected: string[] = [];
+
         if (category) {
-          selected = categoryMap[category] || [];
+          selected = map[category] || [];
           if (setCachedProblemUris) {
             setCachedProblemUris(selected);
           }
         } else {
-          const selectedCategory =
-            Object.keys(categoryMap)[tabIndex] || Object.keys(categoryMap)[0];
-          selected = categoryMap[selectedCategory] || [];
+          const categoryKeys = Object.keys(map);
+          if (categoryKeys.length === 0) {
+            setProblemUris([]);
+            setIsSubmitted([]);
+            setResponses([]);
+            setIsLoadingProblemUris(false);
+            return;
+          }
+
+          const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
+          selected = map[selectedCategory] || [];
+
           if (setCachedProblemUris) {
-            const all = Object.values(categoryMap).flat();
+            const all = Object.values(map).flat();
             setCachedProblemUris(all);
           }
         }
@@ -141,7 +156,7 @@ export function PerSectionQuiz({
         setIsLoadingProblemUris(false);
       })
       .catch(() => setIsLoadingProblemUris(false));
-  }, [sectionUri, courseId, cachedProblemUris, category, tabIndex]);
+  }, [sectionUri, courseId]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
   if (!problemUris.length) {
@@ -191,12 +206,15 @@ export function PerSectionQuiz({
           <Tabs
             value={tabIndex}
             onChange={(_, idx) => {
-              setTabIndex(idx);
-              const selectedCategory = Object.keys(categoryMap)[idx];
+              const categoryKeys = Object.keys(categoryMap);
+              const safeIdx = Math.min(idx, categoryKeys.length - 1);
+              setTabIndex(safeIdx);
+              const selectedCategory = categoryKeys[safeIdx];
               const selected = categoryMap[selectedCategory] || [];
               setProblemUris(selected);
               setIsSubmitted(selected.map(() => false));
               setResponses(selected.map(() => undefined));
+              setProblemIdx(0);
             }}
           >
             {Object.keys(categoryMap).map((cat) => {

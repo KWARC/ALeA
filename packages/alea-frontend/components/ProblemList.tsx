@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
-import { getProblemCountsByCourse } from '@stex-react/api';
+import { getCourseProblemCounts } from '@stex-react/api';
 
 interface TitleMetadata {
   uri?: string;
@@ -52,7 +52,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
   useEffect(() => {
     if (!courseId) return;
-    getProblemCountsByCourse(courseId)
+    getCourseProblemCounts(courseId)
       .then((data) => setProblemCounts(data))
       .catch((err) => console.error('Error fetching problem counts:', err));
   }, [courseId]);
@@ -74,11 +74,14 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   });
 
   const seeSectionProblems = (sectionUri?: string, sectionTitle?: string) => {
-    router.push(
-      `/per-section-quiz?sectionUri=${encodeURIComponent(
-        sectionUri
-      )}&courseId=${courseId}&sectionTitle=${encodeURIComponent(sectionTitle)}`
-    );
+    router.push({
+      pathname: '/per-section-quiz',
+      query: {
+        sectionUri,
+        courseId,
+        sectionTitle,
+      },
+    });
   };
 
   const goToSection = (sectionId?: string) => {

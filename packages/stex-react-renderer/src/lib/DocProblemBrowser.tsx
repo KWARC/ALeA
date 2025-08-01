@@ -9,7 +9,7 @@ import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
 import { getFlamsServer } from '@kwarc/ftml-react';
-import { getProblemCountsByCourse } from '@stex-react/api';
+import { getCourseProblemCounts } from '@stex-react/api';
 
 export function DocProblemBrowser({
   notesDocUri,
@@ -57,9 +57,9 @@ export function DocProblemBrowser({
   useEffect(() => {
     if (!courseId) return;
 
-    getProblemCountsByCourse(courseId).then((resp) => {
-      console.log(resp.data);
-      setProblemCounts(resp.data);
+    getCourseProblemCounts(courseId).then((counts) => {
+      console.log(counts);
+      setProblemCounts(counts);
     });
   }, [courseId, notesDocUri]);
   if (!toc?.length) return <CircularProgress />;

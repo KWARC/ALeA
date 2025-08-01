@@ -1,18 +1,28 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
-export async function getProblemsBySection(sectionUri: string, courseId?: string) {
-  const resp = await axios.get(`/api/get-problems-by-section`, {
+export interface ProblemData {
+  problemId: string;
+  category: string;
+  labels: string[];
+}
+
+export interface CourseProblemCounts {
+  [sectionUri: string]: number;
+}
+
+export async function getProblemsPerSections(sectionUri: string, courseId?: string) {
+  const resp = await axios.get(`/api/get-problems-per-section`, {
     params: {
       sectionUri,
       ...(courseId ? { courseId } : {}),
     },
   });
-  return resp.data;
+  return resp.data as ProblemData[];
 }
 
-export async function getProblemCountsByCourse(courseId: string) {
+export async function getCourseProblemCounts(courseId: string) {
   const resp = await axios.get(`/api/get-course-problem-counts`, {
     params: { courseId },
   });
-  return resp.data;
+  return resp.data as CourseProblemCounts;
 }

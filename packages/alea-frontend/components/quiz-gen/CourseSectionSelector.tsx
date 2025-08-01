@@ -18,8 +18,8 @@ import {
   getCourseGeneratedProblemsBySection as getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
   getCoverageTimeline,
-  getProblemCountsByCourse,
-  getProblemsBySection,
+  getCourseProblemCounts,
+  getProblemsPerSections,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
@@ -85,7 +85,7 @@ export const CourseSectionSelector = ({
     }
     fetchCoverageTimeline();
   }, []);
-
+  console.log('courseid', courseId);
   useEffect(() => {
     const getSections = async () => {
       if (!courseId) return;
@@ -126,9 +126,9 @@ export const CourseSectionSelector = ({
     const fetchCounts = async () => {
       if (!courseId) return;
       const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
-      const existingCountsResp = await getProblemCountsByCourse(courseId);
+      const existingCountsResp = await getCourseProblemCounts(courseId);
       setGeneratedProblemsCount(generatedCounts);
-      setExistingProblemsCount(existingCountsResp.data);
+      setExistingProblemsCount(existingCountsResp);
     };
     fetchCounts();
   }, [courseId]);
@@ -146,8 +146,8 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await getProblemsBySection(sectionUri, courseId);
-              const problemUris: string[] = resp.data;
+              const resp = await getProblemsPerSections(sectionUri);
+              const problemUris: string[] = resp.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
