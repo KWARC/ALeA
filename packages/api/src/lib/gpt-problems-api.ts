@@ -134,6 +134,35 @@ export async function generateQuizProblems(generationParams: GenerationParams) {
   return resp.data as QuizProblem[];
 }
 
+export async function saveProblemDraft(problemId: number,stex:string) {
+ await axios.post(
+    '/api/gpt-redirect',
+    { problemId,stex },
+    {
+      params: {
+        apiname: 'save-problem-draft',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  
+}
+export async function finalizeProblem(problemId: number) {
+ await axios.post(
+    '/api/gpt-redirect',
+    { problemId },
+    {
+      params: {
+        apiname: 'finalize-problem',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  
+}
+
 export async function checkPossibleVariants(problemId: number) {
   const resp = await axios.post(
     '/api/gpt-redirect',

@@ -10,7 +10,7 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants, generateQuizProblems, QuizProblem } from '@stex-react/api';
+import {  finalizeProblem, generateQuizProblems, QuizProblem, saveProblemDraft } from '@stex-react/api';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -191,20 +191,15 @@ export const VariantDialog = ({
       console.error('Cannot create variant without problemId');
       return;
     }
-    const result = await generateQuizProblems({
-      mode: 'variant',
-      problemId: previewProblemData.problemId,
-      variantType: 'manual_edit',
-      stex: editableSTeX,
-    });
+    const result = await saveProblemDraft(
+       previewProblemData.problemId,
+      editableSTeX,
+    );
     console.log('result', result);
   };
-  const finalizeProblem = async () => {
-    if (editableSTeX)await saveManualEdit();
-    await generateQuizProblems({
-      mode: 'finalize',
-      problemId: previewProblemData.problemId,
-    });
+  const markProblemFinal = async () => {
+    if (editableSTeX)await saveProblemDraft(previewProblemData.problemId,editableSTeX);
+    await finalizeProblem(previewProblemData.problemId);
   };
 
   return (
@@ -373,9 +368,9 @@ export const VariantDialog = ({
         </Button>
         <Button
           onClick={async () => {
-          await finalizeProblem();
-            onClose();
+            await markProblemFinal();
             clearSelection();
+            onClose();
           }}
           sx={{ textTransform: 'none' }}
         >

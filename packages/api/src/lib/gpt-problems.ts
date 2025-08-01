@@ -167,11 +167,6 @@ export interface ModifyChoicesVariant {
   optionsToModify: string[];
 }
 
-export interface ManualEditVariant{
-  variantType: 'manual_edit';
-  stex:string;
-}
-
 export interface VariantBase {
   mode: 'variant';
   problemId?: number;
@@ -183,7 +178,6 @@ export type VariantGenerationParams =
   | (VariantBase & RephraseVariant)
   | (VariantBase & ReskinVariant)
   | (VariantBase & ModifyChoicesVariant)
-  | (VariantBase & ManualEditVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -199,11 +193,8 @@ interface CopyGenerationParams {
   sectionUri?: string;
   sectionId?: string;
 }
-interface FinalizeProblemParams {
-  mode: 'finalize';
-problemId:number;
-}
-export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams | FinalizeProblemParams;
+
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams ;
 
 export interface PossibleVariantsResult {
   rephrase: {
