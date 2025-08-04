@@ -25,7 +25,7 @@ import {
   deleteAcl,
   hasAclAssociatedResources,
 } from '@stex-react/api';
-import { ConfirmationDialog } from '../edit/ConfirmationDialog';
+import { ConfirmationDialog } from '../../../components/confirmation-dialog/ConfirmationDialog';
 
 const UpdateAcl: NextPage = () => {
   const router = useRouter();
