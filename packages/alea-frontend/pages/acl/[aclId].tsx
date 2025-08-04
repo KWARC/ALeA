@@ -78,7 +78,7 @@ const AclId: NextPage = () => {
   async function getMembers() {
     try {
       const acl = await getAcl(aclId);
-      setDesc(acl?.description);
+      setDesc(acl?.description ?? null);
       setUpdaterACLId(acl?.updaterACLId);
       setIsOpen(acl?.isOpen);
       const aclIds = new Set<string>();
@@ -123,28 +123,18 @@ const AclId: NextPage = () => {
 
       const fetchStatusAndResources = async () => {
         try {
-          const userMemberStatus = await isUserMember(aclId);
+          const [userMemberStatus, hasResources, updaterMemberStatus] = await Promise.all([
+            isUserMember(aclId),
+            hasAclAssociatedResources(aclId),
+            updaterACLId ? isUserMember(updaterACLId) : Promise.resolve(false),
+          ]);
           setUserIsMember(userMemberStatus);
-        } catch (error) {
-          console.error('Error checking user membership:', error);
-          setUserIsMember(false);
-        }
-        if (updaterACLId) {
-          try {
-            const updaterMemberStatus = await isUserMember(updaterACLId);
-            setIsUpdaterMember(updaterMemberStatus);
-          } catch (error) {
-            console.error('Error checking updater membership:', error);
-            setIsUpdaterMember(false);
-          }
-        } else {
-          setIsUpdaterMember(false);
-        }
-        try {
-          const hasResources = await hasAclAssociatedResources(aclId);
           setHasAssociatedResources(hasResources);
+          setIsUpdaterMember(updaterMemberStatus);
         } catch (error) {
-          console.error('Error fetching ACL resource association:', error);
+          console.error('Error fetching ACL status or resources:', error);
+          setUserIsMember(false);
+          setIsUpdaterMember(false);
           setHasAssociatedResources(false);
         }
       };
@@ -319,7 +309,7 @@ const AclId: NextPage = () => {
                     >
                       <AclDisplay aclId={aclIdItem} />
                     </ListItem>
-                    {index < acls.length - 1 && <Divider sx={{ width: '100%' }} />}
+                    {index < acls.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -334,7 +324,10 @@ const AclId: NextPage = () => {
               <List>
                 {directMembersNamesAndIds.map((user, index) => (
                   <React.Fragment key={user.userId}>
-                    <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
+                    <ListItem
+                      component="a"
+                      sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                    >
                       <ListItemText
                         primary={
                           <>
@@ -343,9 +336,7 @@ const AclId: NextPage = () => {
                         }
                       />
                     </ListItem>
-                    {index < directMembersNamesAndIds.length - 1 && (
-                      <Divider sx={{ width: '100%' }} />
-                    )}
+                    {index < directMembersNamesAndIds.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -380,7 +371,7 @@ const AclId: NextPage = () => {
                     <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
                       <ListItemText primary={`${user.fullName} (${user.userId})`} />
                     </ListItem>
-                    {index < allMemberNamesAndIds.length - 1 && <Divider sx={{ width: '100%' }} />}
+                    {index < allMemberNamesAndIds.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
