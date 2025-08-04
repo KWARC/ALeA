@@ -1,5 +1,6 @@
 import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
 import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { generateQuizProblems, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useState } from 'react';
 import {
@@ -19,6 +20,18 @@ export const handleGoToSection = (courseId: string, sectionId: string) => {
   window.open(url, '_blank');
 };
 
+export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
+  return {
+    problemId: qp.problemId,
+    courseId: qp.courseId,
+    sectionId: qp.sectionId,
+    sectionUri: qp.sectionUri,
+    problemStex: qp.problemStex,
+    manualEdits: qp.manualEdits,
+    ...qp.problemJson,
+  };
+}
+
 export function QuizPanel({
   problems,
   currentIdx,
@@ -34,15 +47,46 @@ export function QuizPanel({
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
-  const handleOpenVariantDialog = () => setVariantDialogOpen(true);
-  const handleCloseVariantDialog = () => setVariantDialogOpen(false);
+  const [copiedProblem, setCopiedProblem] = useState<FlatQuizProblem | null>(null);
 
-  const handleCreateVariant = (payload: any) => {
-    console.log('Creating multi-variant payload:', payload);
+  const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
+    if (!problemData) return;
 
-    // TODO: call backend API
+    let copiedProblem: QuizProblem | undefined;
+    if ('problemId' in problemData) {
+      const draft = await getLatestProblemDraft({ problemId: problemData.problemId });
+      copiedProblem =
+        draft && Object.keys(draft).length > 0
+          ? draft
+          : (await generateQuizProblems({ mode: 'copy', problemId: problemData.problemId }))?.[0];
+    } else if ('uri' in problemData && courseId) {
+      const draft = await getLatestProblemDraft({
+        courseId,
+        sectionId: problemData.sectionId,
+        sectionUri: problemData.sectionUri,
+        problemUri: problemData.uri,
+      });
+      copiedProblem =
+        draft && Object.keys(draft).length > 0
+          ? draft
+          : (
+              await generateQuizProblems({
+                mode: 'copy',
+                courseId,
+                sectionId: problemData.sectionId,
+                sectionUri: problemData.sectionUri,
+                problemUri: problemData.uri,
+              })
+            )?.[0];
+    }
 
-    handleCloseVariantDialog();
+    if (!copiedProblem) return;
+    setCopiedProblem(flattenQuizProblem(copiedProblem));
+  };
+
+  const handleOpenVariantDialog = async () => {
+    await createCopyAndCheckVariants(currentProblem);
+    setVariantDialogOpen(true);
   };
 
   if (!currentProblem) {
@@ -124,9 +168,7 @@ export function QuizPanel({
       <VariantDialog
         open={variantDialogOpen}
         onClose={() => setVariantDialogOpen(false)}
-        onCreate={handleCreateVariant}
-        problemData={currentProblem}
-        courseId={courseId}
+        problemData={copiedProblem}
       />
     </Box>
   );
