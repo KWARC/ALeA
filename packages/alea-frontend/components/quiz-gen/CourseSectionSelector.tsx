@@ -8,7 +8,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Switch,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -21,12 +20,12 @@ import {
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
-import { useRouter } from 'next/router';
-import { ExistingProblem, FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
-import { SecInfo } from 'packages/alea-frontend/types';
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
-import { getSecInfo } from '../coverage-update';
 import axios from 'axios';
+import { useRouter } from 'next/router';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
+import { SecInfo } from '../../types';
+import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
@@ -285,11 +284,14 @@ export const CourseSectionSelector = ({
                 label="Start Section"
                 onChange={(e) => {
                   const newStart = e.target.value;
-                  const updates: Record<string, string> = { startSectionUri: newStart };
-                  if (!endSectionUri) {
-                    updates.endSectionUri = newStart;
-                  }
-                  updateRouterQuery(router, updates, true);
+                  updateRouterQuery(
+                    router,
+                    {
+                      startSectionUri: newStart,
+                      endSectionUri: newStart,
+                    },
+                    true
+                  );
                 }}
               >
                 {sections.map((s) => (

@@ -41,14 +41,14 @@ interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
   problemData: FlatQuizProblem;
-  courseId: string;
+  problemUri?:string;
 }
 
 export const VariantDialog = ({
   open,
   onClose,
   problemData,
-  courseId,
+  problemUri,
 }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
@@ -74,7 +74,7 @@ export const VariantDialog = ({
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
-  const mcqOptions =problemData?.options || [];
+  let mcqOptions;
   const STeX = problemData?.problemStex ;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
@@ -91,6 +91,10 @@ export const VariantDialog = ({
       thematicReskinInstruction: '',
     });
   };
+  useEffect(() =>{
+    if(!problemData)return;
+    mcqOptions=problemData?.options||[];
+  },[problemData]);
 
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
@@ -134,7 +138,7 @@ export const VariantDialog = ({
     };
 
     createCopyAndCheckVariants();
-  }, [open, problemData, courseId]);
+  }, [open, problemData]);
 
   useEffect(() => {
     setEditableSTeX(STeX);
@@ -240,6 +244,7 @@ export const VariantDialog = ({
                       instructionKey="thematicReskinInstruction"
                       placeholder="e.g., apply concept in a real-world scenario"
                       variantConfig={variantConfig}
+                      problemUri={problemUri}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
