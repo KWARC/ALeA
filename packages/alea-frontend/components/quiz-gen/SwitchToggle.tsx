@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
-import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
@@ -26,7 +26,7 @@ interface SwitchToggleProps {
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
-  problemData?: FlatQuizProblem | ExistingProblem;
+  problemData?: FlatQuizProblem;
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -99,37 +99,13 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-    if (typeKey === 'thematicReskin' && problemData && (problemData as FlatQuizProblem).problemId) {
-      const flatProblem = problemData as FlatQuizProblem;
+    if (typeKey === 'thematicReskin' && problemData && problemData.problemId) {
       onLoadingChange?.(true);
 
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
-          problemId: flatProblem.problemId,
-          variantType: 'reskin',
-          theme,
-        });
-
-        if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
-          onVariantGenerated?.(newVariant);
-        }
-      } finally {
-        onLoadingChange?.(false);
-      }
-    } else if (
-      typeKey === 'thematicReskin' &&
-      problemData &&
-      (problemData as ExistingProblem).uri
-    ) {
-      const flatProblem = problemData as ExistingProblem;
-      onLoadingChange?.(true);
-
-      try {
-        const result = await generateQuizProblems({
-          mode: 'variant',
-          problemUri: flatProblem.uri,
+          problemId: problemData.problemId,
           variantType: 'reskin',
           theme,
         });

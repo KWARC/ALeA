@@ -99,6 +99,7 @@ export interface QuizProblem {
   sectionUri: string;
   problemStex: string;
   problemJson: ProblemJson;
+  manualEdits?:string[];
 }
 export async function fetchGeneratedProblems(
   courseId: string,
@@ -117,6 +118,29 @@ export async function fetchGeneratedProblems(
   });
   return resp.data as QuizProblem[];
 }
+type ByProblemId = {
+  problemId: number;
+};
+
+type ByProblemUri = {
+  courseId: string;
+  sectionId: string;
+  sectionUri: string;
+  problemUri: string;
+};
+
+export async function getLatestProblemDraft(draftParams: ByProblemId | ByProblemUri) {
+  const resp = await axios.get(`/api/gpt-redirect`, {
+    params: {
+      apiname: 'get-latest-problem-draft',
+      projectName: 'quiz-gen',
+      ...draftParams
+     },
+    headers: getAuthHeaders(),
+  });
+
+  return resp.data as QuizProblem;
+}
 
 export async function generateQuizProblems(generationParams: GenerationParams) {
   const resp = await axios.post(
@@ -131,6 +155,35 @@ export async function generateQuizProblems(generationParams: GenerationParams) {
     }
   );
   return resp.data as QuizProblem[];
+}
+
+export async function saveProblemDraft(problemId: number,stex:string) {
+ await axios.post(
+    '/api/gpt-redirect',
+    { problemId,stex },
+    {
+      params: {
+        apiname: 'save-problem-draft',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  
+}
+export async function finalizeProblem(problemId: number) {
+ await axios.post(
+    '/api/gpt-redirect',
+    { problemId },
+    {
+      params: {
+        apiname: 'finalize-problem',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
+  
 }
 
 export async function checkPossibleVariants(problemId: number) {

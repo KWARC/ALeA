@@ -177,7 +177,7 @@ export interface VariantBase {
 export type VariantGenerationParams =
   | (VariantBase & RephraseVariant)
   | (VariantBase & ReskinVariant)
-  | (VariantBase & ModifyChoicesVariant);
+  | (VariantBase & ModifyChoicesVariant)
 
 interface NewGenerationParams {
   mode: 'new';
@@ -194,7 +194,7 @@ interface CopyGenerationParams {
   sectionId?: string;
 }
 
-export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams ;
 
 export interface PossibleVariantsResult {
   rephrase: {
