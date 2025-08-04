@@ -10,7 +10,6 @@ export interface SemesterData {
   semesterEnd: string;
   lectureStartDate: string;
   lectureEndDate: string;
-  userId: string;
   timeZone: string;
 }
 
@@ -23,7 +22,6 @@ export interface UploadHolidaysRequest {
   universityId: string;
   instanceId: string;
   holidays: Holiday[];
-  userId: string;
 }
 
 export interface EditHolidayRequest {
@@ -31,7 +29,6 @@ export interface EditHolidayRequest {
   instanceId: string;
   originalDate: string;
   updatedHoliday: Holiday;
-  userId?: string;
 }
 
 export interface DeleteSingleHolidayRequest {
@@ -45,7 +42,6 @@ export interface DeleteSingleHolidayRequest {
 /* ====== CONSTANTS ====== */
 
 const SEMESTER_BASE_URL = '/api/university-admin/semester-info';
-const HOLIDAYS_BASE_URL = '/api/university-admin/semester-info';
 
 /* ====== SEMESTER APIs ====== */
 
@@ -81,10 +77,18 @@ export async function deleteSemester(universityId: string, instanceId: string) {
   return response.data;
 }
 
+export async function getInstances(universityId: string, userId: string) {
+  const response = await axios.get(`${SEMESTER_BASE_URL}/get-instances`, {
+    params: { universityId, userId },
+    headers: getAuthHeaders(),
+  });
+  return response.data.data as string[];
+}
+
 /* ====== HOLIDAYS APIs ====== */
 
 export async function getHolidaysInfo(universityId: string, instanceId: string) {
-  const response = await axios.get(`${HOLIDAYS_BASE_URL}/get-holidays-info`, {
+  const response = await axios.get(`${SEMESTER_BASE_URL}/get-holidays-info`, {
     params: { universityId, instanceId },
     headers: getAuthHeaders(),
   });
@@ -92,14 +96,14 @@ export async function getHolidaysInfo(universityId: string, instanceId: string) 
 }
 
 export async function uploadHolidays(data: UploadHolidaysRequest) {
-  const response = await axios.post(`${HOLIDAYS_BASE_URL}/upload-holidays`, data, {
+  const response = await axios.post(`${SEMESTER_BASE_URL}/upload-holidays`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;
 }
 
 export async function editHoliday(data: EditHolidayRequest) {
-  const response = await axios.post(`${HOLIDAYS_BASE_URL}/edit-holiday`, data, {
+  const response = await axios.post(`${SEMESTER_BASE_URL}/edit-holiday`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;
@@ -114,7 +118,7 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
 
 
 export async function deleteAllHolidays(universityId: string, instanceId: string) {
-  const response = await axios.post(`${HOLIDAYS_BASE_URL}/delete-all-holidays`, {
+  const response = await axios.post(`${SEMESTER_BASE_URL}/delete-all-holidays`, {
     universityId,
     instanceId,
   }, {
