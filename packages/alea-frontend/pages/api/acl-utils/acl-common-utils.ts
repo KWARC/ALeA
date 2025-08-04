@@ -3,19 +3,16 @@ import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';
 
-export async function checkResourcesassociatedOrSet500OnError(
-  aclId: string,
-  res: any 
-): Promise<boolean> {
-  const resourceId = await executeAndEndSet500OnError(
-    'select resourceId from resourceaccess where aclId=?',
+export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
+  const resources = await executeAndEndSet500OnError(
+    'select resourceId from resourceAccess where aclId=? LIMIT 1',
     [aclId],
     res
   );
-
-  if (resourceId?.length) return true;
-  return false;
+  if (!resources) return;
+  return { used: resources.length > 0 };
 }
+
 export function getCacheKey(aclId: string) {
   return `acl-membership:${aclId}`;
 }
