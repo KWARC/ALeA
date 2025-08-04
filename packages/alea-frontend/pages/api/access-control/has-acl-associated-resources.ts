@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError } from '../comment-utils';
-import { checkResourceAssociatedOrSet500OnError } from './delete-acl';
+import { checkResourceAssociatedOrSet500OnError } from '../acl-utils/acl-common-utils';
 
 export default async function handleCheckAclResources(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) {

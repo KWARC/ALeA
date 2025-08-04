@@ -27,7 +27,10 @@ import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
 import { ConfirmationDialog } from '../../components/confirmation-dialog/ConfirmationDialog';
-
+interface MemberNameAndId  {
+      fullName: string;
+      userId: string;
+    }
 const AclId: NextPage = () => {
   const router = useRouter();
   const { query } = router;
@@ -35,7 +38,7 @@ const AclId: NextPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [acls, setAcls] = useState<string[]>([]);
-  const [directMembersNamesAndIds, setDirectMembersNamesAndIds] = useState<any[]>([]);
+  const [directMembersNamesAndIds, setDirectMembersNamesAndIds] = useState<MemberNameAndId[]>([]);
   const [desc, setDesc] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [updaterACLId, setUpdaterACLId] = useState<string | null>(null);
@@ -368,7 +371,10 @@ const AclId: NextPage = () => {
               <List>
                 {allMemberNamesAndIds.map((user, index) => (
                   <React.Fragment key={user.userId}>
-                    <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
+                    <ListItem
+                      component="a"
+                      sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                    >
                       <ListItemText primary={`${user.fullName} (${user.userId})`} />
                     </ListItem>
                     {index < allMemberNamesAndIds.length - 1 && <Divider />}

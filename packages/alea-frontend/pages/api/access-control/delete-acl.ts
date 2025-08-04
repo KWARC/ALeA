@@ -1,20 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { checkIfPostOrSetError, executeTxnAndEndSet500OnError } from '../comment-utils';
 import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  executeTxnAndEndSet500OnError,
-} from '../comment-utils';
-import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
+  checkResourceAssociatedOrSet500OnError,
+  isCurrentUserMemberOfAClupdater,
+} from '../acl-utils/acl-common-utils';
 
-export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
-  const resources = await executeAndEndSet500OnError(
-    'select resourceId from resourceAccess where aclId=? LIMIT 1',
-    [aclId],
-    res
-  );
-  if (!resources) return;
-  return { used: resources.length > 0 };
-}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const id = req.body.id as string;
