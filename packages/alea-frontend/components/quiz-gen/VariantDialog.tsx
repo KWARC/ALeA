@@ -41,14 +41,12 @@ interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
   problemData: FlatQuizProblem;
-  problemUri?:string;
 }
 
 export const VariantDialog = ({
   open,
   onClose,
   problemData,
-  problemUri,
 }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
@@ -244,7 +242,6 @@ export const VariantDialog = ({
                       instructionKey="thematicReskinInstruction"
                       placeholder="e.g., apply concept in a real-world scenario"
                       variantConfig={variantConfig}
-                      problemUri={problemUri}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}

@@ -23,7 +23,6 @@ interface SwitchToggleProps {
   placeholder: string;
   variantConfig: VariantConfig;
   themes?: string[];
-  problemUri?: string;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   mcqOptions?: string[];
   selectedOptions?: string[];
@@ -47,7 +46,6 @@ export const SwitchToggle = ({
   placeholder,
   variantConfig,
   themes = [],
-  problemUri,
   setVariantConfig,
   mcqOptions = [],
   selectedOptions = [],
@@ -107,25 +105,6 @@ export const SwitchToggle = ({
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
-          problemId: problemData.problemId,
-          variantType: 'reskin',
-          theme,
-        });
-
-        if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
-          onVariantGenerated?.(newVariant);
-        }
-      } finally {
-        onLoadingChange?.(false);
-      }
-    } else if (typeKey === 'thematicReskin' && problemData && problemUri) {
-      onLoadingChange?.(true);
-
-      try {
-        const result = await generateQuizProblems({
-          mode: 'variant',
-          problemUri: problemUri,
           problemId: problemData.problemId,
           variantType: 'reskin',
           theme,
