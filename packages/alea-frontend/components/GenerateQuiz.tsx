@@ -13,6 +13,7 @@ import {
   Card,
   IconButton,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
@@ -77,7 +78,19 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
         </Box>
       );
     });
-
+  if (problemData?.manualEdits?.length) {
+    return (
+      <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+        <Typography variant="body2" color="text.secondary" mt={1}>
+          This problem is a manually edited variant of an existing problem.
+        </Typography>
+         <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" mb={2}>
+          {problemData.manualEdits[problemData.manualEdits.length - 1]}
+        </Typography>
+      </Box>
+    );
+  }
   return (
     <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
       <Box display="flex" justifyContent="space-between" gap={1}>
@@ -98,8 +111,8 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           </IconButton>
         </Tooltip>
       </Box>
-      {(problemData.problemType.toLowerCase() === 'scq' ||
-        problemData.problemType.toLowerCase() === 'mcq') &&
+      {(problemData?.problemType?.toLowerCase() === 'scq' ||
+        problemData?.problemType?.toLowerCase() === 'mcq') &&
         renderOptionsWithFeedback()}
 
       {problemData.problemType === 'FILL_IN' && (

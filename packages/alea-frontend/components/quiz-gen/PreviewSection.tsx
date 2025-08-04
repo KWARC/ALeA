@@ -1,12 +1,13 @@
-import { Box, Switch, TextField, Typography } from '@mui/material';
-import { UriProblemViewer } from '@stex-react/stex-react-renderer';
-import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
+import InfoIcon from '@mui/icons-material/Info';
+import { Box, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import { useEffect, useMemo } from 'react';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
 
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
   setPreviewMode: (mode: 'json' | 'stex') => void;
-  problemData?: FlatQuizProblem | ExistingProblem;
+  problemData?: FlatQuizProblem;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
 }
@@ -18,6 +19,15 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
 }: PreviewSectionProps) => {
+  const isModified = useMemo(() => {
+    const original = problemData?.problemStex;
+    return editableSTeX !== original;
+  }, [editableSTeX, problemData]);
+
+  useEffect(() => {
+    setPreviewMode(isModified ? 'stex' : 'json');
+  }, [isModified]);
+  
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
       <Box
@@ -42,10 +52,16 @@ export const PreviewSection = ({
           <Switch
             checked={previewMode === 'stex'}
             onChange={(e) => setPreviewMode(e.target.checked ? 'stex' : 'json')}
+            disabled={isModified}
           />
           <Typography variant="body2" color="text.secondary">
             Source
           </Typography>
+          {isModified && (
+            <Tooltip title="Manual changes detected in STeX source.">
+              <InfoIcon color="warning" fontSize="small" />
+            </Tooltip>
+          )}
         </Box>
       </Box>
 
@@ -60,10 +76,8 @@ export const PreviewSection = ({
         position="relative"
       >
         {previewMode === 'json' ? (
-          isGenerated(problemData) ? (
+          problemData ? (
             <QuizProblemViewer problemData={problemData} />
-          ) : isExisting(problemData) ? (
-            <UriProblemViewer uri={problemData.uri} />
           ) : (
             <Box
               sx={{
