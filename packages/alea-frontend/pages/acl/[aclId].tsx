@@ -26,7 +26,7 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
-import { ConfirmationDialog } from './edit/ConfirmationDialog';
+import { ConfirmationDialog } from '../../components/confirmation-dialog/ConfirmationDialog';
 
 const AclId: NextPage = () => {
   const router = useRouter();

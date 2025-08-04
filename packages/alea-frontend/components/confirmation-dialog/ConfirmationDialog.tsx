@@ -7,6 +7,7 @@ import {
   DialogTitle,
   Button,
   Alert,
+  Typography,
 } from '@mui/material';
 
 interface ConfirmationDialogProps {
@@ -21,7 +22,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   open,
   onClose,
   onConfirm,
-  error = '',
+  error,
+
   aclId,
 }) => {
   return (
@@ -38,15 +40,21 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             {error}
           </Alert>
         )}
-        <DialogContentText id="confirmation-dialog-description"> Are you sure you want to delete this ACL: <strong>{aclId}</strong>? This action cannot
-                    be undone. If this ACL is assigned to any resource or is a member of another ACL,
-                    deletion will be rejected by the server.</DialogContentText>
+        <DialogContentText id="confirmation-dialog-description" component="div">
+          <Typography component="span">
+            Are you sure you want to delete this ACL: <strong>{aclId}</strong>?
+          </Typography>
+          <Typography component="span">
+            This action cannot be undone. If this ACL is assigned to any resource or is a member of
+            another ACL, deletion will be rejected by the server.
+          </Typography>
+        </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
           Cancel
         </Button>
-        <Button onClick={onConfirm} color="secondary" autoFocus>
+        <Button onClick={onConfirm} color="error" autoFocus>
           Delete
         </Button>
       </DialogActions>
