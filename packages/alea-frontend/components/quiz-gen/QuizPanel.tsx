@@ -61,9 +61,6 @@ export function QuizPanel({
           : (await generateQuizProblems({ mode: 'copy', problemId: problemData.problemId }))?.[0];
     } else if ('uri' in problemData && courseId) {
       const draft = await getLatestProblemDraft({
-        courseId,
-        sectionId: problemData.sectionId,
-        sectionUri: problemData.sectionUri,
         problemUri: problemData.uri,
       });
       copiedProblem =
