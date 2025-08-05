@@ -23,15 +23,12 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   const { quiz: t } = getLocaleObject(router);
   const [tabValue, setTabValue] = useState(0);
   const courseId = router.query.courseId as string;
-
-  // Caching states
   const [formeProblemUris, setFormeProblemUris] = useState<string[] | null>(null);
   const [syllabusUris, setSyllabusUris] = useState<string[] | null>(null);
   const [adventurousUris, setAdventurousUris] = useState<string[] | null>(null);
   const handleTabChange = React.useCallback((event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   }, []);
-
   const [forMeTabLabel, setForMeTabLabel] = useState(t.ForMe.replace('$1', '...'));
   const [perSectionTabLabel, setPerSectionTabLabel] = useState(
     t.perSectionQuizButton.replace('$1', '...')
@@ -72,7 +69,6 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
 
   useEffect(() => {
     if (!sectionUri || !courseId) return;
-
     setShowProblems(true);
     setTabValue(0);
     setTimeout(() => setTabValue(1), 0);
@@ -81,7 +77,6 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   if (isAccordionOpen) {
     const isLoadingAny =
       formeProblemUris === null || syllabusUris === null || adventurousUris === null;
-
     if (
       !isLoadingAny &&
       (formeProblemUris?.length ?? 0) === 0 &&

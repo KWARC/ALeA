@@ -1,5 +1,13 @@
-import { Box, Button, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
-import { FTML } from '@kwarc/ftml-viewer';
+import {
+  Box,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
 import { SafeHtml } from '@stex-react/react-utils';
 import { PRIMARY_COL } from '@stex-react/utils';
 import axios from 'axios';
@@ -7,6 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
+import { FTML } from '@kwarc/ftml-viewer';
 
 interface TitleMetadata {
   uri?: string;
@@ -15,7 +24,10 @@ interface TitleMetadata {
   sectionTitle: string;
 }
 
-const extractTitlesAndSectionUri = (toc: FTML.TOCElem | null, chapterTitle = ''): TitleMetadata[] => {
+const extractTitlesAndSectionUri = (
+  toc: FTML.TOCElem | null,
+  chapterTitle = ''
+): TitleMetadata[] => {
   if (!toc || toc.type === 'Paragraph' || toc.type === 'Slide') {
     return [];
   }
@@ -42,7 +54,7 @@ interface ProblemListProps {
 }
 
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
-  const [problemCounts, setProblemCounts] = useState<Record<string, number>>({});
+  const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
   const router = useRouter();
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
 
@@ -51,8 +63,19 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
     axios
       .get(`/api/get-course-problem-counts?courseId=${courseId}`)
       .then((resp) => setProblemCounts(resp.data))
-      .catch((err) => console.error('Error fetching problem counts:', err));
+      .catch((err) => {
+        console.error('Error fetching problem counts:', err);
+        setProblemCounts({});
+      });
   }, [courseId]);
+
+  if (problemCounts === null) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   const titlesAndSectionUri = courseSections
     .flatMap((toc) => extractTitlesAndSectionUri(toc))
@@ -60,6 +83,20 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       ({ chapterTitle, sectionTitle }) =>
         chapterTitle.toLowerCase() !== 'preface' && sectionTitle.toLowerCase() !== 'preface'
     );
+
+  const hasAnyProblems = titlesAndSectionUri.some(
+    (item) => (problemCounts[item.uri || ''] || 0) > 0
+  );
+
+  if (!hasAnyProblems) {
+    return (
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          Problem not found for this course.
+        </Typography>
+      </Box>
+    );
+  }
 
   const groupedByChapter: Record<string, TitleMetadata[]> = {};
   titlesAndSectionUri.forEach((item) => {
@@ -71,9 +108,14 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   });
 
   const seeSectionProblems = (sectionUri?: string, sectionTitle?: string) => {
-    router.push(
-      `/per-section-quiz?sectionUri=${encodeURIComponent(sectionUri)}&courseId=${courseId}&sectionTitle=${encodeURIComponent(sectionTitle)}`
-    );
+    router.push({
+      pathname: '/per-section-quiz',
+      query: {
+        sectionUri,
+        courseId,
+        sectionTitle,
+      },
+    });
   };
 
   const goToSection = (sectionId?: string) => {
@@ -133,7 +175,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                       justifyContent: 'space-between',
                       backgroundColor: '#f0f4f8',
                       borderRadius: '8px',
-                      py: problemCount > 0 ? 2 : 0,
+                      py: 2,
                       px: 2,
                       transition: 'background-color 0.3s ease, transform 0.2s ease',
                       '&:hover': {
@@ -146,6 +188,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                         <>
                           <Typography
                             variant="body1"
+                            component="div"
                             sx={{
                               fontWeight: 'medium',
                               fontSize: '1rem',
@@ -157,13 +200,15 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                           >
                             <SafeHtml html={sectionTitle} />
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {problemCount ? `${problemCount} problems` : null}
-                          </Typography>
+                          {isEnabled && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                              {`${problemCount} problems`}
+                            </Typography>
+                          )}
                         </>
                       }
                     />
-                    {isEnabled && (
+                    {isEnabled ? (
                       <Button
                         variant="contained"
                         sx={{
@@ -178,6 +223,22 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                       >
                         {t.practice}
                       </Button>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          textAlign: 'right',
+                          minWidth: '127px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          height: '100%',
+                          mr: 2,
+                        }}
+                      >
+                        No problem found
+                      </Typography>
                     )}
                   </ListItem>
                 );

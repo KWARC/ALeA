@@ -42,7 +42,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  'syllabus': { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
+  syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
 };
 function ChosenTab({
   tabName,
@@ -76,9 +76,7 @@ function ChosenTab({
 }
 
 const toUserFriendlyName = (tabName: string) => {
-  return tabName
-    .replace(/-/g, ' ') // Replace hyphens with spaces
-    .replace(/\b\w/g, (str) => str.toUpperCase()); // Capitalize the first letter of each word
+  return tabName.replace(/-/g, ' ').replace(/\b\w/g, (str) => str.toUpperCase());
 };
 
 const TabPanel = (props: TabPanelProps) => {
@@ -105,19 +103,16 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
   'study-buddy': '900px',
-  'syllabus': '1200px',
+  syllabus: '1200px',
 };
 
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const tab = router.query.tab as TabName;
-
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
-
   const [accessibleTabs, setAccessibleTabs] = useState<TabName[] | undefined>(undefined); // undefined means loading
   const [currentTabIdx, setCurrentTabIdx] = useState<number>(0);
-
   const [quizId, setQuizId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -219,8 +214,8 @@ const InstructorDash: NextPage = () => {
             overflowX: 'auto',
             '& .MuiTabs-flexContainer': {
               justifyContent: {
-                xs: 'flex-start', 
-                md: 'center', 
+                xs: 'flex-start',
+                md: 'center',
               },
             },
             '& .MuiTab-root': {
