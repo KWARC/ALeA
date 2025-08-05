@@ -19,6 +19,7 @@ export * from './notifications';
 export * from './notifications-api';
 export * from './points';
 export * from './points-api';
+export * from './problem-api';
 export * from './quiz';
 export * from './quiz-api';
 export * from './request-aggregator';

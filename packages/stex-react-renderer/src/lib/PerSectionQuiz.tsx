@@ -1,13 +1,23 @@
 import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Box, Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  LinearProgress,
+  Tab,
+  Tabs,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
+import { getProblemsPerSection } from '@stex-react/api';
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -93,31 +103,60 @@ export function PerSectionQuiz({
   const [show, setShow] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
-
+  const [tabIndex, setTabIndex] = useState(0);
+  const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   useEffect(() => {
-    if (cachedProblemUris) return;
-    //  if (!sectionUri) return;
-    setIsLoadingProblemUris(true);
-    axios
-      .get(
-        `/api/get-problems-by-section?sectionUri=${encodeURIComponent(
-          sectionUri
-        )}&courseId=${courseId}`
-      )
-      .then((resp) => {
-        const filtered = resp.data
-          .filter((p: any) => !category || p.category === category)
-          .map((p: any) => p.problemId);
+    if (cachedProblemUris && cachedProblemUris.length > 0) {
+      setProblemUris(cachedProblemUris);
+      setIsSubmitted(cachedProblemUris.map(() => false));
+      setResponses(cachedProblemUris.map(() => undefined));
+      return;
+    }
 
-        setProblemUris(filtered);
-        if (setCachedProblemUris) {
-          setCachedProblemUris(filtered);
+    setIsLoadingProblemUris(true);
+
+    getProblemsPerSection(sectionUri, courseId)
+      .then((problems) => {
+        const map: Record<string, string[]> = {};
+        for (const p of problems) {
+          if (!map[p.category]) map[p.category] = [];
+          map[p.category].push(p.problemId);
         }
+        setCategoryMap(map);
+
+        let selected: string[] = [];
+
+        if (category) {
+          selected = map[category] || [];
+          if (setCachedProblemUris) {
+            setCachedProblemUris(selected);
+          }
+        } else {
+          const categoryKeys = Object.keys(map);
+          if (categoryKeys.length === 0) {
+            setProblemUris([]);
+            setIsSubmitted([]);
+            setResponses([]);
+            setIsLoadingProblemUris(false);
+            return;
+          }
+
+          const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
+          selected = map[selectedCategory] || [];
+
+          if (setCachedProblemUris) {
+            const all = Object.values(map).flat();
+            setCachedProblemUris(all);
+          }
+        }
+
+        setProblemUris(selected);
+        setIsSubmitted(selected.map(() => false));
+        setResponses(selected.map(() => undefined));
         setIsLoadingProblemUris(false);
-        setIsSubmitted(filtered.map(() => false));
-        setResponses(filtered.map(() => undefined));
-      }, console.error);
-  }, [sectionUri, cachedProblemUris, setCachedProblemUris, category]);
+      })
+      .catch(() => setIsLoadingProblemUris(false));
+  }, [sectionUri, courseId]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
   if (!problemUris.length) {
@@ -151,52 +190,79 @@ export function PerSectionQuiz({
   if (!problemUri) return <>error: [{problemUri}] </>;
 
   return (
-    <Box
-      px={1}
-      maxWidth="800px"
-      m="auto"
-      bgcolor="white"
-      border="1px solid #CCC"
-      borderRadius="5px"
-    >
-      <Typography fontWeight="bold" textAlign="left">
-        {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-      </Typography>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <ListStepper
-          idx={problemIdx}
-          listSize={problemUris.length}
-          onChange={(idx) => {
-            setProblemIdx(idx);
-            setShowSolution(false);
-          }}
-        />
-        <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
-          <Tooltip title="view source">
-            <OpenInNewIcon />
-          </Tooltip>
-        </IconButton>
-      </Box>
-      <Box mb="10px">
-        <UriProblemViewer
-          key={problemUri}
-          uri={problemUri}
-          isSubmitted={isSubmitted[problemIdx]}
-          setIsSubmitted={(v) =>
-            setIsSubmitted((prev) => {
-              prev[problemIdx] = v;
-              return [...prev];
-            })
-          }
-          response={responses[problemIdx]}
-          setResponse={(v) =>
-            setResponses((prev) => {
-              prev[problemIdx] = v;
-              return [...prev];
-            })
-          }
-        />
-        {/* TODO ALEA4-P3
+    <Box mb={4}>
+      <Box
+        px={2}
+        maxWidth="800px"
+        m="auto"
+        bgcolor="white"
+        border="1px solid #CCC"
+        borderRadius="5px"
+      >
+        <Typography fontWeight="bold" textAlign="left">
+          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+        </Typography>
+        {!category && (
+          <Tabs
+            value={tabIndex}
+            onChange={(_, idx) => {
+              const categoryKeys = Object.keys(categoryMap);
+              const safeIdx = Math.min(idx, categoryKeys.length - 1);
+              setTabIndex(safeIdx);
+              const selectedCategory = categoryKeys[safeIdx];
+              const selected = categoryMap[selectedCategory] || [];
+              setProblemUris(selected);
+              setIsSubmitted(selected.map(() => false));
+              setResponses(selected.map(() => undefined));
+              setProblemIdx(0);
+            }}
+          >
+            {Object.keys(categoryMap).map((cat) => {
+              const label =
+                cat === 'adventurous'
+                  ? "I'm Adventurous"
+                  : cat === 'syllabus'
+                  ? 'Syllabus'
+                  : cat[0].toUpperCase() + cat.slice(1);
+              return <Tab key={cat} label={label} />;
+            })}
+          </Tabs>
+        )}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+          <ListStepper
+            idx={problemIdx}
+            listSize={problemUris.length}
+            onChange={(idx) => {
+              setProblemIdx(idx);
+              setShowSolution(false);
+            }}
+          />
+          <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
+            <Tooltip title="view source">
+              <OpenInNewIcon />
+            </Tooltip>
+          </IconButton>
+        </Box>
+        <Box mb="14px">
+          <UriProblemViewer
+            key={problemUri}
+            uri={problemUri}
+            isSubmitted={isSubmitted[problemIdx]}
+            setIsSubmitted={(v) =>
+              setIsSubmitted((prev) => {
+                prev[problemIdx] = v;
+                return [...prev];
+              })
+            }
+            response={responses[problemIdx]}
+            setResponse={(v) =>
+              setResponses((prev) => {
+                prev[problemIdx] = v;
+                return [...prev];
+              })
+            }
+          />
+          {/* TODO ALEA4-P3
         <ProblemDisplay
           r={response}
           uri={problemUris[problemIdx]}
@@ -217,28 +283,29 @@ export function PerSectionQuiz({
             })
           }
         />*/}
-      </Box>
-      <Box
-        mb={2}
-        sx={{ display: 'flex', gap: '10px', flexDirection: 'column', alignItems: 'flex-start' }}
-      >
-        {/* TODO ALEA4-P3 solutions?.length > 0 && (
+        </Box>
+        <Box
+          mb={6}
+          sx={{ display: 'flex', gap: '10px', flexDirection: 'column', alignItems: 'flex-start' }}
+        >
+          {/* TODO ALEA4-P3 solutions?.length > 0 && (
           <Button variant="contained" onClick={() => setShowSolution(!showSolution)}>
             {showSolution ? t.hideSolution : t.showSolution}
           </Button>
         )}*/}
-        {showSolution && (
-          <Box mb="10px">
-            {/* solutions.map((solution) => (
+          {showSolution && (
+            <Box mb="10px">
+              {/* solutions.map((solution) => (
               <div style={{ color: '#555' }} dangerouslySetInnerHTML={{__html:solution}}></div>
             ))*/}
-          </Box>
-        )}
-        {showHideButton && (
-          <Button onClick={() => setShow(false)} variant="contained" color="secondary">
-            {t.hideProblems}
-          </Button>
-        )}
+            </Box>
+          )}
+          {showHideButton && (
+            <Button onClick={() => setShow(false)} variant="contained" color="secondary">
+              {t.hideProblems}
+            </Button>
+          )}
+        </Box>
       </Box>
     </Box>
   );
