@@ -140,10 +140,18 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
       return;
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
+    if (problemData?.manualEdits) {
+      problemData.manualEdits.push(editableSTeX);
+    } else if (problemData) {
+      problemData.manualEdits = [editableSTeX];
+    }
   };
 
   const markProblemFinal = async () => {
-    if (editableSTeX) await saveProblemDraft(problemData.problemId, editableSTeX);
+    const latestManualEdit = problemData?.manualEdits[problemData?.manualEdits.length - 1];
+    if (latestManualEdit !== editableSTeX) {
+      await saveProblemDraft(problemData.problemId, editableSTeX);
+    }
     await finalizeProblem(problemData.problemId);
   };
 
