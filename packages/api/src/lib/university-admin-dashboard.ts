@@ -1,5 +1,5 @@
-import axios from 'axios'
-import { getAuthHeaders } from './lmp'
+import axios from 'axios';
+import { getAuthHeaders } from './lmp';
 
 /* ====== TYPES ====== */
 
@@ -37,8 +37,6 @@ export interface DeleteSingleHolidayRequest {
   dateToDelete: string;
 }
 
-
-
 /* ====== CONSTANTS ====== */
 
 const SEMESTER_BASE_URL = '/api/university-admin/semester-info';
@@ -68,18 +66,22 @@ export async function updateSemester(data: SemesterData) {
 }
 
 export async function deleteSemester(universityId: string, instanceId: string) {
-  const response = await axios.post(`${SEMESTER_BASE_URL}/delete-semester`, {
-    universityId,
-    instanceId,
-  }, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(
+    `${SEMESTER_BASE_URL}/delete-semester`,
+    {
+      universityId,
+      instanceId,
+    },
+    {
+      headers: getAuthHeaders(),
+    }
+  );
   return response.data;
 }
 
-export async function getInstances(universityId: string, userId: string) {
+export async function getInstances(universityId: string) {
   const response = await axios.get(`${SEMESTER_BASE_URL}/get-instances`, {
-    params: { universityId, userId },
+    params: { universityId },
     headers: getAuthHeaders(),
   });
   return response.data.data as string[];
@@ -110,19 +112,26 @@ export async function editHoliday(data: EditHolidayRequest) {
 }
 
 export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
-  const response = await axios.post(`/api/university-admin/semester-info/delete-single-holiday`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(
+    `/api/university-admin/semester-info/delete-single-holiday`,
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
   return response.data;
 }
 
-
 export async function deleteAllHolidays(universityId: string, instanceId: string) {
-  const response = await axios.post(`${SEMESTER_BASE_URL}/delete-all-holidays`, {
-    universityId,
-    instanceId,
-  }, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(
+    `${SEMESTER_BASE_URL}/delete-all-holidays`,
+    {
+      universityId,
+      instanceId,
+    },
+    {
+      headers: getAuthHeaders(),
+    }
+  );
   return response.data;
 }
