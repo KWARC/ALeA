@@ -84,7 +84,7 @@ export const CourseSectionSelector = ({
     }
     fetchCoverageTimeline();
   }, []);
-  console.log('courseid', courseId);
+
   useEffect(() => {
     const getSections = async () => {
       if (!courseId) return;
