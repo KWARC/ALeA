@@ -9,11 +9,7 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import {
-  checkPossibleVariants,
-  finalizeProblem,
-  saveProblemDraft
-} from '@stex-react/api';
+import { checkPossibleVariants, finalizeProblem, saveProblemDraft } from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
@@ -43,11 +39,7 @@ interface VariantDialogProps {
   problemData: FlatQuizProblem;
 }
 
-export const VariantDialog = ({
-  open,
-  onClose,
-  problemData,
-}: VariantDialogProps) => {
+export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
     difficulty: '',
@@ -72,8 +64,8 @@ export const VariantDialog = ({
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
 
-  let mcqOptions;
-  const STeX = problemData?.problemStex ;
+  const mcqOptions = problemData?.options || [];
+  const STeX = problemData?.problemStex;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -89,24 +81,19 @@ export const VariantDialog = ({
       thematicReskinInstruction: '',
     });
   };
-  useEffect(() =>{
-    if(!problemData)return;
-    mcqOptions=problemData?.options||[];
-  },[problemData]);
 
   useEffect(() => {
     const createCopyAndCheckVariants = async () => {
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
-
         console.log({ problemData });
         if (problemData?.manualEdits?.length > 0) {
           setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
         } else {
           setEditableSTeX(problemData.problemStex);
         }
-        
+
         if (!problemData) return;
         //const result = await checkPossibleVariants(problemData.problemId);
         const result = {
@@ -142,6 +129,11 @@ export const VariantDialog = ({
     setEditableSTeX(STeX);
   }, [STeX]);
 
+  useEffect(() => {
+    if (!reskinApplicable) return;
+    setSelectedOptions(mcqOptions);
+  }, [reskinApplicable, mcqOptions]);
+
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
@@ -149,7 +141,7 @@ export const VariantDialog = ({
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
   };
-  
+
   const markProblemFinal = async () => {
     if (editableSTeX) await saveProblemDraft(problemData.problemId, editableSTeX);
     await finalizeProblem(problemData.problemId);
@@ -294,7 +286,7 @@ export const VariantDialog = ({
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={previewProblemData ??problemData}
+            problemData={previewProblemData ?? problemData}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
           />
