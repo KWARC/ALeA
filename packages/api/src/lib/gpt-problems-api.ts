@@ -123,9 +123,6 @@ type ByProblemId = {
 };
 
 type ByProblemUri = {
-  courseId: string;
-  sectionId: string;
-  sectionUri: string;
   problemUri: string;
 };
 
@@ -167,10 +164,9 @@ export async function saveProblemDraft(problemId: number,stex:string) {
         projectName: 'quiz-gen',
       },
       headers: getAuthHeaders(),
-    }
-  );
-  
+    }  );
 }
+
 export async function finalizeProblem(problemId: number) {
  await axios.post(
     '/api/gpt-redirect',

@@ -16,6 +16,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@kwarc/ftml-viewer';
+import { getCourseProblemCounts } from '@stex-react/api';
 
 interface TitleMetadata {
   uri?: string;
@@ -60,13 +61,9 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
   useEffect(() => {
     if (!courseId) return;
-    axios
-      .get(`/api/get-course-problem-counts?courseId=${courseId}`)
-      .then((resp) => setProblemCounts(resp.data))
-      .catch((err) => {
-        console.error('Error fetching problem counts:', err);
-        setProblemCounts({});
-      });
+    getCourseProblemCounts(courseId)
+      .then((data) => setProblemCounts(data))
+      .catch((err) => console.error('Error fetching problem counts:', err));
   }, [courseId]);
 
   if (problemCounts === null) {
