@@ -1,5 +1,5 @@
 import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
-import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Card, Chip, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import { generateQuizProblems, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useState } from 'react';
@@ -48,7 +48,7 @@ export function QuizPanel({
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const [copiedProblem, setCopiedProblem] = useState<FlatQuizProblem | null>(null);
-
+  const [loading, setLoading] = useState<boolean>(false);
   const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
     if (!problemData) return;
 
@@ -82,7 +82,9 @@ export function QuizPanel({
   };
 
   const handleOpenVariantDialog = async () => {
+    setLoading(true);
     await createCopyAndCheckVariants(currentProblem);
+    setLoading(false);
     setVariantDialogOpen(true);
   };
 
@@ -161,12 +163,27 @@ export function QuizPanel({
 
         {isGenerated(currentProblem) && <HiddenFeedback problemId={currentProblem.problemId} />}
       </Card>
-
-      <VariantDialog
-        open={variantDialogOpen}
-        onClose={() => setVariantDialogOpen(false)}
-        problemData={copiedProblem}
-      />
+      {loading ? (
+        <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(255,255,255,0.6)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+      ) : (
+        <VariantDialog
+          open={variantDialogOpen}
+          onClose={() => setVariantDialogOpen(false)}
+          problemData={copiedProblem}
+        />
+      )}
     </Box>
   );
 }
