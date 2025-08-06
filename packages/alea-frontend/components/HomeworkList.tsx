@@ -95,14 +95,14 @@ const HomeworkList = ({
                 <TableRow key={homework.id}>
                   <TableCell>
                     <SafeHtml html={homework.title} />
-                    <Tooltip title="View homework document">
+                    <Tooltip title={t.viewHomeworkDocument}>
                       <a
                         href={`/homework-doc?id=${homework.id}&courseId=${homework.courseId}`}
                         target="_blank"
                         rel="noreferrer"
                         style={{ textDecoration: 'none' }}
                       >
-                        <IconButton aria-label="View homework document">
+                        <IconButton aria-label={t.viewHomeworkDocument}>
                           <OpenInNew />
                         </IconButton>
                       </a>
@@ -112,36 +112,34 @@ const HomeworkList = ({
                   <TableCell>{formattedDueTs}</TableCell>
                   <TableCell>{formattedReleaseDate}</TableCell>
                   <TableCell>
-                    <Tooltip title="Show homework statistics">
-                      <Box component="span" sx={{ display: 'inline-block' }}>
-                        <IconButton
-                          color="primary"
-                          onClick={async () => {
-                            handleShow((await getHomework(homework.id)).homework);
-                          }}
-                          disabled={selectedHomeworkId === homework.id}
-                          aria-label="Show homework statistics"
-                        >
-                          <ShowChartIcon />
-                        </IconButton>
-                      </Box>
+                    <Tooltip title={t.showHomeworkStatistics}>
+                      <IconButton
+                        color="primary"
+                        onClick={async () => {
+                          handleShow((await getHomework(homework.id)).homework);
+                        }}
+                        disabled={selectedHomeworkId === homework.id}
+                        aria-label={t.showHomeworkStatistics}
+                      >
+                        <ShowChartIcon />
+                      </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit homework">
+                    <Tooltip title={t.editHomework}>
                       <IconButton
                         color="primary"
                         onClick={async () => {
                           handleEdit((await getHomework(homework.id)).homework);
                         }}
-                        aria-label="Edit homework"
+                        aria-label={t.editHomework}
                       >
                         <Edit />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete homework">
+                    <Tooltip title={t.deleteHomework}>
                       <IconButton
                         color="error"
                         onClick={() => confirmDelete(homework.id)}
-                        aria-label="Delete homework"
+                        aria-label={t.deleteHomework}
                       >
                         <Delete />
                       </IconButton>
