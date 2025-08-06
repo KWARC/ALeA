@@ -12,6 +12,7 @@ import { getFlamsServer } from '@kwarc/ftml-react';
 const CourseProblemsPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [sectionsData, setSectionsData] = useState<FTML.TOCElem[] | undefined>(undefined);
 
