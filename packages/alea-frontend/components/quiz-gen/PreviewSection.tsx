@@ -1,6 +1,16 @@
 import InfoIcon from '@mui/icons-material/Info';
-import { Box, Switch, TextField, Tooltip, Typography } from '@mui/material';
-import { useEffect, useMemo } from 'react';
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
 
@@ -10,7 +20,83 @@ interface PreviewSectionProps {
   problemData?: FlatQuizProblem;
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
+  previousVersions?: FlatQuizProblem[];
 }
+
+const VersionLeadNode = ({ index, isSelected }: {
+  index: number;
+  isSelected: boolean;
+}) => {
+  return (
+    <Box
+      sx={{
+        minWidth: 120,
+        height: 48,
+        border: 2,
+        borderColor: isSelected ? 'primary.main' : 'grey.300',
+        backgroundColor: isSelected ? 'primary.main' : 'background.paper',
+        borderRadius: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 2,
+        cursor: 'pointer',
+        position: 'relative',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: isSelected 
+          ? '0 4px 12px rgba(25, 118, 210, 0.15)' 
+          : '0 2px 4px rgba(0, 0, 0, 0.1)',
+        '&:hover': {
+          borderColor: 'primary.main',
+          backgroundColor: isSelected ? 'primary.main' : 'primary.50',
+          transform: 'translateY(-1px)',
+          boxShadow: isSelected 
+            ? '0 6px 16px rgba(25, 118, 210, 0.2)' 
+            : '0 4px 12px rgba(25, 118, 210, 0.1)',
+        },
+        '&:active': {
+          transform: 'translateY(0px)',
+        }
+      }}
+    >
+      <Typography 
+        variant="body2" 
+        fontWeight={600}
+        sx={{ 
+          color: isSelected ? 'white' : 'text.primary',
+          fontSize: '0.875rem',
+        }}
+      >
+        Version {index + 1}
+      </Typography>
+      <Box 
+        sx={{ 
+          fontSize: '14px', 
+          color: isSelected ? 'white' : 'primary.main',
+          fontWeight: 600,
+          transform: 'translateX(2px)',
+        }}
+      >
+        ›
+      </Box>
+      
+      {isSelected && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </Box>
+  );
+};
 
 export const PreviewSection = ({
   previewMode,
@@ -18,6 +104,7 @@ export const PreviewSection = ({
   problemData,
   editableSTeX,
   setEditableSTeX,
+  previousVersions,
 }: PreviewSectionProps) => {
   const isModified = useMemo(() => {
     const original = problemData?.problemStex;
@@ -27,7 +114,22 @@ export const PreviewSection = ({
   useEffect(() => {
     setPreviewMode(isModified ? 'stex' : 'json');
   }, [isModified]);
-  
+
+  const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
+
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+
+  useEffect(() => {
+    if (versionOptions.length > 0) {
+      setSelectedVersionIndex(versionOptions.length - 1); 
+    }
+  }, [versionOptions]);
+
+  const selectedVersion = versionOptions[selectedVersionIndex];
+  useEffect(() => {
+    console.log('Selected version data:', selectedVersion);
+  }, [selectedVersion]);
+
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
       <Box
@@ -44,6 +146,23 @@ export const PreviewSection = ({
         <Typography variant="subtitle1" fontWeight={600}>
           Preview
         </Typography>
+        {versionOptions.length > 0 && (
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel id="version-select-label">Version</InputLabel>
+            <Select
+              labelId="version-select-label"
+              value={selectedVersionIndex}
+              label="Version"
+              onChange={(e) => setSelectedVersionIndex(Number(e.target.value))}
+            >
+              {versionOptions.map((_, index) => (
+                <MenuItem key={index} value={index}>
+                  Version {index + 1} {index + 1 === versionOptions.length ? '(Latest)' : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="body2" color="text.secondary">
@@ -65,6 +184,54 @@ export const PreviewSection = ({
         </Box>
       </Box>
 
+      {versionOptions.length > 0 && (
+        <Box
+          p={2}
+          bgcolor="grey.50"
+          borderBottom="1px solid"
+          borderColor="divider"
+          flexShrink={0}
+        >
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Typography variant="body2" color="text.primary" fontWeight={600}>
+              Available Versions
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {versionOptions.length} version{versionOptions.length !== 1 ? 's' : ''}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1.5,
+              overflowX: 'auto',
+              pb: 1,
+              
+            }}
+          >
+            {versionOptions.map((version, index) => (
+              <Box
+                key={index}
+                onClick={() => setSelectedVersionIndex(index)}
+                sx={{
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                <VersionLeadNode
+                  index={index}
+                  isSelected={selectedVersionIndex === index}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+
       <Box
         flex={1}
         bgcolor="background.default"
@@ -77,7 +244,7 @@ export const PreviewSection = ({
       >
         {previewMode === 'json' ? (
           problemData ? (
-            <QuizProblemViewer problemData={problemData} />
+            <QuizProblemViewer problemData={selectedVersion ?? problemData} />
           ) : (
             <Box
               sx={{

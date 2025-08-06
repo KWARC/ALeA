@@ -9,7 +9,12 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import { checkPossibleVariants, finalizeProblem, saveProblemDraft } from '@stex-react/api';
+import {
+  checkPossibleVariants,
+  finalizeProblem,
+  getProblemVersionHistory,
+  saveProblemDraft,
+} from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
@@ -37,9 +42,15 @@ interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
   problemData: FlatQuizProblem;
+  setProblemData: (p: FlatQuizProblem | null) => void;
 }
 
-export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps) => {
+export const VariantDialog = ({
+  open,
+  onClose,
+  problemData,
+  setProblemData,
+}: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
     difficulty: '',
@@ -62,7 +73,7 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
-  const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
+  const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
 
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
@@ -126,6 +137,18 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
   }, [open, problemData]);
 
   useEffect(() => {
+     const fetchProblemVersionHistory = async () => {
+      if (!open || !problemData) return;
+     const res = await getProblemVersionHistory(problemData.problemId);
+      console.log({res})
+      const flattenedVersions = res.map(flattenQuizProblem);
+      setVersions(flattenedVersions);
+    };
+
+    fetchProblemVersionHistory();
+  }, [problemData,open]);
+
+   useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
 
@@ -146,7 +169,6 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
       problemData.manualEdits = [editableSTeX];
     }
   };
-
   const markProblemFinal = async () => {
     const latestManualEdit = problemData?.manualEdits[problemData?.manualEdits.length - 1];
     if (latestManualEdit !== editableSTeX) {
@@ -248,7 +270,7 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
-                        setPreviewProblemData(flat);
+                        setProblemData(flat);
                         setEditableSTeX(flat.problemStex);
                       }}
                     />
@@ -294,9 +316,10 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={previewProblemData ?? problemData}
+            problemData={problemData}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
+            previousVersions={versions}
           />
         </Box>
       </DialogContent>

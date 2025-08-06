@@ -28,6 +28,10 @@ export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     sectionUri: qp.sectionUri,
     problemStex: qp.problemStex,
     manualEdits: qp.manualEdits,
+    generationParams: qp.generationParams,
+    isDraft: qp.isDraft,
+    createdAt: qp.createdAt,
+    updatedAt: qp.updatedAt,
     ...qp.problemJson,
   };
 }
@@ -182,6 +186,7 @@ export function QuizPanel({
           open={variantDialogOpen}
           onClose={() => setVariantDialogOpen(false)}
           problemData={copiedProblem}
+          setProblemData={setCopiedProblem}
         />
       )}
     </Box>
