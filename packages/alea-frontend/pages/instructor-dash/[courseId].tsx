@@ -42,7 +42,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  'syllabus': { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
+  syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
 };
 function ChosenTab({
   tabName,
@@ -105,7 +105,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
   'study-buddy': '900px',
-  'syllabus': '1200px',
+  syllabus: '1200px',
 };
 
 const InstructorDash: NextPage = () => {
@@ -219,8 +219,8 @@ const InstructorDash: NextPage = () => {
             overflowX: 'auto',
             '& .MuiTabs-flexContainer': {
               justifyContent: {
-                xs: 'flex-start', 
-                md: 'center', 
+                xs: 'flex-start',
+                md: 'center',
               },
             },
             '& .MuiTab-root': {
