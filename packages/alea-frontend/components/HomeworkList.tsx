@@ -113,16 +113,18 @@ const HomeworkList = ({
                   <TableCell>{formattedReleaseDate}</TableCell>
                   <TableCell>
                     <Tooltip title={t.showHomeworkStatistics}>
-                      <IconButton
-                        color="primary"
-                        onClick={async () => {
-                          handleShow((await getHomework(homework.id)).homework);
-                        }}
-                        disabled={selectedHomeworkId === homework.id}
-                        aria-label={t.showHomeworkStatistics}
-                      >
-                        <ShowChartIcon />
-                      </IconButton>
+                      <span>
+                        <IconButton
+                          color="primary"
+                          onClick={async () => {
+                            handleShow((await getHomework(homework.id)).homework);
+                          }}
+                          disabled={selectedHomeworkId === homework.id}
+                          aria-label={t.showHomeworkStatistics}
+                        >
+                          <ShowChartIcon />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                     <Tooltip title={t.editHomework}>
                       <IconButton
