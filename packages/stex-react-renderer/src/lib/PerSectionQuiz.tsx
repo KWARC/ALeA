@@ -1,11 +1,15 @@
 import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import FilterList from '@mui/icons-material/FilterList';
 import {
   Box,
   Button,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   LinearProgress,
+  Popover,
   Tab,
   Tabs,
   Tooltip,
@@ -18,6 +22,8 @@ import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
 import { getProblemsPerSection } from '@stex-react/api';
+import { ForMe } from './ForMe';
+import { ProblemFilter } from './ProblemFilter';
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -25,6 +31,13 @@ export function handleViewSource(problemUri: string) {
     .then((sourceLink) => {
       if (sourceLink) window.open(sourceLink, '_blank');
     });
+}
+
+export function getProblemType(uri: string): 'quiz' | 'homework' | 'exam' | 'uncategorized' {
+  if (uri.includes('/assignments')) return 'homework';
+  if (uri.includes('/hwexam')) return 'exam';
+  if (uri.includes('/quiz') || uri.includes('&e=quiz')) return 'quiz';
+  return 'uncategorized';
 }
 
 export function UriProblemViewer({
@@ -105,14 +118,63 @@ export function PerSectionQuiz({
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
   const [tabIndex, setTabIndex] = useState(0);
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
-  useEffect(() => {
-    if (cachedProblemUris && cachedProblemUris.length > 0) {
-      setProblemUris(cachedProblemUris);
-      setIsSubmitted(cachedProblemUris.map(() => false));
-      setResponses(cachedProblemUris.map(() => undefined));
-      return;
-    }
+  const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState<
+    'all' | 'quiz' | 'homework' | 'exam' | 'uncategorized'
+  >('all');
 
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [tempFilters, setTempFilters] = useState({
+    quiz: true,
+    homework: true,
+    exam: true,
+    uncategorized: true,
+  });
+
+  function applyFilter(type: 'all' | 'quiz' | 'homework' | 'exam' | 'uncategorized') {
+    setFilterType(type);
+
+    const filtered = allProblemUris.filter((uri) => {
+      if (type === 'quiz') return getProblemType(uri) === 'quiz';
+      if (type === 'homework') return getProblemType(uri) === 'homework';
+      if (type === 'exam') return getProblemType(uri) === 'exam';
+      if (type === 'uncategorized') return getProblemType(uri) === 'uncategorized';
+      return true;
+    });
+
+    setProblemUris(filtered);
+    setIsSubmitted(filtered.map(() => false));
+    setResponses(filtered.map(() => undefined));
+    setProblemIdx(0);
+  }
+
+  const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleFilterClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleFilterChange =
+    (filterName: keyof typeof tempFilters) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setTempFilters((prev) => ({
+        ...prev,
+        [filterName]: event.target.checked,
+      }));
+    };
+
+  const applyFilters = () => {
+    const activeFilters = Object.entries(tempFilters).filter(([_, val]) => val);
+    if (activeFilters.length === 1) {
+      applyFilter(activeFilters[0][0] as typeof filterType);
+    } else {
+      applyFilter('all');
+    }
+    handleFilterClose();
+  };
+
+  useEffect(() => {
     setIsLoadingProblemUris(true);
 
     getProblemsPerSection(sectionUri, courseId)
@@ -124,30 +186,24 @@ export function PerSectionQuiz({
         }
         setCategoryMap(map);
 
+        const all = Object.values(map).flat();
+        setAllProblemUris(all);
+
         let selected: string[] = [];
 
-        if (category) {
+        if (cachedProblemUris && cachedProblemUris.length > 0) {
+          selected = cachedProblemUris;
+          setAllProblemUris(selected);
+        } else if (category) {
           selected = map[category] || [];
-          if (setCachedProblemUris) {
-            setCachedProblemUris(selected);
-          }
+          setCachedProblemUris?.(selected);
+          setAllProblemUris(selected);
         } else {
           const categoryKeys = Object.keys(map);
-          if (categoryKeys.length === 0) {
-            setProblemUris([]);
-            setIsSubmitted([]);
-            setResponses([]);
-            setIsLoadingProblemUris(false);
-            return;
-          }
-
           const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
           selected = map[selectedCategory] || [];
-
-          if (setCachedProblemUris) {
-            const all = Object.values(map).flat();
-            setCachedProblemUris(all);
-          }
+          setCachedProblemUris?.(all);
+          setAllProblemUris(selected);
         }
 
         setProblemUris(selected);
@@ -159,11 +215,75 @@ export function PerSectionQuiz({
   }, [sectionUri, courseId]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
+
+  const filterUI = (
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Tooltip title="Filter problems">
+        <IconButton onClick={handleFilterClick}>
+          <FilterList />
+        </IconButton>
+      </Tooltip>
+
+      <Typography variant="body2" sx={{ ml: 1 }}>
+        {filterType === 'all'
+          ? `Showing all ${problemUris.length} problems`
+          : `Showing ${problemUris.length} ${filterType} problems`}
+      </Typography>
+
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={handleFilterClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      >
+        <Box sx={{ p: 2, minWidth: 250 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Filter Problems
+          </Typography>
+
+          {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => (
+            <FormControlLabel
+              key={type}
+              control={
+                <Checkbox
+                  checked={tempFilters[type]}
+                  onChange={handleFilterChange(type)}
+                  size="small"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span>{type[0].toUpperCase() + type.slice(1)}</span>
+                  <Typography variant="caption" color="text.secondary">
+                    ({allProblemUris.filter((uri) => getProblemType(uri) === type).length})
+                  </Typography>
+                </Box>
+              }
+            />
+          ))}
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button size="small" onClick={handleFilterClose}>
+              Cancel
+            </Button>
+            <Button size="small" variant="contained" onClick={applyFilters}>
+              Apply
+            </Button>
+          </Box>
+        </Box>
+      </Popover>
+    </Box>
+  );
+
   if (!problemUris.length) {
     return (
-      <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-        {t.NoPracticeProblemsAll}
-      </Typography>
+      <Box>
+        {filterUI}
+        <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+          {t.NoPracticeProblemsAll}
+        </Typography>
+      </Box>
     );
   }
 
@@ -191,6 +311,17 @@ export function PerSectionQuiz({
 
   return (
     <Box mb={4}>
+      {filterUI}
+      {/* <ProblemFilter
+        allProblemUris={allProblemUris}
+        onApply={(filtered, type) => {
+          setProblemUris(filtered);
+          setIsSubmitted(filtered.map(() => false));
+          setResponses(filtered.map(() => undefined));
+          setProblemIdx(0);
+        }}
+      /> */}
+
       <Box
         px={2}
         maxWidth="800px"
@@ -211,9 +342,17 @@ export function PerSectionQuiz({
               setTabIndex(safeIdx);
               const selectedCategory = categoryKeys[safeIdx];
               const selected = categoryMap[selectedCategory] || [];
-              setProblemUris(selected);
-              setIsSubmitted(selected.map(() => false));
-              setResponses(selected.map(() => undefined));
+
+              setAllProblemUris(selected);
+
+              const filtered = selected.filter((uri) => {
+                if (filterType === 'all') return true;
+                return getProblemType(uri) === filterType;
+              });
+
+              setProblemUris(filtered);
+              setIsSubmitted(filtered.map(() => false));
+              setResponses(filtered.map(() => undefined));
               setProblemIdx(0);
             }}
           >
