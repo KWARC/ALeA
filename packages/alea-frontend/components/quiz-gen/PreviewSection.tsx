@@ -8,8 +8,9 @@ import {
   Switch,
   TextField,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
+import { GenerationParams } from '@stex-react/api';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
@@ -23,10 +24,7 @@ interface PreviewSectionProps {
   previousVersions?: FlatQuizProblem[];
 }
 
-const VersionLeadNode = ({ index, isSelected }: {
-  index: number;
-  isSelected: boolean;
-}) => {
+const VersionLeadNode = ({ index, isSelected, problemId }: { index: number; isSelected: boolean , problemId:number}) => {
   return (
     <Box
       sx={{
@@ -43,35 +41,35 @@ const VersionLeadNode = ({ index, isSelected }: {
         cursor: 'pointer',
         position: 'relative',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: isSelected 
-          ? '0 4px 12px rgba(25, 118, 210, 0.15)' 
+        boxShadow: isSelected
+          ? '0 4px 12px rgba(25, 118, 210, 0.15)'
           : '0 2px 4px rgba(0, 0, 0, 0.1)',
         '&:hover': {
           borderColor: 'primary.main',
           backgroundColor: isSelected ? 'primary.main' : 'primary.50',
           transform: 'translateY(-1px)',
-          boxShadow: isSelected 
-            ? '0 6px 16px rgba(25, 118, 210, 0.2)' 
+          boxShadow: isSelected
+            ? '0 6px 16px rgba(25, 118, 210, 0.2)'
             : '0 4px 12px rgba(25, 118, 210, 0.1)',
         },
         '&:active': {
           transform: 'translateY(0px)',
-        }
+        },
       }}
     >
-      <Typography 
-        variant="body2" 
+      <Typography
+        variant="body2"
         fontWeight={600}
-        sx={{ 
+        sx={{
           color: isSelected ? 'white' : 'text.primary',
           fontSize: '0.875rem',
         }}
       >
-        Version {index + 1}
+        Version {index + 1} {problemId}
       </Typography>
-      <Box 
-        sx={{ 
-          fontSize: '14px', 
+      <Box
+        sx={{
+          fontSize: '14px',
           color: isSelected ? 'white' : 'primary.main',
           fontWeight: 600,
           transform: 'translateX(2px)',
@@ -79,7 +77,7 @@ const VersionLeadNode = ({ index, isSelected }: {
       >
         ›
       </Box>
-      
+
       {isSelected && (
         <Box
           sx={{
@@ -89,7 +87,8 @@ const VersionLeadNode = ({ index, isSelected }: {
             right: 0,
             bottom: 0,
             borderRadius: 2,
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+            background:
+              'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
             pointerEvents: 'none',
           }}
         />
@@ -106,26 +105,26 @@ export const PreviewSection = ({
   setEditableSTeX,
   previousVersions,
 }: PreviewSectionProps) => {
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
+  const selectedVersion = versionOptions[selectedVersionIndex];
+  const manualEditPresentInVersion =
+    Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
   const isModified = useMemo(() => {
     const original = problemData?.problemStex;
     return editableSTeX !== original;
   }, [editableSTeX, problemData]);
 
   useEffect(() => {
-    setPreviewMode(isModified ? 'stex' : 'json');
-  }, [isModified]);
-
-  const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
-
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
-
-  useEffect(() => {
     if (versionOptions.length > 0) {
-      setSelectedVersionIndex(versionOptions.length - 1); 
+      setSelectedVersionIndex(versionOptions.length - 1);
     }
   }, [versionOptions]);
 
-  const selectedVersion = versionOptions[selectedVersionIndex];
+  useEffect(() => {
+    setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
+  }, [isModified, manualEditPresentInVersion]);
+
   useEffect(() => {
     console.log('Selected version data:', selectedVersion);
   }, [selectedVersion]);
@@ -155,11 +154,22 @@ export const PreviewSection = ({
               label="Version"
               onChange={(e) => setSelectedVersionIndex(Number(e.target.value))}
             >
-              {versionOptions.map((_, index) => (
-                <MenuItem key={index} value={index}>
-                  Version {index + 1} {index + 1 === versionOptions.length ? '(Latest)' : ''}
-                </MenuItem>
-              ))}
+              {versionOptions.map((version, index) => {
+                const genParams = version.generationParams as unknown as GenerationParams;
+                const mode = genParams?.mode;
+
+                let modeLabel = 'Manual';
+                if (mode === 'copy') modeLabel = 'Copied';
+                else if (mode === 'variant') modeLabel = 'Variant';
+                else if (mode === 'new') modeLabel = 'Generated';
+
+                return (
+                  <MenuItem key={index} value={index}>
+                    {index + 1} - {modeLabel}{' '}
+                    {index + 1 === versionOptions.length ? '(Latest)' : ''}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         )}
@@ -171,13 +181,21 @@ export const PreviewSection = ({
           <Switch
             checked={previewMode === 'stex'}
             onChange={(e) => setPreviewMode(e.target.checked ? 'stex' : 'json')}
-            disabled={isModified}
+            disabled={isModified || manualEditPresentInVersion}
           />
           <Typography variant="body2" color="text.secondary">
             Source
           </Typography>
-          {isModified && (
-            <Tooltip title="Manual changes detected in STeX source.">
+          {(isModified || manualEditPresentInVersion) && (
+            <Tooltip
+              title={
+                isModified
+                  ? 'Manual changes detected in STeX source.'
+                  : manualEditPresentInVersion
+                  ? 'Switch disabled for manually Edited problems.'
+                  : ''
+              }
+            >
               <InfoIcon color="warning" fontSize="small" />
             </Tooltip>
           )}
@@ -185,13 +203,7 @@ export const PreviewSection = ({
       </Box>
 
       {versionOptions.length > 0 && (
-        <Box
-          p={2}
-          bgcolor="grey.50"
-          borderBottom="1px solid"
-          borderColor="divider"
-          flexShrink={0}
-        >
+        <Box p={2} bgcolor="grey.50" borderBottom="1px solid" borderColor="divider" flexShrink={0}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Typography variant="body2" color="text.primary" fontWeight={600}>
               Available Versions
@@ -206,7 +218,6 @@ export const PreviewSection = ({
               gap: 1.5,
               overflowX: 'auto',
               pb: 1,
-              
             }}
           >
             {versionOptions.map((version, index) => (
@@ -222,10 +233,7 @@ export const PreviewSection = ({
                   transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                <VersionLeadNode
-                  index={index}
-                  isSelected={selectedVersionIndex === index}
-                />
+                <VersionLeadNode index={index} isSelected={selectedVersionIndex === index} problemId ={selectedVersion?.problemId}/>
               </Box>
             ))}
           </Box>

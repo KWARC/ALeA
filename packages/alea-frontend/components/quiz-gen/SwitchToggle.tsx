@@ -156,14 +156,6 @@ export const SwitchToggle = ({
     </Box>
   );
 
-  useEffect(() => {
-    if (themes.length === 0) {
-      setThemesLoading(true);
-    } else {
-      setThemesLoading(false);
-    }
-  }, [themes]);
-
   const renderModifyChoicesOptions = () => {
     const mode = variantConfig.modifyChoiceMode;
 
