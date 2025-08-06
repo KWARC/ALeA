@@ -108,6 +108,7 @@ export const PreviewSection = ({
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
+  const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
   const isModified = useMemo(() => {
@@ -124,6 +125,14 @@ export const PreviewSection = ({
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
   }, [isModified, manualEditPresentInVersion]);
+
+  useEffect(() => {
+    if (manualEditPresentInVersion && latestManualEdit) {
+      setEditableSTeX(latestManualEdit);
+    } else {
+      setEditableSTeX(selectedVersion?.problemStex);
+    }
+  }, [manualEditPresentInVersion, latestManualEdit]);
 
   useEffect(() => {
     console.log('Selected version data:', selectedVersion);
@@ -153,6 +162,28 @@ export const PreviewSection = ({
               value={selectedVersionIndex}
               label="Version"
               onChange={(e) => setSelectedVersionIndex(Number(e.target.value))}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    borderRadius: 2,
+                    boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.12)',
+                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                    mt: 1,
+                    '& .MuiList-root': {
+                      padding: '8px',
+                    },
+                  },
+                },
+              }}
+              sx={{
+                borderRadius: 1.5,
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              }}
             >
               {versionOptions.map((version, index) => {
                 const genParams = version.generationParams as unknown as GenerationParams;
@@ -164,7 +195,31 @@ export const PreviewSection = ({
                 else if (mode === 'new') modeLabel = 'Generated';
 
                 return (
-                  <MenuItem key={index} value={index}>
+                  <MenuItem
+                    key={index}
+                    value={index}
+                    sx={{
+                      borderRadius: 1,
+                      mx: 1,
+                      my: 0.25,
+                      py: 1.25,
+                      px: 2,
+                      backgroundColor: 'transparent !important',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.08) !important',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.12) !important',
+                        fontWeight: 600,
+                        '&:hover': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.16) !important',
+                        },
+                      },
+                    }}
+                  >
                     {index + 1} - {modeLabel}{' '}
                     {index + 1 === versionOptions.length ? '(Latest)' : ''}
                   </MenuItem>
