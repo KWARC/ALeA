@@ -152,10 +152,10 @@ export const VariantDialog = ({
     setEditableSTeX(STeX);
   }, [STeX]);
 
-  // useEffect(() => {
-  //   if (!reskinApplicable) return;
-  //   setSelectedOptions(mcqOptions);
-  // }, [reskinApplicable, mcqOptions]);
+  useEffect(() => {
+    if (!reskinApplicable) return;
+    setSelectedOptions(mcqOptions);
+  }, [reskinApplicable, mcqOptions]);
 
   const saveManualEdit = async () => {
     if (!problemData) {

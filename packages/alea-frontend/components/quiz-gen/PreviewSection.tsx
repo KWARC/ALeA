@@ -24,7 +24,7 @@ interface PreviewSectionProps {
   previousVersions?: FlatQuizProblem[];
 }
 
-const VersionLeadNode = ({ index, isSelected, problemId }: { index: number; isSelected: boolean , problemId:number}) => {
+const VersionLeadNode = ({ index, isSelected }: { index: number; isSelected: boolean }) => {
   return (
     <Box
       sx={{
@@ -65,7 +65,7 @@ const VersionLeadNode = ({ index, isSelected, problemId }: { index: number; isSe
           fontSize: '0.875rem',
         }}
       >
-        Version {index + 1} {problemId}
+        Version {index + 1}
       </Typography>
       <Box
         sx={{
@@ -233,7 +233,7 @@ export const PreviewSection = ({
                   transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                <VersionLeadNode index={index} isSelected={selectedVersionIndex === index} problemId ={selectedVersion?.problemId}/>
+                <VersionLeadNode index={index} isSelected={selectedVersionIndex === index} />
               </Box>
             ))}
           </Box>
