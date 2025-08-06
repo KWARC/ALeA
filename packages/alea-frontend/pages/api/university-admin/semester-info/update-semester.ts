@@ -14,12 +14,11 @@ export default async function handler(req, res) {
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    // updatedBy,
     timeZone,
   } = req.body;
 
-  if (!universityId || !instanceId || !userId) {
-    return res.status(400).json({ message: 'Missing universityId, instanceId, or userId ' });
+  if (!universityId || !instanceId) {
+    return res.status(400).json({ message: 'Missing universityId, instanceId' });
   }
 
   const result = (await executeQuery(

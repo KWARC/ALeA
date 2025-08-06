@@ -1,8 +1,5 @@
 import axios from 'axios';
 import { getAuthHeaders } from './lmp';
-
-/* ====== TYPES ====== */
-
 export interface SemesterData {
   universityId: string;
   instanceId: string;
@@ -37,11 +34,7 @@ export interface DeleteSingleHolidayRequest {
   dateToDelete: string;
 }
 
-/* ====== CONSTANTS ====== */
-
 const SEMESTER_BASE_URL = '/api/university-admin/semester-info';
-
-/* ====== SEMESTER APIs ====== */
 
 export async function getSemesterInfo(universityId: string, instanceId: string) {
   const response = await axios.get(`${SEMESTER_BASE_URL}/get-semester-info`, {
@@ -86,8 +79,6 @@ export async function getInstances(universityId: string) {
   });
   return response.data.data as string[];
 }
-
-/* ====== HOLIDAYS APIs ====== */
 
 export async function getHolidaysInfo(universityId: string, instanceId: string) {
   const response = await axios.get(`${SEMESTER_BASE_URL}/get-holidays-info`, {

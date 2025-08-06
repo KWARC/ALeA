@@ -24,23 +24,22 @@ export default async function handler(req, res) {
       return res.status(500).json({
         success: false,
         message: 'Database error while fetching instances',
-        error: result.error
+        error: result.error,
       });
     }
 
-    const instanceArray = result.map(r => r.instanceId);
+    const instanceArray = result.map((r) => r.instanceId);
 
     return res.status(200).json({
       success: true,
       message: 'Instances fetched successfully',
-      data: instanceArray
+      data: instanceArray,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

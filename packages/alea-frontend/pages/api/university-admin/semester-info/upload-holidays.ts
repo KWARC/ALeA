@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   const { universityId, instanceId, holidays } = req.body;
 
-  if (!universityId || !instanceId || !Array.isArray(holidays) || !userId){
+  if (!universityId || !instanceId || !Array.isArray(holidays)) {
     return res.status(400).json({ message: 'Missing or invalid data' });
   }
 
@@ -42,7 +42,6 @@ export default async function handler(req, res) {
     `,
     [JSON.stringify(formattedHolidays), userId, universityId, instanceId]
   );
-
 
   res.status(200).json({
     success: true,

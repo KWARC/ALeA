@@ -14,7 +14,6 @@ export default async function handler(req, res) {
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    // userId,
     timeZone,
   } = req.body;
 
@@ -25,12 +24,10 @@ export default async function handler(req, res) {
     !semesterEnd ||
     !lectureStartDate ||
     !lectureEndDate ||
-    !userId ||
     !timeZone
   ) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
-
 
   const existing = (await executeQuery(
     `SELECT 1 FROM semesterInfo WHERE universityId = ? AND instanceId = ?`,
@@ -60,7 +57,7 @@ export default async function handler(req, res) {
       lectureEndDate,
       userId,
       timeZone,
-      JSON.stringify([]), // Set holidays to an empty JSON array
+      JSON.stringify([]),
     ]
   )) as { error?: any };
 
@@ -68,5 +65,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Insert failed', error: result.error });
   }
 
-  res.status(200).json({ success: true });
+  res.status(200).json({ success: true, message: 'Semester created successfully' });
 }

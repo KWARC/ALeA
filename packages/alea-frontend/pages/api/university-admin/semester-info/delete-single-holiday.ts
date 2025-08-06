@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
 
   //TODO: We will use getUserIdAuthoriseSetError
-const userId = await getUserIdOrSetError(req, res);
+  const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
   const { universityId, instanceId, dateToDelete } = req.body;
@@ -24,7 +24,9 @@ const userId = await getUserIdOrSetError(req, res);
 
   const existing = result[0];
   if (!existing || !existing.holidays) {
-    return res.status(404).json({ message: 'No holidays found for the given university and instance' });
+    return res
+      .status(404)
+      .json({ message: 'No holidays found for the given university and instance' });
   }
 
   let holidays: any[];

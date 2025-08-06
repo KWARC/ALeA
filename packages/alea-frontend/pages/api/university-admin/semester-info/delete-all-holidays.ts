@@ -3,7 +3,7 @@ import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../../
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  // Ensure the user is authenticated
+  //TODO: We will use getUserIdAuthoriseSetError
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
@@ -14,7 +14,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Explicitly type the result of executeQuery
     const result = (await executeQuery(
       `
       UPDATE semesterInfo
@@ -22,10 +21,12 @@ export default async function handler(req, res) {
       WHERE universityId = ? AND instanceId = ?
       `,
       [userId, universityId, instanceId]
-    )) as { affectedRows: number }; // Add explicit typing
+    )) as { affectedRows: number };
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'No matching semester found for the given universityId and instanceId' });
+      return res
+        .status(404)
+        .json({ message: 'No matching semester found for the given universityId and instanceId' });
     }
 
     res.status(200).json({
