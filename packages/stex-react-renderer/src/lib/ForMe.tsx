@@ -16,7 +16,6 @@ export function ForMe({
   cachedProblemUris,
   setCachedProblemUris,
   setExternalProblemUris,
-  hideFilter = false,
   disablelayout = false,
 }: {
   sectionUri: string;
@@ -24,7 +23,6 @@ export function ForMe({
   showHideButton?: boolean;
   cachedProblemUris: string[] | null;
   setCachedProblemUris: (uris: string[]) => void;
-  hideFilter?: boolean;
   disablelayout?: boolean;
   setExternalProblemUris?: (uris: string[]) => void;
 }) {
@@ -89,104 +87,113 @@ export function ForMe({
   // const problemUri = problemUris[problemIdx];
   // if (!problemUri) return <>error: [{problemUri}] </>;
 
-  const content = (
+  const InnerContent = () => (
     <>
-      {!hideFilter && (
-        <ProblemFilter
-          allProblemUris={allProblemUris}
-          onApply={(filtered, type) => {
-            setProblemUris(filtered);
-            setIsSubmitted(filtered.map(() => false));
-            setResponses(filtered.map(() => undefined));
-            setProblemIdx(0);
-          }}
-        />
-      )}
-
-      <Box
-        px={1}
-        maxWidth="800px"
-        m="auto"
-        bgcolor="white"
-        border="1px solid #CCC"
-        borderRadius="5px"
-      >
-        {!problemUris.length ? (
-          <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-            {t.NoPracticeProblemsForMe}
-          </Typography>
-        ) : (
-          (() => {
-            const problemUri = problemUris[problemIdx];
-            if (!problemUri) {
-              console.error('Invalid problemIdx', problemIdx, problemUris);
-              return (
-                <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-                  {t.NoPracticeProblemsForMe}
-                </Typography>
-              );
-            }
+      <ProblemFilter
+        allProblemUris={allProblemUris}
+        onApply={(filtered, type) => {
+          setProblemUris(filtered);
+          setIsSubmitted(filtered.map(() => false));
+          setResponses(filtered.map(() => undefined));
+          setProblemIdx(0);
+        }}
+      />
+      {!problemUris.length ? (
+        <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+          {t.NoPracticeProblemsForMe}
+        </Typography>
+      ) : (
+        (() => {
+          const problemUri = problemUris[problemIdx];
+          if (!problemUri) {
+            console.error('Invalid problemIdx', problemIdx, problemUris);
             return (
-              <>
-                <Typography fontWeight="bold" textAlign="left">
-                  {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-                </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <ListStepper
-                    idx={problemIdx}
-                    listSize={problemUris.length}
-                    onChange={(idx) => {
-                      setProblemIdx(idx);
-                    }}
-                  />
-                  <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
-                    <Tooltip title="view source">
-                      <OpenInNewIcon />
-                    </Tooltip>
-                  </IconButton>
-                </Box>
-                <Box mb="10px">
-                  <UriProblemViewer
-                    key={problemUri}
-                    uri={problemUri}
-                    isSubmitted={isSubmitted[problemIdx]}
-                    setIsSubmitted={(v) =>
-                      setIsSubmitted((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
-                      })
-                    }
-                    response={responses[problemIdx]}
-                    setResponse={(v) =>
-                      setResponses((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
-                      })
-                    }
-                  />
-                </Box>
-                <Box
-                  mb={2}
-                  sx={{
-                    display: 'flex',
-                    gap: '10px',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  {showHideButton && (
-                    <Button onClick={() => setShow(false)} variant="contained" color="secondary">
-                      {t.hideProblems}
-                    </Button>
-                  )}
-                </Box>
-              </>
+              <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                {t.NoPracticeProblemsForMe}
+              </Typography>
             );
-          })()
-        )}
-      </Box>
+          }
+          return (
+            <>
+              <Typography fontWeight="bold" textAlign="left">
+                {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+              </Typography>
+              <Box
+                px={2}
+                maxWidth="800px"
+                m="auto"
+                bgcolor="white"
+                border="1px solid #CCC"
+                borderRadius="5px"
+              ></Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                <ListStepper
+                  idx={problemIdx}
+                  listSize={problemUris.length}
+                  onChange={(idx) => {
+                    setProblemIdx(idx);
+                  }}
+                />
+                <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
+                  <Tooltip title="view source">
+                    <OpenInNewIcon />
+                  </Tooltip>
+                </IconButton>
+              </Box>
+              <Box mb="10px">
+                <UriProblemViewer
+                  key={problemUri}
+                  uri={problemUri}
+                  isSubmitted={isSubmitted[problemIdx]}
+                  setIsSubmitted={(v) =>
+                    setIsSubmitted((prev) => {
+                      prev[problemIdx] = v;
+                      return [...prev];
+                    })
+                  }
+                  response={responses[problemIdx]}
+                  setResponse={(v) =>
+                    setResponses((prev) => {
+                      prev[problemIdx] = v;
+                      return [...prev];
+                    })
+                  }
+                />
+              </Box>
+              <Box
+                mb={2}
+                sx={{
+                  display: 'flex',
+                  gap: '10px',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                }}
+              >
+                {showHideButton && (
+                  <Button onClick={() => setShow(false)} variant="contained" color="secondary">
+                    {t.hideProblems}
+                  </Button>
+                )}
+              </Box>
+            </>
+          );
+        })()
+      )}
     </>
   );
 
-  return disablelayout ? content : <>{content}</>;
+  return disablelayout ? (
+    InnerContent()
+  ) : (
+    <Box
+      px={2}
+      maxWidth="800px"
+      m="auto"
+      bgcolor="white"
+      border="1px solid #CCC"
+      borderRadius="5px"
+    >
+      {InnerContent()}
+    </Box>
+  );
 }

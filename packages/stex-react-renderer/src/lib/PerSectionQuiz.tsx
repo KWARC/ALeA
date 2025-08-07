@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
@@ -120,40 +120,39 @@ export function PerSectionQuiz({
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
+  const orderedCategoryKeys = useMemo(() => {
+    const knownOrder = ['syllabus', 'adventurous'];
+    const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
+    return [...knownOrder.filter((k) => categoryMap[k]), ...rest];
+  }, [categoryMap]);
 
   useEffect(() => {
+    if (cachedProblemUris?.length) {
+      setProblemUris(cachedProblemUris);
+      setIsSubmitted(cachedProblemUris.map(() => false));
+      setResponses(cachedProblemUris.map(() => undefined));
+      setAllProblemUris(cachedProblemUris);
+      return;
+    }
+
     setIsLoadingProblemUris(true);
 
     getProblemsPerSection(sectionUri, courseId)
       .then((problems) => {
         const map: Record<string, string[]> = {};
-        for (const p of problems) {
-          const cat = p.category || 'uncategorized';
+
+        problems.forEach(({ problemId, category }) => {
+          const cat = category || 'uncategorized';
           if (!map[cat]) map[cat] = [];
-          map[cat].push(p.problemId);
-        }
+          map[cat].push(problemId);
+        });
+
         setCategoryMap(map);
+        const selected: string[] = (category && map[category]) || map[Object.keys(map)[0]] || [];
+        setCachedProblemUris?.(selected);
+        setTabIndex('0');
 
-        const all = Object.values(map).flat();
-        setAllProblemUris(all);
-
-        let selected: string[] = [];
-
-        if (cachedProblemUris && cachedProblemUris.length > 0) {
-          selected = cachedProblemUris;
-          setAllProblemUris(selected);
-        } else if (category && map[category]) {
-          selected = map[category];
-          setAllProblemUris(selected);
-          setCachedProblemUris?.(selected);
-        } else {
-          const defaultCategory = Object.keys(map)[0];
-          selected = map[defaultCategory] || [];
-          setCachedProblemUris?.(selected);
-          setTabIndex('0');
-          setAllProblemUris(selected);
-        }
-
+        setAllProblemUris(selected);
         setProblemUris(selected);
         setIsSubmitted(selected.map(() => false));
         setResponses(selected.map(() => undefined));
@@ -182,7 +181,7 @@ export function PerSectionQuiz({
     );
   }
 
-  // const problemUri = problemUris[problemIdx];
+  const problemUri = problemUris[problemIdx];
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
@@ -190,151 +189,147 @@ export function PerSectionQuiz({
 
   return (
     <Box mb={4}>
-      {/* <ProblemFilter
-        allProblemUris={allProblemUris}
-        onApply={(filtered, type) => {
-          setProblemUris(filtered);
-          setIsSubmitted(filtered.map(() => false));
-          setResponses(filtered.map(() => undefined));
-          setProblemIdx(0);
-        }}
-      /> */}
-      {!problemUris.length ? (
+      {/* {!problemUris.length ? (
         <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
           {t.NoPracticeProblemsAll}
         </Typography>
       ) : (
-        (() => {
-          const problemUri = problemUris[problemIdx];
-          return (
-            <Box
-              px={2}
-              maxWidth="800px"
-              m="auto"
-              bgcolor="white"
-              border="1px solid #CCC"
-              borderRadius="5px"
-            >
-              <Typography fontWeight="bold" textAlign="left">
-                {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+        (() => { */}
+      {/* const problemUri = problemUris[problemIdx]; */}
+      <Box
+        px={2}
+        maxWidth="800px"
+        m="auto"
+        bgcolor="white"
+        border="1px solid #CCC"
+        borderRadius="5px"
+      >
+        {/* <Typography fontWeight="bold" textAlign="left">
+          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+        </Typography> */}
+        {!category && Object.keys(categoryMap).length > 0 && (
+          <Tabs
+            value={tabIndex}
+            onChange={(_, newVal: string) => {
+              if (newVal === 'forme') {
+                setTabIndex('forme');
+                return;
+              }
+
+              const index = parseInt(newVal);
+              const selectedCategory = orderedCategoryKeys[index];
+              const selected = categoryMap[selectedCategory] || [];
+
+              setTabIndex(newVal);
+              setAllProblemUris(selected);
+              setProblemUris(selected);
+              setIsSubmitted(selected.map(() => false));
+              setResponses(selected.map(() => undefined));
+              setProblemIdx(0);
+            }}
+          >
+            <Tab value="forme" label="For Me" />
+            {orderedCategoryKeys.map((cat, i) => (
+              <Tab
+                key={cat}
+                value={i.toString()}
+                label={
+                  cat === 'adventurous'
+                    ? "I'm Adventurous"
+                    : cat === 'syllabus'
+                    ? 'Syllabus'
+                    : cat[0].toUpperCase() + cat.slice(1)
+                }
+              />
+            ))}
+          </Tabs>
+        )}
+        {tabIndex === 'forme' ? (
+          <ForMe
+            sectionUri={sectionUri}
+            cachedProblemUris={formeUris}
+            setCachedProblemUris={setFormeUris}
+            disablelayout={true}
+            setExternalProblemUris={(uris) => {
+              if (
+                uris.length === problemUris.length &&
+                uris.every((u, i) => u === problemUris[i])
+              ) {
+                return;
+              }
+              setProblemUris(uris);
+              setIsSubmitted(uris.map(() => false));
+              setResponses(uris.map(() => undefined));
+              setProblemIdx(0);
+            }}
+          />
+        ) : (
+          <>
+            <ProblemFilter
+              allProblemUris={allProblemUris}
+              onApply={(filtered, type) => {
+                setProblemUris(filtered);
+                setIsSubmitted(filtered.map(() => false));
+                setResponses(filtered.map(() => undefined));
+                setProblemIdx(0);
+              }}
+            />
+            {!problemUris.length ? (
+              <Typography
+                variant="body2"
+                sx={{ fontStyle: 'italic', color: 'text.secondary', mt: 2 }}
+              >
+                {t.NoPracticeProblemsAll}
               </Typography>
-              {!category && Object.keys(categoryMap).length > 0 && (
-                <Tabs
-                  value={tabIndex}
-                  onChange={(_, newVal: string) => {
-                    if (newVal === 'forme') {
-                      setTabIndex('forme');
-                      return;
-                    }
-
-                    const categoryKeys = Object.keys(categoryMap);
-                    const index = parseInt(newVal);
-                    const selectedCategory = categoryKeys[index];
-                    const selected = categoryMap[selectedCategory] || [];
-
-                    setTabIndex(newVal);
-                    setAllProblemUris(selected);
-                    setProblemUris(selected);
-                    setIsSubmitted(selected.map(() => false));
-                    setResponses(selected.map(() => undefined));
-                    setProblemIdx(0);
-                  }}
-                >
-                  <Tab value="forme" label="ForMe" />
-                  {categoryMap['syllabus'] && <Tab value="0" label="Syllabus" />}
-                  {Object.keys(categoryMap)
-                    .filter((cat) => cat !== 'syllabus')
-                    .map((cat, i) => (
-                      <Tab
-                        key={cat}
-                        value={(i + (categoryMap['syllabus'] ? 1 : 0)).toString()}
-                        label={
-                          cat === 'adventurous'
-                            ? "I'm Adventurous"
-                            : cat[0].toUpperCase() + cat.slice(1)
-                        }
-                      />
-                    ))}
-                </Tabs>
-              )}
-              {tabIndex === 'forme' ? (
-                <ForMe
-                  sectionUri={sectionUri}
-                  cachedProblemUris={formeUris}
-                  setCachedProblemUris={setFormeUris}
-                  disablelayout={true}
-                  hideFilter={true}
-                  setExternalProblemUris={(uris) => {
-                    if (
-                      uris.length === problemUris.length &&
-                      uris.every((u, i) => u === problemUris[i])
-                    ) {
-                      return;
-                    }
-                    setProblemUris(uris);
-                    setIsSubmitted(uris.map(() => false));
-                    setResponses(uris.map(() => undefined));
-                    setProblemIdx(0);
-                  }}
-                />
-              ) : (
-                <>
-                  <ProblemFilter
-                    allProblemUris={allProblemUris}
-                    onApply={(filtered, type) => {
-                      setProblemUris(filtered);
-                      setIsSubmitted(filtered.map(() => false));
-                      setResponses(filtered.map(() => undefined));
-                      setProblemIdx(0);
+            ) : (
+              <>
+                <Typography fontWeight="bold" textAlign="left">
+                  {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+                </Typography>
+                <Box
+                  px={2}
+                  maxWidth="800px"
+                  m="auto"
+                  bgcolor="white"
+                  border="1px solid #CCC"
+                  borderRadius="5px"
+                ></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                  <ListStepper
+                    idx={problemIdx}
+                    listSize={problemUris.length}
+                    onChange={(idx) => {
+                      setProblemIdx(idx);
+                      setShowSolution(false);
                     }}
                   />
-                  <Box
-                    px={2}
-                    maxWidth="800px"
-                    m="auto"
-                    bgcolor="white"
-                    border="1px solid #CCC"
-                    borderRadius="5px"
-                  ></Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                    <ListStepper
-                      idx={problemIdx}
-                      listSize={problemUris.length}
-                      onChange={(idx) => {
-                        setProblemIdx(idx);
-                        setShowSolution(false);
-                      }}
-                    />
-                    <IconButton
-                      onClick={() => handleViewSource(problemUri)}
-                      sx={{ float: 'right' }}
-                    >
-                      <Tooltip title="view source">
-                        <OpenInNewIcon />
-                      </Tooltip>
-                    </IconButton>
-                  </Box>
-                  <Box mb="14px">
-                    <UriProblemViewer
-                      key={problemUri}
-                      uri={problemUri}
-                      isSubmitted={isSubmitted[problemIdx]}
-                      setIsSubmitted={(v) =>
-                        setIsSubmitted((prev) => {
-                          prev[problemIdx] = v;
-                          return [...prev];
-                        })
-                      }
-                      response={responses[problemIdx]}
-                      setResponse={(v) =>
-                        setResponses((prev) => {
-                          prev[problemIdx] = v;
-                          return [...prev];
-                        })
-                      }
-                    />
-                    {/* TODO ALEA4-P3
-        <ProblemDisplay
+                  <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
+                    <Tooltip title="view source">
+                      <OpenInNewIcon />
+                    </Tooltip>
+                  </IconButton>
+                </Box>
+                <Box mb="14px">
+                  <UriProblemViewer
+                    key={problemUri}
+                    uri={problemUri}
+                    isSubmitted={isSubmitted[problemIdx]}
+                    setIsSubmitted={(v) =>
+                      setIsSubmitted((prev) => {
+                        prev[problemIdx] = v;
+                        return [...prev];
+                      })
+                    }
+                    response={responses[problemIdx]}
+                    setResponse={(v) =>
+                      setResponses((prev) => {
+                        prev[problemIdx] = v;
+                        return [...prev];
+                      })
+                    }
+                  />
+                  {/* TODO ALEA4-P3
+          <ProblemDisplay
           r={response}
           uri={problemUris[problemIdx]}
           showPoints={false}
@@ -353,41 +348,40 @@ export function PerSectionQuiz({
               return [...prev];
             })
           }
-        />*/}
-                  </Box>
-                  <Box
-                    mb={6}
-                    sx={{
-                      display: 'flex',
-                      gap: '10px',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    {/* TODO ALEA4-P3 solutions?.length > 0 && (
+         />*/}
+                </Box>
+                <Box
+                  mb={6}
+                  sx={{
+                    display: 'flex',
+                    gap: '10px',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {/* TODO ALEA4-P3 solutions?.length > 0 && (
           <Button variant="contained" onClick={() => setShowSolution(!showSolution)}>
             {showSolution ? t.hideSolution : t.showSolution}
           </Button>
-        )}*/}
-                    {showSolution && (
-                      <Box mb="10px">
-                        {/* solutions.map((solution) => (
+         )}*/}
+                  {showSolution && (
+                    <Box mb="10px">
+                      {/* solutions.map((solution) => (
               <div style={{ color: '#555' }} dangerouslySetInnerHTML={{__html:solution}}></div>
             ))*/}
-                      </Box>
-                    )}
-                    {showHideButton && (
-                      <Button onClick={() => setShow(false)} variant="contained" color="secondary">
-                        {t.hideProblems}
-                      </Button>
-                    )}
-                  </Box>
-                </>
-              )}
-            </Box>
-          );
-        })()
-      )}
+                    </Box>
+                  )}
+                  {showHideButton && (
+                    <Button onClick={() => setShow(false)} variant="contained" color="secondary">
+                      {t.hideProblems}
+                    </Button>
+                  )}
+                </Box>
+              </>
+            )}
+          </>
+        )}
+      </Box>
     </Box>
   );
 }
