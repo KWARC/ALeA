@@ -256,7 +256,6 @@ export const VariantDialog = ({
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
-                      disabled={!isViewingLatestVersion}
                     />
                   )}
 
@@ -271,7 +270,6 @@ export const VariantDialog = ({
                       mcqOptions={mcqOptions}
                       selectedOptions={selectedOptions}
                       setSelectedOptions={setSelectedOptions}
-                      disabled={!isViewingLatestVersion}
                     />
                   )}
 
@@ -286,7 +284,6 @@ export const VariantDialog = ({
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
                       onLoadingChange={setPreviewLoading}
-                      disabled={!isViewingLatestVersion}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
                         setProblemData(flat);
