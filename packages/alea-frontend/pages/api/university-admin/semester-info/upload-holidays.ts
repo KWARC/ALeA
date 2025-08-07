@@ -1,4 +1,6 @@
-import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
+import { Action, ResourceName } from '@stex-react/utils';
+import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
+import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
 function formatDateToDDMMYYYY(date: string): string | null {
   const d = new Date(date);
@@ -12,9 +14,8 @@ function formatDateToDDMMYYYY(date: string): string | null {
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  //TODO: We will use getUserIdAuthoriseSetError
-  const userId = await getUserIdOrSetError(req, res);
-  if (!userId) return;
+ const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
+   if (!userId) return;
 
   const { universityId, instanceId, holidays } = req.body;
 

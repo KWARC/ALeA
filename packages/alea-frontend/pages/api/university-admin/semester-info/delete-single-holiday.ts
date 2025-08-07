@@ -1,10 +1,11 @@
-import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
+import { Action, ResourceName } from '@stex-react/utils';
+import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
+import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  //TODO: We will use getUserIdAuthoriseSetError
-  const userId = await getUserIdOrSetError(req, res);
+  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
   if (!userId) return;
 
   const { universityId, instanceId, dateToDelete } = req.body;
