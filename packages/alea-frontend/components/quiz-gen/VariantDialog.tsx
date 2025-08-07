@@ -8,6 +8,7 @@ import {
   DialogTitle,
   LinearProgress,
   TextField,
+  Typography,
 } from '@mui/material';
 import {
   checkPossibleVariants,
@@ -183,9 +184,15 @@ export const VariantDialog = ({
           fontSize: '1.25rem',
           fontWeight: 600,
           color: 'primary.main',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         Create Question Variant
+        <Typography variant="subtitle1" fontWeight={500} color="text.secondary">
+          Preview
+        </Typography>
       </DialogTitle>
 
       <DialogContent

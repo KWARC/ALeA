@@ -162,9 +162,6 @@ export const PreviewSection = ({
         flexShrink={0}
         mb={1}
       >
-        <Typography variant="subtitle1" fontWeight={600}>
-          Preview
-        </Typography>
         {versionOptions.length > 0 && (
           <Box display="flex" alignItems="center" gap={1.5}>
             <FormControl size="small" sx={{ minWidth: 180 }}>
