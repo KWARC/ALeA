@@ -1,13 +1,24 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
 type DatabaseResult<T> = T[] | { error: any };
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
   if (!userId) return;
 
   const { universityId, instanceId, originalDate, updatedHoliday } = req.body as {
@@ -27,19 +38,13 @@ export default async function handler(req, res) {
     !updatedHoliday?.date ||
     !updatedHoliday?.name
   ) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing required fields',
-    });
+    return res.status(400).end('Missing required fields');
   }
 
   try {
     const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
     if (!dateRegex.test(originalDate) || !dateRegex.test(updatedHoliday.date)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dates must be in DD/MM/YYYY format',
-      });
+      return res.status(400).end('Dates must be in DD/MM/YYYY format');
     }
 
     const existingResult = (await executeQuery<{ holidays: string }[]>(
@@ -48,37 +53,23 @@ export default async function handler(req, res) {
     )) as DatabaseResult<{ holidays: string }>;
 
     if ('error' in existingResult) {
-      return res.status(500).json({
-        success: false,
-        message: 'Database error',
-        error: existingResult.error,
-      });
+      return res.status(500).end('Database error');
     }
 
     if (!existingResult.length) {
-      return res.status(404).json({
-        success: false,
-        message: 'Semester not found',
-      });
+      return res.status(404).end('Semester not found');
     }
 
     let holidays: Array<{ date: string; name: string }>;
     try {
       holidays = JSON.parse(existingResult[0].holidays || '[]');
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Invalid holidays data format',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return res.status(500).end('Invalid holidays JSON');
     }
 
     const holidayIndex = holidays.findIndex((h) => h.date === originalDate);
     if (holidayIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: `Holiday not found with date: ${originalDate}`,
-      });
+      return res.status(404).end(`Holiday with date ${originalDate} not found`);
     }
 
     const updatedHolidays = [...holidays];
@@ -95,11 +86,7 @@ export default async function handler(req, res) {
     )) as DatabaseResult<{ affectedRows: number }>;
 
     if ('error' in updateResult) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update holidays',
-        error: updateResult.error,
-      });
+      return res.status(500).end('Failed to update holiday');
     }
 
     return res.status(200).json({

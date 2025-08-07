@@ -1,3 +1,4 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
@@ -11,16 +12,26 @@ function formatDateToDDMMYYYY(date: string): string | null {
   return `${day}/${month}/${year}`;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
- const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
-   if (!userId) return;
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
+  if (!userId) return;
 
   const { universityId, instanceId, holidays } = req.body;
 
   if (!universityId || !instanceId || !Array.isArray(holidays)) {
-    return res.status(400).json({ message: 'Missing or invalid data' });
+    return res.status(400).end('Missing or invalid data');
   }
 
   const formattedHolidays = holidays
@@ -32,7 +43,7 @@ export default async function handler(req, res) {
     .filter(Boolean);
 
   if (formattedHolidays.length === 0) {
-    return res.status(400).json({ message: 'All holiday dates were invalid' });
+    return res.status(400).end('All holiday dates were invalid');
   }
 
   const result = await executeQuery(

@@ -1,26 +1,39 @@
+// File: packages/alea-frontend/pages/api/university-admin/semester-info/delete-semester.ts
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
-import { executeQuery, checkIfPostOrSetError} from '../../comment-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../../comment-utils';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+   {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
   if (!userId) return;
 
   const { universityId, instanceId } = req.body;
 
   if (!universityId || !instanceId) {
-    return res.status(400).json({ message: 'Missing universityId or instanceId' });
+    return res.status(400).end();
   }
 
-  const result = await executeQuery(
+  const result = await executeAndEndSet500OnError(
     `
     DELETE FROM semesterInfo
     WHERE universityId = ? AND instanceId = ?
     `,
-    [universityId, instanceId]
+    [universityId, instanceId],
+    res
   );
 
-  res.status(200).json({ success: true, result });
+  res.status(200).json(result);
 }

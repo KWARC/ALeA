@@ -1,17 +1,28 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
   if (!userId) return;
 
   const { universityId, instanceId, dateToDelete } = req.body;
 
   if (!universityId || !instanceId || !dateToDelete) {
-    return res.status(400).json({ message: 'Missing universityId, instanceId, or dateToDelete' });
+    return res.status(400).end('Missing universityId, instanceId, or dateToDelete');
   }
 
   const result = await executeQuery(
@@ -25,16 +36,14 @@ export default async function handler(req, res) {
 
   const existing = result[0];
   if (!existing || !existing.holidays) {
-    return res
-      .status(404)
-      .json({ message: 'No holidays found for the given university and instance' });
+    return res.status(404).end('No holiday data found for the specified university and instance');
   }
 
   let holidays: any[];
   try {
     holidays = JSON.parse(existing.holidays);
   } catch {
-    return res.status(500).json({ message: 'Failed to parse holidays JSON' });
+    return res.status(500).end('Failed to parse holidays JSON');
   }
 
   const filtered = holidays.filter((h: any) => h.date !== dateToDelete);

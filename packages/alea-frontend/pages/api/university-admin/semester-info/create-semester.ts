@@ -1,11 +1,26 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
-import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeDontEndSet500OnError,
+  executeAndEndSet500OnError,
+} from '../../comment-utils';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
   if (!userId) return;
 
   const {
@@ -27,25 +42,21 @@ export default async function handler(req, res) {
     !lectureEndDate ||
     !timeZone
   ) {
-    return res.status(400).json({ message: 'Missing required fields' });
+    return res.status(400).end();
   }
 
-  const existing = (await executeQuery(
+  const existing = await executeDontEndSet500OnError(
     `SELECT 1 FROM semesterInfo WHERE universityId = ? AND instanceId = ?`,
-    [universityId, instanceId]
-  )) as any[] | { error: any };
-
-  if ('error' in existing) {
-    return res.status(500).json({ message: 'Database error', error: existing.error });
-  }
+    [universityId, instanceId],
+    res
+  );
+  if (!existing) return;
 
   if (Array.isArray(existing) && existing.length > 0) {
-    return res
-      .status(409)
-      .json({ message: 'Semester already exists for this university and instance' });
+    return res.status(409).end();
   }
 
-  const result = (await executeQuery(
+  await executeAndEndSet500OnError(
     `INSERT INTO semesterInfo
       (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, userId, timeZone, holidays)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -58,13 +69,10 @@ export default async function handler(req, res) {
       lectureEndDate,
       userId,
       timeZone,
-      JSON.stringify([]),
-    ]
-  )) as { error?: any };
-
-  if (result.error) {
-    return res.status(500).json({ message: 'Insert failed', error: result.error });
-  }
+      '[]',
+    ],
+    res
+  );
 
   res.status(200).json({ success: true, message: 'Semester created successfully' });
 }

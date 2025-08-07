@@ -1,51 +1,49 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery } from '../../comment-utils';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ success: false, message: 'Only GET requests allowed' });
+    return res.status(405).end('Only GET requests allowed');
   }
 
-  const userId = await getUserIdIfAuthorizedOrSetError(req,res,ResourceName.UNIVERSITY_SEMESTER_DATA,Action.MUTATE,{universityId: req.query.universityId});
-    if (!userId) return;
-
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    {
+      universityId: Array.isArray(req.query.universityId)
+        ? req.query.universityId[0]
+        : req.query.universityId,
+    }
+  );
+  if (!userId) return;
 
   const { universityId } = req.query;
 
   if (!universityId || typeof universityId !== 'string') {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing or invalid universityId',
-    });
+    return res.status(400).end('Missing or invalid query parameter: universityId must be a string');
   }
 
-  try {
-    const result = await executeQuery<Array<{ instanceId: string }>>(
-      `SELECT DISTINCT instanceId FROM semesterInfo WHERE universityId = ?`,
-      [universityId]
-    );
+  const result = await executeQuery<Array<{ instanceId: string }>>(
+    `SELECT DISTINCT instanceId FROM semesterInfo WHERE universityId = ?`,
+    [universityId]
+  );
 
-    if ('error' in result) {
-      return res.status(500).json({
-        success: false,
-        message: 'Database error while fetching instances',
-        error: result.error,
-      });
-    }
-
-    const instanceArray = result.map((r) => r.instanceId);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Instances fetched successfully',
-      data: instanceArray,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+  if ('error' in result) {
+    return res.status(500).end('Failed to fetch semester instances');
   }
+
+  const instanceArray = result.map((r) => r.instanceId);
+
+  return res.status(200).json({
+    success: true,
+    message:
+      instanceArray.length > 0
+        ? 'Semester instances fetched successfully'
+        : 'No semester instances found for the specified universityId',
+    data: instanceArray,
+  });
 }
