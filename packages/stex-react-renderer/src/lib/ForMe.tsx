@@ -76,16 +76,6 @@ export function ForMe({
   }, [problemUris]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
-  // if (!problemUris.length) {
-  //   return (
-  //     <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-  //       {t.NoPracticeProblemsForMe}
-  //     </Typography>
-  //   );
-  // }
-
-  // const problemUri = problemUris[problemIdx];
-  // if (!problemUri) return <>error: [{problemUri}] </>;
 
   const InnerContent = () => (
     <>

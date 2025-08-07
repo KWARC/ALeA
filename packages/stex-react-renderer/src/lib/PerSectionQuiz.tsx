@@ -1,15 +1,11 @@
 import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import FilterList from '@mui/icons-material/FilterList';
 import {
   Box,
   Button,
-  Checkbox,
-  FormControlLabel,
   IconButton,
   LinearProgress,
-  Popover,
   Tab,
   Tabs,
   Tooltip,
@@ -189,13 +185,6 @@ export function PerSectionQuiz({
 
   return (
     <Box mb={4}>
-      {/* {!problemUris.length ? (
-        <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-          {t.NoPracticeProblemsAll}
-        </Typography>
-      ) : (
-        (() => { */}
-      {/* const problemUri = problemUris[problemIdx]; */}
       <Box
         px={2}
         maxWidth="800px"
@@ -204,9 +193,6 @@ export function PerSectionQuiz({
         border="1px solid #CCC"
         borderRadius="5px"
       >
-        {/* <Typography fontWeight="bold" textAlign="left">
-          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-        </Typography> */}
         {!category && Object.keys(categoryMap).length > 0 && (
           <Tabs
             value={tabIndex}
