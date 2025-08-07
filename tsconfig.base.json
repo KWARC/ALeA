@@ -25,6 +25,7 @@
       "@stex-react/report-a-problem": ["packages/report-a-problem/src/index.ts"],
       "@stex-react/stex-react-renderer": ["packages/stex-react-renderer/src/index.ts"],
       "@stex-react/utils": ["packages/utils/src/index.ts"]
+
     }
   },
   "exclude": ["node_modules", "tmp"]
