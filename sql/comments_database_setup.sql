@@ -275,3 +275,13 @@ CREATE TABLE excused(
     courseId VARCHAR(255) NOT NULL,                
     courseInstance VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE announcements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    courseId VARCHAR(255) NOT NULL,
+    instructorId VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    visibleUntil TIMESTAMP NULL,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
