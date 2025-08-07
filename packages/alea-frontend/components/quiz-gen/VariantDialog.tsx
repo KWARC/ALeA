@@ -77,6 +77,13 @@ export const VariantDialog = ({
 
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
+  const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
+  const isDirty = editableSTeX !== latestManualEdit && editableSTeX !== problemData?.problemStex;
+
+  const isViewingLatestVersion =
+    versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
+  console.log({ isViewingLatestVersion });
+  console.log(versions[versions.length - 1])
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -94,16 +101,16 @@ export const VariantDialog = ({
   };
 
   useEffect(() => {
-    const createCopyAndCheckVariants = async () => {
+    const checkVariants = async () => {
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
         console.log({ problemData });
-        if (problemData?.manualEdits?.length > 0) {
-          setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
-        } else {
-          setEditableSTeX(problemData.problemStex);
-        }
+        // if (problemData?.manualEdits?.length > 0) {
+        //   setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
+        // } else {
+        //   setEditableSTeX(problemData.problemStex);
+        // }
 
         if (!problemData) return;
         //const result = await checkPossibleVariants(problemData.problemId);
@@ -133,29 +140,29 @@ export const VariantDialog = ({
       }
     };
 
-    createCopyAndCheckVariants();
+    checkVariants();
   }, [open, problemData]);
 
   useEffect(() => {
-     const fetchProblemVersionHistory = async () => {
+    const fetchProblemVersionHistory = async () => {
       if (!open || !problemData) return;
-     const res = await getProblemVersionHistory(problemData.problemId);
-      console.log({res})
+      const res = await getProblemVersionHistory(problemData.problemId);
+      console.log({ res });
       const flattenedVersions = res.map(flattenQuizProblem);
       setVersions(flattenedVersions);
     };
 
     fetchProblemVersionHistory();
-  }, [problemData,open]);
+  }, [problemData, open]);
 
-   useEffect(() => {
+  useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
 
   // useEffect(() => {
   //   if (!reskinApplicable) return;
   //   setSelectedOptions(mcqOptions);
-  // }, [reskinApplicable, mcqOptions]);
+  // }, [mcqOptions]);
 
   const saveManualEdit = async () => {
     if (!problemData) {
@@ -170,7 +177,6 @@ export const VariantDialog = ({
     }
   };
   const markProblemFinal = async () => {
-    const latestManualEdit = problemData?.manualEdits[problemData?.manualEdits.length - 1];
     if (latestManualEdit !== editableSTeX) {
       await saveProblemDraft(problemData.problemId, editableSTeX);
     }
@@ -240,6 +246,7 @@ export const VariantDialog = ({
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
+                      disabled={!isViewingLatestVersion}
                     />
                   )}
 
@@ -254,6 +261,7 @@ export const VariantDialog = ({
                       mcqOptions={mcqOptions}
                       selectedOptions={selectedOptions}
                       setSelectedOptions={setSelectedOptions}
+                      disabled={!isViewingLatestVersion}
                     />
                   )}
 
@@ -268,6 +276,7 @@ export const VariantDialog = ({
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
                       onLoadingChange={setPreviewLoading}
+                      disabled={!isViewingLatestVersion}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
                         setProblemData(flat);
@@ -339,6 +348,7 @@ export const VariantDialog = ({
             await saveManualEdit();
             clearSelection();
           }}
+          disabled={!isDirty}
           sx={{ textTransform: 'none' }}
         >
           Save As Draft
