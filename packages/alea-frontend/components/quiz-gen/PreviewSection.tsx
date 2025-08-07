@@ -356,15 +356,22 @@ export const PreviewSection = ({
             variant="outlined"
             InputProps={{
               readOnly: !isLatestVersion,
+              sx: {
+                '& textarea': {
+                  userSelect: isLatestVersion ? 'text' : 'none', 
+                  pointerEvents: isLatestVersion ? 'auto' : 'none', 
+                },
+              },
             }}
             sx={{
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '0.9rem',
               lineHeight: 1.5,
-              color: manualEditPresentInVersion ? 'text.secondary' : '#111827',
-              backgroundColor: manualEditPresentInVersion ? '#f9f9f9' : '#fff',
+              color: isLatestVersion ? '#111827' : 'text.secondary',
+              backgroundColor: isLatestVersion ? '#fff' : '#f9f9f9',
               minHeight: '300px',
-              cursor: manualEditPresentInVersion ? 'not-allowed' : 'text',
+              cursor: isLatestVersion ? 'text' : 'not-allowed',
+              userSelect: isLatestVersion ? 'text' : 'none',
             }}
           />
         )}
