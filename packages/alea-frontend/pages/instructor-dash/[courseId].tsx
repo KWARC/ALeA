@@ -228,6 +228,8 @@ const InstructorDash: NextPage = () => {
               justifyContent: {
                 xs: 'flex-start',
                 md: 'center',
+                xs: 'flex-start',
+                md: 'center',
               },
             },
             '& .MuiTab-root': {
