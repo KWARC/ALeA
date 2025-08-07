@@ -79,20 +79,9 @@ export const VariantDialog = ({
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const isDirty = editableSTeX !== latestManualEdit && editableSTeX !== problemData?.problemStex;
-<<<<<<< Updated upstream
-
-  const isViewingLatestVersion =
-    versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
-  // console.log({ STeX });
-=======
 const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true); 
 console.log({isViewingLatestVersion});
-  // const isViewingLatestVersion =
-  //   versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
-  // console.log({ isViewingLatestVersion });
->>>>>>> Stashed changes
-  // console.log(versions[versions.length - 1])
-  const handleConfigChange = (field, value) => {
+   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
 
