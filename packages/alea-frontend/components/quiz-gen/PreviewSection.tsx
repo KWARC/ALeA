@@ -110,7 +110,7 @@ export const PreviewSection = ({
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
-  const manualEditPresentInVersion =
+  const   manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
   const [showVersionTrack, setShowVersionTrack] = useState(false);
   const isModified = useMemo(() => {
@@ -134,7 +134,7 @@ export const PreviewSection = ({
     } else {
       setEditableSTeX(selectedVersion?.problemStex);
     }
-  }, [manualEditPresentInVersion, latestManualEdit]);
+  }, [selectedVersion]);
 
   useEffect(() => {
     console.log('Selected version data:', selectedVersion);

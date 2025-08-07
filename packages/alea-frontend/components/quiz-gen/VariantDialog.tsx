@@ -82,8 +82,8 @@ export const VariantDialog = ({
 
   const isViewingLatestVersion =
     versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
-  console.log({ isViewingLatestVersion });
-  console.log(versions[versions.length - 1])
+  // console.log({ STeX });
+  // console.log(versions[versions.length - 1])
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -106,11 +106,6 @@ export const VariantDialog = ({
       setVariantOptionsLoading(true);
       try {
         console.log({ problemData });
-        // if (problemData?.manualEdits?.length > 0) {
-        //   setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
-        // } else {
-        //   setEditableSTeX(problemData.problemStex);
-        // }
 
         if (!problemData) return;
         //const result = await checkPossibleVariants(problemData.problemId);
