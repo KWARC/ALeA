@@ -14,6 +14,7 @@ import { GenerationParams } from '@stex-react/api';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
+import TuneIcon from '@mui/icons-material/Tune';
 
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
@@ -111,6 +112,7 @@ export const PreviewSection = ({
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
+  const [showVersionTrack, setShowVersionTrack] = useState(false);
   const isModified = useMemo(() => {
     const original = problemData?.problemStex;
     return editableSTeX !== original;
@@ -155,78 +157,94 @@ export const PreviewSection = ({
           Preview
         </Typography>
         {versionOptions.length > 0 && (
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="version-select-label">Version</InputLabel>
-            <Select
-              labelId="version-select-label"
-              value={selectedVersionIndex}
-              label="Version"
-              onChange={(e) => setSelectedVersionIndex(Number(e.target.value))}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    borderRadius: 2,
-                    boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.12)',
-                    border: '1px solid rgba(0, 0, 0, 0.06)',
-                    mt: 1,
-                    '& .MuiList-root': {
-                      padding: '8px',
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="version-select-label">Version</InputLabel>
+              <Select
+                labelId="version-select-label"
+                value={selectedVersionIndex}
+                label="Version"
+                onChange={(e) => setSelectedVersionIndex(Number(e.target.value))}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      borderRadius: 2,
+                      boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.12)',
+                      border: '1px solid rgba(0, 0, 0, 0.06)',
+                      mt: 1,
+                      '& .MuiList-root': {
+                        padding: '8px',
+                      },
                     },
                   },
-                },
-              }}
-              sx={{
-                borderRadius: 1.5,
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              {versionOptions.map((version, index) => {
-                const genParams = version.generationParams as unknown as GenerationParams;
-                const mode = genParams?.mode;
+                }}
+                sx={{
+                  borderRadius: 1.5,
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                }}
+              >
+                {versionOptions.map((version, index) => {
+                  const genParams = version.generationParams as unknown as GenerationParams;
+                  const mode = genParams?.mode;
+                  const meVersion = version?.manualEdits?.length ?? 0;
+                  let modeLabel = 'Manual';
+                  if (mode === 'copy') modeLabel = 'Copied';
+                  else if (mode === 'variant') modeLabel = 'Variant';
+                  else if (mode === 'new') modeLabel = 'Generated';
+                  if (meVersion > 0) modeLabel += ` ME${meVersion}`;
 
-                let modeLabel = 'Manual';
-                if (mode === 'copy') modeLabel = 'Copied';
-                else if (mode === 'variant') modeLabel = 'Variant';
-                else if (mode === 'new') modeLabel = 'Generated';
-
-                return (
-                  <MenuItem
-                    key={index}
-                    value={index}
-                    sx={{
-                      borderRadius: 1,
-                      mx: 1,
-                      my: 0.25,
-                      py: 1.25,
-                      px: 2,
-                      backgroundColor: 'transparent !important',
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.08) !important',
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      },
-                      '&.Mui-selected': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.12) !important',
-                        fontWeight: 600,
+                  return (
+                    <MenuItem
+                      key={index}
+                      value={index}
+                      sx={{
+                        borderRadius: 1,
+                        mx: 1,
+                        my: 0.25,
+                        py: 1.25,
+                        px: 2,
+                        backgroundColor: 'transparent !important',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.16) !important',
+                          backgroundColor: 'rgba(25, 118, 210, 0.08) !important',
+                          transform: 'translateY(-1px)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                         },
-                      },
-                    }}
-                  >
-                    {index + 1} - {modeLabel}{' '}
-                    {index + 1 === versionOptions.length ? '(Latest)' : ''}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
+                        '&.Mui-selected': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.12) !important',
+                          fontWeight: 600,
+                          '&:hover': {
+                            backgroundColor: 'rgba(25, 118, 210, 0.16) !important',
+                          },
+                        },
+                      }}
+                    >
+                      {index + 1} - {modeLabel}{' '}
+                      {index + 1 === versionOptions.length ? '(Latest)' : ''}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+            <Tooltip title={'See All the versions'}>
+              <TuneIcon
+                onClick={() => setShowVersionTrack((prev) => !prev)}
+                sx={{
+                  cursor: 'pointer',
+                  color: showVersionTrack ? 'primary.main' : 'action.active',
+                  transition: 'color 0.2s',
+                  '&:hover': {
+                    color: 'primary.dark',
+                  },
+                }}
+              />
+            </Tooltip>
+          </Box>
         )}
 
         <Box display="flex" alignItems="center" gap={1}>
@@ -257,7 +275,7 @@ export const PreviewSection = ({
         </Box>
       </Box>
 
-      {versionOptions.length > 0 && (
+      {showVersionTrack && versionOptions.length > 0 && (
         <Box p={2} bgcolor="grey.50" borderBottom="1px solid" borderColor="divider" flexShrink={0}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Typography variant="body2" color="text.primary" fontWeight={600}>
@@ -330,13 +348,17 @@ export const PreviewSection = ({
             value={editableSTeX}
             onChange={(e) => setEditableSTeX(e.target.value)}
             variant="outlined"
+            InputProps={{
+              readOnly: manualEditPresentInVersion,
+            }}
             sx={{
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '0.9rem',
               lineHeight: 1.5,
-              color: '#111827',
-              backgroundColor: '#fff',
+              color: manualEditPresentInVersion ? 'text.secondary' : '#111827',
+              backgroundColor: manualEditPresentInVersion ? '#f9f9f9' : '#fff',
               minHeight: '300px',
+              cursor: manualEditPresentInVersion ? 'not-allowed' : 'text',
             }}
           />
         )}
