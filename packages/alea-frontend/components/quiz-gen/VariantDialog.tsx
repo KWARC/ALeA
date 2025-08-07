@@ -79,9 +79,9 @@ export const VariantDialog = ({
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const isDirty = editableSTeX !== latestManualEdit && editableSTeX !== problemData?.problemStex;
-const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true); 
-console.log({isViewingLatestVersion});
-   const handleConfigChange = (field, value) => {
+  const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true);
+  console.log({ isViewingLatestVersion });
+  const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -211,19 +211,25 @@ console.log({isViewingLatestVersion});
           </Box>
         )}
         <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
-          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden" position={"relative"}>
-              {!isViewingLatestVersion && (
-    <Box
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
-      zIndex={10}
-      bgcolor="rgba(255, 255, 255, 0.6)"
-  />
-
-  )}
+          <Box
+            flex={0.7}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+            position={'relative'}
+          >
+            {!isViewingLatestVersion && (
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                zIndex={10}
+                bgcolor="rgba(255, 255, 255, 0.6)"
+              />
+            )}
             <Box
               flex={1}
               overflow="auto"
@@ -334,7 +340,6 @@ console.log({isViewingLatestVersion});
             setEditableSTeX={setEditableSTeX}
             previousVersions={versions}
             onLatestVersionStatusChange={(isLatest) => setIsViewingLatestVersion(isLatest)}
-
           />
         </Box>
       </DialogContent>

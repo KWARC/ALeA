@@ -30,7 +30,6 @@ interface SwitchToggleProps {
   setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
-  disabled?: boolean;
 }
 
 const REPHRASE_SUBOPTIONS = [
@@ -54,7 +53,6 @@ export const SwitchToggle = ({
   problemData,
   onVariantGenerated,
   onLoadingChange,
-  disabled,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
   const [themesLoading, setThemesLoading] = useState<boolean>(false);
@@ -265,7 +263,7 @@ export const SwitchToggle = ({
         <Typography fontWeight={600} color={isActive ? 'primary.main' : 'text.primary'}>
           {title}
         </Typography>
-        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)} disabled={disabled} />
+        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)}  />
       </Box>
 
       <Collapse in={isActive}>

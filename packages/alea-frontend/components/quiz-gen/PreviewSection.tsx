@@ -112,7 +112,8 @@ export const PreviewSection = ({
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
-  const   manualEditPresentInVersion =
+  const isLatestVersion = selectedVersionIndex === versionOptions.length - 1;
+  const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
   const [showVersionTrack, setShowVersionTrack] = useState(false);
   const isModified = useMemo(() => {
@@ -125,11 +126,12 @@ export const PreviewSection = ({
       setSelectedVersionIndex(versionOptions.length - 1);
     }
   }, [versionOptions]);
- useEffect(() => {
-    const isLatest = selectedVersionIndex === versionOptions.length-1;
-    console.log({isLatest});
-    onLatestVersionStatusChange?.(isLatest);
-  }, [selectedVersionIndex]);
+  useEffect(() => {
+    console.log({ selectedVersionIndex });
+    console.log({ versionOptions });
+    console.log({ isLatest: isLatestVersion });
+    onLatestVersionStatusChange?.(isLatestVersion);
+  }, [selectedVersionIndex, versionOptions]);
 
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
@@ -356,7 +358,7 @@ export const PreviewSection = ({
             onChange={(e) => setEditableSTeX(e.target.value)}
             variant="outlined"
             InputProps={{
-              readOnly: manualEditPresentInVersion,
+              readOnly: !isLatestVersion,
             }}
             sx={{
               fontFamily: 'JetBrains Mono, monospace',
