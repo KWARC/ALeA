@@ -275,3 +275,18 @@ CREATE TABLE excused(
     courseId VARCHAR(255) NOT NULL,                
     courseInstance VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE semesterInfo (
+  universityId VARCHAR(50),
+  instanceId VARCHAR(50),
+  semesterStart TIMESTAMP,
+  semesterEnd TIMESTAMP,
+  lectureStartDate TIMESTAMP,
+  lectureEndDate TIMESTAMP,
+  holidays JSON NOT NULL,
+  timeZone VARCHAR(100),
+  userId VARCHAR(255),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (universityId, instanceId)
+);
