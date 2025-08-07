@@ -34,7 +34,7 @@ export enum ResourceName {
   COURSE_ACCESS = 'COURSE_ACCESS',
   
   // University admin resources
-  UNIVERSITY_SEMESTER_MANAGEMENT = 'UNIVERSITY_SEMESTER_MANAGEMENT',
+  UNIVERSITY_SEMESTER_DATA = 'UNIVERSITY_SEMESTER_DATA',
 }
 
 export enum ComponentType {
@@ -84,7 +84,7 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
 ];
 
 export const UNIVERSITY_ADMIN_RESOURCE_AND_ACTION = [
-  { resource: ResourceName.UNIVERSITY_SEMESTER_MANAGEMENT, action: Action.MUTATE },
+  { resource: ResourceName.UNIVERSITY_SEMESTER_DATA, action: Action.MUTATE },
 ];
 
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
@@ -191,7 +191,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
     ],
   },
   {
-    name: ResourceName.UNIVERSITY_SEMESTER_MANAGEMENT,
+    name: ResourceName.UNIVERSITY_SEMESTER_DATA,
     possibleActions: [Action.MUTATE],
     components: [
       { type: ComponentType.FIXED, value: 'university' },
