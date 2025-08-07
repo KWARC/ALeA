@@ -79,10 +79,18 @@ export const VariantDialog = ({
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const isDirty = editableSTeX !== latestManualEdit && editableSTeX !== problemData?.problemStex;
+<<<<<<< Updated upstream
 
   const isViewingLatestVersion =
     versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
   // console.log({ STeX });
+=======
+const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true); 
+console.log({isViewingLatestVersion});
+  // const isViewingLatestVersion =
+  //   versions.length > 0 && problemData.problemId === versions[versions.length - 1]?.problemId;
+  // console.log({ isViewingLatestVersion });
+>>>>>>> Stashed changes
   // console.log(versions[versions.length - 1])
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
@@ -141,9 +149,9 @@ export const VariantDialog = ({
   useEffect(() => {
     const fetchProblemVersionHistory = async () => {
       if (!open || !problemData) return;
-      const res = await getProblemVersionHistory(problemData.problemId);
-      console.log({ res });
-      const flattenedVersions = res.map(flattenQuizProblem);
+      const history = await getProblemVersionHistory(problemData.problemId);
+      console.log({ res: history });
+      const flattenedVersions = history.map(flattenQuizProblem);
       setVersions(flattenedVersions);
     };
 
@@ -214,7 +222,19 @@ export const VariantDialog = ({
           </Box>
         )}
         <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
-          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
+          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden" position={"relative"}>
+              {!isViewingLatestVersion && (
+    <Box
+      position="absolute"
+      top={0}
+      left={0}
+      right={0}
+      bottom={0}
+      zIndex={10}
+      bgcolor="rgba(255, 255, 255, 0.6)"
+  />
+
+  )}
             <Box
               flex={1}
               overflow="auto"
@@ -324,6 +344,8 @@ export const VariantDialog = ({
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
             previousVersions={versions}
+            onLatestVersionStatusChange={(isLatest) => setIsViewingLatestVersion(isLatest)}
+
           />
         </Box>
       </DialogContent>

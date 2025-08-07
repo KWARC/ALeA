@@ -23,6 +23,7 @@ interface PreviewSectionProps {
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
   previousVersions?: FlatQuizProblem[];
+  onLatestVersionStatusChange: (isLatest: boolean) => void;
 }
 
 const VersionLeadNode = ({ index, isSelected }: { index: number; isSelected: boolean }) => {
@@ -105,6 +106,7 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
   previousVersions,
+  onLatestVersionStatusChange,
 }: PreviewSectionProps) => {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
@@ -123,6 +125,11 @@ export const PreviewSection = ({
       setSelectedVersionIndex(versionOptions.length - 1);
     }
   }, [versionOptions]);
+ useEffect(() => {
+    const isLatest = selectedVersionIndex === versionOptions.length-1;
+    console.log({isLatest});
+    onLatestVersionStatusChange?.(isLatest);
+  }, [selectedVersionIndex]);
 
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
