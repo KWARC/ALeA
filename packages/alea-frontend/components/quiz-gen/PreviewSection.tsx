@@ -160,6 +160,7 @@ export const PreviewSection = ({
         justifyContent="space-between"
         alignItems="center"
         flexShrink={0}
+        overflow="auto"
         mb={1}
       >
         {versionOptions.length > 0 && (
