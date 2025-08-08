@@ -252,3 +252,14 @@ export async function getProblemVersionHistory(problemId: number) {
   return resp.data as QuizProblem[];
 }
 
+export async function getFinalizedVariants(problemId: number) {
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      problemId,
+      apiname: 'get-finalized-variants',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as QuizProblem[];
+}

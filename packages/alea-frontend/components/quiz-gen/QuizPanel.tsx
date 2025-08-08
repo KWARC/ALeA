@@ -1,8 +1,8 @@
 import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
-import { Box, Card, Chip, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
-import { generateQuizProblems, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
+import { Box, Card, Chip, CircularProgress, IconButton, Select, Tooltip, Typography } from '@mui/material';
+import { generateQuizProblems, getFinalizedVariants, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ExistingProblem,
   FlatQuizProblem,
@@ -53,6 +53,14 @@ export function QuizPanel({
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const [copiedProblem, setCopiedProblem] = useState<FlatQuizProblem | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+    useEffect(()=>{
+    async function finalVariants(){
+      if(!currentProblem)return;
+      const finalizedVariants=await getFinalizedVariants((currentProblem as FlatQuizProblem).problemId);
+console.log({finalizedVariants})
+    }
+    finalVariants();
+  },[currentProblem])
   const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
     if (!problemData) return;
 
@@ -113,6 +121,7 @@ export function QuizPanel({
       </Box>
     );
   }
+
 
   return (
     <Box mt={3}>
