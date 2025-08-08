@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   LinearProgress,
+  Snackbar,
   TextField,
   Typography,
 } from '@mui/material';
@@ -75,11 +76,12 @@ export const VariantDialog = ({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
-  const isDirty = editableSTeX !== latestManualEdit && editableSTeX !== problemData?.problemStex;
   const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true);
   console.log({ isViewingLatestVersion });
   const handleConfigChange = (field, value) => {
@@ -160,6 +162,12 @@ export const VariantDialog = ({
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
+      return;
+    }
+    if (latestManualEdit === editableSTeX || problemData.problemStex === editableSTeX) {
+      console.log('No changes detected. Draft not saved.');
+      setSnackbarMessage('No changes detected. Draft not saved.');
+      setSnackbarOpen(true);
       return;
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
@@ -346,6 +354,13 @@ export const VariantDialog = ({
             onLatestVersionStatusChange={(isLatest) => setIsViewingLatestVersion(isLatest)}
           />
         </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        />
       </DialogContent>
 
       <DialogActions sx={{ p: 3, gap: 1 }}>
@@ -363,7 +378,7 @@ export const VariantDialog = ({
             await saveManualEdit();
             clearSelection();
           }}
-          disabled={!isDirty}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Save As Draft
@@ -374,6 +389,7 @@ export const VariantDialog = ({
             clearSelection();
             onClose();
           }}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Finalize
