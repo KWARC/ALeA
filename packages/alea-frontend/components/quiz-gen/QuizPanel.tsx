@@ -75,14 +75,14 @@ export function QuizPanel({
 
   useEffect(() => {
     async function finalVariants() {
-      if (!(currentProblem as FlatQuizProblem)?.problemId) return;
-
-      const finalizedVariants = await getFinalizedVariants(
-        (currentProblem as FlatQuizProblem).problemId
-      );
-
+      if (!currentProblem ) return;
+      let finalizedVariants:QuizProblem[];
+      if ('problemId' in currentProblem && currentProblem.problemId) {
+        finalizedVariants = await getFinalizedVariants({problemId:currentProblem.problemId});
+      } else if ('uri' in currentProblem && currentProblem.uri) {
+        finalizedVariants = await getFinalizedVariants({problemUri:currentProblem.uri});
+      }
       setFinalizedProblems(finalizedVariants);
-
       if (finalizedVariants.length > 0) {
         setSelectedProblemIndex(0);
         setFinalizedProblemData(flattenQuizProblem(finalizedVariants[0]));
