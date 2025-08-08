@@ -156,14 +156,6 @@ export const SwitchToggle = ({
     </Box>
   );
 
-  useEffect(() => {
-    if (themes.length === 0) {
-      setThemesLoading(true);
-    } else {
-      setThemesLoading(false);
-    }
-  }, [themes]);
-
   const renderModifyChoicesOptions = () => {
     const mode = variantConfig.modifyChoiceMode;
 
@@ -271,7 +263,7 @@ export const SwitchToggle = ({
         <Typography fontWeight={600} color={isActive ? 'primary.main' : 'text.primary'}>
           {title}
         </Typography>
-        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)} />
+        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)}  />
       </Box>
 
       <Collapse in={isActive}>

@@ -100,6 +100,10 @@ export interface QuizProblem {
   problemStex: string;
   problemJson: ProblemJson;
   manualEdits?:string[];
+  generationParams?:JSON;
+  isDraft?:boolean;//TODO remove if not needed
+  createdAt?:string;
+  updatedAt?:string;
 }
 export async function fetchGeneratedProblems(
   courseId: string,
@@ -234,4 +238,28 @@ export async function getCourseGeneratedProblemsCountBySection(courseId: string)
     headers: getAuthHeaders(),
   });
   return resp.data as Record<string, number>;
+}
+
+export async function getProblemVersionHistory(problemId: number) {
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      problemId,
+      apiname: 'get-problem-version-history',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as QuizProblem[];
+}
+
+export async function getFinalizedVariants(params:ByProblemId|ByProblemUri) {
+  const resp = await axios.get('/api/gpt-redirect', {
+    params: {
+      ...params,
+      apiname: 'get-finalized-variants',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data as QuizProblem[];
 }

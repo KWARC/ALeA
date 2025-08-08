@@ -1,8 +1,24 @@
 import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
-import { Box, Card, Chip, IconButton, Tooltip, Typography } from '@mui/material';
-import { generateQuizProblems, getLatestProblemDraft, QuizProblem } from '@stex-react/api';
+import {
+  Box,
+  Card,
+  Chip,
+  CircularProgress,
+  FormControl,
+  IconButton,
+  InputLabel,
+  NativeSelect,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import {
+  generateQuizProblems,
+  getFinalizedVariants,
+  getLatestProblemDraft,
+  QuizProblem,
+} from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ExistingProblem,
   FlatQuizProblem,
@@ -28,6 +44,10 @@ export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     sectionUri: qp.sectionUri,
     problemStex: qp.problemStex,
     manualEdits: qp.manualEdits,
+    generationParams: qp.generationParams,
+    isDraft: qp.isDraft,
+    createdAt: qp.createdAt,
+    updatedAt: qp.updatedAt,
     ...qp.problemJson,
   };
 }
@@ -48,6 +68,47 @@ export function QuizPanel({
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const [copiedProblem, setCopiedProblem] = useState<FlatQuizProblem | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [finalizedProblems, setFinalizedProblems] = useState<QuizProblem[]>([]);
+  const [selectedProblemIndex, setSelectedProblemIndex] = useState<number | null>(null);
+  const [finalizedProblemData, setFinalizedProblemData] = useState<FlatQuizProblem>();
+
+  useEffect(() => {
+    async function finalVariants() {
+      if (!currentProblem ) return;
+      let finalizedVariants:QuizProblem[];
+      if ('problemId' in currentProblem && currentProblem.problemId) {
+        finalizedVariants = await getFinalizedVariants({problemId:currentProblem.problemId});
+      } else if ('uri' in currentProblem && currentProblem.uri) {
+        finalizedVariants = await getFinalizedVariants({problemUri:currentProblem.uri});
+      }
+      setFinalizedProblems(finalizedVariants);
+      if (finalizedVariants.length > 0) {
+        setSelectedProblemIndex(0);
+        setFinalizedProblemData(flattenQuizProblem(finalizedVariants[0]));
+      } else {
+        setSelectedProblemIndex(0);
+        setFinalizedProblemData(null);
+      }
+    }
+    finalVariants();
+  }, [currentProblem]);
+
+  const handleVariantChange = (value: string) => {
+    if (value === '') {
+      setSelectedProblemIndex(undefined);
+      setFinalizedProblemData(currentProblem as FlatQuizProblem);
+      return;
+    }
+
+    const idx = Number(value);
+    setSelectedProblemIndex(idx);
+
+    const selectedVariant = finalizedProblems?.[idx];
+    if (selectedVariant) {
+      setFinalizedProblemData(flattenQuizProblem(selectedVariant));
+    }
+  };
 
   const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
     if (!problemData) return;
@@ -82,7 +143,14 @@ export function QuizPanel({
   };
 
   const handleOpenVariantDialog = async () => {
-    await createCopyAndCheckVariants(currentProblem);
+    setLoading(true);
+    try {
+      await createCopyAndCheckVariants(currentProblem);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
     setVariantDialogOpen(true);
   };
 
@@ -106,7 +174,13 @@ export function QuizPanel({
   return (
     <Box mt={3}>
       <Card sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+          overflow="auto"
+        >
           <Typography variant="h5" color="#0d47a1">
             Question {Math.min(currentIdx, problems.length - 1) + 1} of {problems.length}
           </Typography>
@@ -124,6 +198,33 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
+          <FormControl sx={{ m: 1 }}>
+            <InputLabel>Variants</InputLabel>
+            <NativeSelect
+              value={selectedProblemIndex ?? ''}
+              onChange={(e) => handleVariantChange(e.target.value)}
+              sx={{
+                '& .MuiInputBase-input': {
+                  border: '1px solid #ced4da',
+                  borderRadius: 1,
+                  p: '10px 26px 10px 12px',
+                  fontSize: 16,
+                  '&:focus': {
+                    borderColor: '#80bdff',
+                    boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
+                  },
+                },
+              }}
+            >
+              <option value="">None</option>
+              {finalizedProblems?.map((variant, idx) => (
+                <option key={variant.problemId} value={idx}>
+                  Variant {idx + 1}
+                </option>
+              ))}
+            </NativeSelect>
+          </FormControl>
+
           <Tooltip title="Create a new Variant">
             <PublishedWithChanges onClick={handleOpenVariantDialog} />
           </Tooltip>
@@ -142,7 +243,7 @@ export function QuizPanel({
 
         {isGenerated(currentProblem) ? (
           <>
-            <QuizProblemViewer problemData={currentProblem} />
+            <QuizProblemViewer problemData={finalizedProblemData ?? currentProblem} />
             <FeedbackSection key={currentProblem.problemId} problemId={currentProblem.problemId} />
           </>
         ) : isExisting(currentProblem) ? (
@@ -161,12 +262,28 @@ export function QuizPanel({
 
         {isGenerated(currentProblem) && <HiddenFeedback problemId={currentProblem.problemId} />}
       </Card>
-
-      <VariantDialog
-        open={variantDialogOpen}
-        onClose={() => setVariantDialogOpen(false)}
-        problemData={copiedProblem}
-      />
+      {loading ? (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(255,255,255,0.6)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
+        <VariantDialog
+          open={variantDialogOpen}
+          onClose={() => setVariantDialogOpen(false)}
+          problemData={copiedProblem}
+          setProblemData={setCopiedProblem}
+        />
+      )}
     </Box>
   );
 }
