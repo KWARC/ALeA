@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     ResourceName.UNIVERSITY_SEMESTER_DATA,
     Action.MUTATE,
-   {
+    {
       universityId: Array.isArray(req.query.universityId)
         ? req.query.universityId[0]
         : req.query.universityId,
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end();
   }
 
-  const result = await executeAndEndSet500OnError(
+  await executeAndEndSet500OnError(
     `
     DELETE FROM semesterInfo
     WHERE universityId = ? AND instanceId = ?
@@ -35,5 +35,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
 
-  res.status(200).json(result);
+  res.status(204).end();
 }

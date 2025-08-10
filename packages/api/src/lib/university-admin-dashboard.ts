@@ -45,10 +45,9 @@ export async function getSemesterInfo(universityId: string, instanceId: string) 
 }
 
 export async function createSemester(data: SemesterData) {
-  const response = await axios.post(`${SEMESTER_BASE_URL}/create-semester`, data, {
+  await axios.post(`${SEMESTER_BASE_URL}/create-semester`, data, {
     headers: getAuthHeaders(),
   });
-  return response.data;
 }
 
 export async function updateSemester(data: SemesterData) {
