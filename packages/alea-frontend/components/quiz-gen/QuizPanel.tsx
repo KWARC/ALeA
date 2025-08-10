@@ -9,7 +9,7 @@ import {
   InputLabel,
   NativeSelect,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import {
   generateQuizProblems,
@@ -71,33 +71,38 @@ export function QuizPanel({
   const [loading, setLoading] = useState<boolean>(false);
   const [finalizedProblems, setFinalizedProblems] = useState<QuizProblem[]>([]);
   const [selectedProblemIndex, setSelectedProblemIndex] = useState<number | null>(null);
-  const [finalizedProblemData, setFinalizedProblemData] = useState<FlatQuizProblem>();
+  const [finalizedProblemData, setFinalizedProblemData] = useState<FlatQuizProblem | null>();
 
   useEffect(() => {
     async function finalVariants() {
-      if (!currentProblem ) return;
-      let finalizedVariants:QuizProblem[];
+      if (!currentProblem) return;
+      let finalizedVariants: QuizProblem[];
       if ('problemId' in currentProblem && currentProblem.problemId) {
-        finalizedVariants = await getFinalizedVariants({problemId:currentProblem.problemId});
+        finalizedVariants = await getFinalizedVariants({ problemId: currentProblem.problemId });
       } else if ('uri' in currentProblem && currentProblem.uri) {
-        finalizedVariants = await getFinalizedVariants({problemUri:currentProblem.uri});
+        finalizedVariants = await getFinalizedVariants({ problemUri: currentProblem.uri });
       }
       setFinalizedProblems(finalizedVariants);
+      console.log({ setFinalizedProblemData });
       if (finalizedVariants.length > 0) {
         setSelectedProblemIndex(0);
         setFinalizedProblemData(flattenQuizProblem(finalizedVariants[0]));
       } else {
-        setSelectedProblemIndex(0);
+        setSelectedProblemIndex(null);
         setFinalizedProblemData(null);
       }
+      setSelectedProblemIndex(null);
+      setFinalizedProblemData(null);
     }
     finalVariants();
   }, [currentProblem]);
 
   const handleVariantChange = (value: string) => {
+    console.log({ value });
     if (value === '') {
-      setSelectedProblemIndex(undefined);
-      setFinalizedProblemData(currentProblem as FlatQuizProblem);
+      setSelectedProblemIndex(null);
+      setFinalizedProblemData(null);
+      console.log({ setFinalizedProblemData });
       return;
     }
 
@@ -107,6 +112,7 @@ export function QuizPanel({
     const selectedVariant = finalizedProblems?.[idx];
     if (selectedVariant) {
       setFinalizedProblemData(flattenQuizProblem(selectedVariant));
+      console.log({ setFinalizedProblemData });
     }
   };
 
@@ -198,33 +204,33 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
-          <FormControl sx={{ m: 1 }}>
-            <InputLabel>Variants</InputLabel>
-            <NativeSelect
-              value={selectedProblemIndex ?? ''}
-              onChange={(e) => handleVariantChange(e.target.value)}
-              sx={{
-                '& .MuiInputBase-input': {
-                  border: '1px solid #ced4da',
-                  borderRadius: 1,
-                  p: '10px 26px 10px 12px',
-                  fontSize: 16,
-                  '&:focus': {
-                    borderColor: '#80bdff',
-                    boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
+          <Tooltip title="Variants of this Problem">
+            <FormControl sx={{ m: 1 }}>
+              <NativeSelect
+                value={selectedProblemIndex ?? ''}
+                onChange={(e) => handleVariantChange(e.target.value)}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    border: '1px solid #ced4da',
+                    borderRadius: 1,
+                    p: '10px 26px 10px 12px',
+                    fontSize: 16,
+                    '&:focus': {
+                      borderColor: '#80bdff',
+                      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
+                    },
                   },
-                },
-              }}
-            >
-              <option value="">None</option>
-              {finalizedProblems?.map((variant, idx) => (
-                <option key={variant.problemId} value={idx}>
-                  Variant {idx + 1}
-                </option>
-              ))}
-            </NativeSelect>
-          </FormControl>
-
+                }}
+              >
+                <option value="">None</option>
+                {finalizedProblems?.map((variant, idx) => (
+                  <option key={variant.problemId} value={idx}>
+                    Variant {idx + 1}
+                  </option>
+                ))}
+              </NativeSelect>
+            </FormControl>
+          </Tooltip>
           <Tooltip title="Create a new Variant">
             <PublishedWithChanges onClick={handleOpenVariantDialog} />
           </Tooltip>
@@ -256,7 +262,11 @@ export function QuizPanel({
             borderRadius={2}
             border="0.5px solid rgb(172, 178, 173)"
           >
-            <UriProblemViewer uri={currentProblem.uri} isSubmitted />
+            {finalizedProblemData ? (
+              <QuizProblemViewer problemData={finalizedProblemData} />
+            ) : (
+              <UriProblemViewer uri={currentProblem.uri} isSubmitted />
+            )}
           </Box>
         ) : null}
 
