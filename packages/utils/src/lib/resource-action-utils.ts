@@ -83,9 +83,7 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
   { resource: ResourceName.COURSE_ACCESS, action: Action.ACCESS_CONTROL },
 ];
 
-export const UNIVERSITY_ADMIN_RESOURCE_AND_ACTION = [
-  { resource: ResourceName.UNIVERSITY_SEMESTER_DATA, action: Action.MUTATE },
-];
+
 
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
   {
