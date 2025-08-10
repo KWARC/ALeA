@@ -31,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     semesterEnd,
     lectureStartDate,
     lectureEndDate,
-    timeZone,
   } = req.body;
 
   if (
@@ -40,8 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     !semesterStart ||
     !semesterEnd ||
     !lectureStartDate ||
-    !lectureEndDate ||
-    !timeZone
+    !lectureEndDate
   ) {
     return res.status(400).end();
   }
@@ -59,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await executeAndEndSet500OnError(
     `INSERT INTO semesterInfo
-      (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, userId, timeZone, holidays)
+      (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, userId, holidays)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       universityId,
@@ -69,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lectureStartDate,
       lectureEndDate,
       userId,
-      timeZone,
       '[]',
     ],
     res

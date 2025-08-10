@@ -7,7 +7,7 @@ export interface SemesterData {
   semesterEnd: string;
   lectureStartDate: string;
   lectureEndDate: string;
-  timeZone: string;
+  // timeZone: string;
 }
 
 export interface Holiday {
@@ -112,16 +112,3 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
   return response.data;
 }
 
-export async function deleteAllHolidays(universityId: string, instanceId: string) {
-  const response = await axios.post(
-    `${SEMESTER_BASE_URL}/delete-all-holidays`,
-    {
-      universityId,
-      instanceId,
-    },
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-  return response.data;
-}

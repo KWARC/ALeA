@@ -8,16 +8,17 @@ type DatabaseResult<T> = T[] | { error: any };
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
+  const { universityId: queryUniversityId } = req.query;
+  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
+    return res.status(400).send('Invalid university id');
+  }
+
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.UNIVERSITY_SEMESTER_DATA,
     Action.MUTATE,
-    {
-      universityId: Array.isArray(req.query.universityId)
-        ? req.query.universityId[0]
-        : req.query.universityId,
-    }
+    { universityId: queryUniversityId }
   );
   if (!userId) return;
 
