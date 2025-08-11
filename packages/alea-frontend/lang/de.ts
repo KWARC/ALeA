@@ -415,7 +415,7 @@ export const de = {
     backToAllCourseProblems: 'Zurück zu allen Kursproblemen',
   },
   peerGrading: {
-    peerGrading: 'Benotung durch Gleichaltrige',
+    peerGrading: 'Bewertung durch andere Lernende',
   },
   resource: {
     updatesyllabus: 'Aktualisierungen des Lehrplans',
