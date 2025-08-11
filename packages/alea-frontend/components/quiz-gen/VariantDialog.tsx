@@ -7,9 +7,16 @@ import {
   DialogContent,
   DialogTitle,
   LinearProgress,
+  Snackbar,
   TextField,
+  Typography,
 } from '@mui/material';
-import { checkPossibleVariants, finalizeProblem, saveProblemDraft } from '@stex-react/api';
+import {
+  checkPossibleVariants,
+  finalizeProblem,
+  getProblemVersionHistory,
+  saveProblemDraft,
+} from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
@@ -37,9 +44,15 @@ interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
   problemData: FlatQuizProblem;
+  setProblemData: (p: FlatQuizProblem | null) => void;
 }
 
-export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps) => {
+export const VariantDialog = ({
+  open,
+  onClose,
+  problemData,
+  setProblemData,
+}: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
     difficulty: '',
@@ -62,10 +75,15 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
-  const [previewProblemData, setPreviewProblemData] = useState<FlatQuizProblem>(null);
+  const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
+  const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
+  const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true);
+  console.log({ isViewingLatestVersion });
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -83,36 +101,14 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
   };
 
   useEffect(() => {
-    const createCopyAndCheckVariants = async () => {
+    const checkVariants = async () => {
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
         console.log({ problemData });
-        if (problemData?.manualEdits?.length > 0) {
-          setEditableSTeX(problemData.manualEdits[problemData.manualEdits.length - 1]);
-        } else {
-          setEditableSTeX(problemData.problemStex);
-        }
 
         if (!problemData) return;
-        //const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          modify_choices: {
-            applicable: true,
-          },
-          rephrase: {
-            applicable: true,
-          },
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-        };
+        const result = await checkPossibleVariants(problemData.problemId);// Use HardCoded api call while development to reduce LLM cost
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -122,28 +118,52 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
       }
     };
 
-    createCopyAndCheckVariants();
+    checkVariants();
   }, [open, problemData]);
+
+  useEffect(() => {
+    const fetchProblemVersionHistory = async () => {
+      if (!open || !problemData) return;
+      const history = await getProblemVersionHistory(problemData.problemId);
+      console.log({ res: history });
+      const flattenedVersions = history.map(flattenQuizProblem);
+      setVersions(flattenedVersions);
+    };
+
+    fetchProblemVersionHistory();
+  }, [problemData, open]);
 
   useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
 
-  useEffect(() => {
-    if (!reskinApplicable) return;
-    setSelectedOptions(mcqOptions);
-  }, [reskinApplicable, mcqOptions]);
+  // useEffect(() => {
+  //   if (!reskinApplicable) return;
+  //   setSelectedOptions(mcqOptions);
+  // }, [mcqOptions]);
 
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
       return;
     }
+    if (latestManualEdit === editableSTeX || problemData.problemStex === editableSTeX) {
+      console.log('No changes detected. Draft not saved.');
+      setSnackbarMessage('No changes detected. Draft not saved.');
+      setSnackbarOpen(true);
+      return;
+    }
     await saveProblemDraft(problemData.problemId, editableSTeX);
+    if (problemData?.manualEdits) {
+      problemData.manualEdits.push(editableSTeX);
+    } else if (problemData) {
+      problemData.manualEdits = [editableSTeX];
+    }
   };
-
   const markProblemFinal = async () => {
-    if (editableSTeX) await saveProblemDraft(problemData.problemId, editableSTeX);
+    if (latestManualEdit !== editableSTeX) {
+      await saveProblemDraft(problemData.problemId, editableSTeX);
+    }
     await finalizeProblem(problemData.problemId);
   };
 
@@ -155,9 +175,15 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
           fontSize: '1.25rem',
           fontWeight: 600,
           color: 'primary.main',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         Create Question Variant
+        <Typography variant="subtitle1" fontWeight={500} color="text.secondary">
+          Preview
+        </Typography>
       </DialogTitle>
 
       <DialogContent
@@ -183,7 +209,25 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
           </Box>
         )}
         <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
-          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
+          <Box
+            flex={0.7}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+            position={'relative'}
+          >
+            {!isViewingLatestVersion && (
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                zIndex={10}
+                bgcolor="rgba(255, 255, 255, 0.6)"
+              />
+            )}
             <Box
               flex={1}
               overflow="auto"
@@ -240,7 +284,7 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
-                        setPreviewProblemData(flat);
+                        setProblemData(flat);
                         setEditableSTeX(flat.problemStex);
                       }}
                     />
@@ -286,11 +330,20 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
           <PreviewSection
             previewMode={previewMode}
             setPreviewMode={setPreviewMode}
-            problemData={previewProblemData ?? problemData}
+            problemData={problemData}
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
+            previousVersions={versions}
+            onLatestVersionStatusChange={(isLatest) => setIsViewingLatestVersion(isLatest)}
           />
         </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        />
       </DialogContent>
 
       <DialogActions sx={{ p: 3, gap: 1 }}>
@@ -308,6 +361,7 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
             await saveManualEdit();
             clearSelection();
           }}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Save As Draft
@@ -318,6 +372,7 @@ export const VariantDialog = ({ open, onClose, problemData }: VariantDialogProps
             clearSelection();
             onClose();
           }}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Finalize
