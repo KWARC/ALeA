@@ -395,6 +395,10 @@ export const en = {
     updateHomework: 'Update Homework',
     cancel: 'Cancel',
     noHomeworksAvailable: 'No homework available.',
+    viewHomeworkDocument: 'View homework document',
+    showHomeworkStatistics: 'Show homework statistics',
+    editHomework: 'Edit homework',
+    deleteHomework: 'Delete homework',
   },
   logInSystem: {
     reset404: 'User not found.',

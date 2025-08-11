@@ -371,6 +371,10 @@ export const de = {
     updateHomework: 'Hausaufgaben aktualisieren',
     cancel: 'Abbrechen',
     noHomeworksAvailable: 'Keine Hausaufgaben vorhanden.',
+    viewHomeworkDocument: 'Hausaufgabendokument anzeigen',
+    showHomeworkStatistics: 'Hausaufgabenstatistik anzeigen',
+    editHomework: 'Hausaufgaben bearbeiten',
+    deleteHomework: 'Hausaufgaben löschen',
   },
   logInSystem: {
     reset404: 'Benutzer nicht gefunden.',
