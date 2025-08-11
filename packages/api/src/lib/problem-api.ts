@@ -4,17 +4,23 @@ export interface ProblemData {
   problemId: string;
   category: string;
   labels: string[];
+  showGermanNotice?: boolean;
 }
 
 export interface CourseProblemCounts {
   [sectionUri: string]: number;
 }
 
-export async function getProblemsPerSection(sectionUri: string, courseId?: string) {
+export async function getProblemsPerSection(
+  sectionUri: string,
+  courseId?: string,
+  languages?: string
+) {
   const resp = await axios.get(`/api/get-problems-per-section`, {
     params: {
       sectionUri,
       ...(courseId ? { courseId } : {}),
+      ...(languages ? { languages } : {}),
     },
   });
   return resp.data as ProblemData[];

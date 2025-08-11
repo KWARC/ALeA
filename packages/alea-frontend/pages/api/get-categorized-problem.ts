@@ -70,6 +70,7 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
 export async function getCategorizedProblems(
   sectionUri: string,
   courseToc: FTML.TOCElem[],
+  userLanguages?: string | string[],
   forceRefresh = false
 ): Promise<
   {
@@ -88,7 +89,6 @@ export async function getCategorizedProblems(
   }
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseToc);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-
   const categorized: {
     problemId: string;
     category: 'syllabus' | 'adventurous';
@@ -98,15 +98,18 @@ export async function getCategorizedProblems(
       const labels = await getLoRelationConceptUris(problemUri);
       const isSyllabus = labels.some((label) => conceptUrisFromCourse.has(label));
 
-      return {
-        problemId: problemUri,
-        category: isSyllabus ? 'syllabus' : 'adventurous',
-        labels,
-      } as {
-        problemId: string;
-        category: 'syllabus' | 'adventurous';
-        labels: string[];
-      };
+      let category: 'syllabus' | 'adventurous' = isSyllabus ? 'syllabus' : 'adventurous';
+      let showGermanNotice = false;
+
+      if (category === 'syllabus' && problemUri.includes('l=de')) {
+        if (userLanguages.includes('Deutsch')) {
+          showGermanNotice = true;
+        } else {
+          category = 'adventurous';
+        }
+      }
+
+      return { problemId: problemUri, category, labels, showGermanNotice };
     })
   );
   categorizedProblemCache.set(cacheKey, {
