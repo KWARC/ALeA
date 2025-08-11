@@ -199,7 +199,7 @@ export const PreviewSection = ({
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
                   const meVersion = version?.manualEdits?.length ?? 0;
-                  let modeLabel = 'Manual';
+                  let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
                   else if (mode === 'new') modeLabel = 'Generated';
