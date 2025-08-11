@@ -120,8 +120,6 @@ export function PerSectionQuiz({
       const userInfo = await getUserProfile();
       const languages = (userInfo as any)?.languages;
 
-      // const problems = await getProblemsPerSection(sectionUri, courseId, languages);
-
       getProblemsPerSection(sectionUri, courseId, languages)
         .then((problems) => {
           const map: Record<string, string[]> = {};
