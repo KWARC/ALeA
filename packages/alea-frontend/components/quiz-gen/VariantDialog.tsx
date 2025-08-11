@@ -108,24 +108,7 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        //const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          modify_choices: {
-            applicable: true,
-          },
-          rephrase: {
-            applicable: true,
-          },
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-        };
+        const result = await checkPossibleVariants(problemData.problemId);// Use HardCoded api call while development to reduce LLM cost
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
