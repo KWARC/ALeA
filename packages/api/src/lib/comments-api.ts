@@ -332,7 +332,6 @@ export async function getResourcesForUser() {
   return response.data as CourseResourceAction[];
 }
 
-
 export async function getStudentsEnrolledInCourse(courseId: string, instanceId: string) {
   const response = await axios.get('/api/get-students-enrolled-in-course', {
     params: {
