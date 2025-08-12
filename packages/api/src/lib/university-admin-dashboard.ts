@@ -7,7 +7,6 @@ export interface SemesterData {
   semesterEnd: string;
   lectureStartDate: string;
   lectureEndDate: string;
-  // timeZone: string;
 }
 
 export interface Holiday {
@@ -111,4 +110,3 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
   );
   return response.data;
 }
-

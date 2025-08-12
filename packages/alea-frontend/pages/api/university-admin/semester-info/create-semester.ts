@@ -10,28 +10,8 @@ import {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { universityId: queryUniversityId } = req.query;
-  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
-    return res.status(400).send('Invalid university id');
-  }
-
-  const userId = await getUserIdIfAuthorizedOrSetError(
-    req,
-    res,
-    ResourceName.UNIVERSITY_SEMESTER_DATA,
-    Action.MUTATE,
-    { universityId: queryUniversityId }
-  );
-  if (!userId) return;
-
-  const {
-    universityId,
-    instanceId,
-    semesterStart,
-    semesterEnd,
-    lectureStartDate,
-    lectureEndDate,
-  } = req.body;
+  const { universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate } =
+    req.body;
 
   if (
     !universityId ||
@@ -43,6 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ) {
     return res.status(400).end();
   }
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    { universityId }
+  );
+  if (!userId) return;
 
   const existing = await executeDontEndSet500OnError(
     `SELECT 1 FROM semesterInfo WHERE universityId = ? AND instanceId = ?`,
@@ -58,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await executeAndEndSet500OnError(
     `INSERT INTO semesterInfo
       (universityId, instanceId, semesterStart, semesterEnd, lectureStartDate, lectureEndDate, userId, holidays)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       universityId,
       instanceId,
@@ -72,5 +60,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
 
-  res.status(200).json({ success: true, message: 'Semester created successfully' });
+  res.status(200).end();
 }

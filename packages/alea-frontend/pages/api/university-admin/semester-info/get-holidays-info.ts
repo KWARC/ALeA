@@ -23,5 +23,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).end('No holiday data found');
   }
 
-  res.status(200).json({ holidays: JSON.parse(result[0].holidays) });
+  res.status(200).send({ holidays: JSON.parse(result[0].holidays) });
 }

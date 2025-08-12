@@ -6,9 +6,10 @@ import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { universityId: queryUniversityId } = req.query;
-  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
-    return res.status(400).send('Invalid university id');
+  const { universityId, instanceId, dateToDelete } = req.body;
+
+  if (!universityId || !instanceId || !dateToDelete) {
+    return res.status(400).end('Missing universityId, instanceId, or dateToDelete');
   }
 
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -16,15 +17,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     ResourceName.UNIVERSITY_SEMESTER_DATA,
     Action.MUTATE,
-    { universityId: queryUniversityId }
+    { universityId }
   );
   if (!userId) return;
-
-  const { universityId, instanceId, dateToDelete } = req.body;
-
-  if (!universityId || !instanceId || !dateToDelete) {
-    return res.status(400).end('Missing universityId, instanceId, or dateToDelete');
-  }
 
   const result = await executeQuery(
     `
@@ -58,8 +53,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [JSON.stringify(filtered), userId, universityId, instanceId]
   );
 
-  res.status(200).json({
-    success: true,
-    message: `Holiday on ${dateToDelete} deleted successfully`,
-  });
+  res.status(200);
 }

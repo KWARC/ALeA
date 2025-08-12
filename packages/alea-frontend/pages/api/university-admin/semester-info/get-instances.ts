@@ -8,9 +8,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end('Only GET requests allowed');
   }
 
-  const { universityId: queryUniversityId } = req.query;
-  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
-    return res.status(400).send('Invalid university id');
+  const { universityId } = req.query;
+
+  if (!universityId || typeof universityId !== 'string') {
+    return res.status(400).end('Missing or invalid query parameter: universityId must be a string');
   }
 
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -18,15 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     ResourceName.UNIVERSITY_SEMESTER_DATA,
     Action.MUTATE,
-    { universityId: queryUniversityId }
+    { universityId }
   );
   if (!userId) return;
-
-  const { universityId } = req.query;
-
-  if (!universityId || typeof universityId !== 'string') {
-    return res.status(400).end('Missing or invalid query parameter: universityId must be a string');
-  }
 
   const result = await executeQuery<Array<{ instanceId: string }>>(
     `SELECT DISTINCT instanceId FROM semesterInfo WHERE universityId = ?`,

@@ -18,5 +18,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).end('Database error');
   }
 
-  res.status(200).json({ semesterInfo: data });
+  res.status(200).send({ semesterInfo: data });
 }

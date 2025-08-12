@@ -15,9 +15,10 @@ function formatDateToDDMMYYYY(date: string): string | null {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { universityId: queryUniversityId } = req.query;
-  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
-    return res.status(400).send('Invalid university id');
+  const { universityId, instanceId, holidays } = req.body;
+
+  if (!universityId || !instanceId || !Array.isArray(holidays)) {
+    return res.status(400).end('Missing or invalid data');
   }
 
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -25,15 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     ResourceName.UNIVERSITY_SEMESTER_DATA,
     Action.MUTATE,
-    { universityId: queryUniversityId }
+    { universityId }
   );
   if (!userId) return;
-
-  const { universityId, instanceId, holidays } = req.body;
-
-  if (!universityId || !instanceId || !Array.isArray(holidays)) {
-    return res.status(400).end('Missing or invalid data');
-  }
 
   const formattedHolidays = holidays
     .map((holiday) => {
@@ -47,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end('All holiday dates were invalid');
   }
 
-  const result = await executeQuery(
+  await executeQuery(
     `
     UPDATE semesterInfo
     SET holidays = ?, userId = ?
@@ -56,9 +51,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [JSON.stringify(formattedHolidays), userId, universityId, instanceId]
   );
 
-  res.status(200).json({
-    success: true,
-    message: 'Holiday data uploaded successfully',
-    result,
-  });
+  res.status(200).end('Holiday data uploaded successfully');
 }

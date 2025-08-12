@@ -8,20 +8,6 @@ type DatabaseResult<T> = T[] | { error: any };
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { universityId: queryUniversityId } = req.query;
-  if (!queryUniversityId || typeof queryUniversityId !== 'string') {
-    return res.status(400).send('Invalid university id');
-  }
-
-  const userId = await getUserIdIfAuthorizedOrSetError(
-    req,
-    res,
-    ResourceName.UNIVERSITY_SEMESTER_DATA,
-    Action.MUTATE,
-    { universityId: queryUniversityId }
-  );
-  if (!userId) return;
-
   const { universityId, instanceId, originalDate, updatedHoliday } = req.body as {
     universityId: string;
     instanceId: string;
@@ -41,6 +27,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ) {
     return res.status(400).end('Missing required fields');
   }
+
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.UNIVERSITY_SEMESTER_DATA,
+    Action.MUTATE,
+    { universityId }
+  );
+  if (!userId) return;
 
   try {
     const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -90,23 +85,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).end('Failed to update holiday');
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Holiday updated successfully',
-      data: {
-        previousDate: originalDate,
-        updatedHoliday: {
-          date: updatedHoliday.date,
-          name: updatedHoliday.name,
-        },
-      },
-    });
+    return res.status(200).end();
   } catch (error) {
     console.error('Error editing holiday:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(500).end('Internal server error');
   }
 }
