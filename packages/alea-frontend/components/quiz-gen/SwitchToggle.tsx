@@ -10,7 +10,7 @@ import {
   Stack,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
@@ -53,7 +53,6 @@ export const SwitchToggle = ({
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [themesLoading, setThemesLoading] = useState<boolean>(false);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
@@ -98,7 +97,7 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-    if (typeKey === 'thematicReskin' && problemData && problemData.problemId) {
+    if (typeKey === 'thematicReskin' && problemData.problemId) {
       onLoadingChange?.(true);
 
       try {
@@ -110,7 +109,7 @@ export const SwitchToggle = ({
         });
 
         if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
+          const newVariant = result[0];
           onVariantGenerated?.(newVariant);
         }
       } finally {
@@ -133,8 +132,8 @@ export const SwitchToggle = ({
         });
 
         if (result.length > 0) {
-          console.log({ result });
-          onVariantGenerated?.(result[0]);
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
         }
         console.log({ types });
       } finally {
@@ -146,8 +145,6 @@ export const SwitchToggle = ({
   const handleModifyChoice = async (modifyChoiceMode: string) => {
     if (typeKey === 'modifyChoice' && problemData?.problemId) {
       onLoadingChange?.(true);
-
-      onLoadingChange?.(true);
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
@@ -157,7 +154,8 @@ export const SwitchToggle = ({
           modifyChoiceInstruction: variantConfig[instructionKey],
         });
         if (result.length > 0) {
-          onVariantGenerated?.(result[0]);
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
         }
       } finally {
         onLoadingChange?.(false);
