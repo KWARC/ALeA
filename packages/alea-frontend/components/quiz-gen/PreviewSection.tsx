@@ -1,4 +1,5 @@
 import InfoIcon from '@mui/icons-material/Info';
+import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,
   FormControl,
@@ -14,7 +15,6 @@ import { GenerationParams } from '@stex-react/api';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
-import TuneIcon from '@mui/icons-material/Tune';
 
 interface PreviewSectionProps {
   previewMode: 'json' | 'stex';
@@ -109,13 +109,13 @@ export const PreviewSection = ({
   onLatestVersionStatusChange,
 }: PreviewSectionProps) => {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [showVersionTrack, setShowVersionTrack] = useState(false);
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const isLatestVersion = selectedVersionIndex === versionOptions.length - 1;
   const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
-  const [showVersionTrack, setShowVersionTrack] = useState(false);
   const isModified = useMemo(() => {
     const original = problemData?.problemStex;
     return editableSTeX !== original;
@@ -127,9 +127,6 @@ export const PreviewSection = ({
     }
   }, [versionOptions]);
   useEffect(() => {
-    console.log({ selectedVersionIndex });
-    console.log({ versionOptions });
-    console.log({ isLatest: isLatestVersion });
     onLatestVersionStatusChange?.(isLatestVersion);
   }, [selectedVersionIndex, versionOptions]);
 
