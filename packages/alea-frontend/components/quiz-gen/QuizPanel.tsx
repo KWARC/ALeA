@@ -7,7 +7,8 @@ import {
   FormControl,
   IconButton,
   InputLabel,
-  NativeSelect,
+  MenuItem,
+  Select,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -97,9 +98,9 @@ export function QuizPanel({
     finalVariants();
   }, [currentProblem]);
 
-  const handleVariantChange = (value: string) => {
+  const handleVariantChange = (value: number) => {
     console.log({ value });
-    if (value === '') {
+    if (value === null) {
       setSelectedProblemIndex(null);
       setFinalizedProblemData(null);
       console.log({ setFinalizedProblemData });
@@ -204,33 +205,21 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
-          <Tooltip title="Variants of this Problem">
-            <FormControl sx={{ m: 1 }}>
-              <NativeSelect
-                value={selectedProblemIndex ?? ''}
-                onChange={(e) => handleVariantChange(e.target.value)}
-                sx={{
-                  '& .MuiInputBase-input': {
-                    border: '1px solid #ced4da',
-                    borderRadius: 1,
-                    p: '10px 26px 10px 12px',
-                    fontSize: 16,
-                    '&:focus': {
-                      borderColor: '#80bdff',
-                      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
-                    },
-                  },
-                }}
-              >
-                <option value="">None</option>
-                {finalizedProblems?.map((variant, idx) => (
-                  <option key={variant.problemId} value={idx}>
-                    Variant {idx + 1}
-                  </option>
-                ))}
-              </NativeSelect>
-            </FormControl>
-          </Tooltip>
+          <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
+            <InputLabel>Variants</InputLabel>
+            <Select
+              value={selectedProblemIndex ?? ''}
+              onChange={(e) => handleVariantChange(e.target.value as number)}
+              label="Variants"
+            >
+              <MenuItem value={null}>None</MenuItem>
+              {finalizedProblems?.map((variant, idx) => (
+                <MenuItem key={variant.problemId} value={idx}>
+                  Variant {idx + 1}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Tooltip title="Create a new Variant">
             <PublishedWithChanges onClick={handleOpenVariantDialog} />
           </Tooltip>
@@ -246,6 +235,11 @@ export function QuizPanel({
             </Tooltip>
           )}
         </Box>
+        {finalizedProblemData && (
+          <Typography variant="body2" color="#ff1f1fff" mt={1}>
+            This is a finalized variant of the original problem.
+          </Typography>
+        )}
 
         {isGenerated(currentProblem) ? (
           <>

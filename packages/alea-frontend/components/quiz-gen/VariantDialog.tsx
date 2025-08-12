@@ -24,9 +24,15 @@ import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
+import { PRIMARY_COL } from '@stex-react/utils';
 
+// export interface QuizProblemUri {
+//   problemUri: string;
+// }
+// interface VersionHistory {
+//   version: FlatQuizProblem | QuizProblemUri;
+// }
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
-
 export interface VariantConfig {
   variantTypes: VariantType[];
   difficulty?: string;
@@ -66,7 +72,6 @@ export const VariantDialog = ({
     selectedTheme: '',
   });
 
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
@@ -83,7 +88,6 @@ export const VariantDialog = ({
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true);
-  console.log({ isViewingLatestVersion });
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -108,7 +112,24 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        const result = await checkPossibleVariants(problemData.problemId);// Use HardCoded api call while development to reduce LLM cost
+        //const result = await checkPossibleVariants(problemData.problemId);
+        const result = {
+          modify_choices: {
+            applicable: true,
+          },
+          rephrase: {
+            applicable: true,
+          },
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+        };
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -128,6 +149,11 @@ export const VariantDialog = ({
       console.log({ res: history });
       const flattenedVersions = history.map(flattenQuizProblem);
       setVersions(flattenedVersions);
+      //  const processedVersions = history.map((item) =>
+      //   (item as any).problemUri ? item: flattenQuizProblem(item)
+      // );
+
+      // setVersions(processedVersions);
     };
 
     fetchProblemVersionHistory();
@@ -136,11 +162,6 @@ export const VariantDialog = ({
   useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
-
-  // useEffect(() => {
-  //   if (!reskinApplicable) return;
-  //   setSelectedOptions(mcqOptions);
-  // }, [mcqOptions]);
 
   const saveManualEdit = async () => {
     if (!problemData) {
@@ -254,6 +275,13 @@ export const VariantDialog = ({
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
                     />
                   )}
 
@@ -265,9 +293,13 @@ export const VariantDialog = ({
                       placeholder="e.g., randomize but keep correct answer intact"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
-                      mcqOptions={mcqOptions}
-                      selectedOptions={selectedOptions}
-                      setSelectedOptions={setSelectedOptions}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
                     />
                   )}
 
@@ -296,19 +328,6 @@ export const VariantDialog = ({
                 setVariantConfig={setVariantConfig}
               />
 
-              <Button
-                size="small"
-                onClick={clearSelection}
-                sx={{
-                  color: 'error.main',
-                  textTransform: 'none',
-                  mb: 2,
-                  '&:hover': { bgcolor: 'error.50', color: 'error.dark' },
-                }}
-              >
-                Clear All Selection
-              </Button>
-
               <TextField
                 label="Pretext Instructions (optional)"
                 placeholder="e.g., general notes for all variants"
@@ -324,6 +343,40 @@ export const VariantDialog = ({
               />
 
               <ConfigurationSummary variantConfig={variantConfig} />
+              <Box display="flex" gap={10} mt={2} p={3}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={clearSelection}
+                  sx={{
+                    color: 'error.main',
+                    borderColor: 'error.main',
+                    textTransform: 'none',
+                    mb: 2,
+                    '&:hover': {
+                      bgcolor: 'error.50',
+                      borderColor: 'error.dark',
+                      color: 'error.dark',
+                    },
+                  }}
+                >
+                  Clear Selection
+                </Button>
+
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={clearSelection}
+                  sx={{
+                    bgcolor: PRIMARY_COL,
+                    textTransform: 'none',
+                    mb: 2,
+                    '&:hover': { bgcolor: PRIMARY_COL, opacity: 0.9 },
+                  }}
+                >
+                  Create Variant
+                </Button>
+              </Box>
             </Box>
           </Box>
 

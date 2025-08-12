@@ -145,10 +145,6 @@ export const PreviewSection = ({
     }
   }, [selectedVersion]);
 
-  useEffect(() => {
-    console.log('Selected version data:', selectedVersion);
-  }, [selectedVersion]);
-
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
       <Box
@@ -359,8 +355,8 @@ export const PreviewSection = ({
               readOnly: !isLatestVersion,
               sx: {
                 '& textarea': {
-                  userSelect: isLatestVersion ? 'text' : 'none', 
-                  pointerEvents: isLatestVersion ? 'auto' : 'none', 
+                  userSelect: isLatestVersion ? 'text' : 'none',
+                  pointerEvents: isLatestVersion ? 'auto' : 'none',
                 },
               },
             }}
