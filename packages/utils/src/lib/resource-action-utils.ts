@@ -83,7 +83,16 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
   { resource: ResourceName.COURSE_ACCESS, action: Action.ACCESS_CONTROL },
 ];
 
+
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
+   {
+    name: ResourceName.COURSE,
+    possibleActions: [Action.MANAGE_COURSE],
+    components: [
+      { type: ComponentType.FIXED, value: 'course' },
+      { name: 'courseId', type: ComponentType.VARIABLE },
+    ],
+  },
   {
     name: ResourceName.BLOG,
     possibleActions: [Action.MUTATE],
