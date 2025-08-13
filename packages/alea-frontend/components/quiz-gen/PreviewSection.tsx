@@ -202,6 +202,12 @@ export const PreviewSection = ({
                 }}
                 sx={{
                   borderRadius: 1.5,
+                  '& .MuiSelect-select': {
+                    p: 0.5,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: 'primary.main',
                   },
@@ -211,6 +217,17 @@ export const PreviewSection = ({
                 }}
               >
                 {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
+                {/* {versionOptions
+                  .filter((option, index) => {
+                    const mode = (option?.generationParams as any)?.mode;
+                    const hasManualEdits =
+                      Array.isArray(option?.manualEdits) && option.manualEdits.length > 0;
+                    const isLatest = index === versionOptions.length - 1;
+
+                    if (mode !== 'copy') return true;
+                    return hasManualEdits || isLatest;
+                  })
+                  .map((version, index) => { */}
                 {versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
@@ -218,6 +235,8 @@ export const PreviewSection = ({
                   const variantType = variantOptions ? variantOptions?.variantType : '';
                   const theme = variantOptions ? variantOptions?.theme : '';
                   const meVersion = version?.manualEdits?.length ?? 0;
+                  const isLatest = index + 1 === versionOptions.length;
+
                   let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
@@ -225,37 +244,84 @@ export const PreviewSection = ({
                   if (variantType) modeLabel += ` (${variantType})`;
                   if (meVersion > 0) modeLabel += ` ME${meVersion}`;
 
+                  const formattedDate = version?.updatedAt
+                    ? new Date(version.updatedAt).toLocaleString()
+                    : '';
                   return (
                     <MenuItem
                       key={index}
                       value={index}
                       sx={{
-                        borderRadius: 1,
+                        borderRadius: 2,
                         mx: 1,
-                        my: 0.25,
-                        py: 1.25,
-                        px: 2,
-                        backgroundColor: 'transparent !important',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        my: 0.5,
+                        p: 0,
+                        backgroundColor: 'transparent',
+                        border: '1px solid transparent',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        overflow: 'hidden',
+                        position: 'relative',
+
                         '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.08) !important',
+                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                          border: '1px solid rgba(25, 118, 210, 0.2)',
                           transform: 'translateY(-1px)',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                         },
+
                         '&.Mui-selected': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.12) !important',
-                          fontWeight: 600,
+                          backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                          border: '1px solid rgba(25, 118, 210, 0.3)',
+
                           '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.16) !important',
+                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                          },
+
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: 3,
+                            backgroundColor: '#1976d2',
                           },
                         },
                       }}
                     >
                       <Tooltip title={theme}>
-                        <Typography>
-                          {index + 1} - {modeLabel}{' '}
-                          {index + 1 === versionOptions.length ? '(Latest)' : ''}
-                        </Typography>
+                        <Box
+                          sx={{
+                            p: 1,
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.25,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 500,
+                              color: 'text.primary',
+                              fontSize: '0.875rem',
+                            }}
+                          >
+                            {index + 1}. {modeLabel} {isLatest ? '(Latest)' : ''}
+                          </Typography>
+
+                          {formattedDate && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              {formattedDate}
+                            </Typography>
+                          )}
+                        </Box>
                       </Tooltip>
                     </MenuItem>
                   );
