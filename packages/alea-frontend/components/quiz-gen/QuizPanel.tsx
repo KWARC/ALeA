@@ -49,7 +49,7 @@ export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     isDraft: qp.isDraft,
     createdAt: qp.createdAt,
     updatedAt: qp.updatedAt,
-    ...qp.problemJson, 
+    ...qp.problemJson,
   };
   if (qp.problemUri) {
     result.problemUri = qp.problemUri;

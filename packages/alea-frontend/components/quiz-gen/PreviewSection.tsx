@@ -1,3 +1,4 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import InfoIcon from '@mui/icons-material/Info';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -12,6 +13,8 @@ import {
   Typography,
 } from '@mui/material';
 import { GenerationParams } from '@stex-react/api';
+import { UriProblemViewer } from '@stex-react/stex-react-renderer';
+import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
@@ -110,14 +113,23 @@ export const PreviewSection = ({
 }: PreviewSectionProps) => {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [showVersionTrack, setShowVersionTrack] = useState(false);
+  const [uriStex, setUriStex] = useState('');
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const isLatestVersion = selectedVersionIndex === versionOptions.length - 1;
   const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
+
+  async function fetchRawStexFromUri(problemUri: string) {
+    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+    if (!sourceLink) return null;
+    const rawStexLink = sourceLink.replace('-/blob', '-/raw');
+    const response = await axios.get(rawStexLink);
+    return response.data;
+  }
   const isModified = useMemo(() => {
-    const original = problemData?.problemStex;
+    const original = selectedVersion?.problemStex ?? problemData?.problemStex;
     return editableSTeX !== original;
   }, [editableSTeX, problemData]);
 
@@ -126,6 +138,12 @@ export const PreviewSection = ({
       setSelectedVersionIndex(versionOptions.length - 1);
     }
   }, [versionOptions]);
+
+  useEffect(() => {
+    if (!selectedVersion?.problemUri) return;
+    setUriStex(selectedVersion?.problemUri);
+  }, [selectedVersion]);
+
   useEffect(() => {
     onLatestVersionStatusChange?.(isLatestVersion);
   }, [selectedVersionIndex, versionOptions]);
@@ -133,11 +151,14 @@ export const PreviewSection = ({
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
   }, [isModified, manualEditPresentInVersion]);
-console.log({editableSTeX});
-console.log("prS",problemData.problemStex);
+
   useEffect(() => {
     if (manualEditPresentInVersion && latestManualEdit) {
       setEditableSTeX(latestManualEdit);
+    } else if (selectedVersion?.problemStex === null && selectedVersion?.problemUri) {
+      fetchRawStexFromUri(uriStex).then((fetchedSTeX) => {
+        setEditableSTeX(fetchedSTeX);
+      });
     } else {
       setEditableSTeX(selectedVersion?.problemStex);
     }
@@ -189,19 +210,19 @@ console.log("prS",problemData.problemStex);
                   },
                 }}
               >
-                                {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
+                {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
                 {versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
-                  const variantOptions= (genParams as any)?.variantOptions ;
-                  const variantType=variantOptions?variantOptions?.variantType:'';
-                  const theme=variantOptions?variantOptions?.theme:'';
+                  const variantOptions = (genParams as any)?.variantOptions;
+                  const variantType = variantOptions ? variantOptions?.variantType : '';
+                  const theme = variantOptions ? variantOptions?.theme : '';
                   const meVersion = version?.manualEdits?.length ?? 0;
                   let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
                   else if (mode === 'new') modeLabel = 'Generated';
-                  if(variantType)modeLabel+=` (${variantType})`
+                  if (variantType) modeLabel += ` (${variantType})`;
                   if (meVersion > 0) modeLabel += ` ME${meVersion}`;
 
                   return (
@@ -229,11 +250,12 @@ console.log("prS",problemData.problemStex);
                           },
                         },
                       }}
-                    ><Tooltip title={theme}>
-                      <Typography>
-                      {index + 1} - {modeLabel}{' '}
-                      {index + 1 === versionOptions.length ? '(Latest)' : ''}
-                      </Typography>
+                    >
+                      <Tooltip title={theme}>
+                        <Typography>
+                          {index + 1} - {modeLabel}{' '}
+                          {index + 1 === versionOptions.length ? '(Latest)' : ''}
+                        </Typography>
                       </Tooltip>
                     </MenuItem>
                   );
@@ -334,7 +356,11 @@ console.log("prS",problemData.problemStex);
       >
         {previewMode === 'json' ? (
           problemData ? (
-            <QuizProblemViewer problemData={selectedVersion ?? problemData} />
+            selectedVersion?.problemUri ? (
+              <UriProblemViewer uri={selectedVersion?.problemUri} />
+            ) : (
+              <QuizProblemViewer problemData={selectedVersion ?? problemData} />
+            )
           ) : (
             <Box
               sx={{
