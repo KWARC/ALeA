@@ -50,10 +50,7 @@ export async function getActiveAnnouncements(courseId?: string) {
     params: { courseId },
   });
 
-  const now = new Date();
-  return (resp.data as Announcement[]).filter(
-    (a) => !a.visibleUntil || new Date(a.visibleUntil) > now
-  );
+  return resp.data as Announcement[];
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
