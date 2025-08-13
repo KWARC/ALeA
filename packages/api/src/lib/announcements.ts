@@ -47,14 +47,14 @@ export async function createAnnouncement(details: CreateAnnouncementRequest) {
 }
 
 export async function getAnnouncement(courseId?: string) {
-  const resp = await axios.get('/api/announcements', {
+  const resp = await axios.get('/api/announcement/getAnnouncement', {
     params: courseId ? { courseId } : {}, //
   });
   return resp.data as Announcement[];
 }
 
-export async function getValidAnnouncement(courseId?: string) {
-  const resp = await axios.get('/api/announcements', {
+export async function getActiveAnnouncements(courseId?: string) {
+  const resp = await axios.get('/api/announcement/getActiveAnnouncements', {
     params: { courseId },
   });
 
@@ -65,19 +65,19 @@ export async function getValidAnnouncement(courseId?: string) {
 }
 
 export async function editAnnouncement(details: EditAnnouncementRequest) {
-  await axios.post('/api/announcements', details, {
+  await axios.post('/api/announcement', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
-  await axios.post('/api/announcements/delete', details, {
+  await axios.post('/api/announcement/delete', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function updateAnnouncement(details: UpdateAnnouncementRequest) {
-  await axios.post('/api/announcements/update', details, {
+  await axios.post('/api/announcement/update', details, {
     headers: getAuthHeaders(),
   });
 }
