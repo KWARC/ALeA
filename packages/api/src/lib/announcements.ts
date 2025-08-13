@@ -19,14 +19,6 @@ export interface CreateAnnouncementRequest {
   visibleUntil?: string;
 }
 
-export interface EditAnnouncementRequest {
-  id: number;
-  courseId: string;
-  title: string;
-  content: string;
-  visibleUntil?: string;
-}
-
 export interface DeleteAnnouncementRequest {
   id: number;
   courseId: string;
@@ -41,20 +33,20 @@ export interface UpdateAnnouncementRequest {
 }
 
 export async function createAnnouncement(details: CreateAnnouncementRequest) {
-  await axios.post('/api/announcement/createAnnouncement', details, {
+  await axios.post('/api/announcement/create-announcement', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function getAnnouncement(courseId?: string) {
-  const resp = await axios.get('/api/announcement/getAnnouncement', {
+  const resp = await axios.get('/api/announcement/get-announcement', {
     params: courseId ? { courseId } : {}, //
   });
   return resp.data as Announcement[];
 }
 
 export async function getActiveAnnouncements(courseId?: string) {
-  const resp = await axios.get('/api/announcement/getActiveAnnouncements', {
+  const resp = await axios.get('/api/announcement/get-active-announcements', {
     params: { courseId },
   });
 
@@ -64,20 +56,14 @@ export async function getActiveAnnouncements(courseId?: string) {
   );
 }
 
-export async function editAnnouncement(details: EditAnnouncementRequest) {
-  await axios.post('/api/announcement/editAnnouncement', details, {
-    headers: getAuthHeaders(),
-  });
-}
-
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
-  await axios.post('/api/announcement/deleteAnnouncement', details, {
+  await axios.post('/api/announcement/delete-announcement', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function updateAnnouncement(details: UpdateAnnouncementRequest) {
-  await axios.post('/api/announcement/updateAnnouncement', details, {
+  await axios.post('/api/announcement/update-announcement', details, {
     headers: getAuthHeaders(),
   });
 }
