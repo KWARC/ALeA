@@ -65,19 +65,19 @@ export async function getActiveAnnouncements(courseId?: string) {
 }
 
 export async function editAnnouncement(details: EditAnnouncementRequest) {
-  await axios.post('/api/announcement', details, {
+  await axios.post('/api/announcement/editAnnouncement', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
-  await axios.post('/api/announcement/delete', details, {
+  await axios.post('/api/announcement/deleteAnnouncement', details, {
     headers: getAuthHeaders(),
   });
 }
 
 export async function updateAnnouncement(details: UpdateAnnouncementRequest) {
-  await axios.post('/api/announcement/update', details, {
+  await axios.post('/api/announcement/updateAnnouncement', details, {
     headers: getAuthHeaders(),
   });
 }
