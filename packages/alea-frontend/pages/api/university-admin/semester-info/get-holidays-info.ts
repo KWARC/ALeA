@@ -10,18 +10,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end('Missing universityId or instanceId');
   }
 
-  const result = (await executeQuery(
-    `
-    SELECT holidays
-    FROM semesterInfo
-    WHERE universityId = ? AND instanceId = ?
-    `,
-    [universityId, instanceId]
-  )) as { holidays: string }[];
+  try {
+    const result = (await executeQuery(
+      `
+      SELECT holidays
+      FROM semesterInfo
+      WHERE universityId = ? AND instanceId = ?
+      `,
+      [universityId, instanceId]
+    )) as { holidays: string }[];
 
-  if (result.length === 0) {
-    return res.status(404).end('No holiday data found');
+    if (result.length === 0) {
+      // Return empty array instead of 404 when no data exists
+      return res.status(200).send({ holidays: [] });
+    }
+
+    try {
+      const holidays = JSON.parse(result[0].holidays || '[]');
+      res.status(200).send({ holidays });
+    } catch (error) {
+      res.status(200).send({ holidays: [] });
+    }
+  } catch (error) {
+    res.status(500).end('Database error');
   }
-
-  res.status(200).send({ holidays: JSON.parse(result[0].holidays) });
 }

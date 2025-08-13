@@ -19,39 +19,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     Action.MUTATE,
     { universityId }
   );
-  if (!userId) return;
-
-  const result = await executeQuery(
-    `
-    SELECT holidays
-    FROM semesterInfo
-    WHERE universityId = ? AND instanceId = ?
-    `,
-    [universityId, instanceId]
-  );
-
-  const existing = result[0];
-  if (!existing || !existing.holidays) {
-    return res.status(404).end('No holiday data found for the specified university and instance');
+  if (!userId) {
+    return;
   }
 
-  let holidays: any[];
   try {
-    holidays = JSON.parse(existing.holidays);
-  } catch {
-    return res.status(500).end('Failed to parse holidays JSON');
+    const result = await executeQuery(
+      `
+      SELECT holidays
+      FROM semesterInfo
+      WHERE universityId = ? AND instanceId = ?
+      `,
+      [universityId, instanceId]
+    );
+
+    const existing = result[0];
+    if (!existing || !existing.holidays) {
+      return res.status(404).end('No holiday data found for the specified university and instance');
+    }
+
+    let holidays: any[];
+    try {
+      holidays = JSON.parse(existing.holidays);
+    } catch (error) {
+      return res.status(500).end('Failed to parse holidays JSON');
+    }
+
+    const filtered = holidays.filter((h: any) => h.date !== dateToDelete);
+
+    await executeQuery(
+      `
+      UPDATE semesterInfo
+      SET holidays = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP
+      WHERE universityId = ? AND instanceId = ?
+      `,
+      [JSON.stringify(filtered), userId, universityId, instanceId]
+    );
+
+    res.status(200).end('Holiday deleted successfully');
+  } catch (error) {
+    res.status(500).end('Database error');
   }
-
-  const filtered = holidays.filter((h: any) => h.date !== dateToDelete);
-
-  await executeQuery(
-    `
-    UPDATE semesterInfo
-    SET holidays = ?, userId = ?
-    WHERE universityId = ? AND instanceId = ?
-    `,
-    [JSON.stringify(filtered), userId, universityId, instanceId]
-  );
-
-  res.status(200);
 }
