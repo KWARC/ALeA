@@ -94,6 +94,7 @@ export interface ProblemJson {
 }
 export interface QuizProblem {
   problemId: number;
+  problemUri?:string;
   courseId: string;
   sectionId: string; //TODO see again
   sectionUri: string;

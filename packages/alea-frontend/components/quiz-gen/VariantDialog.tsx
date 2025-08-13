@@ -26,12 +26,7 @@ import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
 import { PRIMARY_COL } from '@stex-react/utils';
 
-// export interface QuizProblemUri {
-//   problemUri: string;
-// }
-// interface VersionHistory {
-//   version: FlatQuizProblem | QuizProblemUri;
-// }
+
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
   variantTypes: VariantType[];

@@ -133,7 +133,8 @@ export const PreviewSection = ({
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
   }, [isModified, manualEditPresentInVersion]);
-
+console.log({editableSTeX});
+console.log("prS",problemData.problemStex);
   useEffect(() => {
     if (manualEditPresentInVersion && latestManualEdit) {
       setEditableSTeX(latestManualEdit);
@@ -188,14 +189,19 @@ export const PreviewSection = ({
                   },
                 }}
               >
+                                {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
                 {versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
+                  const variantOptions= (genParams as any)?.variantOptions ;
+                  const variantType=variantOptions?variantOptions?.variantType:'';
+                  const theme=variantOptions?variantOptions?.theme:'';
                   const meVersion = version?.manualEdits?.length ?? 0;
                   let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
                   else if (mode === 'new') modeLabel = 'Generated';
+                  if(variantType)modeLabel+=` (${variantType})`
                   if (meVersion > 0) modeLabel += ` ME${meVersion}`;
 
                   return (
@@ -223,9 +229,12 @@ export const PreviewSection = ({
                           },
                         },
                       }}
-                    >
+                    ><Tooltip title={theme}>
+                      <Typography>
                       {index + 1} - {modeLabel}{' '}
                       {index + 1 === versionOptions.length ? '(Latest)' : ''}
+                      </Typography>
+                      </Tooltip>
                     </MenuItem>
                   );
                 })}

@@ -38,7 +38,7 @@ export const handleGoToSection = (courseId: string, sectionId: string) => {
 };
 
 export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
-  return {
+  const result: FlatQuizProblem = {
     problemId: qp.problemId,
     courseId: qp.courseId,
     sectionId: qp.sectionId,
@@ -49,10 +49,13 @@ export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     isDraft: qp.isDraft,
     createdAt: qp.createdAt,
     updatedAt: qp.updatedAt,
-    ...qp.problemJson,
+    ...qp.problemJson, 
   };
+  if (qp.problemUri) {
+    result.problemUri = qp.problemUri;
+  }
+  return result;
 }
-
 export function QuizPanel({
   problems,
   currentIdx,
