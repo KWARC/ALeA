@@ -1,4 +1,3 @@
-// packages/alea-frontend/pages/api/announcement/getActiveAnnouncements.ts
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
