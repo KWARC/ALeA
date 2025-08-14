@@ -16,6 +16,7 @@ import {
   finalizeProblem,
   getProblemVersionHistory,
   saveProblemDraft,
+  UserInfo,
 } from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
@@ -46,6 +47,7 @@ interface VariantDialogProps {
   onClose: () => void;
   problemData: FlatQuizProblem;
   setProblemData: (p: FlatQuizProblem | null) => void;
+  userInfo:UserInfo|undefined;
 }
 
 export const VariantDialog = ({
@@ -53,6 +55,7 @@ export const VariantDialog = ({
   onClose,
   problemData,
   setProblemData,
+  userInfo,
 }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
@@ -163,21 +166,26 @@ export const VariantDialog = ({
       console.error('Cannot create variant without problemId');
       return;
     }
-    if (latestManualEdit === editableSTeX || problemData.problemStex === editableSTeX) {
+    if (latestManualEdit.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
       console.log('No changes detected. Draft not saved.');
       setSnackbarMessage('No changes detected. Draft not saved.');
       setSnackbarOpen(true);
       return;
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
+    const editEntry = {
+  updaterId: userInfo?.userId, 
+  updatedAt: new Date().toISOString(),
+  editedText: editableSTeX
+};
     if (problemData?.manualEdits) {
-      problemData.manualEdits.push(editableSTeX);
+      problemData.manualEdits.push(editEntry);
     } else if (problemData) {
-      problemData.manualEdits = [editableSTeX];
+      problemData.manualEdits = [editEntry];
     }
   };
   const markProblemFinal = async () => {
-    if (latestManualEdit !== editableSTeX) {
+    if (latestManualEdit.editedText !== editableSTeX) {
       await saveProblemDraft(problemData.problemId, editableSTeX);
     }
     await finalizeProblem(problemData.problemId);

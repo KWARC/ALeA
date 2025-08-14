@@ -137,7 +137,7 @@ console.log({editableSTeX});
 console.log("prS",problemData.problemStex);
   useEffect(() => {
     if (manualEditPresentInVersion && latestManualEdit) {
-      setEditableSTeX(latestManualEdit);
+      setEditableSTeX(latestManualEdit?.editedText);
     } else {
       setEditableSTeX(selectedVersion?.problemStex);
     }
@@ -197,6 +197,10 @@ console.log("prS",problemData.problemStex);
                   const variantType=variantOptions?variantOptions?.variantType:'';
                   const theme=variantOptions?variantOptions?.theme:'';
                   const meVersion = version?.manualEdits?.length ?? 0;
+                   const latestEditTime =
+    meVersion > 0
+      ? new Date(version.manualEdits[meVersion - 1].updatedAt).toLocaleString()
+      : new Date(version.updatedAt).toLocaleString();
                   let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
@@ -230,11 +234,18 @@ console.log("prS",problemData.problemStex);
                         },
                       }}
                     ><Tooltip title={theme}>
+                      <Box>
                       <Typography>
                       {index + 1} - {modeLabel}{' '}
                       {index + 1 === versionOptions.length ? '(Latest)' : ''}
                       </Typography>
+                       {latestEditTime && (
+            <Typography variant="caption" color="text.secondary">
+          {latestEditTime}
+            </Typography>
+          )}</Box>
                       </Tooltip>
+                      
                     </MenuItem>
                   );
                 })}

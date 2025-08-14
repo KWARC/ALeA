@@ -78,19 +78,29 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
         </Box>
       );
     });
-  if (problemData?.manualEdits?.length) {
-    return (
-      <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
-        <Typography variant="body2" color="text.secondary" mt={1}>
-          This problem is a manually edited variant of an existing problem.
-        </Typography>
-         <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" mb={2}>
-          {problemData.manualEdits[problemData.manualEdits.length - 1]}
-        </Typography>
-      </Box>
-    );
-  }
+    if (problemData?.manualEdits?.length) {
+  const latestEdit = problemData.manualEdits[problemData.manualEdits.length - 1];
+
+  return (
+    <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+      <Typography variant="body2" color="text.secondary" mt={1}>
+        This problem is a manually edited variant of an existing problem.
+      </Typography>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Typography variant="h6" mb={1}>
+        {latestEdit?.editedText}
+      </Typography>
+
+      <Typography variant="caption" color="text.secondary">
+        Edited by {latestEdit.updaterId} on{" "}
+        {new Date(latestEdit.updatedAt).toLocaleString()}
+      </Typography>
+    </Box>
+  );
+}
+
   return (
     <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
       <Box display="flex" justifyContent="space-between" gap={1}>

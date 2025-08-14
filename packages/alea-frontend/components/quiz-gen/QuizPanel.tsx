@@ -17,6 +17,7 @@ import {
   getFinalizedVariants,
   getLatestProblemDraft,
   QuizProblem,
+  UserInfo,
 } from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
@@ -62,12 +63,14 @@ export function QuizPanel({
   setCurrentIdx,
   sections,
   courseId,
+  userInfo,
 }: {
   problems: (FlatQuizProblem | ExistingProblem)[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
   sections: SecInfo[];
   courseId: string;
+  userInfo:UserInfo|undefined;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -208,6 +211,7 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
+          <Tooltip title="Finalized variants of this problem">
           <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
             <InputLabel>Variants</InputLabel>
             <Select
@@ -223,6 +227,7 @@ export function QuizPanel({
               ))}
             </Select>
           </FormControl>
+          </Tooltip>
           <Tooltip title="Create a new Variant">
             <PublishedWithChanges onClick={handleOpenVariantDialog} />
           </Tooltip>
@@ -239,9 +244,8 @@ export function QuizPanel({
           )}
         </Box>
         {finalizedProblemData && (
-          <Typography variant="body2" color="#ff1f1fff" mt={1}>
-            This is a finalized variant of the original problem.
-          </Typography>
+          <Typography variant="body2" color="#b07575ff" mt={1}>
+This is the finalized version created from the original problem.          </Typography>
         )}
 
         {isGenerated(currentProblem) ? (
@@ -289,6 +293,7 @@ export function QuizPanel({
           onClose={() => setVariantDialogOpen(false)}
           problemData={copiedProblem}
           setProblemData={setCopiedProblem}
+          userInfo={userInfo}
         />
       )}
     </Box>
