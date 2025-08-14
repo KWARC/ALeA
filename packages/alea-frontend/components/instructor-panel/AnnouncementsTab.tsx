@@ -23,6 +23,7 @@ interface Announcement {
   id: string;
   courseId: string;
   instructorId: string;
+  title: string;
   message: string;
   createdAt: number;
   visibleUntil: number;
@@ -38,14 +39,16 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
       id: '1',
       courseId: 'ai-1',
       instructorId: 'joy',
-      message: 'Assignments submission due soon.',
+      title: 'homework',
+      message: 'homework is due by 25 Aug',
       createdAt: Date.now(),
-      visibleUntil: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      visibleUntil: new Date('2025-08-25T23:59').getTime(),
     },
     {
       id: '2',
       courseId: 'ai-1',
       instructorId: 'joy',
+      title: 'Class Postponed',
       message: 'The module 2 class is postponed.',
       createdAt: Date.now(),
       visibleUntil: Date.now() + 5 * 24 * 60 * 60 * 1000,
@@ -54,14 +57,21 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [newDate, setNewDate] = useState(
     new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
   );
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
+  const resetForm = () => {
+    setNewTitle('');
+    setNewMessage('');
+    setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+  };
+
   const handleCreate = () => {
-    if (!newMessage.trim() || !newDate) return;
+    if (!newTitle.trim() || !newMessage.trim() || !newDate) return;
 
     const nextId = announcements.length
       ? String(Math.max(...announcements.map((a) => Number(a.id))) + 1)
@@ -73,38 +83,43 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         id: nextId,
         courseId,
         instructorId: 'joy',
+        title: newTitle.trim(),
         message: newMessage.trim(),
         createdAt: Date.now(),
         visibleUntil: new Date(newDate).getTime(),
       },
     ]);
 
-    setNewMessage('');
-    setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    resetForm();
     setDialogOpen(false);
   };
 
   const handleEditClick = (announcement: Announcement) => {
     setEditingAnnouncement(announcement);
+    setNewTitle(announcement.title);
     setNewMessage(announcement.message);
     setNewDate(new Date(announcement.visibleUntil).toISOString().slice(0, 16));
     setEditDialogOpen(true);
   };
 
   const handleEditSave = () => {
-    if (!editingAnnouncement || !newMessage.trim() || !newDate) return;
+    if (!editingAnnouncement || !newTitle.trim() || !newMessage.trim() || !newDate) return;
 
     setAnnouncements((prev) =>
       prev.map((a) =>
         a.id === editingAnnouncement.id
-          ? { ...a, message: newMessage.trim(), visibleUntil: new Date(newDate).getTime() }
+          ? {
+              ...a,
+              title: newTitle.trim(),
+              message: newMessage.trim(),
+              visibleUntil: new Date(newDate).getTime(),
+            }
           : a
       )
     );
 
     setEditingAnnouncement(null);
-    setNewMessage('');
-    setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    resetForm();
     setEditDialogOpen(false);
   };
 
@@ -134,6 +149,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
             <TableCell>ID</TableCell>
             <TableCell>Course ID</TableCell>
             <TableCell>Instructor</TableCell>
+            <TableCell>Title</TableCell>
             <TableCell>Message</TableCell>
             <TableCell>Created At</TableCell>
             <TableCell>Visible Until</TableCell>
@@ -148,6 +164,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
                 <TableCell>{a.id}</TableCell>
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
+                <TableCell>{a.title}</TableCell>
                 <TableCell>{a.message}</TableCell>
                 <TableCell>{new Date(a.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{new Date(a.visibleUntil).toLocaleString()}</TableCell>
@@ -164,10 +181,17 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         </TableBody>
       </Table>
 
+      {/* Create Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>New Announcement</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              fullWidth
+            />
             <TextField
               label="Message"
               value={newMessage}
@@ -194,6 +218,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         </DialogActions>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
@@ -203,6 +228,12 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         <DialogTitle>Edit Announcement</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              fullWidth
+            />
             <TextField
               label="Message"
               value={newMessage}
