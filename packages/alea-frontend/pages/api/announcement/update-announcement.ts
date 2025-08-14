@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id, courseId, title, content, visibleUntil, instanceId } = req.body;
 
   if (!id || !courseId || !title || !content || !instanceId) {
-    res.status(422).json({ error: 'Missing required fields' });
+    res.status(422).end( 'Missing required fields' );
     return;
   }
 
@@ -31,5 +31,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!result) return;
 
-  res.status(200).json({ message: 'Announcement updated successfully' });
+  res.status(200).end( 'Announcement updated successfully' );
 }

@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { courseId, title, content, visibleUntil, instanceId } = req.body;
 
   if (!courseId || !title || !content || !instanceId) {
-    res.status(422).json({ error: 'Missing required fields' });
+    res.status(422).send('Missing required fields');
     return;
   }
 
@@ -23,12 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
+    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil)
+     VALUES (?, ?, ?, ?, ?)`,
     [courseId, userId, title, content, visibleUntil],
     res
   );
   if (!result) return;
 
-  res.status(201).json({ message: 'Announcement created successfully' });
+  res.status(201).end();
 }

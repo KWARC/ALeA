@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { courseId } = req.query;
 
   if (!courseId) {
-    res.status(422).json({ error: 'Missing courseId' });
+    res.status(422).end('Missing courseId');
     return;
   }
 
@@ -21,5 +21,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!announcements) return;
 
-  res.status(200).json(announcements);
+  res.status(200).end(announcements);
 }
