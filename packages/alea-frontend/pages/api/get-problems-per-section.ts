@@ -6,6 +6,7 @@ import { getFlamsServer } from '@kwarc/ftml-react';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sectionUri = req.query.sectionUri as string;
   const courseId = req.query.courseId as string | undefined;
+  const languages = req.query.languages as string | undefined;
 
   if (!sectionUri) {
     return res.status(422).send('Missing required query param: sectionUri');
@@ -22,6 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
   }
 
-  const problems = await getCategorizedProblems(sectionUri, toc);
+  const problems = await getCategorizedProblems(sectionUri, toc, languages);
   res.status(200).json(problems);
 }
