@@ -53,10 +53,12 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [newDate, setNewDate] = useState(
     new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
   );
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
   const handleCreate = () => {
     if (!newMessage.trim() || !newDate) return;
@@ -80,6 +82,34 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
     setNewMessage('');
     setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
     setDialogOpen(false);
+  };
+
+  const handleEditClick = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setNewMessage(announcement.message);
+    setNewDate(new Date(announcement.visibleUntil).toISOString().slice(0, 16));
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = () => {
+    if (!editingAnnouncement || !newMessage.trim() || !newDate) return;
+
+    setAnnouncements((prev) =>
+      prev.map((a) =>
+        a.id === editingAnnouncement.id
+          ? { ...a, message: newMessage.trim(), visibleUntil: new Date(newDate).getTime() }
+          : a
+      )
+    );
+
+    setEditingAnnouncement(null);
+    setNewMessage('');
+    setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    setEditDialogOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
   };
 
   return (
@@ -122,10 +152,10 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
                 <TableCell>{new Date(a.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{new Date(a.visibleUntil).toLocaleString()}</TableCell>
                 <TableCell>
-                  <IconButton size="small">
+                  <IconButton size="small" onClick={() => handleEditClick(a)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small">
+                  <IconButton size="small" onClick={() => handleDelete(a.id)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -160,6 +190,41 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleCreate}>
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Announcement</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Message"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              fullWidth
+              multiline
+              minRows={3}
+            />
+            <TextField
+              label="Visible Until"
+              type="datetime-local"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleEditSave}>
+            Save
           </Button>
         </DialogActions>
       </Dialog>
