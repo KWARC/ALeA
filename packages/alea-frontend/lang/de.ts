@@ -8,7 +8,7 @@ export const de = {
       'Klicken Sie hier, um ganz einfach mit Kommiliton*Innen in Kontakt zu kommen, die gleiche Kurse besuchen',
     expIconHover1: 'Sehen Sie, was in unserem Labor braut.',
     expIconHover2: 'Äußerste Vorsicht walten lassen!',
-    cardIntro:https://gl.mathhub.info/
+    cardIntro:
       '"Flash Cards" unterstützen das Üben und Lernen der Konzepte ' +
       'des Kurses. Den Lernenden werden Karten mit Konzeptnamen gezeigt, ' +
       'die umgedreht werden können, um die Definition anzuzeigen. Die ' +
