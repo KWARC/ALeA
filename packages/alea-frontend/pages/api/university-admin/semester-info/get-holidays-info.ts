@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeQuery, checkIfGetOrSetError } from '../../comment-utils';
+import { executeAndEndSet500OnError, checkIfGetOrSetError } from '../../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
@@ -10,28 +10,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end('Missing universityId or instanceId');
   }
 
-  try {
-    const result = (await executeQuery(
-      `
+  const result = (await executeAndEndSet500OnError(
+    `
       SELECT holidays
       FROM semesterInfo
       WHERE universityId = ? AND instanceId = ?
       `,
-      [universityId, instanceId]
-    )) as { holidays: string }[];
+    [universityId, instanceId],
+    res
+  )) as { holidays: string }[];
 
-    if (result.length === 0) {
-      // Return empty array instead of 404 when no data exists
-      return res.status(200).send({ holidays: [] });
-    }
+  if (!result) return;
 
-    try {
-      const holidays = JSON.parse(result[0].holidays || '[]');
-      res.status(200).send({ holidays });
-    } catch (error) {
-      res.status(200).send({ holidays: [] });
-    }
+  if (result.length === 0) {
+    // Return empty array instead of 404 when no data exists
+    return res.status(200).send({ holidays: [] });
+  }
+
+  try {
+    const holidays = JSON.parse(result[0].holidays || '[]');
+    res.status(200).send({ holidays });
   } catch (error) {
-    res.status(500).end('Database error');
+    res.status(200).send({ holidays: [] });
   }
 }

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
-import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -23,41 +23,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  try {
-    const result = await executeQuery(
-      `
+  const result = await executeAndEndSet500OnError(
+    `
       SELECT holidays
       FROM semesterInfo
       WHERE universityId = ? AND instanceId = ?
       `,
-      [universityId, instanceId]
-    );
+    [universityId, instanceId],
+    res
+  );
 
-    const existing = result[0];
-    if (!existing || !existing.holidays) {
-      return res.status(404).end('No holiday data found for the specified university and instance');
-    }
+  if (!result?.length || !result[0].holidays) {
+    return res.status(404).end('No holiday data found for the specified university and instance');
+  }
 
-    let holidays: any[];
-    try {
-      holidays = JSON.parse(existing.holidays);
-    } catch (error) {
-      return res.status(500).end('Failed to parse holidays JSON');
-    }
+  let holidays: any[];
+  try {
+    holidays = JSON.parse(result[0].holidays);
+  } catch (error) {
+    return res.status(500).end('Failed to parse holidays JSON');
+  }
 
-    const filtered = holidays.filter((h: any) => h.date !== dateToDelete);
+  const filtered = holidays.filter((h: any) => h.date !== dateToDelete);
 
-    await executeQuery(
-      `
+  await executeAndEndSet500OnError(
+    `
       UPDATE semesterInfo
       SET holidays = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP
       WHERE universityId = ? AND instanceId = ?
       `,
-      [JSON.stringify(filtered), userId, universityId, instanceId]
-    );
+    [JSON.stringify(filtered), userId, universityId, instanceId],
+    res
+  );
 
-    res.status(200).end('Holiday deleted successfully');
-  } catch (error) {
-    res.status(500).end('Database error');
-  }
+  res.status(200).end('Holiday deleted successfully');
 }

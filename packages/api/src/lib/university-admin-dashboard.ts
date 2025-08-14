@@ -101,12 +101,8 @@ export async function editHoliday(data: EditHolidayRequest) {
 }
 
 export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
-  const response = await axios.post(
-    `/api/university-admin/semester-info/delete-single-holiday`,
-    data,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+  const response = await axios.post(`${SEMESTER_BASE_URL}/delete-single-holiday`, data, {
+    headers: getAuthHeaders(),
+  });
   return response.data;
 }

@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const updateResult = (await executeQuery<{ affectedRows: number }>(
       `UPDATE semesterInfo
-       SET holidays = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP
+       SET holidays = ?, userId = ?
        WHERE universityId = ? AND instanceId = ?`,
       [JSON.stringify(updatedHolidays), userId, universityId, instanceId]
     )) as DatabaseResult<{ affectedRows: number }>;
