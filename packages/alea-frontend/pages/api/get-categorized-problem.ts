@@ -6,6 +6,7 @@ import {
 } from '@stex-react/api';
 import { getProblemsBySection } from './get-course-problem-counts';
 import { FTML } from '@kwarc/ftml-viewer';
+import { Language } from '@stex-react/api';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const categorizedProblemCache = new Map<
@@ -67,6 +68,29 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   return conceptUris;
 }
 
+const languageUrlMap: Record<Language, string> = {
+  [Language.Deutsch]: 'l=de',
+  [Language.English]: '',
+  [Language.Arabic]: 'l=ar',
+  [Language.Bengali]: 'l=bn',
+  [Language.Hindi]: 'l=hi',
+  [Language.French]: 'l=fr',
+  [Language.Japanese]: 'l=ja',
+  [Language.Korean]: 'l=ko',
+  [Language.Mandarin]: 'l=zh',
+  [Language.Marathi]: 'l=mr',
+  [Language.Persian]: 'l=fa',
+  [Language.Portuguese]: 'l=pt',
+  [Language.Russian]: 'l=ru',
+  [Language.Spanish]: 'l=es',
+  [Language.Tamil]: 'l=ta',
+  [Language.Telugu]: 'l=te',
+  [Language.Turkish]: 'l=tr',
+  [Language.Urdu]: 'l=ur',
+  [Language.Vietnamese]: 'l=vi',
+  [Language.Others]: '',
+};
+
 export async function getCategorizedProblems(
   sectionUri: string,
   courseToc: FTML.TOCElem[],
@@ -100,16 +124,23 @@ export async function getCategorizedProblems(
 
       let category: 'syllabus' | 'adventurous' = isSyllabus ? 'syllabus' : 'adventurous';
       let showGermanNotice = false;
+      let matchedLanguage: string | undefined;
 
-      if (category === 'syllabus' && problemUri.includes('l=de')) {
-        if (userLanguages.includes('Deutsch')) {
-          showGermanNotice = true;
-        } else {
-          category = 'adventurous';
+      if (category === 'syllabus') {
+        for (const [langKey, urlFragment] of Object.entries(languageUrlMap)) {
+          if (urlFragment && problemUri.includes(urlFragment)) {
+            if (userLanguages.includes(langKey)) {
+              showGermanNotice = true;
+              matchedLanguage = langKey;
+            } else {
+              category = 'adventurous';
+            }
+            break;
+          }
         }
       }
 
-      return { problemId: problemUri, category, labels, showGermanNotice };
+      return { problemId: problemUri, category, labels, showGermanNotice,matchedLanguage };
     })
   );
   categorizedProblemCache.set(cacheKey, {

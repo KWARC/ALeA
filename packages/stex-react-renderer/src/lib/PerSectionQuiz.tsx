@@ -210,7 +210,9 @@ export function PerSectionQuiz({
         <Typography fontWeight="bold" textAlign="left">
           {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
           {currentProblem?.showGermanNotice && (
-            <Tooltip title="This problem is shown because you have Deutsch in your language preferences.">
+            <Tooltip
+              title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
+            >
               <VisibilityIcon
                 onClick={() => Router.push('/my-profile')}
                 style={{

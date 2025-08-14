@@ -5,6 +5,7 @@ export interface ProblemData {
   category: string;
   labels: string[];
   showGermanNotice?: boolean;
+  matchedLanguage?: string;
 }
 
 export interface CourseProblemCounts {
