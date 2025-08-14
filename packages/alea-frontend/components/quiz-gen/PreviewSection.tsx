@@ -1,3 +1,4 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import InfoIcon from '@mui/icons-material/Info';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -12,6 +13,8 @@ import {
   Typography,
 } from '@mui/material';
 import { GenerationParams } from '@stex-react/api';
+import { UriProblemViewer } from '@stex-react/stex-react-renderer';
+import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { QuizProblemViewer } from '../GenerateQuiz';
@@ -110,14 +113,23 @@ export const PreviewSection = ({
 }: PreviewSectionProps) => {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [showVersionTrack, setShowVersionTrack] = useState(false);
+  const [uriStex, setUriStex] = useState('');
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const selectedVersion = versionOptions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const isLatestVersion = selectedVersionIndex === versionOptions.length - 1;
   const manualEditPresentInVersion =
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
+
+  async function fetchRawStexFromUri(problemUri: string) {
+    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+    if (!sourceLink) return null;
+    const rawStexLink = sourceLink.replace('-/blob', '-/raw');
+    const response = await axios.get(rawStexLink);
+    return response.data;
+  }
   const isModified = useMemo(() => {
-    const original = problemData?.problemStex;
+    const original = selectedVersion?.problemStex ?? problemData?.problemStex;
     return editableSTeX !== original;
   }, [editableSTeX, problemData]);
 
@@ -126,6 +138,12 @@ export const PreviewSection = ({
       setSelectedVersionIndex(versionOptions.length - 1);
     }
   }, [versionOptions]);
+
+  useEffect(() => {
+    if (!selectedVersion?.problemUri) return;
+    setUriStex(selectedVersion?.problemUri);
+  }, [selectedVersion]);
+
   useEffect(() => {
     onLatestVersionStatusChange?.(isLatestVersion);
   }, [selectedVersionIndex, versionOptions]);
@@ -133,11 +151,14 @@ export const PreviewSection = ({
   useEffect(() => {
     setPreviewMode(isModified || manualEditPresentInVersion ? 'stex' : 'json');
   }, [isModified, manualEditPresentInVersion]);
-console.log({editableSTeX});
-console.log("prS",problemData.problemStex);
+
   useEffect(() => {
     if (manualEditPresentInVersion && latestManualEdit) {
       setEditableSTeX(latestManualEdit?.editedText);
+    } else if (selectedVersion?.problemStex === null && selectedVersion?.problemUri) {
+      fetchRawStexFromUri(uriStex).then((fetchedSTeX) => {
+        setEditableSTeX(fetchedSTeX);
+      });
     } else {
       setEditableSTeX(selectedVersion?.problemStex);
     }
@@ -181,6 +202,12 @@ console.log("prS",problemData.problemStex);
                 }}
                 sx={{
                   borderRadius: 1.5,
+                  '& .MuiSelect-select': {
+                    p: 0.5,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: 'primary.main',
                   },
@@ -189,61 +216,111 @@ console.log("prS",problemData.problemStex);
                   },
                 }}
               >
-                                {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
+                {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
+                {/* {versionOptions
+                  .filter((option, index) => {
+                    const mode = (option?.generationParams as any)?.mode;
+                    const hasManualEdits =
+                      Array.isArray(option?.manualEdits) && option.manualEdits.length > 0;
+                    const isLatest = index === versionOptions.length - 1;
+
+                    if (mode !== 'copy') return true;
+                    return hasManualEdits || isLatest;
+                  })
+                  .map((version, index) => { */}
                 {versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
-                  const variantOptions= (genParams as any)?.variantOptions ;
-                  const variantType=variantOptions?variantOptions?.variantType:'';
-                  const theme=variantOptions?variantOptions?.theme:'';
+                  const variantOptions = (genParams as any)?.variantOptions;
+                  const variantType = variantOptions ? variantOptions?.variantType : '';
+                  const theme = variantOptions ? variantOptions?.theme : '';
                   const meVersion = version?.manualEdits?.length ?? 0;
-                   const latestEditTime =
-    meVersion > 0
-      ? new Date(version.manualEdits[meVersion - 1].updatedAt).toLocaleString()
-      : new Date(version.updatedAt).toLocaleString();
+                 const isLatest = index + 1 === versionOptions.length;
                   let modeLabel = 'Existing';
                   if (mode === 'copy') modeLabel = 'Copied';
                   else if (mode === 'variant') modeLabel = 'Variant';
                   else if (mode === 'new') modeLabel = 'Generated';
-                  if(variantType)modeLabel+=` (${variantType})`
+                  if (variantType) modeLabel += ` (${variantType})`;
                   if (meVersion > 0) modeLabel += ` ME${meVersion}`;
 
+                  const formattedDate =  meVersion > 0
+      ? new Date(version.manualEdits[meVersion - 1].updatedAt).toLocaleString()
+                    : new Date(version.updatedAt).toLocaleString();
                   return (
                     <MenuItem
                       key={index}
                       value={index}
                       sx={{
-                        borderRadius: 1,
+                        borderRadius: 2,
                         mx: 1,
-                        my: 0.25,
-                        py: 1.25,
-                        px: 2,
-                        backgroundColor: 'transparent !important',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        my: 0.5,
+                        p: 0,
+                        backgroundColor: 'transparent',
+                        border: '1px solid transparent',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        overflow: 'hidden',
+                        position: 'relative',
+
                         '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.08) !important',
+                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                          border: '1px solid rgba(25, 118, 210, 0.2)',
                           transform: 'translateY(-1px)',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                         },
+
                         '&.Mui-selected': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.12) !important',
-                          fontWeight: 600,
+                          backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                          border: '1px solid rgba(25, 118, 210, 0.3)',
+
                           '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.16) !important',
+                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                          },
+
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: 3,
+                            backgroundColor: '#1976d2',
                           },
                         },
                       }}
-                    ><Tooltip title={theme}>
-                      <Box>
-                      <Typography>
-                      {index + 1} - {modeLabel}{' '}
-                      {index + 1 === versionOptions.length ? '(Latest)' : ''}
-                      </Typography>
-                       {latestEditTime && (
-            <Typography variant="caption" color="text.secondary">
-          {latestEditTime}
-            </Typography>
-          )}</Box>
+                    >
+                      <Tooltip title={theme}>
+                        <Box
+                          sx={{
+                            p: 1,
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.25,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 500,
+                              color: 'text.primary',
+                              fontSize: '0.875rem',
+                            }}
+                          >
+                            {index + 1}. {modeLabel} {isLatest ? '(Latest)' : ''}
+                          </Typography>
+
+                          {formattedDate && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              {formattedDate}
+                            </Typography>
+                          )}
+                        </Box>
                       </Tooltip>
                       
                     </MenuItem>
@@ -345,7 +422,11 @@ console.log("prS",problemData.problemStex);
       >
         {previewMode === 'json' ? (
           problemData ? (
-            <QuizProblemViewer problemData={selectedVersion ?? problemData} />
+            selectedVersion?.problemUri ? (
+              <UriProblemViewer uri={selectedVersion?.problemUri} />
+            ) : (
+              <QuizProblemViewer problemData={selectedVersion ?? problemData} />
+            )
           ) : (
             <Box
               sx={{
