@@ -70,7 +70,7 @@ export function QuizPanel({
   setCurrentIdx: (idx: number) => void;
   sections: SecInfo[];
   courseId: string;
-  userInfo:UserInfo|undefined;
+  userInfo: UserInfo | undefined;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -212,21 +212,21 @@ export function QuizPanel({
             />
           </Tooltip>
           <Tooltip title="Finalized variants of this problem">
-          <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
-            <InputLabel>Variants</InputLabel>
-            <Select
-              value={selectedProblemIndex ?? ''}
-              onChange={(e) => handleVariantChange(e.target.value as number)}
-              label="Variants"
-            >
-              <MenuItem value={null}>None</MenuItem>
-              {finalizedProblems?.map((variant, idx) => (
-                <MenuItem key={variant.problemId} value={idx}>
-                  Variant {idx + 1}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
+              <InputLabel>Variants</InputLabel>
+              <Select
+                value={selectedProblemIndex ?? ''}
+                onChange={(e) => handleVariantChange(e.target.value as number)}
+                label="Variants"
+              >
+                <MenuItem value={null}>None</MenuItem>
+                {finalizedProblems?.map((variant, idx) => (
+                  <MenuItem key={variant.problemId} value={idx}>
+                    Variant {idx + 1}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Tooltip>
           <Tooltip title="Create a new Variant">
             <PublishedWithChanges onClick={handleOpenVariantDialog} />
@@ -245,7 +245,8 @@ export function QuizPanel({
         </Box>
         {finalizedProblemData && (
           <Typography variant="body2" color="#b07575ff" mt={1}>
-This is the finalized version created from the original problem.          </Typography>
+            This is the finalized version created from the original problem.{' '}
+          </Typography>
         )}
 
         {isGenerated(currentProblem) ? (

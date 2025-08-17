@@ -27,7 +27,6 @@ import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
 import { PRIMARY_COL } from '@stex-react/utils';
 
-
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
   variantTypes: VariantType[];
@@ -47,7 +46,7 @@ interface VariantDialogProps {
   onClose: () => void;
   problemData: FlatQuizProblem;
   setProblemData: (p: FlatQuizProblem | null) => void;
-  userInfo:UserInfo|undefined;
+  userInfo: UserInfo | undefined;
 }
 
 export const VariantDialog = ({
@@ -85,8 +84,10 @@ export const VariantDialog = ({
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
-    const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
-const isViewingLatestVersion= selectedVersionIndex === versions.length - 1;
+  //const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [selectedVersion, setSelectedVersion] = useState<FlatQuizProblem>(null);
+  const isViewingLatestVersion = (selectedVersion?.problemId === versions[versions.length - 1]?.problemId) ;
+  console.log({isViewingLatestVersion})
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -167,7 +168,7 @@ const isViewingLatestVersion= selectedVersionIndex === versions.length - 1;
       console.error('Cannot create variant without problemId');
       return;
     }
-    if (latestManualEdit.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
+    if (latestManualEdit?.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
       console.log('No changes detected. Draft not saved.');
       setSnackbarMessage('No changes detected. Draft not saved.');
       setSnackbarOpen(true);
@@ -175,10 +176,10 @@ const isViewingLatestVersion= selectedVersionIndex === versions.length - 1;
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
     const editEntry = {
-  updaterId: userInfo?.userId, 
-  updatedAt: new Date().toISOString(),
-  editedText: editableSTeX
-};
+      updaterId: userInfo?.userId,
+      updatedAt: new Date().toISOString(),
+      editedText: editableSTeX,
+    };
     if (problemData?.manualEdits) {
       problemData.manualEdits.push(editEntry);
     } else if (problemData) {
@@ -186,12 +187,12 @@ const isViewingLatestVersion= selectedVersionIndex === versions.length - 1;
     }
   };
   const markProblemFinal = async () => {
-    if (latestManualEdit.editedText !== editableSTeX) {
+    if (latestManualEdit?.editedText !== editableSTeX) {
       await saveProblemDraft(problemData.problemId, editableSTeX);
     }
     await finalizeProblem(problemData.problemId);
   };
-const selectedVersionGenParams= versions[selectedVersionIndex]?.generationParams;
+  const selectedVersionGenParams = selectedVersion?.generationParams;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
@@ -243,61 +244,63 @@ const selectedVersionGenParams= versions[selectedVersionIndex]?.generationParams
             position={'relative'}
           >
             {!isViewingLatestVersion && (
-                 <>
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                zIndex={10}
-                bgcolor="rgba(255, 255, 255, 0.6)"
-              />
-              <Box
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      zIndex={11}
-      bgcolor="white"
-      borderRadius={2}
-      p={2}
-      sx={{
-        border: "2px solid saddlebrown",
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          fontWeight: 700,
-          mb: 1,
-        }}
-      >
-        Generation Params
-      </Typography>
+              <>
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  bottom={0}
+                  zIndex={10}
+                  bgcolor="rgba(255, 255, 255, 0.6)"
+                />
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  zIndex={11}
+                  bgcolor="white"
+                  borderRadius={2}
+                  p={2}
+                  sx={{
+                    border: '2px solid saddlebrown',
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      mb: 1,
+                    }}
+                  >
+                    Generation Params
+                  </Typography>
 
-      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-        Mode:{" "}
-        <Box component="span" sx={{ fontWeight: 400,color:PRIMARY_COL }}>
-          {(selectedVersionGenParams as any)?.mode}
-        </Box>
-      </Typography>
-      {(selectedVersionGenParams as any)?.variantOptions?.theme&&
-      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-        Theme:{" "}
-        <Box component="span" sx={{ fontWeight: 400 ,color:PRIMARY_COL}}>
-          {(selectedVersionGenParams as any)?.variantOptions?.theme}
-        </Box>
-      </Typography>}
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    Mode:{' '}
+                    <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                      {(selectedVersionGenParams as any)?.mode}
+                    </Box>
+                  </Typography>
+                  {(selectedVersionGenParams as any)?.variantOptions?.theme && (
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      Theme:{' '}
+                      <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                        {(selectedVersionGenParams as any)?.variantOptions?.theme}
+                      </Box>
+                    </Typography>
+                  )}
 
-      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-        Source Problem Id:{" "}
-        <Box component="span" sx={{ fontWeight: 400 }}>
-          {(selectedVersionGenParams as any)?.sourceProblem.problemId??(selectedVersionGenParams as any)?.sourceProblem.problemUri}
-        </Box>
-      </Typography>
-    </Box> </>
-           
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    Source Problem Id:{' '}
+                    <Box component="span" sx={{ fontWeight: 400 }}>
+                      {(selectedVersionGenParams as any)?.sourceProblem.problemId ??
+                        (selectedVersionGenParams as any)?.sourceProblem.problemUri}
+                    </Box>
+                  </Typography>
+                </Box>{' '}
+              </>
             )}
             <Box
               flex={1}
@@ -437,7 +440,9 @@ const selectedVersionGenParams= versions[selectedVersionIndex]?.generationParams
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
             previousVersions={versions}
-            onLatestVersionChange={(selectedVersionIdx) => setSelectedVersionIndex(selectedVersionIdx)}
+            onLatestVersionChange={(selectedVersion) =>
+              setSelectedVersion(selectedVersion)
+            }
           />
         </Box>
         <Snackbar
