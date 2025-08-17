@@ -115,13 +115,11 @@ export const PreviewSection = ({
 }: PreviewSectionProps) => {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(1);
   const [showVersionTrack, setShowVersionTrack] = useState(false);
-  const [uriStex, setUriStex] = useState('');
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
   const filteredVersions = versionOptions.filter((option, index) => {
     const mode = (option?.generationParams as any)?.mode;
     const hasManualEdits = Array.isArray(option?.manualEdits) && option.manualEdits.length > 0;
     const isLatest = index === versionOptions.length - 1;
-
     if (mode !== 'copy') return true;
     return isLatest || hasManualEdits;
   });
@@ -153,11 +151,6 @@ export const PreviewSection = ({
   }, [versionOptions]);
 
   useEffect(() => {
-    if (!selectedVersion?.problemUri) return;
-    setUriStex(selectedVersion?.problemUri);
-  }, [selectedVersion, uriStex]);
-
-  useEffect(() => {
     isLatest?.(isLatestVersion);
     onLatestVersionChange?.(selectedVersion);
   }, [selectedVersion, filteredVersions]);
@@ -169,14 +162,14 @@ export const PreviewSection = ({
   useEffect(() => {
     if (manualEditPresentInVersion && latestManualEdit) {
       setEditableSTeX(latestManualEdit?.editedText);
-    } else if (selectedVersion?.problemStex === null && selectedVersion?.problemUri && uriStex) {
-      fetchRawStexFromUri(uriStex).then((fetchedSTeX) => {
+    } else if (selectedVersion?.problemStex === null && selectedVersion?.problemUri) {
+      fetchRawStexFromUri(selectedVersion?.problemUri).then((fetchedSTeX) => {
         setEditableSTeX(fetchedSTeX);
       });
     } else {
       setEditableSTeX(selectedVersion?.problemStex);
     }
-  }, [selectedVersion, uriStex]);
+  }, [selectedVersion]);
 
   return (
     <Box flex={1} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
