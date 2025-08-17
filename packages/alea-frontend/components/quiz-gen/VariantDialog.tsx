@@ -85,7 +85,8 @@ export const VariantDialog = ({
   const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
-  const [isViewingLatestVersion, setIsViewingLatestVersion] = useState(true);
+    const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+const isViewingLatestVersion= selectedVersionIndex === versions.length - 1;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -190,7 +191,7 @@ export const VariantDialog = ({
     }
     await finalizeProblem(problemData.problemId);
   };
-
+const selectedVersionGenParams= versions[selectedVersionIndex]?.generationParams;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
@@ -242,6 +243,7 @@ export const VariantDialog = ({
             position={'relative'}
           >
             {!isViewingLatestVersion && (
+                 <>
               <Box
                 position="absolute"
                 top={0}
@@ -251,6 +253,51 @@ export const VariantDialog = ({
                 zIndex={10}
                 bgcolor="rgba(255, 255, 255, 0.6)"
               />
+              <Box
+      position="absolute"
+      top={0}
+      left={0}
+      right={0}
+      zIndex={11}
+      bgcolor="white"
+      borderRadius={2}
+      p={2}
+      sx={{
+        border: "2px solid saddlebrown",
+      }}
+    >
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: 700,
+          mb: 1,
+        }}
+      >
+        Generation Params
+      </Typography>
+
+      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+        Mode:{" "}
+        <Box component="span" sx={{ fontWeight: 400,color:PRIMARY_COL }}>
+          {(selectedVersionGenParams as any)?.mode}
+        </Box>
+      </Typography>
+      {(selectedVersionGenParams as any)?.variantOptions?.theme&&
+      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+        Theme:{" "}
+        <Box component="span" sx={{ fontWeight: 400 ,color:PRIMARY_COL}}>
+          {(selectedVersionGenParams as any)?.variantOptions?.theme}
+        </Box>
+      </Typography>}
+
+      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+        Source Problem Id:{" "}
+        <Box component="span" sx={{ fontWeight: 400 }}>
+          {(selectedVersionGenParams as any)?.sourceProblem.problemId??(selectedVersionGenParams as any)?.sourceProblem.problemUri}
+        </Box>
+      </Typography>
+    </Box> </>
+           
             )}
             <Box
               flex={1}
@@ -390,7 +437,7 @@ export const VariantDialog = ({
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
             previousVersions={versions}
-            onLatestVersionStatusChange={(isLatest) => setIsViewingLatestVersion(isLatest)}
+            onLatestVersionChange={(selectedVersionIdx) => setSelectedVersionIndex(selectedVersionIdx)}
           />
         </Box>
         <Snackbar

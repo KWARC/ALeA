@@ -26,7 +26,7 @@ interface PreviewSectionProps {
   editableSTeX: string;
   setEditableSTeX: (stex: string) => void;
   previousVersions?: FlatQuizProblem[];
-  onLatestVersionStatusChange: (isLatest: boolean) => void;
+  onLatestVersionChange: (selectedVersionIdx:number) => void;
 }
 
 const VersionLeadNode = ({ index, isSelected }: { index: number; isSelected: boolean }) => {
@@ -109,9 +109,9 @@ export const PreviewSection = ({
   editableSTeX,
   setEditableSTeX,
   previousVersions,
-  onLatestVersionStatusChange,
+  onLatestVersionChange,
 }: PreviewSectionProps) => {
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(1);
   const [showVersionTrack, setShowVersionTrack] = useState(false);
   const [uriStex, setUriStex] = useState('');
   const versionOptions = useMemo(() => previousVersions ?? [], [previousVersions]);
@@ -145,7 +145,7 @@ export const PreviewSection = ({
   }, [selectedVersion]);
 
   useEffect(() => {
-    onLatestVersionStatusChange?.(isLatestVersion);
+    onLatestVersionChange?.(selectedVersionIndex);
   }, [selectedVersionIndex, versionOptions]);
 
   useEffect(() => {
@@ -217,7 +217,7 @@ export const PreviewSection = ({
                 }}
               >
                 {/* {versionOptions.filter((option)=>(option?.generationParams as any)?.mode!=="copy").map((version, index) => { */}
-                {/* {versionOptions
+                {versionOptions
                   .filter((option, index) => {
                     const mode = (option?.generationParams as any)?.mode;
                     const hasManualEdits =
@@ -227,8 +227,8 @@ export const PreviewSection = ({
                     if (mode !== 'copy') return true;
                     return hasManualEdits || isLatest;
                   })
-                  .map((version, index) => { */}
-                {versionOptions.map((version, index) => {
+                  .map((version, index) => {
+                // {versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
                   const variantOptions = (genParams as any)?.variantOptions;
