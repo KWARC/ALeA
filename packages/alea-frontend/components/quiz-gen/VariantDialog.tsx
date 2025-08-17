@@ -16,8 +16,9 @@ import {
   finalizeProblem,
   getProblemVersionHistory,
   saveProblemDraft,
-  UserInfo,
+  UserInfo
 } from '@stex-react/api';
+import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ConfigurationSummary } from './ConfigurationSummary';
@@ -25,7 +26,6 @@ import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
-import { PRIMARY_COL } from '@stex-react/utils';
 
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
@@ -81,13 +81,11 @@ export const VariantDialog = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const mcqOptions = problemData?.options || [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
-  //const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<FlatQuizProblem>(null);
-  const isViewingLatestVersion = (selectedVersion?.problemId === versions[versions.length - 1]?.problemId) ;
-  console.log({isViewingLatestVersion})
+  //const isViewingLatestVersion = selectedVersionIndex === versions.length - 1;
   const handleConfigChange = (field, value) => {
     setVariantConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -146,14 +144,8 @@ export const VariantDialog = ({
     const fetchProblemVersionHistory = async () => {
       if (!open || !problemData) return;
       const history = await getProblemVersionHistory(problemData.problemId);
-      console.log({ res: history });
       const flattenedVersions = history.map(flattenQuizProblem);
       setVersions(flattenedVersions);
-      //  const processedVersions = history.map((item) =>
-      //   (item as any).problemUri ? item: flattenQuizProblem(item)
-      // );
-
-      // setVersions(processedVersions);
     };
 
     fetchProblemVersionHistory();
@@ -254,52 +246,56 @@ export const VariantDialog = ({
                   zIndex={10}
                   bgcolor="rgba(255, 255, 255, 0.6)"
                 />
-                <Box
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                  zIndex={11}
-                  bgcolor="white"
-                  borderRadius={2}
-                  p={2}
-                  sx={{
-                    border: '2px solid saddlebrown',
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      mb: 1,
-                    }}
-                  >
-                    Generation Params
-                  </Typography>
+                {(selectedVersionGenParams as any) &&
+                  (selectedVersionGenParams as any)?.mode !== 'copy' && (
+                    <Box
+                      position="absolute"
+                      top={0}
+                      left={0}
+                      right={0}
+                      zIndex={11}
+                      bgcolor="white"
+                      borderRadius={2}
+                      p={2}
+                      sx={{
+                        border: '2px solid saddlebrown',
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                        }}
+                      >
+                        Generation Params
+                      </Typography>
 
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    Mode:{' '}
-                    <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                      {(selectedVersionGenParams as any)?.mode}
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        Mode:{' '}
+                        <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                          {(selectedVersionGenParams as any)?.mode}
+                        </Box>
+                      </Typography>
+
+                      {(selectedVersionGenParams as any)?.variantOptions?.theme && (
+                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                          Theme:{' '}
+                          <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                            {(selectedVersionGenParams as any)?.variantOptions?.theme}
+                          </Box>
+                        </Typography>
+                      )}
+
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        Source Problem Id:{' '}
+                        <Box component="span" sx={{ fontWeight: 400 }}>
+                          {(selectedVersionGenParams as any)?.sourceProblem?.problemId ??
+                            (selectedVersionGenParams as any)?.problemUri}
+                        </Box>
+                      </Typography>
                     </Box>
-                  </Typography>
-                  {(selectedVersionGenParams as any)?.variantOptions?.theme && (
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      Theme:{' '}
-                      <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                        {(selectedVersionGenParams as any)?.variantOptions?.theme}
-                      </Box>
-                    </Typography>
                   )}
-
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    Source Problem Id:{' '}
-                    <Box component="span" sx={{ fontWeight: 400 }}>
-                      {(selectedVersionGenParams as any)?.sourceProblem.problemId ??
-                        (selectedVersionGenParams as any)?.sourceProblem.problemUri}
-                    </Box>
-                  </Typography>
-                </Box>{' '}
               </>
             )}
             <Box
@@ -440,9 +436,8 @@ export const VariantDialog = ({
             editableSTeX={editableSTeX}
             setEditableSTeX={setEditableSTeX}
             previousVersions={versions}
-            onLatestVersionChange={(selectedVersion) =>
-              setSelectedVersion(selectedVersion)
-            }
+            isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+            onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
           />
         </Box>
         <Snackbar
@@ -454,15 +449,15 @@ export const VariantDialog = ({
         />
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, gap: 1 }}>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
         <Button
           onClick={() => {
             clearSelection();
             onClose();
           }}
-          sx={{ textTransform: 'none' }}
+          // sx={{ textTransform: 'none' }}
         >
-          Start New Edit
+          Close
         </Button>
         <Button
           onClick={async () => {
