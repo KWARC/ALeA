@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { ProblemJson, QuizProblem } from '@stex-react/api';
+import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/api';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
@@ -41,9 +41,19 @@ const QuizGen = () => {
   const [allIdx, setAllIdx] = useState(0);
   const [viewMode, setViewMode] = useState<QuizViewMode>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
+  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  useEffect(() => { 
+    getUserInfo().then((info) => {
+      if (!info) {
+        router.push('/login');
+        return;
+      }
+      setUserInfo(info);
+    });
+  }, [router]);
 
   const currentIdx =
     viewMode === 'generated' ? generatedIdx : viewMode === 'existing' ? existingIdx : allIdx;
@@ -85,6 +95,7 @@ const QuizGen = () => {
           setCurrentIdx={setCurrentIdx}
           sections={sections}
           courseId={courseId}
+          userInfo={userInfo}
         />
       </Box>
       <QuestionSidebar
