@@ -3,7 +3,7 @@ import { VariantConfig } from './VariantDialog';
 
 export const ConfigurationSummary = ({ variantConfig }: { variantConfig: VariantConfig }) => {
   const VARIANT_LABELS: Record<string, string> = {
-    rephrase: 'Rephrase',
+    rephrase: 'Minor Edits',
     modifyChoice: 'Modify Choices',
     thematicReskin: 'Thematic Reskin',
   };
@@ -28,7 +28,6 @@ export const ConfigurationSummary = ({ variantConfig }: { variantConfig: Variant
       }}
     >
       <Typography
-        variant="h6"
         sx={{
           color: 'primary.main',
           fontWeight: 600,

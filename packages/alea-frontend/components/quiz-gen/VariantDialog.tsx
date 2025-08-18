@@ -27,7 +27,7 @@ import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
 
-export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
+export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin' | 'informationClarity';
 export interface VariantConfig {
   variantTypes: VariantType[];
   difficulty?: string;
@@ -39,6 +39,8 @@ export interface VariantConfig {
   modifyChoiceInstruction?: string;
   thematicReskinInstruction?: string;
   selectedTheme?: string;
+  informationClarity?: string;
+  informationClarityInstruction?: string;
 }
 
 interface VariantDialogProps {
@@ -67,6 +69,8 @@ export const VariantDialog = ({
     modifyChoiceInstruction: '',
     thematicReskinInstruction: '',
     selectedTheme: '',
+    informationClarity: '',
+    informationClarityInstruction: '',
   });
 
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
@@ -99,6 +103,7 @@ export const VariantDialog = ({
       rephraseInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
+      informationClarityInstruction: '',
     });
   };
 
@@ -110,24 +115,24 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        const result = await checkPossibleVariants(problemData.problemId);
-        // const result = {
-        //   modify_choices: {
-        //     applicable: true,
-        //   },
-        //   rephrase: {
-        //     applicable: true,
-        //   },
-        //   reskin: {
-        //     applicable: true,
-        //     themes: [
-        //       'Corporate Office Scenario',
-        //       'Library Management System',
-        //       'Hospital Staff Records',
-        //       'University Student Database',
-        //     ],
-        //   },
-        // };
+        //const result = await checkPossibleVariants(problemData.problemId);
+        const result = {
+          modify_choices: {
+            applicable: true,
+          },
+          rephrase: {
+            applicable: true,
+          },
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+        };
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -161,11 +166,13 @@ export const VariantDialog = ({
       return;
     }
     if (latestManualEdit?.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
-      setSnackbarMessage('No Manual changes detected.');
+      setSnackbarMessage('Draft Saved! No Manual changes detected.');
       setSnackbarOpen(true);
       return;
     }
     await saveProblemDraft(problemData.problemId, editableSTeX);
+    setSnackbarMessage('Draft Saved!');
+    setSnackbarOpen(true);
     const editEntry = {
       updaterId: userInfo?.userId,
       updatedAt: new Date().toISOString(),
@@ -341,7 +348,7 @@ export const VariantDialog = ({
                 <>
                   {rephraseApplicable && (
                     <SwitchToggle
-                      title="Rephrase"
+                      title="Minor Edit"
                       typeKey="rephrase"
                       instructionKey="rephraseInstruction"
                       placeholder="e.g., simplify language, keep same meaning"
@@ -393,14 +400,32 @@ export const VariantDialog = ({
                       }}
                     />
                   )}
+
+                  {/* {rephraseApplicable && (
+                    <SwitchToggle
+                      title="Information Clarity"
+                      typeKey="informationClarity"
+                      instructionKey="informationClarityInstruction"
+                      placeholder="e.g., simplify language, keep same meaning"
+                      variantConfig={variantConfig}
+                      setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
+                    />
+                  )} */}
                 </>
               )}
-              <VariantConfigSection
+              {/* <VariantConfigSection
                 variantConfig={variantConfig}
                 setVariantConfig={setVariantConfig}
-              />
+              /> */}
 
-              <TextField
+              {/* <TextField
                 label="Pretext Instructions (optional)"
                 placeholder="e.g., general notes for all variants"
                 value={variantConfig.customPrompt}
@@ -412,30 +437,28 @@ export const VariantDialog = ({
                   mb: 2,
                   '& .MuiOutlinedInput-root': { borderRadius: 2 },
                 }}
-              />
+              /> */}
+              {/* <Box display="flex" gap={10} mt={2} p={3}> */}
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={clearSelection}
+                sx={{
+                  color: 'error.main',
+                  borderColor: 'error.main',
+                  textTransform: 'none',
+                  mb: 2,
+                  '&:hover': {
+                    bgcolor: 'error.50',
+                    borderColor: 'error.dark',
+                    color: 'error.dark',
+                  },
+                }}
+              >
+                Clear Selection
+              </Button>
 
-              <ConfigurationSummary variantConfig={variantConfig} />
-              <Box display="flex" gap={10} mt={2} p={3}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={clearSelection}
-                  sx={{
-                    color: 'error.main',
-                    borderColor: 'error.main',
-                    textTransform: 'none',
-                    mb: 2,
-                    '&:hover': {
-                      bgcolor: 'error.50',
-                      borderColor: 'error.dark',
-                      color: 'error.dark',
-                    },
-                  }}
-                >
-                  Clear Selection
-                </Button>
-
-                <Button
+              {/* <Button
                   size="small"
                   variant="contained"
                   onClick={clearSelection}
@@ -447,8 +470,9 @@ export const VariantDialog = ({
                   }}
                 >
                   Create Variant
-                </Button>
-              </Box>
+                </Button> */}
+              {/* </Box> */}
+              <ConfigurationSummary variantConfig={variantConfig} />
             </Box>
           </Box>
 

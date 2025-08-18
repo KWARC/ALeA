@@ -30,11 +30,10 @@ interface SwitchToggleProps {
   onLoadingChange?: (loading: boolean) => void;
 }
 
-type RephraseType = 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping';
+type RephraseType = 'goal_inversion' | 'num_substitution' | 'entity_swapping';
 
 const REPHRASE_SUBOPTIONS: RephraseType[] = [
-  'technical',
-  'add_distractors',
+  'goal_inversion',
   'num_substitution',
   'entity_swapping',
 ];
@@ -313,6 +312,8 @@ export const SwitchToggle = ({
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
 
+          {typeKey === 'informationClarity' && renderThematicReskinOptions()}
+
           <TextField
             sx={{ mb: 2 }}
             label={`${title} Instructions`}
@@ -337,7 +338,7 @@ export const SwitchToggle = ({
                 }
                 disabled={!variantConfig.rephraseSubtypes?.length}
               >
-                Generate Rephrased Variant
+                Generate
               </Button>
             )}
 
@@ -348,6 +349,16 @@ export const SwitchToggle = ({
                 disabled={!selectedOptions?.length}
               >
                 Generate Modified Choice Variant
+              </Button>
+            )}
+
+            {typeKey === 'informationClarity' && (
+              <Button
+                variant="contained"
+                onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
+                disabled={!selectedOptions?.length}
+              >
+                Generate Information Clarity
               </Button>
             )}
           </Stack>

@@ -154,7 +154,7 @@ export interface CompletionEval {
 
 export interface RephraseVariant {
   variantType: 'rephrase';
-  rephraseType: string[]; // camel_casing here  
+  rephraseType: string[]; 
   rephraseInstruction?: string;
 }
 
