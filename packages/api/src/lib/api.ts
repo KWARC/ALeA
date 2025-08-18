@@ -25,4 +25,4 @@ export * from './quiz-api';
 export * from './request-aggregator';
 export * from './study-buddy';
 export * from './study-buddy-api';
-export * from './university-admin-dashboard';
+export * from './announcements';

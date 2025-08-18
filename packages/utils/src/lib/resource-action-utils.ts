@@ -12,11 +12,14 @@ export enum Action {
 
   ACCESS_CONTROL = 'ACCESS_CONTROL',
   TAKE = 'TAKE',
+
+  MANAGE_COURSE = 'MANAGE_COURSE',
 }
 
 export enum ResourceName {
   BLOG = 'BLOG',
   EXPERIMENTAL = 'EXPERIMENTAL',
+  COURSE = 'COURSE',
 
   // Resources related to specific courses.
   COURSE_SYLLABUS = 'COURSE_SYLLABUS',
@@ -32,7 +35,7 @@ export enum ResourceName {
   // For managing access control updates only.
   GLOBAL_ACCESS = 'GLOBAL_ACCESS',
   COURSE_ACCESS = 'COURSE_ACCESS',
-  
+
   // University admin resources
   UNIVERSITY_SEMESTER_DATA = 'UNIVERSITY_SEMESTER_DATA',
 }
@@ -84,8 +87,15 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
 ];
 
 
-
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
+   {
+    name: ResourceName.COURSE,
+    possibleActions: [Action.MANAGE_COURSE],
+    components: [
+      { type: ComponentType.FIXED, value: 'course' },
+      { name: 'courseId', type: ComponentType.VARIABLE },
+    ],
+  },
   {
     name: ResourceName.BLOG,
     possibleActions: [Action.MUTATE],
