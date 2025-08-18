@@ -1,5 +1,18 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+enum DrawingStatus {
+  start,
+  continue,
+  end,
+}
+type DrawingOperation = {
+  status: DrawingStatus;
+  x: number;
+  y: number;
+  color: string;
+  opacity: number;
+  width: number;
+};
 const DrawingComponent = ({
   initialDrawing = [],
   children,
@@ -21,7 +34,8 @@ const DrawingComponent = ({
   const [lineWidth, setLineWidth] = useState(2);
   const [lineColor, setLineColor] = useState('black');
   const [lineOpacity, setLineOpacity] = useState(1);
-  const [drawingOperations, setDrawingOperations] = useState<any[]>(
+
+  const [drawingOperations, setDrawingOperations] = useState<DrawingOperation[]>(
     JSON.parse(localStorage.getItem(`${id}-draw`) ?? '[]')
   );
   // Initialization when the component
@@ -29,6 +43,7 @@ const DrawingComponent = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+    ctx.canvas.style.touchAction = 'none';
     // ctx.lineCap = 'round';
     // ctx.lineJoin = 'round';
     ctx.globalAlpha = lineOpacity;
@@ -100,6 +115,11 @@ const DrawingComponent = ({
     setIsDrawing(false);
   };
   setTimeout(() => localStorage.setItem(`${id}-draw`, JSON.stringify(drawingOperations)), 300);
+  const onResetClicked = () => {
+    setDrawingOperations([]);
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  };
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) {
       return;
@@ -121,7 +141,7 @@ const DrawingComponent = ({
     });
   };
   return (
-    <div ref={ctxRef} style={{ position: 'relative', width: width, height: height }}>
+    <div ref={ctxRef} style={{ position: 'relative', width: width, height: height ,touchAction:'none'}}>
       {children}
       <canvas
         ref={canvasRef}
@@ -138,6 +158,7 @@ const DrawingComponent = ({
         }}
       />
       <Menu
+        onReset={onResetClicked}
         setLineColor={setLineColor}
         setLineWidth={setLineWidth}
         setLineOpacity={setLineOpacity}
@@ -147,7 +168,7 @@ const DrawingComponent = ({
 };
 
 export default DrawingComponent;
-function Menu({ setLineColor, setLineWidth, setLineOpacity }) {
+function Menu({ setLineColor, setLineWidth, setLineOpacity, onReset }) {
   return (
     <div className="Menu">
       <label>Brush Color </label>
@@ -175,11 +196,7 @@ function Menu({ setLineColor, setLineWidth, setLineOpacity }) {
           setLineOpacity(+e.target.value / 100);
         }}
       />
+      <button onClick={onReset}>Reset</button>
     </div>
   );
-}
-enum DrawingStatus {
-  start,
-  continue,
-  end,
 }
