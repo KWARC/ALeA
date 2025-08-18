@@ -6,6 +6,7 @@ export interface ProblemData {
   labels: string[];
   showForeignLanguageNotice?: boolean;
   matchedLanguage?: string;
+  outOfSyllabusConcepts?: string[];
 }
 
 export interface CourseProblemCounts {

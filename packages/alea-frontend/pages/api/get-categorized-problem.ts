@@ -43,6 +43,7 @@ async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Se
     const deps = await getSectionDependencies(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
+  console.log('conceptUris', JSON.stringify(conceptUris, null, 2));
 
   return conceptUris;
 }
@@ -63,7 +64,7 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
     conceptUris.push(...poSymbolUris);
   });
 
-  return conceptUris;
+  return Array.from(new Set(conceptUris));
 }
 
 const languageUrlMap: Record<string, Language> = {
@@ -108,9 +109,10 @@ export async function getCategorizedProblems(
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const isSyllabus = labels.some((label) => conceptUrisFromCourse.has(label));
+      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.has(label));
 
-      let category: 'syllabus' | 'adventurous' = isSyllabus ? 'syllabus' : 'adventurous';
+      let category: 'syllabus' | 'adventurous' =
+        outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
       let showForeignLanguageNotice = false;
       let matchedLanguage: string | undefined;
 
@@ -131,6 +133,7 @@ export async function getCategorizedProblems(
         labels,
         showForeignLanguageNotice,
         matchedLanguage,
+        outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
       } as ProblemData;
     })
   );
