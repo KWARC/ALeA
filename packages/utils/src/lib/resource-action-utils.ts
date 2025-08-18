@@ -32,6 +32,9 @@ export enum ResourceName {
   // For managing access control updates only.
   GLOBAL_ACCESS = 'GLOBAL_ACCESS',
   COURSE_ACCESS = 'COURSE_ACCESS',
+  
+  // University admin resources
+  UNIVERSITY_SEMESTER_DATA = 'UNIVERSITY_SEMESTER_DATA',
 }
 
 export enum ComponentType {
@@ -79,6 +82,8 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
   { resource: ResourceName.COURSE_HOMEWORK, action: Action.MUTATE },
   { resource: ResourceName.COURSE_ACCESS, action: Action.ACCESS_CONTROL },
 ];
+
+
 
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
   {
@@ -181,6 +186,15 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'instance' },
       { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
       { type: ComponentType.WILDCARD2, value: '**' },
+    ],
+  },
+  {
+    name: ResourceName.UNIVERSITY_SEMESTER_DATA,
+    possibleActions: [Action.MUTATE],
+    components: [
+      { type: ComponentType.FIXED, value: 'university' },
+      { name: 'universityId', type: ComponentType.VARIABLE },
+      { type: ComponentType.FIXED, value: 'university-sem-info' },
     ],
   },
 ];
