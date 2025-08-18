@@ -9,6 +9,7 @@ import {
 } from '@stex-react/api';
 import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const categorizedProblemCache = new Map<
@@ -32,8 +33,15 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
   return sectionUris;
 }
 
-async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Set<string>> {
-  const sectionUris = getSections(courseToc);
+// HACK: Fix this.
+const conceptUrisForCourse = new Map<string, string[]>();
+async function getAllConceptUrisForCourse(courseId: string, courseNotesUri: string): Promise<string[]> {
+  if (conceptUrisForCourse.has(courseId)) {
+    return conceptUrisForCourse.get(courseId);
+  }
+  const toc = (await getFlamsServer().contentToc({ uri: courseNotesUri }))?.[1] ?? [];
+
+  const sectionUris = getSections(toc);
   const conceptUris = new Set<string>();
 
   for (const sectionUri of sectionUris) {
@@ -43,9 +51,9 @@ async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Se
     const deps = await getSectionDependencies(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
-  console.log('conceptUris', JSON.stringify(conceptUris, null, 2));
-
-  return conceptUris;
+  const conceptUrisArray = Array.from(conceptUris);
+  conceptUrisForCourse.set(courseId, conceptUrisArray);
+  return conceptUrisArray;
 }
 
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
@@ -90,8 +98,9 @@ const languageUrlMap: Record<string, Language> = {
 };
 
 export async function getCategorizedProblems(
+  courseId: string,
   sectionUri: string,
-  courseToc: FTML.TOCElem[],
+  courseNotesUri: string,
   userLanguages?: string | string[],
   forceRefresh = false
 ): Promise<ProblemData[]> {
@@ -104,12 +113,12 @@ export async function getCategorizedProblems(
     }
   }
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
-  const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseToc);
+  const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.has(label));
+      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.includes(label));
 
       let category: 'syllabus' | 'adventurous' =
         outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';

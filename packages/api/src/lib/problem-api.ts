@@ -15,7 +15,7 @@ export interface CourseProblemCounts {
 
 export async function getProblemsPerSection(
   sectionUri: string,
-  courseId?: string,
+  courseId: string,
   languages?: string
 ) {
   const resp = await axios.get(`/api/get-problems-per-section`, {

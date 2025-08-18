@@ -101,7 +101,7 @@ export function PerSectionQuiz({
   cachedProblemUris?: string[] | null;
   setCachedProblemUris?: (uris: string[]) => void;
   category?: 'syllabus' | 'adventurous';
-  courseId?: string;
+  courseId: string;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);

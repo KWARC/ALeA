@@ -152,7 +152,7 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await getProblemsPerSection(sectionUri);
+              const resp = await getProblemsPerSection(sectionUri, courseId);
               const problemUris: string[] = resp.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
