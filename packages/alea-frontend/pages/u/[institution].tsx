@@ -14,30 +14,7 @@ import { ReactNode } from 'react';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES } from '..';
-
-const UniversityDetail = {
-  FAU: {
-    fullName: 'Friedrich-Alexander-Universität Erlangen-Nürnberg',
-    logo: 'https://community.fau.de/wp-content/themes/community.fau-erlangen/img/FAU_Logo_Bildmarke.svg',
-  },
-  Jacobs: {
-    fullName: 'Jacobs University',
-    logo: '/jacoblogo.png',
-  },
-  IISc: {
-    fullName: 'India Institute of Science and Technology',
-    logo: '/iisc.png',
-  },
-  'Heriot Watt': {
-    fullName: 'Heriot-Watt University',
-    logo: '/heriott_logo.png',
-  },
-  others: {
-    fullName: 'Other Institutions',
-    logo: '/others.png',
-  },
-};
+import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@stex-react/utils';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (

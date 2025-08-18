@@ -7,7 +7,8 @@ import {
   FormControl,
   IconButton,
   InputLabel,
-  NativeSelect,
+  MenuItem,
+  Select,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -16,6 +17,7 @@ import {
   getFinalizedVariants,
   getLatestProblemDraft,
   QuizProblem,
+  UserInfo,
 } from '@stex-react/api';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
@@ -37,7 +39,7 @@ export const handleGoToSection = (courseId: string, sectionId: string) => {
 };
 
 export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
-  return {
+  const result: FlatQuizProblem = {
     problemId: qp.problemId,
     courseId: qp.courseId,
     sectionId: qp.sectionId,
@@ -50,20 +52,25 @@ export function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
     updatedAt: qp.updatedAt,
     ...qp.problemJson,
   };
+  if (qp.problemUri) {
+    result.problemUri = qp.problemUri;
+  }
+  return result;
 }
-
 export function QuizPanel({
   problems,
   currentIdx,
   setCurrentIdx,
   sections,
   courseId,
+  userInfo,
 }: {
   problems: (FlatQuizProblem | ExistingProblem)[];
   currentIdx: number;
   setCurrentIdx: (idx: number) => void;
   sections: SecInfo[];
   courseId: string;
+  userInfo: UserInfo | undefined;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -97,9 +104,9 @@ export function QuizPanel({
     finalVariants();
   }, [currentProblem]);
 
-  const handleVariantChange = (value: string) => {
+  const handleVariantChange = (value: number) => {
     console.log({ value });
-    if (value === '') {
+    if (value === null) {
       setSelectedProblemIndex(null);
       setFinalizedProblemData(null);
       console.log({ setFinalizedProblemData });
@@ -204,31 +211,21 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
-          <Tooltip title="Variants of this Problem">
-            <FormControl sx={{ m: 1 }}>
-              <NativeSelect
+          <Tooltip title="Finalized variants of this problem">
+            <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
+              <InputLabel>Variants</InputLabel>
+              <Select
                 value={selectedProblemIndex ?? ''}
-                onChange={(e) => handleVariantChange(e.target.value)}
-                sx={{
-                  '& .MuiInputBase-input': {
-                    border: '1px solid #ced4da',
-                    borderRadius: 1,
-                    p: '10px 26px 10px 12px',
-                    fontSize: 16,
-                    '&:focus': {
-                      borderColor: '#80bdff',
-                      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
-                    },
-                  },
-                }}
+                onChange={(e) => handleVariantChange(e.target.value as number)}
+                label="Variants"
               >
-                <option value="">None</option>
+                <MenuItem value={null}>None</MenuItem>
                 {finalizedProblems?.map((variant, idx) => (
-                  <option key={variant.problemId} value={idx}>
+                  <MenuItem key={variant.problemId} value={idx}>
                     Variant {idx + 1}
-                  </option>
+                  </MenuItem>
                 ))}
-              </NativeSelect>
+              </Select>
             </FormControl>
           </Tooltip>
           <Tooltip title="Create a new Variant">
@@ -246,6 +243,11 @@ export function QuizPanel({
             </Tooltip>
           )}
         </Box>
+        {finalizedProblemData && (
+          <Typography variant="body2" color="#b07575ff" mt={1}>
+            This is the finalized version created from the original problem.{' '}
+          </Typography>
+        )}
 
         {isGenerated(currentProblem) ? (
           <>
@@ -292,6 +294,7 @@ export function QuizPanel({
           onClose={() => setVariantDialogOpen(false)}
           problemData={copiedProblem}
           setProblemData={setCopiedProblem}
+          userInfo={userInfo}
         />
       )}
     </Box>

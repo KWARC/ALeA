@@ -92,14 +92,20 @@ export interface ProblemJson {
   correctAnswer: string | string[];
   explanation?: string;
 }
+export interface ManualEdit{
+  editedText:string,
+  updaterId:string;
+  updatedAt:string;
+}
 export interface QuizProblem {
   problemId: number;
+  problemUri?:string;
   courseId: string;
   sectionId: string; //TODO see again
   sectionUri: string;
   problemStex: string;
   problemJson: ProblemJson;
-  manualEdits?:string[];
+  manualEdits?:ManualEdit[];
   generationParams?:JSON;
   isDraft?:boolean;//TODO remove if not needed
   createdAt?:string;
