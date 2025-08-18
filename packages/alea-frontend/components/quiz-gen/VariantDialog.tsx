@@ -16,7 +16,7 @@ import {
   finalizeProblem,
   getProblemVersionHistory,
   saveProblemDraft,
-  UserInfo
+  UserInfo,
 } from '@stex-react/api';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
@@ -110,24 +110,24 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        //const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          modify_choices: {
-            applicable: true,
-          },
-          rephrase: {
-            applicable: true,
-          },
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-        };
+        const result = await checkPossibleVariants(problemData.problemId);
+        // const result = {
+        //   modify_choices: {
+        //     applicable: true,
+        //   },
+        //   rephrase: {
+        //     applicable: true,
+        //   },
+        //   reskin: {
+        //     applicable: true,
+        //     themes: [
+        //       'Corporate Office Scenario',
+        //       'Library Management System',
+        //       'Hospital Staff Records',
+        //       'University Student Database',
+        //     ],
+        //   },
+        // };
         setRephraseApplicable(result.rephrase.applicable);
         setChoicesApplicable(result.modify_choices.applicable);
         setReskinApplicable(result.reskin.applicable);
@@ -183,10 +183,9 @@ export const VariantDialog = ({
     }
     await finalizeProblem(problemData.problemId);
   };
-    const existingProblemUri=selectedVersion?.problemUri;
-  const selectedVersionGenParams = selectedVersion?.generationParams??existingProblemUri;
+  const existingProblemUri = selectedVersion?.problemUri;
+  const selectedVersionGenParams = selectedVersion?.generationParams ?? existingProblemUri;
 
-  console.log("exis",existingProblemUri)
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
@@ -273,47 +272,51 @@ export const VariantDialog = ({
                         Generation Params
                       </Typography>
 
-          {(selectedVersionGenParams as any)?.mode ? (
-  <>
-    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-      Mode:{' '}
-      <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-        {(selectedVersionGenParams as any)?.mode}
-      </Box>
-    </Typography>
+                      {(selectedVersionGenParams as any)?.mode ? (
+                        <>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            Mode:{' '}
+                            <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                              {(selectedVersionGenParams as any)?.mode}
+                            </Box>
+                          </Typography>
 
-    {(selectedVersionGenParams as any)?.variantOptions?.theme && (
-      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-        Theme:{' '}
-        <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-          {(selectedVersionGenParams as any)?.variantOptions?.theme}
-        </Box>
-      </Typography>
-    )}
+                          {(selectedVersionGenParams as any)?.variantOptions?.theme && (
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Theme:{' '}
+                              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+                                {(selectedVersionGenParams as any)?.variantOptions?.theme}
+                              </Box>
+                            </Typography>
+                          )}
 
-    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-      Source Problem Id:{' '}
-      <Box component="span" sx={{ fontWeight: 400 }}>
-        {(selectedVersionGenParams as any)?.sourceProblem?.problemId ??
-          (selectedVersionGenParams as any)?.problemUri}
-      </Box>
-    </Typography>
-  </>
-) : (
-  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-    Source Problem Uri:{' '}
-    <Box
-      component="a"
-      href={existingProblemUri}
-      target="_blank"
-      rel="noopener noreferrer"
-      sx={{ fontWeight: 400, color: PRIMARY_COL, textDecoration: "underline" }}
-    >
-      {existingProblemUri}
-    </Box>
-  </Typography>
-)}
-
+                          {(selectedVersionGenParams as any)?.sourceProblem?.problemId && (
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              Source Problem Id:{' '}
+                              <Box component="span" sx={{ fontWeight: 400 }}>
+                                {(selectedVersionGenParams as any)?.sourceProblem?.problemId}
+                              </Box>
+                            </Typography>
+                          )}
+                        </>
+                      ) : (
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          Source Problem Uri:{' '}
+                          <Box
+                            component="a"
+                            href={existingProblemUri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              fontWeight: 400,
+                              color: PRIMARY_COL,
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {existingProblemUri}
+                          </Box>
+                        </Typography>
+                      )}
                     </Box>
                   )}
               </>
