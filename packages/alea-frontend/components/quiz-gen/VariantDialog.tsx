@@ -183,8 +183,9 @@ export const VariantDialog = ({
     }
     await finalizeProblem(problemData.problemId);
   };
-  const selectedVersionGenParams = selectedVersion?.generationParams;
-  const existingProblemUri=selectedVersion?.problemUri;
+    const existingProblemUri=selectedVersion?.problemUri;
+  const selectedVersionGenParams = selectedVersion?.generationParams??existingProblemUri;
+
   console.log("exis",existingProblemUri)
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
