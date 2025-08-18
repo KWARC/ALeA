@@ -24,9 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil)
-     VALUES (?, ?, ?, ?, ?)`,
-    [courseId, userId, title, content, visibleUntil],
+    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil,instanceId)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [courseId, userId, title, content, visibleUntil,instanceId],
     res
   );
   if (!result) return;

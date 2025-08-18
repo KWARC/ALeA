@@ -1,15 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { ResourceName, Action } from '@stex-react/utils';
+import { ResourceName, Action, CURRENT_TERM } from '@stex-react/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { id, courseId, title, content, visibleUntil, instanceId } = req.body;
+  const { id, courseId, title, content, visibleUntil} = req.body;
+    const instanceId = CURRENT_TERM;
 
   if (!id || !courseId || !title || !content || !instanceId) {
-    res.status(422).end( 'Missing required fields' );
+    res.status(422).end('Missing required fields');
     return;
   }
 
@@ -25,11 +26,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const result = await executeAndEndSet500OnError(
     `UPDATE announcement
    SET title = ?, content = ?, visibleUntil = ?, updatedAt = NOW()
-   WHERE id = ? AND courseId = ?`,
-    [title, content, visibleUntil, id, courseId],
+   WHERE id = ?, courseId = ? AND instanceId = ?`,
+    [title, content, visibleUntil, id, courseId, instanceId],
     res
   );
   if (!result) return;
 
-  res.status(200).end( 'Announcement updated successfully' );
+  res.status(200).end('Announcement updated successfully');
 }

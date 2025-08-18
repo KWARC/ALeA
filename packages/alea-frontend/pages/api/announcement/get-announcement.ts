@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const announcements = await executeAndEndSet500OnError(
-    `SELECT courseId, instructorId, title, content, createdAt, updatedAt, visibleUntil
+    `SELECT id, courseId, instructorId, title, content, createdAt, updatedAt, visibleUntil
      FROM announcement
      WHERE courseId = ?
      ORDER BY createdAt DESC`,
@@ -21,5 +21,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!announcements) return;
 
-   res.status(200).json(announcements);
+  res.status(200).json(announcements);
 }

@@ -57,7 +57,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [visibleUntil, setVisibleUntil] = useState('');
-  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+  const [announcementToDelete, setAnnouncementToDelete] = useState<number | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -108,7 +108,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
     }
 
     try {
-        const visibleUntilSQL = dayjs(visibleUntil).format("YYYY-MM-DD HH:mm:ss");
+      const visibleUntilSQL = dayjs(visibleUntil).format('YYYY-MM-DD HH:mm:ss');
       if (editingAnnouncement) {
         const updateRequest: UpdateAnnouncementRequest = {
           id: editingAnnouncement.id,
@@ -137,13 +137,12 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       setSnackbarOpen(true);
     }
   };
-
+console.log({announcementToDelete});
   const handleDelete = async () => {
-    if (announcementToDelete) {
+    if (announcementToDelete !== null) {
       try {
-        // FIX: Add instanceId to the delete request payload
         await deleteAnnouncement({
-          id: Number(announcementToDelete),
+          id: announcementToDelete,
           courseId: courseId,
           instanceId: instanceId,
         });
@@ -160,7 +159,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
     }
   };
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = (id: number) => {
     setAnnouncementToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -172,7 +171,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       </Box>
     );
   }
-
+console.log({announcements});
   return (
     <Box p={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -213,7 +212,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
                   <IconButton size="small" onClick={() => handleEditOpen(a)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => confirmDelete(String(a.id))}>
+                  <IconButton size="small" onClick={() => confirmDelete(a.id)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>

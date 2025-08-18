@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { courseId } = req.query;
 
   if (!courseId) {
-    res.status(422).end( 'Missing courseId' );
+    res.status(422).end('Missing courseId');
     return;
   }
 
