@@ -168,6 +168,17 @@ export async function addRemoveMember({
   );
 }
 
+// Anshuman//
+export async function createInstructorCourseMemberAcl(courseId: string): Promise<{ aclId: string }> {
+  const response = await axios.post(
+    '/api/access-control/instructor-dashboard/create-member-acl',
+    { courseId },
+    { headers: getAuthHeaders() }
+  );
+  return response.data.data; // this contains `{ aclId }`
+}
+
+
 export type UpdateACLRequest = Omit<AccessControlList, 'updatedAt' | 'createdAt'>;
 export type CreateACLRequest = Omit<AccessControlList, 'createdAt' | 'updatedAt'>;
 export type CreateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;

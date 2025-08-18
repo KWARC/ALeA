@@ -14,6 +14,7 @@ import QuizDashboard from '../../components/QuizDashboard';
 import { StudyBuddyModeratorStats } from '../../components/StudyBuddyModeratorStats';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
+import InstructorPanel from '../../components/instructor-panel/InstructorPanel';
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -27,7 +28,8 @@ type TabName =
   | 'quiz-dashboard'
   | 'study-buddy'
   | 'peer-review'
-  | 'syllabus';
+  | 'syllabus'
+  | 'instructor-panel';
 
 const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions: Action[] }> = {
   'access-control': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
@@ -42,7 +44,8 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
+  'syllabus': { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
+  'instructor-panel': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
 };
 function ChosenTab({
   tabName,
@@ -70,6 +73,8 @@ function ChosenTab({
       return <InstructorPeerReviewViewing courseId={courseId}></InstructorPeerReviewViewing>;
     case 'syllabus':
       return <CoverageUpdateTab />;
+      case 'instructor-panel':
+      return <InstructorPanel courseId={courseId} />;
     default:
       return null;
   }
@@ -105,7 +110,8 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
   'study-buddy': '900px',
-  syllabus: '1200px',
+  'syllabus': '1200px',
+  'instructor-panel': '1200px',
 };
 
 const InstructorDash: NextPage = () => {
@@ -168,6 +174,7 @@ const InstructorDash: NextPage = () => {
         'study-buddy',
         'peer-review',
         'access-control',
+        'instructor-panel',
       ];
 
       const sortedTabs = tabOrder.filter((tab) => tabs.includes(tab));
@@ -219,6 +226,8 @@ const InstructorDash: NextPage = () => {
             overflowX: 'auto',
             '& .MuiTabs-flexContainer': {
               justifyContent: {
+                xs: 'flex-start',
+                md: 'center',
                 xs: 'flex-start',
                 md: 'center',
               },
