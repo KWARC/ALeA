@@ -120,6 +120,15 @@ const DrawingComponent = ({
       width: lineWidth,
     });
   };
+  const startDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    console.log(e);
+  };
+  const drawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    console.log(e);
+  };
+  const endDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    console.log(e);
+  };
   return (
     <div ref={ctxRef} style={{ position: 'relative', width: width, height: height }}>
       {children}
@@ -128,6 +137,9 @@ const DrawingComponent = ({
         onMouseDown={startDrawing}
         onMouseUp={endDrawing}
         onMouseMove={draw}
+        onTouchStart={startDrawingTouch}
+        onTouchMove={drawingTouch}
+        onTouchEnd={endDrawingTouch}
         style={{
           position: 'absolute',
           top: 0,
