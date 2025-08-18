@@ -25,6 +25,7 @@ import {
 import {
   addRemoveMember,
   canAccessResource,
+  getActiveAnnouncements,
   getCourseInfo,
   getCoverageTimeline,
   getUserInfo,
@@ -326,56 +327,14 @@ function CourseScheduleSection({
 }
 
 interface Announcement {
-  id: string;
+  id: number;
   courseId: string;
   instructorId: string;
-  message: string;
-  createdAt: number;
-  visibleUntil: number;
-}
-
-async function getValidAnnouncements(courseId: string): Promise<Announcement[]> {
-  const mockAnnouncements: Announcement[] = [
-    {
-      id: '1',
-      courseId: 'ai-1',
-      instructorId: 'joy',
-      message: 'The AI Midterm will be held on Oct 25th in room 203.',
-      createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-      visibleUntil: Date.now() + 10 * 24 * 60 * 60 * 1000,
-    },
-    {
-      id: '2',
-      courseId: 'ai-1',
-      instructorId: 'joy',
-      message: 'Assignment 2 deadline extended to Friday, 5 PM.',
-      createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
-      visibleUntil: Date.now() + 3 * 24 * 60 * 60 * 1000,
-    },
-    {
-      id: '3',
-      courseId: 'ai-1',
-      instructorId: 'joy',
-      message: 'This is an old announcement that should not be visible.',
-      createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-      visibleUntil: Date.now() - 1 * 24 * 60 * 60 * 1000,
-    },
-    {
-      id: '4',
-      courseId: 'other',
-      instructorId: 'other',
-      message: 'This is for another course.',
-      createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
-      visibleUntil: Date.now() + 3 * 24 * 60 * 60 * 1000,
-    },
-  ];
-
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const now = Date.now();
-  return mockAnnouncements
-    .filter((a) => a.courseId === courseId && a.visibleUntil > now)
-    .sort((a, b) => b.createdAt - a.createdAt);
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  visibleUntil: string;
 }
 
 function AnnouncementsSection({ courseId }: { courseId: string }) {
@@ -387,7 +346,7 @@ function AnnouncementsSection({ courseId }: { courseId: string }) {
     async function fetchAnnouncements() {
       try {
         setLoading(true);
-        const fetchedAnnouncements = await getValidAnnouncements(courseId);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId);
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -447,7 +406,7 @@ function AnnouncementsSection({ courseId }: { courseId: string }) {
               }}
             >
               <Typography variant="body1" fontWeight="bold">
-                {a.message}
+                {a.content}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                 Posted on {new Date(a.createdAt).toLocaleDateString()}
