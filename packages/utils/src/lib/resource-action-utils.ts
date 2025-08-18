@@ -194,7 +194,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
     components: [
       { type: ComponentType.FIXED, value: 'university' },
       { name: 'universityId', type: ComponentType.VARIABLE },
-      { type: ComponentType.FIXED, value: 'university-course-info' },
+      { type: ComponentType.FIXED, value: 'university-sem-info' },
     ],
   },
 ];
