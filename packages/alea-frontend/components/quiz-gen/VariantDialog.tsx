@@ -161,8 +161,7 @@ export const VariantDialog = ({
       return;
     }
     if (latestManualEdit?.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
-      console.log('No changes detected. Draft not saved.');
-      setSnackbarMessage('No changes detected. Draft not saved.');
+      setSnackbarMessage('No Manual changes detected.');
       setSnackbarOpen(true);
       return;
     }

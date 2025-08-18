@@ -145,7 +145,7 @@ export const PreviewSection = ({
   }, [editableSTeX, problemData]);
 
   useEffect(() => {
-    if (filteredVersions.length > 0 && selectedVersionIndex === 1) {
+    if (filteredVersions.length > 0) {
       setSelectedVersionIndex(filteredVersions.length - 1);
     }
   }, [versionOptions]);
