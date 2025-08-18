@@ -1,22 +1,20 @@
+import { FTML } from '@kwarc/ftml-viewer';
 import {
   getDefiniedaInSection,
-  getSectionDependencies,
   getQueryResults,
+  getSectionDependencies,
   getSparqlQueryForLoRelationToDimAndConceptPair,
+  Language,
+  ProblemData,
 } from '@stex-react/api';
+import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
-import { FTML } from '@kwarc/ftml-viewer';
-import { Language } from '@stex-react/api';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const categorizedProblemCache = new Map<
   string,
   {
-    data: {
-      problemId: string;
-      category: 'syllabus' | 'adventurous';
-      labels: string[];
-    }[];
+    data: ProblemData[];
     timestamp: number;
   }
 >();
@@ -68,27 +66,26 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   return conceptUris;
 }
 
-const languageUrlMap: Record<Language, string> = {
-  [Language.Deutsch]: 'l=de',
-  [Language.English]: '',
-  [Language.Arabic]: 'l=ar',
-  [Language.Bengali]: 'l=bn',
-  [Language.Hindi]: 'l=hi',
-  [Language.French]: 'l=fr',
-  [Language.Japanese]: 'l=ja',
-  [Language.Korean]: 'l=ko',
-  [Language.Mandarin]: 'l=zh',
-  [Language.Marathi]: 'l=mr',
-  [Language.Persian]: 'l=fa',
-  [Language.Portuguese]: 'l=pt',
-  [Language.Russian]: 'l=ru',
-  [Language.Spanish]: 'l=es',
-  [Language.Tamil]: 'l=ta',
-  [Language.Telugu]: 'l=te',
-  [Language.Turkish]: 'l=tr',
-  [Language.Urdu]: 'l=ur',
-  [Language.Vietnamese]: 'l=vi',
-  [Language.Others]: '',
+const languageUrlMap: Record<string, Language> = {
+  de: Language.Deutsch,
+  en: Language.English,
+  ar: Language.Arabic,
+  bn: Language.Bengali,
+  hi: Language.Hindi,
+  fr: Language.French,
+  ja: Language.Japanese,
+  ko: Language.Korean,
+  zh: Language.Mandarin,
+  mr: Language.Marathi,
+  fa: Language.Persian,
+  pt: Language.Portuguese,
+  ru: Language.Russian,
+  es: Language.Spanish,
+  ta: Language.Tamil,
+  te: Language.Telugu,
+  tr: Language.Turkish,
+  ur: Language.Urdu,
+  vi: Language.Vietnamese,
 };
 
 export async function getCategorizedProblems(
@@ -96,13 +93,7 @@ export async function getCategorizedProblems(
   courseToc: FTML.TOCElem[],
   userLanguages?: string | string[],
   forceRefresh = false
-): Promise<
-  {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[]
-> {
+): Promise<ProblemData[]> {
   const cacheKey = sectionUri;
 
   if (!forceRefresh && categorizedProblemCache.has(cacheKey)) {
@@ -111,36 +102,36 @@ export async function getCategorizedProblems(
       return cached.data;
     }
   }
+  const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseToc);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-  const categorized: {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[] = await Promise.all(
+  const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
       const isSyllabus = labels.some((label) => conceptUrisFromCourse.has(label));
 
       let category: 'syllabus' | 'adventurous' = isSyllabus ? 'syllabus' : 'adventurous';
-      let showGermanNotice = false;
+      let showForeignLanguageNotice = false;
       let matchedLanguage: string | undefined;
 
-      if (category === 'syllabus') {
-        for (const [langKey, urlFragment] of Object.entries(languageUrlMap)) {
-          if (urlFragment && problemUri.includes(urlFragment)) {
-            if (userLanguages.includes(langKey)) {
-              showGermanNotice = true;
-              matchedLanguage = langKey;
-            } else {
-              category = 'adventurous';
-            }
-            break;
-          }
+      const problemLangCode = getParamFromUri(problemUri, 'l') ?? 'en';
+      if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
+        const problemLang = languageUrlMap[problemLangCode];
+        if (problemLang && userLanguages?.includes(problemLang)) {
+          showForeignLanguageNotice = true;
+          matchedLanguage = problemLang;
+        } else {
+          category = 'adventurous';
         }
       }
 
-      return { problemId: problemUri, category, labels, showGermanNotice,matchedLanguage };
+      return {
+        problemId: problemUri,
+        category,
+        labels,
+        showForeignLanguageNotice,
+        matchedLanguage,
+      } as ProblemData;
     })
   );
   categorizedProblemCache.set(cacheKey, {

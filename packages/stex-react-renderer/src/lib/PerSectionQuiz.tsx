@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
-import { getProblemsPerSection, getUserProfile } from '@stex-react/api';
+import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -106,7 +106,7 @@ export function PerSectionQuiz({
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
   const [tabIndex, setTabIndex] = useState(0);
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
-  const [problems, setProblems] = useState<any[]>([]);
+  const [problems, setProblems] = useState<ProblemData[]>([]);
   useEffect(() => {
     if (cachedProblemUris && cachedProblemUris.length > 0) {
       setProblemUris(cachedProblemUris);
@@ -209,7 +209,7 @@ export function PerSectionQuiz({
       >
         <Typography fontWeight="bold" textAlign="left">
           {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-          {currentProblem?.showGermanNotice && (
+          {currentProblem?.showForeignLanguageNotice && (
             <Tooltip
               title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
             >

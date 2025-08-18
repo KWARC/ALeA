@@ -4,7 +4,7 @@ export interface ProblemData {
   problemId: string;
   category: string;
   labels: string[];
-  showGermanNotice?: boolean;
+  showForeignLanguageNotice?: boolean;
   matchedLanguage?: string;
 }
 
