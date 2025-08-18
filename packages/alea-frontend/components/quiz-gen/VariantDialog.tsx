@@ -161,8 +161,7 @@ export const VariantDialog = ({
       return;
     }
     if (latestManualEdit?.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
-      console.log('No changes detected. Draft not saved.');
-      setSnackbarMessage('No changes detected. Draft not saved.');
+      setSnackbarMessage('No Manual changes detected.');
       setSnackbarOpen(true);
       return;
     }
@@ -184,7 +183,7 @@ export const VariantDialog = ({
     }
     await finalizeProblem(problemData.problemId);
   };
-  const selectedVersionGenParams = selectedVersion?.generationParams;
+  const selectedVersionGenParams = selectedVersion?.generationParams ?? selectedVersion?.problemUri;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
