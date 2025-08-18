@@ -22,6 +22,7 @@ export interface CreateAnnouncementRequest {
 export interface DeleteAnnouncementRequest {
   id: number;
   courseId: string;
+  instanceId: string;
 }
 
 export interface UpdateAnnouncementRequest {

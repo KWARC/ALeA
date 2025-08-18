@@ -17,9 +17,12 @@ import {
   Stack,
   CircularProgress,
   DialogContentText,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import dayjs from 'dayjs';
 import {
   createAnnouncement,
   CreateAnnouncementRequest,
@@ -42,20 +45,21 @@ interface Announcement {
 
 interface AnnouncementsTabProps {
   courseId: string;
+  instanceId: string;
 }
 
-const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
+const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceId }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [visibleUntil, setVisibleUntil] = useState('');
-
   const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
@@ -64,6 +68,8 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
+      setSnackbarMessage('Failed to fetch announcements. Check console for details.');
+      setSnackbarOpen(true);
     } finally {
       setLoading(false);
     }
@@ -77,7 +83,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
     setEditingAnnouncement(null);
     setTitle('');
     setContent('');
-    const defaultDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16); // local datetime-local format
+    const defaultDate = dayjs().add(3, 'days').toISOString().slice(0, 16);
     setVisibleUntil(defaultDate);
     setDialogOpen(true);
   };
@@ -86,7 +92,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
     setEditingAnnouncement(announcement);
     setTitle(announcement.title);
     setContent(announcement.content);
-    setVisibleUntil(new Date(announcement.visibleUntil).toISOString().slice(0, 16));
+    setVisibleUntil(dayjs(announcement.visibleUntil).format('YYYY-MM-DDTHH:mm'));
     setDialogOpen(true);
   };
 
@@ -95,18 +101,20 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim() || !visibleUntil) return;
+    if (!title.trim() || !content.trim() || !visibleUntil) {
+      setSnackbarMessage('Title, content, and date are required.');
+      setSnackbarOpen(true);
+      return;
+    }
 
     try {
-      const date = new Date(visibleUntil);
-      const visibleUntilFormatted = date.toISOString().slice(0, 19).replace('T', ' ');
-
+        const visibleUntilSQL = dayjs(visibleUntil).format("YYYY-MM-DD HH:mm:ss");
       if (editingAnnouncement) {
         const updateRequest: UpdateAnnouncementRequest = {
           id: editingAnnouncement.id,
           title: title.trim(),
           content: content.trim(),
-          visibleUntil: visibleUntilFormatted,
+          visibleUntil: visibleUntilSQL,
           courseId: courseId,
         };
         await updateAnnouncement(updateRequest);
@@ -115,32 +123,39 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
           courseId: courseId,
           title: title.trim(),
           content: content.trim(),
-          visibleUntil: visibleUntilFormatted,
+          visibleUntil: visibleUntilSQL,
         };
         await createAnnouncement(createRequest);
       }
       handleCloseDialog();
       fetchAnnouncements();
-    } catch (error: any) {
+      setSnackbarMessage('Announcement saved successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
       console.error('Failed to save announcement:', error);
-      if (error.response) {
-        try {
-          const details = error.response.data || (await error.response.json?.());
-          console.error('Server validation details:', details);
-        } catch {}
-      }
+      setSnackbarMessage('Failed to save announcement. Check console for details.');
+      setSnackbarOpen(true);
     }
   };
 
   const handleDelete = async () => {
     if (announcementToDelete) {
       try {
-        await deleteAnnouncement({ id: Number(announcementToDelete), courseId });
+        // FIX: Add instanceId to the delete request payload
+        await deleteAnnouncement({
+          id: Number(announcementToDelete),
+          courseId: courseId,
+          instanceId: instanceId,
+        });
         setDeleteDialogOpen(false);
         setAnnouncementToDelete(null);
         fetchAnnouncements();
+        setSnackbarMessage('Announcement deleted successfully!');
+        setSnackbarOpen(true);
       } catch (error) {
         console.error('Failed to delete announcement:', error);
+        setSnackbarMessage('Failed to delete announcement. Check console for details.');
+        setSnackbarOpen(true);
       }
     }
   };
@@ -192,8 +207,8 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>
                 <TableCell>{a.content}</TableCell>
-                <TableCell>{new Date(a.createdAt).toLocaleString()}</TableCell>
-                <TableCell>{new Date(a.visibleUntil).toLocaleString()}</TableCell>
+                <TableCell>{dayjs(a.createdAt).format('YYYY-MM-DD HH:mm')}</TableCell>
+                <TableCell>{dayjs(a.visibleUntil).format('YYYY-MM-DD HH:mm')}</TableCell>
                 <TableCell>
                   <IconButton size="small" onClick={() => handleEditOpen(a)}>
                     <EditIcon fontSize="small" />
@@ -257,6 +272,12 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity="info" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
