@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -15,18 +15,29 @@ import {
   DialogActions,
   TextField,
   Stack,
+  CircularProgress,
+  DialogContentText,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import {
+  createAnnouncement,
+  CreateAnnouncementRequest,
+  deleteAnnouncement,
+  getAnnouncement,
+  updateAnnouncement,
+  UpdateAnnouncementRequest,
+} from '@stex-react/api';
 
 interface Announcement {
-  id: string;
+  id: number;
   courseId: string;
   instructorId: string;
   title: string;
-  message: string;
-  createdAt: number;
-  visibleUntil: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  visibleUntil: string;
 }
 
 interface AnnouncementsTabProps {
@@ -34,98 +45,118 @@ interface AnnouncementsTabProps {
 }
 
 const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([
-    {
-      id: '1',
-      courseId: 'ai-1',
-      instructorId: 'joy',
-      title: 'homework',
-      message: 'homework is due by 25 Aug',
-      createdAt: Date.now(),
-      visibleUntil: new Date('2025-08-25T23:59').getTime(),
-    },
-    {
-      id: '2',
-      courseId: 'ai-1',
-      instructorId: 'joy',
-      title: 'Class Postponed',
-      message: 'The module 2 class is postponed.',
-      createdAt: Date.now(),
-      visibleUntil: Date.now() + 5 * 24 * 60 * 60 * 1000,
-    },
-  ]);
-
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newMessage, setNewMessage] = useState('');
-  const [newDate, setNewDate] = useState(
-    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
-  );
-  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const resetForm = () => {
-    setNewTitle('');
-    setNewMessage('');
-    setNewDate(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [visibleUntil, setVisibleUntil] = useState('');
+
+  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+
+  const fetchAnnouncements = useCallback(async () => {
+    setLoading(true);
+    try {
+      const fetchedAnnouncements = await getAnnouncement(courseId);
+      setAnnouncements(fetchedAnnouncements);
+    } catch (error) {
+      console.error('Failed to fetch announcements:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId]);
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const handleCreateOpen = () => {
+    setEditingAnnouncement(null);
+    setTitle('');
+    setContent('');
+    const defaultDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16); // local datetime-local format
+    setVisibleUntil(defaultDate);
+    setDialogOpen(true);
   };
 
-  const handleCreate = () => {
-    if (!newTitle.trim() || !newMessage.trim() || !newDate) return;
+  const handleEditOpen = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setTitle(announcement.title);
+    setContent(announcement.content);
+    setVisibleUntil(new Date(announcement.visibleUntil).toISOString().slice(0, 16));
+    setDialogOpen(true);
+  };
 
-    const nextId = announcements.length
-      ? String(Math.max(...announcements.map((a) => Number(a.id))) + 1)
-      : '1';
-
-    setAnnouncements((prev) => [
-      ...prev,
-      {
-        id: nextId,
-        courseId,
-        instructorId: 'joy',
-        title: newTitle.trim(),
-        message: newMessage.trim(),
-        createdAt: Date.now(),
-        visibleUntil: new Date(newDate).getTime(),
-      },
-    ]);
-
-    resetForm();
+  const handleCloseDialog = () => {
     setDialogOpen(false);
   };
 
-  const handleEditClick = (announcement: Announcement) => {
-    setEditingAnnouncement(announcement);
-    setNewTitle(announcement.title);
-    setNewMessage(announcement.message);
-    setNewDate(new Date(announcement.visibleUntil).toISOString().slice(0, 16));
-    setEditDialogOpen(true);
+  const handleSave = async () => {
+    if (!title.trim() || !content.trim() || !visibleUntil) return;
+
+    try {
+      const date = new Date(visibleUntil);
+      const visibleUntilFormatted = date.toISOString().slice(0, 19).replace('T', ' ');
+
+      if (editingAnnouncement) {
+        const updateRequest: UpdateAnnouncementRequest = {
+          id: editingAnnouncement.id,
+          title: title.trim(),
+          content: content.trim(),
+          visibleUntil: visibleUntilFormatted,
+          courseId: courseId,
+        };
+        await updateAnnouncement(updateRequest);
+      } else {
+        const createRequest: CreateAnnouncementRequest = {
+          courseId: courseId,
+          title: title.trim(),
+          content: content.trim(),
+          visibleUntil: visibleUntilFormatted,
+        };
+        await createAnnouncement(createRequest);
+      }
+      handleCloseDialog();
+      fetchAnnouncements();
+    } catch (error: any) {
+      console.error('Failed to save announcement:', error);
+      if (error.response) {
+        try {
+          const details = error.response.data || (await error.response.json?.());
+          console.error('Server validation details:', details);
+        } catch {}
+      }
+    }
   };
 
-  const handleEditSave = () => {
-    if (!editingAnnouncement || !newTitle.trim() || !newMessage.trim() || !newDate) return;
+  const handleDelete = async () => {
+    if (announcementToDelete) {
+      try {
+        await deleteAnnouncement({ id: Number(announcementToDelete), courseId });
+        setDeleteDialogOpen(false);
+        setAnnouncementToDelete(null);
+        fetchAnnouncements();
+      } catch (error) {
+        console.error('Failed to delete announcement:', error);
+      }
+    }
+  };
 
-    setAnnouncements((prev) =>
-      prev.map((a) =>
-        a.id === editingAnnouncement.id
-          ? {
-              ...a,
-              title: newTitle.trim(),
-              message: newMessage.trim(),
-              visibleUntil: new Date(newDate).getTime(),
-            }
-          : a
-      )
+  const confirmDelete = (id: string) => {
+    setAnnouncementToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
     );
-
-    setEditingAnnouncement(null);
-    resetForm();
-    setEditDialogOpen(false);
-  };
-
-  const handleDelete = (id: string) => {
-    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-  };
+  }
 
   return (
     <Box p={2}>
@@ -133,12 +164,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         <Typography variant="h6" fontWeight="bold">
           Announcements for Course ID: {courseId}
         </Typography>
-        <Button
-          variant="contained"
-          size="small"
-          color="primary"
-          onClick={() => setDialogOpen(true)}
-        >
+        <Button variant="contained" size="small" color="primary" onClick={handleCreateOpen}>
           + New Announcement
         </Button>
       </Box>
@@ -150,29 +176,29 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
             <TableCell>Course ID</TableCell>
             <TableCell>Instructor</TableCell>
             <TableCell>Title</TableCell>
-            <TableCell>Message</TableCell>
+            <TableCell>Content</TableCell>
             <TableCell>Created At</TableCell>
             <TableCell>Visible Until</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {[...announcements]
-            .sort((a, b) => Number(a.id) - Number(b.id))
+          {announcements
+            .sort((a, b) => a.id - b.id)
             .map((a) => (
               <TableRow key={a.id}>
                 <TableCell>{a.id}</TableCell>
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>
-                <TableCell>{a.message}</TableCell>
+                <TableCell>{a.content}</TableCell>
                 <TableCell>{new Date(a.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{new Date(a.visibleUntil).toLocaleString()}</TableCell>
                 <TableCell>
-                  <IconButton size="small" onClick={() => handleEditClick(a)}>
+                  <IconButton size="small" onClick={() => handleEditOpen(a)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => handleDelete(a.id)}>
+                  <IconButton size="small" onClick={() => confirmDelete(String(a.id))}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -181,21 +207,20 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
         </TableBody>
       </Table>
 
-      {/* Create Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>New Announcement</DialogTitle>
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle>{editingAnnouncement ? 'Edit Announcement' : 'New Announcement'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               fullWidth
             />
             <TextField
-              label="Message"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              label="Content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               fullWidth
               multiline
               minRows={3}
@@ -203,59 +228,32 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId }) => {
             <TextField
               label="Visible Until"
               type="datetime-local"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
+              value={visibleUntil}
+              onChange={(e) => setVisibleUntil(e.target.value)}
               InputLabelProps={{ shrink: true }}
               fullWidth
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreate}>
-            Create
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>
+            {editingAnnouncement ? 'Save Changes' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Edit Announcement</DialogTitle>
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Message"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              fullWidth
-              multiline
-              minRows={3}
-            />
-            <TextField
-              label="Visible Until"
-              type="datetime-local"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-            />
-          </Stack>
+          <DialogContentText>
+            Are you sure you want to delete this announcement? This action cannot be undone.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleEditSave}>
-            Save
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error">
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
