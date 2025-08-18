@@ -16,13 +16,12 @@ import {
   generateQuizProblems,
   getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
-  getCoverageTimeline,
   getCourseProblemCounts,
+  getCoverageTimeline,
   getProblemsPerSection,
 } from '@stex-react/api';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
-import axios from 'axios';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -65,6 +64,7 @@ export const CourseSectionSelector = ({
   const [generatedProblemsCount, setGeneratedProblemsCount] = useState<Record<string, number>>({});
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
+  const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
@@ -123,11 +123,18 @@ export const CourseSectionSelector = ({
   }, [coverageTimeline, courseId, sections]);
   useEffect(() => {
     const fetchCounts = async () => {
-      if (!courseId) return;
-      const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
-      const existingCountsResp = await getCourseProblemCounts(courseId);
-      setGeneratedProblemsCount(generatedCounts);
-      setExistingProblemsCount(existingCountsResp);
+      setLoadingProblemCount(true);
+      try {
+        if (!courseId) return;
+        const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
+        const existingCountsResp = await getCourseProblemCounts(courseId);
+        setGeneratedProblemsCount(generatedCounts);
+        setExistingProblemsCount(existingCountsResp);
+      } catch (err) {
+        console.error('Error in fetch Problem Count', err);
+      } finally {
+        setLoadingProblemCount(false);
+      }
     };
     fetchCounts();
   }, [courseId]);
@@ -145,7 +152,7 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await getProblemsPerSection(sectionUri);
+              const resp = await getProblemsPerSection(sectionUri, courseId);
               const problemUris: string[] = resp.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
@@ -312,22 +319,55 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                        <Tooltip title="Existing problems">
-                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
-                            {existingProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
-                        <Tooltip title="Generated problems">
-                          <Box
-                            px={1.2}
-                            py={0.3}
-                            bgcolor="success.main"
-                            color="white"
-                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
-                          >
-                            {generatedProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="primary.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Existing problems">
+                            <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                              {existingProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
+
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Generated problems">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                            >
+                              {generatedProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>
                   </MenuItem>
