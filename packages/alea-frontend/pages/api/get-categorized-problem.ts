@@ -1,21 +1,20 @@
+import { FTML } from '@kwarc/ftml-viewer';
 import {
   getDefiniedaInSection,
-  getSectionDependencies,
   getQueryResults,
+  getSectionDependencies,
   getSparqlQueryForLoRelationToDimAndConceptPair,
+  Language,
+  ProblemData,
 } from '@stex-react/api';
+import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
-import { FTML } from '@kwarc/ftml-viewer';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const categorizedProblemCache = new Map<
   string,
   {
-    data: {
-      problemId: string;
-      category: 'syllabus' | 'adventurous';
-      labels: string[];
-    }[];
+    data: ProblemData[];
     timestamp: number;
   }
 >();
@@ -44,6 +43,7 @@ async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Se
     const deps = await getSectionDependencies(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
+  console.log('conceptUris', JSON.stringify(conceptUris, null, 2));
 
   return conceptUris;
 }
@@ -64,20 +64,37 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
     conceptUris.push(...poSymbolUris);
   });
 
-  return conceptUris;
+  return Array.from(new Set(conceptUris));
 }
+
+const languageUrlMap: Record<string, Language> = {
+  de: Language.Deutsch,
+  en: Language.English,
+  ar: Language.Arabic,
+  bn: Language.Bengali,
+  hi: Language.Hindi,
+  fr: Language.French,
+  ja: Language.Japanese,
+  ko: Language.Korean,
+  zh: Language.Mandarin,
+  mr: Language.Marathi,
+  fa: Language.Persian,
+  pt: Language.Portuguese,
+  ru: Language.Russian,
+  es: Language.Spanish,
+  ta: Language.Tamil,
+  te: Language.Telugu,
+  tr: Language.Turkish,
+  ur: Language.Urdu,
+  vi: Language.Vietnamese,
+};
 
 export async function getCategorizedProblems(
   sectionUri: string,
   courseToc: FTML.TOCElem[],
+  userLanguages?: string | string[],
   forceRefresh = false
-): Promise<
-  {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[]
-> {
+): Promise<ProblemData[]> {
   const cacheKey = sectionUri;
 
   if (!forceRefresh && categorizedProblemCache.has(cacheKey)) {
@@ -86,27 +103,38 @@ export async function getCategorizedProblems(
       return cached.data;
     }
   }
+  const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseToc);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-
-  const categorized: {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[] = await Promise.all(
+  const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const isSyllabus = labels.some((label) => conceptUrisFromCourse.has(label));
+      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.has(label));
+
+      let category: 'syllabus' | 'adventurous' =
+        outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
+      let showForeignLanguageNotice = false;
+      let matchedLanguage: string | undefined;
+
+      const problemLangCode = getParamFromUri(problemUri, 'l') ?? 'en';
+      if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
+        const problemLang = languageUrlMap[problemLangCode];
+        if (problemLang && userLanguages?.includes(problemLang)) {
+          showForeignLanguageNotice = true;
+          matchedLanguage = problemLang;
+        } else {
+          category = 'adventurous';
+        }
+      }
 
       return {
         problemId: problemUri,
-        category: isSyllabus ? 'syllabus' : 'adventurous',
+        category,
         labels,
-      } as {
-        problemId: string;
-        category: 'syllabus' | 'adventurous';
-        labels: string[];
-      };
+        showForeignLanguageNotice,
+        matchedLanguage,
+        outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
+      } as ProblemData;
     })
   );
   categorizedProblemCache.set(cacheKey, {
