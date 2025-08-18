@@ -27,7 +27,7 @@ import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
 
-export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin' | 'informationClarity';
+export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
   variantTypes: VariantType[];
   difficulty?: string;
@@ -35,12 +35,10 @@ export interface VariantConfig {
   customPrompt: string;
   rephraseInstruction?: string;
   rephraseSubtypes?: string[];
-  modifyChoiceMode?: 'add' | 'remove';
+  modifyChoiceMode?: 'add' | 'replace';
   modifyChoiceInstruction?: string;
   thematicReskinInstruction?: string;
   selectedTheme?: string;
-  informationClarity?: string;
-  informationClarityInstruction?: string;
 }
 
 interface VariantDialogProps {
@@ -69,8 +67,6 @@ export const VariantDialog = ({
     modifyChoiceInstruction: '',
     thematicReskinInstruction: '',
     selectedTheme: '',
-    informationClarity: '',
-    informationClarityInstruction: '',
   });
 
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
@@ -81,6 +77,7 @@ export const VariantDialog = ({
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
+  const [infoClarityApplicable, setInfoClarityApplicable] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -103,7 +100,6 @@ export const VariantDialog = ({
       rephraseInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
-      informationClarityInstruction: '',
     });
   };
 
@@ -190,6 +186,15 @@ export const VariantDialog = ({
     }
     await finalizeProblem(problemData.problemId);
   };
+
+  const getInformationClarity = async () => {
+     if (!problemData?.problemId) {
+      console.error('Cannot create variant without problemId');
+      return;
+    }
+    clearSelection();
+  };
+  
   const existingProblemUri = selectedVersion?.problemUri;
   const selectedVersionGenParams = selectedVersion?.generationParams ?? existingProblemUri;
 
@@ -438,6 +443,15 @@ export const VariantDialog = ({
                   '& .MuiOutlinedInput-root': { borderRadius: 2 },
                 }}
               /> */}
+              <Box display="flex" gap={10} mt={2} p={3}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={getInformationClarity}
+                >
+                  Information Clarity
+                </Button>
+              </Box>
               {/* <Box display="flex" gap={10} mt={2} p={3}> */}
               <Button
                 size="small"

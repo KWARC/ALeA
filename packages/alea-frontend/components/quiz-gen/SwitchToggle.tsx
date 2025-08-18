@@ -81,7 +81,7 @@ export const SwitchToggle = ({
     });
   };
 
-  const handleModeChange = (newMode: 'add' | 'remove') => {
+  const handleModeChange = (newMode: 'add' | 'replace') => {
     setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: newMode }));
     if (newMode === 'add') {
       setSelectedOptions?.(mcqOptions);
@@ -209,17 +209,17 @@ export const SwitchToggle = ({
           </Typography>
           <RadioGroup
             value={mode || ''}
-            onChange={(e) => handleModeChange(e.target.value as 'add' | 'remove')}
+            onChange={(e) => handleModeChange(e.target.value as 'add' | 'replace')}
           >
             <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
-            <FormControlLabel value="remove" control={<Radio />} label="Remove Distractors" />
+            <FormControlLabel value="replace" control={<Radio />} label="Replace Distractors" />
           </RadioGroup>
         </Box>
 
         {mcqOptions.length > 0 && (
           <Box sx={{ pl: 1, mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" mb={1}>
-              Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
+              Select which options to {mode === 'add' ? 'duplicate/modify' : 'replace'}:
             </Typography>
             {mcqOptions.map((opt, idx) => (
               <FormControlLabel
@@ -312,7 +312,7 @@ export const SwitchToggle = ({
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
 
-          {typeKey === 'informationClarity' && renderThematicReskinOptions()}
+          {/* {typeKey === 'informationClarity' && renderThematicReskinOptions()} */}
 
           <TextField
             sx={{ mb: 2 }}
@@ -352,7 +352,7 @@ export const SwitchToggle = ({
               </Button>
             )}
 
-            {typeKey === 'informationClarity' && (
+            {/* {typeKey === 'informationClarity' && (
               <Button
                 variant="contained"
                 onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
@@ -360,7 +360,7 @@ export const SwitchToggle = ({
               >
                 Generate Information Clarity
               </Button>
-            )}
+            )} */}
           </Stack>
         </Box>
       </Collapse>

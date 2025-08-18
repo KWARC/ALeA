@@ -92,24 +92,24 @@ export interface ProblemJson {
   correctAnswer: string | string[];
   explanation?: string;
 }
-export interface ManualEdit{
-  editedText:string,
-  updaterId:string;
-  updatedAt:string;
+export interface ManualEdit {
+  editedText: string;
+  updaterId: string;
+  updatedAt: string;
 }
 export interface QuizProblem {
   problemId: number;
-  problemUri?:string;
+  problemUri?: string;
   courseId: string;
   sectionId: string; //TODO see again
   sectionUri: string;
   problemStex: string;
   problemJson: ProblemJson;
-  manualEdits?:ManualEdit[];
-  generationParams?:JSON;
-  isDraft?:boolean;//TODO remove if not needed
-  createdAt?:string;
-  updatedAt?:string;
+  manualEdits?: ManualEdit[];
+  generationParams?: JSON;
+  isDraft?: boolean; //TODO remove if not needed
+  createdAt?: string;
+  updatedAt?: string;
 }
 export async function fetchGeneratedProblems(
   courseId: string,
@@ -141,8 +141,8 @@ export async function getLatestProblemDraft(draftParams: ByProblemId | ByProblem
     params: {
       apiname: 'get-latest-problem-draft',
       projectName: 'quiz-gen',
-      ...draftParams
-     },
+      ...draftParams,
+    },
     headers: getAuthHeaders(),
   });
 
@@ -164,21 +164,22 @@ export async function generateQuizProblems(generationParams: GenerationParams) {
   return resp.data as QuizProblem[];
 }
 
-export async function saveProblemDraft(problemId: number,stex:string) {
- await axios.post(
+export async function saveProblemDraft(problemId: number, stex: string) {
+  await axios.post(
     '/api/gpt-redirect',
-    { problemId,stex },
+    { problemId, stex },
     {
       params: {
         apiname: 'save-problem-draft',
         projectName: 'quiz-gen',
       },
       headers: getAuthHeaders(),
-    }  );
+    }
+  );
 }
 
 export async function finalizeProblem(problemId: number) {
- await axios.post(
+  await axios.post(
     '/api/gpt-redirect',
     { problemId },
     {
@@ -189,7 +190,20 @@ export async function finalizeProblem(problemId: number) {
       headers: getAuthHeaders(),
     }
   );
-  
+}
+
+export async function informationClarity(problemId: number) {
+  await axios.post(
+    '/api/gpt-redirect',
+    { problemId },
+    {
+      params: {
+        apiname: 'information-clarity',
+        projectName: 'quiz-gen',
+      },
+      headers: getAuthHeaders(),
+    }
+  );
 }
 
 export async function checkPossibleVariants(problemId: number) {
@@ -258,7 +272,7 @@ export async function getProblemVersionHistory(problemId: number) {
   return resp.data as QuizProblem[];
 }
 
-export async function getFinalizedVariants(params:ByProblemId|ByProblemUri) {
+export async function getFinalizedVariants(params: ByProblemId | ByProblemUri) {
   const resp = await axios.get('/api/gpt-redirect', {
     params: {
       ...params,
