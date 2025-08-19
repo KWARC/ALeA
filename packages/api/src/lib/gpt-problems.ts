@@ -154,17 +154,20 @@ export interface CompletionEval {
 
 export interface RephraseVariant {
   variantType: 'rephrase';
-  rephraseType: 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping'; // camel_casing here  
+  rephraseType: string[]; // camel_casing here  
+  rephraseInstruction?: string;
 }
 
 export interface ReskinVariant {
   variantType: 'reskin';
   theme: string;
+  reskinInstruction?: string;
 }
 
 export interface ModifyChoicesVariant {
   variantType: 'modify_choices';
-  optionsToModify: string[];
+  optionsToModify: string;
+  modifyChoiceInstruction?: string;
 }
 
 export interface VariantBase {

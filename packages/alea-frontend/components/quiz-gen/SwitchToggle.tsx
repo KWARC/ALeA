@@ -1,12 +1,13 @@
 import {
   Box,
+  Button,
   Checkbox,
   Chip,
   Collapse,
   FormControlLabel,
-  LinearProgress,
   Radio,
   RadioGroup,
+  Stack,
   Switch,
   TextField,
   Typography,
@@ -24,19 +25,18 @@ interface SwitchToggleProps {
   variantConfig: VariantConfig;
   themes?: string[];
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
-  mcqOptions?: string[];
-  selectedOptions?: string[];
   problemData?: FlatQuizProblem;
-  setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
 
-const REPHRASE_SUBOPTIONS = [
-  'Technical Rephrasing',
-  'Entity Swapping',
-  'Numerical Substitution',
-  'Add/Remove Distractors',
+type RephraseType = 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping';
+
+const REPHRASE_SUBOPTIONS: RephraseType[] = [
+  'technical',
+  'add_distractors',
+  'num_substitution',
+  'entity_swapping',
 ];
 
 export const SwitchToggle = ({
@@ -47,18 +47,16 @@ export const SwitchToggle = ({
   variantConfig,
   themes = [],
   setVariantConfig,
-  mcqOptions = [],
-  selectedOptions = [],
-  setSelectedOptions,
   problemData,
   onVariantGenerated,
   onLoadingChange,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
-  const [themesLoading, setThemesLoading] = useState<boolean>(false);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
+  const mcqOptions = problemData?.options || [];
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -99,7 +97,7 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-    if (typeKey === 'thematicReskin' && problemData && problemData.problemId) {
+    if (typeKey === 'thematicReskin' && problemData.problemId) {
       onLoadingChange?.(true);
 
       try {
@@ -111,7 +109,52 @@ export const SwitchToggle = ({
         });
 
         if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
+        }
+      } finally {
+        onLoadingChange?.(false);
+      }
+    }
+  };
+
+  const handleRephrase = async (types: RephraseType[]) => {
+    if (typeKey === 'rephrase' && problemData?.problemId) {
+      onLoadingChange?.(true);
+
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: problemData.problemId,
+          variantType: 'rephrase',
+          rephraseType: types,
+          rephraseInstruction: variantConfig[instructionKey],
+        });
+
+        if (result.length > 0) {
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
+        }
+        console.log({ types });
+      } finally {
+        onLoadingChange?.(false);
+      }
+    }
+  };
+
+  const handleModifyChoice = async (modifyChoiceMode: string) => {
+    if (typeKey === 'modifyChoice' && problemData?.problemId) {
+      onLoadingChange?.(true);
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: problemData.problemId,
+          variantType: 'modify_choices',
+          optionsToModify: variantConfig.modifyChoiceMode,
+          modifyChoiceInstruction: variantConfig[instructionKey],
+        });
+        if (result.length > 0) {
+          const newVariant = result[0];
           onVariantGenerated?.(newVariant);
         }
       } finally {
@@ -207,11 +250,7 @@ export const SwitchToggle = ({
         Choose a Problem Theme
       </Typography>
 
-      {themesLoading ? (
-        <Box width="100%" my={1}>
-          <LinearProgress />
-        </Box>
-      ) : themes.length > 0 ? (
+      {themes.length > 0 ? (
         <Box display="flex" flexWrap="wrap" gap={1}>
           {themes.map((theme) => (
             <Chip
@@ -263,7 +302,7 @@ export const SwitchToggle = ({
         <Typography fontWeight={600} color={isActive ? 'primary.main' : 'text.primary'}>
           {title}
         </Typography>
-        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)}  />
+        <Switch checked={isActive} onChange={(e) => handleSwitchChange(e.target.checked)} />
       </Box>
 
       <Collapse in={isActive}>
@@ -289,6 +328,29 @@ export const SwitchToggle = ({
             multiline
             minRows={2}
           />
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            {typeKey === 'rephrase' && (
+              <Button
+                variant="contained"
+                onClick={() =>
+                  handleRephrase((variantConfig.rephraseSubtypes as RephraseType[]) || [])
+                }
+                disabled={!variantConfig.rephraseSubtypes?.length}
+              >
+                Generate Rephrased Variant
+              </Button>
+            )}
+
+            {typeKey === 'modifyChoice' && (
+              <Button
+                variant="contained"
+                onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
+                disabled={!selectedOptions?.length}
+              >
+                Generate Modified Choice Variant
+              </Button>
+            )}
+          </Stack>
         </Box>
       </Collapse>
     </Box>

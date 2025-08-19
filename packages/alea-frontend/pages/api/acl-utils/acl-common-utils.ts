@@ -5,7 +5,7 @@ import { CACHE_STORE } from './cache-store';
 
 export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
   const resources = await executeAndEndSet500OnError(
-    'select resourceId from resourceAccess where aclId=? LIMIT 1',
+    'select resourceId from ResourceAccess where aclId=? LIMIT 1',
     [aclId],
     res
   );

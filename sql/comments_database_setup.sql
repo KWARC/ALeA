@@ -277,6 +277,7 @@ CREATE TABLE excused(
 );
 
 
+
 CREATE TABLE announcement(
     id INT PRIMARY KEY AUTO_INCREMENT,
     courseId VARCHAR(255) NOT NULL,
@@ -286,4 +287,18 @@ CREATE TABLE announcement(
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     visibleUntil TIMESTAMP NULL,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+CREATE TABLE semesterInfo (
+  universityId VARCHAR(50),
+  instanceId VARCHAR(50),
+  semesterStart TIMESTAMP,
+  semesterEnd TIMESTAMP,
+  lectureStartDate TIMESTAMP,
+  lectureEndDate TIMESTAMP,
+  holidays JSON NOT NULL,
+  userId VARCHAR(255),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (universityId, instanceId)
+
 );
