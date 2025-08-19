@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import {
+  checkPossibleVariants,
   finalizeProblem,
   getProblemVersionHistory,
   saveProblemDraft,
@@ -69,6 +70,7 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const [selectedMinorEdit, setSelectedMinorEdit] = useState<MinorEditType[] | []>([]);
   const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
@@ -77,7 +79,7 @@ export const VariantDialog = ({
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
+  const availableMinorEdits: MinorEditType[] = [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
@@ -127,13 +129,14 @@ export const VariantDialog = ({
           },
           substitute_numbers: true,
         };
-        setMinorEditsApplicable(
-          result.change_data_format ||
-            result.change_goal ||
-            result.convert_units ||
-            result.negate_question_stem ||
-            result.substitute_numbers
-        );
+        if (result.change_data_format) availableMinorEdits.push('change_data_format');
+        if (result.change_goal) availableMinorEdits.push('change_goal');
+        if (result.convert_units) availableMinorEdits.push('convert_units');
+        if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
+        if (result.substitute_numbers) availableMinorEdits.push('substitute_numbers');
+
+        setSelectedMinorEdit(availableMinorEdits);
+        setMinorEditsApplicable(availableMinorEdits.length > 0);
         setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable);
         setAvailableThemes(result.reskin.themes);
@@ -356,6 +359,7 @@ export const VariantDialog = ({
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
+                      availableMinorEdits={selectedMinorEdit}
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);

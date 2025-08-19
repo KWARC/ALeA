@@ -26,6 +26,7 @@ interface SwitchToggleProps {
   themes?: string[];
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   problemData?: FlatQuizProblem;
+  availableMinorEdits?: MinorEditType[];
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -45,8 +46,6 @@ const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
   substitute_numbers: 'Substitute Numbers',
 };
 
-const MINOR_EDIT_SUBOPTIONS: MinorEditType[] = Object.keys(MINOR_EDIT_LABELS) as MinorEditType[];
-
 export const SwitchToggle = ({
   title,
   typeKey,
@@ -56,6 +55,7 @@ export const SwitchToggle = ({
   themes = [],
   setVariantConfig,
   problemData,
+  availableMinorEdits,
   onVariantGenerated,
   onLoadingChange,
 }: SwitchToggleProps) => {
@@ -188,11 +188,11 @@ export const SwitchToggle = ({
           const selected = e.target.value as MinorEditType;
           setVariantConfig((prev) => ({
             ...prev,
-            minorEditSubtypes: selected, 
+            minorEditSubtypes: selected,
           }));
         }}
       >
-        {MINOR_EDIT_SUBOPTIONS.map((opt) => (
+        {(availableMinorEdits || []).map((opt) => (
           <FormControlLabel
             key={opt}
             value={opt}
