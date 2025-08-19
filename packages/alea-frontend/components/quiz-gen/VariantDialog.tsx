@@ -72,11 +72,12 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
+  const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
+  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
   const [infoClarityApplicable, setInfoClarityApplicable] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -111,27 +112,36 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        const result = await checkPossibleVariants(problemData.problemId);
-        // const result = {
-        //   modify_choices: {
-        //     applicable: true,
-        //   },
-        //   rephrase: {
-        //     applicable: true,
-        //   },
-        //   reskin: {
-        //     applicable: true,
-        //     themes: [
-        //       'Corporate Office Scenario',
-        //       'Library Management System',
-        //       'Hospital Staff Records',
-        //       'University Student Database',
-        //     ],
-        //   },
-        // };
-        setRephraseApplicable(result.rephrase.applicable);
-        setChoicesApplicable(result.modify_choices.applicable);
+        // const result = await checkPossibleVariants(problemData.problemId);
+        const result = {
+          adjust_scaffolding: true,
+          change_data_format: true,
+          change_goal: true,
+          convert_units: true,
+          modify_choices: true,
+          negate_question_stem: true,
+          rephrase_wording: true,
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+          substitute_numbers: true,
+        };
+        setMinorEditsApplicable(
+          result.change_data_format ||
+            result.change_goal ||
+            result.convert_units ||
+            result.negate_question_stem ||
+            result.substitute_numbers
+        );
+        setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable);
+        setRephraseApplicable(result.rephrase_wording);
         setAvailableThemes(result.reskin.themes);
       } finally {
         setVariantOptionsLoading(false);
@@ -188,13 +198,13 @@ export const VariantDialog = ({
   };
 
   const getInformationClarity = async () => {
-     if (!problemData?.problemId) {
+    if (!problemData?.problemId) {
       console.error('Cannot create variant without problemId');
       return;
     }
     clearSelection();
   };
-  
+
   const existingProblemUri = selectedVersion?.problemUri;
   const selectedVersionGenParams = selectedVersion?.generationParams ?? existingProblemUri;
 
@@ -351,7 +361,7 @@ export const VariantDialog = ({
                 <LinearProgress />
               ) : (
                 <>
-                  {rephraseApplicable && (
+                  {minorEditsApplicable && (
                     <SwitchToggle
                       title="Minor Edit"
                       typeKey="rephrase"
@@ -405,24 +415,6 @@ export const VariantDialog = ({
                       }}
                     />
                   )}
-
-                  {/* {rephraseApplicable && (
-                    <SwitchToggle
-                      title="Information Clarity"
-                      typeKey="informationClarity"
-                      instructionKey="informationClarityInstruction"
-                      placeholder="e.g., simplify language, keep same meaning"
-                      variantConfig={variantConfig}
-                      setVariantConfig={setVariantConfig}
-                      problemData={problemData}
-                      onLoadingChange={setPreviewLoading}
-                      onVariantGenerated={(newVariant) => {
-                        const flat = flattenQuizProblem(newVariant);
-                        setProblemData(flat);
-                        setEditableSTeX(flat.problemStex);
-                      }}
-                    />
-                  )} */}
                 </>
               )}
               {/* <VariantConfigSection
@@ -444,13 +436,15 @@ export const VariantDialog = ({
                 }}
               /> */}
               <Box display="flex" gap={10} mt={2} p={3}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={getInformationClarity}
-                >
+                <Button size="small" variant="contained" onClick={getInformationClarity}>
                   Information Clarity
                 </Button>
+                
+                {rephraseApplicable && (
+                  <Button size="small" variant="contained" onClick={getInformationClarity}>
+                    Rephrase
+                  </Button>
+                )}
               </Box>
               {/* <Box display="flex" gap={10} mt={2} p={3}> */}
               <Button
@@ -471,21 +465,6 @@ export const VariantDialog = ({
               >
                 Clear Selection
               </Button>
-
-              {/* <Button
-                  size="small"
-                  variant="contained"
-                  onClick={clearSelection}
-                  sx={{
-                    bgcolor: PRIMARY_COL,
-                    textTransform: 'none',
-                    mb: 2,
-                    '&:hover': { bgcolor: PRIMARY_COL, opacity: 0.9 },
-                  }}
-                >
-                  Create Variant
-                </Button> */}
-              {/* </Box> */}
               <ConfigurationSummary variantConfig={variantConfig} />
             </Box>
           </Box>

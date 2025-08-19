@@ -154,7 +154,7 @@ export interface CompletionEval {
 
 export interface RephraseVariant {
   variantType: 'rephrase';
-  rephraseType: string[]; 
+  rephraseType: string[];
   rephraseInstruction?: string;
 }
 
@@ -180,7 +180,7 @@ export interface VariantBase {
 export type VariantGenerationParams =
   | (VariantBase & RephraseVariant)
   | (VariantBase & ReskinVariant)
-  | (VariantBase & ModifyChoicesVariant)
+  | (VariantBase & ModifyChoicesVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -197,7 +197,7 @@ interface CopyGenerationParams {
   sectionId?: string;
 }
 
-export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams ;
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
 
 // export interface PossibleVariantsResult {
 //   rephrase: {
@@ -214,16 +214,16 @@ export type GenerationParams = NewGenerationParams | CopyGenerationParams | Vari
 //   };
 // }
 export interface PossibleVariantsResult {
-    adjust_scaffolding: boolean,
-    change_data_format: boolean,
-    change_goal: boolean,
-    convert_units: boolean,
-    modify_choices: boolean,
-    negate_question_stem: boolean,
-    rephrase_wording: boolean,
-    reskin: {
-        applicable: boolean,
-         themes?: string[];
-    },
-    substitute_numbers: boolean
+  adjust_scaffolding: boolean;
+  change_data_format: boolean;
+  change_goal: boolean;
+  convert_units: boolean;
+  modify_choices: boolean;
+  negate_question_stem: boolean;
+  rephrase_wording: boolean;
+  reskin: {
+    applicable: boolean;
+    themes?: string[];
+  };
+  substitute_numbers: boolean;
 }
