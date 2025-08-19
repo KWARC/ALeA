@@ -1,13 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { ResourceName, Action, CURRENT_TERM } from '@stex-react/utils';
+import { ResourceName, Action } from '@stex-react/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { id, courseId} = req.body;
-   const instanceId = CURRENT_TERM;
+  const { id, courseId, instanceId } = req.body;
 
   if (!id || !courseId || !instanceId) {
     console.log(id, courseId, instanceId);
@@ -25,8 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const result = await executeAndEndSet500OnError(
-    `DELETE FROM announcement WHERE id = ? AND courseId = ?`,
-    [id, courseId],
+    `DELETE FROM announcement WHERE id = ? AND courseId = ? AND instanceId = ?`,
+    [id, courseId, instanceId],
     res
   );
   if (!result) return;
