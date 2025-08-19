@@ -64,7 +64,7 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [selectedMinorEdit, setSelectedMinorEdit] = useState<MinorEditType[] | []>([]);
+  const [availabledMinorEdits, setAvailableMinorEdits] = useState<MinorEditType[] | []>([]);
   const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
@@ -97,36 +97,36 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        // const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          adjust_scaffolding: true,
-          change_data_format: true,
-          change_goal: true,
-          convert_units: true,
-          modify_choices: true,
-          negate_question_stem: true,
-          rephrase_wording: true,
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-          substitute_numbers: true,
-        };
+        const result = await checkPossibleVariants(problemData.problemId);
+        // const result = {
+        //   adjust_scaffolding: true,
+        //   change_data_format: true,
+        //   change_goal: true,
+        //   convert_units: true,
+        //   modify_choices: true,
+        //   negate_question_stem: true,
+        //   rephrase_wording: true,
+        //   reskin: {
+        //     applicable: true,
+        //     themes: [
+        //       'Corporate Office Scenario',
+        //       'Library Management System',
+        //       'Hospital Staff Records',
+        //       'University Student Database',
+        //     ],
+        //   },
+        //   substitute_values: true,
+        // };
         if (result.change_data_format) availableMinorEdits.push('change_data_format');
         if (result.change_goal) availableMinorEdits.push('change_goal');
         if (result.convert_units) availableMinorEdits.push('convert_units');
         if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
-        if (result.substitute_numbers) availableMinorEdits.push('substitute_numbers');
+        if (result.substitute_values) availableMinorEdits.push('substitute_values');
 
-        setSelectedMinorEdit(availableMinorEdits);
         setMinorEditsApplicable(availableMinorEdits.length > 0);
+        setAvailableMinorEdits(availableMinorEdits);
         setChoicesApplicable(result.modify_choices);
-        setReskinApplicable(result.reskin.applicable);
+        setReskinApplicable(result.reskin.applicable&&result.reskin?.themes?.length>0);
         setAvailableThemes(result.reskin.themes);
       } finally {
         setVariantOptionsLoading(false);
@@ -347,7 +347,7 @@ export const VariantDialog = ({
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
-                      availableMinorEdits={selectedMinorEdit}
+                      availableMinorEdits={availabledMinorEdits}
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);

@@ -151,10 +151,15 @@ export interface CompletionEval {
   problemEvals: ProblemEval[];
   updateTime: string;
 }
-
+export type MinorEditType =
+  | 'change_data_format'
+  | 'change_goal'
+  | 'convert_units'
+  | 'negate_question_stem'
+  | 'substitute_values';
 export interface MinorEditVariant {
   variantType: 'minor_edit';
-  minorEditType: string;
+  minorEditType: MinorEditType ;
   minorEditInstruction?: string;
 }
 
@@ -163,7 +168,10 @@ export interface ReskinVariant {
   theme: string;
   reskinInstruction?: string;
 }
-
+export interface LanguageVariant {
+  variantType: 'translate';
+  language: string;
+}
 export interface ModifyChoicesVariant {
   variantType: 'modify_choices';
   optionsToModify: string;
@@ -174,13 +182,13 @@ export interface VariantBase {
   mode: 'variant';
   problemId?: number;
   problemUri?: string;
-  instruction?: string;
 }
 
 export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
-  | (VariantBase & ModifyChoicesVariant);
+  | (VariantBase & ModifyChoicesVariant)
+  |(VariantBase & LanguageVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -225,5 +233,5 @@ export interface PossibleVariantsResult {
     applicable: boolean;
     themes?: string[];
   };
-  substitute_numbers: boolean;
+  substitute_values: boolean;
 }

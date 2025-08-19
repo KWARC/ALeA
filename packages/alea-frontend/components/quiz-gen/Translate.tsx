@@ -1,5 +1,5 @@
 import { Box, Button, Collapse, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { QuizProblem } from '@stex-react/api';
+import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 
@@ -8,13 +8,13 @@ interface TranslateProps {
   onTranslated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
-
+//TODO remove code 
 const LANGUAGES = [
-  { code: 'de', name: 'German' },
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'zh', name: 'Chinese' },
+  { code: 'German', name: 'German' },
+  { code: 'English', name: 'English' },
+  { code: 'Spanish', name: 'Spanish' },
+  { code: 'Polish', name: 'Polish' },
+  { code: 'French', name: 'French' },
 ];
 
 export const Translate = ({ problemData, onTranslated, onLoadingChange }: TranslateProps) => {
@@ -24,20 +24,19 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
   const handleGenerate = async () => {
     if (!problemData?.problemId) return;
     onLoadingChange?.(true);
-    // try {
-    //   const result = await generateQuizProblems({
-    //     mode: 'variant',
-    //     problemId: problemData.problemId,
-    //     variantType: 'translate',
-    //     targetLang,
-    //     instruction,
-    //   });
-    //   if (result.length > 0) {
-    //     onTranslated?.(result[0]);
-    //   }
-    // } finally {
-    //   onLoadingChange?.(false);
-    // }
+    try {
+      const result = await generateQuizProblems({
+        mode: 'variant',
+        problemId: problemData.problemId,
+        variantType: 'translate',
+        language:targetLang,
+      });
+      if (result.length > 0) {
+        onTranslated?.(result[0]);
+      }
+    } finally {
+      onLoadingChange?.(false);
+    }
   };
 
   return (

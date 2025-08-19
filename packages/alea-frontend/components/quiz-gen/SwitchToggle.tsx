@@ -36,14 +36,14 @@ export type MinorEditType =
   | 'change_goal'
   | 'convert_units'
   | 'negate_question_stem'
-  | 'substitute_numbers';
+  | 'substitute_values';
 
 const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
   change_data_format: 'Change Data Format',
   change_goal: 'Change Goal',
   convert_units: 'Convert Units',
   negate_question_stem: 'Negate Question Stem',
-  substitute_numbers: 'Substitute Numbers',
+  substitute_values: 'Substitute Values',
 };
 
 export const SwitchToggle = ({
@@ -126,7 +126,7 @@ export const SwitchToggle = ({
     }
   };
 
-  const handleMinorEdit = async (types: MinorEditType) => {
+  const handleMinorEdit = async (type: MinorEditType) => {
     if (typeKey === 'minorEdit' && problemData?.problemId) {
       onLoadingChange?.(true);
 
@@ -135,7 +135,7 @@ export const SwitchToggle = ({
           mode: 'variant',
           problemId: problemData.problemId,
           variantType: 'minor_edit',
-          minorEditType: types,
+          minorEditType: type,
           minorEditInstruction: variantConfig[instructionKey],
         });
 
@@ -143,7 +143,7 @@ export const SwitchToggle = ({
           const newVariant = result[0];
           onVariantGenerated?.(newVariant);
         }
-        console.log({ types });
+        console.log({ type });
       } finally {
         onLoadingChange?.(false);
       }
