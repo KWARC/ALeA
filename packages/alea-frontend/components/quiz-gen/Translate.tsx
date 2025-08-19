@@ -1,14 +1,4 @@
-import {
-  Box,
-  Button,
-  Collapse,
-  MenuItem,
-  Select,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Collapse, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
 import { QuizProblem } from '@stex-react/api';
 import { useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
@@ -30,7 +20,6 @@ const LANGUAGES = [
 export const Translate = ({ problemData, onTranslated, onLoadingChange }: TranslateProps) => {
   const [active, setActive] = useState(false);
   const [targetLang, setTargetLang] = useState('en');
-  const [instruction, setInstruction] = useState('');
 
   const handleGenerate = async () => {
     if (!problemData?.problemId) return;
@@ -126,34 +115,6 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
                 </MenuItem>
               ))}
             </Select>
-          </Box>
-
-          <Box
-            mb={3}
-            border="1px solid"
-            borderColor="grey.300"
-            borderRadius={2}
-            bgcolor="white"
-            minHeight={120}
-          >
-            <TextField
-              placeholder="Tap to enter text"
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              fullWidth
-              multiline
-              minRows={4}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  border: 'none',
-                  '& fieldset': { border: 'none' },
-                },
-                '& .MuiInputBase-input': {
-                  fontSize: '1rem',
-                },
-              }}
-            />
           </Box>
 
           <Stack direction="row" justifyContent="flex-end">

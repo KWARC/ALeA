@@ -28,9 +28,6 @@ import { Translate } from './Translate';
 export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
   variantTypes: VariantType[];
-  difficulty?: string;
-  formatType?: string;
-  customPrompt: string;
   minorEditInstruction?: string;
   minorEditSubtypes?: MinorEditType;
   modifyChoiceMode?: 'add' | 'replace';
@@ -56,9 +53,6 @@ export const VariantDialog = ({
 }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
-    difficulty: '',
-    formatType: '',
-    customPrompt: '',
     minorEditInstruction: '',
     minorEditSubtypes: undefined,
     modifyChoiceMode: undefined,
@@ -84,17 +78,11 @@ export const VariantDialog = ({
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<FlatQuizProblem>(null);
-  //const isViewingLatestVersion = selectedVersionIndex === versions.length - 1;
-  const handleConfigChange = (field, value) => {
-    setVariantConfig((prev) => ({ ...prev, [field]: value }));
-  };
 
   const clearSelection = () => {
     setVariantConfig({
       variantTypes: [],
-      difficulty: '',
-      formatType: '',
-      customPrompt: '',
+
       minorEditInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
@@ -421,31 +409,6 @@ export const VariantDialog = ({
                 setVariantConfig={setVariantConfig}
               /> */}
 
-              {/* <TextField
-                label="Pretext Instructions (optional)"
-                placeholder="e.g., general notes for all variants"
-                value={variantConfig.customPrompt}
-                onChange={(e) => handleConfigChange('customPrompt', e.target.value)}
-                fullWidth
-                multiline
-                minRows={3}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              /> */}
-              {/* <Box display="flex" gap={10} mt={2} p={3}>
-                <Button size="small" variant="contained" onClick={getInformationClarity}>
-                  Information Clarity
-                </Button>
-
-                {rephraseApplicable && (
-                  <Button size="small" variant="contained" onClick={getInformationClarity}>
-                    Rephrase
-                  </Button>
-                )}
-              </Box> */}
-              {/* <Box display="flex" gap={10} mt={2} p={3}> */}
               <Button
                 size="small"
                 variant="outlined"
