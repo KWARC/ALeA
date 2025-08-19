@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, getUserIdOrSetError, executeQuery } from '../../../comment-utils';
-import { createCourseMemberAclBackend } from '../../../acl-utils/instructor-dasboard-utils/createMemberAcl';
+import { checkIfPostOrSetError, getUserIdOrSetError, executeQuery } from '../../comment-utils';
+import { createCourseMemberAclBackend } from '../../acl-utils/instructor-dashboard-utils/createMemberAcl';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
