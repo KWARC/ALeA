@@ -26,6 +26,7 @@ import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
+import { Translate } from './Translate';
 
 export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
@@ -417,6 +418,17 @@ export const VariantDialog = ({
                   )}
                 </>
               )}
+
+              <Translate
+                problemData={problemData}
+                onLoadingChange={setPreviewLoading}
+                onTranslated={(newVariant) => {
+                  const flat = flattenQuizProblem(newVariant);
+                  setProblemData(flat);
+                  setEditableSTeX(flat.problemStex);
+                }}
+              />
+
               {/* <VariantConfigSection
                 variantConfig={variantConfig}
                 setVariantConfig={setVariantConfig}
@@ -435,17 +447,17 @@ export const VariantDialog = ({
                   '& .MuiOutlinedInput-root': { borderRadius: 2 },
                 }}
               /> */}
-              <Box display="flex" gap={10} mt={2} p={3}>
+              {/* <Box display="flex" gap={10} mt={2} p={3}>
                 <Button size="small" variant="contained" onClick={getInformationClarity}>
                   Information Clarity
                 </Button>
-                
+
                 {rephraseApplicable && (
                   <Button size="small" variant="contained" onClick={getInformationClarity}>
                     Rephrase
                   </Button>
                 )}
-              </Box>
+              </Box> */}
               {/* <Box display="flex" gap={10} mt={2} p={3}> */}
               <Button
                 size="small"
@@ -465,7 +477,7 @@ export const VariantDialog = ({
               >
                 Clear Selection
               </Button>
-              <ConfigurationSummary variantConfig={variantConfig} />
+              {/* <ConfigurationSummary variantConfig={variantConfig} /> */}
             </Box>
           </Box>
 

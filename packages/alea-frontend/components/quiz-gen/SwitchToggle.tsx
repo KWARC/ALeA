@@ -30,12 +30,14 @@ interface SwitchToggleProps {
   onLoadingChange?: (loading: boolean) => void;
 }
 
-type RephraseType = 'goal_inversion' | 'num_substitution' | 'entity_swapping';
+type MinorEditType = 'change_data_format' | 'change_goal' | 'convert_units'|'negate_question_stem '|'substitute_numbers';
 
-const REPHRASE_SUBOPTIONS: RephraseType[] = [
-  'goal_inversion',
-  'num_substitution',
-  'entity_swapping',
+const MinorEdit_SUBOPTIONS: MinorEditType[] = [
+  'change_data_format',
+  'change_goal',
+  'convert_units',
+  'negate_question_stem ',
+  'substitute_numbers'
 ];
 
 export const SwitchToggle = ({
@@ -117,17 +119,17 @@ export const SwitchToggle = ({
     }
   };
 
-  const handleRephrase = async (types: RephraseType[]) => {
-    if (typeKey === 'rephrase' && problemData?.problemId) {
+  const handleMinorEdit = async (types: MinorEditType[]) => {
+    if (typeKey === 'minorEdit' && problemData?.problemId) {
       onLoadingChange?.(true);
 
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
           problemId: problemData.problemId,
-          variantType: 'rephrase',
-          rephraseType: types,
-          rephraseInstruction: variantConfig[instructionKey],
+          variantType: 'minorEdit',
+          minorEditType: types,
+          minorEditInstruction: variantConfig[instructionKey],
         });
 
         if (result.length > 0) {
@@ -168,13 +170,13 @@ export const SwitchToggle = ({
     }
   }, [variantConfig.selectedTheme]);
 
-  const renderRephraseSuboptions = () => (
+  const renderMinorEditSuboptions = () => (
     <Box pl={1} mb={2}>
       <Typography variant="subtitle2" color="text.secondary" mb={1}>
-        Select Rephrase Types:
+        Select MinorEdit Types:
       </Typography>
-      {REPHRASE_SUBOPTIONS.map((opt) => {
-        const checked = variantConfig.rephraseSubtypes?.includes(opt) ?? false;
+      {MinorEdit_SUBOPTIONS.map((opt) => {
+        const checked = variantConfig.minorEditSubtypes?.includes(opt) ?? false;
         return (
           <FormControlLabel
             key={opt}
@@ -184,9 +186,9 @@ export const SwitchToggle = ({
                 onChange={(e) => {
                   setVariantConfig((prev) => ({
                     ...prev,
-                    rephraseSubtypes: e.target.checked
-                      ? [...(prev.rephraseSubtypes ?? []), opt]
-                      : (prev.rephraseSubtypes ?? []).filter((o) => o !== opt),
+                    minorEditSubtypes: e.target.checked
+                      ? [...(prev.minorEditSubtypes ?? []), opt]
+                      : (prev.minorEditSubtypes ?? []).filter((o) => o !== opt),
                   }));
                 }}
               />
@@ -306,7 +308,7 @@ export const SwitchToggle = ({
 
       <Collapse in={isActive}>
         <Box p={2} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
-          {typeKey === 'rephrase' && renderRephraseSuboptions()}
+          {typeKey === 'minorEdit' && renderMinorEditSuboptions()}
 
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
@@ -330,13 +332,13 @@ export const SwitchToggle = ({
             minRows={2}
           />
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            {typeKey === 'rephrase' && (
+            {typeKey === 'minorEdit' && (
               <Button
                 variant="contained"
                 onClick={() =>
-                  handleRephrase((variantConfig.rephraseSubtypes as RephraseType[]) || [])
+                  handleMinorEdit((variantConfig.minorEditSubtypes as MinorEditType[]) || [])
                 }
-                disabled={!variantConfig.rephraseSubtypes?.length}
+                disabled={!variantConfig.minorEditSubtypes?.length}
               >
                 Generate
               </Button>

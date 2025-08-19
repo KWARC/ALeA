@@ -152,10 +152,10 @@ export interface CompletionEval {
   updateTime: string;
 }
 
-export interface RephraseVariant {
-  variantType: 'rephrase';
-  rephraseType: string[];
-  rephraseInstruction?: string;
+export interface MinorEditVariant {
+  variantType: 'minorEdit';
+  minorEditType: string[];
+  minorEditInstruction?: string;
 }
 
 export interface ReskinVariant {
@@ -178,7 +178,7 @@ export interface VariantBase {
 }
 
 export type VariantGenerationParams =
-  | (VariantBase & RephraseVariant)
+  | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
   | (VariantBase & ModifyChoicesVariant);
 
