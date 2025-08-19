@@ -199,17 +199,31 @@ interface CopyGenerationParams {
 
 export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams ;
 
+// export interface PossibleVariantsResult {
+//   rephrase: {
+//     applicable: boolean;
+//     types?: string[];
+//   };
+//   reskin: {
+//     applicable: boolean;
+//     themes?: string[];
+//   };
+//   modify_choices: {
+//     applicable: boolean;
+//     optionsToModify?: string[];
+//   };
+// }
 export interface PossibleVariantsResult {
-  rephrase: {
-    applicable: boolean;
-    types?: string[];
-  };
-  reskin: {
-    applicable: boolean;
-    themes?: string[];
-  };
-  modify_choices: {
-    applicable: boolean;
-    optionsToModify?: string[];
-  };
+    adjust_scaffolding: boolean,
+    change_data_format: boolean,
+    change_goal: boolean,
+    convert_units: boolean,
+    modify_choices: boolean,
+    negate_question_stem: boolean,
+    rephrase_wording: boolean,
+    reskin: {
+        applicable: boolean,
+         themes?: string[];
+    },
+    substitute_numbers: boolean
 }
