@@ -124,6 +124,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           title: title.trim(),
           content: content.trim(),
           visibleUntil: visibleUntilSQL,
+          instanceId: instanceId,
         };
         await createAnnouncement(createRequest);
       }
@@ -186,7 +187,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       <Table size="small" sx={{ mt: 1 }}>
         <TableHead>
           <TableRow>
-            <TableCell>ID</TableCell>
+            {/* <TableCell>ID</TableCell> */}
             <TableCell>Course ID</TableCell>
             <TableCell>Instructor</TableCell>
             <TableCell>Title</TableCell>
@@ -201,7 +202,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
             .sort((a, b) => a.id - b.id)
             .map((a) => (
               <TableRow key={a.id}>
-                <TableCell>{a.id}</TableCell>
+                {/* <TableCell>{a.id}</TableCell> */}
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>
