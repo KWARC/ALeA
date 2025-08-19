@@ -6,8 +6,8 @@ import { ResourceName, Action, CURRENT_TERM } from '@stex-react/utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { id, courseId, title, content, visibleUntil} = req.body;
-    const instanceId = CURRENT_TERM;
+  const { id, courseId, title, content, visibleUntil } = req.body;
+  const instanceId = CURRENT_TERM;
 
   if (!id || !courseId || !title || !content || !instanceId) {
     res.status(422).end('Missing required fields');
@@ -26,8 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const result = await executeAndEndSet500OnError(
     `UPDATE announcement
    SET title = ?, content = ?, visibleUntil = ?, updatedAt = NOW()
-   WHERE id = ?, courseId = ? AND instanceId = ?`,
-    [title, content, visibleUntil, id, courseId, instanceId],
+   WHERE id = ? AND courseId = ? `,
+    [title, content, visibleUntil, id, courseId],
     res
   );
   if (!result) return;
