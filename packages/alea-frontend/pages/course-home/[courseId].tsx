@@ -18,10 +18,14 @@ import {
   InputAdornment,
   TextField,
   Typography,
+  Card,
+  CardContent,
+  Grid,
 } from '@mui/material';
 import {
   addRemoveMember,
   canAccessResource,
+  getActiveAnnouncements,
   getCourseInfo,
   getCoverageTimeline,
   getUserInfo,
@@ -154,18 +158,10 @@ export function CourseHeader({
 }
 
 function getWeekdayName(dayOfWeek: number): string {
-  const days = [
-    '', // index 0 is unused
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   return days[dayOfWeek] || '';
 }
+
 function CourseScheduleSection({
   userId,
   courseId,
@@ -254,7 +250,7 @@ function CourseScheduleSection({
               </Typography>
             )}
             {courseSchedule.map((entry, idx) => {
-              const isNext = false; //entry.dayOfWeek === nextLectureDay; Re-enable after fixing timezone issues.
+              const isNext = false;
               return (
                 <Box
                   key={idx}
@@ -326,6 +322,101 @@ function CourseScheduleSection({
           />
         )}
       </Box>
+    </Box>
+  );
+}
+
+interface Announcement {
+  id: number;
+  courseId: string;
+  instructorId: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  visibleUntil: string;
+}
+
+function AnnouncementsSection({ courseId }: { courseId: string }) {
+  const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAnnouncements() {
+      try {
+        setLoading(true);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId);
+        setAnnouncements(fetchedAnnouncements);
+      } catch (e) {
+        setError('Failed to fetch announcements.');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAnnouncements();
+  }, [courseId]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ my: 2 }}>
+        {error}
+      </Alert>
+    );
+  }
+
+  if (!announcements || announcements.length === 0) {
+    return (
+      <Alert severity="info" sx={{ my: 2 }}>
+        No valid announcements found for this course.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box
+      mt={3}
+      sx={{
+        mx: 'auto',
+        maxWidth: '650px',
+        p: { xs: 0, sm: 1 },
+      }}
+    >
+      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#333' }}>
+        Announcements
+      </Typography>
+      <Grid container spacing={2}>
+        {announcements.map((a) => (
+          <Grid item xs={12} key={a.id}>
+            <Card
+              sx={{
+                padding: 2,
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                borderLeft: '4px solid #1976d2',
+              }}
+            >
+              <Typography variant="body1" fontWeight="bold">
+                {a.content}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Posted on {new Date(a.createdAt).toLocaleDateString()}
+                {' | '}
+                Visible until {new Date(a.visibleUntil).toLocaleDateString()}
+              </Typography>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 }
@@ -520,6 +611,9 @@ const CourseHomePage: NextPage = () => {
             </Alert>
           </Box>
         )}
+
+        <AnnouncementsSection courseId={courseId} />
+
         <CourseScheduleSection courseId={courseId} userId={userId} />
         <br />
         {showSearchBar && (
