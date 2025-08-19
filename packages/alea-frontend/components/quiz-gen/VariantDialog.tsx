@@ -8,11 +8,9 @@ import {
   DialogTitle,
   LinearProgress,
   Snackbar,
-  TextField,
   Typography,
 } from '@mui/material';
 import {
-  checkPossibleVariants,
   finalizeProblem,
   getProblemVersionHistory,
   saveProblemDraft,
@@ -21,11 +19,9 @@ import {
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
-import { ConfigurationSummary } from './ConfigurationSummary';
 import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
-import { SwitchToggle } from './SwitchToggle';
-import { VariantConfigSection } from './VariantConfigSection';
+import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
 
 export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin';
@@ -35,7 +31,7 @@ export interface VariantConfig {
   formatType?: string;
   customPrompt: string;
   minorEditInstruction?: string;
-  minorEditSubtypes?: string[];
+  minorEditSubtypes?: MinorEditType;
   modifyChoiceMode?: 'add' | 'replace';
   modifyChoiceInstruction?: string;
   thematicReskinInstruction?: string;
@@ -63,7 +59,7 @@ export const VariantDialog = ({
     formatType: '',
     customPrompt: '',
     minorEditInstruction: '',
-    minorEditSubtypes: [],
+    minorEditSubtypes: undefined,
     modifyChoiceMode: undefined,
     modifyChoiceInstruction: '',
     thematicReskinInstruction: '',
@@ -193,14 +189,6 @@ export const VariantDialog = ({
       await saveProblemDraft(problemData.problemId, editableSTeX);
     }
     await finalizeProblem(problemData.problemId);
-  };
-
-  const getInformationClarity = async () => {
-    if (!problemData?.problemId) {
-      console.error('Cannot create variant without problemId');
-      return;
-    }
-    clearSelection();
   };
 
   const existingProblemUri = selectedVersion?.problemUri;
@@ -399,8 +387,6 @@ export const VariantDialog = ({
                     <SwitchToggle
                       title="Thematic Reskinning"
                       typeKey="thematicReskin"
-                      instructionKey="thematicReskinInstruction"
-                      placeholder="e.g., apply concept in a real-world scenario"
                       variantConfig={variantConfig}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}

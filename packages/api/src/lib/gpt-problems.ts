@@ -153,8 +153,8 @@ export interface CompletionEval {
 }
 
 export interface MinorEditVariant {
-  variantType: 'minorEdit';
-  minorEditType: string[];
+  variantType: 'minor_edit';
+  minorEditType: string;
   minorEditInstruction?: string;
 }
 

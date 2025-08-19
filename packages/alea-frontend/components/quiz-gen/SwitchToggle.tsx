@@ -20,8 +20,8 @@ import { VariantConfig, VariantType } from './VariantDialog';
 interface SwitchToggleProps {
   title: string;
   typeKey: VariantType;
-  instructionKey: string;
-  placeholder: string;
+  instructionKey?: string;
+  placeholder?: string;
   variantConfig: VariantConfig;
   themes?: string[];
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
@@ -30,7 +30,7 @@ interface SwitchToggleProps {
   onLoadingChange?: (loading: boolean) => void;
 }
 
-type MinorEditType =
+export type MinorEditType =
   | 'change_data_format'
   | 'change_goal'
   | 'convert_units'
@@ -126,7 +126,7 @@ export const SwitchToggle = ({
     }
   };
 
-  const handleMinorEdit = async (types: MinorEditType[]) => {
+  const handleMinorEdit = async (types: MinorEditType) => {
     if (typeKey === 'minorEdit' && problemData?.problemId) {
       onLoadingChange?.(true);
 
@@ -180,30 +180,27 @@ export const SwitchToggle = ({
   const renderMinorEditSuboptions = () => (
     <Box pl={1} mb={2}>
       <Typography variant="subtitle2" color="text.secondary" mb={1}>
-        Select MinorEdit Types:
+        Select Minor Edit Type:
       </Typography>
-      {MINOR_EDIT_SUBOPTIONS.map((opt) => {
-        const checked = variantConfig.minorEditSubtypes?.includes(opt) ?? false;
-        return (
+      <RadioGroup
+        value={variantConfig.minorEditSubtypes || ''}
+        onChange={(e) => {
+          const selected = e.target.value as MinorEditType;
+          setVariantConfig((prev) => ({
+            ...prev,
+            minorEditSubtypes: selected, 
+          }));
+        }}
+      >
+        {MINOR_EDIT_SUBOPTIONS.map((opt) => (
           <FormControlLabel
             key={opt}
-            control={
-              <Checkbox
-                checked={checked}
-                onChange={(e) => {
-                  setVariantConfig((prev) => ({
-                    ...prev,
-                    minorEditSubtypes: e.target.checked
-                      ? [...(prev.minorEditSubtypes ?? []), opt]
-                      : (prev.minorEditSubtypes ?? []).filter((o) => o !== opt),
-                  }));
-                }}
-              />
-            }
+            value={opt}
+            control={<Radio />}
             label={MINOR_EDIT_LABELS[opt]}
           />
-        );
-      })}
+        ))}
+      </RadioGroup>
     </Box>
   );
 
@@ -321,31 +318,29 @@ export const SwitchToggle = ({
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
 
-          {/* {typeKey === 'informationClarity' && renderThematicReskinOptions()} */}
-
-          <TextField
-            sx={{ mb: 2 }}
-            label={`${title} Instructions`}
-            placeholder={placeholder}
-            value={variantConfig[instructionKey] || ''}
-            onChange={(e) =>
-              setVariantConfig((prev) => ({
-                ...prev,
-                [instructionKey]: e.target.value,
-              }))
-            }
-            fullWidth
-            multiline
-            minRows={2}
-          />
+          {instructionKey && (
+            <TextField
+              sx={{ mb: 2 }}
+              label={`${title} Instructions(Optional)`}
+              placeholder={placeholder}
+              value={variantConfig[instructionKey] || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({
+                  ...prev,
+                  [instructionKey]: e.target.value,
+                }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+            />
+          )}
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             {typeKey === 'minorEdit' && (
               <Button
                 variant="contained"
-                onClick={() =>
-                  handleMinorEdit((variantConfig.minorEditSubtypes as MinorEditType[]) || [])
-                }
-                disabled={!variantConfig.minorEditSubtypes?.length}
+                onClick={() => handleMinorEdit(variantConfig.minorEditSubtypes as MinorEditType)}
+                disabled={!variantConfig.minorEditSubtypes}
               >
                 Generate
               </Button>
@@ -360,16 +355,6 @@ export const SwitchToggle = ({
                 Generate Modified Choice Variant
               </Button>
             )}
-
-            {/* {typeKey === 'informationClarity' && (
-              <Button
-                variant="contained"
-                onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
-                disabled={!selectedOptions?.length}
-              >
-                Generate Information Clarity
-              </Button>
-            )} */}
           </Stack>
         </Box>
       </Collapse>

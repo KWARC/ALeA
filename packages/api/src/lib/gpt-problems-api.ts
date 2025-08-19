@@ -192,20 +192,6 @@ export async function finalizeProblem(problemId: number) {
   );
 }
 
-export async function informationClarity(problemId: number) {
-  await axios.post(
-    '/api/gpt-redirect',
-    { problemId },
-    {
-      params: {
-        apiname: 'information-clarity',
-        projectName: 'quiz-gen',
-      },
-      headers: getAuthHeaders(),
-    }
-  );
-}
-
 export async function checkPossibleVariants(problemId: number) {
   const resp = await axios.post(
     '/api/gpt-redirect',
