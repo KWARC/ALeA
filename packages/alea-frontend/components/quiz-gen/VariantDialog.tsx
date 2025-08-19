@@ -28,14 +28,14 @@ import { SwitchToggle } from './SwitchToggle';
 import { VariantConfigSection } from './VariantConfigSection';
 import { Translate } from './Translate';
 
-export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
+export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin';
 export interface VariantConfig {
   variantTypes: VariantType[];
   difficulty?: string;
   formatType?: string;
   customPrompt: string;
-  rephraseInstruction?: string;
-  rephraseSubtypes?: string[];
+  minorEditInstruction?: string;
+  minorEditSubtypes?: string[];
   modifyChoiceMode?: 'add' | 'replace';
   modifyChoiceInstruction?: string;
   thematicReskinInstruction?: string;
@@ -62,8 +62,8 @@ export const VariantDialog = ({
     difficulty: '',
     formatType: '',
     customPrompt: '',
-    rephraseInstruction: '',
-    rephraseSubtypes: [],
+    minorEditInstruction: '',
+    minorEditSubtypes: [],
     modifyChoiceMode: undefined,
     modifyChoiceInstruction: '',
     thematicReskinInstruction: '',
@@ -78,8 +78,6 @@ export const VariantDialog = ({
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
-  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
-  const [infoClarityApplicable, setInfoClarityApplicable] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -99,7 +97,7 @@ export const VariantDialog = ({
       difficulty: '',
       formatType: '',
       customPrompt: '',
-      rephraseInstruction: '',
+      minorEditInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
     });
@@ -142,7 +140,6 @@ export const VariantDialog = ({
         );
         setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable);
-        setRephraseApplicable(result.rephrase_wording);
         setAvailableThemes(result.reskin.themes);
       } finally {
         setVariantOptionsLoading(false);
@@ -365,8 +362,8 @@ export const VariantDialog = ({
                   {minorEditsApplicable && (
                     <SwitchToggle
                       title="Minor Edit"
-                      typeKey="rephrase"
-                      instructionKey="rephraseInstruction"
+                      typeKey="minorEdit"
+                      instructionKey="minorEditInstruction"
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}

@@ -30,15 +30,22 @@ interface SwitchToggleProps {
   onLoadingChange?: (loading: boolean) => void;
 }
 
-type MinorEditType = 'change_data_format' | 'change_goal' | 'convert_units'|'negate_question_stem '|'substitute_numbers';
+type MinorEditType =
+  | 'change_data_format'
+  | 'change_goal'
+  | 'convert_units'
+  | 'negate_question_stem'
+  | 'substitute_numbers';
 
-const MinorEdit_SUBOPTIONS: MinorEditType[] = [
-  'change_data_format',
-  'change_goal',
-  'convert_units',
-  'negate_question_stem ',
-  'substitute_numbers'
-];
+const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
+  change_data_format: 'Change Data Format',
+  change_goal: 'Change Goal',
+  convert_units: 'Convert Units',
+  negate_question_stem: 'Negate Question Stem',
+  substitute_numbers: 'Substitute Numbers',
+};
+
+const MINOR_EDIT_SUBOPTIONS: MinorEditType[] = Object.keys(MINOR_EDIT_LABELS) as MinorEditType[];
 
 export const SwitchToggle = ({
   title,
@@ -127,7 +134,7 @@ export const SwitchToggle = ({
         const result = await generateQuizProblems({
           mode: 'variant',
           problemId: problemData.problemId,
-          variantType: 'minorEdit',
+          variantType: 'minor_edit',
           minorEditType: types,
           minorEditInstruction: variantConfig[instructionKey],
         });
@@ -175,7 +182,7 @@ export const SwitchToggle = ({
       <Typography variant="subtitle2" color="text.secondary" mb={1}>
         Select MinorEdit Types:
       </Typography>
-      {MinorEdit_SUBOPTIONS.map((opt) => {
+      {MINOR_EDIT_SUBOPTIONS.map((opt) => {
         const checked = variantConfig.minorEditSubtypes?.includes(opt) ?? false;
         return (
           <FormControlLabel
@@ -193,7 +200,7 @@ export const SwitchToggle = ({
                 }}
               />
             }
-            label={opt}
+            label={MINOR_EDIT_LABELS[opt]}
           />
         );
       })}
