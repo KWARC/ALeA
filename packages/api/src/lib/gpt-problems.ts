@@ -169,6 +169,12 @@ export interface ReskinVariant {
   theme: string;
   reskinInstruction?: string;
 }
+export interface ScaffoldVariant {
+  variantType: 'scaffolding';
+  scaffoldingType: string;
+  numSubQuestions?:number;
+  scaffoldInstruction?: string;
+}
 export interface LanguageVariant {
   variantType: 'translate';
   language: string;
@@ -189,6 +195,7 @@ export interface VariantBase {
 export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
+  | (VariantBase & ScaffoldVariant)
   | (VariantBase & ModifyChoicesVariant)
   | (VariantBase & LanguageVariant);
 
@@ -225,7 +232,7 @@ export type GenerationParams = NewGenerationParams | CopyGenerationParams | Vari
 // }
 export interface PossibleVariantsResult {
   current_question_language: string;
-  adjust_scaffolding: boolean;
+  // adjust_scaffolding: boolean;
   change_data_format: boolean;
   change_goal: boolean;
   goal_inversion: boolean;

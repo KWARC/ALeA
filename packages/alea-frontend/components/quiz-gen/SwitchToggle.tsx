@@ -5,17 +5,20 @@ import {
   Chip,
   Collapse,
   FormControlLabel,
+  MenuItem,
   Radio,
   RadioGroup,
+  Select,
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
-import { VariantConfig, VariantType } from './VariantDialog';
+import { ScaffoldingType, VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
   title: string;
@@ -24,6 +27,7 @@ interface SwitchToggleProps {
   placeholder?: string;
   variantConfig: VariantConfig;
   themes?: string[];
+  scaffoldingDetails?: ScaffoldingType;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   problemData?: FlatQuizProblem;
   availableMinorEdits?: MinorEditType[];
@@ -42,11 +46,63 @@ export type MinorEditType =
 const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
   change_data_format: 'Change Data Format',
   change_goal: 'Change Goal',
-  goal_inversion : 'Invert Goal',
+  goal_inversion: 'Invert Goal',
   convert_units: 'Convert Units',
   negate_question_stem: 'Negate Question Stem',
   substitute_values: 'Substitute Values',
 };
+
+function RenderScaffoldingDetails({
+  selectedScaffolding,
+  numSubQuestions = 1,
+  setSelectedScaffolding,
+  setNumSubQuestions,
+  maxSubQuestions,
+}: {
+  selectedScaffolding: 'high' | 'reduced';
+  numSubQuestions?: number;
+  setSelectedScaffolding: (value: 'high' | 'reduced') => void;
+  setNumSubQuestions?: (value: number) => void;
+  maxSubQuestions?: number;
+}) {
+  return (
+    <Box pl={1} mb={2}>
+      <Typography variant="subtitle2" color="text.secondary" mb={1}>
+        Scaffolding Options:
+      </Typography>
+
+      <RadioGroup
+        value={selectedScaffolding}
+        onChange={(e) => setSelectedScaffolding(e.target.value as 'high' | 'reduced')}
+      >
+        <Box display="flex" alignItems="center" mb={1}>
+          <Tooltip title="High Scaffolding: breaks the problem into multiple guided sub-questions, reducing cognitive load.">
+            <FormControlLabel value="high" control={<Radio />} label="High Scaffolding" />
+          </Tooltip>
+          {selectedScaffolding === 'high' && (
+            <Tooltip title={`Select number of sub-questions to break the problem into`}>
+              <Select
+                size="small"
+                value={numSubQuestions}
+                onChange={(e) => setNumSubQuestions(Number(e.target.value))}
+                sx={{ ml: 2, width: 80 }}
+              >
+                {Array.from({ length: maxSubQuestions }, (_, i) => i + 1).map((n) => (
+                  <MenuItem key={n} value={n}>
+                    {n}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Tooltip>
+          )}
+        </Box>
+        <Tooltip title="Reduced Scaffolding: presents the problem as a single step without breaking into sub-questions.">
+          <FormControlLabel value="reduced" control={<Radio />} label="Reduced Scaffolding" />
+        </Tooltip>
+      </RadioGroup>
+    </Box>
+  );
+}
 
 export const SwitchToggle = ({
   title,
@@ -55,6 +111,7 @@ export const SwitchToggle = ({
   placeholder,
   variantConfig,
   themes = [],
+  scaffoldingDetails,
   setVariantConfig,
   problemData,
   availableMinorEdits,
@@ -66,6 +123,11 @@ export const SwitchToggle = ({
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
+  const { high, reduced } = scaffoldingDetails || {};
+  const [selectedScaffolding, setSelectedScaffolding] = useState<'high' | 'reduced'>(
+    high?.applicable ? 'high' : reduced?.applicable ? 'reduced' : 'high'
+  );
+  const [numSubQuestions, setNumSubQuestions] = useState(high?.num_subquestions || null);
   const mcqOptions = problemData?.options || [];
 
   const handleSwitchChange = (checked: boolean) => {
@@ -160,7 +222,7 @@ export const SwitchToggle = ({
           mode: 'variant',
           problemId: problemData.problemId,
           variantType: 'modify_choices',
-          modifyType :variantConfig.modifyChoiceMode,
+          modifyType: variantConfig.modifyChoiceMode,
           optionsToModify: selectedOptions,
           modifyChoiceInstruction: variantConfig[instructionKey],
         });
@@ -173,6 +235,27 @@ export const SwitchToggle = ({
       }
     }
   };
+const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQuestions: number) => {
+  if (!problemData?.problemId) return;
+  onLoadingChange?.(true);
+  try {
+    const result = await generateQuizProblems({
+      mode: 'variant',
+      problemId: problemData.problemId,
+      variantType: 'scaffolding', 
+      scaffoldingType: selectedScaffolding,
+      numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined, 
+    });
+
+    if (result.length > 0) {
+      const newVariant = result[0];
+      onVariantGenerated?.(newVariant);
+    }
+  } finally {
+    onLoadingChange?.(false);
+  }
+};
+
 
   useEffect(() => {
     if (variantConfig.selectedTheme) {
@@ -320,6 +403,15 @@ export const SwitchToggle = ({
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
+          {typeKey === 'scaffolding' && (
+            <RenderScaffoldingDetails
+              selectedScaffolding={selectedScaffolding}
+              numSubQuestions={numSubQuestions}
+              setSelectedScaffolding={setSelectedScaffolding}
+              setNumSubQuestions={setNumSubQuestions}
+              maxSubQuestions={scaffoldingDetails?.high?.num_subquestions ?? 1}
+            />
+          )}
 
           {instructionKey && (
             <TextField
@@ -356,6 +448,14 @@ export const SwitchToggle = ({
                 disabled={!variantConfig.modifyChoiceMode || !selectedOptions?.length}
               >
                 Generate Modified Choice Variant
+              </Button>
+            )}
+            {typeKey === 'scaffolding' && (
+              <Button
+                variant="contained"
+                onClick={() => handleScaffold(selectedScaffolding,numSubQuestions)}
+              >
+                Generate
               </Button>
             )}
           </Stack>

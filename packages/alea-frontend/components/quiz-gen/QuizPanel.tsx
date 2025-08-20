@@ -124,7 +124,7 @@ export function QuizPanel({
   };
 
   const createCopyAndCheckVariants = async (problemData: FlatQuizProblem | ExistingProblem) => {
-    if (!problemData) return;
+    if (!problemData) return false;
 
     let copiedProblem: QuizProblem | undefined;
     if ('problemId' in problemData) {
@@ -151,20 +151,24 @@ export function QuizPanel({
             )?.[0];
     }
 
-    if (!copiedProblem) return;
+    if (!copiedProblem) return false;
     setCopiedProblem(flattenQuizProblem(copiedProblem));
+    return true;
   };
 
   const handleOpenVariantDialog = async () => {
     setLoading(true);
+     let success = false;
     try {
-      await createCopyAndCheckVariants(currentProblem);
+     success= await createCopyAndCheckVariants(currentProblem);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+    if (success) {
     setVariantDialogOpen(true);
+    } 
   };
 
   if (!currentProblem) {

@@ -25,7 +25,7 @@ import { flattenQuizProblem } from './QuizPanel';
 import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
 
-export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin';
+export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin'|'scaffolding';
 export interface VariantConfig {
   variantTypes: VariantType[];
   minorEditInstruction?: string;
@@ -35,7 +35,15 @@ export interface VariantConfig {
   thematicReskinInstruction?: string;
   selectedTheme?: string;
 }
-
+export interface ScaffoldingType {
+  high: {
+    applicable: boolean;
+    num_subquestions: number; 
+  };
+  reduced: {
+    applicable: boolean;
+  };
+}
 interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
@@ -43,7 +51,14 @@ interface VariantDialogProps {
   setProblemData: (p: FlatQuizProblem | null) => void;
   userInfo: UserInfo | undefined;
 }
-
+export const MINOR_EDIT_KEYS: MinorEditType[] = [
+  'change_data_format',
+  'change_goal',
+  'goal_inversion',
+  'convert_units',
+  'negate_question_stem',
+  'substitute_values',
+];
 export const VariantDialog = ({
   open,
   onClose,
@@ -64,10 +79,12 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const [scaffoldingDetails,setScaffoldingDetails]=useState<ScaffoldingType>(null);
   const [availabledMinorEdits, setAvailableMinorEdits] = useState<MinorEditType[] | []>([]);
   const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
+  const [scaffoldingApplicable, setScaffoldingApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
@@ -75,7 +92,6 @@ export const VariantDialog = ({
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [currentLang, setCurrentLang] = useState('');
   const [resetKey, setResetKey] = useState(0);
-  const availableMinorEdits: MinorEditType[] = [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
@@ -99,39 +115,46 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        const result = await checkPossibleVariants(problemData.problemId);
-        // const result = {
-        //   adjust_scaffolding: true,
-        //   change_data_format: true,
-        //   change_goal: true,
-        //   convert_units: true,
-        //   modify_choices: true,
-        //   negate_question_stem: true,
-        //   rephrase_wording: true,
-        //   goal_inversion: true,
-        //   current_question_language: 'English',
-        //   reskin: {
-        //     applicable: true,
-        //     themes: [
-        //       'Corporate Office Scenario',
-        //       'Library Management System',
-        //       'Hospital Staff Records',
-        //       'University Student Database',
-        //     ],
-        //   },
-        //   substitute_values: true,
-        // };
-        if (result.goal_inversion) availableMinorEdits.push('goal_inversion');
-        if (result.change_goal) availableMinorEdits.push('change_goal');
-        if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
-        if (result.change_data_format) availableMinorEdits.push('change_data_format');
-        if (result.convert_units) availableMinorEdits.push('convert_units');
-        if (result.substitute_values) availableMinorEdits.push('substitute_values');
-
+        // const result = await checkPossibleVariants(problemData.problemId);
+        const result = {
+          adjust_scaffolding: true,
+          change_data_format: true,
+          change_goal: true,
+          convert_units: true,
+          modify_choices: true,
+          negate_question_stem: true,
+          rephrase_wording: true,
+          goal_inversion: true,
+          current_question_language: 'English',
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+          scaffolding: {
+            "high": {
+              "applicable": true,
+              "num_subquestions": 3
+            },
+          "reduced": {
+              "applicable": false
+            } 
+    },
+          substitute_values: true,
+        };
+        const availableMinorEdits = MINOR_EDIT_KEYS.filter(key => result[key]);
+        const isHighScaffoldingApplicable = result.scaffolding?.high?.applicable && (result.scaffolding?.high.num_subquestions > 0);
+        const isReducedScaffoldingApplicable = result.scaffolding?.reduced?.applicable;
         setMinorEditsApplicable(availableMinorEdits.length > 0);
         setAvailableMinorEdits(availableMinorEdits);
         setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable && result.reskin?.themes?.length > 0);
+        setScaffoldingApplicable(isHighScaffoldingApplicable||isReducedScaffoldingApplicable);
+        setScaffoldingDetails(result.scaffolding);
         setAvailableThemes(result.reskin.themes);
         setCurrentLang(result.current_question_language);
       } finally {
@@ -141,7 +164,7 @@ export const VariantDialog = ({
 
     checkVariants();
   }, [open, problemData]);
-
+console.log({scaffoldingDetails});
   useEffect(() => {
     const fetchProblemVersionHistory = async () => {
       if (!open || !problemData) return;
@@ -394,6 +417,23 @@ export const VariantDialog = ({
                       typeKey="thematicReskin"
                       variantConfig={variantConfig}
                       themes={availableThemes}
+                      setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
+                    />
+                  )}
+                  {scaffoldingApplicable && (
+                    <SwitchToggle
+                      title="Scaffold"
+                      typeKey="scaffolding"
+                      instructionKey="scaffoldingInstruction"
+                      variantConfig={variantConfig}
+                      scaffoldingDetails={scaffoldingDetails}
                       setVariantConfig={setVariantConfig}
                       problemData={problemData}
                       onLoadingChange={setPreviewLoading}
