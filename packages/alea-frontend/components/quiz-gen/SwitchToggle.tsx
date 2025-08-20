@@ -353,7 +353,7 @@ export const SwitchToggle = ({
               <Button
                 variant="contained"
                 onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
-                disabled={!variantConfig.modifyChoiceMode && !selectedOptions?.length}
+                disabled={!variantConfig.modifyChoiceMode || !selectedOptions?.length}
               >
                 Generate Modified Choice Variant
               </Button>

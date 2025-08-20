@@ -98,28 +98,28 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        //const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          adjust_scaffolding: true,
-          change_data_format: true,
-          change_goal: true,
-          convert_units: true,
-          modify_choices: true,
-          negate_question_stem: true,
-          rephrase_wording: true,
-          goal_inversion: true,
-          current_question_language: 'English',
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-          substitute_values: true,
-        };
+        const result = await checkPossibleVariants(problemData.problemId);
+        // const result = {
+        //   adjust_scaffolding: true,
+        //   change_data_format: true,
+        //   change_goal: true,
+        //   convert_units: true,
+        //   modify_choices: true,
+        //   negate_question_stem: true,
+        //   rephrase_wording: true,
+        //   goal_inversion: true,
+        //   current_question_language: 'English',
+        //   reskin: {
+        //     applicable: true,
+        //     themes: [
+        //       'Corporate Office Scenario',
+        //       'Library Management System',
+        //       'Hospital Staff Records',
+        //       'University Student Database',
+        //     ],
+        //   },
+        //   substitute_values: true,
+        // };
         if (result.goal_inversion) availableMinorEdits.push('goal_inversion');
         if (result.change_goal) availableMinorEdits.push('change_goal');
         if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
