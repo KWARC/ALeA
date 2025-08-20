@@ -158,6 +158,12 @@ export const VariantDialog = ({
     setEditableSTeX(STeX);
   }, [STeX]);
 
+  useEffect(() => {
+    if (!isViewingLatestVersion) {
+      clearSelection();
+    }
+  }, [isViewingLatestVersion]);
+
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
@@ -260,13 +266,12 @@ export const VariantDialog = ({
                   zIndex={10}
                   bgcolor="rgba(255, 255, 255, 0.6)"
                 />
-                {(selectedVersionGenParams as any) &&
-                  (selectedVersionGenParams as any)?.mode !== 'copy' && (
-                    <GenerationParams
-                      genParams={selectedVersionGenParams}
-                      existingProblemUri={existingProblemUri}
-                    />
-                  )}
+                {selectedVersionGenParams && (selectedVersionGenParams as any)?.mode !== 'copy' && (
+                  <GenerationParams
+                    genParams={selectedVersionGenParams}
+                    existingProblemUri={existingProblemUri}
+                  />
+                )}
               </>
             )}
             <Box

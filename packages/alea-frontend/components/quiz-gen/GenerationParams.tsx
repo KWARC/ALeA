@@ -17,7 +17,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
       right={0}
       zIndex={11}
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        background: 'linear-gradient(135deg, #d7b4b4ff 0%, #f8f9fa 100%)',
         borderRadius: 3,
         p: 3,
         border: '1px solid #e1e5e9',
@@ -123,7 +123,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   variant="body2"
                   sx={{ fontWeight: 600, color: '#34495e', minWidth: '80px' }}
                 >
-                  Minor Edit:
+                  Variant Type:
                 </Typography>
                 <Typography
                   variant="body2"
@@ -160,6 +160,57 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   }}
                 >
                   {genParams?.variantOptions?.language}
+                </Typography>
+              </Box>
+            </>
+          )}
+
+          {genParams?.variantOptions?.variantType && genParams?.variantOptions?.modifyType && (
+            <>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: '#34495e', minWidth: '80px' }}
+                >
+                  Modify Choices:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 400,
+                    color: PRIMARY_COL,
+                    backgroundColor: '#f8f9fa',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    border: `1px solid ${PRIMARY_COL}20`,
+                  }}
+                >
+                  {genParams?.variantOptions?.modifyType}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: '#34495e', minWidth: '120px' }}
+                >
+                  Selected Options:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 400,
+                    color: PRIMARY_COL,
+                    backgroundColor: '#f8f9fa',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    border: `1px solid ${PRIMARY_COL}20`,
+                  }}
+                >
+                  {Array.isArray(genParams?.variantOptions?.optionsToModify)
+                    ? genParams.variantOptions.optionsToModify.join(', ')
+                    : genParams?.variantOptions?.optionsToModify}
                 </Typography>
               </Box>
             </>
