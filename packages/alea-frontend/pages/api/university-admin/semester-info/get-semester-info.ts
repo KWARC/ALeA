@@ -8,7 +8,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const data = (await executeQuery(
     `
-    SELECT * FROM semesterInfo
+    SELECT semesterStart, semesterEnd, lectureStartDate, lectureEndDate
+    FROM semesterInfo
     WHERE universityId = ? AND instanceId = ?
     `,
     [universityId, instanceId]
