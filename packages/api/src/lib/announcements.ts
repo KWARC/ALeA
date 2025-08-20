@@ -18,7 +18,7 @@ export interface CreateAnnouncementRequest {
   instanceId: string;
   title: string;
   content: string;
-  visibleUntil?: string;
+  visibleUntil: string;
 }
 
 export interface DeleteAnnouncementRequest {
@@ -29,11 +29,11 @@ export interface DeleteAnnouncementRequest {
 
 export interface UpdateAnnouncementRequest {
   id: number;
-  courseId?: string;
+  courseId: string;
   instanceId: string;
-  title?: string;
-  content?: string;
-  visibleUntil?: string;
+  title: string;
+  content: string;
+  visibleUntil: string;
 }
 
 export async function createAnnouncement(details: CreateAnnouncementRequest) {
@@ -42,14 +42,14 @@ export async function createAnnouncement(details: CreateAnnouncementRequest) {
   });
 }
 
-export async function getAnnouncement(courseId?: string, instanceId?: string) {
+export async function getAnnouncement(courseId: string, instanceId: string) {
   const resp = await axios.get('/api/announcement/get-announcement', {
     params: { courseId, instanceId },
   });
   return resp.data as Announcement[];
 }
 
-export async function getActiveAnnouncements(courseId?: string, instanceId?: string) {
+export async function getActiveAnnouncements(courseId: string, instanceId: string) {
   const resp = await axios.get('/api/announcement/get-active-announcements', {
     params: { courseId , instanceId},
   });
