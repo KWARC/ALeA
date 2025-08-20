@@ -66,7 +66,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const fetchedAnnouncements = await getAnnouncement(courseId);
+      const fetchedAnnouncements = await getAnnouncement(courseId, instanceId);
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
@@ -75,7 +75,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -117,9 +117,11 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           content: content.trim(),
           visibleUntil: visibleUntilSQL,
           courseId: courseId,
+          instanceId: instanceId,
         };
         await updateAnnouncement(updateRequest);
       } else {
+        console.log({instanceId})
         const createRequest: CreateAnnouncementRequest = {
           courseId: courseId,
           title: title.trim(),
@@ -128,6 +130,10 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           instanceId: instanceId,
         };
         await createAnnouncement(createRequest);
+        console.log("Payload sent to create-announcement:", createRequest);
+
+
+
       }
       handleCloseDialog();
       fetchAnnouncements();

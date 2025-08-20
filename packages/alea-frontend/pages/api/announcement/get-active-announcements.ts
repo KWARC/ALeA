@@ -4,7 +4,7 @@ import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-uti
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
 
-  const { courseId, instanceId  } = req.query;
+  const { courseId, instanceId } = req.query;
 
   if (!courseId || !instanceId) {
     res.status(422).end('Missing courseId or instanceId');

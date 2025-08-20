@@ -14,7 +14,7 @@ import QuizDashboard from '../../components/QuizDashboard';
 import { StudyBuddyModeratorStats } from '../../components/StudyBuddyModeratorStats';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
-import InstructorPanel from '../../components/instructor-panel/InstructorPanel';
+import CourseMetadata from '../../components/instructor-panel/CourseMetadata';
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -29,7 +29,7 @@ type TabName =
   | 'study-buddy'
   | 'peer-review'
   | 'syllabus'
-  | 'instructor-panel';
+  | 'course-metadata';
 
 const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions: Action[] }> = {
   'access-control': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
@@ -45,16 +45,18 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
-  'instructor-panel': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
+  'course-metadata': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
 };
 function ChosenTab({
   tabName,
   courseId,
+  instanceId,
   quizId,
   onQuizIdChange,
 }: {
   tabName: TabName;
   courseId: string;
+  instanceId: string;
   quizId?: string;
   onQuizIdChange?: (id: string) => void;
 }) {
@@ -73,8 +75,8 @@ function ChosenTab({
       return <InstructorPeerReviewViewing courseId={courseId}></InstructorPeerReviewViewing>;
     case 'syllabus':
       return <CoverageUpdateTab />;
-    case 'instructor-panel':
-      return <InstructorPanel courseId={courseId} instanceId="" />;
+    case 'course-metadata':
+      return <CourseMetadata courseId={courseId} instanceId={instanceId} />;
     default:
       return null;
   }
@@ -111,12 +113,13 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'quiz-dashboard': '900px',
   'study-buddy': '900px',
   syllabus: '1200px',
-  'instructor-panel': '1200px',
+  'course-metadata': '1200px',
 };
 
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  const instanceId = (router.query.instanceId as string) ?? CURRENT_TERM;
   const tab = router.query.tab as TabName;
 
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
@@ -174,7 +177,7 @@ const InstructorDash: NextPage = () => {
         'study-buddy',
         'peer-review',
         'access-control',
-        'instructor-panel',
+        'course-metadata',
       ];
 
       const sortedTabs = tabOrder.filter((tab) => tabs.includes(tab));
@@ -248,6 +251,7 @@ const InstructorDash: NextPage = () => {
             <ChosenTab
               tabName={tabName}
               courseId={courseId}
+              instanceId={instanceId}
               quizId={quizId}
               onQuizIdChange={handleQuizIdChange}
             />

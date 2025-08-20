@@ -327,7 +327,6 @@ function CourseScheduleSection({
 }
 
 interface Announcement {
-  id: number;
   courseId: string;
   instructorId: string;
   title: string;
@@ -335,9 +334,10 @@ interface Announcement {
   createdAt: string;
   updatedAt: string;
   visibleUntil: string;
+  instanceId: string;
 }
 
-function AnnouncementsSection({ courseId }: { courseId: string }) {
+function AnnouncementsSection({ courseId,instanceId }: { courseId: string, instanceId: string}) {
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -346,7 +346,7 @@ function AnnouncementsSection({ courseId }: { courseId: string }) {
     async function fetchAnnouncements() {
       try {
         setLoading(true);
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId,instanceId);
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -356,7 +356,7 @@ function AnnouncementsSection({ courseId }: { courseId: string }) {
       }
     }
     fetchAnnouncements();
-  }, [courseId]);
+  }, [courseId, instanceId]);
 
   if (loading) {
     return (
@@ -374,13 +374,7 @@ function AnnouncementsSection({ courseId }: { courseId: string }) {
     );
   }
 
-  if (!announcements || announcements.length === 0) {
-    return (
-      <Alert severity="info" sx={{ my: 2 }}>
-        No valid announcements found for this course.
-      </Alert>
-    );
-  }
+
 
   return (
     <Box
@@ -506,10 +500,12 @@ const CourseHomePage: NextPage = () => {
   };
 
   return (
+
     <MainLayout
       title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
       bgColor={BG_COLOR}
     >
+
       <CourseHeader
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
@@ -612,7 +608,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} />
+        <AnnouncementsSection courseId={courseId} instanceId={instanceId} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} />
         <br />

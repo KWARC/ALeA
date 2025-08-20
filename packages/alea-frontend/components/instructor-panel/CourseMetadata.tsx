@@ -5,12 +5,12 @@ import AnnouncementsTab from './AnnouncementsTab';
 import LectureScheduleTab from './LectureScheduleTab';
 import { createInstructorCourseMemberAcl } from '@stex-react/api';
 
-interface InstructorPanelProps {
+interface CourseMetadataProps {
   courseId: string;
   instanceId: string;
 }
 
-const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId, instanceId }) => {
+const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
   const [tab, setTab] = useState<number>(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => setTab(newValue);
@@ -57,4 +57,4 @@ const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId, instanceId 
   );
 };
 
-export default InstructorPanel;
+export default CourseMetadata;
