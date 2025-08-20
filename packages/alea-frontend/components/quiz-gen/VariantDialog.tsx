@@ -232,9 +232,16 @@ export const VariantDialog = ({
             <CircularProgress />
           </Box>
         )}
-        <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
+        <Box
+          display="flex"
+          flex={1}
+          gap={2}
+          minHeight={0}
+          overflow="hidden"
+          flexDirection={{ xs: 'column', md: 'row' }}
+        >
           <Box
-            flex={0.7}
+            flex={{ xs: '1 1 auto', md: 0.4 }}
             display="flex"
             flexDirection="column"
             minHeight={0}
@@ -432,25 +439,26 @@ export const VariantDialog = ({
               </Button>
             </Box>
           </Box>
-
-          <PreviewSection
-            previewMode={previewMode}
-            setPreviewMode={setPreviewMode}
-            problemData={problemData}
-            editableSTeX={editableSTeX}
-            setEditableSTeX={setEditableSTeX}
-            previousVersions={versions}
-            isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
-            onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setSnackbarOpen(false)}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           />
+          <Box flex={{ xs: '1 1 auto', md: 0.7 }} minHeight={0} overflow="hidden">
+            <PreviewSection
+              previewMode={previewMode}
+              setPreviewMode={setPreviewMode}
+              problemData={problemData}
+              editableSTeX={editableSTeX}
+              setEditableSTeX={setEditableSTeX}
+              previousVersions={versions}
+              isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+              onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+            />
+          </Box>
         </Box>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          message={snackbarMessage}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        />
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
