@@ -446,7 +446,13 @@ export const VariantDialog = ({
             message={snackbarMessage}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           />
-          <Box flex={{ xs: '1 1 auto', md: 0.7 }} minHeight={0} overflow="hidden">
+          <Box
+            flex={{ xs: '1 1 auto', md: 0.7 }}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+          >
             <PreviewSection
               previewMode={previewMode}
               setPreviewMode={setPreviewMode}
