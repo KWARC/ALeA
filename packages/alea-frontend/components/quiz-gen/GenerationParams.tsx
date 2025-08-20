@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Chip, Typography } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
 
 interface GenerationParamsProps {
@@ -32,7 +32,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
           height: '4px',
           background: `linear-gradient(90deg, ${PRIMARY_COL} 0%, #8B4513 100%)`,
           borderRadius: '12px 12px 0 0',
-        }
+        },
       }}
     >
       <Typography
@@ -46,75 +46,199 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
       </Typography>
 
       {genParams?.mode ? (
-        <>
-          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-            Mode:{' '}
-            <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-              {genParams?.mode}
-            </Box>
-          </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: '#34495e', minWidth: '60px' }}
+            >
+              Mode:
+            </Typography>
+            <Chip
+              label={genParams?.mode}
+              size="small"
+              sx={{
+                backgroundColor: PRIMARY_COL,
+                color: 'white',
+                fontWeight: 500,
+                fontSize: '0.75rem',
+              }}
+            />
+          </Box>
 
           {genParams?.variantOptions?.theme && (
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              Theme:{' '}
-              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: '#34495e', minWidth: '60px' }}
+              >
+                Theme:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 400,
+                  color: PRIMARY_COL,
+                  backgroundColor: '#f8f9fa',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  border: `1px solid ${PRIMARY_COL}20`,
+                }}
+              >
                 {genParams?.variantOptions?.theme}
-              </Box>
-            </Typography>
+              </Typography>
+            </Box>
           )}
 
           {genParams?.variantOptions?.minorEditType && (
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              Minor Edit:{' '}
-              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: '#34495e', minWidth: '80px' }}
+              >
+                Minor Edit:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 400,
+                  color: PRIMARY_COL,
+                  backgroundColor: '#f8f9fa',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  border: `1px solid ${PRIMARY_COL}20`,
+                }}
+              >
                 {genParams?.variantOptions?.minorEditType}
-              </Box>
-            </Typography>
+              </Typography>
+            </Box>
           )}
 
-          {(genParams?.variantOptions?.variantType && genParams?.variantOptions?.language )&&(
+          {genParams?.variantOptions?.variantType && genParams?.variantOptions?.language && (
             <>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-             Variant Type:{' '}
-              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                {genParams?.variantOptions?.variantType}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: '#34495e', minWidth: '80px' }}
+                >
+                  Minor Edit:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 400,
+                    color: PRIMARY_COL,
+                    backgroundColor: '#f8f9fa',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    border: `1px solid ${PRIMARY_COL}20`,
+                  }}
+                >
+                  {genParams?.variantOptions?.variantType}
+                </Typography>
               </Box>
-            </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                Translated Language:{' '}
-                <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: '#34495e', minWidth: '120px' }}
+                >
+                  Translated Language:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 400,
+                    color: PRIMARY_COL,
+                    backgroundColor: '#f8f9fa',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    border: `1px solid ${PRIMARY_COL}20`,
+                  }}
+                >
                   {genParams?.variantOptions?.language}
-                </Box>
-              </Typography>
+                </Typography>
+              </Box>
             </>
           )}
 
           {genParams?.sourceProblem?.problemId && (
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              Source Problem Id:{' '}
-              <Box component="span" sx={{ fontWeight: 400 }}>
+            <Box
+              sx={{
+                mt: 1,
+                pt: 1.5,
+                borderTop: '1px solid #e1e5e9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: '#34495e', minWidth: '120px' }}
+              >
+                Source Problem ID:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 500,
+                  color: '#2c3e50',
+                  backgroundColor: '#ecf0f1',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  fontFamily: 'monospace',
+                }}
+              >
                 {genParams?.sourceProblem?.problemId}
-              </Box>
-            </Typography>
+              </Typography>
+            </Box>
           )}
-        </>
+        </Box>
       ) : (
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-          Source Problem Uri:{' '}
+        <Box
+          sx={{
+            mt: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600, color: '#34495e' }}>
+            Source Problem URI:
+          </Typography>
           <Box
             component="a"
             href={existingProblemUri}
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-              fontWeight: 400,
+              fontWeight: 800,
               color: PRIMARY_COL,
-              textDecoration: 'underline',
+              textDecoration: 'none',
+              backgroundColor: '#f8f9fa',
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              border: `1px solid ${PRIMARY_COL}30`,
+              transition: 'all 0.2s ease',
+              fontSize: '0.875rem',
+              wordBreak: 'break-all',
+              '&:hover': {
+                backgroundColor: `${PRIMARY_COL}08`,
+                borderColor: PRIMARY_COL,
+                transform: 'translateY(-1px)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              },
             }}
           >
             {existingProblemUri}
           </Box>
-        </Typography>
+        </Box>
       )}
     </Box>
   );
