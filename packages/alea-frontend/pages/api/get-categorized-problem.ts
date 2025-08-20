@@ -1,21 +1,21 @@
+import { FTML } from '@kwarc/ftml-viewer';
 import {
   getDefiniedaInSection,
-  getSectionDependencies,
   getQueryResults,
+  getSectionDependencies,
   getSparqlQueryForLoRelationToDimAndConceptPair,
+  Language,
+  ProblemData,
 } from '@stex-react/api';
+import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
-import { FTML } from '@kwarc/ftml-viewer';
+import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const categorizedProblemCache = new Map<
   string,
   {
-    data: {
-      problemId: string;
-      category: 'syllabus' | 'adventurous';
-      labels: string[];
-    }[];
+    data: ProblemData[];
     timestamp: number;
   }
 >();
@@ -33,8 +33,15 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
   return sectionUris;
 }
 
-async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Set<string>> {
-  const sectionUris = getSections(courseToc);
+// HACK: Fix this.
+const conceptUrisForCourse = new Map<string, string[]>();
+async function getAllConceptUrisForCourse(courseId: string, courseNotesUri: string): Promise<string[]> {
+  if (conceptUrisForCourse.has(courseId)) {
+    return conceptUrisForCourse.get(courseId);
+  }
+  const toc = (await getFlamsServer().contentToc({ uri: courseNotesUri }))?.[1] ?? [];
+
+  const sectionUris = getSections(toc);
   const conceptUris = new Set<string>();
 
   for (const sectionUri of sectionUris) {
@@ -44,8 +51,9 @@ async function getAllConceptUrisForCourse(courseToc: FTML.TOCElem[]): Promise<Se
     const deps = await getSectionDependencies(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
-
-  return conceptUris;
+  const conceptUrisArray = Array.from(conceptUris);
+  conceptUrisForCourse.set(courseId, conceptUrisArray);
+  return conceptUrisArray;
 }
 
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
@@ -64,20 +72,38 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
     conceptUris.push(...poSymbolUris);
   });
 
-  return conceptUris;
+  return Array.from(new Set(conceptUris));
 }
 
+const languageUrlMap: Record<string, Language> = {
+  de: Language.Deutsch,
+  en: Language.English,
+  ar: Language.Arabic,
+  bn: Language.Bengali,
+  hi: Language.Hindi,
+  fr: Language.French,
+  ja: Language.Japanese,
+  ko: Language.Korean,
+  zh: Language.Mandarin,
+  mr: Language.Marathi,
+  fa: Language.Persian,
+  pt: Language.Portuguese,
+  ru: Language.Russian,
+  es: Language.Spanish,
+  ta: Language.Tamil,
+  te: Language.Telugu,
+  tr: Language.Turkish,
+  ur: Language.Urdu,
+  vi: Language.Vietnamese,
+};
+
 export async function getCategorizedProblems(
+  courseId: string,
   sectionUri: string,
-  courseToc: FTML.TOCElem[],
+  courseNotesUri: string,
+  userLanguages?: string | string[],
   forceRefresh = false
-): Promise<
-  {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[]
-> {
+): Promise<ProblemData[]> {
   const cacheKey = sectionUri;
 
   if (!forceRefresh && categorizedProblemCache.has(cacheKey)) {
@@ -86,27 +112,38 @@ export async function getCategorizedProblems(
       return cached.data;
     }
   }
-  const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseToc);
+  const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
+  const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-
-  const categorized: {
-    problemId: string;
-    category: 'syllabus' | 'adventurous';
-    labels: string[];
-  }[] = await Promise.all(
+  const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const isSyllabus = labels.some((label) => conceptUrisFromCourse.has(label));
+      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.includes(label));
+
+      let category: 'syllabus' | 'adventurous' =
+        outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
+      let showForeignLanguageNotice = false;
+      let matchedLanguage: string | undefined;
+
+      const problemLangCode = getParamFromUri(problemUri, 'l') ?? 'en';
+      if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
+        const problemLang = languageUrlMap[problemLangCode];
+        if (problemLang && userLanguages?.includes(problemLang)) {
+          showForeignLanguageNotice = true;
+          matchedLanguage = problemLang;
+        } else {
+          category = 'adventurous';
+        }
+      }
 
       return {
         problemId: problemUri,
-        category: isSyllabus ? 'syllabus' : 'adventurous',
+        category,
         labels,
-      } as {
-        problemId: string;
-        category: 'syllabus' | 'adventurous';
-        labels: string[];
-      };
+        showForeignLanguageNotice,
+        matchedLanguage,
+        outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
+      } as ProblemData;
     })
   );
   categorizedProblemCache.set(cacheKey, {

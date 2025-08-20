@@ -1,6 +1,7 @@
 import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Box,
   Button,
@@ -11,13 +12,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import axios from 'axios';
-import { useRouter } from 'next/router';
+import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
-import { getProblemsPerSection } from '@stex-react/api';
+import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
 import { ForMe } from './ForMe';
 import { ProblemFilter } from './ProblemFilter';
 
@@ -101,7 +101,7 @@ export function PerSectionQuiz({
   cachedProblemUris?: string[] | null;
   setCachedProblemUris?: (uris: string[]) => void;
   category?: 'syllabus' | 'adventurous';
-  courseId?: string;
+  courseId: string;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);
@@ -114,6 +114,7 @@ export function PerSectionQuiz({
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
   const [tabIndex, setTabIndex] = useState<string>('0');
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
+  const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
   const orderedCategoryKeys = useMemo(() => {
@@ -131,32 +132,55 @@ export function PerSectionQuiz({
       return;
     }
 
-    setIsLoadingProblemUris(true);
+    const fetchProblems = async () => {
+      setIsLoadingProblemUris(true);
+      const userInfo = await getUserProfile();
+      const languages = (userInfo as any)?.languages;
 
-    getProblemsPerSection(sectionUri, courseId)
-      .then((problems) => {
-        const map: Record<string, string[]> = {};
+      getProblemsPerSection(sectionUri, courseId, languages)
+        .then((problems) => {
+          const map: Record<string, string[]> = {};
+          for (const p of problems) {
+            if (!map[p.category]) map[p.category] = [];
+            map[p.category].push(p.problemId);
+          }
+          setCategoryMap(map);
+          setProblems(problems);
+          setAllProblemUris(problems.map((p) => p.problemId));
+          let selected: string[] = [];
 
-        problems.forEach(({ problemId, category }) => {
-          const cat = category || 'uncategorized';
-          if (!map[cat]) map[cat] = [];
-          map[cat].push(problemId);
-        });
+          if (category) {
+            selected = map[category] || [];
+            if (setCachedProblemUris) {
+              setCachedProblemUris(selected);
+            }
+          } else {
+            const categoryKeys = Object.keys(map);
+            if (categoryKeys.length === 0) {
+              setProblemUris([]);
+              setIsSubmitted([]);
+              setResponses([]);
+              setIsLoadingProblemUris(false);
+              return;
+            }
 
-        setCategoryMap(map);
-        const selected: string[] = (category && map[category]) || map[Object.keys(map)[0]] || [];
-        setCachedProblemUris?.(selected);
-        setTabIndex('0');
+            const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
+            selected = map[selectedCategory] || [];
 
-        setAllProblemUris(selected);
-        setProblemUris(selected);
-        setIsSubmitted(selected.map(() => false));
-        setResponses(selected.map(() => undefined));
-      })
-      .catch((err) => {
-        console.error('Error loading problems', err);
-      })
-      .finally(() => setIsLoadingProblemUris(false));
+            if (setCachedProblemUris) {
+              const all = Object.values(map).flat();
+              setCachedProblemUris(all);
+            }
+          }
+
+          setProblemUris(selected);
+          setIsSubmitted(selected.map(() => false));
+          setResponses(selected.map(() => undefined));
+          setIsLoadingProblemUris(false);
+        })
+        .catch(() => setIsLoadingProblemUris(false));
+    };
+    fetchProblems();
   }, [sectionUri, courseId]);
 
   if (isLoadingProblemUris) return <LinearProgress />;
@@ -181,7 +205,9 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  // if (!problemUri) return <>error: [{problemUri}] </>;
+  if (!problemUri) return <>error: [{problemUri}] </>;
+  const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
+
 
   return (
     <Box mb={4}>
@@ -193,7 +219,26 @@ export function PerSectionQuiz({
         border="1px solid #CCC"
         borderRadius="5px"
       >
-        {!category && Object.keys(categoryMap).length > 0 && (
+        <Typography fontWeight="bold" textAlign="left">
+          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+          {currentProblem?.showForeignLanguageNotice && (
+            <Tooltip
+              title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
+            >
+              <VisibilityIcon
+                onClick={() => Router.push('/my-profile')}
+                style={{
+                  marginLeft: '8px',
+                  color: '#1976d2',
+                  fontSize: '18px',
+                  verticalAlign: 'middle',
+                  cursor: 'pointer',
+                }}
+              />
+            </Tooltip>
+          )}
+        </Typography>
+        {!category && (
           <Tabs
             value={tabIndex}
             onChange={(_, newVal: string) => {
