@@ -5,7 +5,7 @@ import { FlatQuizProblem } from '../../pages/quiz-gen';
 
 interface TranslateProps {
   problemData: FlatQuizProblem;
-  language: string;
+  language?: string;
   onTranslated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -84,13 +84,12 @@ export const Translate = ({
         <Box p={3} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
           <Box
             display="flex"
-            alignItems="center"
+            justifyContent="center"
             gap={2}
-            mb={3}
+            flexWrap="wrap"
             p={2}
             bgcolor="grey.50"
             borderRadius={2}
-            flexWrap="wrap"
           >
             <Select
               size="small"
@@ -101,20 +100,40 @@ export const Translate = ({
                 bgcolor: 'white',
               }}
             >
-              <MenuItem value={language || 'English'}>{language || 'English'}</MenuItem>
+              {language ? (
+                <MenuItem value={language}>
+                  {LANGUAGES.find((l) => l.code === language)?.name || language}
+                </MenuItem>
+              ) : (
+                LANGUAGES.map((lang) => (
+                  <MenuItem key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </MenuItem>
+                ))
+              )}
             </Select>
 
             <Box
-              sx={{
-                p: 1,
-                borderRadius: '50%',
-                bgcolor: 'white',
-                cursor: 'pointer',
-                '&:hover': { bgcolor: 'grey.100' },
-                flexShrink: 0,
-              }}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              sx={{ minWidth: 40 }}
             >
-              ⇄
+              <Box
+                sx={{
+                  p: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'grey.100' },
+                }}
+              >
+                ⇄
+              </Box>
             </Box>
 
             <Select
