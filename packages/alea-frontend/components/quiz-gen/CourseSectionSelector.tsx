@@ -409,22 +409,55 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                        <Tooltip title="Existing problems">
-                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
-                            {existingProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
-                        <Tooltip title="Generated problems">
-                          <Box
-                            px={1.2}
-                            py={0.3}
-                            bgcolor="success.main"
-                            color="white"
-                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
-                          >
-                            {generatedProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
+                       {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="primary.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Existing problems">
+                            <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                              {existingProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
+
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Generated problems">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                            >
+                              {generatedProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>{' '}
                   </MenuItem>
