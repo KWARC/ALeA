@@ -159,7 +159,7 @@ export type MinorEditType =
   | 'substitute_values';
 export interface MinorEditVariant {
   variantType: 'minor_edit';
-  minorEditType: MinorEditType ;
+  minorEditType: MinorEditType;
   minorEditInstruction?: string;
 }
 
@@ -188,7 +188,7 @@ export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
   | (VariantBase & ModifyChoicesVariant)
-  |(VariantBase & LanguageVariant);
+  | (VariantBase & LanguageVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -222,6 +222,7 @@ export type GenerationParams = NewGenerationParams | CopyGenerationParams | Vari
 //   };
 // }
 export interface PossibleVariantsResult {
+  current_question_language: string;
   adjust_scaffolding: boolean;
   change_data_format: boolean;
   change_goal: boolean;

@@ -73,6 +73,7 @@ export const VariantDialog = ({
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [currentLang, setCurrentLang] = useState('');
   const availableMinorEdits: MinorEditType[] = [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
@@ -128,6 +129,7 @@ export const VariantDialog = ({
         setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable&&result.reskin?.themes?.length>0);
         setAvailableThemes(result.reskin.themes);
+        setCurrentLang(result.current_question_language);
       } finally {
         setVariantOptionsLoading(false);
       }
@@ -397,17 +399,13 @@ export const VariantDialog = ({
               <Translate
                 problemData={problemData}
                 onLoadingChange={setPreviewLoading}
+                language={currentLang}
                 onTranslated={(newVariant) => {
                   const flat = flattenQuizProblem(newVariant);
                   setProblemData(flat);
                   setEditableSTeX(flat.problemStex);
                 }}
               />
-
-              {/* <VariantConfigSection
-                variantConfig={variantConfig}
-                setVariantConfig={setVariantConfig}
-              /> */}
 
               <Button
                 size="small"
@@ -427,7 +425,6 @@ export const VariantDialog = ({
               >
                 Clear Selection
               </Button>
-              {/* <ConfigurationSummary variantConfig={variantConfig} /> */}
             </Box>
           </Box>
 

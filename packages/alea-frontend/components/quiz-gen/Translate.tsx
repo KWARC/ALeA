@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 
 interface TranslateProps {
-  problemData?: FlatQuizProblem;
+  problemData: FlatQuizProblem;
+  language: string;
   onTranslated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
-//TODO remove code 
+//TODO remove code
 const LANGUAGES = [
   { code: 'German', name: 'German' },
   { code: 'English', name: 'English' },
@@ -16,8 +17,12 @@ const LANGUAGES = [
   { code: 'Polish', name: 'Polish' },
   { code: 'French', name: 'French' },
 ];
-
-export const Translate = ({ problemData, onTranslated, onLoadingChange }: TranslateProps) => {
+export const Translate = ({
+  problemData,
+  language,
+  onTranslated,
+  onLoadingChange,
+}: TranslateProps) => {
   const [active, setActive] = useState(false);
   const [targetLang, setTargetLang] = useState('en');
 
@@ -29,7 +34,7 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
         mode: 'variant',
         problemId: problemData.problemId,
         variantType: 'translate',
-        language:targetLang,
+        language: targetLang,
       });
       if (result.length > 0) {
         onTranslated?.(result[0]);
@@ -38,6 +43,7 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
       onLoadingChange?.(false);
     }
   };
+  console.log({ language });
 
   return (
     <Box
@@ -54,7 +60,6 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
         },
       }}
     >
-      {/* Header */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -85,9 +90,18 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
             p={2}
             bgcolor="grey.50"
             borderRadius={2}
+            flexWrap="wrap"
           >
-            <Select size="small" value="en" sx={{ minWidth: 120, bgcolor: 'white' }}>
-              <MenuItem value="en">English</MenuItem>
+            <Select
+              size="small"
+              value={language || 'English'}
+              sx={{
+                minWidth: { xs: 100, sm: 120 },
+                flex: 1,
+                bgcolor: 'white',
+              }}
+            >
+              <MenuItem value={language || 'English'}>{language || 'English'}</MenuItem>
             </Select>
 
             <Box
@@ -97,6 +111,7 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
                 bgcolor: 'white',
                 cursor: 'pointer',
                 '&:hover': { bgcolor: 'grey.100' },
+                flexShrink: 0,
               }}
             >
               ⇄
@@ -106,7 +121,11 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
               size="small"
               value={targetLang}
               onChange={(e) => setTargetLang(e.target.value)}
-              sx={{ minWidth: 120, bgcolor: 'white' }}
+              sx={{
+                minWidth: { xs: 100, sm: 120 },
+                flex: 1,
+                bgcolor: 'white',
+              }}
             >
               {LANGUAGES.map((lang) => (
                 <MenuItem key={lang.code} value={lang.code}>
