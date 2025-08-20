@@ -114,7 +114,10 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
           };
         })
         .filter(Boolean) as Holiday[];
-      
+
+      // Sort ascending by ISO date (YYYY-MM-DD)
+      convertedData.sort((a, b) => a.date.localeCompare(b.date));
+
       setHolidays(convertedData);
     } catch (error) {
       console.error('Failed to fetch holidays:', error);
@@ -161,7 +164,9 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         originalDate: convertedDate, 
       };
       
-      const updatedHolidays = [...holidays, holidayForLocalState];
+      let updatedHolidays = [...holidays, holidayForLocalState];
+      // Keep local list sorted by ISO date
+      updatedHolidays = [...updatedHolidays].sort((a, b) => a.date.localeCompare(b.date));
       // Ensure ALL holidays are sent as DD/MM/YYYY to the API
       const updatedHolidaysForAPI = updatedHolidays.map((h) => ({
         name: h.name,
@@ -204,7 +209,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         instanceId,
         dateToDelete,
       });
-      const updatedHolidays = holidays.filter((_, i) => i !== index);
+      const updatedHolidays = holidays.filter((_, i) => i !== index).sort((a, b) => a.date.localeCompare(b.date));
       setHolidays(updatedHolidays);
       
       setSnackbar({
@@ -266,6 +271,8 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         ...editingHoliday,
         originalDate: updatedHolidayForAPI.date,
       };
+      // Sort after edit
+      updatedHolidays.sort((a, b) => a.date.localeCompare(b.date));
       setHolidays(updatedHolidays);
 
       setEditingIndex(null);
