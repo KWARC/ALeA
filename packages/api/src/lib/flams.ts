@@ -69,6 +69,14 @@ export async function getDocIdx(institution?: string) {
   return [...filteredArchiveIndex, ...institutionIndex];
 }
 
+export async function getCouseIdsOfSemester(semester:string){
+  const docIdx = await getDocIdx();
+  const courseIds = docIdx
+    .filter((doc) => doc.type === DocIdxType.course && doc.instances?.some((i) => i.semester === semester))
+    .map((doc) => doc.acronym.toLowerCase());
+  return courseIds;
+}
+
 export async function getCourseInfo(institution?: string) {
   /*  const filtered = { ...COURSES_INFO };
 
