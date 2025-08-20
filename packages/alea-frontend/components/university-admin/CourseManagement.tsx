@@ -10,7 +10,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { getCourseInfo } from 'packages/api/src/lib/flams';
+import { getCourseInfo, getCouseIdsOfSemester } from 'packages/api/src/lib/flams';
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import { createAcl } from 'packages/api/src/lib/access-control-api';
 import AclDisplay from '../AclDisplay';
@@ -34,16 +34,12 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   useEffect(() => {
     async function fetchCoursesAndAcls() {
-      const courseInfo = await getCourseInfo(universityId);
-      const currentCourses = Object.values(courseInfo)
-        .filter((c: any) => c.isCurrent)
-        .map((c: any) => c.courseId.toUpperCase());
-      setCourses(currentCourses);
-
+      const courses = await getCouseIdsOfSemester(semester);
+      setCourses(courses);
       const aclChecks: Record<string, boolean> = {};
       const aclIdMap: Record<string, string> = {};
       await Promise.all(
-        currentCourses.map(async (courseId) => {
+        courses.map(async (courseId) => {
           const aclId = `${courseId.toLowerCase()}-${semester}-instructors`;
           aclIdMap[courseId] = aclId;
           aclChecks[courseId] = await aclExists(aclId);
