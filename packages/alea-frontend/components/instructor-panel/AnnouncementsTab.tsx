@@ -33,17 +33,7 @@ import {
   updateAnnouncement,
   UpdateAnnouncementRequest,
 } from '@stex-react/api';
-
-interface Announcement {
-  id: number;
-  courseId: string;
-  instructorId: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  visibleUntil: string;
-}
+import { Announcement } from '@stex-react/api';
 
 interface AnnouncementsTabProps {
   courseId: string;
@@ -121,7 +111,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
         };
         await updateAnnouncement(updateRequest);
       } else {
-        console.log({instanceId})
         const createRequest: CreateAnnouncementRequest = {
           courseId: courseId,
           title: title.trim(),
@@ -130,10 +119,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           instanceId: instanceId,
         };
         await createAnnouncement(createRequest);
-        console.log("Payload sent to create-announcement:", createRequest);
-
-
-
       }
       handleCloseDialog();
       fetchAnnouncements();
@@ -212,14 +197,14 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
         }}
       >
         <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: 'bold' }}>Course ID</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Instructor</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Content</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Created At</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Visible Until</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+          <TableRow sx={{ '& > th': { fontWeight: 'bold' } }}>
+            <TableCell>Course ID</TableCell>
+            <TableCell>Instructor</TableCell>
+            <TableCell>Title</TableCell>
+            <TableCell>Content</TableCell>
+            <TableCell>Created At</TableCell>
+            <TableCell>Visible Until</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -227,7 +212,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
             .sort((a, b) => a.id - b.id)
             .map((a) => (
               <TableRow key={a.id}>
-                {/* <TableCell>{a.id}</TableCell> */}
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>

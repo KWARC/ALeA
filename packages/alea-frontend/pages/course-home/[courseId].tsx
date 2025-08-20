@@ -19,8 +19,6 @@ import {
   TextField,
   Typography,
   Card,
-  CardContent,
-  Grid,
 } from '@mui/material';
 import {
   addRemoveMember,
@@ -52,6 +50,8 @@ import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { ExamSchedule } from '../../components/ExamSchedule';
+import { Announcement } from '@stex-react/api';
+import Grid from '@mui/material/Grid';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -326,18 +326,7 @@ function CourseScheduleSection({
   );
 }
 
-interface Announcement {
-  courseId: string;
-  instructorId: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  visibleUntil: string;
-  instanceId: string;
-}
-
-function AnnouncementsSection({ courseId,instanceId }: { courseId: string, instanceId: string}) {
+function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -345,8 +334,7 @@ function AnnouncementsSection({ courseId,instanceId }: { courseId: string, insta
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        setLoading(true);
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId,instanceId);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId);
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -366,16 +354,6 @@ function AnnouncementsSection({ courseId,instanceId }: { courseId: string, insta
     );
   }
 
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ my: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
-
-
   return (
     <Box
       mt={3}
@@ -385,12 +363,9 @@ function AnnouncementsSection({ courseId,instanceId }: { courseId: string, insta
         p: { xs: 0, sm: 1 },
       }}
     >
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#333' }}>
-        Announcements
-      </Typography>
       <Grid container spacing={2}>
         {announcements.map((a) => (
-          <Grid item xs={12} key={a.id}>
+          <Grid item xs={12} key={`${a.courseId}-${a.createdAt}`}>
             <Card
               sx={{
                 padding: 2,
@@ -404,8 +379,6 @@ function AnnouncementsSection({ courseId,instanceId }: { courseId: string, insta
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                 Posted on {new Date(a.createdAt).toLocaleDateString()}
-                {' | '}
-                Visible until {new Date(a.visibleUntil).toLocaleDateString()}
               </Typography>
             </Card>
           </Grid>
@@ -500,12 +473,10 @@ const CourseHomePage: NextPage = () => {
   };
 
   return (
-
     <MainLayout
       title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
       bgColor={BG_COLOR}
     >
-
       <CourseHeader
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
@@ -518,7 +489,7 @@ const CourseHomePage: NextPage = () => {
         sx={{
           maxWidth: '900px',
           margin: 'auto',
-          px: '10px',
+          px: '1.25',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -608,7 +579,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={instanceId} />
+        <AnnouncementsSection courseId={courseId} instanceId={CURRENT_TERM} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} />
         <br />

@@ -84,8 +84,8 @@ function ChosenTab({
 
 const toUserFriendlyName = (tabName: string) => {
   return tabName
-    .replace(/-/g, ' ') // Replace hyphens with spaces
-    .replace(/\b\w/g, (str) => str.toUpperCase()); // Capitalize the first letter of each word
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (str) => str.toUpperCase());
 };
 
 const TabPanel = (props: TabPanelProps) => {
@@ -124,7 +124,7 @@ const InstructorDash: NextPage = () => {
 
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
 
-  const [accessibleTabs, setAccessibleTabs] = useState<TabName[] | undefined>(undefined); // undefined means loading
+  const [accessibleTabs, setAccessibleTabs] = useState<TabName[] | undefined>(undefined);
   const [currentTabIdx, setCurrentTabIdx] = useState<number>(0);
 
   const [quizId, setQuizId] = useState<string | undefined>(undefined);

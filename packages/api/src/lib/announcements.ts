@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getAuthHeaders } from './lmp';
 
 export interface Announcement {
-  id: number;
+  id:number;
   courseId: string;
   instructorId: string;
   instanceId: string;
@@ -51,7 +51,7 @@ export async function getAnnouncement(courseId: string, instanceId: string) {
 
 export async function getActiveAnnouncements(courseId: string, instanceId: string) {
   const resp = await axios.get('/api/announcement/get-active-announcements', {
-    params: { courseId , instanceId},
+    params: { courseId, instanceId },
   });
 
   return resp.data as Announcement[];
