@@ -9,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id, courseId, instanceId } = req.body;
 
   if (!id || !courseId || !instanceId) {
-    console.log(id, courseId, instanceId);
     res.status(422).send('Missing required fields');
     return;
   }
