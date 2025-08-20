@@ -24,6 +24,7 @@ export const Translate = ({
   onLoadingChange,
 }: TranslateProps) => {
   const [active, setActive] = useState(false);
+  const [sourceLang, setSourceLang] = useState(language || 'English');
   const [targetLang, setTargetLang] = useState('English');
 
   const handleGenerate = async () => {
@@ -93,24 +94,19 @@ export const Translate = ({
           >
             <Select
               size="small"
-              value={language || 'English'}
+              value={sourceLang}
+              onChange={(e) => setSourceLang(e.target.value)}
               sx={{
                 minWidth: { xs: 100, sm: 120 },
                 flex: 1,
                 bgcolor: 'white',
               }}
             >
-              {language ? (
-                <MenuItem value={language}>
-                  {LANGUAGES.find((l) => l.code === language)?.name || language}
+              {LANGUAGES.map((lang) => (
+                <MenuItem key={lang.code} value={lang.code}>
+                  {lang.name}
                 </MenuItem>
-              ) : (
-                LANGUAGES.map((lang) => (
-                  <MenuItem key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </MenuItem>
-                ))
-              )}
+              ))}
             </Select>
 
             <Box
@@ -146,7 +142,7 @@ export const Translate = ({
                 bgcolor: 'white',
               }}
             >
-              {LANGUAGES.map((lang) => (
+              {LANGUAGES.filter((l) => l.code !== sourceLang).map((lang) => (
                 <MenuItem key={lang.code} value={lang.code}>
                   {lang.name}
                 </MenuItem>

@@ -74,6 +74,7 @@ export const VariantDialog = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [currentLang, setCurrentLang] = useState('');
+  const [resetKey, setResetKey] = useState(0);
   const availableMinorEdits: MinorEditType[] = [];
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
@@ -83,11 +84,11 @@ export const VariantDialog = ({
   const clearSelection = () => {
     setVariantConfig({
       variantTypes: [],
-
       minorEditInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
     });
+    setResetKey((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -400,6 +401,7 @@ export const VariantDialog = ({
               )}
 
               <Translate
+                key={resetKey}
                 problemData={problemData}
                 onLoadingChange={setPreviewLoading}
                 language={currentLang}
