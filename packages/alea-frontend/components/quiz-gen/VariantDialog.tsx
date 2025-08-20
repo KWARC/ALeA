@@ -98,36 +98,39 @@ export const VariantDialog = ({
         console.log({ problemData });
 
         if (!problemData) return;
-        const result = await checkPossibleVariants(problemData.problemId);
-        // const result = {
-        //   adjust_scaffolding: true,
-        //   change_data_format: true,
-        //   change_goal: true,
-        //   convert_units: true,
-        //   modify_choices: true,
-        //   negate_question_stem: true,
-        //   rephrase_wording: true,
-        //   reskin: {
-        //     applicable: true,
-        //     themes: [
-        //       'Corporate Office Scenario',
-        //       'Library Management System',
-        //       'Hospital Staff Records',
-        //       'University Student Database',
-        //     ],
-        //   },
-        //   substitute_values: true,
-        // };
-        if (result.change_data_format) availableMinorEdits.push('change_data_format');
+        //const result = await checkPossibleVariants(problemData.problemId);
+        const result = {
+          adjust_scaffolding: true,
+          change_data_format: true,
+          change_goal: true,
+          convert_units: true,
+          modify_choices: true,
+          negate_question_stem: true,
+          rephrase_wording: true,
+          goal_inversion: true,
+          current_question_language: 'English',
+          reskin: {
+            applicable: true,
+            themes: [
+              'Corporate Office Scenario',
+              'Library Management System',
+              'Hospital Staff Records',
+              'University Student Database',
+            ],
+          },
+          substitute_values: true,
+        };
+        if (result.goal_inversion) availableMinorEdits.push('goal_inversion');
         if (result.change_goal) availableMinorEdits.push('change_goal');
-        if (result.convert_units) availableMinorEdits.push('convert_units');
         if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
+        if (result.change_data_format) availableMinorEdits.push('change_data_format');
+        if (result.convert_units) availableMinorEdits.push('convert_units');
         if (result.substitute_values) availableMinorEdits.push('substitute_values');
 
         setMinorEditsApplicable(availableMinorEdits.length > 0);
         setAvailableMinorEdits(availableMinorEdits);
         setChoicesApplicable(result.modify_choices);
-        setReskinApplicable(result.reskin.applicable&&result.reskin?.themes?.length>0);
+        setReskinApplicable(result.reskin.applicable && result.reskin?.themes?.length > 0);
         setAvailableThemes(result.reskin.themes);
         setCurrentLang(result.current_question_language);
       } finally {

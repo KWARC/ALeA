@@ -34,6 +34,7 @@ interface SwitchToggleProps {
 export type MinorEditType =
   | 'change_data_format'
   | 'change_goal'
+  | 'goal_inversion'
   | 'convert_units'
   | 'negate_question_stem'
   | 'substitute_values';
@@ -41,6 +42,7 @@ export type MinorEditType =
 const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
   change_data_format: 'Change Data Format',
   change_goal: 'Change Goal',
+  goal_inversion : 'Invert Goal',
   convert_units: 'Convert Units',
   negate_question_stem: 'Negate Question Stem',
   substitute_values: 'Substitute Values',
@@ -158,7 +160,8 @@ export const SwitchToggle = ({
           mode: 'variant',
           problemId: problemData.problemId,
           variantType: 'modify_choices',
-          optionsToModify: variantConfig.modifyChoiceMode,
+          modifyType :variantConfig.modifyChoiceMode,
+          optionsToModify: selectedOptions,
           modifyChoiceInstruction: variantConfig[instructionKey],
         });
         if (result.length > 0) {
@@ -350,7 +353,7 @@ export const SwitchToggle = ({
               <Button
                 variant="contained"
                 onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
-                disabled={!selectedOptions?.length}
+                disabled={!variantConfig.modifyChoiceMode && !selectedOptions?.length}
               >
                 Generate Modified Choice Variant
               </Button>

@@ -155,6 +155,7 @@ export type MinorEditType =
   | 'change_data_format'
   | 'change_goal'
   | 'convert_units'
+  | 'goal_inversion'
   | 'negate_question_stem'
   | 'substitute_values';
 export interface MinorEditVariant {
@@ -174,7 +175,8 @@ export interface LanguageVariant {
 }
 export interface ModifyChoicesVariant {
   variantType: 'modify_choices';
-  optionsToModify: string;
+  optionsToModify?: string[];
+  modifyType: string;
   modifyChoiceInstruction?: string;
 }
 
@@ -226,6 +228,7 @@ export interface PossibleVariantsResult {
   adjust_scaffolding: boolean;
   change_data_format: boolean;
   change_goal: boolean;
+  goal_inversion: boolean;
   convert_units: boolean;
   modify_choices: boolean;
   negate_question_stem: boolean;
