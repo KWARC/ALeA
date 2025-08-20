@@ -207,7 +207,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       >
         <TableHead>
           <TableRow>
-<<<<<<< HEAD
             <TableCell sx={{ fontWeight: 'bold' }}>Course ID</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>Instructor</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
@@ -215,16 +214,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
             <TableCell sx={{ fontWeight: 'bold' }}>Created At</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>Visible Until</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-=======
-            {/* <TableCell>ID</TableCell> */}
-            <TableCell>Course ID</TableCell>
-            <TableCell>Instructor</TableCell>
-            <TableCell>Title</TableCell>
-            <TableCell>Content</TableCell>
-            <TableCell>Created At</TableCell>
-            <TableCell>Visible Until</TableCell>
-            <TableCell>Actions</TableCell>
->>>>>>> 1777163a91a20d0db637c35fce5eae20d99b037c
           </TableRow>
         </TableHead>
         <TableBody>
@@ -232,10 +221,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
             .sort((a, b) => a.id - b.id)
             .map((a) => (
               <TableRow key={a.id}>
-<<<<<<< HEAD
-=======
                 {/* <TableCell>{a.id}</TableCell> */}
->>>>>>> 1777163a91a20d0db637c35fce5eae20d99b037c
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>

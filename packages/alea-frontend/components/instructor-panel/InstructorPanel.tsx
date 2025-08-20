@@ -10,7 +10,7 @@ interface InstructorPanelProps {
   instanceId: string;
 }
 
-const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId }) => {
+const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId, instanceId }) => {
   const [tab, setTab] = useState<number>(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => setTab(newValue);
@@ -32,7 +32,7 @@ const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId }) => {
     <Box p={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight="bold">
-          Instructor Panel
+          Course metadata
         </Typography>
         <Box display="flex" gap={2}>
           <Button onClick={handleCreateMemberACL} variant="contained" color="primary">
@@ -42,12 +42,12 @@ const InstructorPanel: React.FC<InstructorPanelProps> = ({ courseId }) => {
         </Box>
       </Box>
 
-      <Tabs value={tab} onChange={handleChange} sx={{ my: 2 }}>
+      {/* <Tabs value={tab} onChange={handleChange} sx={{ my: 2 }}>
         <Tab label="Courses" />
-      </Tabs>
+      </Tabs> */}
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
-        <AnnouncementsTab courseId={courseId} instanceId="" />
+        <AnnouncementsTab courseId={courseId} instanceId={instanceId} />
       </Box>
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
