@@ -76,7 +76,9 @@ const DrawingComponent = ({
     });
   }, []);
   // Function for starting the drawing
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     const { x, y } = getMousePos(e);
     ctxRef.current.beginPath();
 
@@ -91,17 +93,30 @@ const DrawingComponent = ({
     });
     setIsDrawing(true);
   };
-  function getMousePos(evt: React.MouseEvent<HTMLCanvasElement>) {
+  function getMousePos(
+    evt: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ): { x: number; y: number } {
+    let clientX: number, clientY: number;
+    if (!evt) return;
+    if ('clientX' in evt) {
+      clientX = evt.clientX;
+      clientY = evt.clientY;
+    } else {
+      clientX = evt.touches[0]?.clientX ?? 0;
+      clientY = evt.touches[0]?.clientY ?? 0;
+    }
     const rect = canvasRef.current.getBoundingClientRect(),
       scaleX = canvasRef.current.width / rect.width,
       scaleY = canvasRef.current.height / rect.height;
     return {
-      x: (evt.clientX - rect.left) * scaleX,
-      y: (evt.clientY - rect.top) * scaleY,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     };
   }
   // Function for ending the drawing
-  const endDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const endDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     ctxRef.current.closePath();
     const { x, y } = getMousePos(e);
     drawingOperations.push({
@@ -120,10 +135,11 @@ const DrawingComponent = ({
     const ctx = canvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
   };
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) {
       return;
     }
+    e.preventDefault();
     const { x, y } = getMousePos(e);
     ctxRef.current.lineTo(x, y);
 
@@ -144,22 +160,27 @@ const DrawingComponent = ({
     console.log(e);
   };
   const drawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+
     console.log(e);
   };
   const endDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
     console.log(e);
   };
   return (
-    <div ref={ctxRef} style={{ position: 'relative', width: width, height: height ,touchAction:'none'}}>
+    <div
+      ref={ctxRef}
+      style={{ position: 'relative', width: width, height: height, touchAction: 'none' }}
+    >
       {children}
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
         onMouseUp={endDrawing}
         onMouseMove={draw}
-        onTouchStart={startDrawingTouch}
-        onTouchMove={drawingTouch}
-        onTouchEnd={endDrawingTouch}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={endDrawing}
         style={{
           position: 'absolute',
           top: 0,
