@@ -24,7 +24,7 @@ export const Translate = ({
   onLoadingChange,
 }: TranslateProps) => {
   const [active, setActive] = useState(false);
-  const [targetLang, setTargetLang] = useState('en');
+  const [targetLang, setTargetLang] = useState('English');
 
   const handleGenerate = async () => {
     if (!problemData?.problemId) return;
