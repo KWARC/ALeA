@@ -115,7 +115,6 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         })
         .filter(Boolean) as Holiday[];
       
-      console.log('Converted holiday data:', convertedData);
       setHolidays(convertedData);
     } catch (error) {
       console.error('Failed to fetch holidays:', error);
@@ -140,9 +139,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     }
 
     setLoading(true);
-    try {
-      console.log('Adding holiday:', newHoliday);
-      
+    try {      
       const convertedDate = convertToDDMMYYYY(newHoliday.date);
       if (!convertedDate) {
         setSnackbar({
@@ -165,13 +162,12 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
       };
       
       const updatedHolidays = [...holidays, holidayForLocalState];
-      const updatedHolidaysForAPI = [...holidays, holidayForAPI];
+      // Ensure ALL holidays are sent as DD/MM/YYYY to the API
+      const updatedHolidaysForAPI = updatedHolidays.map((h) => ({
+        name: h.name,
+        date: h.originalDate || convertToDDMMYYYY(h.date),
+      }));
       
-      console.log('Sending to API:', {
-        universityId,
-        instanceId,
-        holidays: updatedHolidaysForAPI,
-      });
       
       await uploadHolidays({
         universityId,
@@ -265,7 +261,11 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
       });
 
       const updatedHolidays = [...holidays];
-      updatedHolidays[editingIndex!] = editingHoliday;
+      // Keep originalDate in sync locally after successful edit
+      updatedHolidays[editingIndex!] = {
+        ...editingHoliday,
+        originalDate: updatedHolidayForAPI.date,
+      };
       setHolidays(updatedHolidays);
 
       setEditingIndex(null);
