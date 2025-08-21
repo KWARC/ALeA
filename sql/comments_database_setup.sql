@@ -289,3 +289,15 @@ CREATE TABLE semesterInfo (
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (universityId, instanceId)
 );
+
+CREATE TABLE courseMetaData (
+    courseId VARCHAR(50) NOT NULL,     
+    instanceId VARCHAR(50) NOT NULL,     
+    lectureDay VARCHAR(20) NOT NULL,     
+    venue VARCHAR(10),  
+    venueLink VARCHAR(255),  
+    lectureStartTime TIME NOT NULL,
+    lectureEndTime TIME NOT NULL,                  
+    hasHomework BOOLEAN DEFAULT FALSE,
+    hasQuiz BOOLEAN DEFAULT FALSE,
+);
