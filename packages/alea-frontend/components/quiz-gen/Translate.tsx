@@ -9,14 +9,8 @@ interface TranslateProps {
   onTranslated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
-//TODO remove code
-const LANGUAGES = [
-  { code: 'German', name: 'German' },
-  { code: 'English', name: 'English' },
-  { code: 'Spanish', name: 'Spanish' },
-  { code: 'Polish', name: 'Polish' },
-  { code: 'French', name: 'French' },
-];
+
+const LANGUAGES = ['German', 'English', 'Spanish', 'Polish', 'French'];
 export const Translate = ({
   problemData,
   language,
@@ -103,8 +97,8 @@ export const Translate = ({
               }}
             >
               {LANGUAGES.map((lang) => (
-                <MenuItem key={lang.code} value={lang.code}>
-                  {lang.name}
+                <MenuItem key={lang} value={lang}>
+                  {lang}
                 </MenuItem>
               ))}
             </Select>
@@ -142,9 +136,9 @@ export const Translate = ({
                 bgcolor: 'white',
               }}
             >
-              {LANGUAGES.filter((l) => l.code !== sourceLang).map((lang) => (
-                <MenuItem key={lang.code} value={lang.code}>
-                  {lang.name}
+              {LANGUAGES.filter((l) => l !== sourceLang).map((lang) => (
+                <MenuItem key={lang} value={lang}>
+                  {lang}
                 </MenuItem>
               ))}
             </Select>

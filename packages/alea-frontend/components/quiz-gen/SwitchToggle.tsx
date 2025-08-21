@@ -18,7 +18,7 @@ import {
 import { generateQuizProblems, QuizProblem } from '@stex-react/api';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
-import { ScaffoldingType, VariantConfig, VariantType } from './VariantDialog';
+import { ScaffoldingDetails, VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
   title: string;
@@ -27,7 +27,7 @@ interface SwitchToggleProps {
   placeholder?: string;
   variantConfig: VariantConfig;
   themes?: string[];
-  scaffoldingDetails?: ScaffoldingType;
+  scaffoldingDetails?: ScaffoldingDetails;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   problemData?: FlatQuizProblem;
   availableMinorEdits?: MinorEditType[];
@@ -127,7 +127,7 @@ export const SwitchToggle = ({
   const [selectedScaffolding, setSelectedScaffolding] = useState<'high' | 'reduced'>(
     high?.applicable ? 'high' : reduced?.applicable ? 'reduced' : 'high'
   );
-  const [numSubQuestions, setNumSubQuestions] = useState(high?.num_subquestions || null);
+  const [numSubQuestions, setNumSubQuestions] = useState(high?.numSubQuestions || null);
   const mcqOptions = problemData?.options || [];
 
   const handleSwitchChange = (checked: boolean) => {
@@ -409,7 +409,7 @@ const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQue
               numSubQuestions={numSubQuestions}
               setSelectedScaffolding={setSelectedScaffolding}
               setNumSubQuestions={setNumSubQuestions}
-              maxSubQuestions={scaffoldingDetails?.high?.num_subquestions ?? 1}
+              maxSubQuestions={scaffoldingDetails?.high?.numSubQuestions ?? 1}
             />
           )}
 

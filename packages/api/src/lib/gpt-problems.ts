@@ -169,6 +169,16 @@ export interface ReskinVariant {
   theme: string;
   reskinInstruction?: string;
 }
+interface ScaffoldingDetails {
+  high: {
+    applicable: boolean;
+    numSubQuestions: number;
+  };
+  reduced: {
+    applicable: boolean;
+  };
+}
+
 export interface ScaffoldVariant {
   variantType: 'scaffolding';
   scaffoldingType: string;
@@ -215,24 +225,8 @@ interface CopyGenerationParams {
 }
 
 export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
-
-// export interface PossibleVariantsResult {
-//   rephrase: {
-//     applicable: boolean;
-//     types?: string[];
-//   };
-//   reskin: {
-//     applicable: boolean;
-//     themes?: string[];
-//   };
-//   modify_choices: {
-//     applicable: boolean;
-//     optionsToModify?: string[];
-//   };
-// }
 export interface PossibleVariantsResult {
   current_question_language: string;
-  // adjust_scaffolding: boolean;
   change_data_format: boolean;
   change_goal: boolean;
   goal_inversion: boolean;
@@ -244,5 +238,6 @@ export interface PossibleVariantsResult {
     applicable: boolean;
     themes?: string[];
   };
+  scaffolding:ScaffoldingDetails;
   substitute_values: boolean;
 }

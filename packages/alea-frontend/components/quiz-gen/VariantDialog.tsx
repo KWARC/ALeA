@@ -26,7 +26,7 @@ import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
 import { GenerationParams } from './GenerationParams';
 
-export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin'|'scaffolding';
+export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin' | 'scaffolding';
 export interface VariantConfig {
   variantTypes: VariantType[];
   minorEditInstruction?: string;
@@ -36,10 +36,10 @@ export interface VariantConfig {
   thematicReskinInstruction?: string;
   selectedTheme?: string;
 }
-export interface ScaffoldingType {
+export interface ScaffoldingDetails {
   high: {
     applicable: boolean;
-    num_subquestions: number; 
+    numSubQuestions: number;
   };
   reduced: {
     applicable: boolean;
@@ -80,7 +80,7 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [scaffoldingDetails,setScaffoldingDetails]=useState<ScaffoldingType>(null);
+  const [scaffoldingDetails, setScaffoldingDetails] = useState<ScaffoldingDetails>(null);
   const [availabledMinorEdits, setAvailableMinorEdits] = useState<MinorEditType[] | []>([]);
   const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
@@ -113,48 +113,17 @@ export const VariantDialog = ({
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
-        console.log({ problemData });
-
         if (!problemData) return;
-        // const result = await checkPossibleVariants(problemData.problemId);
-        const result = {
-          adjust_scaffolding: true,
-          change_data_format: true,
-          change_goal: true,
-          convert_units: true,
-          modify_choices: true,
-          negate_question_stem: true,
-          rephrase_wording: true,
-          goal_inversion: true,
-          current_question_language: 'English',
-          reskin: {
-            applicable: true,
-            themes: [
-              'Corporate Office Scenario',
-              'Library Management System',
-              'Hospital Staff Records',
-              'University Student Database',
-            ],
-          },
-          scaffolding: {
-            "high": {
-              "applicable": true,
-              "num_subquestions": 3
-            },
-          "reduced": {
-              "applicable": false
-            } 
-    },
-          substitute_values: true,
-        };
-        const availableMinorEdits = MINOR_EDIT_KEYS.filter(key => result[key]);
-        const isHighScaffoldingApplicable = result.scaffolding?.high?.applicable && (result.scaffolding?.high.num_subquestions > 0);
+        const result = await checkPossibleVariants(problemData.problemId);
+        const availableMinorEdits = MINOR_EDIT_KEYS.filter((key) => result[key]);
+        const isHighScaffoldingApplicable =
+          result.scaffolding?.high?.applicable && result.scaffolding?.high.numSubQuestions > 0;
         const isReducedScaffoldingApplicable = result.scaffolding?.reduced?.applicable;
         setMinorEditsApplicable(availableMinorEdits.length > 0);
         setAvailableMinorEdits(availableMinorEdits);
         setChoicesApplicable(result.modify_choices);
         setReskinApplicable(result.reskin.applicable && result.reskin?.themes?.length > 0);
-        setScaffoldingApplicable(isHighScaffoldingApplicable||isReducedScaffoldingApplicable);
+        setScaffoldingApplicable(isHighScaffoldingApplicable || isReducedScaffoldingApplicable);
         setScaffoldingDetails(result.scaffolding);
         setAvailableThemes(result.reskin.themes);
         setCurrentLang(result.current_question_language);
@@ -165,7 +134,7 @@ export const VariantDialog = ({
 
     checkVariants();
   }, [open, problemData]);
-console.log({scaffoldingDetails});
+
   useEffect(() => {
     const fetchProblemVersionHistory = async () => {
       if (!open || !problemData) return;
@@ -362,7 +331,9 @@ console.log({scaffoldingDetails});
                       }}
                     />
                   )}
-                  {/* {scaffoldingApplicable && (
+                  {/*
+                  //TODO next step
+                   {scaffoldingApplicable && (
                     <SwitchToggle
                       title="Scaffold"
                       typeKey="scaffolding"
