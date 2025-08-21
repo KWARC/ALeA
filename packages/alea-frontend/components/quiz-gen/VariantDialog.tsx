@@ -24,6 +24,7 @@ import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
+import { GenerationParams } from './GenerationParams';
 
 export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin'|'scaffolding';
 export interface VariantConfig {
@@ -180,6 +181,12 @@ console.log({scaffoldingDetails});
     setEditableSTeX(STeX);
   }, [STeX]);
 
+  useEffect(() => {
+    if (!isViewingLatestVersion) {
+      clearSelection();
+    }
+  }, [isViewingLatestVersion]);
+
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
@@ -282,78 +289,12 @@ console.log({scaffoldingDetails});
                   zIndex={10}
                   bgcolor="rgba(255, 255, 255, 0.6)"
                 />
-                {(selectedVersionGenParams as any) &&
-                  (selectedVersionGenParams as any)?.mode !== 'copy' && (
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      zIndex={11}
-                      bgcolor="white"
-                      borderRadius={2}
-                      p={2}
-                      sx={{
-                        border: '2px solid saddlebrown',
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          mb: 1,
-                        }}
-                      >
-                        Generation Params
-                      </Typography>
-
-                      {(selectedVersionGenParams as any)?.mode ? (
-                        <>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            Mode:{' '}
-                            <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                              {(selectedVersionGenParams as any)?.mode}
-                            </Box>
-                          </Typography>
-
-                          {(selectedVersionGenParams as any)?.variantOptions?.theme && (
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Theme:{' '}
-                              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                                {(selectedVersionGenParams as any)?.variantOptions?.theme}
-                              </Box>
-                            </Typography>
-                          )}
-
-                          {(selectedVersionGenParams as any)?.sourceProblem?.problemId && (
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              Source Problem Id:{' '}
-                              <Box component="span" sx={{ fontWeight: 400 }}>
-                                {(selectedVersionGenParams as any)?.sourceProblem?.problemId}
-                              </Box>
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          Source Problem Uri:{' '}
-                          <Box
-                            component="a"
-                            href={existingProblemUri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                              fontWeight: 400,
-                              color: PRIMARY_COL,
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            {existingProblemUri}
-                          </Box>
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
+                {selectedVersionGenParams && (selectedVersionGenParams as any)?.mode !== 'copy' && (
+                  <GenerationParams
+                    genParams={selectedVersionGenParams}
+                    existingProblemUri={existingProblemUri}
+                  />
+                )}
               </>
             )}
             <Box
