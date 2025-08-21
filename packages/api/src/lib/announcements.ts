@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getAuthHeaders } from './lmp';
 
 export interface Announcement {
-  id: number;
+  id:number;
   courseId: string;
   instructorId: string;
   instanceId: string;

@@ -19,6 +19,8 @@ import {
   DialogContentText,
   Snackbar,
   Alert,
+  Paper,
+  Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -31,17 +33,7 @@ import {
   updateAnnouncement,
   UpdateAnnouncementRequest,
 } from '@stex-react/api';
-
-interface Announcement {
-  id: number;
-  courseId: string;
-  instructorId: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  visibleUntil: string;
-}
+import { Announcement } from '@stex-react/api';
 
 interface AnnouncementsTabProps {
   courseId: string;
@@ -64,7 +56,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const fetchedAnnouncements = await getAnnouncement(courseId);
+      const fetchedAnnouncements = await getAnnouncement(courseId, instanceId);
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
@@ -73,7 +65,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -106,7 +98,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       setSnackbarOpen(true);
       return;
     }
-
     try {
       const visibleUntilSQL = dayjs(visibleUntil).format('YYYY-MM-DD HH:mm:ss');
       if (editingAnnouncement) {
@@ -116,6 +107,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           content: content.trim(),
           visibleUntil: visibleUntilSQL,
           courseId: courseId,
+          instanceId: instanceId,
         };
         await updateAnnouncement(updateRequest);
       } else {
@@ -138,7 +130,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       setSnackbarOpen(true);
     }
   };
-  console.log({ announcementToDelete });
   const handleDelete = async () => {
     if (announcementToDelete !== null) {
       try {
@@ -172,22 +163,41 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       </Box>
     );
   }
-  console.log({ announcements });
+
   return (
-    <Box p={2}>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6" fontWeight="bold">
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight="bold" color="primary">
           Announcements for Course ID: {courseId}
         </Typography>
-        <Button variant="contained" size="small" color="primary" onClick={handleCreateOpen}>
+        <Button
+          variant="contained"
+          size="small"
+          color="primary"
+          onClick={handleCreateOpen}
+          sx={{
+            px: 2,
+            py: 1,
+            boxShadow: 2,
+          }}
+        >
           + New Announcement
         </Button>
       </Box>
 
-      <Table size="small" sx={{ mt: 1 }}>
+      <Table
+        size="small"
+        sx={{
+          mt: 1,
+          backgroundColor: '#fafbfc',
+          '& thead': { backgroundColor: '#f5f7fa' },
+          '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
         <TableHead>
-          <TableRow>
-            {/* <TableCell>ID</TableCell> */}
+          <TableRow sx={{ '& > th': { fontWeight: 'bold' } }}>
             <TableCell>Course ID</TableCell>
             <TableCell>Instructor</TableCell>
             <TableCell>Title</TableCell>
@@ -202,20 +212,34 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
             .sort((a, b) => a.id - b.id)
             .map((a) => (
               <TableRow key={a.id}>
-                {/* <TableCell>{a.id}</TableCell> */}
                 <TableCell>{a.courseId}</TableCell>
                 <TableCell>{a.instructorId}</TableCell>
                 <TableCell>{a.title}</TableCell>
-                <TableCell>{a.content}</TableCell>
+                <TableCell
+                  style={{
+                    maxWidth: 220,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Tooltip title={a.content}>
+                    <span>{a.content}</span>
+                  </Tooltip>
+                </TableCell>
                 <TableCell>{dayjs(a.createdAt).format('YYYY-MM-DD HH:mm')}</TableCell>
                 <TableCell>{dayjs(a.visibleUntil).format('YYYY-MM-DD HH:mm')}</TableCell>
                 <TableCell>
-                  <IconButton size="small" onClick={() => handleEditOpen(a)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => confirmDelete(a.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Edit">
+                    <IconButton size="small" onClick={() => handleEditOpen(a)}>
+                      <EditIcon fontSize="small" color="primary" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton size="small" onClick={() => confirmDelete(a.id)}>
+                      <DeleteIcon fontSize="small" color="error" />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -223,7 +247,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       </Table>
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{editingAnnouncement ? 'Edit Announcement' : 'New Announcement'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          {editingAnnouncement ? 'Edit Announcement' : 'New Announcement'}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
@@ -231,6 +257,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               fullWidth
+              required
             />
             <TextField
               label="Content"
@@ -239,6 +266,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
               fullWidth
               multiline
               minRows={3}
+              required
             />
             <TextField
               label="Visible Until"
@@ -247,6 +275,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
               onChange={(e) => setVisibleUntil(e.target.value)}
               InputLabelProps={{ shrink: true }}
               fullWidth
+              required
             />
           </Stack>
         </DialogContent>
@@ -259,7 +288,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle color="error" sx={{ fontWeight: 'bold' }}>
+          Confirm Deletion
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to delete this announcement? This action cannot be undone.
@@ -267,7 +298,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error">
+          <Button onClick={handleDelete} color="error" variant="contained">
             Delete
           </Button>
         </DialogActions>
@@ -278,7 +309,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Box>
+    </Paper>
   );
 };
 
