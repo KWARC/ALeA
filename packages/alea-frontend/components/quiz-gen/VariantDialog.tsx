@@ -427,7 +427,7 @@ console.log({scaffoldingDetails});
                       }}
                     />
                   )}
-                  {scaffoldingApplicable && (
+                  {/* {scaffoldingApplicable && (
                     <SwitchToggle
                       title="Scaffold"
                       typeKey="scaffolding"
@@ -443,7 +443,7 @@ console.log({scaffoldingDetails});
                         setEditableSTeX(flat.problemStex);
                       }}
                     />
-                  )}
+                  )} */}
                 </>
               )}
 
