@@ -11,16 +11,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const lectureSchedule = await executeAndEndSet500OnError(
-    `SELECT lectureDay, venue, venueLink, lectureStartTime, lectureEndTime, hasHomework, hasQuiz
-     FROM lecture_schedule
-     WHERE courseId = ? AND instanceId = ?
-     ORDER BY lectureDay, lectureStartTime`,
+  const result = await executeAndEndSet500OnError(
+    `SELECT lectureSchedule FROM courseMetaData WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
 
-  if (!lectureSchedule) return;
+  if (!result?.length) {
+    return res.status(404).end('No lecture schedule found');
+  }
+
+  let lectureSchedule: any[] = [];
+  try {
+    lectureSchedule = JSON.parse(result[0].lectureSchedule);
+  } catch {
+    return res.status(500).end('Failed to parse lecture schedule JSON');
+  }
 
   res.status(200).json({ courseId, instanceId, lectureSchedule });
 }

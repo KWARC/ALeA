@@ -34,14 +34,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  const lectureSchedule = JSON.stringify(lectureEntry);
-
-  const result = await executeAndEndSet500OnError(
-    `INSERT INTO coursemetadata (courseId, instanceId, lectureSchedule, userId) VALUES (?, ?, ?, ?)`,
-    [courseId, instanceId, lectureSchedule, userId],
+  const existing = await executeAndEndSet500OnError(
+    `SELECT lectureSchedule FROM courseMetaData WHERE courseId = ? AND instanceId = ?`,
+    [courseId, instanceId],
     res
   );
-  if (!result) return;
+
+  let lectureSchedule: any[] = [];
+  if (existing?.length && existing[0].lectureSchedule) {
+    try {
+      lectureSchedule = JSON.parse(existing[0].lectureSchedule);
+    } catch {
+      lectureSchedule = [];
+    }
+  }
+
+  lectureSchedule.push(lectureEntry);
+
+  await executeAndEndSet500OnError(
+    `INSERT INTO courseMetaData (courseId, instanceId, lectureSchedule, userId)
+     VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE lectureSchedule = VALUES(lectureSchedule), updatedAt = CURRENT_TIMESTAMP`,
+    [courseId, instanceId, JSON.stringify(lectureSchedule), userId],
+    res
+  );
 
   res.status(201).end();
 }

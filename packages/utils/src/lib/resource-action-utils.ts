@@ -84,10 +84,8 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
   { resource: ResourceName.COURSE_STUDY_BUDDY, action: Action.MODERATE },
   { resource: ResourceName.COURSE_HOMEWORK, action: Action.MUTATE },
   { resource: ResourceName.COURSE_ACCESS, action: Action.ACCESS_CONTROL },
-   { resource: ResourceName.COURSE_METADATA, action: Action.MUTATE },
+  { resource: ResourceName.COURSE_METADATA, action: Action.MUTATE },
 ];
-
-
 
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
   {
@@ -202,7 +200,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
     ],
   },
 
-   {
+  {
     name: ResourceName.COURSE_METADATA,
     possibleActions: [Action.MUTATE],
     components: [

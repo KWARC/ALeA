@@ -4,24 +4,23 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { ResourceName, Action } from '@stex-react/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
   const { courseId, instanceId, lectureEntry } = req.body;
 
-  if (!courseId || !instanceId || !lectureEntry || !lectureEntry.lectureDay) {
-    res.status(422).send('Missing required fields');
-    return;
+  if (!courseId || !instanceId || !lectureEntry) {
+    return res.status(422).send('Missing required fields');
   }
 
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  // Step 1: Fetch existing lectureSchedule JSON array
   const result = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule FROM coursemetadata WHERE userId = ? AND courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule
+     FROM courseMetaData
+     WHERE userId = ? AND courseId = ? AND instanceId = ?`,
     [userId, courseId, instanceId],
     res
   );
@@ -32,19 +31,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let lectureSchedule: any[];
   try {
-    lectureSchedule = JSON.parse(result.lectureSchedule);
+    lectureSchedule = JSON.parse(result[0].lectureSchedule);
   } catch {
     return res.status(500).end('Failed to parse lecture schedule JSON');
   }
 
-  // Step 2: Filter out the lecture entry to delete
-  // Adjust matching logic as necessary; here based on matching lectureDay
-  const filtered = lectureSchedule.filter((entry) => entry.lectureDay !== lectureEntry.lectureDay);
+  const filtered = lectureSchedule.filter((entry) => {
+    return !(
+      entry.lectureDay === lectureEntry.lectureDay &&
+      entry.lectureStartTime === lectureEntry.lectureStartTime &&
+      entry.lectureEndTime === lectureEntry.lectureEndTime &&
+      entry.venue === lectureEntry.venue &&
+      entry.venueLink === lectureEntry.venueLink &&
+      entry.hasQuiz === lectureEntry.hasQuiz &&
+      entry.hasHomework === lectureEntry.hasHomework
+    );
+  });
 
-  // Step 3: Update the DB with filtered lecture schedule JSON
   const updateResult = await executeAndEndSet500OnError(
-    `UPDATE coursemetadata SET lectureSchedule = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP WHERE courseId = ? AND instanceId = ?`,
-    [JSON.stringify(filtered), userId, courseId, instanceId],
+    `UPDATE courseMetaData
+     SET lectureSchedule = ?, updatedAt = CURRENT_TIMESTAMP
+     WHERE courseId = ? AND instanceId = ? AND userId = ?`,
+    [JSON.stringify(filtered), courseId, instanceId, userId],
     res
   );
   if (!updateResult) return;
