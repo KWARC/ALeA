@@ -29,7 +29,7 @@ import {
   createAnnouncement,
   CreateAnnouncementRequest,
   deleteAnnouncement,
-  getAnnouncement,
+  getAnnouncements,
   updateAnnouncement,
   UpdateAnnouncementRequest,
 } from '@stex-react/api';
@@ -56,7 +56,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const fetchedAnnouncements = await getAnnouncement(courseId, instanceId);
+      const fetchedAnnouncements = await getAnnouncements(courseId, instanceId);
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
