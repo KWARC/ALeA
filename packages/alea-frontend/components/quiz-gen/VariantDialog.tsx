@@ -181,12 +181,6 @@ console.log({scaffoldingDetails});
     setEditableSTeX(STeX);
   }, [STeX]);
 
-  useEffect(() => {
-    if (!isViewingLatestVersion) {
-      clearSelection();
-    }
-  }, [isViewingLatestVersion]);
-
   const saveManualEdit = async () => {
     if (!problemData) {
       console.error('Cannot create variant without problemId');
@@ -287,7 +281,7 @@ console.log({scaffoldingDetails});
                   right={0}
                   bottom={0}
                   zIndex={10}
-                  bgcolor="rgba(255, 255, 255, 0.6)"
+                  bgcolor="rgba(255, 255, 255, 1)"
                 />
                 {selectedVersionGenParams && (selectedVersionGenParams as any)?.mode !== 'copy' && (
                   <GenerationParams

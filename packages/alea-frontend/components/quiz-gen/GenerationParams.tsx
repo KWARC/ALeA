@@ -15,14 +15,19 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
       top={0}
       left={0}
       right={0}
-      zIndex={11}
+      bottom={0}
+      zIndex={10}
+
       sx={{
-        background: 'linear-gradient(135deg, #d7b4b4ff 0%, #f8f9fa 100%)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
         borderRadius: 3,
         p: 3,
         border: '1px solid #e1e5e9',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
         backdropFilter: 'blur(8px)',
+        overflowY: { xs: 'auto', md: 'hidden' }, 
+        maxHeight: { xs: '100vh', md: '100vh' },
+         WebkitOverflowScrolling: 'touch',
         '&::before': {
           content: '""',
           position: 'absolute',
