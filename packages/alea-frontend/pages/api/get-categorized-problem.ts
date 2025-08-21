@@ -33,11 +33,17 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
   return sectionUris;
 }
 
-// HACK: Fix this.
-const conceptUrisForCourse = new Map<string, string[]>();
-async function getAllConceptUrisForCourse(courseId: string, courseNotesUri: string): Promise<string[]> {
+const conceptUrisForCourse = new Map<string, { data: string[]; timestamp: number }>();
+async function getAllConceptUrisForCourse(
+  courseId: string,
+  courseNotesUri: string
+): Promise<string[]> {
   if (conceptUrisForCourse.has(courseId)) {
-    return conceptUrisForCourse.get(courseId);
+    const cached = conceptUrisForCourse.get(courseId)!;
+    if (isCacheValid(cached)) {
+      console.log(`[CACHE HIT] Concept URIs for course ${courseId}`);
+      return cached.data;
+    }
   }
   const toc = (await getFlamsServer().contentToc({ uri: courseNotesUri }))?.[1] ?? [];
 
@@ -52,11 +58,54 @@ async function getAllConceptUrisForCourse(courseId: string, courseNotesUri: stri
     deps.forEach((uri) => conceptUris.add(uri));
   }
   const conceptUrisArray = Array.from(conceptUris);
-  conceptUrisForCourse.set(courseId, conceptUrisArray);
+  conceptUrisForCourse.set(courseId, {
+    data: conceptUrisArray,
+    timestamp: Date.now(),
+  });
   return conceptUrisArray;
 }
 
+const loRelationCache = new Map<string, { data: string[]; timestamp: number }>();
+
+// async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
+//    if (loRelationCache.has(problemUri)) {
+//     const cached = loRelationCache.get(problemUri)!;
+//     if (isCacheValid(cached)) {
+//       return cached.data;
+//     }
+//   }
+//   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
+//   const result = await getQueryResults(query ?? '');
+
+//   const conceptUris: string[] = [];
+//   result?.results?.bindings.forEach((binding) => {
+//     const raw = binding.relatedData?.value;
+//     if (!raw) return;
+//     const parts = raw.split('; ').map((p) => p.trim());
+//     const poSymbolUris = parts
+//       .filter((data) => data.startsWith('http://mathhub.info/ulo#po-symbol='))
+//       .map((data) => decodeURIComponent(data.split('#po-symbol=')[1]));
+
+//     conceptUris.push(...poSymbolUris);
+//   });
+
+//   return Array.from(new Set(conceptUris));
+// }
+
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
+if (loRelationCache.has(problemUri)) {
+  const cached = loRelationCache.get(problemUri)!;
+  if (isCacheValid(cached)) {
+    console.log(`[CACHE HIT] LoRelations for ${problemUri}`);
+    return cached.data;
+  } else {
+    console.log(`[CACHE EXPIRED] LoRelations for ${problemUri}`);
+  }
+}
+
+console.log(`[CACHE MISS] LoRelations for ${problemUri} → fetching fresh`);
+
+
   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
   const result = await getQueryResults(query ?? '');
 
@@ -72,7 +121,14 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
     conceptUris.push(...poSymbolUris);
   });
 
-  return Array.from(new Set(conceptUris));
+  const uniqueUris = Array.from(new Set(conceptUris));
+
+  loRelationCache.set(problemUri, {
+    data: uniqueUris,
+    timestamp: Date.now(),
+  });
+
+  return uniqueUris;
 }
 
 const languageUrlMap: Record<string, Language> = {
@@ -118,21 +174,31 @@ export async function getCategorizedProblems(
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const outOfSyllabusConcepts = labels.filter((label) => !conceptUrisFromCourse.includes(label));
+      const outOfSyllabusConcepts = labels.filter(
+        (label) => !conceptUrisFromCourse.includes(label)
+      );
 
-      let category: 'syllabus' | 'adventurous' =
+      const category: 'syllabus' | 'adventurous' =
         outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
       let showForeignLanguageNotice = false;
       let matchedLanguage: string | undefined;
 
       const problemLangCode = getParamFromUri(problemUri, 'l') ?? 'en';
+      const problemLangEnum = languageUrlMap[problemLangCode];
+      const problemLangName = problemLangEnum.toString();
+
+      const normalizedUserLangs =
+        typeof userLanguages === 'string'
+          ? userLanguages.split(',').map((l) => l.trim())
+          : Array.isArray(userLanguages)
+          ? userLanguages
+          : [];
+
+      // keep syllabus always, just show notice if not in preference
       if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
-        const problemLang = languageUrlMap[problemLangCode];
-        if (problemLang && userLanguages?.includes(problemLang)) {
+        if (problemLangName && !normalizedUserLangs.includes(problemLangName)) {
           showForeignLanguageNotice = true;
-          matchedLanguage = problemLang;
-        } else {
-          category = 'adventurous';
+          matchedLanguage = problemLangName;
         }
       }
 

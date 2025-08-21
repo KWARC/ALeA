@@ -83,9 +83,7 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
       </Tooltip>
 
       <Typography variant="body2" sx={{ ml: 1 }}>
-        {filterType === 'all'
-          ? `Showing all ${filteredProblems.length} problems`
-          : `Showing ${filteredProblems.length} ${filterType} problems`}
+        {filterType === 'all' ? 'Showing all problems' : `Showing ${filterType} problems`}
       </Typography>
 
       <Popover

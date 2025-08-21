@@ -116,6 +116,7 @@ export function PerSectionQuiz({
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState<string>('all');
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
@@ -136,7 +137,7 @@ export function PerSectionQuiz({
       setIsLoadingProblemUris(true);
       const userInfo = await getUserProfile();
       const languages = (userInfo as any)?.languages;
-
+      let selected: string[] = [];
       getProblemsPerSection(sectionUri, courseId, languages)
         .then((problems) => {
           const map: Record<string, string[]> = {};
@@ -146,8 +147,6 @@ export function PerSectionQuiz({
           }
           setCategoryMap(map);
           setProblems(problems);
-          setAllProblemUris(problems.map((p) => p.problemId));
-          let selected: string[] = [];
 
           if (category) {
             selected = map[category] || [];
@@ -164,7 +163,7 @@ export function PerSectionQuiz({
               return;
             }
 
-            const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
+            const selectedCategory = categoryKeys[parseInt(tabIndex)] || categoryKeys[0];
             selected = map[selectedCategory] || [];
 
             if (setCachedProblemUris) {
@@ -174,6 +173,7 @@ export function PerSectionQuiz({
           }
 
           setProblemUris(selected);
+          setAllProblemUris(selected);
           setIsSubmitted(selected.map(() => false));
           setResponses(selected.map(() => undefined));
           setIsLoadingProblemUris(false);
@@ -205,9 +205,8 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  if (!problemUri) return <>error: [{problemUri}] </>;
+  // if (!problemUri) return <>error: [{problemUri}] </>;
   const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
-
 
   return (
     <Box mb={4}>
@@ -219,7 +218,7 @@ export function PerSectionQuiz({
         border="1px solid #CCC"
         borderRadius="5px"
       >
-        <Typography fontWeight="bold" textAlign="left">
+        {/* <Typography fontWeight="bold" textAlign="left">
           {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
           {currentProblem?.showForeignLanguageNotice && (
             <Tooltip
@@ -237,7 +236,7 @@ export function PerSectionQuiz({
               />
             </Tooltip>
           )}
-        </Typography>
+        </Typography> */}
         {!category && (
           <Tabs
             value={tabIndex}
@@ -316,7 +315,24 @@ export function PerSectionQuiz({
               <>
                 <Typography fontWeight="bold" textAlign="left">
                   {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+                  {currentProblem?.showForeignLanguageNotice && (
+                    <Tooltip
+                      title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
+                    >
+                      <VisibilityIcon
+                        onClick={() => Router.push('/my-profile')}
+                        style={{
+                          marginLeft: '8px',
+                          color: '#1976d2',
+                          fontSize: '18px',
+                          verticalAlign: 'middle',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </Tooltip>
+                  )}
                 </Typography>
+
                 <Box
                   px={2}
                   maxWidth="800px"
