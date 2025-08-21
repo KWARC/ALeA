@@ -262,17 +262,8 @@ export const VariantDialog = ({
             )}
             <Box
               flex={1}
-              overflow="auto"
               pr={1}
-              sx={{
-                '&::-webkit-scrollbar': { width: '6px' },
-                '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '3px' },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '3px',
-                  '&:hover': { background: '#a1a1a1' },
-                },
-              }}
+              overflow="auto"
             >
               {variantOptionsLoading ? (
                 <LinearProgress />
