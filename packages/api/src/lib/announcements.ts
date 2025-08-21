@@ -42,8 +42,8 @@ export async function createAnnouncement(details: CreateAnnouncementRequest) {
   });
 }
 
-export async function getAnnouncement(courseId: string, instanceId: string) {
-  const resp = await axios.get('/api/announcement/get-announcement', {
+export async function getAnnouncements(courseId: string, instanceId: string) {
+  const resp = await axios.get('/api/announcement/get-announcements', {
     params: { courseId, instanceId },
   });
   return resp.data as Announcement[];
