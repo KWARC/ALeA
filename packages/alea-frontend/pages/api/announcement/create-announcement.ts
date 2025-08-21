@@ -16,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
-    ResourceName.COURSE_ACCESS,
-    Action.ACCESS_CONTROL,
+    ResourceName.COURSE_METADATA,
+    Action.MUTATE,
     { courseId, instanceId }
   );
   if (!userId) return;
