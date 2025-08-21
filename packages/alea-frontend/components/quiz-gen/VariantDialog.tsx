@@ -24,8 +24,9 @@ import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
+import { GenerationParams } from './GenerationParams';
 
-export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin';
+export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin' | 'scaffolding';
 export interface VariantConfig {
   variantTypes: VariantType[];
   minorEditInstruction?: string;
@@ -35,7 +36,15 @@ export interface VariantConfig {
   thematicReskinInstruction?: string;
   selectedTheme?: string;
 }
-
+export interface ScaffoldingDetails {
+  high: {
+    applicable: boolean;
+    numSubQuestions: number;
+  };
+  reduced: {
+    applicable: boolean;
+  };
+}
 interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
@@ -43,7 +52,14 @@ interface VariantDialogProps {
   setProblemData: (p: FlatQuizProblem | null) => void;
   userInfo: UserInfo | undefined;
 }
-
+export const MINOR_EDIT_KEYS: MinorEditType[] = [
+  'change_data_format',
+  'change_goal',
+  'goal_inversion',
+  'convert_units',
+  'negate_question_stem',
+  'substitute_values',
+];
 export const VariantDialog = ({
   open,
   onClose,
@@ -64,16 +80,19 @@ export const VariantDialog = ({
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const [scaffoldingDetails, setScaffoldingDetails] = useState<ScaffoldingDetails>(null);
   const [availabledMinorEdits, setAvailableMinorEdits] = useState<MinorEditType[] | []>([]);
   const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
+  const [scaffoldingApplicable, setScaffoldingApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const availableMinorEdits: MinorEditType[] = [];
+  const [currentLang, setCurrentLang] = useState('');
+  const [resetKey, setResetKey] = useState(0);
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
   const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
@@ -82,11 +101,11 @@ export const VariantDialog = ({
   const clearSelection = () => {
     setVariantConfig({
       variantTypes: [],
-
       minorEditInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
     });
+    setResetKey((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -94,40 +113,20 @@ export const VariantDialog = ({
       if (!open || !problemData) return;
       setVariantOptionsLoading(true);
       try {
-        console.log({ problemData });
-
         if (!problemData) return;
         const result = await checkPossibleVariants(problemData.problemId);
-        // const result = {
-        //   adjust_scaffolding: true,
-        //   change_data_format: true,
-        //   change_goal: true,
-        //   convert_units: true,
-        //   modify_choices: true,
-        //   negate_question_stem: true,
-        //   rephrase_wording: true,
-        //   reskin: {
-        //     applicable: true,
-        //     themes: [
-        //       'Corporate Office Scenario',
-        //       'Library Management System',
-        //       'Hospital Staff Records',
-        //       'University Student Database',
-        //     ],
-        //   },
-        //   substitute_values: true,
-        // };
-        if (result.change_data_format) availableMinorEdits.push('change_data_format');
-        if (result.change_goal) availableMinorEdits.push('change_goal');
-        if (result.convert_units) availableMinorEdits.push('convert_units');
-        if (result.negate_question_stem) availableMinorEdits.push('negate_question_stem');
-        if (result.substitute_values) availableMinorEdits.push('substitute_values');
-
+        const availableMinorEdits = MINOR_EDIT_KEYS.filter((key) => result[key]);
+        const isHighScaffoldingApplicable =
+          result.scaffolding?.high?.applicable && result.scaffolding?.high.numSubQuestions > 0;
+        const isReducedScaffoldingApplicable = result.scaffolding?.reduced?.applicable;
         setMinorEditsApplicable(availableMinorEdits.length > 0);
         setAvailableMinorEdits(availableMinorEdits);
         setChoicesApplicable(result.modify_choices);
-        setReskinApplicable(result.reskin.applicable&&result.reskin?.themes?.length>0);
+        setReskinApplicable(result.reskin.applicable && result.reskin?.themes?.length > 0);
+        setScaffoldingApplicable(isHighScaffoldingApplicable || isReducedScaffoldingApplicable);
+        setScaffoldingDetails(result.scaffolding);
         setAvailableThemes(result.reskin.themes);
+        setCurrentLang(result.current_question_language);
       } finally {
         setVariantOptionsLoading(false);
       }
@@ -226,9 +225,16 @@ export const VariantDialog = ({
             <CircularProgress />
           </Box>
         )}
-        <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
+        <Box
+          display="flex"
+          flex={1}
+          gap={2}
+          minHeight={0}
+          overflow="hidden"
+          flexDirection={{ xs: 'column', md: 'row' }}
+        >
           <Box
-            flex={0.7}
+            flex={{ xs: '1 1 auto', md: 0.4 }}
             display="flex"
             flexDirection="column"
             minHeight={0}
@@ -244,80 +250,14 @@ export const VariantDialog = ({
                   right={0}
                   bottom={0}
                   zIndex={10}
-                  bgcolor="rgba(255, 255, 255, 0.6)"
+                  bgcolor="rgba(255, 255, 255, 1)"
                 />
-                {(selectedVersionGenParams as any) &&
-                  (selectedVersionGenParams as any)?.mode !== 'copy' && (
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      zIndex={11}
-                      bgcolor="white"
-                      borderRadius={2}
-                      p={2}
-                      sx={{
-                        border: '2px solid saddlebrown',
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          mb: 1,
-                        }}
-                      >
-                        Generation Params
-                      </Typography>
-
-                      {(selectedVersionGenParams as any)?.mode ? (
-                        <>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            Mode:{' '}
-                            <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                              {(selectedVersionGenParams as any)?.mode}
-                            </Box>
-                          </Typography>
-
-                          {(selectedVersionGenParams as any)?.variantOptions?.theme && (
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Theme:{' '}
-                              <Box component="span" sx={{ fontWeight: 400, color: PRIMARY_COL }}>
-                                {(selectedVersionGenParams as any)?.variantOptions?.theme}
-                              </Box>
-                            </Typography>
-                          )}
-
-                          {(selectedVersionGenParams as any)?.sourceProblem?.problemId && (
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              Source Problem Id:{' '}
-                              <Box component="span" sx={{ fontWeight: 400 }}>
-                                {(selectedVersionGenParams as any)?.sourceProblem?.problemId}
-                              </Box>
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          Source Problem Uri:{' '}
-                          <Box
-                            component="a"
-                            href={existingProblemUri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                              fontWeight: 400,
-                              color: PRIMARY_COL,
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            {existingProblemUri}
-                          </Box>
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
+                {selectedVersionGenParams && (selectedVersionGenParams as any)?.mode !== 'copy' && (
+                  <GenerationParams
+                    genParams={selectedVersionGenParams}
+                    existingProblemUri={existingProblemUri}
+                  />
+                )}
               </>
             )}
             <Box
@@ -391,23 +331,39 @@ export const VariantDialog = ({
                       }}
                     />
                   )}
+                  {/*
+                  //TODO next step
+                   {scaffoldingApplicable && (
+                    <SwitchToggle
+                      title="Scaffold"
+                      typeKey="scaffolding"
+                      instructionKey="scaffoldingInstruction"
+                      variantConfig={variantConfig}
+                      scaffoldingDetails={scaffoldingDetails}
+                      setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
+                    />
+                  )} */}
                 </>
               )}
 
               <Translate
+                key={resetKey}
                 problemData={problemData}
                 onLoadingChange={setPreviewLoading}
+                language={currentLang}
                 onTranslated={(newVariant) => {
                   const flat = flattenQuizProblem(newVariant);
                   setProblemData(flat);
                   setEditableSTeX(flat.problemStex);
                 }}
               />
-
-              {/* <VariantConfigSection
-                variantConfig={variantConfig}
-                setVariantConfig={setVariantConfig}
-              /> */}
 
               <Button
                 size="small"
@@ -427,28 +383,34 @@ export const VariantDialog = ({
               >
                 Clear Selection
               </Button>
-              {/* <ConfigurationSummary variantConfig={variantConfig} /> */}
             </Box>
           </Box>
-
-          <PreviewSection
-            previewMode={previewMode}
-            setPreviewMode={setPreviewMode}
-            problemData={problemData}
-            editableSTeX={editableSTeX}
-            setEditableSTeX={setEditableSTeX}
-            previousVersions={versions}
-            isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
-            onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setSnackbarOpen(false)}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           />
+          <Box
+            flex={{ xs: '1 1 auto', md: 0.7 }}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+          >
+            <PreviewSection
+              previewMode={previewMode}
+              setPreviewMode={setPreviewMode}
+              problemData={problemData}
+              editableSTeX={editableSTeX}
+              setEditableSTeX={setEditableSTeX}
+              previousVersions={versions}
+              isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+              onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+            />
+          </Box>
         </Box>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          message={snackbarMessage}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        />
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
