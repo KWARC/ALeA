@@ -124,7 +124,6 @@ export const PreviewSection = ({
     return isLatest || hasManualEdits;
   });
 
-  //const selectedVersion = versionOptions[selectedVersionIndex];
   const selectedVersion = filteredVersions[selectedVersionIndex];
   const latestManualEdit = selectedVersion?.manualEdits?.[selectedVersion.manualEdits.length - 1];
   const isLatestVersion = selectedVersionIndex === filteredVersions.length - 1;
@@ -223,18 +222,7 @@ export const PreviewSection = ({
                   },
                 }}
               >
-                {/* {versionOptions
-                  .filter((option, index) => {
-                    const mode = (option?.generationParams as any)?.mode;
-                    const hasManualEdits =
-                      Array.isArray(option?.manualEdits) && option.manualEdits.length > 0;
-                    const isLatest = index === versionOptions.length - 1;
-
-                    if (mode !== 'copy') return true;
-                    return isLatest || hasManualEdits;
-                  }) */}
                 {filteredVersions.map((version, index) => {
-                  //{versionOptions.map((version, index) => {
                   const genParams = version.generationParams as unknown as GenerationParams;
                   const mode = genParams?.mode;
                   const variantOptions = (genParams as any)?.variantOptions;

@@ -20,24 +20,31 @@ import { VariantConfig, VariantType } from './VariantDialog';
 interface SwitchToggleProps {
   title: string;
   typeKey: VariantType;
-  instructionKey: string;
-  placeholder: string;
+  instructionKey?: string;
+  placeholder?: string;
   variantConfig: VariantConfig;
   themes?: string[];
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
   problemData?: FlatQuizProblem;
+  availableMinorEdits?: MinorEditType[];
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
 
-type RephraseType = 'technical' | 'add_distractors' | 'num_substitution' | 'entity_swapping';
+export type MinorEditType =
+  | 'change_data_format'
+  | 'change_goal'
+  | 'convert_units'
+  | 'negate_question_stem'
+  | 'substitute_values';
 
-const REPHRASE_SUBOPTIONS: RephraseType[] = [
-  'technical',
-  'add_distractors',
-  'num_substitution',
-  'entity_swapping',
-];
+const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
+  change_data_format: 'Change Data Format',
+  change_goal: 'Change Goal',
+  convert_units: 'Convert Units',
+  negate_question_stem: 'Negate Question Stem',
+  substitute_values: 'Substitute Values',
+};
 
 export const SwitchToggle = ({
   title,
@@ -48,6 +55,7 @@ export const SwitchToggle = ({
   themes = [],
   setVariantConfig,
   problemData,
+  availableMinorEdits,
   onVariantGenerated,
   onLoadingChange,
 }: SwitchToggleProps) => {
@@ -82,7 +90,7 @@ export const SwitchToggle = ({
     });
   };
 
-  const handleModeChange = (newMode: 'add' | 'remove') => {
+  const handleModeChange = (newMode: 'add' | 'replace') => {
     setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: newMode }));
     if (newMode === 'add') {
       setSelectedOptions?.(mcqOptions);
@@ -118,24 +126,24 @@ export const SwitchToggle = ({
     }
   };
 
-  const handleRephrase = async (types: RephraseType[]) => {
-    if (typeKey === 'rephrase' && problemData?.problemId) {
+  const handleMinorEdit = async (type: MinorEditType) => {
+    if (typeKey === 'minorEdit' && problemData?.problemId) {
       onLoadingChange?.(true);
 
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
           problemId: problemData.problemId,
-          variantType: 'rephrase',
-          rephraseType: types,
-          rephraseInstruction: variantConfig[instructionKey],
+          variantType: 'minor_edit',
+          minorEditType: type,
+          minorEditInstruction: variantConfig[instructionKey],
         });
 
         if (result.length > 0) {
           const newVariant = result[0];
           onVariantGenerated?.(newVariant);
         }
-        console.log({ types });
+        console.log({ type });
       } finally {
         onLoadingChange?.(false);
       }
@@ -169,33 +177,30 @@ export const SwitchToggle = ({
     }
   }, [variantConfig.selectedTheme]);
 
-  const renderRephraseSuboptions = () => (
+  const renderMinorEditSuboptions = () => (
     <Box pl={1} mb={2}>
       <Typography variant="subtitle2" color="text.secondary" mb={1}>
-        Select Rephrase Types:
+        Select Minor Edit Type:
       </Typography>
-      {REPHRASE_SUBOPTIONS.map((opt) => {
-        const checked = variantConfig.rephraseSubtypes?.includes(opt) ?? false;
-        return (
+      <RadioGroup
+        value={variantConfig.minorEditSubtypes || ''}
+        onChange={(e) => {
+          const selected = e.target.value as MinorEditType;
+          setVariantConfig((prev) => ({
+            ...prev,
+            minorEditSubtypes: selected,
+          }));
+        }}
+      >
+        {(availableMinorEdits || []).map((opt) => (
           <FormControlLabel
             key={opt}
-            control={
-              <Checkbox
-                checked={checked}
-                onChange={(e) => {
-                  setVariantConfig((prev) => ({
-                    ...prev,
-                    rephraseSubtypes: e.target.checked
-                      ? [...(prev.rephraseSubtypes ?? []), opt]
-                      : (prev.rephraseSubtypes ?? []).filter((o) => o !== opt),
-                  }));
-                }}
-              />
-            }
-            label={opt}
+            value={opt}
+            control={<Radio />}
+            label={MINOR_EDIT_LABELS[opt]}
           />
-        );
-      })}
+        ))}
+      </RadioGroup>
     </Box>
   );
 
@@ -210,17 +215,17 @@ export const SwitchToggle = ({
           </Typography>
           <RadioGroup
             value={mode || ''}
-            onChange={(e) => handleModeChange(e.target.value as 'add' | 'remove')}
+            onChange={(e) => handleModeChange(e.target.value as 'add' | 'replace')}
           >
             <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
-            <FormControlLabel value="remove" control={<Radio />} label="Remove Distractors" />
+            <FormControlLabel value="replace" control={<Radio />} label="Replace Distractors" />
           </RadioGroup>
         </Box>
 
         {mcqOptions.length > 0 && (
           <Box sx={{ pl: 1, mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" mb={1}>
-              Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
+              Select which options to {mode === 'add' ? 'duplicate/modify' : 'replace'}:
             </Typography>
             {mcqOptions.map((opt, idx) => (
               <FormControlLabel
@@ -307,37 +312,37 @@ export const SwitchToggle = ({
 
       <Collapse in={isActive}>
         <Box p={2} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
-          {typeKey === 'rephrase' && renderRephraseSuboptions()}
+          {typeKey === 'minorEdit' && renderMinorEditSuboptions()}
 
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
 
-          <TextField
-            sx={{ mb: 2 }}
-            label={`${title} Instructions`}
-            placeholder={placeholder}
-            value={variantConfig[instructionKey] || ''}
-            onChange={(e) =>
-              setVariantConfig((prev) => ({
-                ...prev,
-                [instructionKey]: e.target.value,
-              }))
-            }
-            fullWidth
-            multiline
-            minRows={2}
-          />
+          {instructionKey && (
+            <TextField
+              sx={{ mb: 2 }}
+              label={`${title} Instructions(Optional)`}
+              placeholder={placeholder}
+              value={variantConfig[instructionKey] || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({
+                  ...prev,
+                  [instructionKey]: e.target.value,
+                }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+            />
+          )}
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            {typeKey === 'rephrase' && (
+            {typeKey === 'minorEdit' && (
               <Button
                 variant="contained"
-                onClick={() =>
-                  handleRephrase((variantConfig.rephraseSubtypes as RephraseType[]) || [])
-                }
-                disabled={!variantConfig.rephraseSubtypes?.length}
+                onClick={() => handleMinorEdit(variantConfig.minorEditSubtypes as MinorEditType)}
+                disabled={!variantConfig.minorEditSubtypes}
               >
-                Generate Rephrased Variant
+                Generate
               </Button>
             )}
 

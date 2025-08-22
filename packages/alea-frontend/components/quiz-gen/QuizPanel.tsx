@@ -211,7 +211,7 @@ export function QuizPanel({
               }}
             />
           </Tooltip>
-          <Tooltip title="Finalized variants of this problem">
+          <Tooltip title="Finalized variants of this problem" placement="top">
             <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
               <InputLabel>Variants</InputLabel>
               <Select
@@ -219,7 +219,7 @@ export function QuizPanel({
                 onChange={(e) => handleVariantChange(e.target.value as number)}
                 label="Variants"
               >
-                <MenuItem value={null}>None</MenuItem>
+                <MenuItem value={null}>Original</MenuItem>
                 {finalizedProblems?.map((variant, idx) => (
                   <MenuItem key={variant.problemId} value={idx}>
                     Variant {idx + 1}

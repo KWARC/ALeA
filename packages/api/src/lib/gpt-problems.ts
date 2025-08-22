@@ -151,11 +151,16 @@ export interface CompletionEval {
   problemEvals: ProblemEval[];
   updateTime: string;
 }
-
-export interface RephraseVariant {
-  variantType: 'rephrase';
-  rephraseType: string[]; // camel_casing here  
-  rephraseInstruction?: string;
+export type MinorEditType =
+  | 'change_data_format'
+  | 'change_goal'
+  | 'convert_units'
+  | 'negate_question_stem'
+  | 'substitute_values';
+export interface MinorEditVariant {
+  variantType: 'minor_edit';
+  minorEditType: MinorEditType ;
+  minorEditInstruction?: string;
 }
 
 export interface ReskinVariant {
@@ -163,7 +168,10 @@ export interface ReskinVariant {
   theme: string;
   reskinInstruction?: string;
 }
-
+export interface LanguageVariant {
+  variantType: 'translate';
+  language: string;
+}
 export interface ModifyChoicesVariant {
   variantType: 'modify_choices';
   optionsToModify: string;
@@ -174,13 +182,13 @@ export interface VariantBase {
   mode: 'variant';
   problemId?: number;
   problemUri?: string;
-  instruction?: string;
 }
 
 export type VariantGenerationParams =
-  | (VariantBase & RephraseVariant)
+  | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
   | (VariantBase & ModifyChoicesVariant)
+  |(VariantBase & LanguageVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -197,19 +205,33 @@ interface CopyGenerationParams {
   sectionId?: string;
 }
 
-export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams ;
+export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
 
+// export interface PossibleVariantsResult {
+//   rephrase: {
+//     applicable: boolean;
+//     types?: string[];
+//   };
+//   reskin: {
+//     applicable: boolean;
+//     themes?: string[];
+//   };
+//   modify_choices: {
+//     applicable: boolean;
+//     optionsToModify?: string[];
+//   };
+// }
 export interface PossibleVariantsResult {
-  rephrase: {
-    applicable: boolean;
-    types?: string[];
-  };
+  adjust_scaffolding: boolean;
+  change_data_format: boolean;
+  change_goal: boolean;
+  convert_units: boolean;
+  modify_choices: boolean;
+  negate_question_stem: boolean;
+  rephrase_wording: boolean;
   reskin: {
     applicable: boolean;
     themes?: string[];
   };
-  modify_choices: {
-    applicable: boolean;
-    optionsToModify?: string[];
-  };
+  substitute_values: boolean;
 }

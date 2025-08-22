@@ -199,6 +199,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'university-sem-info' },
     ],
   },
+
   {
     name: ResourceName.COURSE_METADATA,
     possibleActions: [Action.MUTATE],
