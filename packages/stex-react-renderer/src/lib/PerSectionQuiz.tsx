@@ -120,24 +120,19 @@ export function PerSectionQuiz({
   const [show, setShow] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
-  // const [tabIndex, setTabIndex] = useState<string>('0');
-  // const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   const [localTabIndex, setLocalTabIndex] = useState<string>('0');
   const tabIndex = externalTabIndex ?? localTabIndex;
   const setTabIndex = setExternalTabIndex ?? setLocalTabIndex;
   const [localCategoryMap, setLocalCategoryMap] = useState<Record<string, string[]>>({});
   const categoryMap = externalCategoryMap ?? localCategoryMap;
   const setCategoryMap = setExternalCategoryMap ?? setLocalCategoryMap;
-
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
-
-  // const [filterType, setFilterType] = useState<string>('all');
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
     const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
-    return [...knownOrder.filter((k) => categoryMap[k]), ...rest];
+    return [...knownOrder, ...rest];
   }, [categoryMap]);
 
   useEffect(() => {
@@ -179,12 +174,25 @@ export function PerSectionQuiz({
               return;
             }
 
-            const selectedCategory = categoryKeys[parseInt(tabIndex)] || categoryKeys[0];
+            if (!map['syllabus']) map['syllabus'] = [];
+            if (!map['adventurous']) map['adventurous'] = [];
+
+            let selectedCategory: string;
+            if (category) {
+              selectedCategory = category;
+            } else {
+              selectedCategory = orderedCategoryKeys[parseInt(tabIndex)] || 'syllabus';
+            }
+
+            if (orderedCategoryKeys.includes(selectedCategory)) {
+              const newIndex = orderedCategoryKeys.indexOf(selectedCategory);
+              setTabIndex(newIndex.toString());
+            }
+
             selected = map[selectedCategory] || [];
 
             if (setCachedProblemUris) {
-              const all = Object.values(map).flat();
-              setCachedProblemUris(all);
+              setCachedProblemUris(selected);
             }
           }
 
@@ -221,7 +229,6 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  // if (!problemUri) return <>error: [{problemUri}] </>;
   const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
 
   return (
@@ -234,25 +241,6 @@ export function PerSectionQuiz({
         border="1px solid #CCC"
         borderRadius="5px"
       >
-        {/* <Typography fontWeight="bold" textAlign="left">
-          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-          {currentProblem?.showForeignLanguageNotice && (
-            <Tooltip
-              title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
-            >
-              <VisibilityIcon
-                onClick={() => Router.push('/my-profile')}
-                style={{
-                  marginLeft: '8px',
-                  color: '#1976d2',
-                  fontSize: '18px',
-                  verticalAlign: 'middle',
-                  cursor: 'pointer',
-                }}
-              />
-            </Tooltip>
-          )}
-        </Typography> */}
         <Tabs
           value={tabIndex}
           onChange={(_, newVal: string) => {

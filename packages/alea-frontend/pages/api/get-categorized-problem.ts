@@ -19,6 +19,8 @@ const categorizedProblemCache = new Map<
     timestamp: number;
   }
 >();
+const conceptUrisForCourse = new Map<string, { data: string[]; timestamp: number }>();
+const loRelationCache = new Map<string, { data: string[]; timestamp: number }>();
 
 function isCacheValid(cacheEntry: { timestamp: number }): boolean {
   return Date.now() - cacheEntry.timestamp < CACHE_TTL;
@@ -33,7 +35,6 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
   return sectionUris;
 }
 
-const conceptUrisForCourse = new Map<string, { data: string[]; timestamp: number }>();
 async function getAllConceptUrisForCourse(
   courseId: string,
   courseNotesUri: string
@@ -41,7 +42,6 @@ async function getAllConceptUrisForCourse(
   if (conceptUrisForCourse.has(courseId)) {
     const cached = conceptUrisForCourse.get(courseId)!;
     if (isCacheValid(cached)) {
-      console.log(`[CACHE HIT] Concept URIs for course ${courseId}`);
       return cached.data;
     }
   }
@@ -65,45 +65,13 @@ async function getAllConceptUrisForCourse(
   return conceptUrisArray;
 }
 
-const loRelationCache = new Map<string, { data: string[]; timestamp: number }>();
-
-// async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
-//    if (loRelationCache.has(problemUri)) {
-//     const cached = loRelationCache.get(problemUri)!;
-//     if (isCacheValid(cached)) {
-//       return cached.data;
-//     }
-//   }
-//   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
-//   const result = await getQueryResults(query ?? '');
-
-//   const conceptUris: string[] = [];
-//   result?.results?.bindings.forEach((binding) => {
-//     const raw = binding.relatedData?.value;
-//     if (!raw) return;
-//     const parts = raw.split('; ').map((p) => p.trim());
-//     const poSymbolUris = parts
-//       .filter((data) => data.startsWith('http://mathhub.info/ulo#po-symbol='))
-//       .map((data) => decodeURIComponent(data.split('#po-symbol=')[1]));
-
-//     conceptUris.push(...poSymbolUris);
-//   });
-
-//   return Array.from(new Set(conceptUris));
-// }
-
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   if (loRelationCache.has(problemUri)) {
     const cached = loRelationCache.get(problemUri)!;
     if (isCacheValid(cached)) {
-      console.log(`[CACHE HIT] LoRelations for ${problemUri}`);
       return cached.data;
-    } else {
-      console.log(`[CACHE EXPIRED] LoRelations for ${problemUri}`);
     }
   }
-
-  console.log(`[CACHE MISS] LoRelations for ${problemUri} → fetching fresh`);
 
   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
   const result = await getQueryResults(query ?? '');
@@ -198,7 +166,6 @@ export async function getCategorizedProblems(
           ? userLanguages.map((l) => reverseLangMap[l] || l.toLowerCase())
           : [];
 
-      // keep syllabus always, just show notice if not in preference
       if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
         if (normalizedUserLangs.includes(problemLangCode)) {
           showForeignLanguageNotice = true;
