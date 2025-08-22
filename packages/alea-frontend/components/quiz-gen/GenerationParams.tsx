@@ -17,7 +17,6 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
       right={0}
       bottom={0}
       zIndex={10}
-
       sx={{
         background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
         borderRadius: 3,
@@ -25,9 +24,8 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
         border: '1px solid #e1e5e9',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
         backdropFilter: 'blur(8px)',
-        overflowY: { xs: 'auto', md: 'hidden' }, 
+        overflowY: { xs: 'auto', md: 'hidden' },
         maxHeight: { xs: '100vh', md: '100vh' },
-         WebkitOverflowScrolling: 'touch',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -213,9 +211,9 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                     border: `1px solid ${PRIMARY_COL}20`,
                   }}
                 >
-                  {Array.isArray(genParams?.variantOptions?.optionsToModify)
-                    ? genParams.variantOptions.optionsToModify.join(', ')
-                    : genParams?.variantOptions?.optionsToModify}
+                  {Array.isArray(genParams?.variantOptions?.modifiedOption)
+                    ? genParams.variantOptions.modifiedOption.join(', ')
+                    : genParams?.variantOptions?.modifiedOption}
                 </Typography>
               </Box>
             </>
