@@ -3,33 +3,44 @@ import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
 
+type LectureEntry = {
+  lectureDay: string;
+  venue?: string;
+  venueLink?: string;
+  lectureStartTime: string;
+  lectureEndTime: string;
+  hasHomework?: boolean;
+  hasQuiz?: boolean;
+};
+
 type DatabaseResult<T> = T[] | { error: any };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { courseId, instanceId, lectureDay, updatedLectureEntry } = req.body as {
+  const {
+    courseId,
+    instanceId,
+    lectureDay,
+    lectureStartTime,
+    lectureEndTime,
+    updatedLectureEntry,
+  } = req.body as {
     courseId: string;
     instanceId: string;
     lectureDay: string;
-    updatedLectureEntry: {
-      lectureDay: string;
-      venue?: string;
-      venueLink?: string;
-      lectureStartTime: string;
-      lectureEndTime: string;
-      hasHomework?: boolean;
-      hasQuiz?: boolean;
-    };
+    lectureStartTime: string;
+    lectureEndTime: string;
+    updatedLectureEntry: Partial<LectureEntry>;
   };
 
   if (
     !courseId ||
     !instanceId ||
     !lectureDay ||
-    !updatedLectureEntry ||
-    !updatedLectureEntry.lectureStartTime ||
-    !updatedLectureEntry.lectureEndTime
+    !lectureStartTime ||
+    !lectureEndTime ||
+    !updatedLectureEntry
   ) {
     return res.status(400).end('Missing required fields');
   }
@@ -58,36 +69,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).end('Course instance not found');
     }
 
-    let lectureSchedule: Array<{
-      lectureDay: string;
-      venue?: string;
-      venueLink?: string;
-      lectureStartTime: string;
-      lectureEndTime: string;
-      hasHomework?: boolean;
-      hasQuiz?: boolean;
-    }>;
-
+    let lectureSchedule: LectureEntry[];
     try {
       lectureSchedule = JSON.parse(existingResult[0].lectureSchedule || '[]');
-    } catch (error) {
+    } catch {
       return res.status(500).end('Invalid lecture schedule JSON');
     }
 
-    const lectureIndex = lectureSchedule.findIndex((l) => l.lectureDay === lectureDay);
+    const lectureIndex = lectureSchedule.findIndex(
+      (l) =>
+        l.lectureDay === lectureDay &&
+        l.lectureStartTime === lectureStartTime &&
+        l.lectureEndTime === lectureEndTime
+    );
     if (lectureIndex === -1) {
-      return res.status(404).end(`Lecture for day ${lectureDay} not found`);
+      return res
+        .status(404)
+        .end(`Lecture on ${lectureDay} ${lectureStartTime}-${lectureEndTime} not found`);
     }
 
-    const updatedEntry = { ...updatedLectureEntry, lectureDay };
-    const updatedSchedule = [...lectureSchedule];
-    updatedSchedule[lectureIndex] = updatedEntry;
+    const mergedEntry: LectureEntry = {
+      ...lectureSchedule[lectureIndex],
+      ...updatedLectureEntry,
+      lectureDay,
+    };
+
+    lectureSchedule[lectureIndex] = mergedEntry;
 
     const updateResult = (await executeQuery<{ affectedRows: number }>(
       `UPDATE courseMetadata
        SET lectureSchedule = ?, userId = ?
        WHERE courseId = ? AND instanceId = ?`,
-      [JSON.stringify(updatedSchedule), userId, courseId, instanceId]
+      [JSON.stringify(lectureSchedule), userId, courseId, instanceId]
     )) as DatabaseResult<{ affectedRows: number }>;
 
     if ('error' in updateResult) {
