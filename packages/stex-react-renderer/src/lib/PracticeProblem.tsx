@@ -21,7 +21,12 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   const [showProblems, setShowProblems] = useState(false);
   const router = useRouter();
   const { quiz: t } = getLocaleObject(router);
+  const [cachedProblemUris, setCachedProblemUris] = useState<string[] | null>(null);
   // const [tabValue, setTabValue] = useState(0);
+  // in PracticeProblem.tsx
+  const [tabIndex, setTabIndex] = useState<string>('0');
+  const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
+
   const courseId = router.query.courseId as string;
   useEffect(() => {
     if (!sectionUri || !courseId) return;
@@ -240,8 +245,14 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
             <PerSectionQuiz
               sectionUri={sectionUri}
               courseId={courseId}
+              cachedProblemUris={cachedProblemUris}
+              setCachedProblemUris={setCachedProblemUris}
               showHideButton={false}
               showButtonFirst={false}
+              tabIndex={tabIndex}
+              setTabIndex={setTabIndex}
+              externalCategoryMap={categoryMap}
+              setExternalCategoryMap={setCategoryMap}
             />
           )}
           {showHideButton && (

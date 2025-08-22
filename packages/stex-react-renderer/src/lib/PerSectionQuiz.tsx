@@ -94,6 +94,10 @@ export function PerSectionQuiz({
   setCachedProblemUris,
   category,
   courseId,
+  tabIndex: externalTabIndex,
+  setTabIndex: setExternalTabIndex,
+  externalCategoryMap,
+  setExternalCategoryMap,
 }: {
   sectionUri: string;
   showButtonFirst?: boolean;
@@ -102,6 +106,10 @@ export function PerSectionQuiz({
   setCachedProblemUris?: (uris: string[]) => void;
   category?: 'syllabus' | 'adventurous';
   courseId: string;
+  tabIndex?: string;
+  setTabIndex?: (val: string) => void;
+  externalCategoryMap?: Record<string, string[]>;
+  setExternalCategoryMap?: (map: Record<string, string[]>) => void;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);
@@ -112,11 +120,19 @@ export function PerSectionQuiz({
   const [show, setShow] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
-  const [tabIndex, setTabIndex] = useState<string>('0');
-  const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
+  // const [tabIndex, setTabIndex] = useState<string>('0');
+  // const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
+  const [localTabIndex, setLocalTabIndex] = useState<string>('0');
+  const tabIndex = externalTabIndex ?? localTabIndex;
+  const setTabIndex = setExternalTabIndex ?? setLocalTabIndex;
+  const [localCategoryMap, setLocalCategoryMap] = useState<Record<string, string[]>>({});
+  const categoryMap = externalCategoryMap ?? localCategoryMap;
+  const setCategoryMap = setExternalCategoryMap ?? setLocalCategoryMap;
+
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
-  const [filterType, setFilterType] = useState<string>('all');
+
+  // const [filterType, setFilterType] = useState<string>('all');
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
@@ -237,43 +253,41 @@ export function PerSectionQuiz({
             </Tooltip>
           )}
         </Typography> */}
-        {!category && (
-          <Tabs
-            value={tabIndex}
-            onChange={(_, newVal: string) => {
-              if (newVal === 'forme') {
-                setTabIndex('forme');
-                return;
+        <Tabs
+          value={tabIndex}
+          onChange={(_, newVal: string) => {
+            if (newVal === 'forme') {
+              setTabIndex('forme');
+              return;
+            }
+
+            const index = parseInt(newVal);
+            const selectedCategory = orderedCategoryKeys[index];
+            const selected = categoryMap[selectedCategory] || [];
+
+            setTabIndex(newVal);
+            setAllProblemUris(selected);
+            setProblemUris(selected);
+            setIsSubmitted(selected.map(() => false));
+            setResponses(selected.map(() => undefined));
+            setProblemIdx(0);
+          }}
+        >
+          <Tab value="forme" label="For Me" />
+          {orderedCategoryKeys.map((cat, i) => (
+            <Tab
+              key={cat}
+              value={i.toString()}
+              label={
+                cat === 'adventurous'
+                  ? "I'm Adventurous"
+                  : cat === 'syllabus'
+                  ? 'Syllabus'
+                  : cat[0].toUpperCase() + cat.slice(1)
               }
-
-              const index = parseInt(newVal);
-              const selectedCategory = orderedCategoryKeys[index];
-              const selected = categoryMap[selectedCategory] || [];
-
-              setTabIndex(newVal);
-              setAllProblemUris(selected);
-              setProblemUris(selected);
-              setIsSubmitted(selected.map(() => false));
-              setResponses(selected.map(() => undefined));
-              setProblemIdx(0);
-            }}
-          >
-            <Tab value="forme" label="For Me" />
-            {orderedCategoryKeys.map((cat, i) => (
-              <Tab
-                key={cat}
-                value={i.toString()}
-                label={
-                  cat === 'adventurous'
-                    ? "I'm Adventurous"
-                    : cat === 'syllabus'
-                    ? 'Syllabus'
-                    : cat[0].toUpperCase() + cat.slice(1)
-                }
-              />
-            ))}
-          </Tabs>
-        )}
+            />
+          ))}
+        </Tabs>
         {tabIndex === 'forme' ? (
           <ForMe
             sectionUri={sectionUri}

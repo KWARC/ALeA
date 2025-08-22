@@ -93,18 +93,17 @@ const loRelationCache = new Map<string, { data: string[]; timestamp: number }>()
 // }
 
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
-if (loRelationCache.has(problemUri)) {
-  const cached = loRelationCache.get(problemUri)!;
-  if (isCacheValid(cached)) {
-    console.log(`[CACHE HIT] LoRelations for ${problemUri}`);
-    return cached.data;
-  } else {
-    console.log(`[CACHE EXPIRED] LoRelations for ${problemUri}`);
+  if (loRelationCache.has(problemUri)) {
+    const cached = loRelationCache.get(problemUri)!;
+    if (isCacheValid(cached)) {
+      console.log(`[CACHE HIT] LoRelations for ${problemUri}`);
+      return cached.data;
+    } else {
+      console.log(`[CACHE EXPIRED] LoRelations for ${problemUri}`);
+    }
   }
-}
 
-console.log(`[CACHE MISS] LoRelations for ${problemUri} → fetching fresh`);
-
+  console.log(`[CACHE MISS] LoRelations for ${problemUri} → fetching fresh`);
 
   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
   const result = await getQueryResults(query ?? '');
@@ -171,6 +170,11 @@ export async function getCategorizedProblems(
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
+  const reverseLangMap: Record<string, string> = {};
+  for (const [code, name] of Object.entries(languageUrlMap)) {
+    reverseLangMap[name.toString()] = code;
+  }
+
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
@@ -187,16 +191,16 @@ export async function getCategorizedProblems(
       const problemLangEnum = languageUrlMap[problemLangCode];
       const problemLangName = problemLangEnum.toString();
 
-      const normalizedUserLangs =
+      const normalizedUserLangs: string[] =
         typeof userLanguages === 'string'
-          ? userLanguages.split(',').map((l) => l.trim())
+          ? userLanguages.split(',').map((l) => reverseLangMap[l.trim()] || l.trim().toLowerCase())
           : Array.isArray(userLanguages)
-          ? userLanguages
+          ? userLanguages.map((l) => reverseLangMap[l] || l.toLowerCase())
           : [];
 
       // keep syllabus always, just show notice if not in preference
       if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
-        if (problemLangName && !normalizedUserLangs.includes(problemLangName)) {
+        if (normalizedUserLangs.includes(problemLangCode)) {
           showForeignLanguageNotice = true;
           matchedLanguage = problemLangName;
         }
