@@ -19,7 +19,16 @@ export const Translate = ({
 }: TranslateProps) => {
   const [active, setActive] = useState(false);
   const [sourceLang, setSourceLang] = useState(language || 'English');
-  const [targetLang, setTargetLang] = useState('English');
+  const [targetLang, setTargetLang] = useState(
+    LANGUAGES.find((l) => l !== (language || 'English')) || LANGUAGES[0]
+  );
+  const handleSourceChange = (newSource: string) => {
+    setSourceLang(newSource);
+    if (newSource === targetLang) {
+      const fallback = LANGUAGES.find((l) => l !== newSource) || LANGUAGES[0];
+      setTargetLang(fallback);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!problemData?.problemId) return;
@@ -38,7 +47,6 @@ export const Translate = ({
       onLoadingChange?.(false);
     }
   };
-  console.log({ language });
 
   return (
     <Box
@@ -89,7 +97,7 @@ export const Translate = ({
             <Select
               size="small"
               value={sourceLang}
-              onChange={(e) => setSourceLang(e.target.value)}
+              onChange={(e) => handleSourceChange(e.target.value)}
               sx={{
                 minWidth: { xs: 100, sm: 120 },
                 flex: 1,
