@@ -25,7 +25,7 @@ export async function populateVideoToSlidesMap() {
     if (match) {
       const courseId = match[1];
       const semesterKey = match[2];
-      const filePath = `${dirPath}/${files}`;
+      const filePath = `${dirPath}/${file}`;
       const fileData = await readFile(filePath, 'utf-8');
       const data = JSON.parse(fileData);
       if (!CACHED_VIDEO_SLIDESMAP[courseId]) {

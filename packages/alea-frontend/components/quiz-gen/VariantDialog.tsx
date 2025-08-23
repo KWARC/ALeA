@@ -91,7 +91,7 @@ export const VariantDialog = ({
   const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [currentLang, setCurrentLang] = useState('');
+  const [currentLang, setCurrentLang] = useState(undefined);
   const [resetKey, setResetKey] = useState(0);
   const STeX = problemData?.problemStex;
   const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
@@ -262,17 +262,8 @@ export const VariantDialog = ({
             )}
             <Box
               flex={1}
-              overflow="auto"
               pr={1}
-              sx={{
-                '&::-webkit-scrollbar': { width: '6px' },
-                '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '3px' },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '3px',
-                  '&:hover': { background: '#a1a1a1' },
-                },
-              }}
+              overflow="auto"
             >
               {variantOptionsLoading ? (
                 <LinearProgress />
@@ -352,19 +343,19 @@ export const VariantDialog = ({
                   )} */}
                 </>
               )}
-
-              <Translate
-                key={resetKey}
-                problemData={problemData}
-                onLoadingChange={setPreviewLoading}
-                language={currentLang}
-                onTranslated={(newVariant) => {
-                  const flat = flattenQuizProblem(newVariant);
-                  setProblemData(flat);
-                  setEditableSTeX(flat.problemStex);
-                }}
-              />
-
+              {currentLang && (
+                <Translate
+                  key={resetKey}
+                  problemData={problemData}
+                  onLoadingChange={setPreviewLoading}
+                  language={currentLang}
+                  onTranslated={(newVariant) => {
+                    const flat = flattenQuizProblem(newVariant);
+                    setProblemData(flat);
+                    setEditableSTeX(flat.problemStex);
+                  }}
+                />
+              )}
               <Button
                 size="small"
                 variant="outlined"
@@ -399,16 +390,18 @@ export const VariantDialog = ({
             minHeight={0}
             overflow="hidden"
           >
-            <PreviewSection
-              previewMode={previewMode}
-              setPreviewMode={setPreviewMode}
-              problemData={problemData}
-              editableSTeX={editableSTeX}
-              setEditableSTeX={setEditableSTeX}
-              previousVersions={versions}
-              isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
-              onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
-            />
+            {/* <Box flex={1} overflow="auto" pr={1}> */}
+              <PreviewSection
+                previewMode={previewMode}
+                setPreviewMode={setPreviewMode}
+                problemData={problemData}
+                editableSTeX={editableSTeX}
+                setEditableSTeX={setEditableSTeX}
+                previousVersions={versions}
+                isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+                onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+              />
+            {/* </Box> */}
           </Box>
         </Box>
       </DialogContent>
