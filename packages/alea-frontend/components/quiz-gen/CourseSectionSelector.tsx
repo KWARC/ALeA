@@ -46,6 +46,7 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems,
   loading,
   setLoading,
+  setSelectedSection,
 }: {
   courseId: string;
   sections: SecInfo[];
@@ -55,6 +56,7 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
   loading: boolean;
   setLoading: (value: boolean) => void;
+  setSelectedSection: (s: SecInfo | null) => void;
 }) => {
   const router = useRouter();
   const startSectionUri = (router.query.startSectionUri as string) || '';
@@ -213,6 +215,12 @@ export const CourseSectionSelector = ({
       setGenerating(false);
     }
   };
+  useEffect(() => {
+    if (!sections.length || !startSectionUri) return;
+    const found = sections.find((s) => s.uri === startSectionUri) || null;
+    setSelectedSection(found);
+    console.log({ found });
+  }, [sections, startSectionUri, setSelectedSection]);
 
   return (
     <Paper
@@ -297,6 +305,8 @@ export const CourseSectionSelector = ({
                     },
                     true
                   );
+                  const selectedSection = sections.find((s) => s.uri === newStart) || null;
+                  setSelectedSection(selectedSection);
                 }}
               >
                 {sections.map((s) => (
@@ -387,6 +397,8 @@ export const CourseSectionSelector = ({
                     updates.startSectionUri = newEnd;
                   }
                   updateRouterQuery(router, updates, true);
+                  // const selectedSection = sections.find((s) => s.uri === newEnd) || null;
+                  // setSelectedSection(selectedSection);
                 }}
               >
                 {sections.map((s) => (
@@ -409,7 +421,7 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                       {loadingProblemCount ? (
+                        {loadingProblemCount ? (
                           <Tooltip title="Fetching problems…">
                             <Box
                               px={1.2}

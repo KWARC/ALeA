@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/api';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
-import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
-import { SecInfo } from '../types';
 import { useRouter } from 'next/router';
-import { QuizViewMode, ViewModeSelector } from '../components/quiz-gen/ViewModeSelector';
+import { useEffect, useMemo, useState } from 'react';
+import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuizPanel } from '../components/quiz-gen/QuizPanel';
+import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
+import { SectionAccordion } from '../components/quiz-gen/SectionAccordion';
+import { QuizViewMode, ViewModeSelector } from '../components/quiz-gen/ViewModeSelector';
+import { SecInfo } from '../types';
 
 export function getSectionNameFromIdOrUri(
   idOrUri: string | undefined,
@@ -41,11 +42,12 @@ const QuizGen = () => {
   const [allIdx, setAllIdx] = useState(0);
   const [viewMode, setViewMode] = useState<QuizViewMode>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
+  const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  useEffect(() => { 
+  useEffect(() => {
     getUserInfo().then((info) => {
       if (!info) {
         router.push('/login');
@@ -70,7 +72,6 @@ const QuizGen = () => {
     if (viewMode === 'existing') return existingProblems;
     return [...generatedProblems, ...existingProblems];
   }, [viewMode, generatedProblems, existingProblems]);
-
   return (
     <Box display="flex" height="100vh" bgcolor="#f4f6f8">
       <Box flex={1} px={4} py={3} overflow="auto">
@@ -86,6 +87,12 @@ const QuizGen = () => {
           setExistingProblemUris={setExistingProblems}
           setGeneratedProblems={setGeneratedProblems}
           setLatestGeneratedProblems={setLatestGeneratedProblems}
+          setSelectedSection={setSelectedSection}
+        />
+        <SectionAccordion
+          sections={sections}
+          setLoading={setLoading}
+          selectedSection={selectedSection}
         />
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} loading={loading} />
 
