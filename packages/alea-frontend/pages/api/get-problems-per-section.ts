@@ -1,4 +1,4 @@
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo, Language } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCategorizedProblems } from './get-categorized-problem';
 
@@ -15,6 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const notesUri = courseInfo?.[courseId]?.notes;
   if (!notesUri) return res.status(404).end();
 
-  const problems = await getCategorizedProblems(courseId, sectionUri, notesUri, languages);
+  const problems = await getCategorizedProblems(
+    courseId,
+    sectionUri,
+    notesUri,
+    languages.split(',').map((s) => s.trim()) as Language[]
+  );
   res.status(200).json(problems);
 }
