@@ -139,10 +139,42 @@ export async function getUserInformation() {
   return cachedUserInformation;
 }
 
+export enum Language {
+  Deutsch = 'Deutsch',
+  English = 'English',
+  Arabic = 'Arabic',
+  Bengali = 'Bengali',
+  Hindi = 'Hindi',
+  French = 'French',
+  Japanese = 'Japanese',
+  Korean = 'Korean',
+  Mandarin = 'Mandarin',
+  Marathi = 'Marathi',
+  Persian = 'Persian',
+  Portuguese = 'Portuguese',
+  Russian = 'Russian',
+  Spanish = 'Spanish',
+  Tamil = 'Tamil',
+  Telugu = 'Telugu',
+  Turkish = 'Turkish',
+  Urdu = 'Urdu',
+  Vietnamese = 'Vietnamese',
+  Others = 'Others',
+}
+
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  studyProgram: string;
+  semester: string;
+  languages: string; // comma separated list of languages
+}
+
 export async function getUserProfile() {
   try {
     const response = await axios.get('/api/get-user-profile', { headers: getAuthHeaders() });
-    return response.data;
+    return response.data as UserProfile;
   } catch (err) {
     const error = err as AxiosError;
     if (axios.isAxiosError(error) && error.response?.status === 401) {

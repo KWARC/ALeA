@@ -2,6 +2,7 @@ import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
   Button,
@@ -12,14 +13,35 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
+import { getParamFromUri } from '@stex-react/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
+import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
-import { ListStepper } from './QuizDisplay';
-import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
-import { ForMe } from './ForMe';
 import { ProblemFilter } from './ProblemFilter';
+import { ListStepper } from './QuizDisplay';
+
+const commonTooltipSlotProps = {
+  popper: {
+    sx: {
+      '& .MuiTooltip-tooltip': {
+        backgroundColor: '#fff',
+        color: '#000',
+        border: '1px solid #000',
+        fontSize: '0.85rem',
+      },
+    },
+  },
+};
+
+const commonIconStyles = {
+  marginLeft: '8px',
+  fontSize: 18,
+  verticalAlign: 'middle' as const,
+  cursor: 'pointer',
+};
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -94,6 +116,10 @@ export function PerSectionQuiz({
   setCachedProblemUris,
   category,
   courseId,
+  tabIndex: externalTabIndex,
+  setTabIndex: setExternalTabIndex,
+  externalCategoryMap,
+  setExternalCategoryMap,
 }: {
   sectionUri: string;
   showButtonFirst?: boolean;
@@ -102,6 +128,10 @@ export function PerSectionQuiz({
   setCachedProblemUris?: (uris: string[]) => void;
   category?: 'syllabus' | 'adventurous';
   courseId: string;
+  tabIndex?: string;
+  setTabIndex?: (val: string) => void;
+  externalCategoryMap?: Record<string, string[]>;
+  setExternalCategoryMap?: (map: Record<string, string[]>) => void;
 }) {
   const t = getLocaleObject(useRouter()).quiz;
   const [problemUris, setProblemUris] = useState<string[]>(cachedProblemUris || []);
@@ -112,15 +142,19 @@ export function PerSectionQuiz({
   const [show, setShow] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [startQuiz, setStartQuiz] = useState(!showButtonFirst);
-  const [tabIndex, setTabIndex] = useState<string>('0');
-  const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
+  const [localTabIndex, setLocalTabIndex] = useState<string>('0');
+  const tabIndex = externalTabIndex ?? localTabIndex;
+  const setTabIndex = setExternalTabIndex ?? setLocalTabIndex;
+  const [localCategoryMap, setLocalCategoryMap] = useState<Record<string, string[]>>({});
+  const categoryMap = externalCategoryMap ?? localCategoryMap;
+  const setCategoryMap = setExternalCategoryMap ?? setLocalCategoryMap;
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
     const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
-    return [...knownOrder.filter((k) => categoryMap[k]), ...rest];
+    return [...knownOrder, ...rest];
   }, [categoryMap]);
 
   useEffect(() => {
@@ -135,8 +169,8 @@ export function PerSectionQuiz({
     const fetchProblems = async () => {
       setIsLoadingProblemUris(true);
       const userInfo = await getUserProfile();
-      const languages = (userInfo as any)?.languages;
-
+      const languages = userInfo?.languages;
+      let selected: string[] = [];
       getProblemsPerSection(sectionUri, courseId, languages)
         .then((problems) => {
           const map: Record<string, string[]> = {};
@@ -146,8 +180,6 @@ export function PerSectionQuiz({
           }
           setCategoryMap(map);
           setProblems(problems);
-          setAllProblemUris(problems.map((p) => p.problemId));
-          let selected: string[] = [];
 
           if (category) {
             selected = map[category] || [];
@@ -164,16 +196,30 @@ export function PerSectionQuiz({
               return;
             }
 
-            const selectedCategory = categoryKeys[tabIndex] || categoryKeys[0];
+            if (!map['syllabus']) map['syllabus'] = [];
+            if (!map['adventurous']) map['adventurous'] = [];
+
+            let selectedCategory: string;
+            if (category) {
+              selectedCategory = category;
+            } else {
+              selectedCategory = orderedCategoryKeys[parseInt(tabIndex)] || 'syllabus';
+            }
+
+            if (orderedCategoryKeys.includes(selectedCategory)) {
+              const newIndex = orderedCategoryKeys.indexOf(selectedCategory);
+              setTabIndex(newIndex.toString());
+            }
+
             selected = map[selectedCategory] || [];
 
             if (setCachedProblemUris) {
-              const all = Object.values(map).flat();
-              setCachedProblemUris(all);
+              setCachedProblemUris(selected);
             }
           }
 
           setProblemUris(selected);
+          setAllProblemUris(selected);
           setIsSubmitted(selected.map(() => false));
           setResponses(selected.map(() => undefined));
           setIsLoadingProblemUris(false);
@@ -205,9 +251,7 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  if (!problemUri) return <>error: [{problemUri}] </>;
   const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
-
 
   return (
     <Box mb={4}>
@@ -219,62 +263,65 @@ export function PerSectionQuiz({
         border="1px solid #CCC"
         borderRadius="5px"
       >
-        <Typography fontWeight="bold" textAlign="left">
-          {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
-          {currentProblem?.showForeignLanguageNotice && (
-            <Tooltip
-              title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
-            >
-              <VisibilityIcon
-                onClick={() => Router.push('/my-profile')}
-                style={{
-                  marginLeft: '8px',
-                  color: '#1976d2',
-                  fontSize: '18px',
-                  verticalAlign: 'middle',
-                  cursor: 'pointer',
-                }}
-              />
-            </Tooltip>
-          )}
-        </Typography>
-        {!category && (
-          <Tabs
-            value={tabIndex}
-            onChange={(_, newVal: string) => {
-              if (newVal === 'forme') {
-                setTabIndex('forme');
-                return;
-              }
+        <Tabs
+          value={tabIndex}
+          onChange={(_, newVal: string) => {
+            if (newVal === 'forme') {
+              setTabIndex('forme');
+              return;
+            }
 
-              const index = parseInt(newVal);
-              const selectedCategory = orderedCategoryKeys[index];
-              const selected = categoryMap[selectedCategory] || [];
+            const index = parseInt(newVal);
+            const selectedCategory = orderedCategoryKeys[index];
+            const selected = categoryMap[selectedCategory] || [];
 
-              setTabIndex(newVal);
-              setAllProblemUris(selected);
-              setProblemUris(selected);
-              setIsSubmitted(selected.map(() => false));
-              setResponses(selected.map(() => undefined));
-              setProblemIdx(0);
-            }}
-          >
-            <Tab value="forme" label="For Me" />
-            {orderedCategoryKeys.map((cat, i) => (
+            setTabIndex(newVal);
+            setAllProblemUris(selected);
+            setProblemUris(selected);
+            setIsSubmitted(selected.map(() => false));
+            setResponses(selected.map(() => undefined));
+            setProblemIdx(0);
+          }}
+        >
+          <Tab
+            value="forme"
+            label={
+              <Tooltip title="Personalized problems tailored to your learning progress and competencies.">
+                <span>For Me</span>
+              </Tooltip>
+            }
+          />
+
+          {orderedCategoryKeys.map((cat, i) => {
+            const labelText =
+              cat === 'adventurous'
+                ? "I'm Adventurous"
+                : cat === 'syllabus'
+                ? 'Syllabus'
+                : cat[0].toUpperCase() + cat.slice(1);
+
+            const tooltipText =
+              cat === 'adventurous'
+                ? 'Challenge yourself with problems beyond the syllabus — expand your horizons.'
+                : cat === 'syllabus'
+                ? 'Practice problems aligned with this course syllabus.'
+                : `Problems in ${labelText}`;
+
+            return (
               <Tab
                 key={cat}
                 value={i.toString()}
                 label={
-                  cat === 'adventurous'
-                    ? "I'm Adventurous"
-                    : cat === 'syllabus'
-                    ? 'Syllabus'
-                    : cat[0].toUpperCase() + cat.slice(1)
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Tooltip title={tooltipText}>
+                      <span>{labelText}</span>
+                    </Tooltip>
+                  </Box>
                 }
               />
-            ))}
-          </Tabs>
-        )}
+            );
+          })}
+        </Tabs>
         {tabIndex === 'forme' ? (
           <ForMe
             sectionUri={sectionUri}
@@ -316,7 +363,57 @@ export function PerSectionQuiz({
               <>
                 <Typography fontWeight="bold" textAlign="left">
                   {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+                  {currentProblem?.showForeignLanguageNotice && (
+                    <Tooltip
+                      title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
+                      slotProps={commonTooltipSlotProps}
+                    >
+                      <WarningAmberIcon
+                        onClick={() => Router.push('/my-profile')}
+                        style={{ ...commonIconStyles, color: '#1976d2' }}
+                      />
+                    </Tooltip>
+                  )}
+                  {currentProblem?.category === 'adventurous' &&
+                    (currentProblem?.outOfSyllabusConcepts?.length ? (
+                      <Tooltip
+                        title={
+                          <Box sx={{ padding: '8px', maxWidth: 300, whiteSpace: 'normal' }}>
+                            <div style={{ marginBottom: '4px' }}>
+                              This problem contains concepts that were not covered in the course:
+                            </div>
+                            {Array.from(new Set(currentProblem?.outOfSyllabusConcepts ?? [])).map(
+                              (uri, idx) => {
+                                const name = getParamFromUri(uri, 's') || uri;
+                                const formatted = name
+                                  .toLowerCase()
+                                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                                return (
+                                  <Tooltip title={uri} key={idx}>
+                                    <b>{formatted}</b>
+                                  </Tooltip>
+                                );
+                              }
+                            )}
+                          </Box>
+                        }
+                        slotProps={commonTooltipSlotProps}
+                      >
+                        <WarningAmberIcon sx={{ ...commonIconStyles, color: '#f57c00' }} />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        title="This syllabus problem is shown here because of your language preferences."
+                        slotProps={commonTooltipSlotProps}
+                      >
+                        <WarningAmberIcon
+                          onClick={() => Router.push('/my-profile')}
+                          style={{ ...commonIconStyles, color: '#1976d2' }}
+                        />
+                      </Tooltip>
+                    ))}
                 </Typography>
+
                 <Box
                   px={2}
                   maxWidth="800px"
