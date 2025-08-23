@@ -11,7 +11,6 @@ export * from './homework-api';
 export * from './lmp';
 export * from './misc';
 export * from './flams';
-export * from './my-profile';
 export * from './nap';
 export * from './nap-api';
 export * from './next-api';

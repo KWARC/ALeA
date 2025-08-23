@@ -1,3 +1,4 @@
+import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
   getDefiniedaInSection,
@@ -9,21 +10,20 @@ import {
 } from '@stex-react/api';
 import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-const categorizedProblemCache = new Map<
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+const CATEGORIZED_PROBLEM_CACHE = new Map<
   string,
   {
     data: ProblemData[];
     timestamp: number;
   }
 >();
-const conceptUrisForCourse = new Map<string, { data: string[]; timestamp: number }>();
-const loRelationCache = new Map<string, { data: string[]; timestamp: number }>();
+const CONCEPT_URIS_FOR_COURSE = new Map<string, { data: string[]; timestamp: number }>();
+const LO_RELATION_CACHE = new Map<string, { data: string[]; timestamp: number }>();
 
-function isCacheValid(cacheEntry: { timestamp: number }): boolean {
-  return Date.now() - cacheEntry.timestamp < CACHE_TTL;
+function isCacheValid(cacheEntry: { timestamp: number } | undefined): boolean {
+  return cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_TTL;
 }
 
 function getSections(tocElems: FTML.TOCElem[]): string[] {
@@ -39,12 +39,9 @@ async function getAllConceptUrisForCourse(
   courseId: string,
   courseNotesUri: string
 ): Promise<string[]> {
-  if (conceptUrisForCourse.has(courseId)) {
-    const cached = conceptUrisForCourse.get(courseId)!;
-    if (isCacheValid(cached)) {
-      return cached.data;
-    }
-  }
+  const cached = CONCEPT_URIS_FOR_COURSE.get(courseId);
+  if (isCacheValid(cached)) return cached.data;
+
   const toc = (await getFlamsServer().contentToc({ uri: courseNotesUri }))?.[1] ?? [];
 
   const sectionUris = getSections(toc);
@@ -57,8 +54,12 @@ async function getAllConceptUrisForCourse(
     const deps = await getSectionDependencies(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
-  const conceptUrisArray = Array.from(conceptUris);
-  conceptUrisForCourse.set(courseId, {
+  const conceptUrisArray = Array.from(conceptUris).map((uri) => {
+    // HACK: Figure out why some concept URIs have %20 instead of space
+    // In the meantime, replace all instances of %20 with space
+    return uri.replace(/%20/g, ' ');
+  });
+  CONCEPT_URIS_FOR_COURSE.set(courseId, {
     data: conceptUrisArray,
     timestamp: Date.now(),
   });
@@ -66,12 +67,8 @@ async function getAllConceptUrisForCourse(
 }
 
 async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
-  if (loRelationCache.has(problemUri)) {
-    const cached = loRelationCache.get(problemUri)!;
-    if (isCacheValid(cached)) {
-      return cached.data;
-    }
-  }
+  const cached = LO_RELATION_CACHE.get(problemUri);
+  if (isCacheValid(cached)) return cached.data;
 
   const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
   const result = await getQueryResults(query ?? '');
@@ -90,7 +87,7 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
 
   const uniqueUris = Array.from(new Set(conceptUris));
 
-  loRelationCache.set(problemUri, {
+  LO_RELATION_CACHE.set(problemUri, {
     data: uniqueUris,
     timestamp: Date.now(),
   });
@@ -124,24 +121,18 @@ export async function getCategorizedProblems(
   courseId: string,
   sectionUri: string,
   courseNotesUri: string,
-  userLanguages?: string | string[],
+  userLanguages: Language[],
   forceRefresh = false
 ): Promise<ProblemData[]> {
   const cacheKey = sectionUri;
-
-  if (!forceRefresh && categorizedProblemCache.has(cacheKey)) {
-    const cached = categorizedProblemCache.get(cacheKey)!;
-    if (isCacheValid(cached)) {
-      return cached.data;
-    }
+  if (!forceRefresh) {
+    const cached = CATEGORIZED_PROBLEM_CACHE.get(cacheKey);
+    if (isCacheValid(cached)) return cached.data;
   }
+
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-  const reverseLangMap: Record<string, string> = {};
-  for (const [code, name] of Object.entries(languageUrlMap)) {
-    reverseLangMap[name.toString()] = code;
-  }
 
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
@@ -156,20 +147,12 @@ export async function getCategorizedProblems(
       let matchedLanguage: string | undefined;
 
       const problemLangCode = getParamFromUri(problemUri, 'l') ?? 'en';
-      const problemLangEnum = languageUrlMap[problemLangCode];
-      const problemLangName = problemLangEnum.toString();
-
-      const normalizedUserLangs: string[] =
-        typeof userLanguages === 'string'
-          ? userLanguages.split(',').map((l) => reverseLangMap[l.trim()] || l.trim().toLowerCase())
-          : Array.isArray(userLanguages)
-          ? userLanguages.map((l) => reverseLangMap[l] || l.toLowerCase())
-          : [];
 
       if (category === 'syllabus' && sectionLangCode !== problemLangCode) {
-        if (normalizedUserLangs.includes(problemLangCode)) {
+        const problemLang = languageUrlMap[problemLangCode];
+        if (userLanguages?.includes(problemLang)) {
           showForeignLanguageNotice = true;
-          matchedLanguage = problemLangName;
+          matchedLanguage = problemLang;
         } else {
           category = 'adventurous';
         }
@@ -182,18 +165,10 @@ export async function getCategorizedProblems(
         showForeignLanguageNotice,
         matchedLanguage,
         outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
-        outOfSyllabusConceptNames: outOfSyllabusConcepts
-          .map((uri) => {
-            const query = uri.split('?')[1];
-            if (!query) return null;
-            const params = new URLSearchParams(query);
-            return params.get('s');
-          })
-          .filter(Boolean),
       } as ProblemData;
     })
   );
-  categorizedProblemCache.set(cacheKey, {
+  CATEGORIZED_PROBLEM_CACHE.set(cacheKey, {
     data: categorized,
     timestamp: Date.now(),
   });

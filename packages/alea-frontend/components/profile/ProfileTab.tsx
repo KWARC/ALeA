@@ -4,26 +4,28 @@ import GradingIcon from '@mui/icons-material/Grading';
 import InsightsIcon from '@mui/icons-material/Insights';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import SchoolIcon from '@mui/icons-material/School';
-import {
-  Box,
-  Button,
-  Card,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Card, Stack, Typography } from '@mui/material';
+import { UserInfo, UserProfile } from '@stex-react/api';
 import Link from 'next/link';
-import { EditProfileDialog } from './EditProfileDialog';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../lang/utils';
 import { PersonalCalendarSection } from '../PersonalCalendar';
-
+import { EditProfileDialog } from './EditProfileDialog';
 
 export const ProfileTab = ({
-  t,
   profileData,
   userInfo,
   setOpenEditDialog,
   openEditDialog,
   handleProfileUpdate,
+}: {
+  profileData: UserProfile | null;
+  userInfo: UserInfo | null;
+  setOpenEditDialog: (open: boolean) => void;
+  openEditDialog: boolean;
+  handleProfileUpdate: (updatedData: UserProfile) => void;
 }) => {
+  const { myProfile: t, calendarSection: c } = getLocaleObject(useRouter());
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
       <Box sx={{ flex: '1 1 50%' }}>
@@ -82,8 +84,8 @@ export const ProfileTab = ({
                   <Box sx={{ mt: 2 }}>
                     <PersonalCalendarSection
                       userId={userInfo.userId}
-                      hintGoogle={t.calendar.howToUseHintGoogle}
-                      hintApple={t.calendar.howToUseHintApple}
+                      hintGoogle={c.howToUseHintGoogle}
+                      hintApple={c.howToUseHintApple}
                     />
                   </Box>
                 )}

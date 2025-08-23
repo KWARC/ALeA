@@ -2,6 +2,7 @@ import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
   Button,
@@ -12,15 +13,15 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
+import { getParamFromUri } from '@stex-react/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
+import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
 import { getProblemState } from './ProblemDisplay';
-import { ListStepper } from './QuizDisplay';
-import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
-import { ForMe } from './ForMe';
 import { ProblemFilter } from './ProblemFilter';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { ListStepper } from './QuizDisplay';
 
 const commonTooltipSlotProps = {
   popper: {
@@ -168,7 +169,7 @@ export function PerSectionQuiz({
     const fetchProblems = async () => {
       setIsLoadingProblemUris(true);
       const userInfo = await getUserProfile();
-      const languages = (userInfo as any)?.languages;
+      const languages = userInfo?.languages;
       let selected: string[] = [];
       getProblemsPerSection(sectionUri, courseId, languages)
         .then((problems) => {
@@ -367,28 +368,33 @@ export function PerSectionQuiz({
                       title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
                       slotProps={commonTooltipSlotProps}
                     >
-                      <VisibilityIcon
+                      <WarningAmberIcon
                         onClick={() => Router.push('/my-profile')}
                         style={{ ...commonIconStyles, color: '#1976d2' }}
                       />
                     </Tooltip>
                   )}
                   {currentProblem?.category === 'adventurous' &&
-                    ((currentProblem?.outOfSyllabusConceptNames?.length ?? 0) > 0 ? (
+                    (currentProblem?.outOfSyllabusConcepts?.length ? (
                       <Tooltip
                         title={
                           <Box sx={{ padding: '8px', maxWidth: 300, whiteSpace: 'normal' }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                            <div style={{ marginBottom: '4px' }}>
                               This problem contains concepts that were not covered in the course:
                             </div>
-                            {Array.from(
-                              new Set(currentProblem?.outOfSyllabusConceptNames ?? [])
-                            ).map((name, idx) => {
-                              const formatted = name
-                                .toLowerCase()
-                                .replace(/\b\w/g, (c) => c.toUpperCase());
-                              return <div key={idx}>{formatted}</div>;
-                            })}
+                            {Array.from(new Set(currentProblem?.outOfSyllabusConcepts ?? [])).map(
+                              (uri, idx) => {
+                                const name = getParamFromUri(uri, 's') || uri;
+                                const formatted = name
+                                  .toLowerCase()
+                                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                                return (
+                                  <Tooltip title={uri} key={idx}>
+                                    <b>{formatted}</b>
+                                  </Tooltip>
+                                );
+                              }
+                            )}
                           </Box>
                         }
                         slotProps={commonTooltipSlotProps}
@@ -400,7 +406,7 @@ export function PerSectionQuiz({
                         title="This syllabus problem is shown here because of your language preferences."
                         slotProps={commonTooltipSlotProps}
                       >
-                        <VisibilityIcon
+                        <WarningAmberIcon
                           onClick={() => Router.push('/my-profile')}
                           style={{ ...commonIconStyles, color: '#1976d2' }}
                         />
