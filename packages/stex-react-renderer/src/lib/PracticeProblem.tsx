@@ -22,6 +22,14 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
   const [tabIndex, setTabIndex] = useState<string>('0');
   const [categoryMap, setCategoryMap] = useState<Record<string, string[]>>({});
   const courseId = router.query.courseId as string;
+  const [hasBeenOpened, setHasBeenOpened] = useState(false);
+
+  useEffect(() => {
+    if (isAccordionOpen && !hasBeenOpened) {
+      setHasBeenOpened(true);
+    }
+  }, [isAccordionOpen]);
+
   useEffect(() => {
     if (!sectionUri || !courseId) return;
     setShowProblems(true);
@@ -46,19 +54,21 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
 
       {showProblems && (
         <Box>
-          {isAccordionOpen && showProblems && (
-            <PerSectionQuiz
-              sectionUri={sectionUri}
-              courseId={courseId}
-              cachedProblemUris={cachedProblemUris}
-              setCachedProblemUris={setCachedProblemUris}
-              showHideButton={false}
-              showButtonFirst={false}
-              tabIndex={tabIndex}
-              setTabIndex={setTabIndex}
-              externalCategoryMap={categoryMap}
-              setExternalCategoryMap={setCategoryMap}
-            />
+          {hasBeenOpened && (
+            <Box sx={{ display: isAccordionOpen ? 'block' : 'none' }}>
+              <PerSectionQuiz
+                sectionUri={sectionUri}
+                courseId={courseId}
+                cachedProblemUris={cachedProblemUris}
+                setCachedProblemUris={setCachedProblemUris}
+                showHideButton={false}
+                showButtonFirst={false}
+                tabIndex={tabIndex}
+                setTabIndex={setTabIndex}
+                externalCategoryMap={categoryMap}
+                setExternalCategoryMap={setCategoryMap}
+              />
+            </Box>
           )}
           {showHideButton && (
             <Button

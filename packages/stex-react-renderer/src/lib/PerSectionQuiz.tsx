@@ -20,6 +20,27 @@ import { ListStepper } from './QuizDisplay';
 import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
 import { ForMe } from './ForMe';
 import { ProblemFilter } from './ProblemFilter';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
+const commonTooltipSlotProps = {
+  popper: {
+    sx: {
+      '& .MuiTooltip-tooltip': {
+        backgroundColor: '#fff',
+        color: '#000',
+        border: '1px solid #000',
+        fontSize: '0.85rem',
+      },
+    },
+  },
+};
+
+const commonIconStyles = {
+  marginLeft: '8px',
+  fontSize: 18,
+  verticalAlign: 'middle' as const,
+  cursor: 'pointer',
+};
 
 export function handleViewSource(problemUri: string) {
   getFlamsServer()
@@ -261,20 +282,44 @@ export function PerSectionQuiz({
             setProblemIdx(0);
           }}
         >
-          <Tab value="forme" label="For Me" />
-          {orderedCategoryKeys.map((cat, i) => (
-            <Tab
-              key={cat}
-              value={i.toString()}
-              label={
-                cat === 'adventurous'
-                  ? "I'm Adventurous"
-                  : cat === 'syllabus'
-                  ? 'Syllabus'
-                  : cat[0].toUpperCase() + cat.slice(1)
-              }
-            />
-          ))}
+          <Tab
+            value="forme"
+            label={
+              <Tooltip title="Personalized problems tailored to your learning progress and competencies.">
+                <span>For Me</span>
+              </Tooltip>
+            }
+          />
+
+          {orderedCategoryKeys.map((cat, i) => {
+            const labelText =
+              cat === 'adventurous'
+                ? "I'm Adventurous"
+                : cat === 'syllabus'
+                ? 'Syllabus'
+                : cat[0].toUpperCase() + cat.slice(1);
+
+            const tooltipText =
+              cat === 'adventurous'
+                ? 'Challenge yourself with problems beyond the syllabus — expand your horizons.'
+                : cat === 'syllabus'
+                ? 'Practice problems aligned with this course syllabus.'
+                : `Problems in ${labelText}`;
+
+            return (
+              <Tab
+                key={cat}
+                value={i.toString()}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Tooltip title={tooltipText}>
+                      <span>{labelText}</span>
+                    </Tooltip>
+                  </Box>
+                }
+              />
+            );
+          })}
         </Tabs>
         {tabIndex === 'forme' ? (
           <ForMe
@@ -320,19 +365,47 @@ export function PerSectionQuiz({
                   {currentProblem?.showForeignLanguageNotice && (
                     <Tooltip
                       title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
+                      slotProps={commonTooltipSlotProps}
                     >
                       <VisibilityIcon
                         onClick={() => Router.push('/my-profile')}
-                        style={{
-                          marginLeft: '8px',
-                          color: '#1976d2',
-                          fontSize: '18px',
-                          verticalAlign: 'middle',
-                          cursor: 'pointer',
-                        }}
+                        style={{ ...commonIconStyles, color: '#1976d2' }}
                       />
                     </Tooltip>
                   )}
+                  {currentProblem?.category === 'adventurous' &&
+                    ((currentProblem?.outOfSyllabusConceptNames?.length ?? 0) > 0 ? (
+                      <Tooltip
+                        title={
+                          <Box sx={{ padding: '8px', maxWidth: 300, whiteSpace: 'normal' }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                              This problem contains concepts that were not covered in the course:
+                            </div>
+                            {Array.from(
+                              new Set(currentProblem?.outOfSyllabusConceptNames ?? [])
+                            ).map((name, idx) => {
+                              const formatted = name
+                                .toLowerCase()
+                                .replace(/\b\w/g, (c) => c.toUpperCase());
+                              return <div key={idx}>{formatted}</div>;
+                            })}
+                          </Box>
+                        }
+                        slotProps={commonTooltipSlotProps}
+                      >
+                        <WarningAmberIcon sx={{ ...commonIconStyles, color: '#f57c00' }} />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        title="This syllabus problem is shown here because of your language preferences."
+                        slotProps={commonTooltipSlotProps}
+                      >
+                        <VisibilityIcon
+                          onClick={() => Router.push('/my-profile')}
+                          style={{ ...commonIconStyles, color: '#1976d2' }}
+                        />
+                      </Tooltip>
+                    ))}
                 </Typography>
 
                 <Box

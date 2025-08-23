@@ -150,7 +150,7 @@ export async function getCategorizedProblems(
         (label) => !conceptUrisFromCourse.includes(label)
       );
 
-      const category: 'syllabus' | 'adventurous' =
+      let category: 'syllabus' | 'adventurous' =
         outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
       let showForeignLanguageNotice = false;
       let matchedLanguage: string | undefined;
@@ -170,6 +170,8 @@ export async function getCategorizedProblems(
         if (normalizedUserLangs.includes(problemLangCode)) {
           showForeignLanguageNotice = true;
           matchedLanguage = problemLangName;
+        } else {
+          category = 'adventurous';
         }
       }
 
@@ -180,6 +182,14 @@ export async function getCategorizedProblems(
         showForeignLanguageNotice,
         matchedLanguage,
         outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
+        outOfSyllabusConceptNames: outOfSyllabusConcepts
+          .map((uri) => {
+            const query = uri.split('?')[1];
+            if (!query) return null;
+            const params = new URLSearchParams(query);
+            return params.get('s');
+          })
+          .filter(Boolean),
       } as ProblemData;
     })
   );
