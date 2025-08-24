@@ -39,6 +39,8 @@ export async function addLectureEntry(
 export async function updateLectureEntry(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & {
     lectureDay: string;
+    lectureStartTime: string;
+    lectureEndTime: string;
     updatedLectureEntry: LectureEntry;
   }
 ) {
@@ -49,7 +51,7 @@ export async function updateLectureEntry(
 }
 
 export async function deleteLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureDay: string }
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureEntry }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
     headers: getAuthHeaders(),

@@ -76,6 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).end('Invalid lecture schedule JSON');
     }
 
+
     const lectureIndex = lectureSchedule.findIndex(
       (l) =>
         l.lectureDay === lectureDay &&
