@@ -8,6 +8,11 @@ interface CourseMetadataProps {
 }
 
 const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
+
+  const handleCreateCourseACL = () => {
+    // TODO: Implement create course ACL logic here
+  };
+  
   return (
     <Box p={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -15,6 +20,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
           Course metadata
         </Typography>
         <Box display="flex" gap={2}>
+          <Button variant="contained">Create Course ACL</Button>
           <Button variant="contained">Generate CURRENT: SEM JSON</Button>
         </Box>
       </Box>
