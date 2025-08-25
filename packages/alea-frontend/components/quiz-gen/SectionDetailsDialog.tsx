@@ -1,19 +1,19 @@
 import {
-    Box,
-    Button,
-    Checkbox,
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Paper,
-    Tooltip,
-    Typography,
+  Box,
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import { conceptUriToName, getDefiniedaInSection } from '@stex-react/api';
 import React, { useEffect, useState } from 'react';
@@ -99,15 +99,15 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" scroll="paper">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
         <Typography variant="h5" fontWeight="bold">
           Generate
         </Typography>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ p: 2 }}>
-        <Box display="grid" gridTemplateColumns="280px 1fr" gap={3} height="70vh">
+      <DialogContent dividers sx={{ p: 2, overflow: 'hidden' }}>
+        <Box display="grid" gridTemplateColumns="280px 1fr" gap={3} height="75vh">
           <Paper
             elevation={3}
             sx={{
@@ -156,18 +156,29 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
               {concepts.length > 0 ? (
                 concepts.map((c) => {
-                  const checked = selectedConcepts.some((sc) => sc.value === c.value);
                   return (
                     <ListItem key={c.value} disablePadding>
                       <ListItemButton
-                        onClick={() =>
-                          setSelectedConcepts((prev) =>
-                            checked ? prev.filter((sc) => sc.value !== c.value) : [...prev, c]
-                          )
-                        }
+                        onClick={() => {
+                          setSelectedConcepts((prev) => {
+                            const exists = prev.some((sc) => sc.value === c.value);
+                            if (exists) {
+                              const idx = prev.findIndex((sc) => sc.value === c.value);
+                              if (idx >= 0) setCurrentIndex(idx);
+                              return prev;
+                            } else {
+                              const newConcepts = [...prev, c];
+                              setCurrentIndex(newConcepts.length - 1);
+                              return newConcepts;
+                            }
+                          });
+                        }}
                       >
                         <ListItemIcon>
-                          <Checkbox checked={checked} color="primary" />
+                          <Checkbox
+                            checked={selectedConcepts.some((sc) => sc.value === c.value)}
+                            color="primary"
+                          />
                         </ListItemIcon>
                         <Tooltip title={c.value} placement="right" arrow>
                           <ListItemText primary={conceptUriToName(c.value)} />
@@ -188,7 +199,13 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
           <Paper
             elevation={3}
-            sx={{ p: 3, borderRadius: 2, display: 'flex', flexDirection: 'column' }}
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '70vh',
+            }}
           >
             <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
               Concept Details
@@ -197,13 +214,76 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
             {selectedConcepts.length > 0 && currentIndex >= 0 ? (
               <>
-                <Box flex={1}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    {conceptUriToName(selectedConcepts[currentIndex].value)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedConcepts[currentIndex].value}
-                  </Typography>
+                <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
+                  <Box mb={2}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {conceptUriToName(selectedConcepts[currentIndex].value)}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ wordBreak: 'break-word' }}
+                    >
+                      {selectedConcepts[currentIndex].value}
+                    </Typography>
+                  </Box>
+
+                  <Box mb={2} display="flex" flexDirection="column">
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      Property Details
+                    </Typography>
+                    <Divider sx={{ mb: 1 }} />
+                    <List dense>
+                      {['Has Primary Key', 'Is Derived', 'Used in ER Model'].map((prop, idx) => (
+                        <ListItem key={idx} disablePadding>
+                          <ListItemButton>
+                            <ListItemIcon>
+                              <Checkbox edge="start" tabIndex={-1} disableRipple color="primary" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                                  {prop}
+                                </Typography>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+
+                  <Box mb={2} display="flex" flexDirection="column">
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      Misconceptions
+                    </Typography>
+                    <Divider sx={{ mb: 1 }} />
+                    <List dense>
+                      {['Confused with foreign key', 'Misapplied in normalization'].map(
+                        (mis, idx) => (
+                          <ListItem key={idx} disablePadding>
+                            <ListItemButton>
+                              <ListItemIcon>
+                                <Checkbox
+                                  edge="start"
+                                  tabIndex={-1}
+                                  disableRipple
+                                  color="primary"
+                                />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={
+                                  <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                                    {mis}
+                                  </Typography>
+                                }
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        )
+                      )}
+                    </List>
+                  </Box>
                 </Box>
 
                 <Box display="flex" justifyContent="space-between" mt={2}>
