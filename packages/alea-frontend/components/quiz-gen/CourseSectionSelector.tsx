@@ -30,7 +30,7 @@ import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 import { SectionDetailsDialog } from './SectionDetailsDialog';
 
-function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
+export function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
   const startIdx = sections.findIndex((s) => s.uri === startUri);
   const endIdx = sections.findIndex((s) => s.uri === endUri);
@@ -490,9 +490,8 @@ export const CourseSectionSelector = ({
             <Button
               variant="contained"
               // onClick={() => generateNewProblems()}
-              // disabled={!courseId || !startSectionUri || !endSectionUri || loading}
               onClick={() => setDialogOpen(true)}
-              disabled={!courseId || loading}
+              disabled={!courseId || !startSectionUri || !endSectionUri || loading}
             >
               Generate
             </Button>
@@ -501,7 +500,9 @@ export const CourseSectionSelector = ({
         <SectionDetailsDialog
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
-          section={selectedSection} 
+          startSectionUri={startSectionUri}
+          endSectionUri={endSectionUri}
+          sections={sections}
           setLoading={setLoading}
         />
       </Box>
