@@ -154,9 +154,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       </Typography>
 
       <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-          Add New Lecture
-        </Typography>
+
         <Box
           sx={{
             display: 'flex',
