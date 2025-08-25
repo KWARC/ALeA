@@ -1,7 +1,6 @@
 import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
@@ -287,7 +286,7 @@ export function PerSectionQuiz({
             value="forme"
             label={
               <Tooltip title="Personalized problems tailored to your learning progress and competencies.">
-                <span>For Me</span>
+                <span>For Me ({formeUris === null ? '...' : formeUris.length})</span>
               </Tooltip>
             }
           />
@@ -314,7 +313,9 @@ export function PerSectionQuiz({
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Tooltip title={tooltipText}>
-                      <span>{labelText}</span>
+                      <span>
+                        {labelText} ({categoryMap[cat]?.length || 0})
+                      </span>
                     </Tooltip>
                   </Box>
                 }
