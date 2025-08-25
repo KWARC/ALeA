@@ -1,5 +1,6 @@
 export * from './access-control';
 export * from './access-control-api';
+export * from './announcements';
 export * from './comment';
 export * from './comments-api';
 export * from './course-grade-info';

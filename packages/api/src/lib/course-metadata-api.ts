@@ -15,13 +15,17 @@ export interface CourseMetadata {
   courseId: string;
   instanceId: string;
   lectureSchedule: LectureEntry[];
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
-
+export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'instanceId'>) {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-lecture`, {
+    headers: getAuthHeaders(),
+    params: data,
+  });
+  return response.data;
+}
 
 export async function addLectureEntry(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureEntry }
@@ -35,6 +39,8 @@ export async function addLectureEntry(
 export async function updateLectureEntry(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & {
     lectureDay: string;
+    lectureStartTime: string;
+    lectureEndTime: string;
     updatedLectureEntry: LectureEntry;
   }
 ) {
@@ -45,12 +51,10 @@ export async function updateLectureEntry(
 }
 
 export async function deleteLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureDay: string }
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureEntry }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;
 }
-
-
