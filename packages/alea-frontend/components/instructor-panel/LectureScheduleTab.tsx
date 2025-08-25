@@ -8,10 +8,6 @@ import {
   TableBody,
   IconButton,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Checkbox,
   FormControlLabel,
@@ -21,6 +17,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState, useCallback } from 'react';
 import {
   LectureEntry,
@@ -29,11 +26,25 @@ import {
   deleteLectureEntry,
   addLectureEntry,
 } from '@alea/course-metadata-api';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 interface LectureScheduleTabProps {
   courseId: string;
   instanceId: string;
 }
+
+const initialNewEntry: LectureEntry = {
+  lectureDay: '',
+  lectureStartTime: '',
+  lectureEndTime: '',
+  venue: '',
+  venueLink: '',
+  hasHomework: false,
+  hasQuiz: false,
+};
 
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const [lectures, setLectures] = useState<LectureEntry[]>([]);
@@ -44,7 +55,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     lectureStartTime: string;
     lectureEndTime: string;
   } | null>(null);
-  const [newEntry, setNewEntry] = useState<LectureEntry | null>(null);
+  const [newEntry, setNewEntry] = useState<LectureEntry>(initialNewEntry);
 
   const fetchLectures = useCallback(async () => {
     try {
@@ -63,20 +74,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
   const handleDelete = async (lecture: LectureEntry) => {
     if (!confirm('Are you sure you want to delete this lecture?')) return;
-
     try {
       await deleteLectureEntry({
         courseId,
         instanceId,
-        lectureEntry: {
-          lectureDay: lecture.lectureDay,
-          lectureStartTime: lecture.lectureStartTime,
-          lectureEndTime: lecture.lectureEndTime,
-          venue: lecture.venue,
-          venueLink: lecture.venueLink,
-          hasQuiz: lecture.hasQuiz,
-          hasHomework: lecture.hasHomework,
-        },
+        lectureEntry: lecture,
       });
       setLectures((prev) =>
         prev.filter(
@@ -99,12 +101,10 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
   const handleSaveEdit = async () => {
     if (!editEntry || !editKeys) return;
-
     if (!editEntry.lectureDay || !editEntry.lectureStartTime || !editEntry.lectureEndTime) {
       alert('Please fill all required fields: Day, Start Time, End Time');
       return;
     }
-
     try {
       await updateLectureEntry({
         courseId,
@@ -112,9 +112,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         lectureDay: editKeys.lectureDay,
         lectureStartTime: editKeys.lectureStartTime,
         lectureEndTime: editKeys.lectureEndTime,
-        updatedLectureEntry: {
-          ...editEntry,
-        },
+        updatedLectureEntry: { ...editEntry },
       });
       setEditEntry(null);
       setEditKeys(null);
@@ -125,20 +123,17 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   };
 
   const handleSaveNew = async () => {
-    if (!newEntry) return;
-
     if (!newEntry.lectureDay || !newEntry.lectureStartTime || !newEntry.lectureEndTime) {
       alert('Please fill all required fields: Day, Start Time, End Time');
       return;
     }
-
     try {
       await addLectureEntry({
         courseId,
         instanceId,
         lectureEntry: newEntry,
       });
-      setNewEntry(null);
+      setNewEntry(initialNewEntry);
       fetchLectures();
     } catch (err) {
       console.error('Failed to add lecture', err);
@@ -154,30 +149,92 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight="bold" color="primary">
-          Lecture Schedule for Course ID: {courseId}
+      <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
+        Lecture Schedule for Course ID: {courseId}
+      </Typography>
+
+      <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+        <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+          Add New Lecture
         </Typography>
-        <Button
-          variant="contained"
-          size="small"
-          color="primary"
-          onClick={() =>
-            setNewEntry({
-              lectureDay: '',
-              lectureStartTime: '',
-              lectureEndTime: '',
-              venue: '',
-              venueLink: '',
-              hasHomework: false,
-              hasQuiz: false,
-            })
-          }
-          sx={{ px: 2, py: 1, boxShadow: 2 }}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1.5,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
         >
-          + New Lecture
-        </Button>
-      </Box>
+          <TextField
+            label="Day"
+            value={newEntry.lectureDay}
+            onChange={(e) => setNewEntry((prev) => ({ ...prev, lectureDay: e.target.value }))}
+            size="small"
+            sx={{ width: 110 }}
+          />
+          <TextField
+            label="Venue"
+            value={newEntry.venue}
+            onChange={(e) => setNewEntry((prev) => ({ ...prev, venue: e.target.value }))}
+            size="small"
+            sx={{ width: 120 }}
+          />
+          <TextField
+            label="Zoom Link"
+            value={newEntry.venueLink}
+            onChange={(e) => setNewEntry((prev) => ({ ...prev, venueLink: e.target.value }))}
+            size="small"
+            sx={{ width: 140 }}
+          />
+          <TextField
+            label="Start Time"
+            type="time"
+            value={newEntry.lectureStartTime}
+            onChange={(e) => setNewEntry((prev) => ({ ...prev, lectureStartTime: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            sx={{ width: 110 }}
+          />
+          <TextField
+            label="End Time"
+            type="time"
+            value={newEntry.lectureEndTime}
+            onChange={(e) => setNewEntry((prev) => ({ ...prev, lectureEndTime: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            sx={{ width: 110 }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={newEntry.hasHomework}
+                onChange={(e) => setNewEntry((prev) => ({ ...prev, hasHomework: e.target.checked }))}
+              />
+            }
+            label="Homework"
+            sx={{ m: 0 }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={newEntry.hasQuiz}
+                onChange={(e) => setNewEntry((prev) => ({ ...prev, hasQuiz: e.target.checked }))}
+              />
+            }
+            label="Quiz"
+            sx={{ m: 0 }}
+          />
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSaveNew}
+            sx={{ px: 2, py: 0.5, borderRadius: 10, minWidth: 100, display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}
+          >
+            <AddIcon fontSize="small" />
+            Add Lecture
+          </Button>
+        </Box>
+      </Paper>
 
       <Table
         size="small"
@@ -243,8 +300,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         </TableBody>
       </Table>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editEntry} onClose={() => setEditEntry(null)}>
+      <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
         <DialogTitle>Edit Lecture</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
@@ -308,73 +364,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         <DialogActions>
           <Button onClick={() => setEditEntry(null)}>Cancel</Button>
           <Button onClick={handleSaveEdit} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={!!newEntry} onClose={() => setNewEntry(null)} fullWidth maxWidth="sm">
-        <DialogTitle>Create New Lecture</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField
-            label="Day"
-            value={newEntry?.lectureDay || ''}
-            onChange={(e) => setNewEntry((prev) => prev && { ...prev, lectureDay: e.target.value })}
-          />
-          <TextField
-            label="Venue"
-            value={newEntry?.venue || ''}
-            onChange={(e) => setNewEntry((prev) => prev && { ...prev, venue: e.target.value })}
-          />
-          <TextField
-            label="Zoom Link"
-            value={newEntry?.venueLink || ''}
-            onChange={(e) => setNewEntry((prev) => prev && { ...prev, venueLink: e.target.value })}
-          />
-          <TextField
-            label="Start Time"
-            type="time"
-            value={newEntry?.lectureStartTime || ''}
-            onChange={(e) =>
-              setNewEntry((prev) => prev && { ...prev, lectureStartTime: e.target.value })
-            }
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="End Time"
-            type="time"
-            value={newEntry?.lectureEndTime || ''}
-            onChange={(e) =>
-              setNewEntry((prev) => prev && { ...prev, lectureEndTime: e.target.value })
-            }
-            InputLabelProps={{ shrink: true }}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={newEntry?.hasHomework || false}
-                onChange={(e) =>
-                  setNewEntry((prev) => prev && { ...prev, hasHomework: e.target.checked })
-                }
-              />
-            }
-            label="Homework"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={newEntry?.hasQuiz || false}
-                onChange={(e) =>
-                  setNewEntry((prev) => prev && { ...prev, hasQuiz: e.target.checked })
-                }
-              />
-            }
-            label="Quiz"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewEntry(null)}>Cancel</Button>
-          <Button onClick={handleSaveNew} variant="contained">
             Save
           </Button>
         </DialogActions>
