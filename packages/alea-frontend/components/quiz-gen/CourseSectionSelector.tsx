@@ -28,6 +28,7 @@ import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
+import { SectionDetailsDialog } from './SectionDetailsDialog';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -46,7 +47,6 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems,
   loading,
   setLoading,
-  setSelectedSection,
 }: {
   courseId: string;
   sections: SecInfo[];
@@ -56,7 +56,6 @@ export const CourseSectionSelector = ({
   setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
   loading: boolean;
   setLoading: (value: boolean) => void;
-  setSelectedSection: (s: SecInfo | null) => void;
 }) => {
   const router = useRouter();
   const startSectionUri = (router.query.startSectionUri as string) || '';
@@ -68,6 +67,8 @@ export const CourseSectionSelector = ({
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
     startSecUri: string;
@@ -488,13 +489,21 @@ export const CourseSectionSelector = ({
           ) : (
             <Button
               variant="contained"
-              onClick={() => generateNewProblems()}
-              disabled={!courseId || !startSectionUri || !endSectionUri || loading}
+              // onClick={() => generateNewProblems()}
+              // disabled={!courseId || !startSectionUri || !endSectionUri || loading}
+              onClick={() => setDialogOpen(true)}
+              disabled={!courseId || loading}
             >
               Generate
             </Button>
           )}
         </Box>
+        <SectionDetailsDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          section={selectedSection} 
+          setLoading={setLoading}
+        />
       </Box>
     </Paper>
   );

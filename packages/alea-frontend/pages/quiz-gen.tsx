@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuizPanel } from '../components/quiz-gen/QuizPanel';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
-import { SectionAccordion } from '../components/quiz-gen/SectionAccordion';
 import { QuizViewMode, ViewModeSelector } from '../components/quiz-gen/ViewModeSelector';
 import { SecInfo } from '../types';
 
@@ -42,7 +41,6 @@ const QuizGen = () => {
   const [allIdx, setAllIdx] = useState(0);
   const [viewMode, setViewMode] = useState<QuizViewMode>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
-  const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -87,12 +85,6 @@ const QuizGen = () => {
           setExistingProblemUris={setExistingProblems}
           setGeneratedProblems={setGeneratedProblems}
           setLatestGeneratedProblems={setLatestGeneratedProblems}
-          setSelectedSection={setSelectedSection}
-        />
-        <SectionAccordion
-          sections={sections}
-          setLoading={setLoading}
-          selectedSection={selectedSection}
         />
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} loading={loading} />
 
