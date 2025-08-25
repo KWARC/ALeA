@@ -4,6 +4,7 @@ export * from './comment';
 export * from './comments-api';
 export * from './course-grade-info';
 export * from './coverage-timeline';
+export * from './course-metadata-api';
 export * from './gpt-problems';
 export * from './gpt-problems-api';
 export * from './homework';
