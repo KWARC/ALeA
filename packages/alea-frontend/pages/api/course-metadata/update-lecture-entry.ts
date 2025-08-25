@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { executeQuery, checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
+import { executeQuery, checkIfPostOrSetError } from '../comment-utils';
 
 type LectureEntry = {
   lectureDay: string;
@@ -45,14 +45,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end('Missing required fields');
   }
 
-  // const userId = await getUserIdIfAuthorizedOrSetError(
-  //   req,
-  //   res,
-  //   ResourceName.COURSE_METADATA,
-  //   Action.MUTATE,
-  //   { courseId }
-  // );
-  const userId = await getUserIdOrSetError(req, res);
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.COURSE_METADATA,
+    Action.MUTATE,
+    { courseId }
+  );
+
   if (!userId) return;
 
   try {

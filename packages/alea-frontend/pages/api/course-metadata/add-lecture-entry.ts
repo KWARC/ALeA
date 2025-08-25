@@ -1,9 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../comment-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { ResourceName, Action } from '@stex-react/utils';
 
@@ -24,14 +20,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // const userId = await getUserIdIfAuthorizedOrSetError(
-  //   req,
-  //   res,
-  //   ResourceName.COURSE_METADATA,
-  //   Action.MUTATE,
-  //   { courseId, instanceId }
-  // );
-  const userId = await getUserIdOrSetError(req, res);
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.COURSE_METADATA,
+    Action.MUTATE,
+    { courseId, instanceId }
+  );
+
   if (!userId) return;
 
   const existing = await executeAndEndSet500OnError(
