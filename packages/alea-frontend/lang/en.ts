@@ -517,5 +517,37 @@ export const en = {
 
   confirmDelete: 'Are you sure you want to delete this lecture?',
   requiredFieldsAlert: 'Please fill all required fields: Day, Start Time, End Time',
+
+  // Announcements
+  announcementsHeader: 'Announcements for Course ID: {{courseId}}',
+  newAnnouncementButton: '+ New Announcement',
+
+  tableCourseId: 'Course ID',
+  tableInstructor: 'Instructor',
+  tableTitle: 'Title',
+  tableContent: 'Content',
+  tableCreatedAt: 'Created At',
+  tableVisibleUntil: 'Visible Until',
+
+  dialogEditAnnouncementTitle: 'Edit Announcement',
+  dialogNewAnnouncementTitle: 'New Announcement',
+
+  fieldTitle: 'Title',
+  fieldContent: 'Content',
+  fieldVisibleUntil: 'Visible Until',
+
+  saveChanges: 'Save Changes',
+  create: 'Create',
+
+  confirmDeleteAnnouncementTitle: 'Confirm Deletion',
+  confirmDeleteAnnouncementMessage:
+    'Are you sure you want to delete this announcement? This action cannot be undone.',
+
+  snackbarAnnouncementSaved: 'Announcement saved successfully!',
+  snackbarAnnouncementSaveFailed: 'Failed to save announcement. Check console for details.',
+  snackbarAnnouncementDeleted: 'Announcement deleted successfully!',
+  snackbarAnnouncementDeleteFailed:
+    'Failed to delete announcement. Check console for details.',
+  snackbarAnnouncementsFetchFailed: 'Failed to fetch announcements. Check console for details.',
 }
 };

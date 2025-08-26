@@ -484,5 +484,37 @@ export const de = {
 
   confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
   requiredFieldsAlert: 'Bitte füllen Sie alle erforderlichen Felder aus: Tag, Startzeit, Endzeit',
+
+  // Announcements
+  announcementsHeader: 'Ankündigungen für Kurs-ID: {{courseId}}',
+  newAnnouncementButton: '+ Neue Ankündigung',
+
+  tableCourseId: 'Kurs-ID',
+  tableInstructor: 'Lehrende(r)',
+  tableTitle: 'Titel',
+  tableContent: 'Inhalt',
+  tableCreatedAt: 'Erstellt am',
+  tableVisibleUntil: 'Sichtbar bis',
+
+  dialogEditAnnouncementTitle: 'Ankündigung bearbeiten',
+  dialogNewAnnouncementTitle: 'Neue Ankündigung',
+
+  fieldTitle: 'Titel',
+  fieldContent: 'Inhalt',
+  fieldVisibleUntil: 'Sichtbar bis',
+
+  saveChanges: 'Änderungen speichern',
+  create: 'Erstellen',
+
+  confirmDeleteAnnouncementTitle: 'Löschen bestätigen',
+  confirmDeleteAnnouncementMessage:
+    'Sind Sie sicher, dass Sie diese Ankündigung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+
+  snackbarAnnouncementSaved: 'Ankündigung erfolgreich gespeichert!',
+  snackbarAnnouncementSaveFailed: 'Speichern der Ankündigung fehlgeschlagen. Details in der Konsole.',
+  snackbarAnnouncementDeleted: 'Ankündigung erfolgreich gelöscht!',
+  snackbarAnnouncementDeleteFailed:
+    'Löschen der Ankündigung fehlgeschlagen. Details in der Konsole.',
+  snackbarAnnouncementsFetchFailed: 'Abrufen der Ankündigungen fehlgeschlagen. Details in der Konsole.',
 }
 };
