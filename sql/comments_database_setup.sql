@@ -290,9 +290,21 @@ CREATE TABLE semesterInfo (
   PRIMARY KEY (universityId, instanceId)
 );
 
+CREATE TABLE announcement(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    courseId VARCHAR(255) NOT NULL,
+    instructorId VARCHAR(255) NOT NULL,
+    instanceId VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    visibleUntil TIMESTAMP NULL,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE courseMetaData (
-    courseId VARCHAR(50) NOT NULL,     
-    instanceId VARCHAR(50) NOT NULL,     
+    courseId VARCHAR(50) NOT NULL,
+    instanceId VARCHAR(50) NOT NULL,
     lectureSchedule JSON NOT NULL,
     userId VARCHAR(255),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
