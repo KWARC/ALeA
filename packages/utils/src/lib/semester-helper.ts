@@ -123,3 +123,86 @@ export async function createStaffResourceActions(courseId: string) {
     }
   }
 }
+
+
+export function getExpectedResourceActions(courseId: string) {
+  return [
+    // Instructors
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/**`,
+      actionId: Action.ACCESS_CONTROL,
+      aclId: `${courseId}-${CURRENT_TERM}-instructors`,
+    },
+    // Students
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      actionId: Action.TAKE,
+      aclId: `${courseId}-${CURRENT_TERM}-enrollments`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      actionId: Action.TAKE,
+      aclId: `${courseId}-${CURRENT_TERM}-enrollments`,
+    },
+    // Staff
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      actionId: Action.MUTATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      actionId: Action.PREVIEW,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      actionId: Action.MUTATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      actionId: Action.INSTRUCTOR_GRADING,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/notes`,
+      actionId: Action.MUTATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/study-buddy`,
+      actionId: Action.MODERATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
+      actionId: Action.MODERATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+  ];
+}
+
+
+export async function isCourseSemesterSetupComplete(courseId: string): Promise<boolean> {
+  try {
+    // Check ACLs
+    const aclIds = ROLES.map((role) => `${courseId}-${CURRENT_TERM}-${role}`);
+    const aclPresence = await Promise.all(aclIds.map((id) => aclExists(id)));
+    const allAclsPresent = aclPresence.every(Boolean);
+
+    if (!allAclsPresent) return false;
+
+    // Check resource actions
+    const expected = getExpectedResourceActions(courseId);
+    const allResourceActions = await getAllResourceActions();
+    const hasAllResourceActions = expected.every((exp) =>
+      allResourceActions.some(
+        (ra) => ra.resourceId === exp.resourceId && ra.actionId === exp.actionId && ra.aclId === exp.aclId
+      )
+    );
+    return hasAllResourceActions;
+  } catch (e) {
+    return false;
+  }
+}
