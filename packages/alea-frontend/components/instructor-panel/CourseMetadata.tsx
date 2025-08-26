@@ -8,7 +8,7 @@ import {
   createStaffResourceActions,
   createStudentResourceActions,
   isCourseSemesterSetupComplete,
-} from '../../../utils/src/lib/semester-helper';
+} from 'packages/utils/src/lib/semester-helper';
 
 interface CourseMetadataProps {
   courseId: string;
