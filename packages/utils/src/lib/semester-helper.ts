@@ -1,4 +1,4 @@
-import { createAcl, CreateACLRequest, createResourceAction, getAcl } from '@stex-react/api';
+import { createAcl, CreateACLRequest, createResourceAction, getAcl, getAllResourceActions } from '@stex-react/api';
 import { Action, CURRENT_TERM } from '@stex-react/utils';
 
 const ROLES = ['instructors', 'staff', 'tas', 'enrollments'];
