@@ -63,7 +63,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
           >
             {isAlreadySetup ? "ACL's already created" : "Create Course ACL"}
           </Button>
-          <Button variant="contained">Generate CURRENT: SEM JSON</Button>
+          <Button variant="contained">Generate Lecture Entry</Button>
         </Box>
       </Box>
 
