@@ -460,4 +460,34 @@ export const de = {
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
+
+  lectureSchedule: {
+  title: 'Vorlesungsplan für Kurs-ID: {{courseId}}',
+  addLectureButton: 'Vorlesung hinzufügen',
+
+  day: 'Tag',
+  venue: 'Veranstaltungsort',
+  zoomLink: 'Zoom-Link',
+  startTime: 'Startzeit',
+  endTime: 'Endzeit',
+  homework: 'Hausaufgaben',
+  quiz: 'Quiz',
+  actions: 'Aktionen',
+  link: 'Link',
+  yes: 'Ja',
+  no: 'Nein',
+  edit: 'Bearbeiten',
+  delete: 'Löschen',
+  editDialogTitle: 'Vorlesung bearbeiten',
+  save: 'Speichern',
+  cancel: 'Abbrechen',
+
+  confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
+  requiredFieldsAlert: 'Bitte füllen Sie alle erforderlichen Felder aus: Tag, Startzeit, Endzeit',
+  noLecturesFound: 'Keine Vorlesungen für diesen Kurs gefunden',
+  fetchFailed: 'Fehler beim Abrufen der Vorlesungen',
+  deleteFailed: 'Fehler beim Löschen der Vorlesung',
+  updateFailed: 'Fehler beim Aktualisieren der Vorlesung',
+  addFailed: 'Fehler beim Hinzufügen der Vorlesung',
+}
 };
