@@ -14,6 +14,7 @@ import {
   Paper,
   Tooltip,
   CircularProgress,
+  MenuItem,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -51,6 +52,7 @@ const initialNewEntry: LectureEntry = {
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const router = useRouter();
   const { lectureSchedule: t } = getLocaleObject(router);
+  const weekdayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const [lectures, setLectures] = useState<LectureEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [editEntry, setEditEntry] = useState<LectureEntry | null>(null);
@@ -172,12 +174,19 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           }}
         >
           <TextField
+            select
             label={t.day}
             value={newEntry.lectureDay}
             onChange={(e) => setNewEntry((prev) => ({ ...prev, lectureDay: e.target.value }))}
             size="small"
-            sx={{ width: 110 }}
-          />
+            sx={{ width: 140 }}
+          >
+            {weekdayOptions.map((day) => (
+              <MenuItem key={day} value={day}>
+                {day}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             label={t.venue}
             value={newEntry.venue}
@@ -319,12 +328,19 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         <DialogTitle>{t.editDialogTitle}</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
+            select
             label={t.day}
             value={editEntry?.lectureDay || ''}
             onChange={(e) =>
               setEditEntry((prev) => prev && { ...prev, lectureDay: e.target.value })
             }
-          />
+          >
+            {weekdayOptions.map((day) => (
+              <MenuItem key={day} value={day}>
+                {day}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             label={t.venue}
             value={editEntry?.venue || ''}
