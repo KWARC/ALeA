@@ -68,7 +68,6 @@ export const CourseSectionSelector = ({
   const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
     startSecUri: string;
@@ -216,12 +215,6 @@ export const CourseSectionSelector = ({
       setGenerating(false);
     }
   };
-  useEffect(() => {
-    if (!sections.length || !startSectionUri) return;
-    const found = sections.find((s) => s.uri === startSectionUri) || null;
-    setSelectedSection(found);
-    console.log({ found });
-  }, [sections, startSectionUri, setSelectedSection]);
 
   return (
     <Paper
@@ -306,8 +299,6 @@ export const CourseSectionSelector = ({
                     },
                     true
                   );
-                  const selectedSection = sections.find((s) => s.uri === newStart) || null;
-                  setSelectedSection(selectedSection);
                 }}
               >
                 {sections.map((s) => (
@@ -398,8 +389,6 @@ export const CourseSectionSelector = ({
                     updates.startSectionUri = newEnd;
                   }
                   updateRouterQuery(router, updates, true);
-                  // const selectedSection = sections.find((s) => s.uri === newEnd) || null;
-                  // setSelectedSection(selectedSection);
                 }}
               >
                 {sections.map((s) => (

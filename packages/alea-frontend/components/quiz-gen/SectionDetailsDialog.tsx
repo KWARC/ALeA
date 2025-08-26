@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -19,6 +20,7 @@ import { conceptUriToName, getDefiniedaInSection } from '@stex-react/api';
 import React, { useEffect, useState } from 'react';
 import { SecInfo } from '../../types';
 import { getSectionRange } from './CourseSectionSelector';
+import { PRIMARY_COL } from '@stex-react/utils';
 
 interface SectionDetailsDialogProps {
   open: boolean;
@@ -107,7 +109,125 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2, overflow: 'hidden' }}>
-        <Box display="grid" gridTemplateColumns="280px 1fr" gap={3} height="75vh">
+        <Box display="grid" gridTemplateColumns="280px 280px 1fr" gap={3} height="75vh">
+          <Paper
+            elevation={3}
+            sx={{
+              borderRadius: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+              {selectedConcepts.length > 0 ? (
+                <Box display="flex" flexDirection="column" gap={2}>
+                  {selectedConcepts.map((sc, idx) => (
+                    <Paper
+                      key={sc.value}
+                      elevation={currentIndex === idx ? 3 : 1}
+                      sx={{
+                        p: 2,
+                        cursor: 'pointer',
+                        border: currentIndex === idx ? `2px solid` : '1px solid',
+                        borderColor: currentIndex === idx ? 'primary.main' : 'grey.300',
+                        bgcolor: currentIndex === idx ? 'primary.light' : 'background.paper',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          elevation: 2,
+                          bgcolor: currentIndex === idx ? 'primary.light' : 'grey.50',
+                        },
+                      }}
+                      onClick={() => setCurrentIndex(idx)}
+                    >
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        mb={1}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="bold"
+                          color={currentIndex === idx ? 'primary.contrastText' : 'text.primary'}
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '180px',
+                          }}
+                        >
+                          {conceptUriToName(sc.value)}
+                        </Typography>
+                        <Button
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedConcepts((prev) => prev.filter((c) => c.value !== sc.value));
+                          }}
+                          sx={{
+                            minWidth: 'auto',
+                            p: 0.5,
+                            color: currentIndex === idx ? 'primary.contrastText' : 'text.secondary',
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </Box>
+
+                      <Typography
+                        variant="caption"
+                        color={currentIndex === idx ? 'primary.contrastText' : 'text.secondary'}
+                        sx={{
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        {sc.value}
+                      </Typography>
+
+                      <Box mt={1} display="flex" flex-wrap gap={0.5}>
+                        <Chip
+                          size="small"
+                          label="3 Properties"
+                          variant="outlined"
+                          sx={{
+                            height: '20px',
+                            fontSize: '0.65rem',
+                            color: currentIndex === idx ? 'primary.contrastText' : 'text.secondary',
+                            borderColor: currentIndex === idx ? 'primary.contrastText' : 'grey.400',
+                          }}
+                        />
+                        <Chip
+                          size="small"
+                          label="2 Misconceptions"
+                          variant="outlined"
+                          sx={{
+                            height: '20px',
+                            fontSize: '0.65rem',
+                            color: currentIndex === idx ? 'primary.contrastText' : 'text.secondary',
+                            borderColor: currentIndex === idx ? 'primary.contrastText' : 'grey.400',
+                          }}
+                        />
+                      </Box>
+                    </Paper>
+                  ))}
+                </Box>
+              ) : (
+                <Box p={3} textAlign="center">
+                    {/* <Typography color="text.secondary" variant="body2" fontStyle="italic">
+                    {startSectionUri} - {endSectionUri}
+                  </Typography> */}
+                  <Typography color="text.secondary" variant="body2" fontStyle="italic">
+                    No concepts selected
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
           <Paper
             elevation={3}
             sx={{
@@ -119,7 +239,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
           >
             <Box sx={{ bgcolor: 'primary.light', color: 'primary.contrastText', p: 2 }}>
               <Typography variant="h6" fontWeight="bold">
-                Concepts ({selectedConcepts.length})
+                Available Concepts ({selectedConcepts.length})
               </Typography>
             </Box>
             <Divider />
@@ -189,7 +309,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                 })
               ) : (
                 <Box p={3} textAlign="center">
-                  <Typography color="text.secondary" variant="body2">
+                  <Typography color="text.secondary" variant="body2" fontStyle="italic">
                     {startSectionUri ? 'No concepts found in range' : 'No section selected'}
                   </Typography>
                 </Box>
@@ -207,25 +327,45 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               minHeight: '70vh',
             }}
           >
-            <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
+            {/* <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
               Concept Details
             </Typography>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 2 }} /> */}
 
             {selectedConcepts.length > 0 && currentIndex >= 0 ? (
               <>
+                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
+                  Concept Details : {conceptUriToName(selectedConcepts[currentIndex].value)}
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+
                 <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
-                  <Box mb={2}>
+                  <Box mb={2} display="flex" flexWrap="wrap" alignItems="center" gap={1}>
                     <Typography variant="subtitle1" fontWeight="bold">
                       {conceptUriToName(selectedConcepts[currentIndex].value)}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ wordBreak: 'break-word' }}
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      –
+                    </Typography>
+                    <Box
+                      component="a"
+                      href={selectedConcepts[currentIndex].value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: PRIMARY_COL,
+                        backgroundColor: '#f8f9fa',
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        border: `1px solid ${PRIMARY_COL}30`,
+                        wordBreak: 'break-all',
+                      }}
                     >
                       {selectedConcepts[currentIndex].value}
-                    </Typography>
+                    </Box>
                   </Box>
 
                   <Box mb={2} display="flex" flexDirection="column">
@@ -304,7 +444,12 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               </>
             ) : (
               <Box flex={1} display="flex" alignItems="center" justifyContent="center">
-                <Typography variant="body1" color="text.secondary" textAlign="center">
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  textAlign="center"
+                  fontStyle="italic"
+                >
                   Select a concept from the left to view details here.
                 </Typography>
               </Box>
