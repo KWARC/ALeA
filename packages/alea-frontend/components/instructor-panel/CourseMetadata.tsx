@@ -7,7 +7,6 @@ import {
   createSemesterAclsForCourse,
   createStaffResourceActions,
   createStudentResourceActions,
-  aclExists,
   isCourseSemesterSetupComplete,
 } from '../../../utils/src/lib/semester-helper';
 
