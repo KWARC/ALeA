@@ -12,13 +12,6 @@ import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
-const CATEGORIZED_PROBLEM_CACHE = new Map<
-  string,
-  {
-    data: ProblemData[];
-    timestamp: number;
-  }
->();
 const CONCEPT_URIS_FOR_COURSE = new Map<string, { data: string[]; timestamp: number }>();
 const LO_RELATION_CACHE = new Map<string, { data: string[]; timestamp: number }>();
 
@@ -122,14 +115,7 @@ export async function getCategorizedProblems(
   sectionUri: string,
   courseNotesUri: string,
   userLanguages: Language[],
-  forceRefresh = false
 ): Promise<ProblemData[]> {
-  const cacheKey = sectionUri;
-  if (!forceRefresh) {
-    const cached = CATEGORIZED_PROBLEM_CACHE.get(cacheKey);
-    if (isCacheValid(cached)) return cached.data;
-  }
-
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
   const allProblems: string[] = await getProblemsBySection(sectionUri);
@@ -168,10 +154,5 @@ export async function getCategorizedProblems(
       } as ProblemData;
     })
   );
-  CATEGORIZED_PROBLEM_CACHE.set(cacheKey, {
-    data: categorized,
-    timestamp: Date.now(),
-  });
-
   return categorized;
 }
