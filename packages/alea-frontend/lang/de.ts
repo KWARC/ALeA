@@ -461,7 +461,7 @@ export const de = {
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
 
-  lectureSchedule: {
+  dashboard: {
   title: 'Vorlesungsplan für Kurs-ID: {{courseId}}',
   addLectureButton: 'Vorlesung hinzufügen',
 
@@ -484,10 +484,5 @@ export const de = {
 
   confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
   requiredFieldsAlert: 'Bitte füllen Sie alle erforderlichen Felder aus: Tag, Startzeit, Endzeit',
-  noLecturesFound: 'Keine Vorlesungen für diesen Kurs gefunden',
-  fetchFailed: 'Fehler beim Abrufen der Vorlesungen',
-  deleteFailed: 'Fehler beim Löschen der Vorlesung',
-  updateFailed: 'Fehler beim Aktualisieren der Vorlesung',
-  addFailed: 'Fehler beim Hinzufügen der Vorlesung',
 }
 };

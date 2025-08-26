@@ -51,7 +51,7 @@ const initialNewEntry: LectureEntry = {
 
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const router = useRouter();
-  const { lectureSchedule: t } = getLocaleObject(router);
+  const { dashboard: t } = getLocaleObject(router);
   const weekdayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const [lectures, setLectures] = useState<LectureEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +69,10 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setLectures(data.lectureSchedule || []);
     } catch (err) {
       if (err.response?.status === 404) {
-        console.warn(t.noLecturesFound);
+        console.warn('No lectures found for this course instance');
         setLectures([]);
       } else {
-        console.error(t.fetchFailed, err);
+        console.error('Failed to fetch lectures', err);
       }
     } finally {
       setLoading(false);
@@ -106,7 +106,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         )
       );
     } catch (err) {
-      console.error(t.deleteFailed, err);
+      console.error('Failed to delete lecture', err);
     }
   };
 
@@ -129,7 +129,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setEditKeys(null);
       fetchLectures();
     } catch (err) {
-      console.error(t.updateFailed, err);
+      console.error('Failed to update lecture', err);
     }
   };
 
@@ -147,7 +147,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setNewEntry(initialNewEntry);
       fetchLectures();
     } catch (err) {
-      console.error(t.addFailed, err);
+      console.error('Failed to add lecture', err);
     }
   };
 

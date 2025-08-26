@@ -494,7 +494,7 @@ export const en = {
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
 
-  lectureSchedule: {
+  dashboard: {
   title: 'Lecture Schedule for Course ID: {{courseId}}',
   addLectureButton: 'Add Lecture',
 
@@ -517,10 +517,5 @@ export const en = {
 
   confirmDelete: 'Are you sure you want to delete this lecture?',
   requiredFieldsAlert: 'Please fill all required fields: Day, Start Time, End Time',
-  noLecturesFound: 'No lectures found for this course instance',
-  fetchFailed: 'Failed to fetch lectures',
-  deleteFailed: 'Failed to delete lecture',
-  updateFailed: 'Failed to update lecture',
-  addFailed: 'Failed to add lecture',
 }
 };
