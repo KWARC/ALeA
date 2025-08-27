@@ -233,7 +233,7 @@ export function PerSectionQuiz({
   if (!startQuiz) {
     return (
       <Button onClick={() => setStartQuiz(true)} variant="contained">
-        {t.perSectionQuizButton.replace('$1', problemUris.length.toString())}
+        {t.syllabus.replace('$1', problemUris.length.toString())}
       </Button>
     );
   }
@@ -241,7 +241,7 @@ export function PerSectionQuiz({
   if (!show) {
     return (
       <Button onClick={() => setShow(true)} variant="contained">
-        {t.perSectionQuizButton.replace('$1', problemUris.length.toString())}
+        {t.syllabus.replace('$1', problemUris.length.toString())}
       </Button>
     );
   }
@@ -285,8 +285,10 @@ export function PerSectionQuiz({
           <Tab
             value="forme"
             label={
-              <Tooltip title="Personalized problems tailored to your learning progress and competencies.">
-                <span>For Me ({formeUris === null ? '...' : formeUris.length})</span>
+              <Tooltip title={t.forMeTooltip}>
+                <span>
+                  {t.forMe} ({formeUris === null ? '...' : formeUris.length})
+                </span>
               </Tooltip>
             }
           />
@@ -294,16 +296,16 @@ export function PerSectionQuiz({
           {orderedCategoryKeys.map((cat, i) => {
             const labelText =
               cat === 'adventurous'
-                ? "I'm Adventurous"
+                ? t.adventurous
                 : cat === 'syllabus'
-                ? 'Syllabus'
+                ? t.syllabus
                 : cat[0].toUpperCase() + cat.slice(1);
 
             const tooltipText =
               cat === 'adventurous'
-                ? 'Challenge yourself with problems beyond the syllabus — expand your horizons.'
+                ? t.adventurousTooltip
                 : cat === 'syllabus'
-                ? 'Practice problems aligned with this course syllabus.'
+                ? t.syllabusTooltip
                 : `Problems in ${labelText}`;
 
             return (
