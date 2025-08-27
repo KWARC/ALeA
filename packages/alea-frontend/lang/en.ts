@@ -1,3 +1,5 @@
+import CourseMetadata from "../components/instructor-panel/CourseMetadata";
+
 export const en = {
   home: {
     header: 'ALeA based Courses at FAU',
@@ -494,13 +496,13 @@ export const en = {
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
 
-  dashboard: {
+  courseMetadata: {
   title: 'Lecture Schedule for Course ID: {{courseId}}',
   addLectureButton: 'Add Lecture',
 
   day: 'Day',
   venue: 'Venue',
-  zoomLink: 'Zoom Link',
+  venueLink: 'Venue Link',
   startTime: 'Start Time',
   endTime: 'End Time',
   homework: 'Homework',

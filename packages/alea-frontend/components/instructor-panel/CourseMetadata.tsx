@@ -1,7 +1,7 @@
 import { Box, Typography, Button, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
-import AnnouncementsTab from './AnnouncementsTab';
-import LectureScheduleTab from './LectureScheduleTab';
+import AnnouncementsTab from './Announcements';
+import LectureScheduleTab from './LectureSchedule';
 import {
   createInstructorResourceActions,
   createSemesterAclsForCourse,
@@ -47,7 +47,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
       setSemesterSetupLoading(false);
     }
   };
-  
+
   return (
     <Box p={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -55,8 +55,8 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
           Course metadata
         </Typography>
         <Box display="flex" gap={2}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCreateCourseACL}
             disabled={semesterSetupLoading || isAlreadySetup}
             startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}

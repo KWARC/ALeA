@@ -51,7 +51,7 @@ const initialNewEntry: LectureEntry = {
 
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const router = useRouter();
-  const { dashboard: t } = getLocaleObject(router);
+  const { courseMetadata: t } = getLocaleObject(router);
   const weekdayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const [lectures, setLectures] = useState<LectureEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +195,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             sx={{ width: 120 }}
           />
           <TextField
-            label={t.zoomLink}
+            label={t.venueLink}
             value={newEntry.venueLink}
             onChange={(e) => setNewEntry((prev) => ({ ...prev, venueLink: e.target.value }))}
             size="small"
@@ -277,7 +277,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             <TableCell>{t.startTime}</TableCell>
             <TableCell>{t.endTime}</TableCell>
             <TableCell>{t.venue}</TableCell>
-            <TableCell>{t.zoomLink}</TableCell>
+            <TableCell>{t.venueLink}</TableCell>
             <TableCell>{t.homework}</TableCell>
             <TableCell>{t.quiz}</TableCell>
             <TableCell>{t.actions}</TableCell>
@@ -347,7 +347,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             onChange={(e) => setEditEntry((prev) => prev && { ...prev, venue: e.target.value })}
           />
           <TextField
-            label={t.zoomLink}
+            label={t.venueLink}
             value={editEntry?.venueLink || ''}
             onChange={(e) => setEditEntry((prev) => prev && { ...prev, venueLink: e.target.value })}
           />

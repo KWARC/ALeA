@@ -56,7 +56,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const router = useRouter();
-  const { dashboard: t } = getLocaleObject(router);
+  const { courseMetadata: t } = getLocaleObject(router);
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
