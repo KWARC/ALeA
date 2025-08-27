@@ -461,13 +461,13 @@ export const de = {
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
 
-  dashboard: {
+  courseMetadata: {
   title: 'Vorlesungsplan für Kurs-ID: {{courseId}}',
   addLectureButton: 'Vorlesung hinzufügen',
 
   day: 'Tag',
   venue: 'Veranstaltungsort',
-  zoomLink: 'Zoom-Link',
+  venueLink: 'Venue-Link',
   startTime: 'Startzeit',
   endTime: 'Endzeit',
   homework: 'Hausaufgaben',
