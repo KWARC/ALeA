@@ -1,5 +1,3 @@
-import { ProblemFilter } from '../ProblemFilter';
-
 export const de = {
   // content dashboard
   expandCollapseAll: 'Alles anzeigen/Minimieren',
