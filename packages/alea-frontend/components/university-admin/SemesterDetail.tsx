@@ -21,6 +21,9 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { updateSemester } from 'packages/api/src/lib/university-admin-dashboard';
 
+import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
+
 interface SemesterData {
   semesterStart: string;
   semesterEnd: string;
@@ -61,13 +64,17 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
     severity: 'success',
   });
 
+  const router = useRouter();
+  const { universityAdmin: t } = getLocaleObject(router);
+
   // Derived state
   const hasSemesters = semesters.length > 0;
   const isEditing = editingIndex !== null;
-  const isFormValid = editingSemester.semesterStart && 
-                     editingSemester.semesterEnd && 
-                     editingSemester.lectureStartDate && 
-                     editingSemester.lectureEndDate;
+  const isFormValid =
+    editingSemester.semesterStart &&
+    editingSemester.semesterEnd &&
+    editingSemester.lectureStartDate &&
+    editingSemester.lectureEndDate;
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -116,7 +123,7 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
     if (!isFormValid) {
       setSnackbar({
         open: true,
-        message: 'Please fill in all required fields',
+        message: t.pleaseFillAll,
         severity: 'error',
       });
       return;
@@ -132,7 +139,7 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         lectureStartDate: formatDateForAPI(editingSemester.lectureStartDate),
         lectureEndDate: formatDateForAPI(editingSemester.lectureEndDate),
       });
-      
+
       setEditingIndex(null);
       setEditingSemester({
         semesterStart: '',
@@ -140,18 +147,18 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         lectureStartDate: '',
         lectureEndDate: '',
       });
-      
+
       setSnackbar({
         open: true,
-        message: 'Semester updated successfully!',
+        message: t.semesterUpdateSuccess,
         severity: 'success',
       });
-      
+
       onSemesterUpdated();
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to update semester',
+        message: t.semesterUpdateFail,
         severity: 'error',
       });
     } finally {
@@ -166,24 +173,24 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
   return (
     <Paper elevation={2} sx={{ p: 2, borderRadius: 3, background: '#fff' }}>
       <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
-        Semester Detail
+        {t.semesterDetail}
       </Typography>
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow sx={{ background: '#e3f0ff' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Semester Start</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Semester End</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Lecture Start</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Lecture End</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.semesterStart}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.semesterEnd}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.lectureStart}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.lectureEnd}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.actions}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!hasSemesters ? (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  No semester data
+                  {t.noSemesterData}
                 </TableCell>
               </TableRow>
             ) : (
@@ -201,10 +208,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.semesterStart)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          semesterStart: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            semesterStart: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -218,10 +227,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.semesterEnd)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          semesterEnd: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            semesterEnd: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -235,10 +246,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.lectureStartDate)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          lectureStartDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            lectureStartDate: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -252,10 +265,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.lectureEndDate)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          lectureEndDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            lectureEndDate: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -302,19 +317,11 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         </Table>
       </TableContainer>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
     </Paper>
   );
-}; 
+};

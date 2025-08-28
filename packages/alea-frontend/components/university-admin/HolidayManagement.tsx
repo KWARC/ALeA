@@ -28,6 +28,9 @@ import {
   deleteSingleHoliday,
 } from 'packages/api/src/lib/university-admin-dashboard';
 
+import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
+
 const convertToDDMMYYYY = (isoDate: string): string => {
   if (!isoDate) return '';
   try {
@@ -93,6 +96,10 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     severity: 'success',
   });
 
+  const router = useRouter();
+
+  const { universityAdmin: t } = getLocaleObject(router);
+
   const hasHolidays = holidays.length > 0;
   const isAddingHoliday = !newHoliday.date || !newHoliday.name;
   const isEditing = editingIndex !== null;
@@ -101,7 +108,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     try {
       const data = await getHolidaysInfo(universityId, instanceId);
       const convertedData = data
-        .map(holiday => {
+        .map((holiday) => {
           const convertedDate = convertFromDDMMYYYY(holiday.date);
           if (!convertedDate) {
             console.warn('Skipping holiday with invalid date:', holiday);
@@ -135,35 +142,35 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     if (isAddingHoliday) {
       setSnackbar({
         open: true,
-        message: 'Please fill in both date and name',
+        message: t.pleaseFill,
         severity: 'error',
       });
       return;
     }
 
     setLoading(true);
-    try {      
+    try {
       const convertedDate = convertToDDMMYYYY(newHoliday.date);
       if (!convertedDate) {
         setSnackbar({
           open: true,
-          message: 'Invalid date format. Please select a valid date.',
+          message: t.invalidDate,
           severity: 'error',
         });
         return;
       }
-      
+
       const holidayForAPI = {
         ...newHoliday,
         date: convertedDate,
       };
-      
+
       const holidayForLocalState = {
         ...newHoliday,
         date: newHoliday.date,
-        originalDate: convertedDate, 
+        originalDate: convertedDate,
       };
-      
+
       let updatedHolidays = [...holidays, holidayForLocalState];
       // Keep local list sorted by ISO date
       updatedHolidays = [...updatedHolidays].sort((a, b) => a.date.localeCompare(b.date));
@@ -172,26 +179,27 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         name: h.name,
         date: h.originalDate || convertToDDMMYYYY(h.date),
       }));
-      
-      
+
       await uploadHolidays({
         universityId,
         instanceId,
         holidays: updatedHolidaysForAPI,
       });
-      
+
       setHolidays(updatedHolidays);
       setNewHoliday({ date: '', name: '' });
       setSnackbar({
         open: true,
-        message: 'Holiday added successfully!',
+        message: t.holidayAddSuccess,
         severity: 'success',
       });
     } catch (error) {
       console.error('Error adding holiday:', error);
       setSnackbar({
         open: true,
-        message: `Failed to add holiday: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to add holiday: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         severity: 'error',
       });
     } finally {
@@ -201,7 +209,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 
   const handleDeleteHoliday = async (index: number) => {
     setLoading(true);
-    try {    
+    try {
       const holidayToDelete = holidays[index];
       const dateToDelete = holidayToDelete.originalDate || convertToDDMMYYYY(holidayToDelete.date);
       await deleteSingleHoliday({
@@ -209,9 +217,11 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         instanceId,
         dateToDelete,
       });
-      const updatedHolidays = holidays.filter((_, i) => i !== index).sort((a, b) => a.date.localeCompare(b.date));
+      const updatedHolidays = holidays
+        .filter((_, i) => i !== index)
+        .sort((a, b) => a.date.localeCompare(b.date));
       setHolidays(updatedHolidays);
-      
+
       setSnackbar({
         open: true,
         message: 'Holiday deleted successfully!',
@@ -221,7 +231,9 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
       console.error('Error deleting holiday:', error);
       setSnackbar({
         open: true,
-        message: `Failed to delete holiday: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to delete holiday: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         severity: 'error',
       });
     } finally {
@@ -243,7 +255,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     if (!editingHoliday.date || !editingHoliday.name) {
       setSnackbar({
         open: true,
-        message: 'Please fill in both date and name',
+        message: t.pleaseFill,
         severity: 'error',
       });
       return;
@@ -252,12 +264,13 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     setLoading(true);
     try {
       const originalHoliday = holidays[editingIndex!];
-      const originalDateForAPI = originalHoliday.originalDate || convertToDDMMYYYY(originalHoliday.date);
+      const originalDateForAPI =
+        originalHoliday.originalDate || convertToDDMMYYYY(originalHoliday.date);
       const updatedHolidayForAPI = {
         ...editingHoliday,
         date: convertToDDMMYYYY(editingHoliday.date),
       };
-      
+
       await editHoliday({
         universityId,
         instanceId,
@@ -280,13 +293,13 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 
       setSnackbar({
         open: true,
-        message: 'Holiday updated successfully!',
+        message: t.holidayUpdateSuccess,
         severity: 'success',
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to update holiday',
+        message:  t.holidayUpdateFail,
         severity: 'error',
       });
     } finally {
@@ -301,12 +314,12 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
   return (
     <Paper elevation={2} sx={{ p: 2, borderRadius: 3, background: '#fff' }}>
       <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
-        Holiday Management
+        {t.holidayManagement}
       </Typography>
 
       <Paper elevation={1} sx={{ p: 2, mb: 2, background: '#f9f9ff' }}>
         <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-          Add New Holiday
+          {t.addNewHoliday}
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
@@ -320,7 +333,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
             disabled={disabled}
           />
           <TextField
-            label="Holiday Name"
+            label={t.holidayName}
             value={newHoliday.name}
             onChange={(e) => setNewHoliday({ ...newHoliday, name: e.target.value })}
             size="small"
@@ -334,7 +347,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
             disabled={loading || isAddingHoliday || disabled}
             size="small"
           >
-            Add
+            {t.add}
           </Button>
         </Stack>
       </Paper>
@@ -343,16 +356,16 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         <Table>
           <TableHead>
             <TableRow sx={{ background: '#e3f0ff' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.date}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.holidayName}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.actions}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!hasHolidays ? (
               <TableRow>
                 <TableCell colSpan={3} align="center">
-                  No holidays found
+                  {t.noHolidaysFound}
                 </TableCell>
               </TableRow>
             ) : (

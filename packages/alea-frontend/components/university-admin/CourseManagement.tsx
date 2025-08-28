@@ -15,6 +15,9 @@ import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import { createAcl } from 'packages/api/src/lib/access-control-api';
 import AclDisplay from '../AclDisplay';
 
+import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
+
 interface CourseManagementProps {
   semester: string;
   universityId: string;
@@ -29,6 +32,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [courses, setCourses] = useState<string[]>([]);
   const [aclPresence, setAclPresence] = useState<Record<string, boolean>>({});
   const [aclIds, setAclIds] = useState<Record<string, string>>({});
+
+   const router = useRouter();
+
+  const {universityAdmin: t} = getLocaleObject(router);
 
   const hasCourses = courses.length > 0;
 
@@ -81,15 +88,15 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
         <Table>
           <TableHead>
             <TableRow sx={{ background: '#e3f0ff' }}>
-              <TableCell sx={{ fontWeight: 600 }}>CourseId</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Instructors</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.courseId}</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.instructors}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!hasCourses ? (
               <TableRow>
                 <TableCell colSpan={2} align="center">
-                  No courses found
+                  {t.noCoursesFound}
                 </TableCell>
               </TableRow>
             ) : (
@@ -105,7 +112,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   <TableCell>{courseId}</TableCell>
                   <TableCell>
                     {aclPresence[courseId] === undefined ? (
-                      'Checking...'
+                      t.checking
                     ) : aclPresence[courseId] ? (
                       <AclDisplay aclId={aclIds[courseId]} />
                     ) : (
@@ -115,7 +122,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         onClick={() => handleCreateAcl(aclIds[courseId], courseId)}
                         disabled={disabled}
                       >
-                        Create Instructor ACL
+                        {t.createInstructorAcl}
                       </Button>
                     )}
                   </TableCell>
@@ -127,4 +134,4 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       </TableContainer>
     </Paper>
   );
-}; 
+};

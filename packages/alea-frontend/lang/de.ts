@@ -460,4 +460,55 @@ export const de = {
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
+  universityAdmin: {
+    courseManagement: 'Kursverwaltung',
+    courseId: 'Kurs-ID',
+    instructors: 'Dozenten',
+    noCoursesFound: 'Keine Kurse gefunden',
+    checking: 'Überprüfung...',
+    createInstructorAcl: 'Dozenten-ACL erstellen',
+
+    //DashboardHeader
+
+    universityAdminDashboard: 'Universitäts-Admin-Dashboard',
+    semester: 'Semester',
+    loading: 'Wird geladen...',
+    addSemesterDetail: 'Semesterdetails hinzufügen',
+    hideSemesterDetail: 'Semesterdetails ausblenden',
+
+    //HolidayManagement
+
+    holidayManagement: 'Feiertagsverwaltung',
+    addNewHoliday: 'Neuen Feiertag hinzufügen',
+    date: 'Datum',
+    holidayName: 'Feiertagsname',
+    add: 'Hinzufügen',
+    noHolidaysFound: 'Keine Feiertage gefunden',
+    actions: 'Aktionen',
+
+    pleaseFill: 'Bitte sowohl Datum als auch Name ausfüllen',
+    invalidDate: 'Ungültiges Datumsformat. Bitte ein gültiges Datum auswählen.',
+    holidayAddSuccess: 'Feiertag erfolgreich hinzugefügt!',
+    holidayAddFail: 'Feiertag konnte nicht hinzugefügt werden',
+    holidayDeleteSuccess: 'Feiertag erfolgreich gelöscht!',
+    holidayDeleteFail: 'Feiertag konnte nicht gelöscht werden',
+    holidayUpdateSuccess: 'Feiertag erfolgreich aktualisiert!',
+    holidayUpdateFail: 'Feiertag konnte nicht aktualisiert werden',
+
+
+    //SEMESTER-DETAILS
+
+    semesterDetail: "Semesterdetails",
+  semesterStart: "Semesterbeginn",
+  semesterEnd: "Semesterende",
+  lectureStart: "Vorlesungsbeginn",
+  lectureEnd: "Vorlesungsende",
+  actions: "Aktionen",
+  noSemesterData: "Keine Semesterdaten",
+
+  // Messages
+  pleaseFillAll: "Bitte alle Pflichtfelder ausfüllen",
+  semesterUpdateSuccess: "Semester erfolgreich aktualisiert!",
+  semesterUpdateFail: "Semester konnte nicht aktualisiert werden",
+  },
 };

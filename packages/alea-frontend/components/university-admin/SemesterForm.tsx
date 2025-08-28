@@ -11,6 +11,9 @@ import {
 import type { AlertColor } from '@mui/material';
 import { createSemester, SemesterData } from 'packages/api/src/lib/university-admin-dashboard';
 
+import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
+
 interface SemesterFormProps {
   onSemesterCreated: (newSemesterId?: string) => void;
   currentSemester: string;
@@ -42,6 +45,9 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
     severity: 'success',
   });
 
+    const router = useRouter();
+    const {universityAdmin: t} = getLocaleObject(router);
+
   useEffect(() => {
     setSemForm(prev => ({
       ...prev,
@@ -60,10 +66,10 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
       await createSemester(semForm);
       setSnackbar({
         open: true,
-        message: 'Semester created successfully!',
+        message: t.semesterCreateSuccess,
         severity: 'success',
       });
-      
+
       setSemForm({
         universityId,
         instanceId: currentSemester,
@@ -72,12 +78,12 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
         lectureStartDate: '',
         lectureEndDate: '',
       });
-      
+
       onSemesterCreated(semForm.instanceId);
     } catch (error: any) {
       setSnackbar({
         open: true,
-        message: error?.response?.data?.message || 'Failed to create semester',
+        message: error?.response?.data?.message || t.semesterCreateFail,
         severity: 'error',
       });
     } finally {
@@ -92,20 +98,20 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 3, background: '#f9f9ff' }}>
       <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
-        Add Semester Detail
+         {t.addSemesterDetail}
       </Typography>
       <Stack spacing={2}>
         <TextField
-          label="University ID"
+          label={t.universityId}
           name="universityId"
           value={semForm.universityId}
           disabled
           fullWidth
           required
         />
-        
+
         <TextField
-          label="Instance ID"
+          label={t.instanceId}
           name="instanceId"
           value={semForm.instanceId}
           onChange={handleSemFormChange}
@@ -113,9 +119,9 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           required
           placeholder="e.g., SS25, WS24-25"
         />
-        
+
         <TextField
-          label="Semester Start"
+          label={t.semesterStart}
           name="semesterStart"
           type="date"
           value={semForm.semesterStart}
@@ -124,9 +130,9 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
-          label="Semester End"
+          label={t.semesterEnd}
           name="semesterEnd"
           type="date"
           value={semForm.semesterEnd}
@@ -135,9 +141,9 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
-          label="Lecture Start Date"
+          label={t.lectureStartDate}
           name="lectureStartDate"
           type="date"
           value={semForm.lectureStartDate}
@@ -146,9 +152,9 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
-          label="Lecture End Date"
+          label={t.lectureEndDate}
           name="lectureEndDate"
           type="date"
           value={semForm.lectureEndDate}
@@ -157,7 +163,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <Button
           variant="contained"
           color="primary"
@@ -183,4 +189,4 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
       </Snackbar>
     </Paper>
   );
-}; 
+};

@@ -9,6 +9,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import { PRIMARY_COL } from '@stex-react/utils';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
 
 interface DashboardHeaderProps {
   semester: string;
@@ -27,6 +29,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleSemForm,
   showSemForm,
 }) => {
+  const router = useRouter();
+  const {universityAdmin: t} = getLocaleObject(router);
 
 
   return (
@@ -36,20 +40,20 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         gutterBottom
         sx={{ fontWeight: 700, color: PRIMARY_COL, letterSpacing: 1 }}
       >
-        University Admin Dashboard
+        {t.universityAdminDashboard}
       </Typography>
       <Stack direction="row" spacing={2} mb={3}>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="semester-select-label">Semester</InputLabel>
+          <InputLabel id="semester-select-label">{t.semester}</InputLabel>
           <Select
             labelId="semester-select-label"
             value={semester}
-            label="Semester"
+            label={t.semester}
             onChange={(e) => onSemesterChange(e.target.value)}
             disabled={loadingOptions}
           >
             {loadingOptions ? (
-              <MenuItem disabled>Loading...</MenuItem>
+              <MenuItem disabled>{t.loading}</MenuItem>
             ) : (
               semesterOptions.map(opt => (
                 <MenuItem key={opt} value={opt}>{opt}</MenuItem>
@@ -63,9 +67,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           sx={{ fontWeight: 600 }}
           onClick={onToggleSemForm}
         >
-          {showSemForm ? 'Hide' : 'Add'} Sem Detail
+          {showSemForm ? t.hideSemesterDetail : t.addSemesterDetail} Sem Detail
         </Button>
       </Stack>
     </>
   );
-}; 
+};

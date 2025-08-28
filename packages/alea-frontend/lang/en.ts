@@ -493,4 +493,70 @@ export const en = {
     howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
+  universityAdmin: {
+    courseManagement: 'Course Management',
+    courseId: 'Course ID',
+    instructors: 'Instructors',
+    noCoursesFound: 'No courses found',
+    checking: 'Checking...',
+    createInstructorAcl: 'Create Instructor ACL',
+
+    //DashboardHeader
+
+    universityAdminDashboard: 'University Admin Dashboard',
+    semester: 'Semester',
+    loading: 'Loading...',
+    addSemesterDetail: 'Add Sem Detail',
+    hideSemesterDetail: 'Hide Sem Detail',
+
+    // Holiday Management
+
+    holidayManagement: 'Holiday Management',
+    addNewHoliday: 'Add New Holiday',
+    date: 'Date',
+    holidayName: 'Holiday Name',
+    add: 'Add',
+    noHolidaysFound: 'No holidays found',
+    actions: 'Actions',
+
+    pleaseFill: 'Please fill in both date and name',
+    invalidDate: 'Invalid date format. Please select a valid date.',
+    holidayAddSuccess: 'Holiday added successfully!',
+    holidayAddFail: 'Failed to add holiday',
+    holidayDeleteSuccess: 'Holiday deleted successfully!',
+    holidayDeleteFail: 'Failed to delete holiday',
+    holidayUpdateSuccess: 'Holiday updated successfully!',
+    holidayUpdateFail: 'Failed to update holiday',
+
+    //SEMESTER-DETAILS
+
+    semesterDetail: 'Semester Detail',
+    semesterStart: 'Semester Start',
+    semesterEnd: 'Semester End',
+    lectureStart: 'Lecture Start',
+    lectureEnd: 'Lecture End',
+    actions: 'Actions',
+    noSemesterData: 'No semester data',
+
+    // Messages
+    pleaseFillAll: 'Please fill in all required fields',
+    semesterUpdateSuccess: 'Semester updated successfully!',
+    semesterUpdateFail: 'Failed to update semester',
+
+    //SEMESTERFORM
+
+    addSemesterDetail: 'Add Semester Detail',
+    universityId: 'University ID',
+    instanceId: 'Instance ID',
+    semesterStart: 'Semester Start',
+    semesterEnd: 'Semester End',
+    lectureStartDate: 'Lecture Start Date',
+    lectureEndDate: 'Lecture End Date',
+    saveSemester: 'Save Semester',
+    saving: 'Saving...',
+
+    // Snackbar messages
+    semesterCreateSuccess: 'Semester created successfully!',
+    semesterCreateFail: 'Failed to create semester',
+  },
 };
