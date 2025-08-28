@@ -495,20 +495,34 @@ export const de = {
     holidayUpdateSuccess: 'Feiertag erfolgreich aktualisiert!',
     holidayUpdateFail: 'Feiertag konnte nicht aktualisiert werden',
 
-
     //SEMESTER-DETAILS
 
-    semesterDetail: "Semesterdetails",
-  semesterStart: "Semesterbeginn",
-  semesterEnd: "Semesterende",
-  lectureStart: "Vorlesungsbeginn",
-  lectureEnd: "Vorlesungsende",
-  actions: "Aktionen",
-  noSemesterData: "Keine Semesterdaten",
+    semesterDetail: 'Semesterdetails',
+    semesterStart: 'Semesterbeginn',
+    semesterEnd: 'Semesterende',
+    lectureStart: 'Vorlesungsbeginn',
+    lectureEnd: 'Vorlesungsende',
+    actions: 'Aktionen',
+    noSemesterData: 'Keine Semesterdaten',
 
-  // Messages
-  pleaseFillAll: "Bitte alle Pflichtfelder ausfüllen",
-  semesterUpdateSuccess: "Semester erfolgreich aktualisiert!",
-  semesterUpdateFail: "Semester konnte nicht aktualisiert werden",
+    // Messages
+    pleaseFillAll: 'Bitte alle Pflichtfelder ausfüllen',
+    semesterUpdateSuccess: 'Semester erfolgreich aktualisiert!',
+    semesterUpdateFail: 'Semester konnte nicht aktualisiert werden',
+
+    //SEMESTERFORM
+    addSemesterDetail: 'Semesterdetails hinzufügen',
+    universityId: 'Universitäts-ID',
+    instanceId: 'Instanz-ID',
+    semesterStart: 'Semesterbeginn',
+    semesterEnd: 'Semesterende',
+    lectureStartDate: 'Vorlesungsbeginn',
+    lectureEndDate: 'Vorlesungsende',
+    saveSemester: 'Semester speichern',
+    saving: 'Speichern...',
+
+    // Snackbar messages
+    semesterCreateSuccess: 'Semester erfolgreich erstellt!',
+    semesterCreateFail: 'Semester konnte nicht erstellt werden',
   },
 };
