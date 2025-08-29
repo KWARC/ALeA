@@ -16,7 +16,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getDefiniedaInSection } from '@stex-react/api';
+import { conceptUriToName, getConceptPropertyInSection, getDefiniedaInSection, runGraphDbUpdateQuery } from '@stex-react/api';
 import React, { useEffect, useState } from 'react';
 import { SecInfo } from '../../types';
 import { getSectionRange } from './CourseSectionSelector';
@@ -71,6 +71,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         const allUris: string[] = [];
 
         for (const sec of rangeSections) {
+        const properties=await getConceptPropertyInSection(sec.uri);
+        console.log({properties});
           const defs = await getDefiniedaInSection(sec.uri);
           allUris.push(...defs.map((c) => c.conceptUri));
         }
@@ -109,7 +111,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2, overflow: 'hidden' }}>
-        <Box display="grid" gridTemplateColumns="280px 280px 1fr" gap={3} height="75vh">
+        <Box display="grid" gridTemplateColumns="180px 280px 1fr" gap={3} height="75vh">
           <Paper
             elevation={3}
             sx={{
