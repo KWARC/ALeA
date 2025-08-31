@@ -30,8 +30,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   showSemForm,
 }) => {
   const router = useRouter();
-  const {universityAdmin: t} = getLocaleObject(router);
-
+  const { universityAdmin: t } = getLocaleObject(router);
 
   return (
     <>
@@ -55,8 +54,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             {loadingOptions ? (
               <MenuItem disabled>{t.loading}</MenuItem>
             ) : (
-              semesterOptions.map(opt => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              semesterOptions.map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {opt}
+                </MenuItem>
               ))
             )}
           </Select>
@@ -67,7 +68,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           sx={{ fontWeight: 600 }}
           onClick={onToggleSemForm}
         >
-          {showSemForm ? t.hideSemesterDetail : t.addSemesterDetail} Sem Detail
+          {showSemForm ? t.hideSemesterDetail : t.addSemesterDetail}
         </Button>
       </Stack>
     </>

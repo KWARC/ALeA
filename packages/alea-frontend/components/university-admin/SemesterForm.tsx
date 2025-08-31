@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Typography,
-  Stack,
-  Button,
-  TextField,
-  Paper,
-  Alert,
-  Snackbar,
-} from '@mui/material';
+import { Typography, Stack, Button, TextField, Paper, Alert, Snackbar } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 import { createSemester, SemesterData } from 'packages/api/src/lib/university-admin-dashboard';
 
@@ -45,17 +37,19 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
     severity: 'success',
   });
 
-    const router = useRouter();
-    const {universityAdmin: t} = getLocaleObject(router);
+  const router = useRouter();
+  const { universityAdmin: t } = getLocaleObject(router);
 
   useEffect(() => {
-    setSemForm(prev => ({
+    setSemForm((prev) => ({
       ...prev,
       instanceId: currentSemester,
     }));
   }, [currentSemester]);
 
-  const handleSemFormChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleSemFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
     const { name, value } = e.target;
     setSemForm({ ...semForm, [name as string]: value });
   };
@@ -98,7 +92,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 3, background: '#f9f9ff' }}>
       <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
-         {t.addSemesterDetail}
+        {t.addSemesterDetail}
       </Typography>
       <Stack spacing={2}>
         <TextField
@@ -117,7 +111,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           onChange={handleSemFormChange}
           fullWidth
           required
-          placeholder="e.g., SS25, WS24-25"
+          placeholder={t.instanceIdPlaceholder}
         />
 
         <TextField
@@ -164,26 +158,13 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           required
         />
 
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSaveSemester}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Semester'}
+        <Button variant="contained" color="primary" onClick={handleSaveSemester} disabled={saving}>
+          {saving ? t.saving : t.saveSemester}
         </Button>
       </Stack>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

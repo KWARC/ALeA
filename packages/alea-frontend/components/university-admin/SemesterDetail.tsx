@@ -67,7 +67,6 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
   const router = useRouter();
   const { universityAdmin: t } = getLocaleObject(router);
 
-  // Derived state
   const hasSemesters = semesters.length > 0;
   const isEditing = editingIndex !== null;
   const isFormValid =
@@ -88,7 +87,6 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
   const formatDateForInput = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    // Handle timezone issues by using local date methods
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');

@@ -14,7 +14,6 @@ import { getCourseInfo, getCouseIdsOfSemester } from 'packages/api/src/lib/flams
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import { createAcl } from 'packages/api/src/lib/access-control-api';
 import AclDisplay from '../AclDisplay';
-
 import { useRouter } from 'next/router';
 import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
 
@@ -33,9 +32,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [aclPresence, setAclPresence] = useState<Record<string, boolean>>({});
   const [aclIds, setAclIds] = useState<Record<string, string>>({});
 
-   const router = useRouter();
+  const router = useRouter();
 
-  const {universityAdmin: t} = getLocaleObject(router);
+  const { universityAdmin: t } = getLocaleObject(router);
 
   const hasCourses = courses.length > 0;
 
@@ -77,12 +76,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   return (
     <Paper elevation={2} sx={{ mb: 4, p: 2, borderRadius: 3, background: '#fff' }}>
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{ color: 'primary.dark', fontWeight: 600 }}
-      >
-        Course Management
+      <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
+        {t.courseManagement}{' '}
       </Typography>
       <TableContainer>
         <Table>
@@ -92,6 +87,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <TableCell sx={{ fontWeight: 600 }}>{t.instructors}</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {!hasCourses ? (
               <TableRow>

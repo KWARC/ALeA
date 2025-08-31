@@ -468,25 +468,22 @@ export const de = {
     checking: 'Überprüfung...',
     createInstructorAcl: 'Dozenten-ACL erstellen',
 
-    //DashboardHeader
-
     universityAdminDashboard: 'Universitäts-Admin-Dashboard',
     semester: 'Semester',
     loading: 'Wird geladen...',
+
     addSemesterDetail: 'Semesterdetails hinzufügen',
     hideSemesterDetail: 'Semesterdetails ausblenden',
 
-    //HolidayManagement
-
     holidayManagement: 'Feiertagsverwaltung',
     addNewHoliday: 'Neuen Feiertag hinzufügen',
-    date: 'Datum',
+    holidayDate: 'Datum',
     holidayName: 'Feiertagsname',
     add: 'Hinzufügen',
     noHolidaysFound: 'Keine Feiertage gefunden',
-    actions: 'Aktionen',
+    holidayActions: 'Aktionen',
 
-    pleaseFill: 'Bitte sowohl Datum als auch Name ausfüllen',
+    pleaseFillHoliday: 'Bitte sowohl Datum als auch Name ausfüllen',
     invalidDate: 'Ungültiges Datumsformat. Bitte ein gültiges Datum auswählen.',
     holidayAddSuccess: 'Feiertag erfolgreich hinzugefügt!',
     holidayAddFail: 'Feiertag konnte nicht hinzugefügt werden',
@@ -495,34 +492,31 @@ export const de = {
     holidayUpdateSuccess: 'Feiertag erfolgreich aktualisiert!',
     holidayUpdateFail: 'Feiertag konnte nicht aktualisiert werden',
 
-    //SEMESTER-DETAILS
-
     semesterDetail: 'Semesterdetails',
-    semesterStart: 'Semesterbeginn',
-    semesterEnd: 'Semesterende',
+    semesterStartDetail: 'Semesterbeginn',
+    semesterEndDetail: 'Semesterende',
     lectureStart: 'Vorlesungsbeginn',
     lectureEnd: 'Vorlesungsende',
-    actions: 'Aktionen',
+    semesterDetailActions: 'Aktionen',
     noSemesterData: 'Keine Semesterdaten',
 
-    // Messages
     pleaseFillAll: 'Bitte alle Pflichtfelder ausfüllen',
     semesterUpdateSuccess: 'Semester erfolgreich aktualisiert!',
     semesterUpdateFail: 'Semester konnte nicht aktualisiert werden',
 
-    //SEMESTERFORM
-    addSemesterDetail: 'Semesterdetails hinzufügen',
+    semesterFormTitle: 'Semesterdetails hinzufügen',
     universityId: 'Universitäts-ID',
     instanceId: 'Instanz-ID',
+
     semesterStart: 'Semesterbeginn',
     semesterEnd: 'Semesterende',
     lectureStartDate: 'Vorlesungsbeginn',
     lectureEndDate: 'Vorlesungsende',
     saveSemester: 'Semester speichern',
     saving: 'Speichern...',
-
-    // Snackbar messages
+    instanceIdPlaceholder: 'z.B. SS25, WS24-25',
     semesterCreateSuccess: 'Semester erfolgreich erstellt!',
     semesterCreateFail: 'Semester konnte nicht erstellt werden',
+    actions: 'Aktionen',
   },
 };

@@ -501,25 +501,21 @@ export const en = {
     checking: 'Checking...',
     createInstructorAcl: 'Create Instructor ACL',
 
-    //DashboardHeader
-
     universityAdminDashboard: 'University Admin Dashboard',
     semester: 'Semester',
     loading: 'Loading...',
-    addSemesterDetail: 'Add Sem Detail',
-    hideSemesterDetail: 'Hide Sem Detail',
-
-    // Holiday Management
+    addSemesterDetail: 'Add Semester Detail',
+    hideSemesterDetail: 'Hide Semester Detail',
 
     holidayManagement: 'Holiday Management',
     addNewHoliday: 'Add New Holiday',
-    date: 'Date',
+    holidayDate: 'Date',
     holidayName: 'Holiday Name',
     add: 'Add',
     noHolidaysFound: 'No holidays found',
-    actions: 'Actions',
+    holidayActions: 'Actions',
 
-    pleaseFill: 'Please fill in both date and name',
+    pleaseFillHoliday: 'Please fill in both date and name',
     invalidDate: 'Invalid date format. Please select a valid date.',
     holidayAddSuccess: 'Holiday added successfully!',
     holidayAddFail: 'Failed to add holiday',
@@ -528,35 +524,34 @@ export const en = {
     holidayUpdateSuccess: 'Holiday updated successfully!',
     holidayUpdateFail: 'Failed to update holiday',
 
-    //SEMESTER-DETAILS
-
     semesterDetail: 'Semester Detail',
+    semesterStartDetail: 'Semester Start',
+    semesterEndDetail: 'Semester End',
+    lectureStartDetail: 'Lecture Start',
+    lectureEndDetail: 'Lecture End',
+    semesterDetailActions: 'Actions',
+    noSemesterData: 'No semester data',
+
+    pleaseFillAll: 'Please fill in all required fields',
+    semesterUpdateSuccess: 'Semester updated successfully!',
+    semesterUpdateFail: 'Failed to update semester',
+
+    semesterFormTitle: 'Add Semester Detail',
+    universityId: 'University ID',
+    instanceId: 'Instance ID',
+    semesterStartForm: 'Semester Start',
+    semesterEndForm: 'Semester End',
+    lectureStartDate: 'Lecture Start Date',
+    lectureEndDate: 'Lecture End Date',
+    saveSemester: 'Save Semester',
+    saving: 'Saving...',
+    instanceIdPlaceholder: 'e.g., SS25, WS24-25',
+    semesterCreateSuccess: 'Semester created successfully!',
+    semesterCreateFail: 'Failed to create semester',
     semesterStart: 'Semester Start',
     semesterEnd: 'Semester End',
     lectureStart: 'Lecture Start',
     lectureEnd: 'Lecture End',
     actions: 'Actions',
-    noSemesterData: 'No semester data',
-
-    // Messages
-    pleaseFillAll: 'Please fill in all required fields',
-    semesterUpdateSuccess: 'Semester updated successfully!',
-    semesterUpdateFail: 'Failed to update semester',
-
-    //SEMESTERFORM
-
-    addSemesterDetail: 'Add Semester Detail',
-    universityId: 'University ID',
-    instanceId: 'Instance ID',
-    semesterStart: 'Semester Start',
-    semesterEnd: 'Semester End',
-    lectureStartDate: 'Lecture Start Date',
-    lectureEndDate: 'Lecture End Date',
-    saveSemester: 'Save Semester',
-    saving: 'Saving...',
-
-    // Snackbar messages
-    semesterCreateSuccess: 'Semester created successfully!',
-    semesterCreateFail: 'Failed to create semester',
   },
 };

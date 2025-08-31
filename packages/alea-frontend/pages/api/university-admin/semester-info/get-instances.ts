@@ -9,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!universityId || typeof universityId !== 'string') {
     return res.status(400).end('Missing or invalid query parameter: universityId must be a string');
   }
-
   const result = await executeQuery<Array<{ instanceId: string }>>(
     `SELECT DISTINCT instanceId FROM semesterInfo WHERE universityId = ?`,
     [universityId]
