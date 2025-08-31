@@ -77,6 +77,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
         borderRadius: 2,
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
         mb: 2,
       }}
     >

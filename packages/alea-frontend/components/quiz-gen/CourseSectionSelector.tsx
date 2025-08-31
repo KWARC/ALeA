@@ -191,30 +191,30 @@ export const CourseSectionSelector = ({
     fetchInitialData();
   }, [courseId, startSectionUri, endSectionUri, sections]);
 
-  const generateNewProblems = async () => {
-    setGenerating(true);
-    try {
-      const response = await generateQuizProblems({
-        mode: 'new',
-        courseId,
-        startSectionUri,
-        endSectionUri,
-      });
-      if (!response?.length) {
-        return;
-      }
-      const parsedProblems: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
-        ...rest,
-        ...problemJson,
-      }));
-      setLatestGeneratedProblems(parsedProblems);
-      setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
-    } catch (error) {
-      console.error(' Error generating problems:', error);
-    } finally {
-      setGenerating(false);
-    }
-  };
+  // const generateNewProblems = async () => {
+  //   setGenerating(true);
+  //   try {
+  //     const response = await generateQuizProblems({
+  //       mode: 'new',
+  //       courseId,
+  //       startSectionUri,
+  //       endSectionUri,
+  //     });
+  //     if (!response?.length) {
+  //       return;
+  //     }
+  //     const parsedProblems: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
+  //       ...rest,
+  //       ...problemJson,
+  //     }));
+  //     setLatestGeneratedProblems(parsedProblems);
+  //     setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
+  //   } catch (error) {
+  //     console.error(' Error generating problems:', error);
+  //   } finally {
+  //     setGenerating(false);
+  //   }
+  // };
 
   return (
     <Paper
@@ -489,10 +489,12 @@ export const CourseSectionSelector = ({
         <SectionDetailsDialog
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
+          courseId={courseId}
           startSectionUri={startSectionUri}
           endSectionUri={endSectionUri}
           sections={sections}
-          setLoading={setLoading}
+          setGeneratedProblems={setGeneratedProblems}
+          setLatestGeneratedProblems={setLatestGeneratedProblems}
         />
       </Box>
     </Paper>

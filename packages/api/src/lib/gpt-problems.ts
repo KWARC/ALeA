@@ -182,7 +182,7 @@ interface ScaffoldingDetails {
 export interface ScaffoldVariant {
   variantType: 'scaffolding';
   scaffoldingType: string;
-  numSubQuestions?:number;
+  numSubQuestions?: number;
   scaffoldInstruction?: string;
 }
 export interface LanguageVariant {
@@ -202,6 +202,12 @@ export interface VariantBase {
   problemUri?: string;
 }
 
+type ConceptSelection = {
+  name: string;
+  uri: string;
+  properties: string[];
+};
+
 export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
@@ -214,6 +220,8 @@ interface NewGenerationParams {
   courseId: string;
   startSectionUri: string;
   endSectionUri: string;
+  selectedConcepts: ConceptSelection[];
+  selectedQuestionTypes: string[];
 }
 interface CopyGenerationParams {
   mode: 'copy';
@@ -238,6 +246,6 @@ export interface PossibleVariantsResult {
     applicable: boolean;
     themes?: string[];
   };
-  scaffolding:ScaffoldingDetails;
+  scaffolding: ScaffoldingDetails;
   substitute_values: boolean;
 }

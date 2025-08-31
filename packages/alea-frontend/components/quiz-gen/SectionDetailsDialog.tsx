@@ -1,18 +1,20 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
   Paper,
-  Typography
+  Typography,
 } from '@mui/material';
 import {
   conceptUriToName,
+  generateQuizProblems,
   getConceptPropertyInSection,
   getDefiniedaInSection,
 } from '@stex-react/api';
-import React, { useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { SecInfo } from '../../types';
 import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
@@ -20,6 +22,7 @@ import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 
 interface ConceptPropertiesMap {
   [conceptUri: string]: ConceptProperty[];
@@ -33,19 +36,23 @@ export interface ConceptProperty {
 interface SectionDetailsDialogProps {
   open: boolean;
   onClose: () => void;
+  courseId: string;
   startSectionUri: string;
   endSectionUri: string;
   sections: SecInfo[];
-  setLoading: (val: boolean) => void;
+  setGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
+  setLatestGeneratedProblems: Dispatch<SetStateAction<FlatQuizProblem[]>>;
 }
 
 export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   open,
   onClose,
+  courseId,
   startSectionUri,
   endSectionUri,
   sections,
-  setLoading,
+  setGeneratedProblems,
+  setLatestGeneratedProblems,
 }) => {
   const [concepts, setConcepts] = useState<{ label: string; value: string }[]>([]);
   const [selectedConcepts, setSelectedConcepts] = useState<{ label: string; value: string }[]>([]);
@@ -56,7 +63,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
-
+  const [generating, setGenerating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const questionTypes = [
     {
       id: 'mcq',
@@ -123,6 +131,37 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }
   }, [showQuestionTypes]);
 
+  const generateNewProblems = async () => {
+    setGenerating(true);
+    try {
+      const response = await generateQuizProblems({
+        mode: 'new',
+        courseId,
+        startSectionUri,
+        endSectionUri,
+        selectedConcepts: selectedConcepts.map((sc) => ({
+          name: sc.label,
+          uri: sc.value,
+          properties: selectedProperties[sc.value] || [],
+        })),
+        selectedQuestionTypes,
+      });
+      if (!response?.length) {
+        return;
+      }
+      const parsedProblems: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
+        ...rest,
+        ...problemJson,
+      }));
+      setLatestGeneratedProblems(parsedProblems);
+      setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
+    } catch (error) {
+      console.error(' Error generating problems:', error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, selectedConcepts.length - 1));
@@ -137,6 +176,21 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
       <DialogContent dividers sx={{ p: 2, overflow: 'hidden' }}>
         <Box display="grid" gridTemplateColumns="220px 280px 1fr" gap={3} height="75vh">
+          {loading && (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: 'rgba(255,255,255,0.6)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 10,
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
           <Paper
             elevation={3}
             sx={{
@@ -160,7 +214,11 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                       selectedProperties={selectedProperties}
                       onSelect={setCurrentIndex}
                       onRemove={(conceptValue) => {
-                        setSelectedConcepts((prev) => prev.filter((c) => c.value !== conceptValue));
+                        setSelectedConcepts((prev) => {
+                          const newConcepts = prev.filter((c) => c.value !== conceptValue);
+                          setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
+                          return newConcepts;
+                        });
                       }}
                     />
                   ))}
@@ -187,9 +245,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                 setSelectedConcepts((prev) => {
                   const exists = prev.some((sc) => sc.value === concept.value);
                   if (exists) {
-                    const idx = prev.findIndex((sc) => sc.value === concept.value);
-                    if (idx >= 0) setCurrentIndex(idx);
-                    return prev;
+                    const newConcepts = prev.filter((sc) => sc.value !== concept.value);
+                    setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
+                    return newConcepts;
                   } else {
                     const newConcepts = [...prev, concept];
                     setCurrentIndex(newConcepts.length - 1);
@@ -278,13 +336,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               variant="contained"
               color="primary"
               disabled={selectedQuestionTypes.length === 0}
-              onClick={() => {
-                console.log('Generate questions:', {
-                  selectedConcepts,
-                  selectedQuestionTypes,
-                  selectedProperties,
-                });
-              }}
+              onClick={() => generateNewProblems()}
             >
               Generate
             </Button>
