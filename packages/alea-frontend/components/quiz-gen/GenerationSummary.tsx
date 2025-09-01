@@ -1,17 +1,13 @@
 import { Box, Chip, Divider, Paper, Typography } from '@mui/material';
 import { conceptUriToName } from '@stex-react/api';
 import React from 'react';
-
-interface QuestionType {
-  id: string;
-  label: string;
-  description: string;
-}
+import { ConceptProperty, QuestionType } from './SectionDetailsDialog';
 
 interface GenerationSummaryProps {
   selectedConcepts: { label: string; value: string }[];
   selectedQuestionTypes: string[];
   selectedProperties: { [conceptUri: string]: string[] };
+  conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   questionTypes: QuestionType[];
 }
 
@@ -19,6 +15,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   selectedConcepts,
   selectedQuestionTypes,
   selectedProperties,
+  conceptProperties,
   questionTypes,
 }) => {
   return (
@@ -84,23 +81,67 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Properties Summary
           </Typography>
-          <Box display="flex" flexDirection="column" gap={1}>
+          <Box display="flex" flexDirection="column" gap={2}>
             {selectedConcepts.map((concept) => {
-              const propertiesCount = (selectedProperties[concept.value] ?? []).length;
+              const selectedProps = selectedProperties[concept.value] ?? [];
+              const allProps = conceptProperties[concept.value] ?? [];
+
               return (
-                <Box
-                  key={concept.value}
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography variant="body2">{conceptUriToName(concept.value)}</Typography>
-                  <Chip
-                    label={`${propertiesCount} properties`}
-                    size="small"
-                    variant="outlined"
-                    color={propertiesCount > 0 ? 'primary' : 'default'}
-                  />
+                <Box key={concept.value}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="body2" fontWeight="bold">
+                      {conceptUriToName(concept.value)}
+                    </Typography>
+                    <Chip
+                      label={`${selectedProps.length}/${allProps.length} selected`}
+                      size="small"
+                      variant="outlined"
+                      color={selectedProps.length > 0 ? 'primary' : 'default'}
+                    />
+                  </Box>
+
+                  {selectedProps.length > 0 && (
+                    <Box ml={2} mb={1}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        gutterBottom
+                        display="block"
+                      >
+                        Selected Properties:
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {selectedProps.map((propKey) => {
+                          const property = allProps.find((p) => p.prop === propKey);
+                          return (
+                            <Box key={propKey} display="flex" alignItems="flex-start" gap={1}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 'bold', minWidth: '4px' }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.primary"
+                                sx={{ flexGrow: 1 }}
+                              >
+                                {property?.description || propKey}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {selectedProps.length === 0 && (
+                    <Box ml={2}>
+                      <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                        No properties selected for this concept
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               );
             })}

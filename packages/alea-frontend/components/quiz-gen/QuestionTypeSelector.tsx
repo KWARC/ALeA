@@ -1,22 +1,17 @@
 import {
-    Box,
-    Checkbox,
-    Divider,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Paper,
-    Typography,
+  Box,
+  Checkbox,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Typography,
 } from '@mui/material';
 import React from 'react';
-
-interface QuestionType {
-  id: string;
-  label: string;
-  description: string;
-}
+import { QuestionType } from './SectionDetailsDialog';
 
 interface QuestionTypeSelectorProps {
   questionTypes: QuestionType[];

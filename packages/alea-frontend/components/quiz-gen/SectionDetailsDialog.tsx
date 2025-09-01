@@ -33,6 +33,12 @@ export interface ConceptProperty {
   prop: string;
 }
 
+export interface QuestionType {
+  id: string;
+  label: string;
+  description: string;
+}
+
 interface SectionDetailsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -93,6 +99,12 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const handleToggleAll = () => {
     setSelectedConcepts(allSelected ? [] : concepts);
   };
+  useEffect(() => {
+    if (!startSectionUri || !endSectionUri) return;
+    setConcepts([]);
+    setSelectedConcepts([]);
+    setSelectedProperties({});
+  }, [startSectionUri, endSectionUri]);
 
   useEffect(() => {
     if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
@@ -249,8 +261,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                     setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
                     return newConcepts;
                   } else {
-                    const newConcepts = [...prev, concept];
-                    setCurrentIndex(newConcepts.length - 1);
+                    const newConcepts = [concept,...prev];
+                    setCurrentIndex(0);
                     return newConcepts;
                   }
                 });
@@ -308,6 +320,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               selectedConcepts={selectedConcepts}
               selectedQuestionTypes={selectedQuestionTypes}
               selectedProperties={selectedProperties}
+              conceptProperties={conceptProperties}
               questionTypes={questionTypes}
             />
           )}
