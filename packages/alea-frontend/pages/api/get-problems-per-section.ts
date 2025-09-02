@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     courseId,
     sectionUri,
     notesUri,
-    languages.split(',').map((s) => s.trim()) as Language[]
+    (languages?.split(',').map((s) => s.trim()) ?? []) as Language[]
   );
   res.status(200).json(problems);
 }
