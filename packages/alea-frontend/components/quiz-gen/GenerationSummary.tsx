@@ -152,7 +152,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Total Properties Selected
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" mb={3}>
             {Object.values(selectedProperties).flat().length} properties across all concepts
           </Typography>
         </Box>

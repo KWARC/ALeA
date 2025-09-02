@@ -187,7 +187,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
         </Box>
       </Box>
 
-      <Box display="flex" justifyContent="space-between" mt={2}>
+      <Box display="flex" justifyContent="space-between" m={2.5}>
         <Button variant="outlined" onClick={onPrevious} disabled={currentIndex === 0}>
           Previous
         </Button>
