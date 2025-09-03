@@ -92,7 +92,7 @@ export function DocProblemBrowser({
         {/*ancestors?.length && (
           <h3>
             <span style={{ color: 'gray' }}>{t.problemsFor}</span> // TODO ALEA4-P1
-            // mmtHTMLToReact(ancestors[ancestors.length - 1].title ?? '') 
+            // mmtHTMLToReact(ancestors[ancestors.length - 1].title ?? '')
           </h3>
         )}*/}
         {!selectedSection && (

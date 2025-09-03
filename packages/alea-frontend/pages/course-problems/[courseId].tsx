@@ -28,6 +28,7 @@ const CourseProblemsPage: NextPage = () => {
     return <>Course Not Found!</>;
   }
   const notesDocUri = courseInfo.notes;
+  console.log('Notes Doc URI:', notesDocUri);
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${t.notes} | ALeA`}>
@@ -41,7 +42,10 @@ const CourseProblemsPage: NextPage = () => {
             zIndex: '100',
           }}
           onClick={() => {
-            router.push({ pathname: router.pathname, query: { courseId } });
+            const newQuery = { ...router.query };
+            delete newQuery.startSecNameExcl;
+            delete newQuery.endSecNameIncl;
+            router.push({ pathname: router.pathname, query: newQuery });
           }}
         >
           See all problems
