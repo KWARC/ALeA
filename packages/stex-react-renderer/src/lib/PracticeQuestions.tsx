@@ -6,10 +6,28 @@ import { FTMLProblemWithSolution } from '@stex-react/api';
 import { SafeHtml } from '@stex-react/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
-import { handleViewSource } from './PerSectionQuiz';
+import { handleViewSource, UriProblemViewer } from './PerSectionQuiz';
 import { ProblemDisplay } from './ProblemDisplay';
 import { ListStepper } from './QuizDisplay';
 import { getLocaleObject } from './lang/utils';
+
+// Corrected import path for getProblem.
+// Adjust this path if the file is in a different location.
+// import { getProblem } from '../../api/getProblem';
+
+// This function is now corrected to match the ProblemResponse type.
+function defaultProblemResponse(problem: FTMLProblemWithSolution): FTML.ProblemResponse {
+  // Cast 'problem.problem' to 'unknown' before accessing the '@id' property.
+  const problemId = (problem.problem as unknown as { '@id': string })['@id'];
+
+  return {
+    problemId: problemId ?? '',
+    uri: problemId ?? '',
+    points: 0,
+    feedback: '',
+    responses: [],
+  } as FTML.ProblemResponse;
+}
 
 function SourceIcon({ problemUri }: { problemUri: string }) {
   return (
@@ -20,6 +38,7 @@ function SourceIcon({ problemUri }: { problemUri: string }) {
     </IconButton>
   );
 }
+
 export function PracticeQuestions({
   problemIds: problemUris,
   showButtonFirst = true,
@@ -36,106 +55,71 @@ export function PracticeQuestions({
   const [, forceRerender] = useReducer((x) => x + 1, 0);
   const [showSolution, setShowSolution] = useState(false);
 
-  useEffect(() => {
-    // TODO ALEA4-P3
-    /*
-    const problems = problemStrs.map((p) => getProblem(p, ''));
-    setIsLoadingProblems(true);
-    const problems$ =  problemUris.map((p) => getLearningObjectShtml( p));
-    Promise.all(problems$).then((problemStrs) => {
-      // setProblems(problems);
-      // setResponses(problems.map((p) => defaultProblemResponse(p)));
-      setIsFrozen(problems.map(() => false));
-      setIsLoadingProblems(false);
-    });*/
-  }, [problemUris]);
+  // useEffect(() => {
+  //   if (!problemUris.length) {
+  //     setIsLoadingProblems(false);
+  //     setProblems([]);
+  //     return;
+  //   }
+
+  //   setIsLoadingProblems(true);
+
+  //   async function fetchProblems() {
+  //     const fetchedProblems: FTMLProblemWithSolution[] = [];
+  //     for (const uri of problemUris) {
+  //       try {
+  //         // Pass the problem URI and an empty string for the second argument if needed.
+  //         const problemData = await getProblem(uri, '');
+  //         if (problemData) {
+  //           fetchedProblems.push(problemData);
+  //         }
+  //       } catch (error) {
+  //         console.error(`Failed to fetch problem ${uri}:`, error);
+  //       }
+  //     }
+  //     setProblems(fetchedProblems);
+  //     setResponses(fetchedProblems.map((p) => defaultProblemResponse(p)));
+  //     setIsFrozen(fetchedProblems.map(() => false));
+  //     setIsLoadingProblems(false);
+  //   }
+
+  //   fetchProblems();
+  // }, [problemUris]);
 
   if (!problemUris.length) return !showButtonFirst && <i>No problems found.</i>;
-  if (isLoadingProblems) return <LinearProgress />;
+  // if (isLoadingProblems) return <LinearProgress />;
 
   const problem = problems[problemIdx];
   const response = responses[problemIdx];
-  // const subProblems = problems[problemIdx]?.subProblemData;
 
-  if (!problem || !response) return <>error</>;
+  // if (!problem || !response) return <>error</>;
+  console.log({ problemUris });
 
   return (
-    <Box
-      px="10px"
-      maxWidth="800px"
-      m="auto"
-      bgcolor="white"
-      border="1px solid #CCC"
-      borderRadius="5px"
-    >
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <h2>
-          {problems.length > 1 ? (
-            <>
-              {t.problem} {problemIdx + 1} {t.of} {problems.length}&nbsp;
-            </>
-          ) : (
-            <SourceIcon problemUri={problemUris[problemIdx]} />
-          )}
-          {problem.problem.title_html && <SafeHtml html={problem.problem.title_html} />}
-        </h2>
-      </Box>
-      {problems.length > 1 && (
-        <Box display="flex" justifyContent="space-between">
-          <ListStepper
-            idx={problemIdx}
-            listSize={problems.length}
-            onChange={(idx) => {
-              setProblemIdx(idx);
-              setShowSolution(false);
-            }}
-          />
-          <IconButton onClick={() => handleViewSource(problemUris[problemIdx])}>
-            <Tooltip title="view source">
-              <OpenInNewIcon />
-            </Tooltip>
-          </IconButton>
-        </Box>
-      )}
-      <Box mb="10px">
-        <ProblemDisplay
-          r={response}
-          showPoints={false}
-          problem={problem}
-          isFrozen={isFrozen[problemIdx]}
-          onResponseUpdate={(response) => {
-            forceRerender();
-            setResponses((prev) => {
-              prev[problemIdx] = response;
-              return prev;
-            });
-          }}
-          onFreezeResponse={() =>
+    <Box>
+      {problemUris.map((uri, idx) => (
+        <UriProblemViewer
+          key={uri}
+          uri={uri}
+          isSubmitted={isFrozen[idx]}
+          setIsSubmitted={(v) =>
             setIsFrozen((prev) => {
-              prev[problemIdx] = true;
+              prev[idx] = v;
               return [...prev];
             })
           }
+          response={responses[idx]}
+          setResponse={(v) =>
+            setResponses((prev) => {
+              prev[idx] = v!;
+              return [...prev];
+            })
+          }
+          setQuotient={(q) => {
+            console.log('Quotient for', uri, '=', q);
+          }}
         />
-      </Box>
-      <Box
-        mb={2}
-        sx={{ display: 'flex', gap: '10px', flexDirection: 'column', alignItems: 'flex-start' }}
-      >
-        {/* TODO ALEA4-P4 subProblems?.length > 0 && (
-          <Button variant="contained" onClick={() => setShowSolution(!showSolution)}>
-            {showSolution ? t.hideSolution : t.showSolution}
-          </Button>
-        )}*/}
-        {showSolution && (
-          <Box mb="10px">
-            {/* subProblems.map((p) => (
-              <div style={{ color: '#555' }}>{mmtHTMLToReact(p.solution)}</div>
-            ))*/}
-            TODO ALEA4-P4
-          </Box>
-        )}
-      </Box>
+      ))}
     </Box>
   );
 }
