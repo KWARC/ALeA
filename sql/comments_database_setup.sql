@@ -302,7 +302,7 @@ CREATE TABLE announcement(
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE courseMetaData (
+CREATE TABLE courseMetadata (
     courseId VARCHAR(50) NOT NULL,
     instanceId VARCHAR(50) NOT NULL,
     lectureSchedule JSON NOT NULL,

@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const result = await executeAndEndSet500OnError(
     `SELECT lectureSchedule
-     FROM courseMetaData
+     FROM courseMetadata
      WHERE userId = ? AND courseId = ? AND instanceId = ?`,
     [userId, courseId, instanceId],
     res
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   const updateResult = await executeAndEndSet500OnError(
-    `UPDATE courseMetaData
+    `UPDATE courseMetadata
      SET lectureSchedule = ?, updatedAt = CURRENT_TIMESTAMP
      WHERE courseId = ? AND instanceId = ? AND userId = ?`,
     [JSON.stringify(filtered), courseId, instanceId, userId],

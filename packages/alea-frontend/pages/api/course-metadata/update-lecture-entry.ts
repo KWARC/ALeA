@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const existing = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule FROM courseMetaData WHERE courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   lectureSchedule[idx] = { ...lectureSchedule[idx], ...updatedLectureEntry };
 
   await executeAndEndSet500OnError(
-    `UPDATE courseMetaData
+    `UPDATE courseMetadata
      SET lectureSchedule = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP
      WHERE courseId = ? AND instanceId = ?`,
     [JSON.stringify(lectureSchedule), userId, courseId, instanceId],
