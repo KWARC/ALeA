@@ -1,5 +1,5 @@
 import { CircularProgress, Typography } from '@mui/material';
-import { resetFakeUserData } from '@stex-react/api';
+import { resetFakeUserData } from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
@@ -19,7 +19,7 @@ const ResetAndRedirectPage: NextPage = () => {
   return (
     <>
       <CircularProgress />
-      <br/>
+      <br />
       {router.isReady && <Typography>Resetting user profile</Typography>}
     </>
   );

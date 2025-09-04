@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { FTMLProblemWithSolution } from '@stex-react/api';
+import { FTMLProblemWithSolution } from '@stex-react/spec';
 import { getPoints, ProblemDisplay } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
 

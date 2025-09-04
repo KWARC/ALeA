@@ -1,4 +1,4 @@
-import { createAcl, CreateACLRequest, createResourceAction, getAcl } from '@stex-react/api';
+import { createAcl, CreateACLRequest, createResourceAction, getAcl } from '@stex-react/spec';
 import { Action } from './resource-action-utils';
 import { CURRENT_TERM } from './courseInfo';
 

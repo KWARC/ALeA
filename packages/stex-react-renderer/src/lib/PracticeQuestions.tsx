@@ -2,7 +2,7 @@ import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
-import { FTMLProblemWithSolution } from '@stex-react/api';
+import { FTMLProblemWithSolution } from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';

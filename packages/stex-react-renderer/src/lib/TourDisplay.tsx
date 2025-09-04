@@ -11,7 +11,7 @@ import {
   getUriSmileys,
   SmileyCognitiveValues,
   smileyToLevel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { shouldUseDrawer, simpleHash } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';

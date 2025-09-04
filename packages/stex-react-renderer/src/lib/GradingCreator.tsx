@@ -7,7 +7,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { AnswerClass, CreateAnswerClassRequest } from '@stex-react/api';
+import { AnswerClass, CreateAnswerClassRequest } from '@stex-react/spec';
 import { DEFAULT_ANSWER_CLASSES } from '@stex-react/quiz-utils';
 import { useRouter } from 'next/router';
 import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';

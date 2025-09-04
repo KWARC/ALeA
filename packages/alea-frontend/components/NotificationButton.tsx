@@ -15,7 +15,7 @@ import {
   getUserNotifications,
   isLoggedIn,
   updateNotificationSeenTime,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DateView } from '@stex-react/react-utils';
 import { PRIMARY_COL, localStore } from '@stex-react/utils';
 import Link from 'next/link';
@@ -158,9 +158,9 @@ function NotificationButton() {
         sx={{ '& .MuiMenu-list': { pb: 0 } }}
       >
         {sortedItems.slice(0, 7).map((item, idx) => (
-          <Link 
-            key={`${item.link}-${item.postedTimestamp}`} 
-            href={item.link} 
+          <Link
+            key={`${item.link}-${item.postedTimestamp}`}
+            href={item.link}
             target={getLinkTarget(item.notificationType)}
           >
             <MenuItem onClick={handleClose}>

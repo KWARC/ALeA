@@ -17,7 +17,7 @@ import {
   isUserMember,
   deleteAcl,
   hasAclAssociatedResources,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import EditIcon from '@mui/icons-material/Edit';
 import { Delete } from '@mui/icons-material';
 import { NextPage } from 'next';
@@ -27,10 +27,10 @@ import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
 import { ConfirmationDialog } from '../../components/confirmation-dialog/ConfirmationDialog';
-interface MemberNameAndId  {
-      fullName: string;
-      userId: string;
-    }
+interface MemberNameAndId {
+  fullName: string;
+  userId: string;
+}
 const AclId: NextPage = () => {
   const router = useRouter();
   const { query } = router;

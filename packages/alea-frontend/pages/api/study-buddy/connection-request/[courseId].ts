@@ -1,4 +1,4 @@
-import { NotificationType } from '@stex-react/api';
+import { NotificationType } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,
@@ -9,10 +9,7 @@ import {
 import { getSbCourseId } from '../study-buddy-utils';
 import { CURRENT_TERM } from '@stex-react/utils';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const user = await getUserInfo(req);
   const userId = user?.userId;

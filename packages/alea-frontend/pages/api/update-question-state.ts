@@ -1,10 +1,10 @@
-import { UpdateQuestionStateRequest } from '@stex-react/api';
+import { UpdateQuestionStateRequest } from '@stex-react/spec';
 import { canUserModerateComments } from './access-control/resource-utils';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,
   getExistingCommentDontEnd,
-  getUserIdOrSetError
+  getUserIdOrSetError,
 } from './comment-utils';
 
 export default async function handler(req, res) {
@@ -12,18 +12,17 @@ export default async function handler(req, res) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  const { commentId, questionStatus, commentType } =
-    req.body as UpdateQuestionStateRequest;
+  const { commentId, questionStatus, commentType } = req.body as UpdateQuestionStateRequest;
   if (!commentId || !commentType) {
     res.status(401).json({ message: 'Invalid comment id or comment type' });
     return;
   }
   const { existing, error } = await getExistingCommentDontEnd(commentId);
-  if (!await canUserModerateComments(userId, existing.courseId, existing.courseTerm)) {
+  if (!(await canUserModerateComments(userId, existing.courseId, existing.courseTerm))) {
     res.status(403).json({ message: 'Unauthorized' });
     return;
   }
-  
+
   if (!existing || existing.isPrivate) {
     res.status(error || 404).json({ message: 'Comment not found' });
     return;

@@ -26,7 +26,7 @@ import {
   uploadHolidays,
   editHoliday,
   deleteSingleHoliday,
-} from 'packages/api/src/lib/university-admin-dashboard';
+} from '@stex-react/spec';
 
 const convertToDDMMYYYY = (isoDate: string): string => {
   if (!isoDate) return '';

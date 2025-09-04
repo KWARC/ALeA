@@ -28,7 +28,7 @@ import { TourAPIEntry, TourDisplay } from './TourDisplay';
 import TrafficLightIndicator from './TrafficLightIndicator';
 import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
 
-import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@stex-react/api';
+import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@stex-react/spec';
 
 export const ServerLinksContext = createContext({ gptUrl: '' });
 
@@ -145,7 +145,7 @@ const PositionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export {
-  AnswerContext, 
+  AnswerContext,
   CompetencyTable,
   ConfigureLevelSlider,
   ContentDashboard,
@@ -154,7 +154,7 @@ export {
   DocProblemBrowser,
   ExpandableContextMenu,
   FixedPositionMenu,
-  GradingContext, 
+  GradingContext,
   GradingCreator,
   GradingDisplay,
   handleViewSource,
@@ -175,7 +175,6 @@ export {
   TourDisplay,
   TrafficLightIndicator,
   URIListDisplay,
-  UriProblemViewer
+  UriProblemViewer,
 };
 export type { TourAPIEntry };
-

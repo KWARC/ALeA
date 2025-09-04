@@ -5,12 +5,9 @@ import { useEffect, useState } from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AlarmIcon from '@mui/icons-material/Alarm';
-import { TimerEvent, TimerEventType, getElapsedTime, getTotalElapsedTime } from '@stex-react/api';
+import { TimerEvent, TimerEventType, getElapsedTime, getTotalElapsedTime } from '@stex-react/spec';
 
-export function timerEvent(
-  type: TimerEventType,
-  problemIdx?: number
-): TimerEvent {
+export function timerEvent(type: TimerEventType, problemIdx?: number): TimerEvent {
   return {
     timestamp_ms: Date.now(),
     type,
@@ -49,8 +46,7 @@ export function QuizTimer({
   onPause?: () => void;
   onUnpause?: () => void;
 }) {
-  const isPaused =
-    !!events?.length && events[events.length - 1].type === TimerEventType.PAUSE;
+  const isPaused = !!events?.length && events[events.length - 1].type === TimerEventType.PAUSE;
   return (
     <Box
       display="flex"
@@ -123,15 +119,11 @@ export function Timer({
     );
   }
   if (leftTime < 0) {
-    return (
-      <span style={{ color: 'gray', fontFamily: 'monospace' }}>Quiz Ended</span>
-    );
+    return <span style={{ color: 'gray', fontFamily: 'monospace' }}>Quiz Ended</span>;
   }
   if (leftTime > 0) {
     return (
-      <span style={{ color: 'gray', fontFamily: 'monospace' }}>
-        {formatElapsedTime(leftTime)}
-      </span>
+      <span style={{ color: 'gray', fontFamily: 'monospace' }}>{formatElapsedTime(leftTime)}</span>
     );
   }
 }

@@ -9,7 +9,7 @@ import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Box, Button, CircularProgress, Dialog, IconButton } from '@mui/material';
-import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@stex-react/api';
+import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@stex-react/spec';
 import { isEmptyResponse } from '@stex-react/quiz-utils';
 import { shouldUseDrawer } from '@stex-react/utils';
 import { useRouter } from 'next/router';

@@ -1,4 +1,9 @@
-import { batchGradeHex, computePointsFromFeedbackJson, InsertAnswerRequest, Phase } from '@stex-react/api';
+import {
+  batchGradeHex,
+  computePointsFromFeedbackJson,
+  InsertAnswerRequest,
+  Phase,
+} from '@stex-react/spec';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
@@ -28,12 +33,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(400).json({ message });
     return;
   }
-  const resp =  await batchGradeHex([[problem.solution, [responses]]]);
+  const resp = await batchGradeHex([[problem.solution, [responses]]]);
   const feedbackJson = resp?.[0]?.[0];
   const points = computePointsFromFeedbackJson(problem.problem, feedbackJson);
   const results = await queryGradingDbAndEndSet500OnError(
     'INSERT INTO grading(userId, quizId, problemId, response, points, browserTimestamp_ms) VALUES (?, ?, ?, ?, ?, ?)',
-    [userId, quizId, problemId, JSON.stringify(responses), Number.isNaN(points) ? 0 : points, browserTimestamp_ms],
+    [
+      userId,
+      quizId,
+      problemId,
+      JSON.stringify(responses),
+      Number.isNaN(points) ? 0 : points,
+      browserTimestamp_ms,
+    ],
     res
   );
   if (!results) return;

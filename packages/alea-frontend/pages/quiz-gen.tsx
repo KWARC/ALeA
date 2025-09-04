@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/api';
+import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
@@ -45,7 +45,7 @@ const QuizGen = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  useEffect(() => { 
+  useEffect(() => {
     getUserInfo().then((info) => {
       if (!info) {
         router.push('/login');

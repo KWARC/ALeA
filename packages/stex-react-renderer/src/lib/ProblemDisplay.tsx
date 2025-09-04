@@ -11,7 +11,7 @@ import {
   createAnswer,
   getUserInfo,
   postAnswerToLMP,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor } from '@stex-react/myst';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -113,8 +113,8 @@ export function ProblemViewer({
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
-  });  
-  const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
+  });
+  const isNap = problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
       key={uri}
@@ -124,22 +124,26 @@ export function ProblemViewer({
       onProblem={(response) => {
         onResponseUpdate?.(response);
       }}
-      {...(!isNap?{onFragment:(problemId, kind) => {
-        if (kind.type === 'Problem') {
-          return (ch: React.ReactNode) => (
-            <Box>
-              {ch}
-              <AnswerAccepter
-                masterProblemId={uri}
-                isHaveSubProblems={isHaveSubProblems}
-                problemTitle={problem.problem.title_html ?? ''}
-                isFrozen={isFrozen}
-                problemId={problemId}
-              ></AnswerAccepter>
-            </Box>
-          );
-        }
-      }}:{}) }
+      {...(!isNap
+        ? {
+            onFragment: (problemId, kind) => {
+              if (kind.type === 'Problem') {
+                return (ch: React.ReactNode) => (
+                  <Box>
+                    {ch}
+                    <AnswerAccepter
+                      masterProblemId={uri}
+                      isHaveSubProblems={isHaveSubProblems}
+                      problemTitle={problem.problem.title_html ?? ''}
+                      isFrozen={isFrozen}
+                      problemId={problemId}
+                    ></AnswerAccepter>
+                  </Box>
+                );
+              }
+            },
+          }
+        : {})}
     />
   );
 }

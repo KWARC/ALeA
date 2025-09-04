@@ -1,4 +1,4 @@
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSlidesForCourse } from './get-slides';
 

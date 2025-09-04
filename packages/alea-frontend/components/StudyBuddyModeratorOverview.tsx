@@ -1,13 +1,9 @@
 import { Typography } from '@mui/material';
-import { AllCoursesStats } from '@stex-react/api';
+import { AllCoursesStats } from '@stex-react/spec';
 import { getLocaleObject } from '../lang/utils';
 import { useRouter } from 'next/router';
 
-const StudyBuddyModeratorOverview = ({
-  overviewData,
-}: {
-  overviewData: AllCoursesStats;
-}) => {
+const StudyBuddyModeratorOverview = ({ overviewData }: { overviewData: AllCoursesStats }) => {
   const { studyBuddy: t } = getLocaleObject(useRouter());
   return (
     <>

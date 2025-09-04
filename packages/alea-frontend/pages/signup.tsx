@@ -1,12 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import {
-  UserSignUpDetail,
-  signUpUser,
-  isLoggedIn,
-  loginUsingRedirect,
-} from '@stex-react/api';
+import { UserSignUpDetail, signUpUser, isLoggedIn, loginUsingRedirect } from '@stex-react/spec';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -16,8 +11,7 @@ import MainLayout from '../layouts/MainLayout';
 import { BG_COLOR, IS_SERVER } from '@stex-react/utils';
 import { LoginInfoBox } from './login';
 
-export const passwordRegex =
-  /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+export const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
 
 const SignUpPage: NextPage = () => {
   const router = useRouter();
@@ -57,9 +51,7 @@ const SignUpPage: NextPage = () => {
       }));
       return;
     } else if (formData.email.endsWith('@fau.de')) {
-      alert(
-        'You are using an FAU ID. You are being redirected to the FAU IdM-portal.'
-      );
+      alert('You are using an FAU ID. You are being redirected to the FAU IdM-portal.');
       loginUsingRedirect();
       return;
     } else {

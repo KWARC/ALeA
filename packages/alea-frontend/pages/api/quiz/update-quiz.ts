@@ -1,4 +1,4 @@
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@stex-react/spec';
 import {
   doesQuizExist,
   getBackupQuizFilePath,
@@ -12,7 +12,10 @@ import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-util
 import { checkIfPostOrSetError } from '../comment-utils';
 
 // function to rewrite the quiz file with the new quiz info and backup the old version.
-export function updateQuiz(quizId, updatedQuizFunc: (existingQuiz: QuizWithStatus) => QuizWithStatus) {
+export function updateQuiz(
+  quizId,
+  updatedQuizFunc: (existingQuiz: QuizWithStatus) => QuizWithStatus
+) {
   // Save old version
   const existingQuiz = getQuiz(quizId);
   fs.writeFileSync(
@@ -23,7 +26,10 @@ export function updateQuiz(quizId, updatedQuizFunc: (existingQuiz: QuizWithStatu
   writeQuizFile(updatedQuiz);
 }
 
-export function updateQuizRecorrectionInfo(quizId: string, recorrectionInfo: QuizWithStatus['recorrectionInfo']) {
+export function updateQuizRecorrectionInfo(
+  quizId: string,
+  recorrectionInfo: QuizWithStatus['recorrectionInfo']
+) {
   updateQuiz(
     quizId,
     (existingQuiz) =>

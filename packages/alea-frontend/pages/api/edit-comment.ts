@@ -1,4 +1,4 @@
-import { EditCommentRequest } from '@stex-react/api';
+import { EditCommentRequest } from '@stex-react/spec';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       existing.statement,
       existing.hiddenStatus,
       existing.hiddenJustification,
-      existing.questionStatus
+      existing.questionStatus,
     ]
   );
   if (!commentUpdate) return;

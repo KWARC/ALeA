@@ -6,13 +6,13 @@ import {
   getSemesterInfo,
   getInstances,
   SemesterData,
-} from 'packages/api/src/lib/university-admin-dashboard';
+} from '@stex-react/spec';
 import { DashboardHeader } from '../../../components/university-admin/DashboardHeader';
 import { SemesterForm } from '../../../components/university-admin/SemesterForm';
 import { CourseManagement } from '../../../components/university-admin/CourseManagement';
 import { HolidayManagement } from '../../../components/university-admin/HolidayManagement';
 import { SemesterDetail } from '../../../components/university-admin/SemesterDetail';
-import { isUserMember } from '@stex-react/api';
+import { isUserMember } from '@stex-react/spec';
 
 export default function UniversityAdminDashboard() {
   const router = useRouter();
@@ -121,9 +121,7 @@ export default function UniversityAdminDashboard() {
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Checking Authorization...
                 </Typography>
-                <Typography variant="body1">
-                  Please wait while we verify your access.
-                </Typography>
+                <Typography variant="body1">Please wait while we verify your access.</Typography>
               </Box>
             </Paper>
           </Box>
@@ -186,13 +184,23 @@ export default function UniversityAdminDashboard() {
             />
 
             {semesterOptions.length === 0 && !loadingOptions && (
-              <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 3, background: '#fff3cd', border: '1px solid #ffeaa7' }}>
+              <Paper
+                elevation={2}
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: 3,
+                  background: '#fff3cd',
+                  border: '1px solid #ffeaa7',
+                }}
+              >
                 <Box textAlign="center">
                   <Typography variant="h6" sx={{ color: '#856404', fontWeight: 600, mb: 1 }}>
                     No Semester Available
                   </Typography>
                   <Typography variant="body1" sx={{ color: '#856404' }}>
-                    No semester is available to create semester info. Please add a new semester to create semester info.
+                    No semester is available to create semester info. Please add a new semester to
+                    create semester info.
                   </Typography>
                 </Box>
               </Paper>
@@ -206,7 +214,11 @@ export default function UniversityAdminDashboard() {
               />
             )}
 
-            <CourseManagement semester={semester} universityId={universityId} disabled={semesterOptions.length === 0} />
+            <CourseManagement
+              semester={semester}
+              universityId={universityId}
+              disabled={semesterOptions.length === 0}
+            />
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box flex={1}>
                 <SemesterDetail
@@ -218,7 +230,11 @@ export default function UniversityAdminDashboard() {
                 />
               </Box>
               <Box flex={1} mb={{ xs: 3, md: 0 }}>
-                <HolidayManagement universityId={universityId} instanceId={semester} disabled={semesterOptions.length === 0} />
+                <HolidayManagement
+                  universityId={universityId}
+                  instanceId={semester}
+                  disabled={semesterOptions.length === 0}
+                />
               </Box>
             </Box>
           </Paper>

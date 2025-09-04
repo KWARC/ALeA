@@ -9,7 +9,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
-import { createSemester, SemesterData } from 'packages/api/src/lib/university-admin-dashboard';
+import { createSemester, SemesterData } from '@stex-react/spec';
 
 interface SemesterFormProps {
   onSemesterCreated: (newSemesterId?: string) => void;

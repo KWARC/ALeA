@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { CreateGptProblemsRequest, Template } from '@stex-react/api';
+import { CreateGptProblemsRequest, Template } from '@stex-react/spec';
 import { ServerLinksContext } from '@stex-react/stex-react-renderer';
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 
@@ -41,7 +41,7 @@ function templateToFormData(template: Template): CreateGptProblemsRequest {
 //   return `https://gl.mathhub.info/${archive}/-/blob/main/source/${filepath}`;
 // }
 
-function getSectionNames(): { name: string; parentFile: "TODO ALeA4-M3" }[] {
+function getSectionNames(): { name: string; parentFile: 'TODO ALeA4-M3' }[] {
   const names = [];
   /* TODO ALeA4-M3
   if (data.title?.length)
@@ -72,7 +72,7 @@ function SectionPicker({
   sectionParentId: string;
   onChange: (value: string) => void;
 }) {
-  const [sections, setSectionNames] = useState<{ name: string; parentFile: "TODO ALeA4-M3"  }[]>([]); 
+  const [sections, setSectionNames] = useState<{ name: string; parentFile: 'TODO ALeA4-M3' }[]>([]);
   // const fileLoc = stringToFileLoc(sectionParentId); TODO ALeA4-M3
 
   useEffect(() => {
@@ -101,8 +101,8 @@ function SectionPicker({
           {sections.map((option) => {
             return (
               <MenuItem
-                key={"TODO ALeA4-M3"}
-                // value={TODO ALeA4-M3} 
+                key={'TODO ALeA4-M3'}
+                // value={TODO ALeA4-M3}
               >
                 {option.name}
               </MenuItem>

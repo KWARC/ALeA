@@ -1,9 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from './comment-utils';
-import { AuthProvider, UserInformation } from '@stex-react/api';
+import { executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
+import { AuthProvider, UserInformation } from '@stex-react/spec';
 
 //This  method for finding authProvider is brittle.we should store the information in the database at the time of signup
 function getAuthProvider(hasPassword: boolean) {
@@ -12,10 +9,7 @@ function getAuthProvider(hasPassword: boolean) {
   }
   return AuthProvider.FAU_IDM;
 }
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   const result: UserInformation = await executeAndEndSet500OnError(
@@ -37,9 +31,6 @@ export default async function handler(
     showTrafficLight: result[0].showTrafficLight,
     showSectionReview: result[0].showSectionReview,
     notificationSeenTs: result[0].notificationSeenTs,
-    isVerified:
-      authProvider === AuthProvider.EMAIL_PASSWORD
-        ? result[0].isVerified
-        : true,
+    isVerified: authProvider === AuthProvider.EMAIL_PASSWORD ? result[0].isVerified : true,
   });
 }

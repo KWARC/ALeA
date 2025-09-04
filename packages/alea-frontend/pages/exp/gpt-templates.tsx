@@ -1,10 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, IconButton, Typography } from '@mui/material';
-import { Template, getTemplateVersions, getTemplates } from '@stex-react/api';
-import {
-  FixedPositionMenu,
-  LayoutWithFixedMenu,
-} from '@stex-react/stex-react-renderer';
+import { Template, getTemplateVersions, getTemplates } from '@stex-react/spec';
+import { FixedPositionMenu, LayoutWithFixedMenu } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL, shouldUseDrawer } from '@stex-react/utils';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
@@ -51,9 +48,7 @@ function TemplateMenu({
             key={template.templateName}
             onClick={() => onSelectTemplate(template)}
             fontWeight={
-              template.templateName === selectedTemplate?.templateName
-                ? 'bold'
-                : undefined
+              template.templateName === selectedTemplate?.templateName ? 'bold' : undefined
             }
           >
             {template.templateName}
@@ -88,11 +83,8 @@ function TemplatePrompt({
     <>
       <Box style={boxStyle}>
         <Typography>
-          <b>
-            Template Description (
-            {templateVersions[templateVersions.length - 1]?.updater})
-          </b>
-          :{templateVersions[templateVersions.length - 1]?.updateMessage}
+          <b>Template Description ({templateVersions[templateVersions.length - 1]?.updater})</b>:
+          {templateVersions[templateVersions.length - 1]?.updateMessage}
         </Typography>
       </Box>
       {selectedTemplate.version !== '0' ? (

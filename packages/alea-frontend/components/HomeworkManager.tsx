@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Snackbar
+  Snackbar,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +24,7 @@ import {
   HomeworkStub,
   updateHomework,
   UpdateHomeworkRequest,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import HomeworkForm from './HomeworkForm';

@@ -4,7 +4,7 @@ import {
   LoType,
   SelfAssessmentEvent,
   updateLearnerModel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import assert from 'assert';
 import { ActionName } from '../../constants/messages';
 import {
@@ -401,7 +401,7 @@ export async function stateTransition(
   if (action.chosenOption === 'MARK_AS_KNOWN') {
     assert(action.targetConceptUri);
     if (action.targetConceptUri === currentConceptUri) {
-      return await moveOnAction( newState, nextIndex, currentConceptUri);
+      return await moveOnAction(newState, nextIndex, currentConceptUri);
     } else {
       if (!newState.completedConceptUris.includes(action.targetConceptUri))
         newState.completedConceptUris.push(action.targetConceptUri);

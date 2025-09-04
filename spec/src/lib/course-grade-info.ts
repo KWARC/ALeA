@@ -21,18 +21,18 @@ export const GRADE_TO_PERCENT_LOOPUP = {
 };
 
 export const POSSIBLE_GERMAN_GRADES = [
-    '1.0',
-    '1.3',
-    '1.7',
-    '2.0',
-    '2.3',
-    '2.7',
-    '3.0',
-    '3.3',
-    '3.7',
-    '4.0',
-    '5.0',
-  ]
+  '1.0',
+  '1.3',
+  '1.7',
+  '2.0',
+  '2.3',
+  '2.7',
+  '3.0',
+  '3.3',
+  '3.7',
+  '4.0',
+  '5.0',
+];
 
 export const COURSE_DESCRIPTIONS: { [courseId: string]: Course } = {
   AI: {

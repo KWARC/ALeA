@@ -11,7 +11,7 @@ import {
   FormHelperText,
   TextField,
 } from '@mui/material';
-import { getUserInfo } from '@stex-react/api';
+import { getUserInfo } from '@stex-react/spec';
 import { handleViewSource } from '@stex-react/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';

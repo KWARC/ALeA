@@ -1,11 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { queryGradingDbAndEndSet500OnError } from './grading-db-utils';
 import { getUserIdOrSetError } from './comment-utils';
-import {
-  DiligenceAndPerformanceData,
-  UserAnonData,
-  canAccessResource,
-} from '@stex-react/api';
+import { DiligenceAndPerformanceData, UserAnonData, canAccessResource } from '@stex-react/spec';
 import { queryMatomoDbAndEndSet500OnError } from './matomo-db-utils';
 import { getAllQuizzes } from '@stex-react/node-utils';
 import { Action, ResourceName } from '@stex-react/utils';
@@ -63,15 +59,17 @@ const QUIZ_DATA = [
     quizId: 'quiz-195da34a',
     prepStartTime: '2023-12-12 15:25:00',
     prepEndTime: '2023-12-19 15:15:00',
-  }
+  },
 ];
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const userId = await getUserIdIfAuthorizedOrSetError(req, res, ResourceName.EXPERIMENTAL, Action.MUTATE);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.EXPERIMENTAL,
+    Action.MUTATE
+  );
   if (!userId) return;
-  
+
   const scoreInfo: any[] = await queryGradingDbAndEndSet500OnError(
     `SELECT userId, quizId, SUM(points) as quizScore
     FROM grading

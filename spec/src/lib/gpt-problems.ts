@@ -182,7 +182,7 @@ interface ScaffoldingDetails {
 export interface ScaffoldVariant {
   variantType: 'scaffolding';
   scaffoldingType: string;
-  numSubQuestions?:number;
+  numSubQuestions?: number;
   scaffoldInstruction?: string;
 }
 export interface LanguageVariant {
@@ -238,6 +238,6 @@ export interface PossibleVariantsResult {
     applicable: boolean;
     themes?: string[];
   };
-  scaffolding:ScaffoldingDetails;
+  scaffolding: ScaffoldingDetails;
   substitute_values: boolean;
 }

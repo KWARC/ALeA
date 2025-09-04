@@ -6,7 +6,7 @@ import {
 } from '../../comment-utils';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
-import { GradingWithAnswer } from '@stex-react/api';
+import { GradingWithAnswer } from '@stex-react/spec';
 import { addAnswerClassesToGradingOrSetError } from '../nap-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   ]);
   if (!userId) return;
-  
+
   const grading = await executeAndEndSet500OnError<GradingWithAnswer[]>(
     `SELECT Grading.id, Answer.questionTitle, Answer.subProblemId, Grading.answerId,Grading.checkerId,Answer.questionId,Grading.reviewType,Grading.customFeedback,Grading.totalPoints,Grading.updatedAt,Answer.courseInstance,Answer.courseId,Answer.answer 
     FROM Answer INNER JOIN Grading ON Answer.id = Grading.answerId 
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [courseId],
     res
   );
-  if(!grading) return;
+  if (!grading) return;
   const gradingWithAnswerClasses = await addAnswerClassesToGradingOrSetError(grading, res);
   if (!gradingWithAnswerClasses) return;
   res.json(gradingWithAnswerClasses);

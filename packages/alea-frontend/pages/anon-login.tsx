@@ -14,14 +14,13 @@ import {
   checkIfUserIdExists,
   logInUser,
   ANON_USER_ID_PREFIX,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { BG_COLOR, capitalizeFirstLetter, PRIMARY_COL, setCookie } from '@stex-react/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ADJECTIVES, ANIMALS } from '../constants/avatar';
 import MainLayout from '../layouts/MainLayout';
-
 
 function modifyUserId(personality: string, animalName: string): string {
   return `${ANON_USER_ID_PREFIX}${personality}_${animalName}`;

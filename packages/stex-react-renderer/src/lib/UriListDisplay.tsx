@@ -1,7 +1,7 @@
 import { Visibility } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Box, IconButton, Typography } from '@mui/material';
-import { BloomDimension, conceptUriToName } from '@stex-react/api';
+import { BloomDimension, conceptUriToName } from '@stex-react/spec';
 import { DimIcon } from './SelfAssessmentDialog';
 
 function toBloomDimension(key: string): BloomDimension {

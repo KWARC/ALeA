@@ -17,7 +17,7 @@ import {
   QuizStubInfo,
   RecorrectionInfo,
   getPreviousQuizInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';

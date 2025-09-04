@@ -26,7 +26,7 @@ import {
   getCoverageTimeline,
   getUserInfo,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   Action,
   BG_COLOR,

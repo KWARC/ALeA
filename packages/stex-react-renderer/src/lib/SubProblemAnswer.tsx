@@ -12,7 +12,7 @@ import {
   Problem,
   ReviewType,
   SubProblemData,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor, MystViewer } from '@stex-react/myst';
 import { localStore, PRIMARY_COL } from '@stex-react/utils';
 import dayjs from 'dayjs';

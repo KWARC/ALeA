@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import { sendForgotEmail } from '@stex-react/api';
+import { sendForgotEmail } from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
@@ -50,8 +50,8 @@ const ForgotPasswordPage: NextPage = () => {
             Password Reset
           </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Enter the email address that you used to sign up. We will send you
-            an email with a link to reset your password.
+            Enter the email address that you used to sign up. We will send you an email with a link
+            to reset your password.
           </Typography>
           <TextField
             label="Email Address"

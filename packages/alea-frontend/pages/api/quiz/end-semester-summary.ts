@@ -1,4 +1,4 @@
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@stex-react/spec';
 import { getAllQuizzes } from '@stex-react/node-utils';
 import { Action, ResourceName } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -53,10 +53,11 @@ export async function getExcusedStudentsFromDB(
   courseInstance: string
 ): Promise<string[]> {
   const query = `SELECT userId FROM excused WHERE quizId = ? AND courseId = ? AND courseInstance = ?`;
-  const result = await executeQueryAndEnd<{ userId: string }>(
-    query,
-    [quizId, courseId, courseInstance]
-  );
+  const result = await executeQueryAndEnd<{ userId: string }>(query, [
+    quizId,
+    courseId,
+    courseInstance,
+  ]);
 
   if (!result) return [];
 
@@ -76,7 +77,7 @@ function buildCsvHeader(quizzes: QuizWithStatus[], topN: number): string[] {
   return header;
 }
 
-function buildCsvRow(userId: string, userData: UserQuizData, quizzes: QuizWithStatus[] ): string {
+function buildCsvRow(userId: string, userData: UserQuizData, quizzes: QuizWithStatus[]): string {
   const row = [userId];
   for (const quiz of quizzes) {
     const quizData = userData.perQuiz[quiz.id];
@@ -145,10 +146,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const excusedData: Record<string, string[]> = {};
-  
+
     for (const quiz of quizzes) {
       try {
-        const excusedStudents = await getExcusedStudentsFromDB(quiz.id, quiz.courseId, quiz.courseTerm); 
+        const excusedStudents = await getExcusedStudentsFromDB(
+          quiz.id,
+          quiz.courseId,
+          quiz.courseTerm
+        );
         excusedData[quiz.id] = excusedStudents;
       } catch (error) {
         console.warn(`Failed to get excused students for quiz ${quiz.id}:`, error);
@@ -173,7 +178,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const [userId, userData] of Object.entries(userIdToQuizScores)) {
       const excusedCount = Object.values(excusedData).filter((userIds) =>
-        userIds.includes(userId)).length;
+        userIds.includes(userId)
+      ).length;
       userData.sumTopN = calculateTopNAverage(userData, topN, excusedCount);
     }
 

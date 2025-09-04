@@ -1,4 +1,4 @@
-import { GradingItem, ReviewType } from '@stex-react/api';
+import { GradingItem, ReviewType } from '@stex-react/spec';
 import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from './comment-utils';
 

@@ -1,4 +1,4 @@
-import { GetHistoricalSyllabusResponse } from '@stex-react/api';
+import { GetHistoricalSyllabusResponse } from '@stex-react/spec';
 import { readFileSync, readdirSync } from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 
@@ -16,10 +16,7 @@ function extractSemesterFromString(filename: string) {
 }
 
 let COURSE_ID_TO_HISTORICAL: Map<string, GetHistoricalSyllabusResponse>;
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   if (!courseId) {
     res.status(400).send({ message: 'Missing courseId.' });
@@ -36,10 +33,7 @@ export default async function handler(
       if (!match) return;
       const { courseId, semester } = match;
       const historicalData = JSON.parse(
-        readFileSync(
-          process.env.RECORDED_SYLLABUS_DIR + '/' + filename,
-          'utf-8'
-        )
+        readFileSync(process.env.RECORDED_SYLLABUS_DIR + '/' + filename, 'utf-8')
       );
       if (!COURSE_ID_TO_HISTORICAL.has(courseId)) {
         COURSE_ID_TO_HISTORICAL.set(courseId, {});

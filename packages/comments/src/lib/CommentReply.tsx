@@ -1,7 +1,7 @@
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import { getUserInfo} from '@stex-react/api';
+import { getUserInfo } from '@stex-react/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -63,11 +63,7 @@ export function CommentReply({
   ) : null;
 
   return (
-    <Box
-      hidden={hidden}
-      display={hidden ? 'none' : 'flex'}
-      alignItems="stretch"
-    >
+    <Box hidden={hidden} display={hidden ? 'none' : 'flex'} alignItems="stretch">
       {isPrivateNote ? (
         <TextSnippetIcon fontSize="large" color="secondary" />
       ) : (

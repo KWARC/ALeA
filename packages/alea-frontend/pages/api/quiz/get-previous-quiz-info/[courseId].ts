@@ -3,7 +3,7 @@ import {
   GetPreviousQuizInfoResponse,
   Phase,
   PreviousQuizInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from '../../comment-utils';
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
       for (const r of recorrectionInfo || []) {
         const problem = problemByProblemId[r.problemUri];
-        r.problemHeader = problem && problem.problem ? (problem.problem.title_html ?? '') : '';
+        r.problemHeader = problem && problem.problem ? problem.problem.title_html ?? '' : '';
       }
       const quizId = quiz.id;
       quizInfo[quizId] = {

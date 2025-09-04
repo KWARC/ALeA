@@ -16,7 +16,7 @@ import {
   getSlideUriToIndexMapping,
   SectionInfo,
   Slide,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { CommentNoteToggleView } from '@stex-react/comments';
 import { SafeHtml } from '@stex-react/react-utils';
 import {

@@ -1,4 +1,4 @@
-import { Comment, HiddenStatus } from '@stex-react/api';
+import { Comment, HiddenStatus } from '@stex-react/spec';
 import axios from 'axios';
 import { createMocks } from 'node-mocks-http';
 import { executeQuery } from '../pages/api/comment-utils';
@@ -52,10 +52,7 @@ describe('/api/update-comment-state', () => {
     });
   });
   test('Private comments cannot be moderated', async () => {
-    const commentId = await addCommentFromUser(
-      'user1',
-      mockCommentData({ isPrivate: true })
-    );
+    const commentId = await addCommentFromUser('user1', mockCommentData({ isPrivate: true }));
     const requestBody = {
       commentId,
       hiddenStatus: HiddenStatus.SPAM,
@@ -92,10 +89,7 @@ describe('/api/update-comment-state', () => {
     await updateCommentState(req, res);
     expect(res._getStatusCode()).toBe(204);
 
-    const comments = await executeQuery(
-      'SELECT * FROM comments WHERE commentId=?',
-      [commentId]
-    );
+    const comments = await executeQuery('SELECT * FROM comments WHERE commentId=?', [commentId]);
     expect(await processResults(undefined, comments as Comment[])).toBe(true);
     expect(comments).toEqual([
       expect.objectContaining({
@@ -106,10 +100,9 @@ describe('/api/update-comment-state', () => {
       }),
     ]);
 
-    const history = await executeQuery(
-      'SELECT * FROM updateHistory WHERE commentId=?',
-      [commentId]
-    );
+    const history = await executeQuery('SELECT * FROM updateHistory WHERE commentId=?', [
+      commentId,
+    ]);
 
     expect(history).toEqual([
       expect.objectContaining({

@@ -18,7 +18,7 @@ import {
   getLatestProblemDraft,
   QuizProblem,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
 import {
@@ -158,17 +158,17 @@ export function QuizPanel({
 
   const handleOpenVariantDialog = async () => {
     setLoading(true);
-     let success = false;
+    let success = false;
     try {
-     success= await createCopyAndCheckVariants(currentProblem);
+      success = await createCopyAndCheckVariants(currentProblem);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
     if (success) {
-    setVariantDialogOpen(true);
-    } 
+      setVariantDialogOpen(true);
+    }
   };
 
   if (!currentProblem) {

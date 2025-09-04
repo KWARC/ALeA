@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from '@mui/material';
-import { BlogPost, canAccessResource, getPostSnippets, PostSnippet } from '@stex-react/api';
+import { BlogPost, canAccessResource, getPostSnippets, PostSnippet } from '@stex-react/spec';
 import { MystViewer } from '@stex-react/myst';
 import { Action, ResourceName } from '@stex-react/utils';
 import fs from 'fs';

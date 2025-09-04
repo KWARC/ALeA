@@ -10,7 +10,7 @@ import {
   Select,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { DEFAULT_POINTS, GrantReason } from '@stex-react/api';
+import { DEFAULT_POINTS, GrantReason } from '@stex-react/spec';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { getLocaleObject } from './lang/utils';
@@ -20,11 +20,7 @@ export interface GrantInfo {
   numPoints: number;
 }
 
-export function PointsGrantDialogContent({
-  onClose,
-}: {
-  onClose?: (grant?: GrantInfo) => void;
-}) {
+export function PointsGrantDialogContent({ onClose }: { onClose?: (grant?: GrantInfo) => void }) {
   const t = getLocaleObject(useRouter());
   const [reason, setReason] = useState(GrantReason.HELPFUL_COMMENT);
   const [numPoints, setNumPoints] = useState(3);
@@ -68,10 +64,7 @@ export function PointsGrantDialogContent({
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onClose && onClose()}>Cancel</Button>
-        <Button
-          onClick={() => onClose && onClose({ reason, numPoints })}
-          autoFocus
-        >
+        <Button onClick={() => onClose && onClose({ reason, numPoints })} autoFocus>
           {t.grantPoints}
         </Button>
       </DialogActions>

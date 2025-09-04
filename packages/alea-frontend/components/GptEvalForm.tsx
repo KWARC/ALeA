@@ -17,7 +17,7 @@ import {
   LikertType,
   ProblemEval,
   Tristate,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { Fragment, useEffect, useState } from 'react';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 
@@ -96,8 +96,7 @@ function LikertInput({
                   fontWeight: i + 1 === rating?.value ? 'bold' : undefined,
                   fontSize: 'small',
                   color: interpolateColor(i, scaleSize),
-                  border:
-                    i + 1 === rating?.value ? '1px solid #CCC' : undefined,
+                  border: i + 1 === rating?.value ? '1px solid #CCC' : undefined,
                 }}
                 onClick={() =>
                   onChange({
@@ -129,9 +128,7 @@ function ProblemEvalForm({
       <TextField
         label="Problem Descriptive Evaluation"
         value={problemEval.textDescription || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, textDescription: target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, textDescription: target.value })}
         name="textDescription"
         fullWidth
       />
@@ -140,9 +137,7 @@ function ProblemEvalForm({
         title="How relevant is the problem to the provided material?"
         type="relevant"
         rating={problemEval.relevanceToMaterial}
-        onChange={(relevanceToMaterial) =>
-          onChange({ ...problemEval, relevanceToMaterial })
-        }
+        onChange={(relevanceToMaterial) => onChange({ ...problemEval, relevanceToMaterial })}
       />
       <LikertInput
         title="How difficult is the problem?"
@@ -174,18 +169,14 @@ function ProblemEvalForm({
       <TriStateCheckbox
         value={problemEval?.languageCorrect}
         label="Is language correct"
-        onChange={(value) =>
-          onChange({ ...problemEval, languageCorrect: value })
-        }
+        onChange={(value) => onChange({ ...problemEval, languageCorrect: value })}
       />
       <br />
       <TextField
         label="Num Content Errors"
         type="number"
         value={problemEval.numContentErrors || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, numContentErrors: +target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, numContentErrors: +target.value })}
         name="numContentErrors"
         sx={{ mb: 2 }}
       />
@@ -201,9 +192,7 @@ function ProblemEvalForm({
         label="Num Missed Annotations"
         type="number"
         value={problemEval.numMissedAnnotations || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, numMissedAnnotations: +target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, numMissedAnnotations: +target.value })}
         name="numMissedAnnotations"
         sx={{ mr: 2 }}
       />
@@ -212,9 +201,7 @@ function ProblemEvalForm({
         label="Num Wrong Annotations"
         type="number"
         value={problemEval.numWrongAnnotations || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, numWrongAnnotations: +target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, numWrongAnnotations: +target.value })}
         name="numWrongAnnotations"
       />
       <br />
@@ -223,9 +210,7 @@ function ProblemEvalForm({
         label="Missed Imports"
         type="number"
         value={problemEval.numMissedImports || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, numMissedImports: +target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, numMissedImports: +target.value })}
         name="numMissedImports"
         sx={{ mr: 2 }}
       />
@@ -234,9 +219,7 @@ function ProblemEvalForm({
         label="Wrong Imports"
         type="number"
         value={problemEval.numWrongImports || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, numWrongImports: +target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, numWrongImports: +target.value })}
         name="numWrongImports"
       />
       <br />
@@ -244,9 +227,7 @@ function ProblemEvalForm({
         label="Corrected Problem"
         type="number"
         value={problemEval.fixedProblem || ''}
-        onChange={({ target }) =>
-          onChange({ ...problemEval, fixedProblem: target.value })
-        }
+        onChange={({ target }) => onChange({ ...problemEval, fixedProblem: target.value })}
         name="fixedProblem"
         sx={{ mt: 2 }}
         fullWidth

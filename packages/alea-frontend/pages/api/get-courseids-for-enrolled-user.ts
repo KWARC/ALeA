@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from './comment-utils';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
 import { CURRENT_TERM } from '@stex-react/utils';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let instanceId = req.query.instanceId as string;
@@ -30,4 +30,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({ enrolledCourseIds });
 }
-

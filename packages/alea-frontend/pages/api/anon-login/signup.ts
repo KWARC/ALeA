@@ -1,4 +1,4 @@
-import { ANON_USER_ID_PREFIX } from '@stex-react/api';
+import { ANON_USER_ID_PREFIX } from '@stex-react/spec';
 import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';

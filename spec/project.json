@@ -1,7 +1,7 @@
 {
-  "name": "api",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/api/src",
+  "name": "spec",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "spec/src",
   "projectType": "library",
   "tags": [],
   "targets": {

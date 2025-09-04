@@ -30,7 +30,7 @@ import {
   GradingItem,
   HomeworkInfo,
   Tristate,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import {
   GradingContext,
@@ -38,15 +38,7 @@ import {
   ProblemDisplay,
   ShowGradingFor,
 } from '@stex-react/stex-react-renderer';
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from './MultiItemsSelector';
 const MULTI_SELECT_FIELDS = ['homeworkId', 'questionId', 'studentId'] as const;
 const ALL_SORT_FIELDS = ['homeworkDate', 'questionTitle', 'updatedAt', 'studentId'] as const;

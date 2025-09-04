@@ -11,7 +11,7 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@stex-react/api';
+import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@stex-react/spec';
 import fs from 'fs';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -145,7 +145,7 @@ const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
 export default BlogPostPage;
 
 export async function getStaticPaths() {
-  if(!fs.existsSync('../../static/blogData.json')) {
+  if (!fs.existsSync('../../static/blogData.json')) {
     return { paths: [], fallback: true };
   }
   const data = fs.readFileSync('../../static/blogData.json', 'utf-8');

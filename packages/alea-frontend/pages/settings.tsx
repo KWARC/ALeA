@@ -1,5 +1,5 @@
 import { Button } from '@mui/material';
-import { IKnowEvent, getUriWeights, reportEvent } from '@stex-react/api';
+import { IKnowEvent, getUriWeights, reportEvent } from '@stex-react/spec';
 import { localStore } from '@stex-react/utils';
 import type { NextPage } from 'next';
 import { useReducer } from 'react';
@@ -18,8 +18,7 @@ const Home: NextPage = () => {
             size="small"
             sx={{ m: '5px' }}
             onClick={() => {
-              if (localStore?.getItem(FORCE_MATHJAX))
-                localStore.removeItem(FORCE_MATHJAX);
+              if (localStore?.getItem(FORCE_MATHJAX)) localStore.removeItem(FORCE_MATHJAX);
               else localStore?.setItem(FORCE_MATHJAX, 'yes');
               forceUpdate();
             }}

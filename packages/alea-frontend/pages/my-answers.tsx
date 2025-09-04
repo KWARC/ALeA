@@ -21,12 +21,9 @@ import {
   GradingInfo,
   Tristate,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
-import {
-  GradingDisplay,
-  ProblemDisplay
-} from '@stex-react/stex-react-renderer';
+import { GradingDisplay, ProblemDisplay } from '@stex-react/stex-react-renderer';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { NextPage } from 'next';

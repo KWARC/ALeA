@@ -1,12 +1,9 @@
-import { QuizStubInfo } from '@stex-react/api';
+import { QuizStubInfo } from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllQuizzes } from '../quiz-utils';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   if (!courseId) {
     res.status(400).send({ message: 'Missing courseId.' });

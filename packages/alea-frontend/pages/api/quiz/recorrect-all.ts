@@ -1,4 +1,4 @@
-import { FTMLProblemWithSolution } from '@stex-react/api';
+import { FTMLProblemWithSolution } from '@stex-react/spec';
 import { getAllQuizzes } from '@stex-react/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isMemberOfAcl } from '../acl-utils/acl-common-utils';

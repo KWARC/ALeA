@@ -10,10 +10,10 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { getCourseInfo, getCouseIdsOfSemester } from 'packages/api/src/lib/flams';
-import { aclExists } from 'packages/utils/src/lib/semester-helper';
-import { createAcl } from 'packages/api/src/lib/access-control-api';
+
 import AclDisplay from '../AclDisplay';
+import { createAcl, getCouseIdsOfSemester } from '@stex-react/spec';
+import { aclExists } from 'packages/utils/src/lib/semester-helper';
 
 interface CourseManagementProps {
   semester: string;
