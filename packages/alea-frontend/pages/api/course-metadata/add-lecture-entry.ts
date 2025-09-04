@@ -23,14 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const userId = await getUserIdIfAuthorizedOrSetError(
+  const updaterId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.COURSE_METADATA,
     Action.MUTATE,
     { courseId, instanceId }
   );
-  if (!userId) return;
+  if (!updaterId) return;
 
   const existing = await executeAndEndSet500OnError(
     `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
@@ -64,16 +64,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (existing?.length) {
     await executeAndEndSet500OnError(
       `UPDATE courseMetadata
-       SET lectureSchedule = ?, userId = ?, updatedAt = CURRENT_TIMESTAMP
+       SET lectureSchedule = ?, updaterId = ?, updatedAt = CURRENT_TIMESTAMP
        WHERE courseId = ? AND instanceId = ?`,
-      [JSON.stringify(lectureSchedule), userId, courseId, instanceId],
+      [JSON.stringify(lectureSchedule), updaterId, courseId, instanceId],
       res
     );
   } else {
     await executeAndEndSet500OnError(
-      `INSERT INTO courseMetadata (courseId, instanceId, lectureSchedule, userId)
+      `INSERT INTO courseMetadata (courseId, instanceId, lectureSchedule, updaterId)
        VALUES (?, ?, ?, ?)`,
-      [courseId, instanceId, JSON.stringify(lectureSchedule), userId],
+      [courseId, instanceId, JSON.stringify(lectureSchedule), updaterId],
       res
     );
   }
