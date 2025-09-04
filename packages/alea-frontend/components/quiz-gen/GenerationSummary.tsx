@@ -1,4 +1,5 @@
-import { Box, Chip, Divider, Paper, Typography } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Box, Chip, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { conceptUriToName } from '@stex-react/api';
 import React from 'react';
 import { ConceptProperty, QuestionType } from './SectionDetailsDialog';
@@ -9,6 +10,7 @@ interface GenerationSummaryProps {
   selectedProperties: { [conceptUri: string]: string[] };
   conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   questionTypes: QuestionType[];
+  onRemoveProperty: (conceptUri: string, propertyKey: string) => void;
 }
 
 export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
@@ -17,6 +19,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   selectedProperties,
   conceptProperties,
   questionTypes,
+  onRemoveProperty,
 }) => {
   return (
     <Paper
@@ -37,7 +40,18 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
 
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         <Box mb={3}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h6"
+            fontWeight="600"
+            gutterBottom
+            sx={{
+              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              mb: 2,
+            }}
+          >
             Selected Concepts ({selectedConcepts.length})
           </Typography>
           <Box display="flex" flexWrap="wrap" gap={1}>
@@ -57,28 +71,35 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Selected Question Types ({selectedQuestionTypes.length})
           </Typography>
-          <Box display="flex" flexDirection="column" gap={1}>
+          <Box display="flex" flexDirection="column" gap={2}>
             {selectedQuestionTypes.map((typeId) => {
               const questionType = questionTypes.find((qt) => qt.id === typeId);
               return (
-                <Box key={typeId} display="flex" alignItems="center" gap={2}>
-                  <Chip
-                    label={questionType?.label}
-                    size="small"
-                    variant="filled"
-                    color="secondary"
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    {questionType?.description}
-                  </Typography>
-                </Box>
+                <Paper
+                  key={typeId}
+                  elevation={1}
+                  sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50' }}
+                >
+                  <Box display="flex" alignItems="flex-start" gap={2}>
+                    <Chip
+                      label={questionType?.label}
+                      size="small"
+                      variant="filled"
+                      color="secondary"
+                      sx={{ fontWeight: 500 }}
+                    />
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                      {questionType?.description}
+                    </Typography>
+                  </Box>
+                </Paper>
               );
             })}
           </Box>
         </Box>
 
         <Box mb={3}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+          <Typography variant="subtitle1" fontWeight="600" gutterBottom>
             Properties Summary
           </Typography>
           <Box display="flex" flexDirection="column" gap={2}>
@@ -88,8 +109,8 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
 
               return (
                 <Box key={concept.value}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="body2" fontWeight="bold">
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="subtitle1" fontWeight="600" color="primary">
                       {conceptUriToName(concept.value)}
                     </Typography>
                     <Chip
@@ -110,25 +131,60 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
                       >
                         Selected Properties:
                       </Typography>
-                      <Box display="flex" flexDirection="column" gap={0.5}>
-                        {selectedProps.map((propKey) => {
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        {selectedProps.map((uniqueKey) => {
+                          const [propKey] = uniqueKey.split('-');
                           const property = allProps.find((p) => p.prop === propKey);
                           return (
-                            <Box key={propKey} display="flex" alignItems="flex-start" gap={1}>
-                              <Typography
-                                variant="caption"
-                                sx={{ fontWeight: 'bold', minWidth: '4px' }}
+                            <Paper
+                              key={uniqueKey}
+                              elevation={1}
+                              sx={{
+                                p: 1.5,
+                                borderRadius: 1.5,
+                                bgcolor: 'primary.50',
+                                border: '1px solid',
+                                borderColor: 'primary.200',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  bgcolor: 'primary.100',
+                                  boxShadow: 2,
+                                },
+                              }}
+                            >
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="flex-start"
+                                gap={2}
                               >
-                                •
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.primary"
-                                sx={{ flexGrow: 1 }}
-                              >
-                                {property?.description || propKey}
-                              </Typography>
-                            </Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    flex: 1,
+                                    lineHeight: 1.4,
+                                    color: 'text.primary',
+                                  }}
+                                >
+                                  {property?.description || propKey}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => onRemoveProperty(concept.value, uniqueKey)}
+                                  sx={{
+                                    color: 'error.main',
+                                    '&:hover': {
+                                      bgcolor: 'error.50',
+                                      color: 'error.dark',
+                                    },
+                                    ml: 1,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Paper>
                           );
                         })}
                       </Box>

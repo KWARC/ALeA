@@ -15,6 +15,7 @@ import {
   getDefiniedaInSection,
 } from '@stex-react/api';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
@@ -22,7 +23,6 @@ import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
-import { FlatQuizProblem } from '../../pages/quiz-gen';
 
 interface ConceptPropertiesMap {
   [conceptUri: string]: ConceptProperty[];
@@ -75,12 +75,12 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     {
       id: 'mcq',
       label: 'Multiple Choice Questions (MCQ)',
-      description: 'Questions with 4 options and 1 correct answer',
+      description: 'Questions with multiple correct answers',
     },
     {
       id: 'scq',
       label: 'Single Choice Questions (SCQ)',
-      description: 'True/False or Yes/No type questions',
+      description: 'Questions with only one correct answer',
     },
     {
       id: 'fill-blanks',
@@ -167,6 +167,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       }));
       setLatestGeneratedProblems(parsedProblems);
       setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
+      onClose?.();
     } catch (error) {
       console.error(' Error generating problems:', error);
     } finally {
@@ -261,7 +262,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                     setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
                     return newConcepts;
                   } else {
-                    const newConcepts = [concept,...prev];
+                    const newConcepts = [concept, ...prev];
                     setCurrentIndex(0);
                     return newConcepts;
                   }
@@ -298,19 +299,22 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               onPrevious={handlePrev}
               onNext={handleNext}
               onSelectAllProperties={(conceptUri) => {
-                const allProps = (conceptProperties[conceptUri] ?? []).map((p) => p.prop);
+                const allProps = (conceptProperties[conceptUri] ?? []).map(
+                  (p, idx) => `${p.prop}-${idx}`
+                );
                 setSelectedProperties((prev) => ({ ...prev, [conceptUri]: allProps }));
               }}
               onClearAllProperties={(conceptUri) => {
                 setSelectedProperties((prev) => ({ ...prev, [conceptUri]: [] }));
               }}
-              onToggleProperty={(conceptUri, propertyKey) => {
+              onToggleProperty={(conceptUri, propertyKey, idx) => {
                 setSelectedProperties((prev) => {
                   const currentProps = prev[conceptUri] ?? [];
-                  const isSelected = currentProps.includes(propertyKey);
+                  const uniqueKey = `${propertyKey}-${idx}`;
+                  const isSelected = currentProps.includes(uniqueKey);
                   const newProps = isSelected
-                    ? currentProps.filter((p) => p !== propertyKey)
-                    : [...currentProps, propertyKey];
+                    ? currentProps.filter((p) => p !== uniqueKey)
+                    : [...currentProps, uniqueKey];
                   return { ...prev, [conceptUri]: newProps };
                 });
               }}
@@ -322,6 +326,13 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               selectedProperties={selectedProperties}
               conceptProperties={conceptProperties}
               questionTypes={questionTypes}
+              onRemoveProperty={(conceptUri, propertyKey) => {
+                setSelectedProperties((prev) => {
+                  const currentProps = prev[conceptUri] ?? [];
+                  const newProps = currentProps.filter((p) => p !== propertyKey);
+                  return { ...prev, [conceptUri]: newProps };
+                });
+              }}
             />
           )}
         </Box>
@@ -348,10 +359,11 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
             <Button
               variant="contained"
               color="primary"
-              disabled={selectedQuestionTypes.length === 0}
-              onClick={() => generateNewProblems()}
+              disabled={selectedQuestionTypes.length === 0 || generating}
+              onClick={generateNewProblems}
+              startIcon={generating ? <CircularProgress size={18} color="inherit" /> : null}
             >
-              Generate
+              {generating ? 'Generating...' : 'Generate'}
             </Button>
           </>
         )}

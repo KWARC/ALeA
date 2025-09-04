@@ -30,7 +30,7 @@ interface ConceptDetailsProps {
   onNext: () => void;
   onSelectAllProperties: (conceptUri: string) => void;
   onClearAllProperties: (conceptUri: string) => void;
-  onToggleProperty: (conceptUri: string, propertyKey: string) => void;
+  onToggleProperty: (conceptUri: string, propertyKey: string, idx: number) => void;
 }
 
 export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
@@ -149,41 +149,56 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
             </Box>
           </Box>
           <Divider sx={{ mb: 1 }} />
-          <List dense>
-            {properties.map((prop, idx) => {
-              const propKey = prop.prop;
-              const isSelected = selectedProperties[conceptUri]?.includes(propKey) ?? false;
 
-              return (
-                <ListItem key={idx} disablePadding>
-                  <ListItemButton
-                    onClick={() => onToggleProperty(conceptUri, propKey)}
-                    
-                  >
-                    <ListItemIcon>
-                      <Checkbox
-                        edge="start"
-                        checked={isSelected}
-                        tabIndex={-1}
-                        disableRipple
-                        color="primary"
-                      />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          
-                        >
-                          {prop.description}
-                        </Typography>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
-          </List>
+          {properties.length > 0 ? (
+            <>
+              <List dense>
+                {properties.map((prop, idx) => {
+                  const uniqueKey = `${prop.prop}-${idx}`;
+                  const isSelected = selectedProperties[conceptUri]?.includes(uniqueKey) ?? false;
+
+                  return (
+                    <ListItem key={uniqueKey} disablePadding>
+                      <ListItemButton onClick={() => onToggleProperty(conceptUri, prop.prop, idx)}>
+                        <ListItemIcon>
+                          <Checkbox
+                            edge="start"
+                            checked={isSelected}
+                            tabIndex={-1}
+                            disableRipple
+                            color="primary"
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={<Typography variant="body2">{prop.description}</Typography>}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+
+              {(selectedProperties[conceptUri]?.length ?? 0) === 0 && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  fontStyle="italic"
+                  sx={{ mt: 1, ml: 2 }}
+                >
+                  Please select at least 1 property to continue.
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontStyle="italic"
+              sx={{ mt: 1, ml: 2 }}
+            >
+              No properties available for this concept.
+            </Typography>
+          )}
         </Box>
       </Box>
 
