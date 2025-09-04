@@ -1,11 +1,4 @@
-import {
-  Box,
-  Button,
-  InputAdornment,
-  MenuItem,
-  Select,
-  TextField,
-} from '@mui/material';
+import { Box, Button, InputAdornment, MenuItem, Select, TextField } from '@mui/material';
 import {
   COURSE_DESCRIPTIONS,
   CourseInitEvent,
@@ -14,17 +7,15 @@ import {
   TO_EXCLUDE,
   UserInfo,
   getUserInfo,
-  reportEvent
-} from '@stex-react/api';
+  reportEvent,
+} from '@stex-react/spec';
 import { localStore } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 
-const COURSE_LIST = Object.keys(COURSE_DESCRIPTIONS).filter(
-  (id) => !TO_EXCLUDE.includes(id)
-);
+const COURSE_LIST = Object.keys(COURSE_DESCRIPTIONS).filter((id) => !TO_EXCLUDE.includes(id));
 interface GradeInfo {
   grade?: string;
   percentage?: number;
@@ -48,9 +39,7 @@ function clamp(num: number, min: number, max: number) {
   return Math.min(Math.max(num, min), max);
 }
 
-function setGradeInfoToLocalStorage(gradeInfo: {
-  [courseId: string]: GradeInfo;
-}) {
+function setGradeInfoToLocalStorage(gradeInfo: { [courseId: string]: GradeInfo }) {
   COURSE_LIST.forEach((courseId) => {
     const gInfo = gradeInfo[courseId] ?? {};
     localStore?.setItem(gradeInfoKey(courseId), JSON.stringify(gInfo));
@@ -71,11 +60,7 @@ const MyCourseHistory = () => {
   const lang = locale ?? 'en';
 
   if (!userInfo) {
-    return (
-      <MainLayout title={`${t.learnerModelPriming} | ALᴇA`}>
-        {t.loginToContinue}
-      </MainLayout>
-    );
+    return <MainLayout title={`${t.learnerModelPriming} | ALᴇA`}>{t.loginToContinue}</MainLayout>;
   }
 
   return (
@@ -158,9 +143,7 @@ const MyCourseHistory = () => {
                 <TextField
                   value={courseInfo[courseId]?.percentage ?? ''}
                   InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">%</InputAdornment>
-                    ),
+                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                   type="number"
                   onChange={(e) => {

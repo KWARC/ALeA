@@ -1,13 +1,6 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  Snackbar,
-  Tooltip,
-} from '@mui/material';
-import { ConceptCompetenceInfo, getMyCompleteModel } from '@stex-react/api';
+import { Box, Button, CircularProgress, IconButton, Snackbar, Tooltip } from '@mui/material';
+import { ConceptCompetenceInfo, getMyCompleteModel } from '@stex-react/spec';
 import { CompetencyTable } from '@stex-react/stex-react-renderer';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -15,14 +8,11 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 
-
 const MyLearnerModelPage: NextPage = () => {
   const router = useRouter();
   const { myLearnerModel: t } = getLocaleObject(router);
   const [isLoading, setIsLoading] = useState(false);
-  const [competenceInfo, setCompetenceInfo] = useState<ConceptCompetenceInfo[]>(
-    []
-  );
+  const [competenceInfo, setCompetenceInfo] = useState<ConceptCompetenceInfo[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   function refresh() {
@@ -38,8 +28,7 @@ const MyLearnerModelPage: NextPage = () => {
     refresh();
   }, []);
 
-  const plainCompetencyData =
-    competenceInfo.map((data) => data.competences) || [];
+  const plainCompetencyData = competenceInfo.map((data) => data.competences) || [];
   const concepts = competenceInfo.map((v) => v.concept);
 
   return (
@@ -57,12 +46,8 @@ const MyLearnerModelPage: NextPage = () => {
                 title={
                   <>
                     <span>Fuller et al. (2007)</span>
-                    <span>
-                      Developing a computer science-specific learning taxonomy.
-                    </span>
-                    <span>
-                      ACM SIGCSE Bulletin. 39. 152-170. 10.1145/1345375.1345438.
-                    </span>
+                    <span>Developing a computer science-specific learning taxonomy.</span>
+                    <span>ACM SIGCSE Bulletin. 39. 152-170. 10.1145/1345375.1345438.</span>
                   </>
                 }
               >

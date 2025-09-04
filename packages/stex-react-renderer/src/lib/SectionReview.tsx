@@ -21,7 +21,7 @@ import {
   getDefiniedaInSection,
   getUriWeights,
   isLoggedIn,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { BG_COLOR } from '@stex-react/utils';
 import { useRouter } from 'next/router';

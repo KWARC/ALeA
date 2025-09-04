@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import { conceptUriToName, getLeafConcepts, getLearningObjects, LoType } from '@stex-react/api';
+import { conceptUriToName, getLeafConcepts, getLearningObjects, LoType } from '@stex-react/spec';
 import { LayoutWithFixedMenu } from '@stex-react/stex-react-renderer';
 import { shouldUseDrawer } from '@stex-react/utils';
 import { useRouter } from 'next/router';

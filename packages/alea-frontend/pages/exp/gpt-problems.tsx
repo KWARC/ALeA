@@ -23,7 +23,7 @@ import {
   getTemplates,
   saveEval,
   saveTemplate,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -113,9 +113,7 @@ function CompletionActualPromptDisplay({
   if (!completion?.actualPrompts) return null;
   return (
     <Accordion>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        {header}
-      </AccordionSummary>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>{header}</AccordionSummary>
       <AccordionDetails>
         {(completion.actualPrompts || []).map((prompt, idx) => (
           <TextField
@@ -131,15 +129,9 @@ function CompletionActualPromptDisplay({
     </Accordion>
   );
 }
-export function OutputViewer({
-  response,
-}: {
-  response?: CreateGptProblemsResponse;
-}) {
+export function OutputViewer({ response }: { response?: CreateGptProblemsResponse }) {
   const [completionIdx, setCompletionIdx] = useState(0);
-  const [completionEval, setCompletionEval] = useState<
-    CompletionEval | undefined
-  >(undefined);
+  const [completionEval, setCompletionEval] = useState<CompletionEval | undefined>(undefined);
   useEffect(() => {
     if (!response?.runId) return;
     getEval(response.runId, completionIdx).then(setCompletionEval);
@@ -150,9 +142,7 @@ export function OutputViewer({
 
   if (!completion) {
     return (
-      <i style={{ fontSize: 'large' }}>
-        Click &apos;Get GPT Response&apos; to see some output
-      </i>
+      <i style={{ fontSize: 'large' }}>Click &apos;Get GPT Response&apos; to see some output</i>
     );
   }
 
@@ -166,10 +156,7 @@ export function OutputViewer({
         completion={completion_tools}
         header="Actual Prompts (for function calling)"
       />
-      <CompletionActualPromptDisplay
-        completion={completion}
-        header="Actual Prompts"
-      />
+      <CompletionActualPromptDisplay completion={completion} header="Actual Prompts" />
 
       {completion_tools && <CompletionDisplay completion={completion_tools} />}
       <CompletionDisplay completion={completion} />
@@ -222,8 +209,7 @@ const GptQuestions: NextPage = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedTemplate = templates[selectedIndex];
   const [isFetchingOutput, setIsFetchingOutput] = useState(false);
-  const [gptResponse, setGptResponse] =
-    useState<CreateGptProblemsResponse>(undefined);
+  const [gptResponse, setGptResponse] = useState<CreateGptProblemsResponse>(undefined);
 
   useEffect(() => {
     canAccessResource(ResourceName.EXPERIMENTAL, Action.MUTATE).then((hasAccess) => {
@@ -255,9 +241,7 @@ const GptQuestions: NextPage = () => {
               variant="outlined"
             >
               {template.templateName}
-              <span style={{ fontSize: '8px', top: '-3px', left: '2px' }}>
-                v{template.version}
-              </span>
+              <span style={{ fontSize: '8px', top: '-3px', left: '2px' }}>v{template.version}</span>
             </Button>
           ))}
         </Box>
@@ -282,21 +266,12 @@ const GptQuestions: NextPage = () => {
                 setIsFetchingOutput(false);
               }
             }}
-            onSaveTemplate={async (
-              templateName: string,
-              formData: CreateGptProblemsRequest
-            ) => {
-              const isExisting = templates.some(
-                (t) => t.templateName === templateName
-              );
-              const updateMessage = prompt(
-                `Template ${isExisting ? 'update ' : ''}description`
-              );
+            onSaveTemplate={async (templateName: string, formData: CreateGptProblemsRequest) => {
+              const isExisting = templates.some((t) => t.templateName === templateName);
+              const updateMessage = prompt(`Template ${isExisting ? 'update ' : ''}description`);
               if (updateMessage === null) return;
 
-              await saveTemplate(
-                formDataToTemplate(templateName, updateMessage, formData)
-              );
+              await saveTemplate(formDataToTemplate(templateName, updateMessage, formData));
               alert(`Template ${isExisting ? 'updated' : 'saved'}!`);
               getTemplates().then(setTemplates);
             }}

@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { getMyNotesSections } from '@stex-react/api';
+import { getMyNotesSections } from '@stex-react/spec';
 import { NotesView } from '@stex-react/comments';
 import { PRIMARY_COL } from '@stex-react/utils';
 import type { NextPage } from 'next';

@@ -1,7 +1,7 @@
 import { OpenInNew } from '@mui/icons-material';
 import QuizIcon from '@mui/icons-material/Quiz';
 import { Box, Button, Chip, Typography } from '@mui/material';
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@stex-react/spec';
 import { convertHtmlStringToPlain, LectureEntry } from '@stex-react/utils';
 
 interface QuizHandlerProps {

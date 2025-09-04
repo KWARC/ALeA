@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { organizeHierarchically } from './comment-helpers';
 
 export class CommentStore {
@@ -8,9 +8,7 @@ export class CommentStore {
   constructor(private uri: FTML.URI) {}
 
   public setComments(flatComments: Comment[]) {
-    this.storedPublicComments = organizeHierarchically(
-      flatComments.filter((c) => !c.isPrivate)
-    );
+    this.storedPublicComments = organizeHierarchically(flatComments.filter((c) => !c.isPrivate));
     this.storedPrivateNotes = flatComments.filter((c) => c.isPrivate);
   }
 

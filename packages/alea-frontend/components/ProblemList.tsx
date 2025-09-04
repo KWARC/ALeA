@@ -16,7 +16,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getCourseProblemCounts } from '@stex-react/api';
+import { getCourseProblemCounts } from '@stex-react/spec';
 
 interface TitleMetadata {
   uri?: string;

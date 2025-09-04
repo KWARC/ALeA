@@ -1,5 +1,5 @@
 import { CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 import { CourseInfo } from '@stex-react/utils';
 import { NextPage } from 'next';

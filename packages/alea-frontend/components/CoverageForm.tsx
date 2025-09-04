@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
 import { isLeafSectionId, SlidePicker } from './SlideSelector';
-import { getSlides } from '@stex-react/api';
+import { getSlides } from '@stex-react/spec';
 
 export type FormData = LectureEntry & {
   sectionName: string;
@@ -166,7 +166,7 @@ export function CoverageForm({
 
     const selectedSection = secInfo[selectedUri];
     if (selectedSection) {
-     const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
+      const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
       setIsLeafSection(isLeaf);
       setFormData({
         ...formData,

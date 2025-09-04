@@ -2,7 +2,7 @@ import axios from 'axios';
 import addComment from '../pages/api/add-comment';
 import { createMocks } from 'node-mocks-http';
 import { executeQuery } from '../pages/api/comment-utils';
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { processResults } from '../pages/api/get-comments';
 
 jest.mock('axios');
@@ -136,15 +136,10 @@ describe('/api/add-comment', () => {
     await addComment(req, res);
     expect(res._getStatusCode()).toBe(200);
     const response = JSON.parse(res._getData());
-    expect(response).toEqual(
-      expect.objectContaining({ newCommentId: expect.any(Number) })
-    );
+    expect(response).toEqual(expect.objectContaining({ newCommentId: expect.any(Number) }));
     const commentId = response.newCommentId;
 
-    const comments = await executeQuery(
-      'SELECT * FROM comments WHERE commentId=?',
-      [commentId]
-    );
+    const comments = await executeQuery('SELECT * FROM comments WHERE commentId=?', [commentId]);
     expect(comments).not.toHaveProperty('error');
     expect(await processResults(undefined, comments as Comment[])).toBe(true);
     const expected = expectedComment(commentId, 'user1', addCommentBody);

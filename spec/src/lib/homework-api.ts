@@ -29,7 +29,7 @@ export function getHomeworkPhase(homework: HomeworkInfo): HomeworkPhase {
 export interface GetHomeworkResponse {
   homework: HomeworkInfo;
   responses: Record<string, ResponseWithSubProblemId>;
-  gradingInfo: Record<string,Record<string, GradingInfo[]>>;
+  gradingInfo: Record<string, Record<string, GradingInfo[]>>;
 }
 export interface ResponseWithSubProblemId {
   problemId: string;

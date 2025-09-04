@@ -16,7 +16,7 @@ import {
   getProblemVersionHistory,
   saveProblemDraft,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
@@ -260,11 +260,7 @@ export const VariantDialog = ({
                 )}
               </>
             )}
-            <Box
-              flex={1}
-              pr={1}
-              overflow="auto"
-            >
+            <Box flex={1} pr={1} overflow="auto">
               {variantOptionsLoading ? (
                 <LinearProgress />
               ) : (
@@ -391,16 +387,16 @@ export const VariantDialog = ({
             overflow="hidden"
           >
             {/* <Box flex={1} overflow="auto" pr={1}> */}
-              <PreviewSection
-                previewMode={previewMode}
-                setPreviewMode={setPreviewMode}
-                problemData={problemData}
-                editableSTeX={editableSTeX}
-                setEditableSTeX={setEditableSTeX}
-                previousVersions={versions}
-                isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
-                onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
-              />
+            <PreviewSection
+              previewMode={previewMode}
+              setPreviewMode={setPreviewMode}
+              problemData={problemData}
+              editableSTeX={editableSTeX}
+              setEditableSTeX={setEditableSTeX}
+              previousVersions={versions}
+              isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+              onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+            />
             {/* </Box> */}
           </Box>
         </Box>

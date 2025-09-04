@@ -11,7 +11,7 @@ import {
   getSectionDependencies,
   getUriWeights,
   isLoggedIn,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
 

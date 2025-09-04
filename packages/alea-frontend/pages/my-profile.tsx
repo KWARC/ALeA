@@ -20,7 +20,7 @@ import {
   updateSectionReviewStatus,
   updateTrafficLightStatus,
   UserProfile,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { DataExportTab } from '../components/profile/DataExportTab';

@@ -1,13 +1,5 @@
-import {
-  Box,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  Paper,
-  Typography,
-} from '@mui/material';
-import { StudyBuddy } from '@stex-react/api';
+import { Box, Divider, IconButton, List, ListItem, Paper, Typography } from '@mui/material';
+import { StudyBuddy } from '@stex-react/spec';
 import { Fragment } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { useRouter } from 'next/router';
@@ -33,9 +25,7 @@ export function StudyBuddyListing({
       >
         <Box sx={{ flex: '1 0 200px' }}>
           <Box>
-            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
-              {studyBuddy.userName}
-            </span>
+            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>{studyBuddy.userName}</span>
             {studyBuddy.email && <b>,&nbsp;{studyBuddy.email}</b>}
           </Box>
           <Box>

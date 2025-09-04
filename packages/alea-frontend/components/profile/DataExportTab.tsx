@@ -3,7 +3,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Button, Card, Dialog, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
-import { getAllMyComments, getAllMyData } from '@stex-react/api';
+import { getAllMyComments, getAllMyData } from '@stex-react/spec';
 import { downloadFile } from '@stex-react/utils';
 import { ConfirmPurgeDialogContent } from './ConfirmPurgeDialogContent';
 

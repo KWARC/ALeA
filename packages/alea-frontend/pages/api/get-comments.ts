@@ -1,4 +1,4 @@
-import { Comment, GetCommentsRequest, PointsGrant } from '@stex-react/api';
+import { Comment, GetCommentsRequest, PointsGrant } from '@stex-react/spec';
 import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
@@ -6,10 +6,7 @@ import {
 } from './comment-utils';
 
 // Returns success as true or false.
-export async function processResults(
-  res,
-  results: Comment[]
-): Promise<boolean> {
+export async function processResults(res, results: Comment[]): Promise<boolean> {
   const commentIds = results.map((c) => c.commentId);
   const userIds = results.map((c) => c.userId);
 
@@ -59,11 +56,8 @@ export default async function handler(req, res) {
     return;
   }
 
-
   const userId = (await getUserId(req)) || '';
-  const fileConstraint = Array(uris.length)
-    .fill('(uri = ?)')
-    .join(' OR ');
+  const fileConstraint = Array(uris.length).fill('(uri = ?)').join(' OR ');
 
   const query = `SELECT * FROM comments WHERE (isPrivate != 1 OR userId = ? ) AND ( ${fileConstraint} )`;
   const queryValues = [userId];

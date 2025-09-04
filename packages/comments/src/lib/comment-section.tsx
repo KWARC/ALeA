@@ -2,7 +2,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Box, Button, CircularProgress, Dialog, IconButton, Menu, MenuItem } from '@mui/material';
-import { canModerateComment, Comment, getUserInfo } from '@stex-react/api';
+import { canModerateComment, Comment, getUserInfo } from '@stex-react/spec';
 import { ReactNode, useEffect, useReducer, useRef, useState } from 'react';
 import { CommentFilters } from './comment-filters';
 import { getPublicCommentTrees, refreshAllComments } from './comment-store-manager';

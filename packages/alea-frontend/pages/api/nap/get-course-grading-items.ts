@@ -1,4 +1,4 @@
-import { GetCourseGradingItemsResponse } from '@stex-react/api';
+import { GetCourseGradingItemsResponse } from '@stex-react/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';

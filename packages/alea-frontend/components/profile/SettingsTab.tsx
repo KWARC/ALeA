@@ -1,5 +1,5 @@
 import { Box, Button, Card, Paper, Switch, Typography } from '@mui/material';
-import { ANON_USER_ID_PREFIX } from '@stex-react/api';
+import { ANON_USER_ID_PREFIX } from '@stex-react/spec';
 import { PersonaChooser } from '../../pages/login';
 
 export const SettingsTab = ({

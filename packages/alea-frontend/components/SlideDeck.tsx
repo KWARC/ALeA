@@ -20,7 +20,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipInfo, getSlides, Slide, SlideType } from '@stex-react/api';
+import { ClipInfo, getSlides, Slide, SlideType } from '@stex-react/spec';
 import { ExpandableContextMenu } from '@stex-react/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';

@@ -18,7 +18,7 @@ import {
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { generateQuizProblems } from '@stex-react/api';
+import { generateQuizProblems } from '@stex-react/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';
@@ -80,7 +80,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
     });
   if (problemData?.manualEdits?.length) {
     const latestEdit = problemData.manualEdits[problemData.manualEdits.length - 1];
-    console.log({latestEdit})
+    console.log({ latestEdit });
     return (
       <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
         <Typography variant="body2" color="text.secondary" mt={1}>

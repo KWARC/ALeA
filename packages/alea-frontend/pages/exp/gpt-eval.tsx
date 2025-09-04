@@ -13,14 +13,11 @@ import {
   Template,
   getGptRuns,
   getTemplates,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
-import {
-  FixedPositionMenu,
-  LayoutWithFixedMenu,
-} from '@stex-react/stex-react-renderer';
+import { FixedPositionMenu, LayoutWithFixedMenu } from '@stex-react/stex-react-renderer';
 import { shouldUseDrawer } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
@@ -39,8 +36,7 @@ function RunsDash({
 }) {
   const sortedRuns = [...runs].sort((a, b) => {
     return (
-      new Date(b.response.runTime).getTime() -
-      new Date(a.response.runTime).getTime() // descending order
+      new Date(b.response.runTime).getTime() - new Date(a.response.runTime).getTime() // descending order
     );
   });
   return (
@@ -105,13 +101,7 @@ function StringMultiSelector({
     </FormControl>
   );
 }
-export function KeyValueDisplay({
-  dispKey,
-  value,
-}: {
-  dispKey: string;
-  value: string;
-}) {
+export function KeyValueDisplay({ dispKey, value }: { dispKey: string; value: string }) {
   return (
     <span style={{ display: 'block' }}>
       <b>{dispKey}:&nbsp;</b>
@@ -147,9 +137,7 @@ const GptEval: NextPage = () => {
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const [selectedRunners, setSelectedRunners] = useState<string[]>([]);
   const [selectedRunId, setSelectedRunId] = useState('');
-  const selectedRun = gptRuns.find(
-    (run) => run.response.runId === selectedRunId
-  );
+  const selectedRun = gptRuns.find((run) => run.response.runId === selectedRunId);
 
   useEffect(() => {
     getGptRuns().then((runs) => {
@@ -163,16 +151,9 @@ const GptEval: NextPage = () => {
   }, []);
 
   const filteredRuns = gptRuns.filter((run) => {
-    if (
-      selectedTemplates.length &&
-      !selectedTemplates.includes(run.request.templateName)
-    )
+    if (selectedTemplates.length && !selectedTemplates.includes(run.request.templateName))
       return false;
-    if (
-      selectedRunners.length &&
-      !selectedRunners.includes(run.response.runner)
-    )
-      return false;
+    if (selectedRunners.length && !selectedRunners.includes(run.response.runner)) return false;
     return true;
   });
 

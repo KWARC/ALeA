@@ -28,7 +28,7 @@ import {
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   LoType,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { capitalizeFirstLetter } from '@stex-react/utils';
 import React, { useEffect, useState } from 'react';
 import { ArchiveMap } from '.';

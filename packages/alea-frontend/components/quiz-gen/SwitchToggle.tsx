@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { generateQuizProblems, QuizProblem } from '@stex-react/api';
+import { generateQuizProblems, QuizProblem } from '@stex-react/spec';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ScaffoldingDetails, VariantConfig, VariantType } from './VariantDialog';
@@ -235,27 +235,29 @@ export const SwitchToggle = ({
       }
     }
   };
-const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQuestions: number) => {
-  if (!problemData?.problemId) return;
-  onLoadingChange?.(true);
-  try {
-    const result = await generateQuizProblems({
-      mode: 'variant',
-      problemId: problemData.problemId,
-      variantType: 'scaffolding', 
-      scaffoldingType: selectedScaffolding,
-      numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined, 
-    });
+  const handleScaffold = async (
+    selectedScaffolding: 'high' | 'reduced',
+    numSubQuestions: number
+  ) => {
+    if (!problemData?.problemId) return;
+    onLoadingChange?.(true);
+    try {
+      const result = await generateQuizProblems({
+        mode: 'variant',
+        problemId: problemData.problemId,
+        variantType: 'scaffolding',
+        scaffoldingType: selectedScaffolding,
+        numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined,
+      });
 
-    if (result.length > 0) {
-      const newVariant = result[0];
-      onVariantGenerated?.(newVariant);
+      if (result.length > 0) {
+        const newVariant = result[0];
+        onVariantGenerated?.(newVariant);
+      }
+    } finally {
+      onLoadingChange?.(false);
     }
-  } finally {
-    onLoadingChange?.(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (variantConfig.selectedTheme) {
@@ -453,7 +455,7 @@ const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQue
             {typeKey === 'scaffolding' && (
               <Button
                 variant="contained"
-                onClick={() => handleScaffold(selectedScaffolding,numSubQuestions)}
+                onClick={() => handleScaffold(selectedScaffolding, numSubQuestions)}
               >
                 Generate
               </Button>

@@ -2,7 +2,7 @@ import { CheckCircleOutline } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
+import { conceptUriToName } from '@stex-react/spec';
 import { FixedPositionMenu } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { GuidedTourState, UserAction } from '../../pages/guided-tour2/[id]';

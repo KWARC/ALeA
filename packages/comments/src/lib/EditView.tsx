@@ -1,4 +1,4 @@
-import {FTML} from '@kwarc/ftml-viewer';
+import { FTML } from '@kwarc/ftml-viewer';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
 import {
   Comment,
@@ -7,7 +7,7 @@ import {
   addComment,
   editComment,
   getUserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor } from '@stex-react/myst';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { useRouter } from 'next/router';

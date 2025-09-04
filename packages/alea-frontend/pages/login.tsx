@@ -15,7 +15,7 @@ import {
   logInUser,
   loginUsingRedirect,
   logout,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { BG_COLOR, IS_SERVER, setCookie } from '@stex-react/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';
@@ -142,9 +142,7 @@ const LoginPage: NextPage = () => {
             <Autocomplete
               id="free-solo-demo"
               freeSolo
-              getOptionLabel={(option) =>
-                typeof option === 'string' ? option : option.label
-              }
+              getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
               inputValue={fakeId}
               onInputChange={(event, newInputValue) => {
                 setFakeId(newInputValue);
@@ -180,8 +178,7 @@ const LoginPage: NextPage = () => {
                 size="large"
                 onClick={() => {
                   if (fakeLogin) {
-                    if (fakeId)
-                      fakeLoginUsingRedirect(fakeId, undefined, returnBackUrl);
+                    if (fakeId) fakeLoginUsingRedirect(fakeId, undefined, returnBackUrl);
                   } else {
                     loginUsingRedirect(returnBackUrl);
                   }
@@ -209,19 +206,14 @@ const LoginPage: NextPage = () => {
                   marginTop: '10px',
                 }}
               >
-                <span
-                  style={{ display: 'inline' }}
-                  onDoubleClick={updateClickCount}
-                >
+                <span style={{ display: 'inline' }} onDoubleClick={updateClickCount}>
                   {t.warning + ' : '}
                 </span>
                 <span>{t.logoutWarning}</span>
                 <br />
                 <br />
                 <Box display="flex" sx={{ margin: '25px 0px' }}>
-                  <hr
-                    style={{ marginRight: '10px', backgroundColor: 'black' }}
-                  />
+                  <hr style={{ marginRight: '10px', backgroundColor: 'black' }} />
                   <span
                     style={{
                       fontWeight: 'bold',
@@ -231,9 +223,7 @@ const LoginPage: NextPage = () => {
                   >
                     OR
                   </span>
-                  <hr
-                    style={{ marginLeft: '10px', backgroundColor: 'black' }}
-                  />
+                  <hr style={{ marginLeft: '10px', backgroundColor: 'black' }} />
                 </Box>
                 <Box
                   style={{
@@ -289,10 +279,7 @@ const LoginPage: NextPage = () => {
                   <br />
                   <Typography sx={{ color: 'black', marginBottom: '25px' }}>
                     Do not have an account?{' '}
-                    <Link
-                      href="/signup"
-                      style={{ width: '100%', color: 'blue' }}
-                    >
+                    <Link href="/signup" style={{ width: '100%', color: 'blue' }}>
                       Sign Up
                     </Link>
                   </Typography>

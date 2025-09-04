@@ -5,7 +5,7 @@ import {
   getUserInfo,
   GradingWithAnswer,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';

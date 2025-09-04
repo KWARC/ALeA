@@ -8,7 +8,7 @@ import {
   isHiddenNotSpam,
   isSpam,
   pointsToLevel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DateView } from '@stex-react/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

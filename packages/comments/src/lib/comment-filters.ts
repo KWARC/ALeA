@@ -1,13 +1,11 @@
-import { Comment, isHiddenNotSpam, isSpam } from '@stex-react/api';
+import { Comment, isHiddenNotSpam, isSpam } from '@stex-react/spec';
 
 export class CommentFilters {
-
   constructor(
     private onResetNeeded: () => void,
     public showHidden = false,
     public showSpam = false
-  ) {
-  }
+  ) {}
 
   onShowHidden() {
     this.showHidden = !this.showHidden;
@@ -26,9 +24,7 @@ export class CommentFilters {
   }
 
   filterHidden(comment: Comment) {
-    comment.childComments = comment.childComments?.filter((c) =>
-      this.isCommentVisible(c)
-    );
+    comment.childComments = comment.childComments?.filter((c) => this.isCommentVisible(c));
     comment.childComments?.forEach((c) => this.filterHidden(c));
   }
 
@@ -37,10 +33,7 @@ export class CommentFilters {
     if (!this.showSpam && isSpam(comment.hiddenStatus)) {
       return false;
     }
-    if (
-      !(this.showHidden || this.showSpam) &&
-      isHiddenNotSpam(comment.hiddenStatus)
-    ) {
+    if (!(this.showHidden || this.showSpam) && isHiddenNotSpam(comment.hiddenStatus)) {
       return false;
     }
     return true;

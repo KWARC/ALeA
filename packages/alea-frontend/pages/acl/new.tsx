@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import GroupIcon from '@mui/icons-material/Group';
-import { CreateACLRequest, createAcl, isValid } from '@stex-react/api';
+import { CreateACLRequest, createAcl, isValid } from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
@@ -95,7 +95,6 @@ const CreateACl: NextPage = () => {
     let isValidUpdater = !!updaterACLId;
     if (isValidUpdater) {
       isValidUpdater = updaterACLId === aclId || (await isValid(updaterACLId));
-
     }
     setIsUpdaterACLValid(isValidUpdater);
   };

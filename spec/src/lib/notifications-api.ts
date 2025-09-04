@@ -19,16 +19,12 @@ export async function purgeUserNotifications() {
 
 export async function getNotificationSeenTime() {
   const url = '/api/get-notificationseen-time';
-  return axios
-    .get(url, { headers: getAuthHeaders() })
-    .then((response) => response.data);
+  return axios.get(url, { headers: getAuthHeaders() }).then((response) => response.data);
 }
 
 export async function updateNotificationSeenTime(newTimestamp: string) {
   const url = `/api/update-notificationseen-time`;
   const data = { newTimestamp: newTimestamp };
 
-  return axios
-    .post(url, data, { headers: getAuthHeaders() })
-    .then((response) => response.data);
+  return axios.post(url, data, { headers: getAuthHeaders() }).then((response) => response.data);
 }

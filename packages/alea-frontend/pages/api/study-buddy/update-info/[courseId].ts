@@ -1,4 +1,4 @@
-import { StudyBuddy } from '@stex-react/api';
+import { StudyBuddy } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,
@@ -8,10 +8,7 @@ import {
 import { getSbCourseId } from '../study-buddy-utils';
 import { CURRENT_TERM } from '@stex-react/utils';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const user = await getUserInfo(req);
   const userId = user?.userId;
@@ -22,15 +19,8 @@ export default async function handler(
   if (!instanceId) instanceId = CURRENT_TERM;
   const sbCourseId = getSbCourseId(courseId, instanceId);
 
-  const {
-    intro,
-    studyProgram,
-    email,
-    semester,
-    meetType,
-    languages,
-    dayPreference,
-  } = req.body as StudyBuddy;
+  const { intro, studyProgram, email, semester, meetType, languages, dayPreference } =
+    req.body as StudyBuddy;
 
   const active = true;
 

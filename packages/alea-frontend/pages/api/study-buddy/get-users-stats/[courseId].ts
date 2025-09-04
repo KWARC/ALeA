@@ -1,21 +1,18 @@
-import { UserStats } from '@stex-react/api';
+import { UserStats } from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../../access-control/resource-utils';
 import { executeAndEndSet500OnError } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
   if (!instanceId) instanceId = CURRENT_TERM;
   const sbCourseId = getSbCourseId(courseId, instanceId);
   const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res, courseId, CURRENT_TERM);
   if (!userId) return;
-  
+
   const result1: any[] = await executeAndEndSet500OnError(
     `SELECT 
       COUNT(userId) as TotalUsers, 
@@ -53,14 +50,7 @@ export default async function handler(
     res
   );
 
-  if (
-    !result1 ||
-    !result2 ||
-    !result3 ||
-    !connections ||
-    !userIdsAndActiveStatus
-  )
-    return;
+  if (!result1 || !result2 || !result3 || !connections || !userIdsAndActiveStatus) return;
 
   const userIdToAnonymousId = new Map<string, string>();
   userIdsAndActiveStatus
@@ -80,8 +70,7 @@ export default async function handler(
     activeUsers: result1[0].ActiveUsers,
     inactiveUsers: result1[0].InactiveUsers,
     numberOfConnections: result2[0].NumberOfConnections,
-    unacceptedRequests:
-      result3[0].TotalRequests - result2[0].NumberOfConnections * 2,
+    unacceptedRequests: result3[0].TotalRequests - result2[0].NumberOfConnections * 2,
     connections: anonymousConnections,
     userIdsAndActiveStatus,
   };

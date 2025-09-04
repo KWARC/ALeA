@@ -1,4 +1,4 @@
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@stex-react/spec';
 import { doesQuizExist, writeQuizFile } from '@stex-react/node-utils';
 import { Action, ResourceName } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';

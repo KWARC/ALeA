@@ -12,7 +12,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { GenerationParams } from '@stex-react/api';
+import { GenerationParams } from '@stex-react/spec';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';

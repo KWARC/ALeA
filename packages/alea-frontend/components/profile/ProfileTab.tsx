@@ -5,7 +5,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, Stack, Typography } from '@mui/material';
-import { UserInfo, UserProfile } from '@stex-react/api';
+import { UserInfo, UserProfile } from '@stex-react/spec';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../lang/utils';

@@ -14,16 +14,13 @@ import {
   grantPoints,
   isHiddenNotSpam,
   isSpam,
-  updateCommentState
-} from '@stex-react/api';
+  updateCommentState,
+} from '@stex-react/spec';
 import { ConfirmDialogContent } from '@stex-react/react-utils';
 import { useRouter } from 'next/router';
 import { ReactNode, useState } from 'react';
 import { HideDialogContent } from './HideDialogContent';
-import {
-  GrantInfo,
-  PointsGrantDialogContent,
-} from './PointsGrantDialogContent';
+import { GrantInfo, PointsGrantDialogContent } from './PointsGrantDialogContent';
 import { getLocaleObject } from './lang/utils';
 
 const P_DELETE = 'delete';
@@ -94,8 +91,7 @@ export function CommentMenu({
   };
   // menu crap end
 
-  const hiddenOrSpam =
-    isHiddenNotSpam(comment.hiddenStatus) || isSpam(comment.hiddenStatus);
+  const hiddenOrSpam = isHiddenNotSpam(comment.hiddenStatus) || isSpam(comment.hiddenStatus);
   const canHideComment = canModerate && !hiddenOrSpam;
   const canUnhideComment = canModerate && hiddenOrSpam;
 
@@ -117,11 +113,7 @@ export function CommentMenu({
       return;
     }
     //asyncState.startProcess(P_HIDE);
-    updateCommentState(
-      comment.commentId,
-      state.hiddenStatus,
-      state.hiddenJustification
-    ).then(
+    updateCommentState(comment.commentId, state.hiddenStatus, state.hiddenJustification).then(
       (success) => {
         onUpdate();
         // asyncState.endProcess(P_HIDE);
@@ -136,11 +128,7 @@ export function CommentMenu({
       return;
     }
     //asyncState.startProcess(P_HIDE);
-    grantPoints(
-      comment.commentId,
-      info.numPoints,
-      info.reason
-    ).then(
+    grantPoints(comment.commentId, info.numPoints, info.reason).then(
       (success) => {
         onUpdate();
         // asyncState.endProcess(P_HIDE);
@@ -157,12 +145,7 @@ export function CommentMenu({
   ) : null;
   return (
     <div style={{ display: 'inline', float: 'right' }}>
-      <IconButton
-        id="options-menu"
-        sx={{ p: '0px 12px' }}
-        onClick={handleClick}
-        size="small"
-      >
+      <IconButton id="options-menu" sx={{ p: '0px 12px' }} onClick={handleClick} size="small">
         <MoreVertIcon fontSize="small" />
       </IconButton>
       <Menu
@@ -216,11 +199,7 @@ export function CommentMenu({
               </>
             }
             dialogContentCreator={(onClose: (state?: HiddenState) => void) => (
-              <HideDialogContent
-                forSpam={false}
-                forUnhide={false}
-                onClose={onClose}
-              />
+              <HideDialogContent forSpam={false} forUnhide={false} onClose={onClose} />
             )}
             onClose={(state) => {
               handleClose();
@@ -238,11 +217,7 @@ export function CommentMenu({
               </>
             }
             dialogContentCreator={(onClose: (state?: HiddenState) => void) => (
-              <HideDialogContent
-                forSpam={false}
-                forUnhide={true}
-                onClose={onClose}
-              />
+              <HideDialogContent forSpam={false} forUnhide={true} onClose={onClose} />
             )}
             onClose={(state) => {
               handleClose();
@@ -260,11 +235,7 @@ export function CommentMenu({
               </>
             }
             dialogContentCreator={(onClose: (state?: HiddenState) => void) => (
-              <HideDialogContent
-                forSpam={true}
-                forUnhide={false}
-                onClose={onClose}
-              />
+              <HideDialogContent forSpam={true} forUnhide={false} onClose={onClose} />
             )}
             onClose={(state) => {
               handleClose();

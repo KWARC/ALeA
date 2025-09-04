@@ -17,7 +17,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { getAllQuizzes, QuizWithStatus } from '@stex-react/api';
+import { getAllQuizzes, QuizWithStatus } from '@stex-react/spec';
 import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
 import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
 import dayjs from 'dayjs';

@@ -1,4 +1,4 @@
-import { ClipDetails } from '@stex-react/api';
+import { ClipDetails } from '@stex-react/spec';
 import axios from 'axios';
 
 interface CachedObject {

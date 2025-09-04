@@ -1,16 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../comment-utils';
-import { EnrolledCourseIds } from '@stex-react/api';
+import { executeAndEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
+import { EnrolledCourseIds } from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { getCourseIdAndInstanceFromSbCourseId } from './study-buddy-utils';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 

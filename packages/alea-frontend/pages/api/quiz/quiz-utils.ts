@@ -1,4 +1,4 @@
-import { Phase, QuizWithStatus } from '@stex-react/api';
+import { Phase, QuizWithStatus } from '@stex-react/spec';
 import dayjs from 'dayjs';
 import fs from 'fs';
 import path from 'path';
@@ -17,9 +17,7 @@ function refreshCacheIfNeeded() {
 }
 
 function refreshQuizCache() {
-  console.log(
-    '\n\n\nRefreshing Cache: ' + dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss')
-  );
+  console.log('\n\n\nRefreshing Cache: ' + dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'));
   QUIZ_CACHE = new Map<string, QuizWithStatus>();
   QUIZ_CACHE_TS = Date.now();
   const quizFiles = fs.readdirSync(process.env.QUIZ_INFO_DIR);

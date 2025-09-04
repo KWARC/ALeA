@@ -9,7 +9,7 @@ import {
   getCourseInfo,
   getCourseQuizList,
   getUserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { Action, CURRENT_TERM, CourseInfo, ResourceName, isFauId } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import { NextPage } from 'next';

@@ -9,7 +9,7 @@ import {
   GradingInfo,
   ResponseWithSubProblemId,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   GradingContext,
   AnswerContext,

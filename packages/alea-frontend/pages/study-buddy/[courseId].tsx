@@ -25,7 +25,7 @@ import {
   setActive,
   StudyBuddy,
   updateStudyBuddyInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { BG_COLOR, CourseInfo, MaAI_COURSES } from '@stex-react/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';

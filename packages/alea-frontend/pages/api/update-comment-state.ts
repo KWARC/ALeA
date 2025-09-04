@@ -1,11 +1,10 @@
-import { UpdateCommentStateRequest } from '@stex-react/api';
+import { UpdateCommentStateRequest } from '@stex-react/spec';
 import { getUserIdIfCanModerateCommentsOrSetError } from './access-control/resource-utils';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,
   getExistingCommentDontEnd,
 } from './comment-utils';
-
 
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;

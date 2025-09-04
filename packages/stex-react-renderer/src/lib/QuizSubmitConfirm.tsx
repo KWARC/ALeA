@@ -7,20 +7,20 @@ import {
   FormControlLabel,
   TextField,
 } from '@mui/material';
-import { getUserInfo } from '@stex-react/api';
+import { getUserInfo } from '@stex-react/spec';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { useRouter } from 'next/router';
 
 export function QuizSubmitConfirm({
   left,
-  onClose
+  onClose,
 }: {
   left: number;
   onClose: (submit: boolean) => void;
 }) {
   const { quiz: t } = getLocaleObject(useRouter());
-  
+
   return (
     <>
       <DialogContent>
@@ -31,10 +31,7 @@ export function QuizSubmitConfirm({
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onClose(false)}>Cancel</Button>
-        <Button
-          onClick={() => onClose(true)}
-          autoFocus
-        >
+        <Button onClick={() => onClose(true)} autoFocus>
           Finish
         </Button>
       </DialogActions>

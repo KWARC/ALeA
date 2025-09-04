@@ -3,7 +3,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
-import { getUserInfo, isLoggedIn, logout } from '@stex-react/api';
+import { getUserInfo, isLoggedIn, logout } from '@stex-react/spec';
 import { CountryFlag, useScrollDirection } from '@stex-react/react-utils';
 import Image from 'next/image';
 import Link from 'next/link';

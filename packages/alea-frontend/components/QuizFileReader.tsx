@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box } from '@mui/material';
-import { FTMLProblemWithSolution, FTMLProblemWithSubProblems } from '@stex-react/api';
+import { FTMLProblemWithSolution, FTMLProblemWithSubProblems } from '@stex-react/spec';
 import React from 'react';
 
 function getProblemsFromQuiz(quiz: FTML.Quiz): Record<string, FTMLProblemWithSolution> {

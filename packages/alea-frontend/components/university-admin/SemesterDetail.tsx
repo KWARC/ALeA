@@ -19,7 +19,7 @@ import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { updateSemester } from 'packages/api/src/lib/university-admin-dashboard';
+import { updateSemester } from '@stex-react/spec';
 
 interface SemesterData {
   semesterStart: string;

@@ -1,19 +1,13 @@
-import { GetStudyBuddiesResponse, StudyBuddy } from '@stex-react/api';
+import { GetStudyBuddiesResponse, StudyBuddy } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../../comment-utils';
+import { executeAndEndSet500OnError, getUserIdOrSetError } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
 
 const SENT_STATUS = 'sent';
 const RECEIVED_STATUS = 'received';
 const CONNECTED_STATUS = 'connected';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 

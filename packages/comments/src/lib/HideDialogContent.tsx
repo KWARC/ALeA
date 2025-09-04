@@ -10,7 +10,7 @@ import {
   Select,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { HiddenStatus } from '@stex-react/api';
+import { HiddenStatus } from '@stex-react/spec';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { HiddenState } from './CommentMenu';
@@ -49,11 +49,7 @@ export function HideDialogContent({
   const [status, setStatus] = useState('');
   const [hiddenJustification, setJustification] = useState('');
 
-  const okString = forSpam
-    ? t.markSpam
-    : forUnhide
-    ? t.unhideComment
-    : t.hideComment;
+  const okString = forSpam ? t.markSpam : forUnhide ? t.unhideComment : t.hideComment;
 
   function getState() {
     if (forSpam) {
@@ -103,11 +99,7 @@ export function HideDialogContent({
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onClose && onClose()}>{t.cancel}</Button>
-        <Button
-          disabled={!getState()}
-          onClick={() => onClose && onClose(getState())}
-          autoFocus
-        >
+        <Button disabled={!getState()} onClick={() => onClose && onClose(getState())} autoFocus>
           {okString}
         </Button>
       </DialogActions>

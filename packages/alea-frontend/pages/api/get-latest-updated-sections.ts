@@ -1,4 +1,4 @@
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { executeAndEndSet500OnError } from './comment-utils';
 
 export default async function handler(req, res) {

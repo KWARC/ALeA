@@ -1,12 +1,9 @@
-import { AccessControlList } from '@stex-react/api';
+import { AccessControlList } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 import { ACLMembership } from './acl-membership';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string;
   if (!id) return res.status(422).send(`Missing param id.`);
   const acls: any[] = await executeAndEndSet500OnError(

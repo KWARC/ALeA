@@ -5,7 +5,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import SchoolIcon from '@mui/icons-material/School';
 import { alpha, Box, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material';
-import { LoType } from '@stex-react/api';
+import { LoType } from '@stex-react/spec';
 import { UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { capitalizeFirstLetter, getParamsFromUri } from '@stex-react/utils';
 import { memo, useState } from 'react';

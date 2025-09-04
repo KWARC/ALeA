@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { verifyEmail } from '@stex-react/api';
+import { verifyEmail } from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

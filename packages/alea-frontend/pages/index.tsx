@@ -6,7 +6,7 @@ import {
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { ServerLinksContext } from '@stex-react/stex-react-renderer';
 import {
   Action,
@@ -74,7 +74,6 @@ const aleaFeatures = [
       'Interaktive Tests in Echtzeit bieten, aktive Teilnahme und sofortige Feedback fördern, um die Lernergebnisse zu verbessern.',
   },
 ];
-
 
 const FEATURED_COURSES = ['ai-1', 'ai-2', 'gdp', 'iwgs-2', 'krmt', 'smai'];
 

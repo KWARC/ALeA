@@ -188,4 +188,3 @@ export async function getAllQuizzes(courseId: string, courseTerm: string) {
   );
   return resp.data;
 }
-

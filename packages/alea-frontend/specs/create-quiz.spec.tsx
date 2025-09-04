@@ -1,4 +1,4 @@
-import { Phase, QuizWithStatus } from '@stex-react/api';
+import { Phase, QuizWithStatus } from '@stex-react/spec';
 import axios from 'axios';
 import { createMocks } from 'node-mocks-http';
 import createQuiz from '../pages/api/quiz/create-quiz';

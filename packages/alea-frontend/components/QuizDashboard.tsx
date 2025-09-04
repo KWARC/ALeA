@@ -26,7 +26,7 @@ import {
   QuizStatsResponse,
   QuizWithStatus,
   updateQuiz,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { SafeHtml } from '@stex-react/react-utils';
 import {

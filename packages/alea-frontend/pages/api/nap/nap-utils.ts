@@ -1,4 +1,4 @@
-import { GradingWithAnswer, GradingAnswerClass } from '@stex-react/api';
+import { GradingWithAnswer, GradingAnswerClass } from '@stex-react/spec';
 import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 
@@ -12,7 +12,7 @@ export async function addAnswerClassesToGradingOrSetError(
     [grading.map((c) => c.id)],
     res
   );
-  if(!gradingAnswerClasses) return;
+  if (!gradingAnswerClasses) return;
   for (const grade of grading) {
     grade.answerClasses = gradingAnswerClasses.filter((c) => c.gradingId == grade.id);
   }

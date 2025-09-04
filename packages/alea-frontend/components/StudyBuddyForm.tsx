@@ -10,13 +10,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import {
-  Days,
-  Languages,
-  MeetType,
-  StudyBuddy,
-  getUserInfo,
-} from '@stex-react/api';
+import { Days, Languages, MeetType, StudyBuddy, getUserInfo } from '@stex-react/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
@@ -35,7 +29,7 @@ export function StudyBuddyForm({
   }, []);
   return (
     <Box>
-      <TextField label={t.nameLabel} value={userName}/>
+      <TextField label={t.nameLabel} value={userName} />
       <Box display="flex" alignItems="center">
         <TextField
           error={!studyBuddy.email?.includes('@')}
@@ -48,9 +42,7 @@ export function StudyBuddyForm({
           inputProps={{ maxLength: 250 }}
           fullWidth
         />
-        <Tooltip
-          title={<span style={{ fontSize: 'medium' }}>{t.emailWarning}</span>}
-        >
+        <Tooltip title={<span style={{ fontSize: 'medium' }}>{t.emailWarning}</span>}>
           <InfoOutlined />
         </Tooltip>
       </Box>
@@ -120,9 +112,7 @@ export function StudyBuddyForm({
         <Select
           labelId="days-label"
           id="days-select"
-          value={
-            studyBuddy.dayPreference ? studyBuddy.dayPreference.split(',') : []
-          }
+          value={studyBuddy.dayPreference ? studyBuddy.dayPreference.split(',') : []}
           multiple
           label={t.preferredDays}
           variant="outlined"

@@ -1,4 +1,4 @@
-import { UpdateAnswerRequest } from '@stex-react/api';
+import { UpdateAnswerRequest } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,

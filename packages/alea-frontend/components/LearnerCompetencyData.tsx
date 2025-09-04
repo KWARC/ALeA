@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUriWeights } from '@stex-react/api';
+import { getUriWeights } from '@stex-react/spec';
 import { CompetencyTable } from '@stex-react/stex-react-renderer';
 
 const LearnerCompetencyData = ({ URIs }: { URIs: string[] }) => {

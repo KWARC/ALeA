@@ -1,11 +1,8 @@
-import { BlogPost } from '@stex-react/api';
+import { BlogPost } from '@stex-react/spec';
 import { executeDontEndSet500OnError } from '../comment-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { postId } = req.query;
   const posts: BlogPost[] = await executeDontEndSet500OnError(
     `SELECT * FROM BlogPosts WHERE postId = ?`,

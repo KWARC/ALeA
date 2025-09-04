@@ -34,7 +34,7 @@ import {
   recomputeMemberships,
   UpdateResourceAction,
   updateResourceAction,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DateView } from '@stex-react/react-utils';
 import {
   Action,

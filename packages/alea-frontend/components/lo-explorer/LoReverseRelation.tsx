@@ -1,4 +1,4 @@
-import { ALL_LO_TYPES, LoType } from '@stex-react/api';
+import { ALL_LO_TYPES, LoType } from '@stex-react/spec';
 import { CartItem } from './LoCartModal';
 import { useEffect, useState } from 'react';
 import {

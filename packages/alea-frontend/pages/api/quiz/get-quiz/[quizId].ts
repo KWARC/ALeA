@@ -1,4 +1,4 @@
-import { FTMLProblemWithSolution, GetQuizResponse, Phase } from '@stex-react/api';
+import { FTMLProblemWithSolution, GetQuizResponse, Phase } from '@stex-react/spec';
 import { getQuiz, getQuizTimes } from '@stex-react/node-utils';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { Action, ResourceName, simpleNumberHash } from '@stex-react/utils';

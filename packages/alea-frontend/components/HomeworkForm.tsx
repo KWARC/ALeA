@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';
 import { QuizFileReader } from './QuizFileReader';
-import { FTMLProblemWithSolution } from '@stex-react/api';
+import { FTMLProblemWithSolution } from '@stex-react/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 import { SafeHtml } from '@stex-react/react-utils';
 

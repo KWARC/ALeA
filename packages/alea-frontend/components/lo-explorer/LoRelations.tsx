@@ -11,7 +11,7 @@ import {
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   SparqlResponse,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DimAndURIListDisplay, URIListDisplay } from '@stex-react/stex-react-renderer';
 import { capitalizeFirstLetter, PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';

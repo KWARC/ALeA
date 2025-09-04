@@ -8,7 +8,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { HomeworkStub, LearnerHomeworkInfo, getHomeworkList } from '@stex-react/api';
+import { HomeworkStub, LearnerHomeworkInfo, getHomeworkList } from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';

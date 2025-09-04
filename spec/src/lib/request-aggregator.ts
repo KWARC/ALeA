@@ -1,23 +1,12 @@
-import { Observable, of, Subject } from "rxjs";
-import {
-  catchError,
-  debounceTime,
-  map,
-  mergeMap,
-  skipWhile,
-  take,
-} from "rxjs/operators";
+import { Observable, of, Subject } from 'rxjs';
+import { catchError, debounceTime, map, mergeMap, skipWhile, take } from 'rxjs/operators';
 
 class InFlightAggCall<I> {
   constructor(public index: number, public individualRequests: I[]) {}
 }
 
 class AggResponseWithIndex<AR, I> {
-  constructor(
-    public aggResponse: AR,
-    public index: number,
-    public individualRequests: I[]
-  ) {}
+  constructor(public aggResponse: AR, public index: number, public individualRequests: I[]) {}
 }
 
 // I = Individual request type
@@ -59,22 +48,16 @@ export class RequestAggregator<I, AR> {
           );
           this.queuedRequests.clear();
 
-          this.inFlightAggCalls.push(
-            new InFlightAggCall(newIndex, individualRequests)
-          );
+          this.inFlightAggCalls.push(new InFlightAggCall(newIndex, individualRequests));
           return aggregateCall.call(parentObject, individualRequests).pipe(
             catchError((err) => {
-              console.log("Error fetching aggregate call: " + err.message);
+              console.log('Error fetching aggregate call: ' + err.message);
               console.log(individualRequests);
               return of(null);
             }),
             map(
               (response) =>
-                new AggResponseWithIndex<AR, I>(
-                  response as AR,
-                  newIndex,
-                  individualRequests
-                )
+                new AggResponseWithIndex<AR, I>(response as AR, newIndex, individualRequests)
             )
           );
         })
@@ -111,7 +94,7 @@ export class RequestAggregator<I, AR> {
     individualRequests.forEach((individualRequest) =>
       this.queuedRequests.add(this.individualRequestToStr(individualRequest))
     );
-    this.addedToQueue$.next("");
+    this.addedToQueue$.next('');
   }
 
   private getInFlightIndex(individualRequests: I[]) {

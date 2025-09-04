@@ -11,7 +11,7 @@ import {
   TableRow,
   Tabs,
 } from '@mui/material';
-import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@stex-react/api';
+import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@stex-react/spec';
 import { MystViewer } from '@stex-react/myst';
 import { CURRENT_TERM } from '@stex-react/utils';
 import axios from 'axios';
@@ -149,7 +149,7 @@ function SyllabusTable({
         </TableHead>
         <TableBody>
           {rows.map(({ timestamp_ms, topics, clipId }, idx) => (
-            <TableRow key={`${timestamp_ms}`} >
+            <TableRow key={`${timestamp_ms}`}>
               <TableCell sx={{ textAlign: 'center', minWidth: '110px' }}>
                 <b>{idx + 1}.&nbsp;</b>
                 {dayjs(timestamp_ms).format(showYear ? 'DD-MMM-YY' : 'DD-MMM')}
