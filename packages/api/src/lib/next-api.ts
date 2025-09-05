@@ -56,7 +56,7 @@ export interface ClipInfo {
   start_time?: number;
   end_time?: number;
 }
-export interface ClipMetaData {
+export interface ClipMetadata {
   start_time?: number;
   end_time?: number;
   sectionId?: string;
