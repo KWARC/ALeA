@@ -220,8 +220,8 @@ interface NewGenerationParams {
   courseId: string;
   startSectionUri: string;
   endSectionUri: string;
-  selectedConcepts: ConceptSelection[];
-  selectedQuestionTypes: string[];
+  selectedConcepts?: ConceptSelection[];
+  selectedQuestionTypes?: string[];
 }
 interface CopyGenerationParams {
   mode: 'copy';
