@@ -22,11 +22,12 @@ import AddIcon from '@mui/icons-material/Add';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
 import {
-  LectureSchedule ,
+  LectureSchedule,
   getLectureEntry,
   updateLectureEntry,
   deleteLectureEntry,
   addLectureSchedule,
+  updateHasHomework,
 } from '@stex-react/api';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -39,7 +40,7 @@ interface LectureScheduleTabProps {
   instanceId: string;
 }
 
-const initialNewEntry: LectureSchedule  = {
+const initialNewEntry: LectureSchedule = {
   lectureDay: '',
   lectureStartTime: '',
   lectureEndTime: '',
@@ -51,21 +52,31 @@ const initialNewEntry: LectureSchedule  = {
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const router = useRouter();
   const { courseMetadata: t } = getLocaleObject(router);
-  const weekdayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const [lectures, setLectures] = useState<LectureSchedule []>([]);
+  const weekdayOptions = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+  const [lectures, setLectures] = useState<LectureSchedule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editEntry, setEditEntry] = useState<LectureSchedule  | null>(null);
+  const [hasHomework, setHasHomework] = useState<boolean>(false);
+  const [editEntry, setEditEntry] = useState<LectureSchedule | null>(null);
   const [editKeys, setEditKeys] = useState<{
     lectureDay: string;
     lectureStartTime: string;
     lectureEndTime: string;
   } | null>(null);
-  const [newEntry, setNewEntry] = useState<LectureSchedule >(initialNewEntry);
+  const [newEntry, setNewEntry] = useState<LectureSchedule>(initialNewEntry);
 
   const fetchLectures = useCallback(async () => {
     try {
       const data = await getLectureEntry({ courseId, instanceId });
       setLectures(data.lectureSchedule || []);
+      setHasHomework(!!data.hasHomework);
     } catch (err) {
       if (err.response?.status === 404) {
         console.warn('No lectures found for this course instance');
@@ -82,7 +93,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     fetchLectures();
   }, [fetchLectures]);
 
-  const handleDelete = async (lecture: LectureSchedule ) => {
+  const handleDelete = async (lecture: LectureSchedule) => {
     if (!confirm(t.confirmDelete)) return;
     try {
       await deleteLectureEntry({
@@ -161,7 +172,30 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
         {t.title.replace('{{courseId}}', courseId)}
       </Typography>
-
+      <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+        <FormControlLabel
+          labelPlacement="start"
+          control={
+            <Checkbox
+              checked={hasHomework}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                if (!confirm('Are you sure to update homework availability?')) {
+                  return;
+                }
+                try {
+                  await updateHasHomework({ courseId, instanceId, hasHomework: next });
+                  setHasHomework(next);
+                } catch (err) {
+                  console.error('Failed to update homework availability', err);
+                }
+              }}
+            />
+          }
+          label={t.isHomeworkAvailable}
+          sx={{ m: 0 }}
+        />
+      </Paper>
       <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Box
           sx={{
@@ -217,7 +251,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             size="small"
             sx={{ width: 110 }}
           />
-          
+
           <FormControlLabel
             control={
               <Checkbox
@@ -265,7 +299,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             <TableCell>{t.endTime}</TableCell>
             <TableCell>{t.venue}</TableCell>
             <TableCell>{t.venueLink}</TableCell>
-            
+            <TableCell>{t.homework || 'Homework'}</TableCell>
             <TableCell>{t.quiz}</TableCell>
             <TableCell>{t.actions}</TableCell>
           </TableRow>
@@ -282,7 +316,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   {t.link}
                 </a>
               </TableCell>
-              
+              <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
               <TableCell>{lecture.hasQuiz ? t.yes : t.no}</TableCell>
               <TableCell>
                 <Tooltip title={t.edit}>
@@ -356,7 +390,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }
             InputLabelProps={{ shrink: true }}
           />
-          
           <FormControlLabel
             control={
               <Checkbox

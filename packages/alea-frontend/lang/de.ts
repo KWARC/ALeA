@@ -516,5 +516,6 @@ export const de = {
   snackbarAnnouncementDeleteFailed:
     'Löschen der Ankündigung fehlgeschlagen. Details in der Konsole.',
   snackbarAnnouncementsFetchFailed: 'Abrufen der Ankündigungen fehlgeschlagen. Details in der Konsole.',
+  isHomeworkAvailable: 'Hausaufgaben für diesen Kurs aktivieren',
 }
 };

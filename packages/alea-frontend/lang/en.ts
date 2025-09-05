@@ -551,5 +551,6 @@ export const en = {
   snackbarAnnouncementDeleteFailed:
     'Failed to delete announcement. Check console for details.',
   snackbarAnnouncementsFetchFailed: 'Failed to fetch announcements. Check console for details.',
+  isHomeworkAvailable: 'Enable homework for this course',
 }
 };

@@ -14,6 +14,7 @@ export interface CourseMetadata {
   courseId: string;
   instanceId: string;
   lectureSchedule: LectureSchedule[];
+  hasHomework?: boolean;
 }
 
 export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  };
@@ -55,6 +56,15 @@ export async function deleteLectureEntry(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+}
+
+export async function updateHasHomework(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasHomework: boolean }
+) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-homework`, data, {
     headers: getAuthHeaders(),
   });
   return response.data;
