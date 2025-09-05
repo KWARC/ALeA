@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required fields');
   }
 
-  const userId = await getUserIdIfAuthorizedOrSetError(
+  const updaterId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.COURSE_METADATA,
@@ -21,13 +21,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     { courseId, instanceId }
   );
 
-  if (!userId) return;
+  if (!updaterId) return;
 
   const result = await executeAndEndSet500OnError(
     `SELECT lectureSchedule
-     FROM courseMetaData
-     WHERE userId = ? AND courseId = ? AND instanceId = ?`,
-    [userId, courseId, instanceId],
+     FROM courseMetadata
+     WHERE updaterId = ? AND courseId = ? AND instanceId = ?`,
+    [updaterId, courseId, instanceId],
     res
   );
 
@@ -55,10 +55,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   const updateResult = await executeAndEndSet500OnError(
-    `UPDATE courseMetaData
+    `UPDATE courseMetadata
      SET lectureSchedule = ?, updatedAt = CURRENT_TIMESTAMP
-     WHERE courseId = ? AND instanceId = ? AND userId = ?`,
-    [JSON.stringify(filtered), courseId, instanceId, userId],
+     WHERE courseId = ? AND instanceId = ? AND updaterId = ?`,
+    [JSON.stringify(filtered), courseId, instanceId, updaterId],
     res
   );
   if (!updateResult) return;

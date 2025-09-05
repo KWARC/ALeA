@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule FROM courseMetaData WHERE courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
