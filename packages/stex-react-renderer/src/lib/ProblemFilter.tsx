@@ -11,6 +11,8 @@ import {
 import FilterList from '@mui/icons-material/FilterList';
 import { useEffect, useState } from 'react';
 import { getProblemType } from './PerSectionQuiz';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from './lang/utils';
 
 export type FilterType = 'all' | 'quiz' | 'homework' | 'exam' | 'uncategorized';
 
@@ -29,6 +31,7 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
     uncategorized: true,
   });
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const t = getLocaleObject(useRouter()).problemFilter;
 
   useEffect(() => {
     setFilteredProblems(allProblemUris);
@@ -76,16 +79,14 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-      <Tooltip title="Filter problems">
+      <Tooltip title={t.filterProblems}>
         <IconButton onClick={handleFilterClick}>
           <FilterList />
         </IconButton>
       </Tooltip>
 
       <Typography variant="body2" sx={{ ml: 1 }}>
-        {filterType === 'all'
-          ? `Showing all ${filteredProblems.length} problems`
-          : `Showing ${filteredProblems.length} ${filterType} problems`}
+        {filterType === 'all' ? t.showingAll : t.showingType.replace('$1', t[filterType])}
       </Typography>
 
       <Popover
@@ -97,7 +98,7 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
       >
         <Box sx={{ p: 2, minWidth: 250 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Filter Problems
+            {t.filterTitle}
           </Typography>
 
           {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => (
@@ -112,7 +113,7 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
               }
               label={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                  <span>{type[0].toUpperCase() + type.slice(1)}</span>
+                  <span>{t[type]}</span>
                   <Typography variant="caption" color="text.secondary">
                     ({allProblemUris.filter((uri) => getProblemType(uri) === type).length})
                   </Typography>
@@ -123,10 +124,10 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button size="small" onClick={handleFilterClose}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button size="small" variant="contained" onClick={applyFilters}>
-              Apply
+              {t.apply}
             </Button>
           </Box>
         </Box>
