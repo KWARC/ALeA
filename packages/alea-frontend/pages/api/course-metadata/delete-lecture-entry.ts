@@ -49,8 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       entry.lectureEndTime === lectureEntry.lectureEndTime &&
       entry.venue === lectureEntry.venue &&
       entry.venueLink === lectureEntry.venueLink &&
-      entry.hasQuiz === lectureEntry.hasQuiz &&
-      entry.hasHomework === lectureEntry.hasHomework
+      entry.hasQuiz === lectureEntry.hasQuiz
     );
   });
 

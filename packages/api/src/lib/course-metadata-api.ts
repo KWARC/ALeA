@@ -7,7 +7,6 @@ export interface LectureSchedule {
   venueLink?: string;
   lectureStartTime: string;
   lectureEndTime: string;
-  hasHomework?: boolean;
   hasQuiz?: boolean;
 }
 

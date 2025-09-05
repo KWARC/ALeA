@@ -22,7 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
 import {
-  LectureEntry,
+  LectureSchedule ,
   getLectureEntry,
   updateLectureEntry,
   deleteLectureEntry,
@@ -39,13 +39,12 @@ interface LectureScheduleTabProps {
   instanceId: string;
 }
 
-const initialNewEntry: LectureEntry = {
+const initialNewEntry: LectureSchedule  = {
   lectureDay: '',
   lectureStartTime: '',
   lectureEndTime: '',
   venue: '',
   venueLink: '',
-  hasHomework: false,
   hasQuiz: false,
 };
 
@@ -53,15 +52,15 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const router = useRouter();
   const { courseMetadata: t } = getLocaleObject(router);
   const weekdayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const [lectures, setLectures] = useState<LectureEntry[]>([]);
+  const [lectures, setLectures] = useState<LectureSchedule []>([]);
   const [loading, setLoading] = useState(true);
-  const [editEntry, setEditEntry] = useState<LectureEntry | null>(null);
+  const [editEntry, setEditEntry] = useState<LectureSchedule  | null>(null);
   const [editKeys, setEditKeys] = useState<{
     lectureDay: string;
     lectureStartTime: string;
     lectureEndTime: string;
   } | null>(null);
-  const [newEntry, setNewEntry] = useState<LectureEntry>(initialNewEntry);
+  const [newEntry, setNewEntry] = useState<LectureSchedule >(initialNewEntry);
 
   const fetchLectures = useCallback(async () => {
     try {
@@ -83,7 +82,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     fetchLectures();
   }, [fetchLectures]);
 
-  const handleDelete = async (lecture: LectureEntry) => {
+  const handleDelete = async (lecture: LectureSchedule ) => {
     if (!confirm(t.confirmDelete)) return;
     try {
       await deleteLectureEntry({
@@ -100,8 +99,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               l.lectureEndTime === lecture.lectureEndTime &&
               l.venue === lecture.venue &&
               l.venueLink === lecture.venueLink &&
-              l.hasQuiz === lecture.hasQuiz &&
-              l.hasHomework === lecture.hasHomework
+              l.hasQuiz === lecture.hasQuiz
             )
         )
       );
@@ -219,18 +217,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             size="small"
             sx={{ width: 110 }}
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={newEntry.hasHomework}
-                onChange={(e) =>
-                  setNewEntry((prev) => ({ ...prev, hasHomework: e.target.checked }))
-                }
-              />
-            }
-            label={t.homework}
-            sx={{ m: 0 }}
-          />
+          
           <FormControlLabel
             control={
               <Checkbox
@@ -278,7 +265,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             <TableCell>{t.endTime}</TableCell>
             <TableCell>{t.venue}</TableCell>
             <TableCell>{t.venueLink}</TableCell>
-            <TableCell>{t.homework}</TableCell>
+            
             <TableCell>{t.quiz}</TableCell>
             <TableCell>{t.actions}</TableCell>
           </TableRow>
@@ -295,7 +282,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   {t.link}
                 </a>
               </TableCell>
-              <TableCell>{lecture.hasHomework ? t.yes : t.no}</TableCell>
+              
               <TableCell>{lecture.hasQuiz ? t.yes : t.no}</TableCell>
               <TableCell>
                 <Tooltip title={t.edit}>
@@ -369,17 +356,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }
             InputLabelProps={{ shrink: true }}
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={editEntry?.hasHomework || false}
-                onChange={(e) =>
-                  setEditEntry((prev) => prev && { ...prev, hasHomework: e.target.checked })
-                }
-              />
-            }
-            label={t.homework}
-          />
+          
           <FormControlLabel
             control={
               <Checkbox
