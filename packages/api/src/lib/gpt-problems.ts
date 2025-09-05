@@ -155,11 +155,12 @@ export type MinorEditType =
   | 'change_data_format'
   | 'change_goal'
   | 'convert_units'
+  | 'goal_inversion'
   | 'negate_question_stem'
   | 'substitute_values';
 export interface MinorEditVariant {
   variantType: 'minor_edit';
-  minorEditType: MinorEditType ;
+  minorEditType: MinorEditType;
   minorEditInstruction?: string;
 }
 
@@ -168,13 +169,30 @@ export interface ReskinVariant {
   theme: string;
   reskinInstruction?: string;
 }
+interface ScaffoldingDetails {
+  high: {
+    applicable: boolean;
+    numSubQuestions: number;
+  };
+  reduced: {
+    applicable: boolean;
+  };
+}
+
+export interface ScaffoldVariant {
+  variantType: 'scaffolding';
+  scaffoldingType: string;
+  numSubQuestions?:number;
+  scaffoldInstruction?: string;
+}
 export interface LanguageVariant {
   variantType: 'translate';
   language: string;
 }
 export interface ModifyChoicesVariant {
   variantType: 'modify_choices';
-  optionsToModify: string;
+  optionsToModify?: string[];
+  modifyType: string;
   modifyChoiceInstruction?: string;
 }
 
@@ -187,8 +205,9 @@ export interface VariantBase {
 export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
+  | (VariantBase & ScaffoldVariant)
   | (VariantBase & ModifyChoicesVariant)
-  |(VariantBase & LanguageVariant);
+  | (VariantBase & LanguageVariant);
 
 interface NewGenerationParams {
   mode: 'new';
@@ -206,25 +225,11 @@ interface CopyGenerationParams {
 }
 
 export type GenerationParams = NewGenerationParams | CopyGenerationParams | VariantGenerationParams;
-
-// export interface PossibleVariantsResult {
-//   rephrase: {
-//     applicable: boolean;
-//     types?: string[];
-//   };
-//   reskin: {
-//     applicable: boolean;
-//     themes?: string[];
-//   };
-//   modify_choices: {
-//     applicable: boolean;
-//     optionsToModify?: string[];
-//   };
-// }
 export interface PossibleVariantsResult {
-  adjust_scaffolding: boolean;
+  current_question_language: string;
   change_data_format: boolean;
   change_goal: boolean;
+  goal_inversion: boolean;
   convert_units: boolean;
   modify_choices: boolean;
   negate_question_stem: boolean;
@@ -233,5 +238,6 @@ export interface PossibleVariantsResult {
     applicable: boolean;
     themes?: string[];
   };
+  scaffolding:ScaffoldingDetails;
   substitute_values: boolean;
 }

@@ -4,22 +4,31 @@ import { useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 
 interface TranslateProps {
-  problemData?: FlatQuizProblem;
+  problemData: FlatQuizProblem;
+  language?: string;
   onTranslated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
-//TODO remove code 
-const LANGUAGES = [
-  { code: 'German', name: 'German' },
-  { code: 'English', name: 'English' },
-  { code: 'Spanish', name: 'Spanish' },
-  { code: 'Polish', name: 'Polish' },
-  { code: 'French', name: 'French' },
-];
 
-export const Translate = ({ problemData, onTranslated, onLoadingChange }: TranslateProps) => {
+const LANGUAGES = ['German', 'English', 'Spanish', 'Polish', 'French'];
+export const Translate = ({
+  problemData,
+  language,
+  onTranslated,
+  onLoadingChange,
+}: TranslateProps) => {
   const [active, setActive] = useState(false);
-  const [targetLang, setTargetLang] = useState('en');
+  const [sourceLang, setSourceLang] = useState(language || 'English');
+  const [targetLang, setTargetLang] = useState(
+    LANGUAGES.find((l) => l !== (language || 'English')) || LANGUAGES[0]
+  );
+  const handleSourceChange = (newSource: string) => {
+    setSourceLang(newSource);
+    if (newSource === targetLang) {
+      const fallback = LANGUAGES.find((l) => l !== newSource) || LANGUAGES[0];
+      setTargetLang(fallback);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!problemData?.problemId) return;
@@ -29,7 +38,7 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
         mode: 'variant',
         problemId: problemData.problemId,
         variantType: 'translate',
-        language:targetLang,
+        language: targetLang,
       });
       if (result.length > 0) {
         onTranslated?.(result[0]);
@@ -54,7 +63,6 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
         },
       }}
     >
-      {/* Header */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -79,38 +87,66 @@ export const Translate = ({ problemData, onTranslated, onLoadingChange }: Transl
         <Box p={3} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
           <Box
             display="flex"
-            alignItems="center"
+            justifyContent="center"
             gap={2}
-            mb={3}
+            flexWrap="wrap"
             p={2}
             bgcolor="grey.50"
             borderRadius={2}
           >
-            <Select size="small" value="en" sx={{ minWidth: 120, bgcolor: 'white' }}>
-              <MenuItem value="en">English</MenuItem>
+            <Select
+              size="small"
+              value={sourceLang}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              sx={{
+                minWidth: { xs: 100, sm: 120 },
+                flex: 1,
+                bgcolor: 'white',
+              }}
+            >
+              {LANGUAGES.map((lang) => (
+                <MenuItem key={lang} value={lang}>
+                  {lang}
+                </MenuItem>
+              ))}
             </Select>
 
             <Box
-              sx={{
-                p: 1,
-                borderRadius: '50%',
-                bgcolor: 'white',
-                cursor: 'pointer',
-                '&:hover': { bgcolor: 'grey.100' },
-              }}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              sx={{ minWidth: 40 }}
             >
-              ⇄
+              <Box
+                sx={{
+                  p: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'grey.100' },
+                }}
+              >
+                ⇄
+              </Box>
             </Box>
 
             <Select
               size="small"
               value={targetLang}
               onChange={(e) => setTargetLang(e.target.value)}
-              sx={{ minWidth: 120, bgcolor: 'white' }}
+              sx={{
+                minWidth: { xs: 100, sm: 120 },
+                flex: 1,
+                bgcolor: 'white',
+              }}
             >
-              {LANGUAGES.map((lang) => (
-                <MenuItem key={lang.code} value={lang.code}>
-                  {lang.name}
+              {LANGUAGES.filter((l) => l !== sourceLang).map((lang) => (
+                <MenuItem key={lang} value={lang}>
+                  {lang}
                 </MenuItem>
               ))}
             </Select>
