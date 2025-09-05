@@ -5,11 +5,12 @@ import {
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { ResourceName, Action } from '@stex-react/utils';
+import { AddLectureScheduleRequest } from '@stex-react/api';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { courseId, instanceId, lectureEntry } = req.body;
+  const { courseId, instanceId, lectureEntry } = req.body as AddLectureScheduleRequest;
 
   if (
     !courseId ||

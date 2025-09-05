@@ -26,7 +26,7 @@ import {
   getLectureEntry,
   updateLectureEntry,
   deleteLectureEntry,
-  addLectureEntry,
+  addLectureSchedule,
 } from '@stex-react/api';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -139,7 +139,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       return;
     }
     try {
-      await addLectureEntry({
+      await addLectureSchedule({
         courseId,
         instanceId,
         lectureEntry: newEntry,

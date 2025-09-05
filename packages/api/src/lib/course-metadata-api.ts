@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthHeaders } from './lmp';
 
-export interface LectureEntry {
+export interface LectureSchedule {
   lectureDay: string;
   venue?: string;
   venueLink?: string;
@@ -14,8 +14,10 @@ export interface LectureEntry {
 export interface CourseMetadata {
   courseId: string;
   instanceId: string;
-  lectureSchedule: LectureEntry[];
+  lectureSchedule: LectureSchedule[];
 }
+
+export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  };
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
@@ -27,8 +29,8 @@ export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'i
   return response.data;
 }
 
-export async function addLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureEntry }
+export async function addLectureSchedule(
+  data: AddLectureScheduleRequest
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-lecture-entry`, data, {
     headers: getAuthHeaders(),
@@ -41,7 +43,7 @@ export async function updateLectureEntry(
     lectureDay: string;
     lectureStartTime: string;
     lectureEndTime: string;
-    updatedLectureEntry: LectureEntry;
+    updatedLectureEntry: LectureSchedule ;
   }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-lecture-entry`, data, {
@@ -51,7 +53,7 @@ export async function updateLectureEntry(
 }
 
 export async function deleteLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureEntry }
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
     headers: getAuthHeaders(),

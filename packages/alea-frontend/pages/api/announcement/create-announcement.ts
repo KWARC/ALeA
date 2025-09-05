@@ -2,11 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { ResourceName, Action } from '@stex-react/utils';
+import { CreateAnnouncementRequest } from '@stex-react/api';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { courseId, title, content, visibleUntil, instanceId } = req.body;
+  const { courseId, title, content, visibleUntil, instanceId } = req.body as CreateAnnouncementRequest;
 
   if (!courseId || !title || !content || !visibleUntil || !instanceId) {
     res.status(422).send('Missing required fields');

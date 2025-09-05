@@ -2,16 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@stex-react/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-
-type LectureEntry = {
-  lectureDay: string;
-  venue?: string;
-  venueLink?: string;
-  lectureStartTime: string;
-  lectureEndTime: string;
-  hasHomework?: boolean;
-  hasQuiz?: boolean;
-};
+import { LectureSchedule  } from '@stex-react/api';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -29,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     lectureDay: string;
     lectureStartTime: string;
     lectureEndTime: string;
-    updatedLectureEntry: Partial<LectureEntry>;
+    updatedLectureEntry: Partial<LectureSchedule >;
   };
 
   if (
@@ -59,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!existing?.length) return res.status(404).end('Course instance not found');
 
-  let lectureSchedule: LectureEntry[] = [];
+  let lectureSchedule: LectureSchedule [] = [];
   try {
     lectureSchedule = JSON.parse(existing[0].lectureSchedule || '[]');
   } catch {
