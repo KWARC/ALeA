@@ -4,6 +4,7 @@ import {
   Checkbox,
   Chip,
   Divider,
+  FormControlLabel,
   List,
   ListItem,
   ListItemButton,
@@ -15,34 +16,91 @@ import {
 import { conceptUriToName } from '@stex-react/api';
 import { PRIMARY_COL } from '@stex-react/utils';
 import React from 'react';
-
-interface ConceptProperty {
-  description?: string;
-  prop: string;
-}
+import { ConceptProperty, Goal, SectionGoals } from './SectionDetailsDialog';
 
 interface ConceptDetailsProps {
   selectedConcepts: { label: string; value: string }[];
   currentIndex: number;
   conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   selectedProperties: { [conceptUri: string]: string[] };
+  sectionGoals: SectionGoals;
   onPrevious: () => void;
   onNext: () => void;
   onSelectAllProperties: (conceptUri: string) => void;
   onClearAllProperties: (conceptUri: string) => void;
   onToggleProperty: (conceptUri: string, propertyKey: string, idx: number) => void;
+  selectedGoals: { [conceptUri: string]: string[] };
+  onSelectAllGoals: (conceptUri: string) => void;
+  onClearAllGoals: (conceptUri: string) => void;
+  onToggleGoal: (conceptUri: string, goalUri: string) => void;
 }
+
+const GoalItem: React.FC<{
+  goal: Goal;
+  level?: number;
+  conceptUri: string;
+  selectedGoals: { [conceptUri: string]: string[] };
+  onToggleGoal: (conceptUri: string, goalUri: string) => void;
+}> = ({ goal, level = 0, conceptUri, selectedGoals, onToggleGoal }) => {
+  const isSelected = selectedGoals[conceptUri]?.includes(goal.goal_uri) ?? false;
+
+  return (
+    <>
+      <ListItem sx={{ pl: level * 2 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={isSelected}
+              onChange={() => onToggleGoal(conceptUri, goal.goal_uri)}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" fontWeight={500}>
+                {goal.description}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                {goal.goal_uri}
+              </Typography>
+            </Box>
+          }
+        />
+      </ListItem>
+
+      {goal.sub_goals?.length > 0 && (
+        <List disablePadding>
+          {goal.sub_goals.map((sub) => (
+            <GoalItem
+              key={sub.goal_uri}
+              goal={sub}
+              level={level + 1}
+              conceptUri={conceptUri}
+              selectedGoals={selectedGoals}
+              onToggleGoal={onToggleGoal}
+            />
+          ))}
+        </List>
+      )}
+    </>
+  );
+};
 
 export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
   selectedConcepts,
   currentIndex,
   conceptProperties,
   selectedProperties,
+  sectionGoals,
+  selectedGoals,
   onPrevious,
   onNext,
   onSelectAllProperties,
   onClearAllProperties,
   onToggleProperty,
+  onSelectAllGoals,
+  onClearAllGoals,
+  onToggleGoal,
 }) => {
   if (selectedConcepts.length === 0 || currentIndex < 0) {
     return (
@@ -197,6 +255,45 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
               sx={{ mt: 1, ml: 2 }}
             >
               No properties available for this concept.
+            </Typography>
+          )}
+        </Box>
+        <Box mb={2} display="flex" flexDirection="column">
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography variant="h6" fontWeight="bold">
+              Goals
+            </Typography>
+            <Box>
+              <Button size="small" onClick={() => onSelectAllGoals(conceptUri)} sx={{ mr: 1 }}>
+                Select All
+              </Button>
+              <Button size="small" onClick={() => onClearAllGoals(conceptUri)}>
+                Clear All
+              </Button>
+            </Box>
+          </Box>
+          <Divider sx={{ mb: 1 }} />
+
+          {sectionGoals[conceptUri]?.length > 0 ? (
+            <List disablePadding>
+              {sectionGoals[conceptUri].map((goal) => (
+                <GoalItem
+                  key={goal.goal_uri}
+                  goal={goal}
+                  conceptUri={conceptUri}
+                  selectedGoals={selectedGoals}
+                  onToggleGoal={onToggleGoal}
+                />
+              ))}
+            </List>
+          ) : (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontStyle="italic"
+              sx={{ mt: 1, ml: 2 }}
+            >
+              No goals defined for this concept.
             </Typography>
           )}
         </Box>

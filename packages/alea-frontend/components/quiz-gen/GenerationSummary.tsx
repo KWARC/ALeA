@@ -2,7 +2,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Box, Chip, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { conceptUriToName } from '@stex-react/api';
 import React from 'react';
-import { ConceptProperty, QuestionType } from './SectionDetailsDialog';
+import { ConceptProperty, QuestionType, SectionGoals } from './SectionDetailsDialog';
 
 interface GenerationSummaryProps {
   selectedConcepts: { label: string; value: string }[];
@@ -10,28 +10,26 @@ interface GenerationSummaryProps {
   selectedProperties: { [conceptUri: string]: string[] };
   conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   questionTypes: QuestionType[];
+  sectionGoals: SectionGoals;
+  selectedGoals: { [conceptUri: string]: string[] };
   onRemoveProperty: (conceptUri: string, propertyKey: string) => void;
+  onRemoveGoal?: (conceptUri: string, goalUri: string) => void;
 }
-
 export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   selectedConcepts,
   selectedQuestionTypes,
   selectedProperties,
   conceptProperties,
   questionTypes,
+  sectionGoals,
+  selectedGoals,
   onRemoveProperty,
+  onRemoveGoal,
 }) => {
   return (
     <Paper
       elevation={3}
-      sx={{
-        p: 3,
-        borderRadius: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        mb: 2,
-      }}
+      sx={{ p: 3, borderRadius: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
         Generation Summary
@@ -40,18 +38,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
 
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         <Box mb={3}>
-          <Typography
-            variant="h6"
-            fontWeight="600"
-            gutterBottom
-            sx={{
-              color: 'text.primary',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mb: 2,
-            }}
-          >
+          <Typography variant="h6" fontWeight="600" gutterBottom>
             Selected Concepts ({selectedConcepts.length})
           </Typography>
           <Box display="flex" flexWrap="wrap" gap={1}>
@@ -68,7 +55,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
         </Box>
 
         <Box mb={3}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
             Selected Question Types ({selectedQuestionTypes.length})
           </Typography>
           <Box display="flex" flexDirection="column" gap={2}>
@@ -99,14 +86,13 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
         </Box>
 
         <Box mb={3}>
-          <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+          <Typography variant="h6" fontWeight="600" gutterBottom>
             Properties Summary
           </Typography>
           <Box display="flex" flexDirection="column" gap={2}>
             {selectedConcepts.map((concept) => {
               const selectedProps = selectedProperties[concept.value] ?? [];
               const allProps = conceptProperties[concept.value] ?? [];
-
               return (
                 <Box key={concept.value}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -204,6 +190,40 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           </Box>
         </Box>
 
+        <Box mb={3}>
+          <Typography variant="h6" fontWeight="600" gutterBottom>
+            Goals Summary
+          </Typography>
+          {selectedConcepts.map((concept) => {
+            const selected = selectedGoals[concept.value] ?? [];
+            const allGoals = sectionGoals[concept.value] ?? [];
+            return (
+              <Box key={concept.value} mb={2}>
+                <Typography variant="subtitle2" color="primary">
+                  {conceptUriToName(concept.value)}
+                </Typography>
+                {selected.length > 0 ? (
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    {selected.map((goalUri) => {
+                      const goal = allGoals.find((g) => g.goal_uri === goalUri);
+                      return (
+                        <Chip
+                          key={goalUri}
+                          label={goal?.description || goalUri}
+                          onDelete={() => onRemoveGoal?.(concept.value, goalUri)}
+                        />
+                      );
+                    })}
+                  </Box>
+                ) : (
+                  <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                    No goals selected for this concept
+                  </Typography>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Total Properties Selected

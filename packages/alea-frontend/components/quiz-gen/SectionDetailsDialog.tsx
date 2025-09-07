@@ -39,6 +39,100 @@ export interface QuestionType {
   description: string;
 }
 
+export interface Goal {
+  goal_uri: string;
+  description: string;
+  sub_goals: Goal[];
+}
+
+export interface SectionGoals {
+  [section_uri: string]: Goal[];
+}
+
+export const mockSectionGoals: SectionGoals = {
+  'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/slides&m=DDL&s=column%20specification':
+    [
+      {
+        goal_uri: 'https://example.org/goal1',
+        description: 'Understand basics of databases',
+        sub_goals: [
+          {
+            goal_uri: 'https://example.org/goal1a',
+            description: 'Learn SQL basics',
+            sub_goals: [],
+          },
+          {
+            goal_uri: 'https://example.org/goal1b',
+            description: 'Understand JSON and XML formats',
+            sub_goals: [
+              {
+                goal_uri: 'https://example.org/goal1b1',
+                description: 'Parse JSON data programmatically',
+                sub_goals: [],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        goal_uri: 'https://example.org/goal2',
+        description: 'Learn about relational database design',
+        sub_goals: [
+          {
+            goal_uri: 'https://example.org/goal2a',
+            description: 'Understand primary keys and foreign keys',
+            sub_goals: [],
+          },
+          {
+            goal_uri: 'https://example.org/goal2b',
+            description: 'Normalize database tables',
+            sub_goals: [],
+          },
+        ],
+      },
+    ],
+  'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/slides&m=DDL&s=create': [
+    {
+      goal_uri: 'https://example.org/goal3',
+      description: 'Understand NoSQL databases',
+      sub_goals: [
+        {
+          goal_uri: 'https://example.org/goal3a',
+          description: 'Learn about document databases',
+          sub_goals: [],
+        },
+        {
+          goal_uri: 'https://example.org/goal3b',
+          description: 'Understand key-value stores',
+          sub_goals: [],
+        },
+      ],
+    },
+    {
+      goal_uri: 'https://example.org/goal4',
+      description: 'Explore distributed databases',
+      sub_goals: [
+        {
+          goal_uri: 'https://example.org/goal4a',
+          description: 'Understand replication strategies',
+          sub_goals: [],
+        },
+        {
+          goal_uri: 'https://example.org/goal4b',
+          description: 'Learn about sharding techniques',
+          sub_goals: [
+            {
+              goal_uri: 'https://example.org/goal4b1',
+              description: 'Implement basic sharding in a test database',
+              sub_goals: [],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 interface SectionDetailsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -66,6 +160,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const [selectedProperties, setSelectedProperties] = useState<{ [conceptUri: string]: string[] }>(
     {}
   );
+  const [sectionGoals, setSectionGoals] = useState<SectionGoals>({});
+  const [selectedGoals, setSelectedGoals] = useState<{ [conceptUri: string]: string[] }>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
@@ -105,6 +201,22 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setSelectedConcepts([]);
     setSelectedProperties({});
   }, [startSectionUri, endSectionUri]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchGoals = async () => {
+      try {
+        const response: SectionGoals = mockSectionGoals;
+        setSectionGoals(response);
+        console.log({ response });
+      } catch (err) {
+        console.error('Error fetching goals:', err);
+      }
+    };
+
+    fetchGoals();
+  }, [open, startSectionUri, endSectionUri]);
 
   useEffect(() => {
     if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
@@ -175,6 +287,102 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }
   };
 
+  const handleRemoveConcept = (conceptValue: string) => {
+    setSelectedConcepts((prev) => {
+      const newConcepts = prev.filter((c) => c.value !== conceptValue);
+      setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
+      return newConcepts;
+    });
+  };
+
+  const handleSelectConcept = (concept: { value: string; label: string }) => {
+    setSelectedConcepts((prev) => {
+      const exists = prev.some((sc) => sc.value === concept.value);
+      if (exists) {
+        const newConcepts = prev.filter((sc) => sc.value !== concept.value);
+        setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
+        return newConcepts;
+      } else {
+        const newConcepts = [concept, ...prev];
+        setCurrentIndex(0);
+        return newConcepts;
+      }
+    });
+  };
+
+  const handleToggleAllQuestionTypes = () => {
+    if (selectedQuestionTypes.length === questionTypes.length) {
+      setSelectedQuestionTypes([]);
+    } else {
+      setSelectedQuestionTypes(questionTypes.map((qt) => qt.id));
+    }
+  };
+
+  const handleSelectQuestionType = (questionTypeId: string) => {
+    setSelectedQuestionTypes((prev) => {
+      const exists = prev.includes(questionTypeId);
+      return exists ? prev.filter((id) => id !== questionTypeId) : [...prev, questionTypeId];
+    });
+  };
+
+  const handleSelectAllProperties = (conceptUri: string) => {
+    const allProps = (conceptProperties[conceptUri] ?? []).map((p, idx) => `${p.prop}-${idx}`);
+    setSelectedProperties((prev) => ({ ...prev, [conceptUri]: allProps }));
+  };
+
+  const handleClearAllProperties = (conceptUri: string) => {
+    setSelectedProperties((prev) => ({ ...prev, [conceptUri]: [] }));
+  };
+
+  const handleToggleProperty = (conceptUri: string, propertyKey: string, idx: number) => {
+    setSelectedProperties((prev) => {
+      const currentProps = prev[conceptUri] ?? [];
+      const uniqueKey = `${propertyKey}-${idx}`;
+      const isSelected = currentProps.includes(uniqueKey);
+      const newProps = isSelected
+        ? currentProps.filter((p) => p !== uniqueKey)
+        : [...currentProps, uniqueKey];
+      return { ...prev, [conceptUri]: newProps };
+    });
+  };
+
+  const handleToggleGoal = (conceptUri: string, goalUri: string) => {
+    setSelectedGoals((prev) => {
+      const current = prev[conceptUri] || [];
+      return {
+        ...prev,
+        [conceptUri]: current.includes(goalUri)
+          ? current.filter((g) => g !== goalUri)
+          : [...current, goalUri],
+      };
+    });
+  };
+
+  const handleRemoveGoal = (conceptUri: string, goalUri: string) => {
+  setSelectedGoals((prev) => ({
+    ...prev,
+    [conceptUri]: prev[conceptUri]?.filter((g) => g !== goalUri) ?? [],
+  }));
+};
+
+
+  const handleSelectAllGoals = (conceptUri: string) => {
+    const allGoals = sectionGoals[conceptUri]?.map((g) => g.goal_uri) || [];
+    setSelectedGoals((prev) => ({ ...prev, [conceptUri]: allGoals }));
+  };
+
+  const handleClearAllGoals = (conceptUri: string) => {
+    setSelectedGoals((prev) => ({ ...prev, [conceptUri]: [] }));
+  };
+
+  const handleRemoveProperty = (conceptUri: string, propertyKey: string) => {
+    setSelectedProperties((prev) => {
+      const currentProps = prev[conceptUri] ?? [];
+      const newProps = currentProps.filter((p) => p !== propertyKey);
+      return { ...prev, [conceptUri]: newProps };
+    });
+  };
+
   const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, selectedConcepts.length - 1));
@@ -226,13 +434,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
                       conceptProperties={conceptProperties}
                       selectedProperties={selectedProperties}
                       onSelect={setCurrentIndex}
-                      onRemove={(conceptValue) => {
-                        setSelectedConcepts((prev) => {
-                          const newConcepts = prev.filter((c) => c.value !== conceptValue);
-                          setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
-                          return newConcepts;
-                        });
-                      }}
+                      onRemove={handleRemoveConcept}
                     />
                   ))}
                 </Box>
@@ -254,40 +456,14 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               someSelected={someSelected}
               startSectionUri={startSectionUri}
               onToggleAll={handleToggleAll}
-              onSelectConcept={(concept) => {
-                setSelectedConcepts((prev) => {
-                  const exists = prev.some((sc) => sc.value === concept.value);
-                  if (exists) {
-                    const newConcepts = prev.filter((sc) => sc.value !== concept.value);
-                    setCurrentIndex((idx) => Math.min(idx, newConcepts.length - 1));
-                    return newConcepts;
-                  } else {
-                    const newConcepts = [concept, ...prev];
-                    setCurrentIndex(0);
-                    return newConcepts;
-                  }
-                });
-              }}
+              onSelectConcept={handleSelectConcept}
             />
           ) : (
             <QuestionTypeSelector
               questionTypes={questionTypes}
               selectedQuestionTypes={selectedQuestionTypes}
-              onToggleAll={() => {
-                if (selectedQuestionTypes.length === questionTypes.length) {
-                  setSelectedQuestionTypes([]);
-                } else {
-                  setSelectedQuestionTypes(questionTypes.map((qt) => qt.id));
-                }
-              }}
-              onSelectQuestionType={(questionTypeId) => {
-                setSelectedQuestionTypes((prev) => {
-                  const exists = prev.includes(questionTypeId);
-                  return exists
-                    ? prev.filter((id) => id !== questionTypeId)
-                    : [...prev, questionTypeId];
-                });
-              }}
+              onToggleAll={handleToggleAllQuestionTypes}
+              onSelectQuestionType={handleSelectQuestionType}
             />
           )}
           {!showQuestionTypes ? (
@@ -296,28 +472,16 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               currentIndex={currentIndex}
               conceptProperties={conceptProperties}
               selectedProperties={selectedProperties}
+              sectionGoals={sectionGoals}
+              selectedGoals={selectedGoals}
               onPrevious={handlePrev}
               onNext={handleNext}
-              onSelectAllProperties={(conceptUri) => {
-                const allProps = (conceptProperties[conceptUri] ?? []).map(
-                  (p, idx) => `${p.prop}-${idx}`
-                );
-                setSelectedProperties((prev) => ({ ...prev, [conceptUri]: allProps }));
-              }}
-              onClearAllProperties={(conceptUri) => {
-                setSelectedProperties((prev) => ({ ...prev, [conceptUri]: [] }));
-              }}
-              onToggleProperty={(conceptUri, propertyKey, idx) => {
-                setSelectedProperties((prev) => {
-                  const currentProps = prev[conceptUri] ?? [];
-                  const uniqueKey = `${propertyKey}-${idx}`;
-                  const isSelected = currentProps.includes(uniqueKey);
-                  const newProps = isSelected
-                    ? currentProps.filter((p) => p !== uniqueKey)
-                    : [...currentProps, uniqueKey];
-                  return { ...prev, [conceptUri]: newProps };
-                });
-              }}
+              onSelectAllProperties={handleSelectAllProperties}
+              onClearAllProperties={handleClearAllProperties}
+              onToggleProperty={handleToggleProperty}
+              onSelectAllGoals={handleSelectAllGoals}
+              onClearAllGoals={handleClearAllGoals}
+              onToggleGoal={handleToggleGoal}
             />
           ) : (
             <GenerationSummary
@@ -326,13 +490,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               selectedProperties={selectedProperties}
               conceptProperties={conceptProperties}
               questionTypes={questionTypes}
-              onRemoveProperty={(conceptUri, propertyKey) => {
-                setSelectedProperties((prev) => {
-                  const currentProps = prev[conceptUri] ?? [];
-                  const newProps = currentProps.filter((p) => p !== propertyKey);
-                  return { ...prev, [conceptUri]: newProps };
-                });
-              }}
+              sectionGoals={sectionGoals}
+              selectedGoals={selectedGoals}
+              onRemoveProperty={handleRemoveProperty}
+              onRemoveGoal={handleRemoveGoal}
             />
           )}
         </Box>
