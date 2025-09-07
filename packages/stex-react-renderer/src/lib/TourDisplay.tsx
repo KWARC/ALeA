@@ -146,8 +146,7 @@ function TourItemDisplay({
   onHideTemp: () => void;
   addToTempShowUri: (uri: string) => void;
 }) {
-
-  const [definitionUri, setDefinitionUri] = useState('https%3A%2F%2Fmathhub.info%3Fa%3Dsmglom%2Fai%26p%3Dmod%26d%3Dagent%26l%3Den%26e%3Ddefinition');
+  const [definitionUris, setDefinitionUris] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const ref = useRef();
   const isVisible = useOnScreen(ref);
@@ -155,16 +154,18 @@ function TourItemDisplay({
     visibilityUpdate(isVisible);
   }, [isVisible]);
 
- useEffect(() => {
-async function fetchDefinition(uri: string) {
-const query = getSparlQueryForDefinition(uri);
-const results = await getQueryResults(query);
-console.log('Definition query results:', results);
-setDefinitionUri(uri)
-}
-fetchDefinition(item.uri)
-}, [item]);
-
+  useEffect(() => {
+    async function fetchDefinition(uri: string) {
+      const query = getSparlQueryForDefinition(uri);
+      const results = await getQueryResults(query);
+      const uris =
+      results?.results?.bindings
+        ?.map((b) => b?.loname?.value)
+        ?.filter((u: string) => u.includes(`&l=${lang}`)) ?? [];   
+      setDefinitionUris(uris);
+    }
+    fetchDefinition(item.uri);
+  }, [item.uri,lang]);
 
   return (
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
@@ -206,14 +207,11 @@ fetchDefinition(item.uri)
       </Box>
       <ItemBreadcrumbs item={item} allItemsMap={allItemsMap} addToTempShowUri={addToTempShowUri} />
       <Box sx={{ mt: '20px' }}>
-        {/*<ContentFromUrl
-          displayReason={DisplayReason.GUIDED_TOUR}
-          url={`/:vollki/frag?path=${item.uri}&lang=${lang}`}
-          modifyRendered={getChildrenOfBodyNode}
-        />*/}
-        //TODO ALEA4-G2
-        {/* <FTMLFragment key={item.uri} fragment={{ uri: item.uri }} /> */}
-        <FTMLFragment key={definitionUri} fragment={{ type: 'FromBackend', uri: definitionUri }} />
+        {definitionUris.map((uri) => (
+          <Box key={uri} mb={1.5}>
+            <FTMLFragment fragment={{ type: 'FromBackend', uri }} />
+          </Box>
+        ))}
       </Box>
 
       <Divider />
@@ -444,8 +442,6 @@ export function TourDisplay({
   const [understoodUri, setUnderstoodUriList] = useState([] as string[]);
   const [tempShowUri, setTempShowUri] = useState([] as string[]);
 
-  // const [sparqlResults, setSparqlResults] = useState<string[]>([]);
-
   async function buildDependencyTree(
     rootUri: string,
     maxDepth = 3,
@@ -499,25 +495,6 @@ export function TourDisplay({
       console.error('Failed to fetch and process tour items:', error);
     }
   }
-
-
-  //
-  // https://mathhub.info?a=smglom/ai&p=mod&m=agent&s=agent
-  // useEffect(() => {
-  //   async function runSparqlQuery() {
-
-  //     try {
-  //       const data = await getQueryResults(query);
-  //       const bindings = data?.results?.bindings?.map((b: any) => b['loname'].value) ?? [];
-  //       setSparqlResults(bindings);
-  //     } catch (error) {
-  //       console.error('SPARQL query failed:', error);
-  //     }
-  //   }
-
-  //   runSparqlQuery();
-  // }, []);
-  // //
 
   useEffect(() => {
     if (!tourId?.length) return;
@@ -602,15 +579,6 @@ export function TourDisplay({
               }}
             />
           ))}
-
-          {/* {sparqlResults.length > 0 && (
-            <Box mt={3} p={2} border="1px solid #ccc" borderRadius="8px">
-              <h4>SPARQL Results:</h4>
-              {sparqlResults.map((res, idx) => (
-                <div key={idx}>{res}</div>
-              ))}
-            </Box>
-          )} */}
         </Box>
       </Box>
     </LayoutWithFixedMenu>
