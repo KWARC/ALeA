@@ -74,7 +74,7 @@ export async function getCouseIdsOfSemester(semester: string): Promise<string[]>
   return idx.flatMap((doc) => {
     if (doc.type !== DocIdxType.course) return [];
     if (!doc.acronym) return [];
-    if (!doc.instances?.some(i => i.semester === semester)) return [];
+    if (!doc.instances?.some((i) => i.semester === semester)) return [];
     return [doc.acronym.toLowerCase()];
   });
 }
@@ -270,7 +270,7 @@ export const getSparqlQueryForLoRelationToDimAndConceptPair = (uri: string) => {
                         FILTER(CONTAINS(STR(?learningObject), "${encodeURI(uri)}")).
                         VALUES ?relation {
                                 ulo:precondition
-                                ulo:objective 
+                                ulo:objective
                                 }
                       }
                 GROUP BY ?learningObject ?relation ?obj1 `;
@@ -296,7 +296,7 @@ export const getSparqlQueryForLoRelationToNonDimConcept = (uri: string) => {
                                    ulo:specifies
                                    ulo:defines
                                    ulo:example-for
-                                   } 
+                                   }
                               }`;
   return query;
 };
@@ -452,7 +452,7 @@ WHERE {
     )
   VALUES ?relation {
           ${relationConditions}
-        } 
+        }
     ?lo rdf:type ?type .
       FILTER(?type IN (${loTypesConditions})).
       ${loStringFilter}

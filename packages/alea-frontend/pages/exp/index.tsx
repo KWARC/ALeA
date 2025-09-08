@@ -55,6 +55,9 @@ const ExperimentsHome: NextPage = () => {
             <Box>
               <InternalButtonLink href="/sys-admin">System Administrator</InternalButtonLink>
               <InternalButtonLink href="/lo-explorer">Learning Objects Explorer</InternalButtonLink>
+              <InternalButtonLink href="/exp/mathhub-query">
+                MathHub Query Interface
+              </InternalButtonLink>
               <InternalButtonLink href="/positiondata">
                 Concept Position Tracking
               </InternalButtonLink>
