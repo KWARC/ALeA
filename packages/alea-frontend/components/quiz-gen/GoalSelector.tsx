@@ -1,17 +1,27 @@
-import { Box, Checkbox, FormControlLabel, Paper, Typography, Button, Divider } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Paper,
+  Typography,
+} from '@mui/material';
 import React from 'react';
+import { Goal, SectionGoals } from './SectionDetailsDialog';
 
-export interface Goal {
-  goal_uri: string;
-  description: string;
-  sub_goals: Goal[];
+interface GoalSelectorProps {
+  sectionGoals: SectionGoals;
+  selectedGoals: { [conceptUri: string]: string[] };
+  startSectionUri: string;
+  endSectionUri: string;
+  onSelectGoal: (sectionUri: string, goalUri: string) => void;
+  onToggleAll: (sectionUri: string) => void;
 }
 
-export interface SectionGoals {
-  [section_uri: string]: Goal[];
-}
-
-// Mock data for goals
 export const mockSectionGoals: SectionGoals = {
   'https://example.org/section1': [
     {
@@ -95,31 +105,6 @@ export const mockSectionGoals: SectionGoals = {
   ],
 };
 
-interface GoalSelectorProps {
-  sectionGoals: SectionGoals;
-  selectedGoals: { [conceptUri: string]: string[] }; 
-  startSectionUri: string;
-  endSectionUri: string;
-  onToggleAll: () => void;
-  onSelectGoal: (goalUri: string) => void;
-}
-
-const flattenGoals = (goals: Goal[]): Goal[] => {
-  const flatGoals: Goal[] = [];
-
-  const flatten = (goalList: Goal[]) => {
-    goalList.forEach((goal) => {
-      flatGoals.push(goal);
-      if (goal.sub_goals && goal.sub_goals.length > 0) {
-        flatten(goal.sub_goals);
-      }
-    });
-  };
-
-  flatten(goals);
-  return flatGoals;
-};
-
 export const GoalSelector: React.FC<GoalSelectorProps> = ({
   sectionGoals,
   selectedGoals,
@@ -128,72 +113,66 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
   onToggleAll,
   onSelectGoal,
 }) => {
-  const currentSectionGoals = sectionGoals[startSectionUri] || [];
-  const allGoals = flattenGoals(currentSectionGoals);
+  const [expandedAccordions, setExpandedAccordions] = React.useState<Set<string>>(new Set());
 
-  const currentSelectedGoals = selectedGoals[startSectionUri] || [];
+  const handleAccordionChange =
+    (goalUri: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+      const newExpanded = new Set(expandedAccordions);
+      if (isExpanded) {
+        newExpanded.add(goalUri);
+      } else {
+        newExpanded.delete(goalUri);
+      }
+      setExpandedAccordions(newExpanded);
+    };
 
-  const allSelected = allGoals.length > 0 && currentSelectedGoals.length === allGoals.length;
-  const someSelected =
-    currentSelectedGoals.length > 0 && currentSelectedGoals.length < allGoals.length;
+  const currentSectionGoals = sectionGoals?.[startSectionUri] || [];
+  const currentSelectedGoals = selectedGoals?.[startSectionUri] || [];
 
-  return (
-    <Paper
-      elevation={3}
-      sx={{
-        borderRadius: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        mb: 2,
-      }}
-    >
-      <Box
-        sx={{
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          p: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Typography variant="h6" fontWeight="bold">
-          Selecting Goals
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={onToggleAll}
-          sx={{
-            color: 'inherit',
-            borderColor: 'currentColor',
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.1)',
-              borderColor: 'currentColor',
-            },
-          }}
-        >
-          {allSelected ? 'Deselect All' : 'Select All'}
-        </Button>
-      </Box>
+  const renderGoalTree = (goals: Goal[], level = 0): React.ReactNode =>
+    goals.map((goal) => {
+      const isSelected = currentSelectedGoals.includes(goal.goal_uri);
+      const hasSubGoals = goal.sub_goals && goal.sub_goals.length > 0;
+      const isExpanded = expandedAccordions.has(goal.goal_uri);
 
-      <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-        {allGoals.length === 0 ? (
-          <Box p={3} textAlign="center">
-            <Typography color="text.secondary" variant="body2" fontStyle="italic">
-              No goals available for selected sections
-            </Typography>
-          </Box>
-        ) : (
-          <Box display="flex" flexDirection="column" gap={1}>
-            {allGoals.map((goal, index) => (
-              <Box key={goal.goal_uri}>
+      if (hasSubGoals) {
+        return (
+          <Box key={goal.goal_uri} sx={{ mb: 1 }}>
+            <Accordion
+              expanded={isExpanded}
+              onChange={handleAccordionChange(goal.goal_uri)}
+              sx={{
+                boxShadow: level === 0 ? 2 : 1,
+                borderRadius: 1,
+                '&:before': { display: 'none' },
+                ml: level * 2,
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  bgcolor: level === 0 ? 'grey.50' : 'grey.25',
+                  minHeight: 48,
+                  '&.Mui-expanded': {
+                    minHeight: 48,
+                  },
+                  '& .MuiAccordionSummary-content': {
+                    alignItems: 'center',
+                    margin: '8px 0',
+                    '&.Mui-expanded': {
+                      margin: '8px 0',
+                    },
+                  },
+                }}
+              >
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={currentSelectedGoals.includes(goal.goal_uri)}
-                      onChange={() => onSelectGoal(goal.goal_uri)}
+                      checked={isSelected}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        onSelectGoal(startSectionUri, goal.goal_uri);
+                      }}
                       size="small"
                     />
                   }
@@ -209,21 +188,114 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                   }
                   sx={{
                     margin: 0,
-                    width: '100%',
-                    alignItems: 'flex-start',
+                    flex: 1,
                     '& .MuiFormControlLabel-label': {
                       flex: 1,
                       ml: 1,
                     },
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 />
-                {index < allGoals.length - 1 && <Divider sx={{ my: 1, opacity: 0.3 }} />}
-              </Box>
-            ))}
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 1 }}>
+                {renderGoalTree(goal.sub_goals, level + 1)}
+              </AccordionDetails>
+            </Accordion>
           </Box>
-        )}
+        );
+      } else {
+        return (
+          <Box key={goal.goal_uri} sx={{ pl: level * 2, py: 0.5, mb: 1 }}>
+            <Paper
+              elevation={1}
+              sx={{
+                p: 1.5,
+                borderRadius: 1,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => onSelectGoal(startSectionUri, goal.goal_uri)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {goal.description}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {goal.goal_uri}
+                    </Typography>
+                  </Box>
+                }
+                sx={{
+                  margin: 0,
+                  width: '100%',
+                  alignItems: 'flex-start',
+                  '& .MuiFormControlLabel-label': {
+                    flex: 1,
+                    ml: 1,
+                  },
+                }}
+              />
+            </Paper>
+          </Box>
+        );
+      }
+    });
+
+  return (
+    <Paper
+      elevation={3}
+      sx={{
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        mb: 2,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: 'primary.light',
+          color: 'primary.contrastText',
+          p: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="h6" fontWeight="bold">
+          Selecting Goals
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          sx={{
+            color: 'inherit',
+            borderColor: 'currentColor',
+          }}
+          onClick={() => onToggleAll(startSectionUri)}
+        >
+          Deselect All
+        </Button>
       </Box>
 
+      <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+        {currentSectionGoals.length === 0 ? (
+          <Box p={3} textAlign="center">
+            <Typography color="text.secondary" variant="body2" fontStyle="italic">
+              No goals available for selected sections
+            </Typography>
+          </Box>
+        ) : (
+          renderGoalTree(currentSectionGoals)
+        )}
+      </Box>
       {currentSelectedGoals.length > 0 && (
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">

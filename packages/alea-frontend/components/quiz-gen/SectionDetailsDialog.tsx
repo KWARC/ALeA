@@ -21,7 +21,7 @@ import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
 import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
-import { GoalSelector } from './GoalSelector';
+import { GoalSelector, mockSectionGoals } from './GoalSelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
 
@@ -117,8 +117,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setConcepts([]);
     setSelectedConcepts([]);
     setSelectedProperties({});
-    //setSelectedGoals([]);
-  }, [startSectionUri, endSectionUri]);
+    setSelectedGoals({});
+  }, [startSectionUri, endSectionUri, setGeneratedProblems]);
 
   useEffect(() => {
     if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
@@ -247,18 +247,6 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     });
   };
 
-  const handleToggleGoal = (conceptUri: string, goalUri: string) => {
-    setSelectedGoals((prev) => {
-      const current = prev[conceptUri] || [];
-      return {
-        ...prev,
-        [conceptUri]: current.includes(goalUri)
-          ? current.filter((g) => g !== goalUri)
-          : [...current, goalUri],
-      };
-    });
-  };
-
   const handleRemoveGoal = (conceptUri: string, goalUri: string) => {
     setSelectedGoals((prev) => ({
       ...prev,
@@ -266,48 +254,34 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }));
   };
 
-  const handleToggleAllGoals = () => {
-    const currentSectionGoals = sectionGoals[startSectionUri] || [];
-    const allGoals = flattenGoals(currentSectionGoals);
-    const currentSelected = selectedGoals[startSectionUri] || [];
-
-    if (currentSelected.length === allGoals.length) {
-      setSelectedGoals((prev) => ({ ...prev, [startSectionUri]: [] }));
-    } else {
-      setSelectedGoals((prev) => ({
-        ...prev,
-        [startSectionUri]: allGoals.map((goal) => goal.goal_uri),
-      }));
-    }
+  const collectAllGoalUris = (goals: Goal[]): string[] => {
+    return goals.flatMap((goal) => [goal.goal_uri, ...collectAllGoalUris(goal.sub_goals || [])]);
   };
 
-  const handleSelectGoal = (goalUri: string) => {
+  const handleToggleAllGoals = (sectionUri: string) => {
+    const currentSectionGoals = sectionGoals[sectionUri] || [];
+    const allGoals = collectAllGoalUris(currentSectionGoals);
+
+    const currentSelected = selectedGoals[sectionUri] || [];
+
+    setSelectedGoals((prev) => ({
+      ...prev,
+      [sectionUri]: currentSelected.length === allGoals.length ? [] : allGoals,
+    }));
+  };
+
+  const handleSelectGoal = (sectionUri: string, goalUri: string) => {
     setSelectedGoals((prev) => {
-      const currentSelected = prev[startSectionUri] || [];
+      const currentSelected = prev[sectionUri] || [];
       const exists = currentSelected.includes(goalUri);
+
       return {
         ...prev,
-        [startSectionUri]: exists
+        [sectionUri]: exists
           ? currentSelected.filter((g) => g !== goalUri)
           : [...currentSelected, goalUri],
       };
     });
-  };
-
-  const flattenGoals = (goals: Goal[]): Goal[] => {
-    const flatGoals: Goal[] = [];
-
-    const flatten = (goalList: Goal[]) => {
-      goalList.forEach((goal) => {
-        flatGoals.push(goal);
-        if (goal.sub_goals && goal.sub_goals.length > 0) {
-          flatten(goal.sub_goals);
-        }
-      });
-    };
-
-    flatten(goals);
-    return flatGoals;
   };
 
   const handleRemoveProperty = (conceptUri: string, propertyKey: string) => {
@@ -358,10 +332,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
           {currentStep === 0 && (
             <GoalSelector
-              sectionGoals={sectionGoals}
+              sectionGoals={mockSectionGoals}
               selectedGoals={selectedGoals}
-              startSectionUri={startSectionUri}
-              endSectionUri={endSectionUri}
+              startSectionUri={'https://example.org/section1'}
+              endSectionUri={'https://example.org/section2'}
               onToggleAll={handleToggleAllGoals}
               onSelectGoal={handleSelectGoal}
             />

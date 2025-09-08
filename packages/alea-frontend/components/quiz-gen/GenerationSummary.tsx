@@ -197,17 +197,16 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           </Box>
         </Box>
 
-        {/* <Box mb={3}>
+        <Box mb={3}>
           <Typography variant="h6" fontWeight="600" gutterBottom>
             Goals Summary
           </Typography>
-          {selectedConcepts.map((concept) => {
-            const selected = selectedGoals[concept.value] ?? [];
-            const allGoals = sectionGoals[concept.value] ?? [];
+          {Object.entries(selectedGoals).map(([sectionUri, selected]) => {
+            const allGoals = sectionGoals[sectionUri] ?? [];
             return (
-              <Box key={concept.value} mb={2}>
+              <Box key={sectionUri} mb={2}>
                 <Typography variant="subtitle2" color="primary">
-                  {conceptUriToName(concept.value)}
+                  {sectionUri}
                 </Typography>
                 {selected.length > 0 ? (
                   <Box display="flex" flexDirection="column" gap={1}>
@@ -217,20 +216,21 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
                         <Chip
                           key={goalUri}
                           label={goal?.description || goalUri}
-                          onDelete={() => onRemoveGoal?.(concept.value, goalUri)}
+                          onDelete={() => onRemoveGoal?.(sectionUri, goalUri)}
                         />
                       );
                     })}
                   </Box>
                 ) : (
                   <Typography variant="caption" color="text.secondary" fontStyle="italic">
-                    No goals selected for this concept
+                    No goals selected for this section
                   </Typography>
                 )}
               </Box>
             );
           })}
-        </Box> */}
+        </Box>
+
         <Box>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Total Properties Selected
