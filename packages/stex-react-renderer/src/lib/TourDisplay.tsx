@@ -11,6 +11,8 @@ import {
   getUriSmileys,
   SmileyCognitiveValues,
   smileyToLevel,
+  getQueryResults,
+  getSparlQueryForDefinition,
 } from '@stex-react/api';
 import { shouldUseDrawer, simpleHash } from '@stex-react/utils';
 import { useRouter } from 'next/router';
@@ -143,12 +145,31 @@ function TourItemDisplay({
   onHideTemp: () => void;
   addToTempShowUri: (uri: string) => void;
 }) {
+  const [definitionUris, setDefinitionUris] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const ref = useRef();
   const isVisible = useOnScreen(ref);
   useEffect(() => {
     visibilityUpdate(isVisible);
   }, [isVisible]);
+
+  useEffect(() => {
+    async function fetchDefinition(uri: string) {
+      const query = getSparlQueryForDefinition(uri);
+      const results = await getQueryResults(query);
+
+      const allUris = results?.results?.bindings?.map((b) => b?.loname?.value) ?? [];
+
+      let uris = allUris.filter((u: string) => u.includes(`&l=${lang}`));
+
+      if (uris.length === 0 && allUris.length > 0) {
+        uris = [allUris[0]];
+      }
+
+      setDefinitionUris(uris.slice(0, 1));
+    }
+    fetchDefinition(item.uri);
+  }, [item.uri, lang]);
 
   return (
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
@@ -190,13 +211,11 @@ function TourItemDisplay({
       </Box>
       <ItemBreadcrumbs item={item} allItemsMap={allItemsMap} addToTempShowUri={addToTempShowUri} />
       <Box sx={{ mt: '20px' }}>
-        {/*<ContentFromUrl
-          displayReason={DisplayReason.GUIDED_TOUR}
-          url={`/:vollki/frag?path=${item.uri}&lang=${lang}`}
-          modifyRendered={getChildrenOfBodyNode}
-        />*/}
-        //TODO ALEA4-G2
-        {/* <FTMLFragment key={item.uri} fragment={{ uri: item.uri }} /> */}
+        {definitionUris.map((uri) => (
+          <Box key={uri} mb={1.5}>
+            <FTMLFragment fragment={{ type: 'FromBackend', uri }} />
+          </Box>
+        ))}
       </Box>
 
       <Divider />

@@ -270,7 +270,7 @@ export const getSparqlQueryForLoRelationToDimAndConceptPair = (uri: string) => {
                         FILTER(CONTAINS(STR(?learningObject), "${encodeURI(uri)}")).
                         VALUES ?relation {
                                 ulo:precondition
-                                ulo:objective 
+                                ulo:objective
                                 }
                       }
                 GROUP BY ?learningObject ?relation ?obj1 `;
@@ -296,7 +296,7 @@ export const getSparqlQueryForLoRelationToNonDimConcept = (uri: string) => {
                                    ulo:specifies
                                    ulo:defines
                                    ulo:example-for
-                                   } 
+                                   }
                               }`;
   return query;
 };
@@ -452,7 +452,7 @@ WHERE {
     )
   VALUES ?relation {
           ${relationConditions}
-        } 
+        }
     ?lo rdf:type ?type .
       FILTER(?type IN (${loTypesConditions})).
       ${loStringFilter}
@@ -462,4 +462,15 @@ WHERE {
 `;
 
   return query;
+}
+
+export function getSparlQueryForDefinition(uri: string) {
+  return `
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX ulo: <http://mathhub.info/ulo#>
+        SELECT DISTINCT ?loname WHERE {
+  ?loname rdf:type ulo:definition .
+  ?loname ulo:defines <${uri}> .
+}
+  `;
 }
