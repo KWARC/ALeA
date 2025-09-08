@@ -21,6 +21,7 @@ import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
 import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
+import { GoalSelector } from './GoalSelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
 
@@ -48,90 +49,6 @@ export interface Goal {
 export interface SectionGoals {
   [section_uri: string]: Goal[];
 }
-
-export const mockSectionGoals: SectionGoals = {
-  'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/slides&m=DDL&s=column%20specification':
-    [
-      {
-        goal_uri: 'https://example.org/goal1',
-        description: 'Understand basics of databases',
-        sub_goals: [
-          {
-            goal_uri: 'https://example.org/goal1a',
-            description: 'Learn SQL basics',
-            sub_goals: [],
-          },
-          {
-            goal_uri: 'https://example.org/goal1b',
-            description: 'Understand JSON and XML formats',
-            sub_goals: [
-              {
-                goal_uri: 'https://example.org/goal1b1',
-                description: 'Parse JSON data programmatically',
-                sub_goals: [],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        goal_uri: 'https://example.org/goal2',
-        description: 'Learn about relational database design',
-        sub_goals: [
-          {
-            goal_uri: 'https://example.org/goal2a',
-            description: 'Understand primary keys and foreign keys',
-            sub_goals: [],
-          },
-          {
-            goal_uri: 'https://example.org/goal2b',
-            description: 'Normalize database tables',
-            sub_goals: [],
-          },
-        ],
-      },
-    ],
-  'https://mathhub.info?a=courses/FAU/IWGS/course&p=databases/slides&m=DDL&s=create': [
-    {
-      goal_uri: 'https://example.org/goal3',
-      description: 'Understand NoSQL databases',
-      sub_goals: [
-        {
-          goal_uri: 'https://example.org/goal3a',
-          description: 'Learn about document databases',
-          sub_goals: [],
-        },
-        {
-          goal_uri: 'https://example.org/goal3b',
-          description: 'Understand key-value stores',
-          sub_goals: [],
-        },
-      ],
-    },
-    {
-      goal_uri: 'https://example.org/goal4',
-      description: 'Explore distributed databases',
-      sub_goals: [
-        {
-          goal_uri: 'https://example.org/goal4a',
-          description: 'Understand replication strategies',
-          sub_goals: [],
-        },
-        {
-          goal_uri: 'https://example.org/goal4b',
-          description: 'Learn about sharding techniques',
-          sub_goals: [
-            {
-              goal_uri: 'https://example.org/goal4b1',
-              description: 'Implement basic sharding in a test database',
-              sub_goals: [],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
 
 interface SectionDetailsDialogProps {
   open: boolean;
@@ -163,10 +80,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const [sectionGoals, setSectionGoals] = useState<SectionGoals>({});
   const [selectedGoals, setSelectedGoals] = useState<{ [conceptUri: string]: string[] }>({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const questionTypes = [
     {
       id: 'mcq',
@@ -200,23 +117,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setConcepts([]);
     setSelectedConcepts([]);
     setSelectedProperties({});
+    //setSelectedGoals([]);
   }, [startSectionUri, endSectionUri]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const fetchGoals = async () => {
-      try {
-        const response: SectionGoals = mockSectionGoals;
-        setSectionGoals(response);
-        console.log({ response });
-      } catch (err) {
-        console.error('Error fetching goals:', err);
-      }
-    };
-
-    fetchGoals();
-  }, [open, startSectionUri, endSectionUri]);
 
   useEffect(() => {
     if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
@@ -248,12 +150,6 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
     fetchConcepts();
   }, [open, startSectionUri, endSectionUri, sections]);
-
-  useEffect(() => {
-    if (!showQuestionTypes) {
-      setSelectedQuestionTypes([]);
-    }
-  }, [showQuestionTypes]);
 
   const generateNewProblems = async () => {
     setGenerating(true);
@@ -370,13 +266,48 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }));
   };
 
-  const handleSelectAllGoals = (conceptUri: string) => {
-    const allGoals = sectionGoals[conceptUri]?.map((g) => g.goal_uri) || [];
-    setSelectedGoals((prev) => ({ ...prev, [conceptUri]: allGoals }));
+  const handleToggleAllGoals = () => {
+    const currentSectionGoals = sectionGoals[startSectionUri] || [];
+    const allGoals = flattenGoals(currentSectionGoals);
+    const currentSelected = selectedGoals[startSectionUri] || [];
+
+    if (currentSelected.length === allGoals.length) {
+      setSelectedGoals((prev) => ({ ...prev, [startSectionUri]: [] }));
+    } else {
+      setSelectedGoals((prev) => ({
+        ...prev,
+        [startSectionUri]: allGoals.map((goal) => goal.goal_uri),
+      }));
+    }
   };
 
-  const handleClearAllGoals = (conceptUri: string) => {
-    setSelectedGoals((prev) => ({ ...prev, [conceptUri]: [] }));
+  const handleSelectGoal = (goalUri: string) => {
+    setSelectedGoals((prev) => {
+      const currentSelected = prev[startSectionUri] || [];
+      const exists = currentSelected.includes(goalUri);
+      return {
+        ...prev,
+        [startSectionUri]: exists
+          ? currentSelected.filter((g) => g !== goalUri)
+          : [...currentSelected, goalUri],
+      };
+    });
+  };
+
+  const flattenGoals = (goals: Goal[]): Goal[] => {
+    const flatGoals: Goal[] = [];
+
+    const flatten = (goalList: Goal[]) => {
+      goalList.forEach((goal) => {
+        flatGoals.push(goal);
+        if (goal.sub_goals && goal.sub_goals.length > 0) {
+          flatten(goal.sub_goals);
+        }
+      });
+    };
+
+    flatten(goals);
+    return flatGoals;
   };
 
   const handleRemoveProperty = (conceptUri: string, propertyKey: string) => {
@@ -387,6 +318,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     });
   };
 
+  const handleNextStep = () => setCurrentStep((s) => Math.min(s + 1, 2));
+  const handlePrevStep = () => setCurrentStep((s) => Math.max(s - 1, 0));
+
   const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, selectedConcepts.length - 1));
@@ -395,12 +329,17 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
         <Typography variant="h5" fontWeight="bold">
-          Generate
+          Generate New Question
         </Typography>
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2, overflow: 'hidden' }}>
-        <Box display="grid" gridTemplateColumns="220px 280px 1fr" gap={3} height="75vh">
+        <Box
+          display="grid"
+          gridTemplateColumns={currentStep === 0 ? '1fr' : '220px 280px 1fr'}
+          gap={3}
+          height="75vh"
+        >
           {loading && (
             <Box
               sx={{
@@ -416,43 +355,57 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               <CircularProgress />
             </Box>
           )}
-          <Paper
-            elevation={3}
-            sx={{
-              borderRadius: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              mb: 2,
-            }}
-          >
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-              {selectedConcepts.length > 0 ? (
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {selectedConcepts.map((sc, idx) => (
-                    <SelectedConcept
-                      key={sc.value}
-                      concept={sc}
-                      index={idx}
-                      currentIndex={currentIndex}
-                      conceptProperties={conceptProperties}
-                      selectedProperties={selectedProperties}
-                      onSelect={setCurrentIndex}
-                      onRemove={handleRemoveConcept}
-                    />
-                  ))}
-                </Box>
-              ) : (
-                <Box p={3} textAlign="center">
-                  <Typography color="text.secondary" variant="body2" fontStyle="italic">
-                    No concepts selected
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Paper>
 
-          {!showQuestionTypes ? (
+          {currentStep === 0 && (
+            <GoalSelector
+              sectionGoals={sectionGoals}
+              selectedGoals={selectedGoals}
+              startSectionUri={startSectionUri}
+              endSectionUri={endSectionUri}
+              onToggleAll={handleToggleAllGoals}
+              onSelectGoal={handleSelectGoal}
+            />
+          )}
+
+          {currentStep > 0 && (
+            <Paper
+              elevation={3}
+              sx={{
+                borderRadius: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                mb: 2,
+              }}
+            >
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+                {selectedConcepts.length > 0 ? (
+                  <Box display="flex" flexDirection="column" gap={2}>
+                    {selectedConcepts.map((sc, idx) => (
+                      <SelectedConcept
+                        key={sc.value}
+                        concept={sc}
+                        index={idx}
+                        currentIndex={currentIndex}
+                        conceptProperties={conceptProperties}
+                        selectedProperties={selectedProperties}
+                        onSelect={setCurrentIndex}
+                        onRemove={handleRemoveConcept}
+                      />
+                    ))}
+                  </Box>
+                ) : (
+                  <Box p={3} textAlign="center">
+                    <Typography color="text.secondary" variant="body2" fontStyle="italic">
+                      No concepts selected
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          )}
+
+          {currentStep === 1 && (
             <ConceptSelector
               concepts={concepts}
               selectedConcepts={selectedConcepts}
@@ -462,7 +415,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               onToggleAll={handleToggleAll}
               onSelectConcept={handleSelectConcept}
             />
-          ) : (
+          )}
+
+          {currentStep === 2 && (
             <QuestionTypeSelector
               questionTypes={questionTypes}
               selectedQuestionTypes={selectedQuestionTypes}
@@ -470,24 +425,22 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               onSelectQuestionType={handleSelectQuestionType}
             />
           )}
-          {!showQuestionTypes ? (
+
+          {currentStep === 1 && (
             <ConceptDetails
               selectedConcepts={selectedConcepts}
               currentIndex={currentIndex}
               conceptProperties={conceptProperties}
               selectedProperties={selectedProperties}
-              sectionGoals={sectionGoals}
-              selectedGoals={selectedGoals}
               onPrevious={handlePrev}
               onNext={handleNext}
               onSelectAllProperties={handleSelectAllProperties}
               onClearAllProperties={handleClearAllProperties}
               onToggleProperty={handleToggleProperty}
-              onSelectAllGoals={handleSelectAllGoals}
-              onClearAllGoals={handleClearAllGoals}
-              onToggleGoal={handleToggleGoal}
             />
-          ) : (
+          )}
+
+          {currentStep === 2 && (
             <GenerationSummary
               selectedConcepts={selectedConcepts}
               selectedQuestionTypes={selectedQuestionTypes}
@@ -503,24 +456,33 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         </Box>
       </DialogContent>
 
-      <Box display="flex" justifyContent="flex-end" gap={2} p={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} p={2}>
         <Button variant="outlined" onClick={onClose}>
           Close
         </Button>
-        {!showQuestionTypes ? (
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={selectedConcepts.length === 0}
-            onClick={() => setShowQuestionTypes(true)}
-          >
-            Next
-          </Button>
-        ) : (
-          <>
-            <Button variant="outlined" onClick={() => setShowQuestionTypes(false)}>
+
+        <Box display="flex" gap={2}>
+          {currentStep > 0 && (
+            <Button variant="outlined" onClick={handlePrevStep}>
               Back
             </Button>
+          )}
+
+          {currentStep < 2 && (
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={
+                (currentStep === 0 && !Object.keys(selectedGoals).length) ||
+                (currentStep === 1 && selectedConcepts.length === 0)
+              }
+              onClick={handleNextStep}
+            >
+              Next
+            </Button>
+          )}
+
+          {currentStep === 2 && (
             <Button
               variant="contained"
               color="primary"
@@ -530,8 +492,8 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
             >
               {generating ? 'Generating...' : 'Generate'}
             </Button>
-          </>
-        )}
+          )}
+        </Box>
       </Box>
     </Dialog>
   );

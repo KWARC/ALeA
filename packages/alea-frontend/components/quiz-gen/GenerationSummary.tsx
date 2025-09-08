@@ -29,7 +29,14 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   return (
     <Paper
       elevation={3}
-      sx={{ p: 3, borderRadius: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      sx={{
+        p: 3,
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        mb: 2,
+      }}
     >
       <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
         Generation Summary
