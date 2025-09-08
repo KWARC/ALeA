@@ -26,7 +26,6 @@ import { useOnScreen } from './useOnScreen';
 const NAV_MENU_ID = 'list-container';
 const EXPANSION_BOX_ID = 'expansion-box';
 
-
 export interface TourItem {
   uri: string;
   header: string;
@@ -158,14 +157,19 @@ function TourItemDisplay({
     async function fetchDefinition(uri: string) {
       const query = getSparlQueryForDefinition(uri);
       const results = await getQueryResults(query);
-      const uris =
-      results?.results?.bindings
-        ?.map((b) => b?.loname?.value)
-        ?.filter((u: string) => u.includes(`&l=${lang}`)) ?? [];   
-      setDefinitionUris(uris);
+
+      const allUris = results?.results?.bindings?.map((b) => b?.loname?.value) ?? [];
+
+      let uris = allUris.filter((u: string) => u.includes(`&l=${lang}`));
+
+      if (uris.length === 0 && allUris.length > 0) {
+        uris = [allUris[0]];
+      }
+
+      setDefinitionUris(uris.slice(0, 1));
     }
     fetchDefinition(item.uri);
-  }, [item.uri,lang]);
+  }, [item.uri, lang]);
 
   return (
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
