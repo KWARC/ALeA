@@ -258,7 +258,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
             </Typography>
           )}
         </Box>
-        <Box mb={2} display="flex" flexDirection="column">
+        {/* <Box mb={2} display="flex" flexDirection="column">
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography variant="h6" fontWeight="bold">
               Goals
@@ -296,7 +296,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
               No goals defined for this concept.
             </Typography>
           )}
-        </Box>
+        </Box> */}
       </Box>
 
       <Box display="flex" justifyContent="space-between" m={2.5}>

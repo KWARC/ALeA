@@ -190,7 +190,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
           </Box>
         </Box>
 
-        <Box mb={3}>
+        {/* <Box mb={3}>
           <Typography variant="h6" fontWeight="600" gutterBottom>
             Goals Summary
           </Typography>
@@ -223,7 +223,7 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
               </Box>
             );
           })}
-        </Box>
+        </Box> */}
         <Box>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Total Properties Selected
