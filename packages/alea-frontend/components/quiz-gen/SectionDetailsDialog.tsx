@@ -257,6 +257,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
   const generateNewProblems = async () => {
     setGenerating(true);
+
     try {
       const response = await generateQuizProblems({
         mode: 'new',
@@ -266,7 +267,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         selectedConcepts: selectedConcepts.map((sc) => ({
           name: sc.label,
           uri: sc.value,
-          properties: (selectedProperties[sc.value] || []).map((d) => d.replace(/-\d+$/, '')),
+          properties: (selectedProperties[sc.value] || [])
+            .map((d) => d.replace(/-\d+$/, ''))
+            .filter((d) => !d.startsWith('http')),
         })),
         selectedQuestionTypes,
       });
@@ -326,7 +329,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   };
 
   const handleSelectAllProperties = (conceptUri: string) => {
-    const allProps = (conceptProperties[conceptUri] ?? []).map((p, idx) => `${p.prop}-${idx}`);
+    const allProps = (conceptProperties[conceptUri] ?? []).map(
+      (p, idx) => `${p.description}-${idx}`
+    );
     setSelectedProperties((prev) => ({ ...prev, [conceptUri]: allProps }));
   };
 
