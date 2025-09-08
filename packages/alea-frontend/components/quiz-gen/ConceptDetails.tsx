@@ -212,12 +212,14 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
             <>
               <List dense>
                 {properties.map((prop, idx) => {
-                  const uniqueKey = `${prop.prop}-${idx}`;
+                  const uniqueKey = `${prop.description}-${idx}`;
                   const isSelected = selectedProperties[conceptUri]?.includes(uniqueKey) ?? false;
 
                   return (
                     <ListItem key={uniqueKey} disablePadding>
-                      <ListItemButton onClick={() => onToggleProperty(conceptUri, prop.prop, idx)}>
+                      <ListItemButton
+                        onClick={() => onToggleProperty(conceptUri, prop.description, idx)}
+                      >
                         <ListItemIcon>
                           <Checkbox
                             edge="start"

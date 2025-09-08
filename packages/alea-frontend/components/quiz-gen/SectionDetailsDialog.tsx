@@ -266,7 +266,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         selectedConcepts: selectedConcepts.map((sc) => ({
           name: sc.label,
           uri: sc.value,
-          properties: selectedProperties[sc.value] || [],
+          properties: (selectedProperties[sc.value] || []).map((d) => d.replace(/-\d+$/, '')),
         })),
         selectedQuestionTypes,
       });
@@ -334,10 +334,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setSelectedProperties((prev) => ({ ...prev, [conceptUri]: [] }));
   };
 
-  const handleToggleProperty = (conceptUri: string, propertyKey: string, idx: number) => {
+  const handleToggleProperty = (conceptUri: string, description: string, idx: number) => {
     setSelectedProperties((prev) => {
       const currentProps = prev[conceptUri] ?? [];
-      const uniqueKey = `${propertyKey}-${idx}`;
+      const uniqueKey = `${description}-${idx}`;
       const isSelected = currentProps.includes(uniqueKey);
       const newProps = isSelected
         ? currentProps.filter((p) => p !== uniqueKey)
@@ -359,12 +359,11 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   };
 
   const handleRemoveGoal = (conceptUri: string, goalUri: string) => {
-  setSelectedGoals((prev) => ({
-    ...prev,
-    [conceptUri]: prev[conceptUri]?.filter((g) => g !== goalUri) ?? [],
-  }));
-};
-
+    setSelectedGoals((prev) => ({
+      ...prev,
+      [conceptUri]: prev[conceptUri]?.filter((g) => g !== goalUri) ?? [],
+    }));
+  };
 
   const handleSelectAllGoals = (conceptUri: string) => {
     const allGoals = sectionGoals[conceptUri]?.map((g) => g.goal_uri) || [];

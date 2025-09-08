@@ -170,7 +170,7 @@ const QuizGen = () => {
           setGeneratedProblems={setGeneratedProblems}
           setLatestGeneratedProblems={setLatestGeneratedProblems}
         />
-      <SparqlTester/>
+      {/* <SparqlTester/> */}
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} loading={loading} />
 
         <QuizPanel
