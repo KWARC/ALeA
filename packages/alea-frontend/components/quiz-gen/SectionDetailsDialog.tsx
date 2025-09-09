@@ -258,9 +258,16 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     return goals.flatMap((goal) => [goal.goal_uri, ...collectAllGoalUris(goal.sub_goals || [])]);
   };
 
+  const collectAllGoalDescriptions = (goals: Goal[]): string[] => {
+    return goals.flatMap((goal) => [
+      goal.description,
+      ...collectAllGoalDescriptions(goal.sub_goals || []),
+    ]);
+  };
+
   const handleToggleAllGoals = (sectionUri: string) => {
     const currentSectionGoals = sectionGoals[sectionUri] || [];
-    const allGoals = collectAllGoalUris(currentSectionGoals);
+    const allGoals = collectAllGoalDescriptions(currentSectionGoals);
 
     const currentSelected = selectedGoals[sectionUri] || [];
 
@@ -270,16 +277,13 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }));
   };
 
-  const handleSelectGoal = (sectionUri: string, goalUri: string) => {
+  const handleSelectGoal = (sectionUri: string, goalUri: string, description: string) => {
     setSelectedGoals((prev) => {
-      const currentSelected = prev[sectionUri] || [];
-      const exists = currentSelected.includes(goalUri);
-
+      const current = prev[sectionUri] || [];
+      const exists = current.includes(description);
       return {
         ...prev,
-        [sectionUri]: exists
-          ? currentSelected.filter((g) => g !== goalUri)
-          : [...currentSelected, goalUri],
+        [sectionUri]: exists ? current.filter((d) => d !== description) : [...current, description],
       };
     });
   };

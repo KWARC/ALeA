@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Checkbox,
-  FormControlLabel,
   Paper,
   Typography,
 } from '@mui/material';
@@ -18,9 +17,17 @@ interface GoalSelectorProps {
   selectedGoals: { [conceptUri: string]: string[] };
   startSectionUri: string;
   endSectionUri: string;
-  onSelectGoal: (sectionUri: string, goalUri: string) => void;
+  onSelectGoal: (sectionUri: string, goalUri: string, description: string) => void;
   onToggleAll: (sectionUri: string) => void;
 }
+
+const GOAL_COLORS = {
+  selected: '#e3f2fd',
+  selectedBorder: '#1976d2',
+  hover: '#f5f5f5',
+  headerBg: '#fafafa',
+  subGoalBg: '#fbfbfb',
+};
 
 export const mockSectionGoals: SectionGoals = {
   'https://example.org/section1': [
@@ -131,7 +138,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
 
   const renderGoalTree = (goals: Goal[], level = 0): React.ReactNode =>
     goals.map((goal) => {
-      const isSelected = currentSelectedGoals.includes(goal.goal_uri);
+      const isSelected = currentSelectedGoals.includes(goal.description);
       const hasSubGoals = goal.sub_goals && goal.sub_goals.length > 0;
       const isExpanded = expandedAccordions.has(goal.goal_uri);
 
@@ -142,63 +149,86 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               expanded={isExpanded}
               onChange={handleAccordionChange(goal.goal_uri)}
               sx={{
-                boxShadow: level === 0 ? 2 : 1,
-                borderRadius: 1,
+                backgroundColor: isSelected ? GOAL_COLORS.selected : 'background.paper',
+                border: `1px solid ${isSelected ? GOAL_COLORS.selectedBorder : 'divider'}`,
+                borderRadius: `${12}px !important`,
+                boxShadow: isSelected
+                  ? '0 2px 8px rgba(25, 118, 210, 0.15)'
+                  : '0 1px 3px rgba(0,0,0,0.05)',
                 '&:before': { display: 'none' },
-                ml: level * 2,
+                '&:hover': {
+                  backgroundColor: isSelected ? GOAL_COLORS.selected : GOAL_COLORS.hover,
+                  transform: 'translateY(-1px)',
+                  transition: 'all 0.2s ease-in-out',
+                },
+                ml: level * 3,
+                overflow: 'hidden',
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={<ExpandMoreIcon sx={{ color: 'text.secondary' }} />}
                 sx={{
-                  bgcolor: level === 0 ? 'grey.50' : 'grey.25',
-                  minHeight: 48,
+                  bgcolor: 'transparent',
+                  minHeight: 56,
+                  px: 2,
                   '&.Mui-expanded': {
-                    minHeight: 48,
+                    minHeight: 56,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
                   },
                   '& .MuiAccordionSummary-content': {
                     alignItems: 'center',
-                    margin: '8px 0',
+                    margin: '12px 0',
                     '&.Mui-expanded': {
-                      margin: '8px 0',
+                      margin: '12px 0',
                     },
                   },
                 }}
               >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        onSelectGoal(startSectionUri, goal.goal_uri);
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 2 }}>
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onSelectGoal(startSectionUri, goal.goal_uri, goal.description);
+                    }}
+                    size="small"
+                    sx={{
+                      color: 'text.secondary',
+                      '&.Mui-checked': {
+                        color: 'primary.main',
+                      },
+                      mt: -0.5,
+                    }}
+                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body1"
+                      fontWeight={level === 0 ? 600 : 500}
+                      color={isSelected ? 'primary.main' : 'text.primary'}
+                      sx={{ lineHeight: 1.4 }}
+                    >
+                      {goal.description}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        display: 'block',
+                        mt: 0.5,
+                        fontSize: '0.75rem',
+                        opacity: 0.7,
                       }}
-                      size="small"
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography variant="body2" fontWeight="medium">
-                        {goal.description}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {goal.goal_uri}
-                      </Typography>
-                    </Box>
-                  }
-                  sx={{
-                    margin: 0,
-                    flex: 1,
-                    '& .MuiFormControlLabel-label': {
-                      flex: 1,
-                      ml: 1,
-                    },
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                    >
+                      {goal.goal_uri.split('/').pop()}
+                    </Typography>
+                  </Box>
+                </Box>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0, pb: 1 }}>
-                {renderGoalTree(goal.sub_goals, level + 1)}
+              <AccordionDetails sx={{ pt: 1, pb: 2, px: 2, bgcolor: '#fafafa' }}>
+                <Box sx={{ '& > *:not(:last-child)': { mb: 1.5 } }}>
+                  {renderGoalTree(goal.sub_goals, level + 1)}
+                </Box>
               </AccordionDetails>
             </Accordion>
           </Box>
@@ -207,41 +237,61 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
         return (
           <Box key={goal.goal_uri} sx={{ pl: level * 2, py: 0.5, mb: 1 }}>
             <Paper
-              elevation={1}
+              elevation={0}
               sx={{
-                p: 1.5,
-                borderRadius: 1,
-                bgcolor: 'background.paper',
+                p: 2.5,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: isSelected ? GOAL_COLORS.selectedBorder : 'divider',
+                bgcolor: isSelected ? GOAL_COLORS.selected : 'background.paper',
+                boxShadow: isSelected
+                  ? '0 2px 8px rgba(25, 118, 210, 0.15)'
+                  : '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: isSelected ? GOAL_COLORS.selected : GOAL_COLORS.hover,
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                },
+                ml: level * 3,
               }}
             >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={() => onSelectGoal(startSectionUri, goal.goal_uri)}
-                    size="small"
-                  />
-                }
-                label={
-                  <Box>
-                    <Typography variant="body2" fontWeight="medium">
-                      {goal.description}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {goal.goal_uri}
-                    </Typography>
-                  </Box>
-                }
-                sx={{
-                  margin: 0,
-                  width: '100%',
-                  alignItems: 'flex-start',
-                  '& .MuiFormControlLabel-label': {
-                    flex: 1,
-                    ml: 1,
-                  },
-                }}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <Checkbox
+                  checked={isSelected}
+                  onChange={() => onSelectGoal(startSectionUri, goal.goal_uri, goal.description)}
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    '&.Mui-checked': {
+                      color: 'primary.main',
+                    },
+                    mt: -0.5,
+                  }}
+                />
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color={isSelected ? 'primary.main' : 'text.primary'}
+                    sx={{ lineHeight: 1.4 }}
+                  >
+                    {goal.description}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      display: 'block',
+                      mt: 0.5,
+                      fontSize: '0.75rem',
+                      opacity: 0.7,
+                    }}
+                  >
+                    {goal.goal_uri.split('/').pop()}
+                  </Typography>
+                </Box>
+              </Box>
             </Paper>
           </Box>
         );
@@ -252,6 +302,8 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
     <Paper
       elevation={3}
       sx={{
+        border: '1px solid',
+        borderColor: 'divider',
         borderRadius: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -261,23 +313,30 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
     >
       <Box
         sx={{
-          bgcolor: 'primary.light',
-          color: 'primary.contrastText',
-          p: 2,
+          bgcolor: 'background.paper',
+          borderBottom: '2px solid',
+          borderColor: 'primary.main',
+          p: 3,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
-          Selecting Goals
+        <Typography variant="h6" fontWeight="600" color="primary.main">
+          Learning Goals Selection
         </Typography>
         <Button
           variant="outlined"
           size="small"
+          startIcon={<ExpandMoreIcon sx={{ transform: 'rotate(180deg)' }} />}
           sx={{
-            color: 'inherit',
-            borderColor: 'currentColor',
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 500,
           }}
           onClick={() => onToggleAll(startSectionUri)}
         >
@@ -285,21 +344,37 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
         </Button>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', p: 3, bgcolor: '#fafafa' }}>
         {currentSectionGoals.length === 0 ? (
-          <Box p={3} textAlign="center">
-            <Typography color="text.secondary" variant="body2" fontStyle="italic">
+          <Box p={4} textAlign="center">
+            <Typography color="text.secondary" variant="body1" fontStyle="italic">
               No goals available for selected sections
             </Typography>
           </Box>
         ) : (
-          renderGoalTree(currentSectionGoals)
+          <Box sx={{ '& > *:not(:last-child)': { mb: 2 } }}>
+            {renderGoalTree(currentSectionGoals)}
+          </Box>
         )}
       </Box>
       {currentSelectedGoals.length > 0 && (
-        <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
-          <Typography variant="caption" color="text.secondary">
-            {currentSelectedGoals.length} goal{currentSelectedGoals.length !== 1 ? 's' : ''}{' '}
+        <Box
+          sx={{
+            p: 2.5,
+            bgcolor: 'primary.50',
+            borderTop: '2px solid',
+            borderColor: 'primary.main',
+            position: 'sticky',
+            bottom: 0,
+          }}
+        >
+          <Typography
+            variant="body2"
+            color="primary.main"
+            fontWeight={600}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            ✓ {currentSelectedGoals.length} goal{currentSelectedGoals.length !== 1 ? 's' : ''}{' '}
             selected
           </Typography>
         </Box>

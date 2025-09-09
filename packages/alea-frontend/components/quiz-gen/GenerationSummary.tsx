@@ -1,4 +1,5 @@
 import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Chip, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { conceptUriToName } from '@stex-react/api';
 import React from 'react';
@@ -15,6 +16,7 @@ interface GenerationSummaryProps {
   onRemoveProperty: (conceptUri: string, propertyKey: string) => void;
   onRemoveGoal?: (conceptUri: string, goalUri: string) => void;
 }
+
 export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   selectedConcepts,
   selectedQuestionTypes,
@@ -26,6 +28,17 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   onRemoveProperty,
   onRemoveGoal,
 }) => {
+  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set());
+
+  const toggleSectionExpansion = (sectionUri: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionUri)) {
+      newExpanded.delete(sectionUri);
+    } else {
+      newExpanded.add(sectionUri);
+    }
+    setExpandedSections(newExpanded);
+  };
   return (
     <Paper
       elevation={3}
@@ -44,6 +57,131 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
       <Divider sx={{ mb: 2 }} />
 
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <Box mb={3}>
+          <Typography variant="h6" fontWeight="600" gutterBottom>
+            Goals Summary
+          </Typography>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {Object.entries(selectedGoals).map(([sectionUri, selected]) => {
+              const isExpanded = expandedSections.has(sectionUri);
+              const displayLimit = 3;
+              const shouldTruncate = selected.length > displayLimit;
+              const displayedGoals =
+                shouldTruncate && !isExpanded ? selected.slice(0, displayLimit) : selected;
+              const remainingCount = selected.length - displayLimit;
+
+              return (
+                <Box key={sectionUri}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    {/* <Typography variant="subtitle1" fontWeight="600" color="primary">
+                      Section: {sectionUri.split('/').pop()}
+                    </Typography> */}
+                    <Chip
+                      label={`${selected.length} goal${selected.length !== 1 ? 's' : ''} selected`}
+                      size="small"
+                      variant="outlined"
+                      color={selected.length > 0 ? 'primary' : 'default'}
+                    />
+                  </Box>
+
+                  {selected.length > 0 ? (
+                    <Box ml={2} mb={1}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        gutterBottom
+                        display="block"
+                      >
+                        Selected Goals:
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        {displayedGoals.map((desc) => (
+                          <Paper key={desc} elevation={1} sx={{ p: 1.5, borderRadius: 1.5 }}>
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              gap={2}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  flex: 1,
+                                  lineHeight: 1.4,
+                                  color: 'text.primary',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {desc}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => onRemoveGoal?.(sectionUri, desc)}
+                                sx={{
+                                  color: 'error.main',
+                                  '&:hover': { bgcolor: 'error.50', color: 'error.dark' },
+                                  ml: 1,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Paper>
+                        ))}
+
+                        {shouldTruncate && (
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 1.5,
+                              bgcolor: 'grey.100',
+                              border: '1px dashed',
+                              borderColor: 'grey.300',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                bgcolor: 'grey.200',
+                                borderColor: 'grey.400',
+                              },
+                            }}
+                            onClick={() => toggleSectionExpansion(sectionUri)}
+                          >
+                            <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                              <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                {isExpanded
+                                  ? 'Show less'
+                                  : `+${remainingCount} more goal${
+                                      remainingCount !== 1 ? 's' : ''
+                                    }`}
+                              </Typography>
+                              <ExpandMoreIcon
+                                fontSize="small"
+                                sx={{
+                                  color: 'text.secondary',
+                                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease',
+                                }}
+                              />
+                            </Box>
+                          </Paper>
+                        )}
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Box ml={2}>
+                      <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                        No goals selected for this section
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+
         <Box mb={3}>
           <Typography variant="h6" fontWeight="600" gutterBottom>
             Selected Concepts ({selectedConcepts.length})
@@ -195,40 +333,6 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
               );
             })}
           </Box>
-        </Box>
-
-        <Box mb={3}>
-          <Typography variant="h6" fontWeight="600" gutterBottom>
-            Goals Summary
-          </Typography>
-          {Object.entries(selectedGoals).map(([sectionUri, selected]) => {
-            const allGoals = sectionGoals[sectionUri] ?? [];
-            return (
-              <Box key={sectionUri} mb={2}>
-                <Typography variant="subtitle2" color="primary">
-                  {sectionUri}
-                </Typography>
-                {selected.length > 0 ? (
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    {selected.map((goalUri) => {
-                      const goal = allGoals.find((g) => g.goal_uri === goalUri);
-                      return (
-                        <Chip
-                          key={goalUri}
-                          label={goal?.description || goalUri}
-                          onDelete={() => onRemoveGoal?.(sectionUri, goalUri)}
-                        />
-                      );
-                    })}
-                  </Box>
-                ) : (
-                  <Typography variant="caption" color="text.secondary" fontStyle="italic">
-                    No goals selected for this section
-                  </Typography>
-                )}
-              </Box>
-            );
-          })}
         </Box>
 
         <Box>
