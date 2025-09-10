@@ -4,7 +4,6 @@ import path from "path";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const quizDir = process.env.OLD_QUIZ_DIR;
-    console.log({ quizDir });
     if (!quizDir) return res.status(500).json({ error: "OLD_QUIZ_DIR not set" });
 
     try {
