@@ -22,7 +22,7 @@ import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
 import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
-import { GoalSelector, mockSectionGoals } from './GoalSelector';
+import { GoalSelector } from './GoalSelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
 
@@ -41,24 +41,18 @@ export interface QuestionType {
   description: string;
 }
 
-//TODO update format of this Goal interface
 export interface Goal {
-  goal_uri: string;
-  text: string;
-  sub_goals: Goal[];
-}
-export interface GoalBackend{
   uri: string;
   text: string;
   subGoalUris?: string[];
 }
- export interface GoalNode {
+export interface GoalNode {
   text: string;
   uri: string;
   subGoals: GoalNode[];
 }
 export interface SectionGoals {
-  [section_uri: string]: Goal[];
+  [allGoals: string]: GoalNode[];
 }
 
 interface SectionDetailsDialogProps {
@@ -116,53 +110,63 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const allSelected = concepts.length > 0 && selectedConcepts.length === concepts.length;
   const someSelected = selectedConcepts.length > 0 && selectedConcepts.length < concepts.length;
 
-//TODO rename GoalBackend to Goal after updating Goal interface above according to format recieved
-function createHierarchy(
-  goalUri: string,
-  allGoals: GoalBackend[],
-): GoalNode {
-
-  const g = allGoals.find(goal => goal.uri === goalUri);
-  if (!g) {
-    return { text: "", uri: goalUri, subGoals: [] };
-  }
-
-  const newNode: GoalNode = {
-    text: g.text,
-    uri: g.uri,
-    subGoals: []
+  const GoalJsonFormat = (allGoals: Goal[], topLevelGoalUris: string[]): SectionGoals => {
+    const trees = buildTrees(topLevelGoalUris, allGoals);
+    const sectionUri = topLevelGoalUris[0]?.split('?')[0] || 'section1';
+    return { [sectionUri]: trees };
   };
 
-  for (const cUri of g.subGoalUris || []) {
-    const cNode = createHierarchy(cUri, allGoals);
-    if (cNode?.text || cNode?.subGoals?.length) {
-      newNode.subGoals.push(cNode);
+  function createHierarchy(
+    goalUri: string,
+    allGoals: Goal[],
+    visited = new Set<string>()
+  ): GoalNode {
+    if (visited.has(goalUri)) {
+      return { text: '(cyclic)', uri: goalUri, subGoals: [] };
     }
+    visited.add(goalUri);
+
+    const g = allGoals.find((goal) => goal.uri === goalUri);
+    if (!g) return { text: '', uri: goalUri, subGoals: [] };
+
+    const node: GoalNode = { text: g.text, uri: g.uri, subGoals: [] };
+
+    for (const subUri of g.subGoalUris || []) {
+      const childNode = createHierarchy(subUri, allGoals, visited);
+      if (childNode.text || childNode.subGoals.length) node.subGoals.push(childNode);
+    }
+
+    visited.delete(goalUri);
+    return node;
   }
 
-  return newNode;
-}
-
-function buildTrees(topLevelGoalUris: string[], allGoals: GoalBackend[]): GoalNode[] {
-  return topLevelGoalUris.map(uri => createHierarchy(uri, allGoals)) .filter(n => n !== null);
-}
-
-useEffect(() => {
-  async function getAllGoals() {
-        console.log("HI")
-
-    //TODO use courseUri instead of courseId
-    const iwgs2_course_uri="https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en";
-    const current_section_uri="https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section";
-    const { allGoals, topLevelGoalUris } = await getSectionGoals(iwgs2_course_uri,current_section_uri);
-    console.log({allGoals});
-    console.log({topLevelGoalUris});
-    const trees = buildTrees(topLevelGoalUris, allGoals);
-    console.log("TREEs",trees)
+  function buildTrees(topLevelGoalUris: string[], allGoals: Goal[]): GoalNode[] {
+    return topLevelGoalUris.map((uri) => createHierarchy(uri, allGoals)).filter(Boolean);
   }
 
-  getAllGoals();
-}, [courseId]);//TODO add courseURi here in dependancy array
+  useEffect(() => {
+    async function getAllGoals() {
+      console.log('HI');
+
+      //TODO use courseUri instead of courseId
+      const iwgs2_course_uri =
+        'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en';
+      const current_section_uri =
+        'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section';
+      const { allGoals, topLevelGoalUris } = await getSectionGoals(
+        iwgs2_course_uri,
+        current_section_uri
+      );
+      const transformed = GoalJsonFormat(allGoals, topLevelGoalUris);
+      setSectionGoals(transformed);
+      console.log({ allGoals });
+      console.log({ topLevelGoalUris });
+      const trees = buildTrees(topLevelGoalUris, allGoals);
+      console.log('TREEs', trees);
+    }
+
+    getAllGoals();
+  }, [courseId, open]); //TODO add courseURi here in dependancy array
 
   useEffect(() => {
     setCurrentIndex(selectedConcepts.length > 0 ? 0 : -1);
@@ -313,36 +317,27 @@ useEffect(() => {
     }));
   };
 
-  const collectAllGoalUris = (goals: Goal[]): string[] => {
-    return goals.flatMap((goal) => [goal.goal_uri, ...collectAllGoalUris(goal.sub_goals || [])]);
-  };
-
-  const collectAllGoalDescriptions = (goals: Goal[]): string[] => {
-    return goals.flatMap((goal) => [
-      goal.text,
-      ...collectAllGoalDescriptions(goal.sub_goals || []),
-    ]);
+  const collectAllGoalDescriptions = (goals: GoalNode[]): string[] => {
+    return goals.flatMap((goal) => [goal.text, ...collectAllGoalDescriptions(goal.subGoals || [])]);
   };
 
   const handleToggleAllGoals = (sectionUri: string) => {
     const currentSectionGoals = sectionGoals[sectionUri] || [];
-    const allGoals = collectAllGoalDescriptions(currentSectionGoals);
-
-    const currentSelected = selectedGoals[sectionUri] || [];
-
+    const allGoalTexts = collectAllGoalDescriptions(currentSectionGoals);
     setSelectedGoals((prev) => ({
       ...prev,
-      [sectionUri]: currentSelected.length === allGoals.length ? [] : allGoals,
+      [sectionUri]: prev[sectionUri]?.length === allGoalTexts.length ? [] : allGoalTexts,
     }));
   };
 
-  const handleSelectGoal = (sectionUri: string, goalUri: string, description: string) => {
+  const handleSelectGoal = (sectionUri: string, goalUri: string, goalText: string) => {
     setSelectedGoals((prev) => {
-      const current = prev[sectionUri] || [];
-      const exists = current.includes(description);
+      const sectionArray = prev[sectionUri] || [];
       return {
         ...prev,
-        [sectionUri]: exists ? current.filter((d) => d !== description) : [...current, description],
+        [sectionUri]: sectionArray.includes(goalText)
+          ? sectionArray.filter((t) => t !== goalText)
+          : [...sectionArray, goalText],
       };
     });
   };
@@ -395,10 +390,14 @@ useEffect(() => {
 
           {currentStep === 0 && (
             <GoalSelector
-              sectionGoals={mockSectionGoals}
+              sectionGoals={sectionGoals}
               selectedGoals={selectedGoals}
-              startSectionUri={'https://example.org/section1'}
-              endSectionUri={'https://example.org/section2'}
+              startSectionUri={
+                'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section'
+              }
+              endSectionUri={
+                'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section'
+              }
               onToggleAll={handleToggleAllGoals}
               onSelectGoal={handleSelectGoal}
             />
