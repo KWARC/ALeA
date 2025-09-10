@@ -9,7 +9,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const semesterPath = path.join(quizDir, semester);
   try {
-    const files = fs.readdirSync(semesterPath).filter((name) => name.endsWith('.json'));
+    const files = fs.readdirSync(semesterPath).filter((name) => name.endsWith('.json') && !name.startsWith('_bkp'));
     res.status(200).json(files);
   } catch (e) {
     res.status(500).json({ error: 'Failed to read files' });
