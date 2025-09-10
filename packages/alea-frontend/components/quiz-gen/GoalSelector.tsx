@@ -33,20 +33,20 @@ export const mockSectionGoals: SectionGoals = {
   'https://example.org/section1': [
     {
       goal_uri: 'https://example.org/goal1',
-      description: 'Understand basics of databases',
+      text: 'Understand basics of databases',
       sub_goals: [
         {
           goal_uri: 'https://example.org/goal1a',
-          description: 'Learn SQL basics',
+          text: 'Learn SQL basics',
           sub_goals: [],
         },
         {
           goal_uri: 'https://example.org/goal1b',
-          description: 'Understand JSON and XML formats',
+          text: 'Understand JSON and XML formats',
           sub_goals: [
             {
               goal_uri: 'https://example.org/goal1b1',
-              description: 'Parse JSON data programmatically',
+              text: 'Parse JSON data programmatically',
               sub_goals: [],
             },
           ],
@@ -55,16 +55,16 @@ export const mockSectionGoals: SectionGoals = {
     },
     {
       goal_uri: 'https://example.org/goal2',
-      description: 'Learn about relational database design',
+      text: 'Learn about relational database design',
       sub_goals: [
         {
           goal_uri: 'https://example.org/goal2a',
-          description: 'Understand primary keys and foreign keys',
+          text: 'Understand primary keys and foreign keys',
           sub_goals: [],
         },
         {
           goal_uri: 'https://example.org/goal2b',
-          description: 'Normalize database tables',
+          text: 'Normalize database tables',
           sub_goals: [],
         },
       ],
@@ -73,36 +73,36 @@ export const mockSectionGoals: SectionGoals = {
   'https://example.org/section2': [
     {
       goal_uri: 'https://example.org/goal3',
-      description: 'Understand NoSQL databases',
+      text: 'Understand NoSQL databases',
       sub_goals: [
         {
           goal_uri: 'https://example.org/goal3a',
-          description: 'Learn about document databases',
+          text: 'Learn about document databases',
           sub_goals: [],
         },
         {
           goal_uri: 'https://example.org/goal3b',
-          description: 'Understand key-value stores',
+          text: 'Understand key-value stores',
           sub_goals: [],
         },
       ],
     },
     {
       goal_uri: 'https://example.org/goal4',
-      description: 'Explore distributed databases',
+      text: 'Explore distributed databases',
       sub_goals: [
         {
           goal_uri: 'https://example.org/goal4a',
-          description: 'Understand replication strategies',
+          text: 'Understand replication strategies',
           sub_goals: [],
         },
         {
           goal_uri: 'https://example.org/goal4b',
-          description: 'Learn about sharding techniques',
+          text: 'Learn about sharding techniques',
           sub_goals: [
             {
               goal_uri: 'https://example.org/goal4b1',
-              description: 'Implement basic sharding in a test database',
+              text: 'Implement basic sharding in a test database',
               sub_goals: [],
             },
           ],
@@ -138,7 +138,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
 
   const renderGoalTree = (goals: Goal[], level = 0): React.ReactNode =>
     goals.map((goal) => {
-      const isSelected = currentSelectedGoals.includes(goal.description);
+      const isSelected = currentSelectedGoals.includes(goal.text);
       const hasSubGoals = goal.sub_goals && goal.sub_goals.length > 0;
       const isExpanded = expandedAccordions.has(goal.goal_uri);
 
@@ -190,7 +190,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                     checked={isSelected}
                     onChange={(e) => {
                       e.stopPropagation();
-                      onSelectGoal(startSectionUri, goal.goal_uri, goal.description);
+                      onSelectGoal(startSectionUri, goal.goal_uri, goal.text);
                     }}
                     size="small"
                     sx={{
@@ -208,7 +208,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                       color={isSelected ? 'primary.main' : 'text.primary'}
                       sx={{ lineHeight: 1.4 }}
                     >
-                      {goal.description}
+                      {goal.text}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -259,7 +259,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
                 <Checkbox
                   checked={isSelected}
-                  onChange={() => onSelectGoal(startSectionUri, goal.goal_uri, goal.description)}
+                  onChange={() => onSelectGoal(startSectionUri, goal.goal_uri, goal.text)}
                   size="small"
                   sx={{
                     color: 'text.secondary',
@@ -276,7 +276,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                     color={isSelected ? 'primary.main' : 'text.primary'}
                     sx={{ lineHeight: 1.4 }}
                   >
-                    {goal.description}
+                    {goal.text}
                   </Typography>
                   <Typography
                     variant="caption"

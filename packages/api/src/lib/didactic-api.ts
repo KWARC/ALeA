@@ -20,16 +20,25 @@ export async function getConceptPropertyInSection(sectionUri:string){
 
   return resp.data as ConceptPropertiesMap;
 }
-
-export async function getConceptGoalsInSection(sectionUri:string){
+interface Goal{
+uri:string;
+text:string;
+subGoalUris?:string[]
+}
+interface GoalsData{
+  allGoals:Goal[];
+  topLevelGoalUris:string[]
+}
+export async function getSectionGoals(courseNotesUri:string,sectionUri:string){
   const resp = await axios.get(`/api/gpt-redirect`, {
     params: {
-      apiname: 'get-concept-goals-in-section',
+      apiname: 'get-section-goals',
       projectName: 'quiz-gen',
-      sectionUri,
+      courseUri:courseNotesUri,
+      sectionUri
     },
     headers: getAuthHeaders(),
   });
 
-  return resp.data as any;
+  return resp.data as GoalsData;
 }

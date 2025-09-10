@@ -12,6 +12,7 @@ import {
   conceptUriToName,
   generateQuizProblems,
   getConceptPropertyInSection,
+  getSectionGoals,
   getDefiniedaInSection,
 } from '@stex-react/api';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
@@ -40,12 +41,22 @@ export interface QuestionType {
   description: string;
 }
 
+//TODO update format of this Goal interface
 export interface Goal {
   goal_uri: string;
-  description: string;
+  text: string;
   sub_goals: Goal[];
 }
-
+export interface GoalBackend{
+  uri: string;
+  text: string;
+  subGoalUris?: string[];
+}
+ export interface GoalNode {
+  text: string;
+  uri: string;
+  subGoals: GoalNode[];
+}
 export interface SectionGoals {
   [section_uri: string]: Goal[];
 }
@@ -104,6 +115,54 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
   const allSelected = concepts.length > 0 && selectedConcepts.length === concepts.length;
   const someSelected = selectedConcepts.length > 0 && selectedConcepts.length < concepts.length;
+
+//TODO rename GoalBackend to Goal after updating Goal interface above according to format recieved
+function createHierarchy(
+  goalUri: string,
+  allGoals: GoalBackend[],
+): GoalNode {
+
+  const g = allGoals.find(goal => goal.uri === goalUri);
+  if (!g) {
+    return { text: "", uri: goalUri, subGoals: [] };
+  }
+
+  const newNode: GoalNode = {
+    text: g.text,
+    uri: g.uri,
+    subGoals: []
+  };
+
+  for (const cUri of g.subGoalUris || []) {
+    const cNode = createHierarchy(cUri, allGoals);
+    if (cNode?.text || cNode?.subGoals?.length) {
+      newNode.subGoals.push(cNode);
+    }
+  }
+
+  return newNode;
+}
+
+function buildTrees(topLevelGoalUris: string[], allGoals: GoalBackend[]): GoalNode[] {
+  return topLevelGoalUris.map(uri => createHierarchy(uri, allGoals)) .filter(n => n !== null);
+}
+
+useEffect(() => {
+  async function getAllGoals() {
+        console.log("HI")
+
+    //TODO use courseUri instead of courseId
+    const iwgs2_course_uri="https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en";
+    const current_section_uri="https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section";
+    const { allGoals, topLevelGoalUris } = await getSectionGoals(iwgs2_course_uri,current_section_uri);
+    console.log({allGoals});
+    console.log({topLevelGoalUris});
+    const trees = buildTrees(topLevelGoalUris, allGoals);
+    console.log("TREEs",trees)
+  }
+
+  getAllGoals();
+}, [courseId]);//TODO add courseURi here in dependancy array
 
   useEffect(() => {
     setCurrentIndex(selectedConcepts.length > 0 ? 0 : -1);
@@ -260,7 +319,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
   const collectAllGoalDescriptions = (goals: Goal[]): string[] => {
     return goals.flatMap((goal) => [
-      goal.description,
+      goal.text,
       ...collectAllGoalDescriptions(goal.sub_goals || []),
     ]);
   };
