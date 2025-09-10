@@ -144,6 +144,7 @@ function OldQuizPage() {
                           fullWidth
                         >
                           {quizStartTs && new Date(quizStartTs).toLocaleDateString()}
+                          {` (${filename.split('.')[0]})`}
                         </Button>
                       </ListItem>
                     ))}
