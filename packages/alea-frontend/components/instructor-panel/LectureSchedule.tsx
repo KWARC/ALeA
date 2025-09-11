@@ -28,6 +28,7 @@ import {
   deleteLectureEntry,
   addLectureSchedule,
   updateHasHomework,
+  updateHasQuiz,
 } from '@stex-react/api';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -64,6 +65,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const [lectures, setLectures] = useState<LectureSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasHomework, setHasHomework] = useState<boolean>(false);
+  const [hasQuiz, setHasQuiz] = useState<boolean>(false);
   const [editEntry, setEditEntry] = useState<LectureSchedule | null>(null);
   const [editKeys, setEditKeys] = useState<{
     lectureDay: string;
@@ -173,28 +175,52 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         {t.title.replace('{{courseId}}', courseId)}
       </Typography>
       <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <FormControlLabel
-          labelPlacement="start"
-          control={
-            <Checkbox
-              checked={hasHomework}
-              onChange={async (e) => {
-                const next = e.target.checked;
-                if (!confirm('Are you sure to update homework availability?')) {
-                  return;
-                }
-                try {
-                  await updateHasHomework({ courseId, instanceId, hasHomework: next });
-                  setHasHomework(next);
-                } catch (err) {
-                  console.error('Failed to update homework availability', err);
-                }
-              }}
-            />
-          }
-          label={t.isHomeworkAvailable}
-          sx={{ m: 0 }}
-        />
+        <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          <FormControlLabel
+            labelPlacement="start"
+            control={
+              <Checkbox
+                checked={hasHomework}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  if (!confirm('Are you sure to update homework availability?')) {
+                    return;
+                  }
+                  try {
+                    await updateHasHomework({ courseId, instanceId, hasHomework: next });
+                    setHasHomework(next);
+                  } catch (err) {
+                    console.error('Failed to update homework availability', err);
+                  }
+                }}
+              />
+            }
+            label={t.isHomeworkAvailable}
+            sx={{ m: 0 }}
+          />
+          <FormControlLabel
+            labelPlacement="start"
+            control={
+              <Checkbox
+                checked={hasQuiz}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  if (!confirm('Are you sure to update quiz availability?')) {
+                    return;
+                  }
+                  try {
+                    await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
+                    setHasQuiz(next);
+                  } catch (err) {
+                    console.error('Failed to update quiz availability', err);
+                  }
+                }}
+              />
+            }
+            label={'Enable quiz for this course'}
+            sx={{ m: 0 }}
+          />
+        </Box>
       </Paper>
       <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Box

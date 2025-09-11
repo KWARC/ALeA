@@ -9,6 +9,7 @@ import {
   createStudentResourceActions,
   isCourseSemesterSetupComplete,
 } from 'packages/utils/src/lib/semester-helper';
+import { generateLectureEntry } from '@stex-react/api';
 
 interface CourseMetadataProps {
   courseId: string;
@@ -19,6 +20,8 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
   const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [generateMessage, setGenerateMessage] = useState('');
 
   async function checkIfAlreadySetup() {
     const complete = await isCourseSemesterSetupComplete(courseId);
@@ -47,6 +50,30 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
       setSemesterSetupLoading(false);
     }
   };
+  const handleGenerateLectureEntry = async () => {
+    setGenerateLoading(true);
+    setGenerateMessage('Generating lecture entries...');
+    try {
+      const data = await generateLectureEntry(courseId, instanceId);
+      if (data && !data.error) {
+        if (data.alreadyExists) {
+          setGenerateMessage(
+            `Lecture entries already exist for courseId ${courseId} (${data.count} entries)`
+          );
+        } else {
+          setGenerateMessage(
+            `Lecture entry generation successful for courseId ${courseId} (${data.count} entries)`
+          );
+        }
+      } else {
+        setGenerateMessage(`Lecture entry generation failed: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (e) {
+      setGenerateMessage(`Lecture entry generation failed: ${(e as Error).message}`);
+    } finally {
+      setGenerateLoading(false);
+    }
+  };
 
   return (
     <Box p={2}>
@@ -61,9 +88,16 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
             disabled={semesterSetupLoading || isAlreadySetup}
             startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
           >
-            {isAlreadySetup ? "ACL's already created" : "Create Course ACL"}
+            {isAlreadySetup ? "ACL's already created" : 'Create Course ACL'}
           </Button>
-          <Button variant="contained">Generate Lecture Entry</Button>
+          <Button
+            variant="contained"
+            onClick={handleGenerateLectureEntry}
+            disabled={generateLoading}
+            startIcon={generateLoading ? <CircularProgress size={20} /> : null}
+          >
+            Generate Lecture Entry
+          </Button>
         </Box>
       </Box>
 
@@ -87,6 +121,27 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
           icon={semesterSetupLoading ? <CircularProgress size={20} /> : undefined}
         >
           {semesterSetupMessage}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={!!generateMessage}
+        autoHideDuration={generateLoading ? null : 4000}
+        onClose={() => setGenerateMessage('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          severity={
+            generateLoading
+              ? 'info'
+              : generateMessage.toLowerCase().includes('failed')
+              ? 'error'
+              : 'success'
+          }
+          sx={{ width: '100%' }}
+          icon={generateLoading ? <CircularProgress size={20} /> : undefined}
+        >
+          {generateMessage}
         </Alert>
       </Snackbar>
 

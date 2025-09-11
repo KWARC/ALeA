@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAuthHeaders } from './lmp';
+import exp = require('constants');
 
 export interface LectureSchedule {
   lectureDay: string;
@@ -15,6 +16,13 @@ export interface CourseMetadata {
   instanceId: string;
   lectureSchedule: LectureSchedule[];
   hasHomework?: boolean;
+}
+export interface GenerateLectureEntryResponse {
+  courseId: string;
+  count: number;
+  filePath: string;
+  alreadyExists: boolean; 
+  error?: string;
 }
 
 export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  };
@@ -67,5 +75,26 @@ export async function updateHasHomework(
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-homework`, data, {
     headers: getAuthHeaders(),
   });
+  return response.data;
+}
+
+export async function updateHasQuiz(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasQuiz: boolean }
+) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-quiz`, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+}
+
+export async function generateLectureEntry(
+  courseId: string,
+  instanceId: string
+): Promise<GenerateLectureEntryResponse> {
+  const response = await axios.post(
+    `${COURSE_METADATA_BASE_URL}/generate-lecture-entry`,
+    { courseId, instanceId },
+    { headers: getAuthHeaders() }
+  );
   return response.data;
 }

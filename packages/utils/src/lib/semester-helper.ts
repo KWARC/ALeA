@@ -1,4 +1,10 @@
-import { createAcl, CreateACLRequest, createResourceAction, getAcl, getAllResourceActions } from '@stex-react/api';
+import {
+  createAcl,
+  CreateACLRequest,
+  createResourceAction,
+  getAcl,
+  getInstructorResourceActions
+} from '@stex-react/api';
 import { Action, CURRENT_TERM } from '@stex-react/utils';
 
 const ROLES = ['instructors', 'staff', 'tas', 'enrollments'];
@@ -124,7 +130,6 @@ export async function createStaffResourceActions(courseId: string) {
   }
 }
 
-
 export function getExpectedResourceActions(courseId: string) {
   return [
     // Instructors
@@ -183,7 +188,6 @@ export function getExpectedResourceActions(courseId: string) {
   ];
 }
 
-
 export async function isCourseSemesterSetupComplete(courseId: string): Promise<boolean> {
   try {
     // Check ACLs
@@ -195,10 +199,11 @@ export async function isCourseSemesterSetupComplete(courseId: string): Promise<b
 
     // Check resource actions
     const expected = getExpectedResourceActions(courseId);
-    const allResourceActions = await getAllResourceActions();
+    const allResourceActions = await getInstructorResourceActions(courseId, CURRENT_TERM);
     const hasAllResourceActions = expected.every((exp) =>
       allResourceActions.some(
-        (ra) => ra.resourceId === exp.resourceId && ra.actionId === exp.actionId && ra.aclId === exp.aclId
+        (ra) =>
+          ra.resourceId === exp.resourceId && ra.actionId === exp.actionId && ra.aclId === exp.aclId
       )
     );
     return hasAllResourceActions;
