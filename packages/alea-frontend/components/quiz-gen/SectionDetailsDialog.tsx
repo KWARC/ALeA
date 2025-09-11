@@ -12,8 +12,8 @@ import {
   conceptUriToName,
   generateQuizProblems,
   getConceptPropertyInSection,
-  getSectionGoals,
   getDefiniedaInSection,
+  getSectionGoals,
 } from '@stex-react/api';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
@@ -116,13 +116,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section';
     return { [sectionUri]: trees };
   };
-
-  function createHierarchy(goalUri: string, allGoals: Goal[], path: string[] = []): GoalNode {
-    const currentPath = [...path, goalUri];
-
+  //TODO: add option to avoid maximum stack size exceeded
+  function createHierarchy(goalUri: string, allGoals: Goal[]): GoalNode {
     const g = allGoals.find((goal) => goal.uri === goalUri);
     if (!g) {
-      console.warn('Goal not found:', goalUri, 'Path:', currentPath.join(' -> '));
       return { text: '', uri: goalUri, subGoals: [] };
     }
 
@@ -133,12 +130,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     };
 
     for (const cUri of g.subGoalUris || []) {
-      if (currentPath.includes(cUri)) {
-        console.warn('Cycle detected!', currentPath.join(' -> '), '->', cUri);
-        continue;
-      }
-
-      const cNode = createHierarchy(cUri, allGoals, currentPath);
+      const cNode = createHierarchy(cUri, allGoals);
       if (cNode?.text || cNode?.subGoals?.length) {
         newNode.subGoals.push(cNode);
       }
