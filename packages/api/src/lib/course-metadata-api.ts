@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getAuthHeaders } from './lmp';
-import exp = require('constants');
 
 export interface LectureSchedule {
   lectureDay: string;
