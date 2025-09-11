@@ -113,6 +113,14 @@ export async function getAllResourceActions(): Promise<ResourceAction[]> {
   return data as ResourceAction[];
 }
 
+export async function getInstructorResourceActions(courseId: string, instanceId: string) {
+  const { data } = await axios.get(
+    `/api/access-control/get-instructor-resourceactions?courseId=${courseId}&instanceId=${instanceId}`,
+    { headers: getAuthHeaders() }
+  );
+  return data as ResourceAction[];
+}
+
 export async function canAccessResource(
   resourceName: ResourceName,
   actionId: Action,

@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetaData, getCourseInfo, SectionInfo } from '@stex-react/api';
+import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@stex-react/api';
 import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
@@ -139,9 +139,9 @@ function addClipInfo(allSections: SectionInfo[], jsonData: any) {
   Object.entries(semesterData).forEach(
     ([videoId, videoData]: [
       string,
-      { extracted_content: { [timeStamp: number]: ClipMetaData } }
+      { extracted_content: { [timeStamp: number]: ClipMetadata } }
     ]) => {
-      const extractedContent: { [timeStamp: number]: ClipMetaData } = videoData.extracted_content;
+      const extractedContent: { [timeStamp: number]: ClipMetadata } = videoData.extracted_content;
       if (!extractedContent) return;
       Object.entries(extractedContent).forEach(([timeStamp, clipData]) => {
         const { sectionId, slideUri } = clipData;
