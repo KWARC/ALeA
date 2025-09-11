@@ -1,4 +1,4 @@
-import { batchGradeHex, computePointsFromFeedbackJson, InsertAnswerRequest, Phase } from '@stex-react/api';
+import { batchGradeHex, computePointsFromFeedbackJson, InsertAnswerRequest, Phase } from '@stex-react/spec';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';

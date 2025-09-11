@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/api';
+import { getUserInfo, ProblemJson, QuizProblem, UserInfo } from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';

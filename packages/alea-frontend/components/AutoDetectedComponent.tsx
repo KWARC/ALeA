@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box, Typography } from '@mui/material';
-import { Slide } from '@stex-react/api';
+import { Slide } from '@stex-react/spec';
 import { getSlideTitle } from './SlideSelector';
 interface AutoDetectedTooltipContentProps {
   autoDetected?: {

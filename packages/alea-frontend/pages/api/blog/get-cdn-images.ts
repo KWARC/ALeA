@@ -1,4 +1,4 @@
-import { CdnImageMetadata } from "@stex-react/api";
+import { CdnImageMetadata } from "@stex-react/spec";
 import { NextApiRequest, NextApiResponse } from "next";
 import { executeDontEndSet500OnError } from "../comment-utils";
 

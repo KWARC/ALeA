@@ -1,4 +1,4 @@
-import { QuizStubInfo } from '@stex-react/api';
+import { QuizStubInfo } from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllQuizzes } from '../quiz-utils';

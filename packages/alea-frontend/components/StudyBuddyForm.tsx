@@ -16,7 +16,7 @@ import {
   MeetType,
   StudyBuddy,
   getUserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';

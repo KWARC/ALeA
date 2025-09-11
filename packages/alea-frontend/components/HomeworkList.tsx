@@ -14,7 +14,7 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material';
-import { getHomework, HomeworkInfo, HomeworkStub } from '@stex-react/api';
+import { getHomework, HomeworkInfo, HomeworkStub } from '@stex-react/spec';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';

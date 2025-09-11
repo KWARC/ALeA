@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@stex-react/api';
+import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@stex-react/spec';
 import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';

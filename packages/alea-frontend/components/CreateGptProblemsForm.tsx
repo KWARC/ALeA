@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { CreateGptProblemsRequest, Template } from '@stex-react/api';
+import { CreateGptProblemsRequest, Template } from '@stex-react/spec';
 import { ServerLinksContext } from '@stex-react/stex-react-renderer';
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 

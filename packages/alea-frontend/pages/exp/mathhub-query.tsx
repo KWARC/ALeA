@@ -11,7 +11,7 @@ import {
 import { styled } from '@mui/material/styles';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { getQueryResults, SparqlResponse } from '@stex-react/api';
+import { getQueryResults, SparqlResponse } from '@stex-react/spec';
 
 const QueryEditorContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),

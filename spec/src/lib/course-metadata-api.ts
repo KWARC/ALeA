@@ -20,11 +20,13 @@ export interface GenerateLectureEntryResponse {
   courseId: string;
   count: number;
   filePath: string;
-  alreadyExists: boolean; 
+  alreadyExists: boolean;
   error?: string;
 }
 
-export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  };
+export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & {
+  lectureEntry: LectureSchedule;
+};
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
@@ -36,9 +38,7 @@ export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'i
   return response.data;
 }
 
-export async function addLectureSchedule(
-  data: AddLectureScheduleRequest
-) {
+export async function addLectureSchedule(data: AddLectureScheduleRequest) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-lecture-entry`, data, {
     headers: getAuthHeaders(),
   });
@@ -50,7 +50,7 @@ export async function updateLectureEntry(
     lectureDay: string;
     lectureStartTime: string;
     lectureEndTime: string;
-    updatedLectureEntry: LectureSchedule ;
+    updatedLectureEntry: LectureSchedule;
   }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-lecture-entry`, data, {
@@ -60,7 +60,7 @@ export async function updateLectureEntry(
 }
 
 export async function deleteLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule  }
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
     headers: getAuthHeaders(),

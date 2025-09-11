@@ -17,7 +17,7 @@ import {
   isUserMember,
   deleteAcl,
   hasAclAssociatedResources,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import EditIcon from '@mui/icons-material/Edit';
 import { Delete } from '@mui/icons-material';
 import { NextPage } from 'next';

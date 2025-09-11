@@ -1,25 +1,24 @@
-import React, { useState } from 'react';
+import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import type { AlertColor } from '@mui/material';
 import {
-  Typography,
+  Alert,
+  IconButton,
+  Paper,
+  Snackbar,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
-  IconButton,
-  Stack,
-  Button,
-  Alert,
-  Snackbar,
+  Typography
 } from '@mui/material';
-import type { AlertColor } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
-import { updateSemester } from 'packages/api/src/lib/university-admin-dashboard';
+import { updateSemester } from '@stex-react/spec';
+import React, { useState } from 'react';
 
 interface SemesterData {
   semesterStart: string;
@@ -64,10 +63,11 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
   // Derived state
   const hasSemesters = semesters.length > 0;
   const isEditing = editingIndex !== null;
-  const isFormValid = editingSemester.semesterStart && 
-                     editingSemester.semesterEnd && 
-                     editingSemester.lectureStartDate && 
-                     editingSemester.lectureEndDate;
+  const isFormValid =
+    editingSemester.semesterStart &&
+    editingSemester.semesterEnd &&
+    editingSemester.lectureStartDate &&
+    editingSemester.lectureEndDate;
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -132,7 +132,7 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         lectureStartDate: formatDateForAPI(editingSemester.lectureStartDate),
         lectureEndDate: formatDateForAPI(editingSemester.lectureEndDate),
       });
-      
+
       setEditingIndex(null);
       setEditingSemester({
         semesterStart: '',
@@ -140,13 +140,13 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         lectureStartDate: '',
         lectureEndDate: '',
       });
-      
+
       setSnackbar({
         open: true,
         message: 'Semester updated successfully!',
         severity: 'success',
       });
-      
+
       onSemesterUpdated();
     } catch (error) {
       setSnackbar({
@@ -201,10 +201,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.semesterStart)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          semesterStart: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            semesterStart: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -218,10 +220,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.semesterEnd)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          semesterEnd: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            semesterEnd: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -235,10 +239,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.lectureStartDate)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          lectureStartDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            lectureStartDate: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -252,10 +258,12 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
                       <TextField
                         type="date"
                         value={formatDateForInput(editingSemester.lectureEndDate)}
-                        onChange={(e) => setEditingSemester({
-                          ...editingSemester,
-                          lectureEndDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                          setEditingSemester({
+                            ...editingSemester,
+                            lectureEndDate: e.target.value,
+                          })
+                        }
                         InputLabelProps={{ shrink: true }}
                         size="small"
                         sx={{ width: 120 }}
@@ -302,19 +310,11 @@ export const SemesterDetail: React.FC<SemesterDetailProps> = ({
         </Table>
       </TableContainer>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
     </Paper>
   );
-}; 
+};

@@ -1,5 +1,5 @@
 import { Button, CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 import { DocProblemBrowser } from '@stex-react/stex-react-renderer';
 import { CourseInfo } from '@stex-react/utils';
 import type { NextPage } from 'next';

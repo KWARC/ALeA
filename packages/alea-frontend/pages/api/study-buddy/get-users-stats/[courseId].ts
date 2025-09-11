@@ -1,4 +1,4 @@
-import { UserStats } from '@stex-react/api';
+import { UserStats } from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../../access-control/resource-utils';

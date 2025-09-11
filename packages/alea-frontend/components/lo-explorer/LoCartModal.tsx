@@ -17,7 +17,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { LoType } from '@stex-react/api';
+import { LoType } from '@stex-react/spec';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { DetailsPanel, handleStexCopy, UrlNameExtractor } from '../LoListDisplay';

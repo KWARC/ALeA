@@ -1,4 +1,4 @@
-import { NotificationType } from '@stex-react/api';
+import { NotificationType } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,

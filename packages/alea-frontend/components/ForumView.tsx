@@ -30,7 +30,7 @@ import {
   canModerateComment,
   getCourseInstanceThreads,
   getUserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor } from '@stex-react/myst';
 import { DateView } from '@stex-react/react-utils';
 import { CURRENT_TERM } from '@stex-react/utils';

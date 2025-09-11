@@ -7,7 +7,7 @@ import {
   getSparqlQueryForLoRelationToDimAndConceptPair,
   Language,
   ProblemData,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { getParamFromUri } from '@stex-react/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
 

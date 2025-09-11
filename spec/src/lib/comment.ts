@@ -1,4 +1,3 @@
-
 export enum HiddenStatus {
   UNHIDDEN = 'UNHIDDEN',
   SPAM = 'SPAM',

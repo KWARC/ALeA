@@ -14,7 +14,7 @@ import {
   checkIfUserIdExists,
   logInUser,
   ANON_USER_ID_PREFIX,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { BG_COLOR, capitalizeFirstLetter, PRIMARY_COL, setCookie } from '@stex-react/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';

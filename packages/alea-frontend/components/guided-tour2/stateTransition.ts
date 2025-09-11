@@ -4,7 +4,7 @@ import {
   LoType,
   SelfAssessmentEvent,
   updateLearnerModel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import assert from 'assert';
 import { ActionName } from '../../constants/messages';
 import {

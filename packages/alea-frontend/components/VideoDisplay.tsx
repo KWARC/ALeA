@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipDetails, ClipInfo, getDefiniedaInSection } from '@stex-react/api';
+import { ClipDetails, ClipInfo, getDefiniedaInSection } from '@stex-react/spec';
 import { formatTime, getParamFromUri, localStore, PathToTour2 } from '@stex-react/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -31,7 +31,7 @@ import {
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
-import { ClipData } from '@stex-react/api';
+import { ClipData } from '@stex-react/spec';
 import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';

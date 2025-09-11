@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { HomeworkStatsInfo } from '@stex-react/api';
+import { HomeworkStatsInfo } from '@stex-react/spec';
 import { useRouter } from 'next/router';
 import Chart from 'react-google-charts';
 import { getLocaleObject } from '../lang/utils';

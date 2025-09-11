@@ -11,7 +11,7 @@ import {
   TableRow,
   Tabs,
 } from '@mui/material';
-import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@stex-react/api';
+import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@stex-react/spec';
 import { MystViewer } from '@stex-react/myst';
 import { CURRENT_TERM } from '@stex-react/utils';
 import axios from 'axios';

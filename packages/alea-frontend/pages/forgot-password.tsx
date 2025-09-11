@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import { sendForgotEmail } from '@stex-react/api';
+import { sendForgotEmail } from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useState } from 'react';
 import MainLayout from '../layouts/MainLayout';

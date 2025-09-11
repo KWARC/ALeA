@@ -5,7 +5,7 @@ import {
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { ResourceName, Action } from '@stex-react/utils';
-import { AddLectureScheduleRequest } from '@stex-react/api';
+import { AddLectureScheduleRequest } from '@stex-react/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;

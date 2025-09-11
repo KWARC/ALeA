@@ -1,4 +1,4 @@
-import { AllCoursesStats } from '@stex-react/api';
+import { AllCoursesStats } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';

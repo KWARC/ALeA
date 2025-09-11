@@ -3,7 +3,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from './comment-utils';
-import { AuthProvider, UserInformation } from '@stex-react/api';
+import { AuthProvider, UserInformation } from '@stex-react/spec';
 
 //This  method for finding authProvider is brittle.we should store the information in the database at the time of signup
 function getAuthProvider(hasPassword: boolean) {

@@ -5,7 +5,7 @@ import {
   DiligenceAndPerformanceData,
   UserAnonData,
   canAccessResource,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { queryMatomoDbAndEndSet500OnError } from './matomo-db-utils';
 import { getAllQuizzes } from '@stex-react/node-utils';
 import { Action, ResourceName } from '@stex-react/utils';

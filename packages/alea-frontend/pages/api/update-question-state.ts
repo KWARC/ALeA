@@ -1,4 +1,4 @@
-import { UpdateQuestionStateRequest } from '@stex-react/api';
+import { UpdateQuestionStateRequest } from '@stex-react/spec';
 import { canUserModerateComments } from './access-control/resource-utils';
 import {
   checkIfPostOrSetError,

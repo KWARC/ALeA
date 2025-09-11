@@ -1,4 +1,4 @@
-import { AnswerClass, Phase,QuizWithStatus } from '@stex-react/api';
+import { AnswerClass, Phase,QuizWithStatus } from '@stex-react/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 
 

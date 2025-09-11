@@ -16,7 +16,7 @@ import {
   getProblemVersionHistory,
   saveProblemDraft,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';

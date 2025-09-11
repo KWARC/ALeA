@@ -6,7 +6,7 @@ import {
 } from '../../comment-utils';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
-import { GradingWithAnswer } from '@stex-react/api';
+import { GradingWithAnswer } from '@stex-react/spec';
 import { addAnswerClassesToGradingOrSetError } from '../nap-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
