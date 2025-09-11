@@ -49,7 +49,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
       setExpandedAccordions(newExpanded);
     };
 
-  const key = 'http://mathhub.info';
+  const key = startSectionUri;
   const currentSectionGoals = sectionGoals?.[key] || [];
   const currentSelectedGoals = selectedGoals?.[key] || [];
 

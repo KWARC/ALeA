@@ -112,36 +112,43 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
   const GoalJsonFormat = (allGoals: Goal[], topLevelGoalUris: string[]): SectionGoals => {
     const trees = buildTrees(topLevelGoalUris, allGoals);
-    const sectionUri = topLevelGoalUris[0]?.split('?')[0] || 'section1';
+    const sectionUri =
+      'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section';
     return { [sectionUri]: trees };
   };
 
-  function createHierarchy(
-    goalUri: string,
-    allGoals: Goal[],
-    visited = new Set<string>()
-  ): GoalNode {
-    if (visited.has(goalUri)) {
-      return { text: '(cyclic)', uri: goalUri, subGoals: [] };
-    }
-    visited.add(goalUri);
+  function createHierarchy(goalUri: string, allGoals: Goal[], path: string[] = []): GoalNode {
+    const currentPath = [...path, goalUri];
 
     const g = allGoals.find((goal) => goal.uri === goalUri);
-    if (!g) return { text: '', uri: goalUri, subGoals: [] };
-
-    const node: GoalNode = { text: g.text, uri: g.uri, subGoals: [] };
-
-    for (const subUri of g.subGoalUris || []) {
-      const childNode = createHierarchy(subUri, allGoals, visited);
-      if (childNode.text || childNode.subGoals.length) node.subGoals.push(childNode);
+    if (!g) {
+      console.warn('Goal not found:', goalUri, 'Path:', currentPath.join(' -> '));
+      return { text: '', uri: goalUri, subGoals: [] };
     }
 
-    visited.delete(goalUri);
-    return node;
+    const newNode: GoalNode = {
+      text: g.text,
+      uri: g.uri,
+      subGoals: [],
+    };
+
+    for (const cUri of g.subGoalUris || []) {
+      if (currentPath.includes(cUri)) {
+        console.warn('Cycle detected!', currentPath.join(' -> '), '->', cUri);
+        continue;
+      }
+
+      const cNode = createHierarchy(cUri, allGoals, currentPath);
+      if (cNode?.text || cNode?.subGoals?.length) {
+        newNode.subGoals.push(cNode);
+      }
+    }
+
+    return newNode;
   }
 
   function buildTrees(topLevelGoalUris: string[], allGoals: Goal[]): GoalNode[] {
-    return topLevelGoalUris.map((uri) => createHierarchy(uri, allGoals)).filter(Boolean);
+    return topLevelGoalUris.map((uri) => createHierarchy(uri, allGoals)).filter((n) => n !== null);
   }
 
   useEffect(() => {
@@ -223,6 +230,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         courseId,
         startSectionUri,
         endSectionUri,
+        selectedGoals,
         selectedConcepts: selectedConcepts.map((sc) => ({
           name: sc.label,
           uri: sc.value,
