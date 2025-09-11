@@ -15,7 +15,7 @@ import {
   UserInfo,
   getUserInfo,
   reportEvent
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { localStore } from '@stex-react/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

@@ -1,4 +1,4 @@
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@stex-react/spec';
 import {
   doesQuizExist,
   getBackupQuizFilePath,

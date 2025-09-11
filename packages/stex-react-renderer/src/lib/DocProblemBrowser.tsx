@@ -9,7 +9,7 @@ import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
 import { getFlamsServer } from '@kwarc/ftml-react';
-import { getCourseProblemCounts } from '@stex-react/api';
+import { getCourseProblemCounts } from '@stex-react/spec';
 
 export function DocProblemBrowser({
   notesDocUri,

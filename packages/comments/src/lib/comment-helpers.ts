@@ -1,4 +1,4 @@
-import { Comment} from '@stex-react/api';
+import { Comment} from '@stex-react/spec';
 import {FTML} from '@kwarc/ftml-viewer';
 
 export function organizeHierarchically(flatComments: Comment[]) {

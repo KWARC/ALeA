@@ -15,7 +15,7 @@ import {
   logInUser,
   loginUsingRedirect,
   logout,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { BG_COLOR, IS_SERVER, setCookie } from '@stex-react/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';

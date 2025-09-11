@@ -7,7 +7,7 @@ import {
   getCdnImages,
   updateBlogPost,
   uploadCdnImage,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor } from '@stex-react/myst';
 import { Action, localStore, ResourceName } from '@stex-react/utils';
 import { NextPage } from 'next';

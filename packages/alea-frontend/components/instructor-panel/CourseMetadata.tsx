@@ -9,7 +9,7 @@ import {
   createStudentResourceActions,
   isCourseSemesterSetupComplete,
 } from 'packages/utils/src/lib/semester-helper';
-import { generateLectureEntry } from '@stex-react/api';
+import { generateLectureEntry } from '@stex-react/spec';
 
 interface CourseMetadataProps {
   courseId: string;

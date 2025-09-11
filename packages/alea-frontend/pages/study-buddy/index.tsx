@@ -38,7 +38,7 @@ import {
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
   getUserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MaAI_COURSES, PRIMARY_COL, localStore } from '@stex-react/utils';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';

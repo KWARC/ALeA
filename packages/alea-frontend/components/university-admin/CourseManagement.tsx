@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
 import {
-  Typography,
+  Button,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Button,
+  Typography,
 } from '@mui/material';
-import { getCourseInfo, getCouseIdsOfSemester } from 'packages/api/src/lib/flams';
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
-import { createAcl } from 'packages/api/src/lib/access-control-api';
+import React, { useEffect, useState } from 'react';
 import AclDisplay from '../AclDisplay';
+import { createAcl, getCouseIdsOfSemester } from '@stex-react/spec';
 
 interface CourseManagementProps {
   semester: string;
@@ -70,11 +69,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   return (
     <Paper elevation={2} sx={{ mb: 4, p: 2, borderRadius: 3, background: '#fff' }}>
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{ color: 'primary.dark', fontWeight: 600 }}
-      >
+      <Typography variant="h6" gutterBottom sx={{ color: 'primary.dark', fontWeight: 600 }}>
         Course Management
       </Typography>
       <TableContainer>
@@ -127,4 +122,4 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       </TableContainer>
     </Paper>
   );
-}; 
+};

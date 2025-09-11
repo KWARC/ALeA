@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
 import { isLeafSectionId, SlidePicker } from './SlideSelector';
-import { getSlides } from '@stex-react/api';
+import { getSlides } from '@stex-react/spec';
 
 export type FormData = LectureEntry & {
   sectionName: string;

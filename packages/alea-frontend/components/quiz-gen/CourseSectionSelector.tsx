@@ -19,7 +19,7 @@ import {
   getCourseProblemCounts,
   getCoverageTimeline,
   getProblemsPerSection,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
 import { useRouter } from 'next/router';

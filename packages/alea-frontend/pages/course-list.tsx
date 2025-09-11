@@ -1,6 +1,6 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
-import { DocIdxType, getCourseInfo, getDocIdx } from '@stex-react/api';
+import { DocIdxType, getCourseInfo, getDocIdx } from '@stex-react/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 import { CourseInfo, PRIMARY_COL } from '@stex-react/utils';
 import { NextPage } from 'next';

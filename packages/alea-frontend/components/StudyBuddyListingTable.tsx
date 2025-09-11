@@ -7,7 +7,7 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import { StudyBuddy } from '@stex-react/api';
+import { StudyBuddy } from '@stex-react/spec';
 import { Fragment } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { useRouter } from 'next/router';

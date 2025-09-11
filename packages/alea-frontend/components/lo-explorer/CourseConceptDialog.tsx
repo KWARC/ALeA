@@ -19,7 +19,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@stex-react/api';
+import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@stex-react/spec';
 import { CourseInfo } from '@stex-react/utils';
 import React, { useEffect, useState } from 'react';
 import { getFlamsServer } from '@kwarc/ftml-react';

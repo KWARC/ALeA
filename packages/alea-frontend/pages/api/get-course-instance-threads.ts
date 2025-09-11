@@ -1,4 +1,4 @@
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { executeAndEndSet500OnError } from './comment-utils';
 import { processResults } from './get-comments';
 

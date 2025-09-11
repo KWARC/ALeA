@@ -11,7 +11,7 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@stex-react/api';
+import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@stex-react/spec';
 import fs from 'fs';
 import { NextPage } from 'next';
 import Link from 'next/link';

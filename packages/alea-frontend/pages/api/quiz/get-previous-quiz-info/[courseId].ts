@@ -3,7 +3,7 @@ import {
   GetPreviousQuizInfoResponse,
   Phase,
   PreviousQuizInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { getQuizPhase } from '@stex-react/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from '../../comment-utils';

@@ -1,4 +1,4 @@
-import { QuizStatsResponse } from '@stex-react/api';
+import { QuizStatsResponse } from '@stex-react/spec';
 import { convertHtmlStringToPlain } from '@stex-react/utils';
 import Chart from 'react-google-charts';
 import { BarChart } from './HomeworkState';

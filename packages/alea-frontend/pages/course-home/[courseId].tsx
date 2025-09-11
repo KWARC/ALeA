@@ -28,7 +28,7 @@ import {
   getCoverageTimeline,
   getUserInfo,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   Action,
   BG_COLOR,
@@ -50,7 +50,7 @@ import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { ExamSchedule } from '../../components/ExamSchedule';
-import { Announcement } from '@stex-react/api';
+import { Announcement } from '@stex-react/spec';
 import Grid from '@mui/material/Grid';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {

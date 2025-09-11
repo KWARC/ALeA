@@ -11,7 +11,7 @@ import {
   getUriSmileys,
   reportEvent,
   smileyToLevel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { BG_COLOR, PRIMARY_COL, SECONDARY_COL } from '@stex-react/utils';
 import { useRouter } from 'next/router';

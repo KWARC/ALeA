@@ -1,5 +1,5 @@
 import { Box, Button, Collapse, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { generateQuizProblems, QuizProblem } from '@stex-react/api';
+import { generateQuizProblems, QuizProblem } from '@stex-react/spec';
 import { useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 

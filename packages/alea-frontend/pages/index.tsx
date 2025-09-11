@@ -6,7 +6,7 @@ import {
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { ServerLinksContext } from '@stex-react/stex-react-renderer';
 import {
   Action,

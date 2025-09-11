@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Typography,
-  Stack,
-  Button,
-  TextField,
-  Paper,
-  Alert,
-  Snackbar,
-} from '@mui/material';
+import { Typography, Stack, Button, TextField, Paper, Alert, Snackbar } from '@mui/material';
 import type { AlertColor } from '@mui/material';
-import { createSemester, SemesterData } from 'packages/api/src/lib/university-admin-dashboard';
+import { createSemester, SemesterData } from '@stex-react/spec';
 
 interface SemesterFormProps {
   onSemesterCreated: (newSemesterId?: string) => void;
@@ -43,13 +35,15 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
   });
 
   useEffect(() => {
-    setSemForm(prev => ({
+    setSemForm((prev) => ({
       ...prev,
       instanceId: currentSemester,
     }));
   }, [currentSemester]);
 
-  const handleSemFormChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleSemFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
     const { name, value } = e.target;
     setSemForm({ ...semForm, [name as string]: value });
   };
@@ -63,7 +57,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
         message: 'Semester created successfully!',
         severity: 'success',
       });
-      
+
       setSemForm({
         universityId,
         instanceId: currentSemester,
@@ -72,7 +66,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
         lectureStartDate: '',
         lectureEndDate: '',
       });
-      
+
       onSemesterCreated(semForm.instanceId);
     } catch (error: any) {
       setSnackbar({
@@ -103,7 +97,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           fullWidth
           required
         />
-        
+
         <TextField
           label="Instance ID"
           name="instanceId"
@@ -113,7 +107,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           required
           placeholder="e.g., SS25, WS24-25"
         />
-        
+
         <TextField
           label="Semester Start"
           name="semesterStart"
@@ -124,7 +118,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
           label="Semester End"
           name="semesterEnd"
@@ -135,7 +129,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
           label="Lecture Start Date"
           name="lectureStartDate"
@@ -146,7 +140,7 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
+
         <TextField
           label="Lecture End Date"
           name="lectureEndDate"
@@ -157,30 +151,17 @@ export const SemesterForm: React.FC<SemesterFormProps> = ({
           InputLabelProps={{ shrink: true }}
           required
         />
-        
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSaveSemester}
-          disabled={saving}
-        >
+
+        <Button variant="contained" color="primary" onClick={handleSaveSemester} disabled={saving}>
           {saving ? 'Saving...' : 'Save Semester'}
         </Button>
       </Stack>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
     </Paper>
   );
-}; 
+};

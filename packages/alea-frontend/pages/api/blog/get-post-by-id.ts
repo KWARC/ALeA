@@ -1,4 +1,4 @@
-import { BlogPost } from '@stex-react/api';
+import { BlogPost } from '@stex-react/spec';
 import { executeDontEndSet500OnError } from '../comment-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 

@@ -1,5 +1,5 @@
 import { Box, Button } from '@mui/material';
-import { logout } from '@stex-react/api';
+import { logout } from '@stex-react/spec';
 import Image from 'next/image';
 
 export function ForceFauLogin() {

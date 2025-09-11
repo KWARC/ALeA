@@ -18,7 +18,7 @@ import {
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { generateQuizProblems } from '@stex-react/api';
+import { generateQuizProblems } from '@stex-react/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';

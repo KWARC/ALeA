@@ -18,7 +18,7 @@ import {
   getLatestProblemDraft,
   QuizProblem,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
 import { useEffect, useState } from 'react';
 import {
