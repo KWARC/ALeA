@@ -113,7 +113,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const GoalJsonFormat = (allGoals: Goal[], topLevelGoalUris: string[]): SectionGoals => {
     const trees = buildTrees(topLevelGoalUris, allGoals);
     const sectionUri =
-      'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section';
+      startSectionUri;
     return { [sectionUri]: trees };
   };
   //TODO: add option to avoid maximum stack size exceeded
@@ -151,7 +151,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       const iwgs2_course_uri =
         'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en';
       const current_section_uri =
-        'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section';
+       startSectionUri;
       const { allGoals, topLevelGoalUris } = await getSectionGoals(
         iwgs2_course_uri,
         current_section_uri
@@ -393,7 +393,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               sectionGoals={sectionGoals}
               selectedGoals={selectedGoals}
               startSectionUri={
-                'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section'
+                startSectionUri
               }
               endSectionUri={
                 'https://mathhub.info?a=courses/FAU/IWGS/course&p=vci/sec&d=vci&l=en&e=section'

@@ -29,6 +29,10 @@ const GOAL_COLORS = {
   subGoalBg: '#fbfbfb',
 };
 
+function flattenGoals(goals: GoalNode[]): string[] {
+  return goals.flatMap((g) => [g.uri, ...flattenGoals(g.subGoals || [])]);
+}
+
 export const GoalSelector: React.FC<GoalSelectorProps> = ({
   sectionGoals,
   selectedGoals,
@@ -49,9 +53,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
       setExpandedAccordions(newExpanded);
     };
 
-  const key = startSectionUri;
-  const currentSectionGoals = sectionGoals?.[key] || [];
-  const currentSelectedGoals = selectedGoals?.[key] || [];
+  const currentSectionGoals = sectionGoals[startSectionUri] || [];
+  const allGoalUris = flattenGoals(currentSectionGoals);
+  const currentSelectedGoals = selectedGoals[startSectionUri] || [];
 
   const renderGoalTree = (goals: GoalNode[], level = 0): React.ReactNode =>
     goals.map((goal) => {
@@ -211,7 +215,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
           }}
           onClick={() => onToggleAll(startSectionUri)}
         >
-          Deselect All
+          {currentSelectedGoals.length === allGoalUris.length ? 'Deselect All' : 'Select All'}
         </Button>
       </Box>
 
