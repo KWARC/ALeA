@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 import { CommentButton } from '@stex-react/comments';
 import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';

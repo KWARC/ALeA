@@ -18,15 +18,17 @@ import {
   InputAdornment,
   TextField,
   Typography,
+  Card,
 } from '@mui/material';
 import {
   addRemoveMember,
   canAccessResource,
+  getActiveAnnouncements,
   getCourseInfo,
   getCoverageTimeline,
   getUserInfo,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   Action,
   BG_COLOR,
@@ -48,6 +50,8 @@ import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { ExamSchedule } from '../../components/ExamSchedule';
+import { Announcement } from '@stex-react/spec';
+import Grid from '@mui/material/Grid';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -154,18 +158,10 @@ export function CourseHeader({
 }
 
 function getWeekdayName(dayOfWeek: number): string {
-  const days = [
-    '', // index 0 is unused
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   return days[dayOfWeek] || '';
 }
+
 function CourseScheduleSection({
   userId,
   courseId,
@@ -192,7 +188,7 @@ function CourseScheduleSection({
         const entries = (timeline[courseId] || [])
           .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
           .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
-        setNextLectureStartTime(entries[0].timestamp_ms);
+        setNextLectureStartTime(entries[0]?.timestamp_ms);
       } catch (error) {
         console.error('Failed to fetch lecture timeline:', error);
       }
@@ -254,7 +250,7 @@ function CourseScheduleSection({
               </Typography>
             )}
             {courseSchedule.map((entry, idx) => {
-              const isNext = false; //entry.dayOfWeek === nextLectureDay; Re-enable after fixing timezone issues.
+              const isNext = false;
               return (
                 <Box
                   key={idx}
@@ -326,6 +322,68 @@ function CourseScheduleSection({
           />
         )}
       </Box>
+    </Box>
+  );
+}
+
+function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
+  const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAnnouncements() {
+      try {
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId);
+        setAnnouncements(fetchedAnnouncements);
+      } catch (e) {
+        setError('Failed to fetch announcements.');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAnnouncements();
+  }, [courseId, instanceId]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      mt={3}
+      sx={{
+        mx: 'auto',
+        maxWidth: '650px',
+        p: { xs: 0, sm: 1 },
+      }}
+    >
+      <Grid container spacing={2}>
+        {announcements.map((a) => (
+          <Grid item xs={12} key={`${a.courseId}-${a.createdAt}`}>
+            <Card
+              sx={{
+                padding: 2,
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                borderLeft: '4px solid #1976d2',
+              }}
+            >
+              <Typography variant="body1" fontWeight="bold">
+                {a.content}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Posted on {new Date(a.createdAt).toLocaleDateString()}
+              </Typography>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 }
@@ -431,7 +489,7 @@ const CourseHomePage: NextPage = () => {
         sx={{
           maxWidth: '900px',
           margin: 'auto',
-          px: '10px',
+          px: '1.25',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -520,6 +578,9 @@ const CourseHomePage: NextPage = () => {
             </Alert>
           </Box>
         )}
+
+        <AnnouncementsSection courseId={courseId} instanceId={CURRENT_TERM} />
+
         <CourseScheduleSection courseId={courseId} userId={userId} />
         <br />
         {showSearchBar && (

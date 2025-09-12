@@ -1,7 +1,7 @@
-import { AccessControlList } from '@stex-react/api';
+import { AccessControlList } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Invalid items');
   const updaterId = req.body.updaterACLId ?? id;
   const result = await executeAndEndSet500OnError(
-    'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?,?, ?,?)',
+    'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?, ?, ?, ?)',
     [id, description, updaterId, isOpen],
     res
   );

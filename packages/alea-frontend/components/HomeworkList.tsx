@@ -12,8 +12,9 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Tooltip,
 } from '@mui/material';
-import { getHomework, HomeworkInfo, HomeworkStub } from '@stex-react/api';
+import { getHomework, HomeworkInfo, HomeworkStub } from '@stex-react/spec';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';
@@ -65,11 +66,11 @@ const HomeworkList = ({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell style={{ fontWeight: 'bold' }}>{t.title}</TableCell>
-              <TableCell style={{ fontWeight: 'bold' }}>{t.givenTs}</TableCell>
-              <TableCell style={{ fontWeight: 'bold' }}>{t.dueTs}</TableCell>
-              <TableCell style={{ fontWeight: 'bold' }}>{t.feedbackReleaseTs}</TableCell>
-              <TableCell style={{ fontWeight: 'bold' }}>{t.actions}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{t.title}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{t.givenTs}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{t.dueTs}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{t.feedbackReleaseTs}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{t.actions}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -94,40 +95,57 @@ const HomeworkList = ({
                 <TableRow key={homework.id}>
                   <TableCell>
                     <SafeHtml html={homework.title} />
-                    <a
-                      href={`/homework-doc?id=${homework.id}&courseId=${homework.courseId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <IconButton>
-                        <OpenInNew />
-                      </IconButton>
-                    </a>
+                    <Tooltip title={t.viewHomeworkDocument}>
+                      <a
+                        href={`/homework-doc?id=${homework.id}&courseId=${homework.courseId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <IconButton aria-label={t.viewHomeworkDocument}>
+                          <OpenInNew />
+                        </IconButton>
+                      </a>
+                    </Tooltip>
                   </TableCell>
                   <TableCell>{formattedGivenTs}</TableCell>
                   <TableCell>{formattedDueTs}</TableCell>
                   <TableCell>{formattedReleaseDate}</TableCell>
                   <TableCell>
-                    <IconButton
-                      color="primary"
-                      onClick={async () => {
-                        handleShow((await getHomework(homework.id)).homework);
-                      }}
-                      disabled={selectedHomeworkId === homework.id}
-                    >
-                      <ShowChartIcon />
-                    </IconButton>
-                    <IconButton
-                      color="primary"
-                      onClick={async () => {
-                        handleEdit((await getHomework(homework.id)).homework);
-                      }}
-                    >
-                      <Edit />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => confirmDelete(homework.id)}>
-                      <Delete />
-                    </IconButton>
+                    <Tooltip title={t.showHomeworkStatistics}>
+                      <span>
+                        <IconButton
+                          color="primary"
+                          onClick={async () => {
+                            handleShow((await getHomework(homework.id)).homework);
+                          }}
+                          disabled={selectedHomeworkId === homework.id}
+                          aria-label={t.showHomeworkStatistics}
+                        >
+                          <ShowChartIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={t.editHomework}>
+                      <IconButton
+                        color="primary"
+                        onClick={async () => {
+                          handleEdit((await getHomework(homework.id)).homework);
+                        }}
+                        aria-label={t.editHomework}
+                      >
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={t.deleteHomework}>
+                      <IconButton
+                        color="error"
+                        onClick={() => confirmDelete(homework.id)}
+                        aria-label={t.deleteHomework}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );

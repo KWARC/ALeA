@@ -3,7 +3,7 @@ import {
   computePointsFromFeedbackJson,
   FTMLProblemWithSolution,
   RecorrectionInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { getAllQuizzes } from '@stex-react/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { queryGradingDbAndEndSet500OnError } from '../grading-db-utils';

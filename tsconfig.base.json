@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@stex-react/api": ["packages/api/src/index.ts"],
+      "@stex-react/spec": ["spec/src/index.ts"],
       "@stex-react/comments": ["packages/comments/src/index.ts"],
       "@stex-react/mathjax": ["packages/mathjax/src/index.ts"],
       "@stex-react/myst": ["packages/myst/src/index.ts"],

@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, IconButton, Typography } from '@mui/material';
-import { Template, getTemplateVersions, getTemplates } from '@stex-react/api';
+import { Template, getTemplateVersions, getTemplates } from '@stex-react/spec';
 import {
   FixedPositionMenu,
   LayoutWithFixedMenu,

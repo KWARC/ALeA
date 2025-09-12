@@ -29,7 +29,7 @@ import {
   QuestionStatus,
   QuizStubInfo,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   Action,
   CourseInfo,

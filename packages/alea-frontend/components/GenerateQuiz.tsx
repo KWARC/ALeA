@@ -13,11 +13,12 @@ import {
   Card,
   IconButton,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL } from '@stex-react/utils';
-import { generateQuizProblems } from '@stex-react/api';
+import { generateQuizProblems } from '@stex-react/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';
@@ -77,6 +78,27 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
         </Box>
       );
     });
+  if (problemData?.manualEdits?.length) {
+    const latestEdit = problemData.manualEdits[problemData.manualEdits.length - 1];
+    console.log({latestEdit})
+    return (
+      <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+        <Typography variant="body2" color="text.secondary" mt={1}>
+          This problem is a manually edited variant of an existing problem.
+        </Typography>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="h6" mb={1}>
+          {latestEdit?.editedText}
+        </Typography>
+
+        <Typography variant="caption" color="text.secondary">
+          Edited by {latestEdit.updaterId} on {new Date(latestEdit.updatedAt).toLocaleString()}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
@@ -98,8 +120,8 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           </IconButton>
         </Tooltip>
       </Box>
-      {(problemData.problemType.toLowerCase() === 'scq' ||
-        problemData.problemType.toLowerCase() === 'mcq') &&
+      {(problemData?.problemType?.toLowerCase() === 'scq' ||
+        problemData?.problemType?.toLowerCase() === 'mcq') &&
         renderOptionsWithFeedback()}
 
       {problemData.problemType === 'FILL_IN' && (

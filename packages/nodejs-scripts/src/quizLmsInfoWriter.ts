@@ -1,4 +1,4 @@
-import {QuizWithStatus} from '@stex-react/api';
+import {QuizWithStatus} from '@stex-react/spec';
 import {FTML} from '@kwarc/ftml-viewer'
 import { getAllQuizzes } from '@stex-react/node-utils';
 import fs from 'fs';

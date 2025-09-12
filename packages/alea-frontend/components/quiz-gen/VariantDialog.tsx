@@ -1,4 +1,3 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
 import {
   Box,
   Button,
@@ -8,181 +7,182 @@ import {
   DialogContent,
   DialogTitle,
   LinearProgress,
-  TextField,
+  Snackbar,
+  Typography,
 } from '@mui/material';
-import { checkPossibleVariants, generateQuizProblems, QuizProblem } from '@stex-react/api';
-import axios from 'axios';
+import {
+  checkPossibleVariants,
+  finalizeProblem,
+  getProblemVersionHistory,
+  saveProblemDraft,
+  UserInfo,
+} from '@stex-react/spec';
+import { PRIMARY_COL } from '@stex-react/utils';
 import { useEffect, useState } from 'react';
-import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
-import { ConfigurationSummary } from './ConfigurationSummary';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { PreviewSection } from './PreviewSection';
-import { SwitchToggle } from './SwitchToggle';
-import { VariantConfigSection } from './VariantConfigSection';
+import { flattenQuizProblem } from './QuizPanel';
+import { MinorEditType, SwitchToggle } from './SwitchToggle';
+import { Translate } from './Translate';
+import { GenerationParams } from './GenerationParams';
 
-function isFlatQuizProblem(data: FlatQuizProblem | ExistingProblem): data is FlatQuizProblem {
-  return (data as FlatQuizProblem).problemId !== undefined;
-}
-
-function flattenQuizProblem(qp: QuizProblem): FlatQuizProblem {
-  return {
-    problemId: qp.problemId,
-    courseId: qp.courseId,
-    sectionId: qp.sectionId,
-    sectionUri: qp.sectionUri,
-    problemStex: qp.problemStex,
-    ...qp.problemJson, 
-  };
-}
-
-export type VariantType = 'rephrase' | 'modifyChoice' | 'thematicReskin';
-
+export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin' | 'scaffolding';
 export interface VariantConfig {
   variantTypes: VariantType[];
-  difficulty?: string;
-  formatType?: string;
-  customPrompt: string;
-  rephraseInstruction?: string;
-  rephraseSubtypes?: string[];
-  modifyChoiceMode?: 'add' | 'remove';
+  minorEditInstruction?: string;
+  minorEditSubtypes?: MinorEditType;
+  modifyChoiceMode?: 'add' | 'replace';
   modifyChoiceInstruction?: string;
   thematicReskinInstruction?: string;
   selectedTheme?: string;
 }
-
+export interface ScaffoldingDetails {
+  high: {
+    applicable: boolean;
+    numSubQuestions: number;
+  };
+  reduced: {
+    applicable: boolean;
+  };
+}
 interface VariantDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (payload: { problemId: number; variantConfig: VariantConfig }) => void;
-  problemData?: FlatQuizProblem | ExistingProblem;
-  courseId: string;
+  problemData: FlatQuizProblem;
+  setProblemData: (p: FlatQuizProblem | null) => void;
+  userInfo: UserInfo | undefined;
 }
-
+export const MINOR_EDIT_KEYS: MinorEditType[] = [
+  'change_data_format',
+  'change_goal',
+  'goal_inversion',
+  'convert_units',
+  'negate_question_stem',
+  'substitute_values',
+];
 export const VariantDialog = ({
   open,
   onClose,
-  onCreate,
   problemData,
-  courseId,
+  setProblemData,
+  userInfo,
 }: VariantDialogProps) => {
   const [variantConfig, setVariantConfig] = useState<VariantConfig>({
     variantTypes: [],
-    difficulty: '',
-    formatType: '',
-    customPrompt: '',
-    rephraseInstruction: '',
-    rephraseSubtypes: [],
+    minorEditInstruction: '',
+    minorEditSubtypes: undefined,
     modifyChoiceMode: undefined,
     modifyChoiceInstruction: '',
     thematicReskinInstruction: '',
     selectedTheme: '',
   });
 
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'json' | 'stex'>('json');
-  const [stex, setStex] = useState(undefined);
   const [editableSTeX, setEditableSTeX] = useState('');
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [rephraseApplicable, setRephraseApplicable] = useState<boolean>(false);
+  const [scaffoldingDetails, setScaffoldingDetails] = useState<ScaffoldingDetails>(null);
+  const [availabledMinorEdits, setAvailableMinorEdits] = useState<MinorEditType[] | []>([]);
+  const [minorEditsApplicable, setMinorEditsApplicable] = useState<boolean>(false);
   const [choicesApplicable, setChoicesApplicable] = useState<boolean>(false);
   const [reskinApplicable, setReskinApplicable] = useState<boolean>(false);
+  const [scaffoldingApplicable, setScaffoldingApplicable] = useState<boolean>(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [variantOptionsLoading, setVariantOptionsLoading] = useState(false);
-  const [previewProblemData, setPreviewProblemData] = useState<
-    FlatQuizProblem | ExistingProblem | null
-  >(null);
-
-  const problemId = isFlatQuizProblem(problemData) ? problemData.problemId : undefined;
-  const mcqOptions = isFlatQuizProblem(problemData) ? problemData.options || [] : [];
-  const STeX = isFlatQuizProblem(problemData) ? problemData.problemStex : stex;
-  const handleConfigChange = (field, value) => {
-    setVariantConfig((prev) => ({ ...prev, [field]: value }));
-  };
+  const [versions, setVersions] = useState<FlatQuizProblem[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [currentLang, setCurrentLang] = useState(undefined);
+  const [resetKey, setResetKey] = useState(0);
+  const STeX = problemData?.problemStex;
+  const latestManualEdit = problemData?.manualEdits?.[problemData.manualEdits.length - 1];
+  const [isViewingLatestVersion, setisViewingLatestVersion] = useState(true);
+  const [selectedVersion, setSelectedVersion] = useState<FlatQuizProblem>(null);
 
   const clearSelection = () => {
     setVariantConfig({
       variantTypes: [],
-      difficulty: '',
-      formatType: '',
-      customPrompt: '',
-      rephraseInstruction: '',
+      minorEditInstruction: '',
       modifyChoiceInstruction: '',
       thematicReskinInstruction: '',
     });
+    setResetKey((prev) => prev + 1);
   };
 
-  async function fetchRawStexFromUri(problemUri: string) {
-    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
-    if (!sourceLink) return null;
-    const rawStexLink = sourceLink.replace('-/blob', '-/raw');
-    const response = await axios.get(rawStexLink);
-    return response.data;
-  }
-
   useEffect(() => {
-    if (!isFlatQuizProblem(problemData))
-      fetchRawStexFromUri(problemData.uri).then((fetchedSTeX) => {
-        setStex(fetchedSTeX);
-      });
-  }, [problemData]);
-  
-  useEffect(() => {
-    const createCopyAndCheckVariants = async () => {
+    const checkVariants = async () => {
       if (!open || !problemData) return;
-
       setVariantOptionsLoading(true);
-
       try {
-        let copyResult;
-
-        if ('problemId' in problemData) {
-          copyResult = await generateQuizProblems({
-            mode: 'copy',
-            problemId: problemData.problemId,
-          });
-        } else if ('uri' in problemData && courseId) {
-          copyResult = await generateQuizProblems({
-            mode: 'copy',
-            problemUri: problemData.uri,
-            courseId,
-            sectionId: problemData.sectionId,
-            sectionUri: problemData.sectionUri,
-          });
-        }
-
-        const copied = copyResult?.[0];
-        if (!copied) return;
-
-        const result = await checkPossibleVariants(copied.problemId);
-        setRephraseApplicable(result.rephrase.applicable);
-        setChoicesApplicable(result.modify_choices.applicable);
-        setReskinApplicable(result.reskin.applicable);
+        if (!problemData) return;
+        const result = await checkPossibleVariants(problemData.problemId);
+        const availableMinorEdits = MINOR_EDIT_KEYS.filter((key) => result[key]);
+        const isHighScaffoldingApplicable =
+          result.scaffolding?.high?.applicable && result.scaffolding?.high.numSubQuestions > 0;
+        const isReducedScaffoldingApplicable = result.scaffolding?.reduced?.applicable;
+        setMinorEditsApplicable(availableMinorEdits.length > 0);
+        setAvailableMinorEdits(availableMinorEdits);
+        setChoicesApplicable(result.modify_choices);
+        setReskinApplicable(result.reskin.applicable && result.reskin?.themes?.length > 0);
+        setScaffoldingApplicable(isHighScaffoldingApplicable || isReducedScaffoldingApplicable);
+        setScaffoldingDetails(result.scaffolding);
         setAvailableThemes(result.reskin.themes);
+        setCurrentLang(result.current_question_language);
       } finally {
         setVariantOptionsLoading(false);
       }
     };
 
-    createCopyAndCheckVariants();
-  }, [open, problemData, courseId]);
+    checkVariants();
+  }, [open, problemData]);
+
+  useEffect(() => {
+    const fetchProblemVersionHistory = async () => {
+      if (!open || !problemData) return;
+      const history = await getProblemVersionHistory(problemData.problemId);
+      const flattenedVersions = history.map(flattenQuizProblem);
+      setVersions(flattenedVersions);
+    };
+
+    fetchProblemVersionHistory();
+  }, [problemData, open]);
 
   useEffect(() => {
     setEditableSTeX(STeX);
   }, [STeX]);
 
-  const handleCreateAndReturn = () => {
-    if (!problemId) {
+  const saveManualEdit = async () => {
+    if (!problemData) {
       console.error('Cannot create variant without problemId');
       return;
     }
-
-    const payload = {
-      problemId,
-      variantConfig: {
-        ...variantConfig,
-      },
+    if (latestManualEdit?.editedText === editableSTeX || problemData.problemStex === editableSTeX) {
+      setSnackbarMessage('Draft Saved! No Manual changes detected.');
+      setSnackbarOpen(true);
+      return;
+    }
+    await saveProblemDraft(problemData.problemId, editableSTeX);
+    setSnackbarMessage('Draft Saved!');
+    setSnackbarOpen(true);
+    const editEntry = {
+      updaterId: userInfo?.userId,
+      updatedAt: new Date().toISOString(),
+      editedText: editableSTeX,
     };
-    onCreate(payload);
+    if (problemData?.manualEdits) {
+      problemData.manualEdits.push(editEntry);
+    } else if (problemData) {
+      problemData.manualEdits = [editEntry];
+    }
   };
+  const markProblemFinal = async () => {
+    if (latestManualEdit?.editedText !== editableSTeX) {
+      await saveProblemDraft(problemData.problemId, editableSTeX);
+    }
+    await finalizeProblem(problemData.problemId);
+  };
+
+  const existingProblemUri = selectedVersion?.problemUri;
+  const selectedVersionGenParams = selectedVersion?.generationParams ?? existingProblemUri;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -192,9 +192,15 @@ export const VariantDialog = ({
           fontSize: '1.25rem',
           fontWeight: 600,
           color: 'primary.main',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         Create Question Variant
+        <Typography variant="subtitle1" fontWeight={500} color="text.secondary">
+          Preview
+        </Typography>
       </DialogTitle>
 
       <DialogContent
@@ -219,34 +225,66 @@ export const VariantDialog = ({
             <CircularProgress />
           </Box>
         )}
-        <Box display="flex" flex={1} gap={2} minHeight={0} overflow="hidden">
-          <Box flex={0.7} display="flex" flexDirection="column" minHeight={0} overflow="hidden">
+        <Box
+          display="flex"
+          flex={1}
+          gap={2}
+          minHeight={0}
+          overflow="hidden"
+          flexDirection={{ xs: 'column', md: 'row' }}
+        >
+          <Box
+            flex={{ xs: '1 1 auto', md: 0.4 }}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+            position={'relative'}
+          >
+            {!isViewingLatestVersion && (
+              <>
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  bottom={0}
+                  zIndex={10}
+                  bgcolor="rgba(255, 255, 255, 1)"
+                />
+                {selectedVersionGenParams && (selectedVersionGenParams as any)?.mode !== 'copy' && (
+                  <GenerationParams
+                    genParams={selectedVersionGenParams}
+                    existingProblemUri={existingProblemUri}
+                  />
+                )}
+              </>
+            )}
             <Box
               flex={1}
-              overflow="auto"
               pr={1}
-              sx={{
-                '&::-webkit-scrollbar': { width: '6px' },
-                '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '3px' },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '3px',
-                  '&:hover': { background: '#a1a1a1' },
-                },
-              }}
+              overflow="auto"
             >
               {variantOptionsLoading ? (
                 <LinearProgress />
               ) : (
                 <>
-                  {rephraseApplicable && (
+                  {minorEditsApplicable && (
                     <SwitchToggle
-                      title="Rephrase"
-                      typeKey="rephrase"
-                      instructionKey="rephraseInstruction"
+                      title="Minor Edit"
+                      typeKey="minorEdit"
+                      instructionKey="minorEditInstruction"
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      availableMinorEdits={availabledMinorEdits}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
                     />
                   )}
 
@@ -258,9 +296,13 @@ export const VariantDialog = ({
                       placeholder="e.g., randomize but keep correct answer intact"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
-                      mcqOptions={mcqOptions}
-                      selectedOptions={selectedOptions}
-                      setSelectedOptions={setSelectedOptions}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
                     />
                   )}
 
@@ -268,8 +310,6 @@ export const VariantDialog = ({
                     <SwitchToggle
                       title="Thematic Reskinning"
                       typeKey="thematicReskin"
-                      instructionKey="thematicReskinInstruction"
-                      placeholder="e.g., apply concept in a real-world scenario"
                       variantConfig={variantConfig}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
@@ -277,82 +317,122 @@ export const VariantDialog = ({
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
-                        setPreviewProblemData(flat);
+                        setProblemData(flat);
                         setEditableSTeX(flat.problemStex);
                       }}
                     />
                   )}
+                  {/*
+                  //TODO next step
+                   {scaffoldingApplicable && (
+                    <SwitchToggle
+                      title="Scaffold"
+                      typeKey="scaffolding"
+                      instructionKey="scaffoldingInstruction"
+                      variantConfig={variantConfig}
+                      scaffoldingDetails={scaffoldingDetails}
+                      setVariantConfig={setVariantConfig}
+                      problemData={problemData}
+                      onLoadingChange={setPreviewLoading}
+                      onVariantGenerated={(newVariant) => {
+                        const flat = flattenQuizProblem(newVariant);
+                        setProblemData(flat);
+                        setEditableSTeX(flat.problemStex);
+                      }}
+                    />
+                  )} */}
                 </>
               )}
-              <VariantConfigSection
-                variantConfig={variantConfig}
-                setVariantConfig={setVariantConfig}
-              />
-
+              {currentLang && (
+                <Translate
+                  key={resetKey}
+                  problemData={problemData}
+                  onLoadingChange={setPreviewLoading}
+                  language={currentLang}
+                  onTranslated={(newVariant) => {
+                    const flat = flattenQuizProblem(newVariant);
+                    setProblemData(flat);
+                    setEditableSTeX(flat.problemStex);
+                  }}
+                />
+              )}
               <Button
                 size="small"
+                variant="outlined"
                 onClick={clearSelection}
                 sx={{
                   color: 'error.main',
+                  borderColor: 'error.main',
                   textTransform: 'none',
                   mb: 2,
-                  '&:hover': { bgcolor: 'error.50', color: 'error.dark' },
+                  '&:hover': {
+                    bgcolor: 'error.50',
+                    borderColor: 'error.dark',
+                    color: 'error.dark',
+                  },
                 }}
               >
-                Clear All Selection
+                Clear Selection
               </Button>
-
-              <TextField
-                label="Pretext Instructions (optional)"
-                placeholder="e.g., general notes for all variants"
-                value={variantConfig.customPrompt}
-                onChange={(e) => handleConfigChange('customPrompt', e.target.value)}
-                fullWidth
-                multiline
-                minRows={3}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              />
-
-              <ConfigurationSummary variantConfig={variantConfig} />
             </Box>
           </Box>
-
-          <PreviewSection
-            previewMode={previewMode}
-            setPreviewMode={setPreviewMode}
-            problemData={previewProblemData ?? problemData}
-            editableSTeX={editableSTeX}
-            setEditableSTeX={setEditableSTeX}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setSnackbarOpen(false)}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           />
+          <Box
+            flex={{ xs: '1 1 auto', md: 0.7 }}
+            display="flex"
+            flexDirection="column"
+            minHeight={0}
+            overflow="hidden"
+          >
+            {/* <Box flex={1} overflow="auto" pr={1}> */}
+              <PreviewSection
+                previewMode={previewMode}
+                setPreviewMode={setPreviewMode}
+                problemData={problemData}
+                editableSTeX={editableSTeX}
+                setEditableSTeX={setEditableSTeX}
+                previousVersions={versions}
+                isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+                onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+              />
+            {/* </Box> */}
+          </Box>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, gap: 1 }}>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
         <Button
           onClick={() => {
+            clearSelection();
             onClose();
           }}
-          sx={{ textTransform: 'none' }}
+          // sx={{ textTransform: 'none' }}
         >
-          Start New Edit
+          Close
         </Button>
         <Button
-          onClick={() => {
-            handleCreateAndReturn();
+          onClick={async () => {
+            await saveManualEdit();
             clearSelection();
           }}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Save As Draft
         </Button>
         <Button
-          onClick={() => {
-            onClose();
+          onClick={async () => {
+            await markProblemFinal();
             clearSelection();
+            onClose();
           }}
+          disabled={!isViewingLatestVersion}
           sx={{ textTransform: 'none' }}
         >
           Finalize

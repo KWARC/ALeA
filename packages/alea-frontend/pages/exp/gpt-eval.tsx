@@ -13,7 +13,7 @@ import {
   Template,
   getGptRuns,
   getTemplates,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';

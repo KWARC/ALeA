@@ -1,4 +1,4 @@
-import { EditCommentRequest } from '@stex-react/api';
+import { EditCommentRequest } from '@stex-react/spec';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,

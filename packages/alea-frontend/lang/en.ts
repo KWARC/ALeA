@@ -1,3 +1,5 @@
+import CourseMetadata from "../components/instructor-panel/CourseMetadata";
+
 export const en = {
   home: {
     header: 'ALeA based Courses at FAU',
@@ -395,6 +397,10 @@ export const en = {
     updateHomework: 'Update Homework',
     cancel: 'Cancel',
     noHomeworksAvailable: 'No homework available.',
+    viewHomeworkDocument: 'View homework document',
+    showHomeworkStatistics: 'Show homework statistics',
+    editHomework: 'Edit homework',
+    deleteHomework: 'Delete homework',
   },
   logInSystem: {
     reset404: 'User not found.',
@@ -489,4 +495,62 @@ export const en = {
     howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
+
+  courseMetadata: {
+  title: 'Lecture Schedule for Course ID: {{courseId}}',
+  addLectureButton: 'Add Lecture',
+
+  day: 'Day',
+  venue: 'Venue',
+  venueLink: 'Venue Link',
+  startTime: 'Start Time',
+  endTime: 'End Time',
+  homework: 'Homework',
+  quiz: 'Quiz',
+  actions: 'Actions',
+  link: 'Link',
+  yes: 'Yes',
+  no: 'No',
+  edit: 'Edit',
+  delete: 'Delete',
+  editDialogTitle: 'Edit Lecture',
+  save: 'Save',
+  cancel: 'Cancel',
+
+  confirmDelete: 'Are you sure you want to delete this lecture?',
+  requiredFieldsAlert: 'Please fill all required fields: Day, Start Time, End Time',
+
+  // Announcements
+  announcementsHeader: 'Announcements for Course ID: {{courseId}}',
+  newAnnouncementButton: '+ New Announcement',
+
+  tableCourseId: 'Course ID',
+  tableInstructor: 'Instructor',
+  tableTitle: 'Title',
+  tableContent: 'Content',
+  tableCreatedAt: 'Created At',
+  tableVisibleUntil: 'Visible Until',
+
+  dialogEditAnnouncementTitle: 'Edit Announcement',
+  dialogNewAnnouncementTitle: 'New Announcement',
+
+  fieldTitle: 'Title',
+  fieldContent: 'Content',
+  fieldVisibleUntil: 'Visible Until',
+
+  saveChanges: 'Save Changes',
+  create: 'Create',
+
+  confirmDeleteAnnouncementTitle: 'Confirm Deletion',
+  confirmDeleteAnnouncementMessage:
+    'Are you sure you want to delete this announcement? This action cannot be undone.',
+
+  snackbarAnnouncementSaved: 'Announcement saved successfully!',
+  snackbarAnnouncementSaveFailed: 'Failed to save announcement. Check console for details.',
+  snackbarAnnouncementDeleted: 'Announcement deleted successfully!',
+  snackbarAnnouncementDeleteFailed:
+    'Failed to delete announcement. Check console for details.',
+  snackbarAnnouncementsFetchFailed: 'Failed to fetch announcements. Check console for details.',
+  isHomeworkAvailable: 'Enable homework for this course',
+}
 };

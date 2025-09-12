@@ -1,5 +1,5 @@
 import CheckIcon from '@mui/icons-material/Check';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 import {
   Alert,
@@ -34,7 +34,7 @@ import {
   recomputeMemberships,
   UpdateResourceAction,
   updateResourceAction,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DateView } from '@stex-react/react-utils';
 import {
   Action,
@@ -56,7 +56,7 @@ import {
   createSemesterAclsForCourse,
   createStaffResourceActions,
   createStudentResourceActions,
-} from 'packages/utils/src/lib/semester-helper';
+} from '../../utils/src/lib/semester-helper';
 import { getFlamsServer } from '@kwarc/ftml-react';
 
 const SysAdmin: NextPage = () => {
@@ -84,12 +84,14 @@ const SysAdmin: NextPage = () => {
   const [courseIds, setCourseIds] = useState([]);
 
   useEffect(() => {
-    getFlamsServer().index().then((data) => {
-      const courseId = data[1]
-        .filter((obj) => obj.type === 'course')
-        .map((courseObj) => courseObj.acronym.toLowerCase());
-      setCourseIds(courseId);
-    });
+    getFlamsServer()
+      .index()
+      .then((data) => {
+        const courseId = data[1]
+          .filter((obj) => obj.type === 'course')
+          .map((courseObj) => courseObj.acronym.toLowerCase());
+        setCourseIds(courseId);
+      });
   }, []);
 
   async function semesterSetup() {
@@ -215,7 +217,7 @@ const SysAdmin: NextPage = () => {
     setNewAclId(aclId);
   };
 
-  function handleDeleteClick(resId: string, actionId: string) {
+  function handleDeleteClickForEntry(resId: string, actionId: string) {
     setDeleteDialogOpen(true);
     setDeleteResource({ resourceId: resId, actionId: actionId });
   }
@@ -227,18 +229,26 @@ const SysAdmin: NextPage = () => {
 
   async function handleDeleteConfirm() {
     try {
-      await deleteResourceAction(deleteResource?.resourceId, deleteResource?.actionId);
-      setResourceActions((prev) =>
-        prev.filter(
-          (entry) =>
-            entry.resourceId !== deleteResource?.resourceId ||
-            entry.actionId !== deleteResource?.actionId
-        )
-      );
+      if (deleteResource) {
+        await deleteResourceAction(deleteResource.resourceId, deleteResource.actionId);
+        setResourceActions((prev) =>
+          prev.filter(
+            (entry) =>
+              entry.resourceId !== deleteResource.resourceId ||
+              entry.actionId !== deleteResource.actionId
+          )
+        );
+        setDeleteDialogOpen(false);
+        setDeleteResource(null);
+      } else {
+        console.warn('Attempted to confirm delete with no resource selected.');
+        setDeleteDialogOpen(false);
+      }
+    } catch (e) {
+      console.error(e);
+
       setDeleteDialogOpen(false);
       setDeleteResource(null);
-    } catch (e) {
-      console.log(e);
     }
   }
 
@@ -262,8 +272,8 @@ const SysAdmin: NextPage = () => {
       <Box
         sx={{
           m: '0 auto',
-          maxWidth: '70%',
-          p: '20px',
+          maxWidth: { xs: '95%', md: '90%', lg: '1200px' },
+          p: { xs: '10px', sm: '20px' },
           width: '100%',
           boxSizing: 'border-box',
         }}
@@ -349,10 +359,11 @@ const SysAdmin: NextPage = () => {
           sx={{
             m: '0 auto',
             maxWidth: '100%',
-            p: '20px',
+            p: { xs: '15px', sm: '20px' },
             boxSizing: 'border-box',
             backgroundColor: '#f9f9f9',
             borderRadius: '8px',
+            mt: 4,
           }}
         >
           <Typography fontSize={22} m="10px 0">
@@ -364,7 +375,6 @@ const SysAdmin: NextPage = () => {
             onChange={(e) => setResourceType(e.target.value as ResourceName)}
             displayEmpty
             variant="outlined"
-            // margin="normal"
             size="small"
           >
             <MenuItem value="">
@@ -406,7 +416,6 @@ const SysAdmin: NextPage = () => {
             onChange={(e) => handleActionClick(e.target.value as Action)}
             displayEmpty
             variant="outlined"
-            // margin="normal"
             size="small"
             disabled={!resourceType}
             sx={{ mb: '20px' }}
@@ -448,8 +457,8 @@ const SysAdmin: NextPage = () => {
         <Box sx={{ textAlign: 'center', my: 4 }}>
           <Typography variant="h6">Resource Access Management</Typography>
         </Box>
-        <TableContainer component={Paper} sx={{ margin: 'auto' }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ margin: 'auto', overflow: 'auto', mt: 2 }}>
+          <Table sx={{ minWidth: 650 }} aria-label="resource actions table">
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Resource ID</TableCell>
@@ -463,8 +472,8 @@ const SysAdmin: NextPage = () => {
             <TableBody>
               {resourceActions.map((entry) => (
                 <TableRow key={`${entry.resourceId}-${entry.actionId}`}>
-                  <TableCell>{entry.resourceId}</TableCell>
-                  <TableCell>{entry.actionId}</TableCell>
+                  <TableCell sx={{ wordBreak: 'break-word' }}>{entry.resourceId}</TableCell>
+                  <TableCell sx={{ wordBreak: 'break-word' }}>{entry.actionId}</TableCell>
                   <TableCell>
                     {error &&
                       editing?.aclId === entry.aclId &&
@@ -497,7 +506,7 @@ const SysAdmin: NextPage = () => {
                   <TableCell>
                     <DateView timestampMs={new Date(entry.updatedAt).getTime()} />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', display: 'flex' }}>
+                  <TableCell sx={{ textAlign: 'center' }}>
                     {editing?.aclId === entry.aclId &&
                     editing?.resourceId === entry.resourceId &&
                     editing?.actionId === entry.actionId ? (
@@ -514,7 +523,7 @@ const SysAdmin: NextPage = () => {
                     )}
                     <IconButton
                       color="warning"
-                      onClick={() => handleDeleteClick(entry.resourceId, entry.actionId)}
+                      onClick={() => handleDeleteClickForEntry(entry.resourceId, entry.actionId)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -541,7 +550,7 @@ const SysAdmin: NextPage = () => {
             <Button onClick={handleDeleteCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleDeleteConfirm} color="secondary" autoFocus>
+            <Button onClick={handleDeleteConfirm} color="error" autoFocus>
               Delete
             </Button>
           </DialogActions>

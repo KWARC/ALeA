@@ -30,7 +30,7 @@ import {
   GradingItem,
   HomeworkInfo,
   Tristate,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import {
   GradingContext,

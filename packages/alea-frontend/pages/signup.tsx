@@ -6,7 +6,7 @@ import {
   signUpUser,
   isLoggedIn,
   loginUsingRedirect,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';

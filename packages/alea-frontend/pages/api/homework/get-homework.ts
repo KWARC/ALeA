@@ -8,7 +8,7 @@ import {
   HomeworkInfo,
   HomeworkPhase,
   ResponseWithSubProblemId,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { Action, ResourceName } from '@stex-react/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny, ResourceActionParams } from '../access-control/resource-utils';
@@ -174,5 +174,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.status(200).json({ homework, responses, gradingInfo } /*as GetHomeworkResponse TODO(Behrooz)*/);
+  res.status(200).json({ homework, responses, gradingInfo } as GetHomeworkResponse );
 }

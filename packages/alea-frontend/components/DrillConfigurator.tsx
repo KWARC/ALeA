@@ -20,7 +20,7 @@ import {
   getAuthHeaders,
   isLoggedIn,
   smileyToLevel,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { SafeHtml } from '@stex-react/react-utils';
 import { ConfigureLevelSlider } from '@stex-react/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL, Window, stableShuffle } from '@stex-react/utils';

@@ -1,7 +1,7 @@
 import { Box, Button, IconButton, List, ListItemButton, ListItemText } from '@mui/material';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../nap/MultiItemsSelector';
-import { deleteReview, getReviewItems, GradingWithAnswer } from '@stex-react/api';
+import { deleteReview, getReviewItems, GradingWithAnswer } from '@stex-react/spec';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';

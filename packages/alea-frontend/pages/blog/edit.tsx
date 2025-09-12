@@ -1,4 +1,4 @@
-import { BlogPost, canAccessResource, getPostById } from '@stex-react/api';
+import { BlogPost, canAccessResource, getPostById } from '@stex-react/spec';
 import { Action, ResourceName } from '@stex-react/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';

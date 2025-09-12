@@ -1,4 +1,4 @@
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { useState } from 'react';
 import { CommentLabel } from './CommentLabel';
 import { CommentReply } from './CommentReply';

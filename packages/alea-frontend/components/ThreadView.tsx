@@ -8,7 +8,7 @@ import {
   canAccessResource,
   getCommentsForThread,
   updateQuestionState,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { CommentTree, organizeHierarchically } from '@stex-react/comments';
 import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
 import Link from 'next/link';

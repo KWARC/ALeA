@@ -4,7 +4,7 @@ import {
   DEFAULT_POINTS,
   GrantReason,
   NotificationType,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { CURRENT_TERM } from '@stex-react/utils';
 import axios from 'axios';
 import { canUserModerateComments } from './access-control/resource-utils';

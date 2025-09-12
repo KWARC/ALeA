@@ -23,7 +23,7 @@ import {
   getTemplates,
   saveEval,
   saveTemplate,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

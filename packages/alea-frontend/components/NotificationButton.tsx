@@ -15,7 +15,7 @@ import {
   getUserNotifications,
   isLoggedIn,
   updateNotificationSeenTime,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { DateView } from '@stex-react/react-utils';
 import { PRIMARY_COL, localStore } from '@stex-react/utils';
 import Link from 'next/link';

@@ -3,7 +3,7 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@stex-react/spec';
 import { CURRENT_TERM, CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@stex-react/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -14,30 +14,7 @@ import { ReactNode } from 'react';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES } from '..';
-
-const UniversityDetail = {
-  FAU: {
-    fullName: 'Friedrich-Alexander-Universität Erlangen-Nürnberg',
-    logo: 'https://community.fau.de/wp-content/themes/community.fau-erlangen/img/FAU_Logo_Bildmarke.svg',
-  },
-  Jacobs: {
-    fullName: 'Jacobs University',
-    logo: '/jacoblogo.png',
-  },
-  IISc: {
-    fullName: 'India Institute of Science and Technology',
-    logo: '/iisc.png',
-  },
-  'Heriot Watt': {
-    fullName: 'Heriot-Watt University',
-    logo: '/heriott_logo.png',
-  },
-  others: {
-    fullName: 'Other Institutions',
-    logo: '/others.png',
-  },
-};
+import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@stex-react/utils';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (

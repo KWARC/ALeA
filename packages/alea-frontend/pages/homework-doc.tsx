@@ -9,7 +9,7 @@ import {
   GradingInfo,
   ResponseWithSubProblemId,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import {
   GradingContext,
   AnswerContext,
@@ -96,7 +96,7 @@ const HomeworkDocPage: React.FC = () => {
               showGradingFor: ShowGradingFor.INSTRUCTOR,
               isGrading: false,
               showGrading: true,
-              gradingInfo: /*hwInfo?.gradingInfo || TODO(Behrooz)*/ {},
+              gradingInfo: hwInfo?.gradingInfo,
               studentId: 'fake_abc',
             }}
           >

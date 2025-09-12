@@ -11,7 +11,7 @@ import {
   createAnswer,
   getUserInfo,
   postAnswerToLMP,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { MystEditor } from '@stex-react/myst';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';

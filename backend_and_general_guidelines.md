@@ -69,7 +69,7 @@ Use joins in SQL queries or leverage ORM features to reduce the number of databa
 ### 2.6.3. Use transactions when appropriate
 Implement transactions for sets of related database operations to maintain consistency in case of partial failures.
 
-## 2.7. Returning API errors outside handler
+## 2.7. Returning API errors in helper functions (not directly in the `handler` function)
 There are some common operations that are performed by several APIs such as checking the request type ('GET' or 'POST'), retrieving user id from token or running a database query. In such scenarios we can create two kinds of helper functions. Lets call them `error-finders` and `error-senders`. The difference between the two is that `error-finders` would just return an appropriate value to indicate error but an `error-sender` would make a `res.status` call to send the error in the API response. 
 
 Such functions (`error-senders`) are tricky to get right, so **we try to avoid creating such functions unless they are used many-many times**. The following a sample `error-handler`. 

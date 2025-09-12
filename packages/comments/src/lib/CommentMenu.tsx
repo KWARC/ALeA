@@ -15,7 +15,7 @@ import {
   isHiddenNotSpam,
   isSpam,
   updateCommentState
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { ConfirmDialogContent } from '@stex-react/react-utils';
 import { useRouter } from 'next/router';
 import { ReactNode, useState } from 'react';

@@ -11,7 +11,7 @@ import {
   insertQuizResponse,
   Phase,
   UserInfo,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { isEmptyResponse } from '@stex-react/quiz-utils';
 import { QuizDisplay } from '@stex-react/stex-react-renderer';
 import {

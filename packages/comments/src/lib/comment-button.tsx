@@ -2,7 +2,7 @@ import AddCommentIcon from '@mui/icons-material/AddComment';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { Box, Button, Dialog, DialogActions, IconButton, Tooltip } from '@mui/material';
-import { Comment } from '@stex-react/api';
+import { Comment } from '@stex-react/spec';
 import { MystViewer } from '@stex-react/myst';
 import { useCommentRefresh } from '@stex-react/utils';
 import { useRouter } from 'next/router';

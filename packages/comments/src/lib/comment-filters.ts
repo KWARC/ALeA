@@ -1,4 +1,4 @@
-import { Comment, isHiddenNotSpam, isSpam } from '@stex-react/api';
+import { Comment, isHiddenNotSpam, isSpam } from '@stex-react/spec';
 
 export class CommentFilters {
 

@@ -1,5 +1,5 @@
 import { Button } from '@mui/material';
-import { IKnowEvent, getUriWeights, reportEvent } from '@stex-react/api';
+import { IKnowEvent, getUriWeights, reportEvent } from '@stex-react/spec';
 import { localStore } from '@stex-react/utils';
 import type { NextPage } from 'next';
 import { useReducer } from 'react';

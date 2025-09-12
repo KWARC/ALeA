@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
+import { UserProfile } from '@stex-react/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -17,5 +18,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { firstName, lastName, email, studyProgram, semester, languages } = result[0];
 
-  return res.status(200).json({ firstName, lastName, email, studyProgram, semester, languages });
+  return res.status(200).json({
+    firstName,
+    lastName,
+    email,
+    studyProgram,
+    semester,
+    languages,
+  } as UserProfile
+);
 }

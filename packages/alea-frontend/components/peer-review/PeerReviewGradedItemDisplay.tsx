@@ -1,7 +1,7 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, IconButton } from '@mui/material';
-import { FTMLProblemWithSolution, GradingWithAnswer } from '@stex-react/api';
+import { FTMLProblemWithSolution, GradingWithAnswer } from '@stex-react/spec';
 import { GradingContext, ProblemDisplay, ShowGradingFor } from '@stex-react/stex-react-renderer';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';

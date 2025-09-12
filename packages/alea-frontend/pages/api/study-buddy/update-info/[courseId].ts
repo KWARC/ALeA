@@ -1,4 +1,4 @@
-import { StudyBuddy } from '@stex-react/api';
+import { StudyBuddy } from '@stex-react/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,

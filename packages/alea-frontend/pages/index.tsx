@@ -6,7 +6,7 @@ import {
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
-} from '@stex-react/api';
+} from '@stex-react/spec';
 import { ServerLinksContext } from '@stex-react/stex-react-renderer';
 import {
   Action,
@@ -24,6 +24,7 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { PARTNERED_UNIVERSITIES } from '@stex-react/utils';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -74,34 +75,6 @@ const aleaFeatures = [
   },
 ];
 
-export const PARTNERED_UNIVERSITIES = [
-  {
-    code: 'FAU',
-    name: 'FAU, Erlangen-Nuremberg',
-    logoSrc: '/faulogo.png',
-  },
-  {
-    code: 'IISc',
-    name: 'IISc, Bengaluru',
-    logoSrc: '/iisc.png',
-  },
-  {
-    code: 'Jacobs',
-    name: 'Jacobs University, Bremen',
-    logoSrc: '/jacoblogo.png',
-  },
-  {
-    code: 'Heriot Watt',
-    name: 'Heriot-Watt University, Edinburgh',
-    logoSrc: '/heriott_logo.png',
-  },
-  {
-    code: 'others',
-    name: 'Other Institutions',
-    name_de: 'Andere Institutionen',
-    logoSrc: '/others.png',
-  },
-];
 
 const FEATURED_COURSES = ['ai-1', 'ai-2', 'gdp', 'iwgs-2', 'krmt', 'smai'];
 

@@ -9,6 +9,7 @@ import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
 import { getFlamsServer } from '@kwarc/ftml-react';
+import { getCourseProblemCounts } from '@stex-react/spec';
 
 export function DocProblemBrowser({
   notesDocUri,
@@ -56,9 +57,9 @@ export function DocProblemBrowser({
   useEffect(() => {
     if (!courseId) return;
 
-    axios.get(`/api/get-course-problem-counts/${courseId}`).then((resp) => {
-      console.log(resp.data);
-      setProblemCounts(resp.data);
+    getCourseProblemCounts(courseId).then((counts) => {
+      console.log(counts);
+      setProblemCounts(counts);
     });
   }, [courseId, notesDocUri]);
   if (!toc?.length) return <CircularProgress />;
@@ -101,7 +102,11 @@ export function DocProblemBrowser({
           </>
         )}
         {selectedSection?.uri && (
-          <PerSectionQuiz sectionUri={selectedSection.uri} showButtonFirst={false} />
+          <PerSectionQuiz
+            courseId={courseId!}
+            sectionUri={selectedSection.uri}
+            showButtonFirst={false}
+          />
         )}
         <br />
         <b style={{ color: 'red' }}>{t.warning}</b>

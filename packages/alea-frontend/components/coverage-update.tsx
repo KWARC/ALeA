@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/api';
+import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/spec';
 import {
   convertHtmlStringToPlain,
   CourseInfo,

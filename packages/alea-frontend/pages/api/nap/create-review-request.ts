@@ -4,7 +4,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { CreateReviewRequest } from '@stex-react/api';
+import { CreateReviewRequest } from '@stex-react/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;

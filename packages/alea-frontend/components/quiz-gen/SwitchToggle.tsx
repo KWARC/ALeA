@@ -1,43 +1,108 @@
 import {
   Box,
+  Button,
   Checkbox,
   Chip,
   Collapse,
   FormControlLabel,
-  LinearProgress,
+  MenuItem,
   Radio,
   RadioGroup,
+  Select,
+  Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { generateQuizProblems, QuizProblem } from '@stex-react/api';
+import { generateQuizProblems, QuizProblem } from '@stex-react/spec';
 import { useEffect, useState } from 'react';
-import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
-import { VariantConfig, VariantType } from './VariantDialog';
+import { FlatQuizProblem } from '../../pages/quiz-gen';
+import { ScaffoldingDetails, VariantConfig, VariantType } from './VariantDialog';
 
 interface SwitchToggleProps {
   title: string;
   typeKey: VariantType;
-  instructionKey: string;
-  placeholder: string;
+  instructionKey?: string;
+  placeholder?: string;
   variantConfig: VariantConfig;
   themes?: string[];
+  scaffoldingDetails?: ScaffoldingDetails;
   setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
-  mcqOptions?: string[];
-  selectedOptions?: string[];
-  problemData?: FlatQuizProblem | ExistingProblem;
-  setSelectedOptions?: React.Dispatch<React.SetStateAction<string[]>>;
+  problemData?: FlatQuizProblem;
+  availableMinorEdits?: MinorEditType[];
   onVariantGenerated?: (newVariant: QuizProblem) => void;
   onLoadingChange?: (loading: boolean) => void;
 }
 
-const REPHRASE_SUBOPTIONS = [
-  'Technical Rephrasing',
-  'Entity Swapping',
-  'Numerical Substitution',
-  'Add/Remove Distractors',
-];
+export type MinorEditType =
+  | 'change_data_format'
+  | 'change_goal'
+  | 'goal_inversion'
+  | 'convert_units'
+  | 'negate_question_stem'
+  | 'substitute_values';
+
+const MINOR_EDIT_LABELS: Record<MinorEditType, string> = {
+  change_data_format: 'Change Data Format',
+  change_goal: 'Change Goal',
+  goal_inversion: 'Invert Goal',
+  convert_units: 'Convert Units',
+  negate_question_stem: 'Negate Question Stem',
+  substitute_values: 'Substitute Values',
+};
+
+function RenderScaffoldingDetails({
+  selectedScaffolding,
+  numSubQuestions = 1,
+  setSelectedScaffolding,
+  setNumSubQuestions,
+  maxSubQuestions,
+}: {
+  selectedScaffolding: 'high' | 'reduced';
+  numSubQuestions?: number;
+  setSelectedScaffolding: (value: 'high' | 'reduced') => void;
+  setNumSubQuestions?: (value: number) => void;
+  maxSubQuestions?: number;
+}) {
+  return (
+    <Box pl={1} mb={2}>
+      <Typography variant="subtitle2" color="text.secondary" mb={1}>
+        Scaffolding Options:
+      </Typography>
+
+      <RadioGroup
+        value={selectedScaffolding}
+        onChange={(e) => setSelectedScaffolding(e.target.value as 'high' | 'reduced')}
+      >
+        <Box display="flex" alignItems="center" mb={1}>
+          <Tooltip title="High Scaffolding: breaks the problem into multiple guided sub-questions, reducing cognitive load.">
+            <FormControlLabel value="high" control={<Radio />} label="High Scaffolding" />
+          </Tooltip>
+          {selectedScaffolding === 'high' && (
+            <Tooltip title={`Select number of sub-questions to break the problem into`}>
+              <Select
+                size="small"
+                value={numSubQuestions}
+                onChange={(e) => setNumSubQuestions(Number(e.target.value))}
+                sx={{ ml: 2, width: 80 }}
+              >
+                {Array.from({ length: maxSubQuestions }, (_, i) => i + 1).map((n) => (
+                  <MenuItem key={n} value={n}>
+                    {n}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Tooltip>
+          )}
+        </Box>
+        <Tooltip title="Reduced Scaffolding: presents the problem as a single step without breaking into sub-questions.">
+          <FormControlLabel value="reduced" control={<Radio />} label="Reduced Scaffolding" />
+        </Tooltip>
+      </RadioGroup>
+    </Box>
+  );
+}
 
 export const SwitchToggle = ({
   title,
@@ -46,19 +111,24 @@ export const SwitchToggle = ({
   placeholder,
   variantConfig,
   themes = [],
+  scaffoldingDetails,
   setVariantConfig,
-  mcqOptions = [],
-  selectedOptions = [],
-  setSelectedOptions,
   problemData,
+  availableMinorEdits,
   onVariantGenerated,
   onLoadingChange,
 }: SwitchToggleProps) => {
   const isActive = variantConfig.variantTypes.includes(typeKey);
-  const [themesLoading, setThemesLoading] = useState<boolean>(false);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(
     variantConfig.selectedTheme || null
   );
+  const { high, reduced } = scaffoldingDetails || {};
+  const [selectedScaffolding, setSelectedScaffolding] = useState<'high' | 'reduced'>(
+    high?.applicable ? 'high' : reduced?.applicable ? 'reduced' : 'high'
+  );
+  const [numSubQuestions, setNumSubQuestions] = useState(high?.numSubQuestions || null);
+  const mcqOptions = problemData?.options || [];
 
   const handleSwitchChange = (checked: boolean) => {
     setVariantConfig((prev) => {
@@ -84,7 +154,7 @@ export const SwitchToggle = ({
     });
   };
 
-  const handleModeChange = (newMode: 'add' | 'remove') => {
+  const handleModeChange = (newMode: 'add' | 'replace') => {
     setVariantConfig((prev) => ({ ...prev, modifyChoiceMode: newMode }));
     if (newMode === 'add') {
       setSelectedOptions?.(mcqOptions);
@@ -99,43 +169,19 @@ export const SwitchToggle = ({
       ...prev,
       selectedTheme: theme,
     }));
-    if (typeKey === 'thematicReskin' && problemData && (problemData as FlatQuizProblem).problemId) {
-      const flatProblem = problemData as FlatQuizProblem;
+    if (typeKey === 'thematicReskin' && problemData.problemId) {
       onLoadingChange?.(true);
 
       try {
         const result = await generateQuizProblems({
           mode: 'variant',
-          problemId: flatProblem.problemId,
+          problemId: problemData.problemId,
           variantType: 'reskin',
           theme,
         });
 
         if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
-          onVariantGenerated?.(newVariant);
-        }
-      } finally {
-        onLoadingChange?.(false);
-      }
-    } else if (
-      typeKey === 'thematicReskin' &&
-      problemData &&
-      (problemData as ExistingProblem).uri
-    ) {
-      const flatProblem = problemData as ExistingProblem;
-      onLoadingChange?.(true);
-
-      try {
-        const result = await generateQuizProblems({
-          mode: 'variant',
-          problemUri: flatProblem.uri,
-          variantType: 'reskin',
-          theme,
-        });
-
-        if (result.length > 0) {
-          const newVariant: QuizProblem = result[0];
+          const newVariant = result[0];
           onVariantGenerated?.(newVariant);
         }
       } finally {
@@ -144,49 +190,105 @@ export const SwitchToggle = ({
     }
   };
 
+  const handleMinorEdit = async (type: MinorEditType) => {
+    if (typeKey === 'minorEdit' && problemData?.problemId) {
+      onLoadingChange?.(true);
+
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: problemData.problemId,
+          variantType: 'minor_edit',
+          minorEditType: type,
+          minorEditInstruction: variantConfig[instructionKey],
+        });
+
+        if (result.length > 0) {
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
+        }
+        console.log({ type });
+      } finally {
+        onLoadingChange?.(false);
+      }
+    }
+  };
+
+  const handleModifyChoice = async (modifyChoiceMode: string) => {
+    if (typeKey === 'modifyChoice' && problemData?.problemId) {
+      onLoadingChange?.(true);
+      try {
+        const result = await generateQuizProblems({
+          mode: 'variant',
+          problemId: problemData.problemId,
+          variantType: 'modify_choices',
+          modifyType: variantConfig.modifyChoiceMode,
+          optionsToModify: selectedOptions,
+          modifyChoiceInstruction: variantConfig[instructionKey],
+        });
+        if (result.length > 0) {
+          const newVariant = result[0];
+          onVariantGenerated?.(newVariant);
+        }
+      } finally {
+        onLoadingChange?.(false);
+      }
+    }
+  };
+const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQuestions: number) => {
+  if (!problemData?.problemId) return;
+  onLoadingChange?.(true);
+  try {
+    const result = await generateQuizProblems({
+      mode: 'variant',
+      problemId: problemData.problemId,
+      variantType: 'scaffolding', 
+      scaffoldingType: selectedScaffolding,
+      numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined, 
+    });
+
+    if (result.length > 0) {
+      const newVariant = result[0];
+      onVariantGenerated?.(newVariant);
+    }
+  } finally {
+    onLoadingChange?.(false);
+  }
+};
+
+
   useEffect(() => {
     if (variantConfig.selectedTheme) {
       setSelectedTheme(variantConfig.selectedTheme);
     }
   }, [variantConfig.selectedTheme]);
 
-  const renderRephraseSuboptions = () => (
+  const renderMinorEditSuboptions = () => (
     <Box pl={1} mb={2}>
       <Typography variant="subtitle2" color="text.secondary" mb={1}>
-        Select Rephrase Types:
+        Select Minor Edit Type:
       </Typography>
-      {REPHRASE_SUBOPTIONS.map((opt) => {
-        const checked = variantConfig.rephraseSubtypes?.includes(opt) ?? false;
-        return (
+      <RadioGroup
+        value={variantConfig.minorEditSubtypes || ''}
+        onChange={(e) => {
+          const selected = e.target.value as MinorEditType;
+          setVariantConfig((prev) => ({
+            ...prev,
+            minorEditSubtypes: selected,
+          }));
+        }}
+      >
+        {(availableMinorEdits || []).map((opt) => (
           <FormControlLabel
             key={opt}
-            control={
-              <Checkbox
-                checked={checked}
-                onChange={(e) => {
-                  setVariantConfig((prev) => ({
-                    ...prev,
-                    rephraseSubtypes: e.target.checked
-                      ? [...(prev.rephraseSubtypes ?? []), opt]
-                      : (prev.rephraseSubtypes ?? []).filter((o) => o !== opt),
-                  }));
-                }}
-              />
-            }
-            label={opt}
+            value={opt}
+            control={<Radio />}
+            label={MINOR_EDIT_LABELS[opt]}
           />
-        );
-      })}
+        ))}
+      </RadioGroup>
     </Box>
   );
-
-  useEffect(() => {
-    if (themes.length === 0) {
-      setThemesLoading(true);
-    } else {
-      setThemesLoading(false);
-    }
-  }, [themes]);
 
   const renderModifyChoicesOptions = () => {
     const mode = variantConfig.modifyChoiceMode;
@@ -199,17 +301,17 @@ export const SwitchToggle = ({
           </Typography>
           <RadioGroup
             value={mode || ''}
-            onChange={(e) => handleModeChange(e.target.value as 'add' | 'remove')}
+            onChange={(e) => handleModeChange(e.target.value as 'add' | 'replace')}
           >
             <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
-            <FormControlLabel value="remove" control={<Radio />} label="Remove Distractors" />
+            <FormControlLabel value="replace" control={<Radio />} label="Replace Distractors" />
           </RadioGroup>
         </Box>
 
         {mcqOptions.length > 0 && (
           <Box sx={{ pl: 1, mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" mb={1}>
-              Select which options to {mode === 'add' ? 'duplicate/modify' : 'remove'}:
+              Select which options to {mode === 'add' ? 'duplicate/modify' : 'replace'}:
             </Typography>
             {mcqOptions.map((opt, idx) => (
               <FormControlLabel
@@ -239,11 +341,7 @@ export const SwitchToggle = ({
         Choose a Problem Theme
       </Typography>
 
-      {themesLoading ? (
-        <Box width="100%" my={1}>
-          <LinearProgress />
-        </Box>
-      ) : themes.length > 0 ? (
+      {themes.length > 0 ? (
         <Box display="flex" flexWrap="wrap" gap={1}>
           {themes.map((theme) => (
             <Chip
@@ -300,27 +398,67 @@ export const SwitchToggle = ({
 
       <Collapse in={isActive}>
         <Box p={2} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
-          {typeKey === 'rephrase' && renderRephraseSuboptions()}
+          {typeKey === 'minorEdit' && renderMinorEditSuboptions()}
 
           {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
 
           {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
+          {typeKey === 'scaffolding' && (
+            <RenderScaffoldingDetails
+              selectedScaffolding={selectedScaffolding}
+              numSubQuestions={numSubQuestions}
+              setSelectedScaffolding={setSelectedScaffolding}
+              setNumSubQuestions={setNumSubQuestions}
+              maxSubQuestions={scaffoldingDetails?.high?.numSubQuestions ?? 1}
+            />
+          )}
 
-          <TextField
-            sx={{ mb: 2 }}
-            label={`${title} Instructions`}
-            placeholder={placeholder}
-            value={variantConfig[instructionKey] || ''}
-            onChange={(e) =>
-              setVariantConfig((prev) => ({
-                ...prev,
-                [instructionKey]: e.target.value,
-              }))
-            }
-            fullWidth
-            multiline
-            minRows={2}
-          />
+          {instructionKey && (
+            <TextField
+              sx={{ mb: 2 }}
+              label={`${title} Instructions(Optional)`}
+              placeholder={placeholder}
+              value={variantConfig[instructionKey] || ''}
+              onChange={(e) =>
+                setVariantConfig((prev) => ({
+                  ...prev,
+                  [instructionKey]: e.target.value,
+                }))
+              }
+              fullWidth
+              multiline
+              minRows={2}
+            />
+          )}
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            {typeKey === 'minorEdit' && (
+              <Button
+                variant="contained"
+                onClick={() => handleMinorEdit(variantConfig.minorEditSubtypes as MinorEditType)}
+                disabled={!variantConfig.minorEditSubtypes}
+              >
+                Generate
+              </Button>
+            )}
+
+            {typeKey === 'modifyChoice' && (
+              <Button
+                variant="contained"
+                onClick={() => handleModifyChoice(variantConfig.modifyChoiceMode || '')}
+                disabled={!variantConfig.modifyChoiceMode || !selectedOptions?.length}
+              >
+                Generate Modified Choice Variant
+              </Button>
+            )}
+            {typeKey === 'scaffolding' && (
+              <Button
+                variant="contained"
+                onClick={() => handleScaffold(selectedScaffolding,numSubQuestions)}
+              >
+                Generate
+              </Button>
+            )}
+          </Stack>
         </Box>
       </Collapse>
     </Box>

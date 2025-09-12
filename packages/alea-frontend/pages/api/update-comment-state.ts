@@ -1,4 +1,4 @@
-import { UpdateCommentStateRequest } from '@stex-react/api';
+import { UpdateCommentStateRequest } from '@stex-react/spec';
 import { getUserIdIfCanModerateCommentsOrSetError } from './access-control/resource-utils';
 import {
   checkIfPostOrSetError,

@@ -8,7 +8,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Switch,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -17,16 +16,17 @@ import {
   generateQuizProblems,
   getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
+  getCourseProblemCounts,
   getCoverageTimeline,
-} from '@stex-react/api';
+  getProblemsPerSection,
+} from '@stex-react/spec';
 import { updateRouterQuery } from '@stex-react/react-utils';
 import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
 import { useRouter } from 'next/router';
-import { ExistingProblem, FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
-import { SecInfo } from 'packages/alea-frontend/types';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
+import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
-import axios from 'axios';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 
 function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
@@ -64,6 +64,7 @@ export const CourseSectionSelector = ({
   const [generatedProblemsCount, setGeneratedProblemsCount] = useState<Record<string, number>>({});
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
+  const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
@@ -122,13 +123,18 @@ export const CourseSectionSelector = ({
   }, [coverageTimeline, courseId, sections]);
   useEffect(() => {
     const fetchCounts = async () => {
-      if (!courseId) return;
-      const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
-      const existingCountsResp = await axios.get(
-        `/api/get-course-problem-counts?courseId=${courseId}`
-      );
-      setGeneratedProblemsCount(generatedCounts);
-      setExistingProblemsCount(existingCountsResp.data);
+      setLoadingProblemCount(true);
+      try {
+        if (!courseId) return;
+        const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
+        const existingCountsResp = await getCourseProblemCounts(courseId);
+        setGeneratedProblemsCount(generatedCounts);
+        setExistingProblemsCount(existingCountsResp);
+      } catch (err) {
+        console.error('Error in fetch Problem Count', err);
+      } finally {
+        setLoadingProblemCount(false);
+      }
     };
     fetchCounts();
   }, [courseId]);
@@ -146,10 +152,8 @@ export const CourseSectionSelector = ({
             allExisting.push(...existingProblemsCache.current[sectionUri]);
           } else {
             try {
-              const resp = await axios.get(
-                `/api/get-problems-by-section?sectionUri=${encodeURIComponent(sectionUri)}`
-              );
-              const problemUris: string[] = resp.data;
+              const resp = await getProblemsPerSection(sectionUri, courseId);
+              const problemUris: string[] = resp.map((item) => item?.problemId);
               const enrichedProblems = problemUris.map((uri) => ({
                 uri,
                 sectionUri,
@@ -258,7 +262,7 @@ export const CourseSectionSelector = ({
             onChange={(e) =>
               updateRouterQuery(
                 router,
-                { courseId: e.target.value, startSectionId: '', endSectionId: '' },
+                { courseId: e.target.value, startSectionUri: '', endSectionUri: '' },
                 true
               )
             }
@@ -285,11 +289,14 @@ export const CourseSectionSelector = ({
                 label="Start Section"
                 onChange={(e) => {
                   const newStart = e.target.value;
-                  const updates: Record<string, string> = { startSectionUri: newStart };
-                  if (!endSectionUri) {
-                    updates.endSectionUri = newStart;
-                  }
-                  updateRouterQuery(router, updates, true);
+                  updateRouterQuery(
+                    router,
+                    {
+                      startSectionUri: newStart,
+                      endSectionUri: newStart,
+                    },
+                    true
+                  );
                 }}
               >
                 {sections.map((s) => (
@@ -312,22 +319,55 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                        <Tooltip title="Existing problems">
-                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
-                            {existingProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
-                        <Tooltip title="Generated problems">
-                          <Box
-                            px={1.2}
-                            py={0.3}
-                            bgcolor="success.main"
-                            color="white"
-                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
-                          >
-                            {generatedProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="primary.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Existing problems">
+                            <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                              {existingProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
+
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Generated problems">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                            >
+                              {generatedProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>
                   </MenuItem>
@@ -369,22 +409,55 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                        <Tooltip title="Existing problems">
-                          <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
-                            {existingProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
-                        <Tooltip title="Generated problems">
-                          <Box
-                            px={1.2}
-                            py={0.3}
-                            bgcolor="success.main"
-                            color="white"
-                            borderLeft="1px solid rgba(255, 255, 255, 0.3)"
-                          >
-                            {generatedProblemsCount[s.uri] || 0}
-                          </Box>
-                        </Tooltip>
+                       {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="primary.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Existing problems">
+                            <Box px={1.2} py={0.3} bgcolor="primary.main" color="white">
+                              {existingProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
+
+                        {loadingProblemCount ? (
+                          <Tooltip title="Fetching problems…">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <CircularProgress size={18} sx={{ color: 'white' }} />
+                            </Box>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Generated problems">
+                            <Box
+                              px={1.2}
+                              py={0.3}
+                              bgcolor="success.main"
+                              color="white"
+                              borderLeft="1px solid rgba(255, 255, 255, 0.3)"
+                            >
+                              {generatedProblemsCount[s.uri] || 0}
+                            </Box>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>{' '}
                   </MenuItem>

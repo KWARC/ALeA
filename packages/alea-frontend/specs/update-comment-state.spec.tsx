@@ -1,4 +1,4 @@
-import { Comment, HiddenStatus } from '@stex-react/api';
+import { Comment, HiddenStatus } from '@stex-react/spec';
 import axios from 'axios';
 import { createMocks } from 'node-mocks-http';
 import { executeQuery } from '../pages/api/comment-utils';
