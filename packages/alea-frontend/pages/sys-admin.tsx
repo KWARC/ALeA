@@ -1,11 +1,9 @@
-import CheckIcon from '@mui/icons-material/Check';
 import { Delete as DeleteIcon } from '@mui/icons-material';
+import CheckIcon from '@mui/icons-material/Check';
 import EditIcon from '@mui/icons-material/Edit';
 import {
-  Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,7 +13,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -51,13 +48,6 @@ import { useEffect, useState } from 'react';
 import AclDisplay from '../components/AclDisplay';
 import RecorrectionChecker from '../components/RecorrectionChecker';
 import MainLayout from '../layouts/MainLayout';
-import {
-  createInstructorResourceActions,
-  createSemesterAclsForCourse,
-  createStaffResourceActions,
-  createStudentResourceActions,
-} from '../../utils/src/lib/semester-helper';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
 const SysAdmin: NextPage = () => {
   const router = useRouter();
@@ -78,37 +68,6 @@ const SysAdmin: NextPage = () => {
     resourceId: string;
     actionId: string;
   } | null>(null);
-  const [courseId, setCourseId] = useState('');
-  const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
-  const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
-  const [courseIds, setCourseIds] = useState([]);
-
-  useEffect(() => {
-    getFlamsServer()
-      .index()
-      .then((data) => {
-        const courseId = data[1]
-          .filter((obj) => obj.type === 'course')
-          .map((courseObj) => courseObj.acronym.toLowerCase());
-        setCourseIds(courseId);
-      });
-  }, []);
-
-  async function semesterSetup() {
-    setSemesterSetupLoading(true);
-    setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
-    try {
-      await createSemesterAclsForCourse(courseId);
-      await createInstructorResourceActions(courseId);
-      await createStudentResourceActions(courseId);
-      await createStaffResourceActions(courseId);
-      setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
-    } catch (e) {
-      setSemesterSetupMessage(`Semester acl setup failed for courseId ${courseId}`);
-    } finally {
-      setSemesterSetupLoading(false);
-    }
-  }
 
   async function getAllResources() {
     try {
@@ -305,56 +264,6 @@ const SysAdmin: NextPage = () => {
           </Button>
         </Link>
         <RecorrectionChecker />
-        <Box sx={{ my: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            displayEmpty
-            variant="outlined"
-            size="small"
-            sx={{ mr: 1, minWidth: 200 }}
-          >
-            <MenuItem value="">
-              <em>Select Course</em>
-            </MenuItem>
-            {courseIds.map((id) => (
-              <MenuItem key={id} value={id}>
-                {id}
-              </MenuItem>
-            ))}
-          </Select>
-          <Button
-            variant="contained"
-            onClick={semesterSetup}
-            disabled={!courseId || semesterSetupLoading}
-            sx={{ minWidth: 160 }}
-            startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
-          >
-            Semester ACL Setup
-          </Button>
-        </Box>
-        <Snackbar
-          open={!!semesterSetupMessage}
-          autoHideDuration={semesterSetupLoading ? null : 4000}
-          onClose={() => setSemesterSetupMessage('')}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert
-            severity={
-              semesterSetupLoading
-                ? 'info'
-                : semesterSetupMessage.includes('successful')
-                ? 'success'
-                : semesterSetupMessage.includes('failed')
-                ? 'error'
-                : 'info'
-            }
-            sx={{ width: '100%' }}
-            icon={semesterSetupLoading ? <CircularProgress size={20} /> : undefined}
-          >
-            {semesterSetupMessage}
-          </Alert>
-        </Snackbar>
         <Box
           sx={{
             m: '0 auto',
