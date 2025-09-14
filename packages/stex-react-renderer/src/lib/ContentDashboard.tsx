@@ -5,8 +5,8 @@ import IndeterminateCheckBoxOutlinedIcon from '@mui/icons-material/Indeterminate
 import UnfoldLessDoubleIcon from '@mui/icons-material/UnfoldLessDouble';
 import UnfoldMoreDoubleIcon from '@mui/icons-material/UnfoldMoreDouble';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
-import { getCoverageTimeline } from '@stex-react/spec';
-import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
+import { getCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';

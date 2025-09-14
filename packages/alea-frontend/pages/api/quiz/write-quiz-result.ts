@@ -1,4 +1,4 @@
-import { QuizResult } from '@stex-react/spec';
+import { QuizResult } from '@alea/spec';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 

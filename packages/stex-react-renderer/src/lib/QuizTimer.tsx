@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AlarmIcon from '@mui/icons-material/Alarm';
-import { TimerEvent, TimerEventType, getElapsedTime, getTotalElapsedTime } from '@stex-react/spec';
+import { TimerEvent, TimerEventType, getElapsedTime, getTotalElapsedTime } from '@alea/spec';
 
 export function timerEvent(
   type: TimerEventType,

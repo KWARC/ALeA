@@ -6,13 +6,13 @@ import {
   getSemesterInfo,
   getInstances,
   SemesterData,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import { DashboardHeader } from '../../../components/university-admin/DashboardHeader';
 import { SemesterForm } from '../../../components/university-admin/SemesterForm';
 import { CourseManagement } from '../../../components/university-admin/CourseManagement';
 import { HolidayManagement } from '../../../components/university-admin/HolidayManagement';
 import { SemesterDetail } from '../../../components/university-admin/SemesterDetail';
-import { isUserMember } from '@stex-react/spec';
+import { isUserMember } from '@alea/spec';
 
 export default function UniversityAdminDashboard() {
   const router = useRouter();

@@ -25,7 +25,7 @@ import {
   editHoliday,
   getHolidaysInfo,
   uploadHolidays,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import React, { useEffect, useState } from 'react';
 
 const convertToDDMMYYYY = (isoDate: string): string => {

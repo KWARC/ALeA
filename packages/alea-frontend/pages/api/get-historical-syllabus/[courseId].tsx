@@ -1,4 +1,4 @@
-import { GetHistoricalSyllabusResponse } from '@stex-react/spec';
+import { GetHistoricalSyllabusResponse } from '@alea/spec';
 import { readFileSync, readdirSync } from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 

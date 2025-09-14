@@ -1,5 +1,5 @@
-import { CreateAnswerRequest, getHomeworkPhase } from '@stex-react/spec';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CreateAnswerRequest, getHomeworkPhase } from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,

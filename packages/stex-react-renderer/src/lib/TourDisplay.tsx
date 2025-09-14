@@ -13,8 +13,8 @@ import {
   smileyToLevel,
   getQueryResults,
   getSparlQueryForDefinition,
-} from '@stex-react/spec';
-import { shouldUseDrawer, simpleHash } from '@stex-react/utils';
+} from '@alea/spec';
+import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';

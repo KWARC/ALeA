@@ -1,15 +1,15 @@
 import { Box, Button, IconButton, List, ListItemButton, ListItemText } from '@mui/material';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../nap/MultiItemsSelector';
-import { deleteReview, getReviewItems, GradingWithAnswer } from '@stex-react/spec';
+import { deleteReview, getReviewItems, GradingWithAnswer } from '@alea/spec';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import { truncateText } from '@stex-react/utils';
+import { truncateText } from '@alea/utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { PeerReviewGradedItemDisplay } from './PeerReviewGradedItemDisplay';
-import { SafeHtml } from '@stex-react/react-utils';
+import { SafeHtml } from '@alea/react-utils';
 
 const MULTI_SELECT_FIELDS = ['questionId', 'checkerId'] as const;
 const ALL_SORT_FIELDS = ['questionTitle', 'updatedAt', 'checkerId'] as const;

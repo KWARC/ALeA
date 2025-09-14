@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { getFeedback, postFeedback } from '@stex-react/spec';
+import { getFeedback, postFeedback } from '@alea/spec';
 import { useEffect, useRef, useState } from 'react';
 
 const FEEDBACK_REASONS = [

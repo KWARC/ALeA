@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Stack, Button, TextField, Paper, Alert, Snackbar } from '@mui/material';
 import type { AlertColor } from '@mui/material';
-import { createSemester, SemesterData } from '@stex-react/spec';
+import { createSemester, SemesterData } from '@alea/spec';
 
 interface SemesterFormProps {
   onSemesterCreated: (newSemesterId?: string) => void;

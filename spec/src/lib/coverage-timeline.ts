@@ -1,4 +1,4 @@
-import { CoverageTimeline, LectureEntry } from '@stex-react/utils';
+import { CoverageTimeline, LectureEntry } from '@alea/utils';
 import axios from 'axios';
 import { getAuthHeaders } from './lmp';
 interface CoverageUpdatePayload {

@@ -1,4 +1,4 @@
-import { AccessControlList } from '@stex-react/spec';
+import { AccessControlList } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';

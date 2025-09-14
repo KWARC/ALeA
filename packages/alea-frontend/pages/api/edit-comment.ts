@@ -1,4 +1,4 @@
-import { EditCommentRequest } from '@stex-react/spec';
+import { EditCommentRequest } from '@alea/spec';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,

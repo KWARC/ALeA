@@ -1,5 +1,5 @@
-import { GetCourseGradingItemsResponse } from '@stex-react/spec';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { GetCourseGradingItemsResponse } from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import { checkIfGetOrSetError, getUserIdOrSetError } from '../comment-utils';

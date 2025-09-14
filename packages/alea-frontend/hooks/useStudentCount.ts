@@ -1,4 +1,4 @@
-import { getStudentCountInCourse } from '@stex-react/spec';
+import { getStudentCountInCourse } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
 export function useStudentCount(courseId?: string, instanceId?: string) {

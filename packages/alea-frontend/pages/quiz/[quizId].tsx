@@ -11,9 +11,9 @@ import {
   insertQuizResponse,
   Phase,
   UserInfo,
-} from '@stex-react/spec';
-import { isEmptyResponse } from '@stex-react/quiz-utils';
-import { QuizDisplay } from '@stex-react/stex-react-renderer';
+} from '@alea/spec';
+import { isEmptyResponse } from '@alea/quiz-utils';
+import { QuizDisplay } from '@alea/stex-react-renderer';
 import {
   Action,
   CourseInfo,
@@ -21,7 +21,7 @@ import {
   isFauId,
   localStore,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';

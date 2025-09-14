@@ -1,4 +1,4 @@
-import { NotificationType } from '@stex-react/spec';
+import { NotificationType } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,
@@ -7,7 +7,7 @@ import {
   sendNotification,
 } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 
 export default async function handler(
   req: NextApiRequest,

@@ -3,9 +3,9 @@ import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';
 import { QuizFileReader } from './QuizFileReader';
-import { FTMLProblemWithSolution } from '@stex-react/spec';
+import { FTMLProblemWithSolution } from '@alea/spec';
 import { FTML } from '@kwarc/ftml-viewer';
-import { SafeHtml } from '@stex-react/react-utils';
+import { SafeHtml } from '@alea/react-utils';
 
 const HomeworkForm = ({
   title,

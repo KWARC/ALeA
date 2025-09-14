@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from '@mui/material';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 
 interface GenerationParamsProps {
   genParams: any;

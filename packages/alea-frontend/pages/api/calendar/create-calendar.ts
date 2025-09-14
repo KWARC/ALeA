@@ -1,4 +1,4 @@
-import { Action, LectureEntry, semesterPeriods } from '@stex-react/utils';
+import { Action, LectureEntry, semesterPeriods } from '@alea/utils';
 import ical, { ICalEventData } from 'ical-generator';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';

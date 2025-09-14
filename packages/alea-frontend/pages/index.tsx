@@ -6,15 +6,15 @@ import {
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
-} from '@stex-react/spec';
-import { ServerLinksContext } from '@stex-react/stex-react-renderer';
+} from '@alea/spec';
+import { ServerLinksContext } from '@alea/stex-react-renderer';
 import {
   Action,
   CourseInfo,
   CourseResourceAction,
   CURRENT_TERM,
   PRIMARY_COL,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { getFlamsServer } from '@kwarc/ftml-react';
-import { PARTNERED_UNIVERSITIES } from '@stex-react/utils';
+import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {

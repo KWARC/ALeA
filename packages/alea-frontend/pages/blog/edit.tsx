@@ -1,5 +1,5 @@
-import { BlogPost, canAccessResource, getPostById } from '@stex-react/spec';
-import { Action, ResourceName } from '@stex-react/utils';
+import { BlogPost, canAccessResource, getPostById } from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

@@ -11,8 +11,8 @@ import {
   createAnswer,
   getUserInfo,
   postAnswerToLMP,
-} from '@stex-react/spec';
-import { MystEditor } from '@stex-react/myst';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';

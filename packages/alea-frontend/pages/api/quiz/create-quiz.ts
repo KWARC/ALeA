@@ -1,6 +1,6 @@
-import { QuizWithStatus } from '@stex-react/spec';
-import { doesQuizExist, writeQuizFile } from '@stex-react/node-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { QuizWithStatus } from '@alea/spec';
+import { doesQuizExist, writeQuizFile } from '@alea/node-utils';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuidv4 } from 'uuid';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';

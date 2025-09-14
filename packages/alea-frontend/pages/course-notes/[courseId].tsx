@@ -11,10 +11,10 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getCourseInfo } from '@stex-react/spec';
-import { CommentButton } from '@stex-react/comments';
-import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CommentButton } from '@alea/comments';
+import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';

@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@mui/material';
-import { AllCoursesStats, UserStats, getStudyBuddyUsersStats } from '@stex-react/spec';
+import { AllCoursesStats, UserStats, getStudyBuddyUsersStats } from '@alea/spec';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import StudyBuddyModeratorOverview from './StudyBuddyModeratorOverview';

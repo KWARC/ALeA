@@ -1,5 +1,5 @@
-import { CreateGradingRequest, ReviewType } from '@stex-react/spec';
-import { Action, ResourceName } from '@stex-react/utils';
+import { CreateGradingRequest, ReviewType } from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import {

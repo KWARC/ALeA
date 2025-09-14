@@ -16,14 +16,14 @@ import {
   getSlideUriToIndexMapping,
   SectionInfo,
   Slide,
-} from '@stex-react/spec';
-import { CommentNoteToggleView } from '@stex-react/comments';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { CommentNoteToggleView } from '@alea/comments';
+import { SafeHtml } from '@alea/react-utils';
 import {
   ContentDashboard,
   LayoutWithFixedMenu,
   SectionReview,
-} from '@stex-react/stex-react-renderer';
+} from '@alea/stex-react-renderer';
 import {
   Action,
   CourseInfo,
@@ -31,7 +31,7 @@ import {
   localStore,
   ResourceName,
   shouldUseDrawer,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';

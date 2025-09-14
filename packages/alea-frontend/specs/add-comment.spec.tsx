@@ -2,7 +2,7 @@ import axios from 'axios';
 import addComment from '../pages/api/add-comment';
 import { createMocks } from 'node-mocks-http';
 import { executeQuery } from '../pages/api/comment-utils';
-import { Comment } from '@stex-react/spec';
+import { Comment } from '@alea/spec';
 import { processResults } from '../pages/api/get-comments';
 
 jest.mock('axios');

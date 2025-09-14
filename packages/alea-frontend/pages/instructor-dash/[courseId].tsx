@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
-import { canAccessResource, getCourseInfo } from '@stex-react/spec';
-import { updateRouterQuery } from '@stex-react/react-utils';
-import { Action, CourseInfo, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { canAccessResource, getCourseInfo } from '@alea/spec';
+import { updateRouterQuery } from '@alea/react-utils';
+import { Action, CourseInfo, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

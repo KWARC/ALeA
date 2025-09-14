@@ -6,7 +6,7 @@ import TimelineItem from '@mui/lab/TimelineItem';
 import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Box } from '@mui/material';
-import { DateView } from '@stex-react/react-utils';
+import { DateView } from '@alea/react-utils';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 import {

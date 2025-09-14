@@ -28,8 +28,8 @@ import {
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   LoType,
-} from '@stex-react/spec';
-import { capitalizeFirstLetter } from '@stex-react/utils';
+} from '@alea/spec';
+import { capitalizeFirstLetter } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
 import { ArchiveMap } from '.';
 import styles from '../../styles/lo-explorer.module.scss';

@@ -20,8 +20,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { CreateGptProblemsRequest, Template } from '@stex-react/spec';
-import { ServerLinksContext } from '@stex-react/stex-react-renderer';
+import { CreateGptProblemsRequest, Template } from '@alea/spec';
+import { ServerLinksContext } from '@alea/stex-react-renderer';
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 
 function templateToFormData(template: Template): CreateGptProblemsRequest {

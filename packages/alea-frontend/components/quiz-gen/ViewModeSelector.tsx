@@ -1,5 +1,5 @@
 import { Box, Button, CircularProgress } from '@mui/material';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 
 export type QuizViewMode = 'all' | 'generated' | 'existing';
 export function ViewModeSelector({

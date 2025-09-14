@@ -2,8 +2,8 @@ import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from './comment-utils';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
-import { getCourseInfo } from '@stex-react/spec';
+import { CURRENT_TERM } from '@alea/utils';
+import { getCourseInfo } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let instanceId = req.query.instanceId as string;
