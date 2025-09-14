@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import { useMemo, useState } from 'react';
 import {
   ExistingProblem,

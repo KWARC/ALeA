@@ -25,8 +25,8 @@ import {
   setActive,
   StudyBuddy,
   updateStudyBuddyInfo,
-} from '@stex-react/spec';
-import { BG_COLOR, CourseInfo, MaAI_COURSES } from '@stex-react/utils';
+} from '@alea/spec';
+import { BG_COLOR, CourseInfo, MaAI_COURSES } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';

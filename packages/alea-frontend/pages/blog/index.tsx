@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from '@mui/material';
-import { BlogPost, canAccessResource, getPostSnippets, PostSnippet } from '@stex-react/spec';
-import { MystViewer } from '@stex-react/myst';
-import { Action, ResourceName } from '@stex-react/utils';
+import { BlogPost, canAccessResource, getPostSnippets, PostSnippet } from '@alea/spec';
+import { MystViewer } from '@alea/myst';
+import { Action, ResourceName } from '@alea/utils';
 import fs from 'fs';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';

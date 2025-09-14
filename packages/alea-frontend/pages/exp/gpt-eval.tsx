@@ -13,15 +13,15 @@ import {
   Template,
   getGptRuns,
   getTemplates,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
 import {
   FixedPositionMenu,
   LayoutWithFixedMenu,
-} from '@stex-react/stex-react-renderer';
-import { shouldUseDrawer } from '@stex-react/utils';
+} from '@alea/stex-react-renderer';
+import { shouldUseDrawer } from '@alea/utils';
 import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
 import { GptNavigator, OutputViewer } from './gpt-problems';

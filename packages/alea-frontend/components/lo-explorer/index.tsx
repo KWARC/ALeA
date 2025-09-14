@@ -1,7 +1,7 @@
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Box, Button, Typography } from '@mui/material';
-import { ALL_LO_RELATION_TYPES, ALL_LO_TYPES, AllLoRelationTypes, LoType } from '@stex-react/spec';
-import { localStore } from '@stex-react/utils';
+import { ALL_LO_RELATION_TYPES, ALL_LO_TYPES, AllLoRelationTypes, LoType } from '@alea/spec';
+import { localStore } from '@alea/utils';
 import { useEffect, useMemo, useState } from 'react';
 import styles from '../../styles/lo-explorer.module.scss';
 import LoListDisplay, { getUrlInfo } from '../LoListDisplay';

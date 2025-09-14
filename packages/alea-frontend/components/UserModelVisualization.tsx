@@ -3,8 +3,8 @@ import { Box, IconButton } from '@mui/material';
 import {
   ServerLinksContext,
   TourAPIEntry,
-} from '@stex-react/stex-react-renderer';
-import { simpleHash } from '@stex-react/utils';
+} from '@alea/stex-react-renderer';
+import { simpleHash } from '@alea/utils';
 import axios from 'axios';
 import * as d3 from 'd3';
 import {
@@ -14,7 +14,7 @@ import {
   sugiyama,
 } from 'd3-dag';
 import { useContext, useEffect, useReducer, useState } from 'react';
-import { getUriWeights } from '@stex-react/spec';
+import { getUriWeights } from '@alea/spec';
 
 const nodeRadius = 20;
 

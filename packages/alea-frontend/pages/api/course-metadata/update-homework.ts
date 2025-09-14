@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Action, ResourceName } from '@stex-react/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 

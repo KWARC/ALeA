@@ -1,9 +1,9 @@
 import { Box, Typography } from '@mui/material';
-import { HomeworkStatsInfo } from '@stex-react/spec';
+import { HomeworkStatsInfo } from '@alea/spec';
 import { useRouter } from 'next/router';
 import Chart from 'react-google-charts';
 import { getLocaleObject } from '../lang/utils';
-import { SafeHtml } from '@stex-react/react-utils';
+import { SafeHtml } from '@alea/react-utils';
 
 export function BarChart({
   data,

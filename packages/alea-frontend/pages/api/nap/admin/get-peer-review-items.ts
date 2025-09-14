@@ -5,8 +5,8 @@ import {
   executeAndEndSet500OnError,
 } from '../../comment-utils';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
-import { GradingWithAnswer } from '@stex-react/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { GradingWithAnswer } from '@alea/spec';
 import { addAnswerClassesToGradingOrSetError } from '../nap-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

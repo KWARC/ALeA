@@ -11,9 +11,9 @@ import {
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   SparqlResponse,
-} from '@stex-react/spec';
-import { DimAndURIListDisplay, URIListDisplay } from '@stex-react/stex-react-renderer';
-import { capitalizeFirstLetter, PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { DimAndURIListDisplay, URIListDisplay } from '@alea/stex-react-renderer';
+import { capitalizeFirstLetter, PRIMARY_COL } from '@alea/utils';
 import { useEffect, useState } from 'react';
 
 function processDimAndConceptData(result: SparqlResponse) {

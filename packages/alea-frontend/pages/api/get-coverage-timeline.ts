@@ -1,4 +1,4 @@
-import { CoverageTimeline } from '@stex-react/utils';
+import { CoverageTimeline } from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 

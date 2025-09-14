@@ -1,4 +1,4 @@
-import { Comment, isHiddenNotSpam, isSpam } from '@stex-react/spec';
+import { Comment, isHiddenNotSpam, isSpam } from '@alea/spec';
 
 export class CommentFilters {
 

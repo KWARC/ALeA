@@ -1,5 +1,5 @@
-import { GetSortedCoursesByConnectionsResponse } from '@stex-react/spec';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { GetSortedCoursesByConnectionsResponse } from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';
 import { executeAndEndSet500OnError } from '../comment-utils';

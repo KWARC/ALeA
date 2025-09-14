@@ -15,8 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Language, UserProfile, updateUserProfile } from '@stex-react/spec';
-import { isFauId } from '@stex-react/utils';
+import { Language, UserProfile, updateUserProfile } from '@alea/spec';
+import { isFauId } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../../lang/utils';

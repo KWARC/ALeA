@@ -3,7 +3,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PublicIcon from '@mui/icons-material/Public';
 import { Box, Tab, Tabs } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { CommentSection } from './comment-section';

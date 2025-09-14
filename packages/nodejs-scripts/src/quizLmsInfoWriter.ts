@@ -1,6 +1,6 @@
-import {QuizWithStatus} from '@stex-react/spec';
+import {QuizWithStatus} from '@alea/spec';
 import {FTML} from '@kwarc/ftml-viewer'
-import { getAllQuizzes } from '@stex-react/node-utils';
+import { getAllQuizzes } from '@alea/node-utils';
 import fs from 'fs';
 
 import { exit } from 'process';

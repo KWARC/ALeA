@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { HomeworkInfo } from './homework';
 import { getAuthHeaders } from './lmp';

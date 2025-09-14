@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@stex-react/spec';
-import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
+import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
+import { CURRENT_TERM, LectureEntry } from '@alea/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';

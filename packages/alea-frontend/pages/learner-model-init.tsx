@@ -15,8 +15,8 @@ import {
   UserInfo,
   getUserInfo,
   reportEvent
-} from '@stex-react/spec';
-import { localStore } from '@stex-react/utils';
+} from '@alea/spec';
+import { localStore } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';

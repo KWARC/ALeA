@@ -12,7 +12,7 @@ import {
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../AclDisplay';
-import { createAcl, getCouseIdsOfSemester } from '@stex-react/spec';
+import { createAcl, getCouseIdsOfSemester } from '@alea/spec';
 
 interface CourseManagementProps {
   semester: string;

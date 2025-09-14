@@ -1,6 +1,6 @@
-import { QuizWithStatus } from '@stex-react/spec';
-import { getAllQuizzes } from '@stex-react/node-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { QuizWithStatus } from '@alea/spec';
+import { getAllQuizzes } from '@alea/node-utils';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeQueryAndEnd } from '../comment-utils';

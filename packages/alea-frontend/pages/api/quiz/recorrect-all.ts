@@ -1,5 +1,5 @@
-import { FTMLProblemWithSolution } from '@stex-react/spec';
-import { getAllQuizzes } from '@stex-react/node-utils';
+import { FTMLProblemWithSolution } from '@alea/spec';
+import { getAllQuizzes } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isMemberOfAcl } from '../acl-utils/acl-common-utils';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';

@@ -1,6 +1,6 @@
 import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
-import { TourDisplay } from '@stex-react/stex-react-renderer';
-import { BG_COLOR } from '@stex-react/utils';
+import { TourDisplay } from '@alea/stex-react-renderer';
+import { BG_COLOR } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

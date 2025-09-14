@@ -1,4 +1,4 @@
-import { GrantPointsRequest } from '@stex-react/spec';
+import { GrantPointsRequest } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { canUserModerateComments as canUserModerateComments } from './access-control/resource-utils';
 import {

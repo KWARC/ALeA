@@ -29,7 +29,7 @@ import {
   QuestionStatus,
   QuizStubInfo,
   UserInfo,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import {
   Action,
   CourseInfo,
@@ -39,7 +39,7 @@ import {
   LectureEntry,
   PRIMARY_COL,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';

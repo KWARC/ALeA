@@ -1,4 +1,4 @@
-import { ResourceActionPair } from '@stex-react/utils';
+import { ResourceActionPair } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 

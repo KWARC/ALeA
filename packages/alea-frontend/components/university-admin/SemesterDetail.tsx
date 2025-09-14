@@ -17,7 +17,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { updateSemester } from '@stex-react/spec';
+import { updateSemester } from '@alea/spec';
 import React, { useState } from 'react';
 
 interface SemesterData {

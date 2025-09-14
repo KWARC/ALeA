@@ -17,9 +17,9 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { getAllQuizzes, QuizWithStatus } from '@stex-react/spec';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
-import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
+import { getAllQuizzes, QuizWithStatus } from '@alea/spec';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
+import { CURRENT_TERM, LectureEntry } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useStudentCount } from '../hooks/useStudentCount';

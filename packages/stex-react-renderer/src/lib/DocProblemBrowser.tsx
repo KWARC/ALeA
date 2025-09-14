@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box, CircularProgress } from '@mui/material';
-import { BG_COLOR, shouldUseDrawer } from '@stex-react/utils';
+import { BG_COLOR, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -9,7 +9,7 @@ import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
 import { getFlamsServer } from '@kwarc/ftml-react';
-import { getCourseProblemCounts } from '@stex-react/spec';
+import { getCourseProblemCounts } from '@alea/spec';
 
 export function DocProblemBrowser({
   notesDocUri,

@@ -1,4 +1,4 @@
-import { Phase, QuizWithStatus } from '@stex-react/spec';
+import { Phase, QuizWithStatus } from '@alea/spec';
 import dayjs from 'dayjs';
 import fs from 'fs';
 import path from 'path';

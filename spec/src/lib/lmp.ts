@@ -1,4 +1,4 @@
-import { deleteCookie, getCookie, setCookie } from '@stex-react/utils';
+import { deleteCookie, getCookie, setCookie } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { LoType } from './flams';
 

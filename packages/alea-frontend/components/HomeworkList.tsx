@@ -14,11 +14,11 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material';
-import { getHomework, HomeworkInfo, HomeworkStub } from '@stex-react/spec';
+import { getHomework, HomeworkInfo, HomeworkStub } from '@alea/spec';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';
-import { SafeHtml } from '@stex-react/react-utils';
+import { SafeHtml } from '@alea/react-utils';
 
 const HomeworkList = ({
   homeworkStubs,

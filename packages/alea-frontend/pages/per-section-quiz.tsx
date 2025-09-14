@@ -1,8 +1,8 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { SafeHtml } from '@stex-react/react-utils';
-import { PerSectionQuiz } from '@stex-react/stex-react-renderer';
-import { getParamFromUri, PRIMARY_COL } from '@stex-react/utils';
+import { SafeHtml } from '@alea/react-utils';
+import { PerSectionQuiz } from '@alea/stex-react-renderer';
+import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { getLocaleObject } from '../lang/utils';

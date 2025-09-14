@@ -32,8 +32,8 @@ import {
   getAnnouncements,
   updateAnnouncement,
   UpdateAnnouncementRequest,
-} from '@stex-react/spec';
-import { Announcement } from '@stex-react/spec';
+} from '@alea/spec';
+import { Announcement } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
 

@@ -7,7 +7,7 @@ import {
   FormControlLabel,
   TextField,
 } from '@mui/material';
-import { getUserInfo } from '@stex-react/spec';
+import { getUserInfo } from '@alea/spec';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { useRouter } from 'next/router';

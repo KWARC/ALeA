@@ -38,8 +38,8 @@ import {
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
   getUserInfo,
-} from '@stex-react/spec';
-import { MaAI_COURSES, PRIMARY_COL, localStore } from '@stex-react/utils';
+} from '@alea/spec';
+import { MaAI_COURSES, PRIMARY_COL, localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';

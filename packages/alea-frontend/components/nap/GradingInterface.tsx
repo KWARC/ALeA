@@ -30,14 +30,14 @@ import {
   GradingItem,
   HomeworkInfo,
   Tristate,
-} from '@stex-react/spec';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
 import {
   GradingContext,
   GradingCreator,
   ProblemDisplay,
   ShowGradingFor,
-} from '@stex-react/stex-react-renderer';
+} from '@alea/stex-react-renderer';
 import {
   Dispatch,
   SetStateAction,

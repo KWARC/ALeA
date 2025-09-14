@@ -1,4 +1,4 @@
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 
 export function getSbCourseId(courseId: string, instanceId: string = CURRENT_TERM) {
   return `${courseId}||${instanceId}`;

@@ -19,9 +19,9 @@ import {
   getCourseProblemCounts,
   getCoverageTimeline,
   getProblemsPerSection,
-} from '@stex-react/spec';
-import { updateRouterQuery } from '@stex-react/react-utils';
-import { CourseInfo, CoverageTimeline } from '@stex-react/utils';
+} from '@alea/spec';
+import { updateRouterQuery } from '@alea/react-utils';
+import { CourseInfo, CoverageTimeline } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';

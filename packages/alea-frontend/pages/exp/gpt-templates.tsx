@@ -1,11 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, IconButton, Typography } from '@mui/material';
-import { Template, getTemplateVersions, getTemplates } from '@stex-react/spec';
+import { Template, getTemplateVersions, getTemplates } from '@alea/spec';
 import {
   FixedPositionMenu,
   LayoutWithFixedMenu,
-} from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL, shouldUseDrawer } from '@stex-react/utils';
+} from '@alea/stex-react-renderer';
+import { PRIMARY_COL, shouldUseDrawer } from '@alea/utils';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';

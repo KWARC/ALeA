@@ -1,7 +1,7 @@
 // Derived from https://github.com/fast-reflexes/better-react-mathjax
 import { useContext, useEffect, useRef } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
-import { MathJaxBaseContext } from '@stex-react/mathjax';
+import { MathJaxBaseContext } from '@alea/mathjax';
 
 // This component is not displayed. It is only used as a workaround.
 // We use mathml2chtml for actually rendering math but it seems like the required fonts are
