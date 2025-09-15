@@ -2,10 +2,10 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton } from '@mui/material';
-import { BloomDimension } from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
-import { SelfAssessment2 } from '@stex-react/stex-react-renderer';
-import { localStore } from '@stex-react/utils';
+import { BloomDimension } from '@alea/spec';
+import { MystEditor } from '@alea/myst';
+import { SelfAssessment2 } from '@alea/stex-react-renderer';
+import { localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -55,6 +55,9 @@ const ExperimentsHome: NextPage = () => {
             <Box>
               <InternalButtonLink href="/sys-admin">System Administrator</InternalButtonLink>
               <InternalButtonLink href="/lo-explorer">Learning Objects Explorer</InternalButtonLink>
+              <InternalButtonLink href="/exp/mathhub-query">
+                MathHub Query Interface
+              </InternalButtonLink>
               <InternalButtonLink href="/positiondata">
                 Concept Position Tracking
               </InternalButtonLink>

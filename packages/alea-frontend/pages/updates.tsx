@@ -1,5 +1,5 @@
 import { Box, Tooltip, Typography } from '@mui/material';
-import { MystViewer } from '@stex-react/myst';
+import { MystViewer } from '@alea/myst';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import type { NextPage } from 'next';

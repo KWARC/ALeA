@@ -5,8 +5,8 @@ import {
   getUserInfo,
   GradingWithAnswer,
   UserInfo,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

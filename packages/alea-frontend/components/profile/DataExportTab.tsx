@@ -3,8 +3,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Button, Card, Dialog, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
-import { getAllMyComments, getAllMyData } from '@stex-react/api';
-import { downloadFile } from '@stex-react/utils';
+import { getAllMyComments, getAllMyData } from '@alea/spec';
+import { downloadFile } from '@alea/utils';
 import { ConfirmPurgeDialogContent } from './ConfirmPurgeDialogContent';
 
 export const DataExportTab = ({

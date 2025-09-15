@@ -8,8 +8,8 @@ import {
   isHiddenNotSpam,
   isSpam,
   pointsToLevel,
-} from '@stex-react/api';
-import { DateView } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { DateView } from '@alea/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { CommentMenu } from './CommentMenu';

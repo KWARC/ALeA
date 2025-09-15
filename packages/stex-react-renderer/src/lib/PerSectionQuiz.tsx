@@ -12,8 +12,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getProblemsPerSection, getUserProfile, ProblemData } from '@stex-react/api';
-import { getParamFromUri } from '@stex-react/utils';
+import { getProblemsPerSection, getUserProfile, ProblemData } from '@alea/spec';
+import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { ForMe } from './ForMe';

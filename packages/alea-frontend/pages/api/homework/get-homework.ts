@@ -8,8 +8,8 @@ import {
   HomeworkInfo,
   HomeworkPhase,
   ResponseWithSubProblemId,
-} from '@stex-react/api';
-import { Action, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny, ResourceActionParams } from '../access-control/resource-utils';
 import {

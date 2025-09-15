@@ -1,4 +1,4 @@
-import { CoverageTimeline, CURRENT_TERM, Holiday, semesterPeriods } from '@stex-react/utils';
+import { CoverageTimeline, CURRENT_TERM, Holiday, semesterPeriods } from '@alea/utils';
 import { writeFile } from 'fs/promises';
 
 function isHoliday(date: Date, holidays: Holiday[]) {

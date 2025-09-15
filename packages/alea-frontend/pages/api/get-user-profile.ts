@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
-import { UserProfile } from '@stex-react/api';
+import { UserProfile } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

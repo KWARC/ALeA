@@ -8,15 +8,15 @@ import {
   Typography,
   CircularProgress,
 } from '@mui/material';
-import { SafeHtml } from '@stex-react/react-utils';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { SafeHtml } from '@alea/react-utils';
+import { PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getCourseProblemCounts } from '@stex-react/api';
+import { getCourseProblemCounts } from '@alea/spec';
 
 interface TitleMetadata {
   uri?: string;

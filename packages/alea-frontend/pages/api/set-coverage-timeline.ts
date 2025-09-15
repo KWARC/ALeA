@@ -4,7 +4,7 @@ import {
   CoverageTimeline,
   CURRENT_TERM,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';

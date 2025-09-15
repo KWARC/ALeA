@@ -9,14 +9,14 @@ import {
   GradingInfo,
   ResponseWithSubProblemId,
   UserInfo,
-} from '@stex-react/api';
+} from '@alea/spec';
 import {
   GradingContext,
   AnswerContext,
   QuizDisplay,
   ShowGradingFor,
-} from '@stex-react/stex-react-renderer';
-import { isFauId } from '@stex-react/utils';
+} from '@alea/stex-react-renderer';
+import { isFauId } from '@alea/utils';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../components/ForceFAULogin';

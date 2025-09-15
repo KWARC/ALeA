@@ -1,5 +1,5 @@
-import { QuizStubInfo } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { QuizStubInfo } from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllQuizzes } from '../quiz-utils';
 

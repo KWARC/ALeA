@@ -1,6 +1,6 @@
 import { Button } from '@mui/material';
-import { IKnowEvent, getUriWeights, reportEvent } from '@stex-react/api';
-import { localStore } from '@stex-react/utils';
+import { IKnowEvent, getUriWeights, reportEvent } from '@alea/spec';
+import { localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useReducer } from 'react';
 import MainLayout from '../layouts/MainLayout';

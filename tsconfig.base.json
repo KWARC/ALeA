@@ -15,16 +15,16 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@stex-react/api": ["packages/api/src/index.ts"],
-      "@stex-react/comments": ["packages/comments/src/index.ts"],
-      "@stex-react/mathjax": ["packages/mathjax/src/index.ts"],
-      "@stex-react/myst": ["packages/myst/src/index.ts"],
-      "@stex-react/node-utils": ["packages/node-utils/src/index.ts"],
-      "@stex-react/quiz-utils": ["packages/quiz-utils/src/index.ts"],
-      "@stex-react/react-utils": ["packages/react-utils/src/index.ts"],
-      "@stex-react/report-a-problem": ["packages/report-a-problem/src/index.ts"],
-      "@stex-react/stex-react-renderer": ["packages/stex-react-renderer/src/index.ts"],
-      "@stex-react/utils": ["packages/utils/src/index.ts"]
+      "@alea/spec": ["spec/src/index.ts"],
+      "@alea/comments": ["packages/comments/src/index.ts"],
+      "@alea/mathjax": ["packages/mathjax/src/index.ts"],
+      "@alea/myst": ["packages/myst/src/index.ts"],
+      "@alea/node-utils": ["packages/node-utils/src/index.ts"],
+      "@alea/quiz-utils": ["packages/quiz-utils/src/index.ts"],
+      "@alea/react-utils": ["packages/react-utils/src/index.ts"],
+      "@alea/report-a-problem": ["packages/report-a-problem/src/index.ts"],
+      "@alea/stex-react-renderer": ["packages/stex-react-renderer/src/index.ts"],
+      "@alea/utils": ["packages/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

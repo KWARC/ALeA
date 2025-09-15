@@ -19,8 +19,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@stex-react/api';
-import { CourseInfo } from '@stex-react/utils';
+import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@alea/spec';
+import { CourseInfo } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { getSecInfo } from '../coverage-update';

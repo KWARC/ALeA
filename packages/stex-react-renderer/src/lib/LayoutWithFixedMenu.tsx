@@ -1,6 +1,6 @@
 import ListIcon from '@mui/icons-material/List';
 import { Box, Drawer, IconButton } from '@mui/material';
-import { BG_COLOR, PRIMARY_COL, shouldUseDrawer, Window } from '@stex-react/utils';
+import { BG_COLOR, PRIMARY_COL, shouldUseDrawer, Window } from '@alea/utils';
 import { createContext, useContext, useEffect, useState } from 'react';
 import styles from './stex-react-renderer.module.scss';
 

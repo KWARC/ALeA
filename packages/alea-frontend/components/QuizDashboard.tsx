@@ -26,9 +26,9 @@ import {
   QuizStatsResponse,
   QuizWithStatus,
   updateQuiz,
-} from '@stex-react/api';
-import { getQuizPhase } from '@stex-react/quiz-utils';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { getQuizPhase } from '@alea/quiz-utils';
+import { SafeHtml } from '@alea/react-utils';
 import {
   Action,
   CoverageTimeline,
@@ -36,7 +36,7 @@ import {
   LectureEntry,
   ResourceName,
   roundToMinutes,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';

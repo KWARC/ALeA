@@ -1,5 +1,5 @@
-import { batchGradeHex, computePointsFromFeedbackJson, InsertAnswerRequest, Phase } from '@stex-react/api';
-import { getQuizPhase } from '@stex-react/quiz-utils';
+import { batchGradeHex, computePointsFromFeedbackJson, InsertAnswerRequest, Phase } from '@alea/spec';
+import { getQuizPhase } from '@alea/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
 import { queryGradingDbAndEndSet500OnError } from '../grading-db-utils';

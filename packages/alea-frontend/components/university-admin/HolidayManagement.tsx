@@ -1,32 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import type { AlertColor } from '@mui/material';
 import {
-  Typography,
-  Stack,
+  Alert,
   Button,
+  IconButton,
+  Paper,
+  Snackbar,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
-  IconButton,
-  Alert,
-  Snackbar,
+  Typography,
 } from '@mui/material';
-import type { AlertColor } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
 import {
+  deleteSingleHoliday,
+  editHoliday,
   getHolidaysInfo,
   uploadHolidays,
-  editHoliday,
-  deleteSingleHoliday,
-} from 'packages/api/src/lib/university-admin-dashboard';
+} from '@alea/spec';
+import React, { useEffect, useState } from 'react';
 
 const convertToDDMMYYYY = (isoDate: string): string => {
   if (!isoDate) return '';
@@ -101,7 +101,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     try {
       const data = await getHolidaysInfo(universityId, instanceId);
       const convertedData = data
-        .map(holiday => {
+        .map((holiday) => {
           const convertedDate = convertFromDDMMYYYY(holiday.date);
           if (!convertedDate) {
             console.warn('Skipping holiday with invalid date:', holiday);
@@ -142,7 +142,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     }
 
     setLoading(true);
-    try {      
+    try {
       const convertedDate = convertToDDMMYYYY(newHoliday.date);
       if (!convertedDate) {
         setSnackbar({
@@ -152,18 +152,18 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         });
         return;
       }
-      
+
       const holidayForAPI = {
         ...newHoliday,
         date: convertedDate,
       };
-      
+
       const holidayForLocalState = {
         ...newHoliday,
         date: newHoliday.date,
-        originalDate: convertedDate, 
+        originalDate: convertedDate,
       };
-      
+
       let updatedHolidays = [...holidays, holidayForLocalState];
       // Keep local list sorted by ISO date
       updatedHolidays = [...updatedHolidays].sort((a, b) => a.date.localeCompare(b.date));
@@ -172,14 +172,13 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         name: h.name,
         date: h.originalDate || convertToDDMMYYYY(h.date),
       }));
-      
-      
+
       await uploadHolidays({
         universityId,
         instanceId,
         holidays: updatedHolidaysForAPI,
       });
-      
+
       setHolidays(updatedHolidays);
       setNewHoliday({ date: '', name: '' });
       setSnackbar({
@@ -191,7 +190,9 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
       console.error('Error adding holiday:', error);
       setSnackbar({
         open: true,
-        message: `Failed to add holiday: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to add holiday: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         severity: 'error',
       });
     } finally {
@@ -201,7 +202,7 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 
   const handleDeleteHoliday = async (index: number) => {
     setLoading(true);
-    try {    
+    try {
       const holidayToDelete = holidays[index];
       const dateToDelete = holidayToDelete.originalDate || convertToDDMMYYYY(holidayToDelete.date);
       await deleteSingleHoliday({
@@ -209,9 +210,11 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         instanceId,
         dateToDelete,
       });
-      const updatedHolidays = holidays.filter((_, i) => i !== index).sort((a, b) => a.date.localeCompare(b.date));
+      const updatedHolidays = holidays
+        .filter((_, i) => i !== index)
+        .sort((a, b) => a.date.localeCompare(b.date));
       setHolidays(updatedHolidays);
-      
+
       setSnackbar({
         open: true,
         message: 'Holiday deleted successfully!',
@@ -221,7 +224,9 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
       console.error('Error deleting holiday:', error);
       setSnackbar({
         open: true,
-        message: `Failed to delete holiday: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to delete holiday: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         severity: 'error',
       });
     } finally {
@@ -252,12 +257,13 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
     setLoading(true);
     try {
       const originalHoliday = holidays[editingIndex!];
-      const originalDateForAPI = originalHoliday.originalDate || convertToDDMMYYYY(originalHoliday.date);
+      const originalDateForAPI =
+        originalHoliday.originalDate || convertToDDMMYYYY(originalHoliday.date);
       const updatedHolidayForAPI = {
         ...editingHoliday,
         date: convertToDDMMYYYY(editingHoliday.date),
       };
-      
+
       await editHoliday({
         universityId,
         instanceId,

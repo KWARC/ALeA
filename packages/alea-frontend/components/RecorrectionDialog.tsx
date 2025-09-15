@@ -16,7 +16,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { FTMLProblemWithSolution, recorrectQuiz } from '@stex-react/api';
+import { FTMLProblemWithSolution, recorrectQuiz } from '@alea/spec';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';

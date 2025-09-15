@@ -1,8 +1,8 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import { conceptUriToName, getLeafConcepts, getLearningObjects, LoType } from '@stex-react/api';
-import { LayoutWithFixedMenu } from '@stex-react/stex-react-renderer';
-import { shouldUseDrawer } from '@stex-react/utils';
+import { conceptUriToName, getLeafConcepts, getLearningObjects, LoType } from '@alea/spec';
+import { LayoutWithFixedMenu } from '@alea/stex-react-renderer';
+import { shouldUseDrawer } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { UriProblemViewer } from 'packages/stex-react-renderer/src/lib/PerSectionQuiz';
 import { useEffect, useState } from 'react';

@@ -1,4 +1,4 @@
-import { AccessControlList } from '@stex-react/api';
+import { AccessControlList } from '@alea/spec';
 import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';

@@ -28,7 +28,7 @@ import { TourAPIEntry, TourDisplay } from './TourDisplay';
 import TrafficLightIndicator from './TrafficLightIndicator';
 import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
 
-import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@stex-react/api';
+import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@alea/spec';
 
 export const ServerLinksContext = createContext({ gptUrl: '' });
 

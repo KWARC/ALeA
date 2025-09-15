@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import GroupIcon from '@mui/icons-material/Group';
-import { CreateACLRequest, createAcl, isValid } from '@stex-react/api';
+import { CreateACLRequest, createAcl, isValid } from '@alea/spec';
 import { NextPage } from 'next';
 import { useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';

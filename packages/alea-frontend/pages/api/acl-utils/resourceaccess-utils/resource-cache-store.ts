@@ -1,4 +1,4 @@
-import { ResourceAction } from '@stex-react/api';
+import { ResourceAction } from '@alea/spec';
 
 export abstract class AbstractResourceAssignmentCache {
   abstract initialize(resourceAccessData: ResourceAction[]): Promise<void>;

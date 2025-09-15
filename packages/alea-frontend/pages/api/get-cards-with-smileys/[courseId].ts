@@ -5,7 +5,7 @@ import {
   getCourseInfo,
   getDefiniedaInSection,
   getUriSmileys,
-} from '@stex-react/api';
+} from '@alea/spec';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 const CARDS_CACHE: { [courseId: string]: CourseCards } = {};

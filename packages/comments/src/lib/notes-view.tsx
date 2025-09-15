@@ -1,7 +1,7 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
-import { Comment, getUserInfo } from '@stex-react/api';
+import { Comment, getUserInfo } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getPrivateNotes, refreshAllComments } from './comment-store-manager';
@@ -9,7 +9,7 @@ import { CommentReply } from './CommentReply';
 import styles from './comments.module.scss';
 import { CommentView } from './CommentView';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@stex-react/utils';
+import { useCommentRefresh } from '@alea/utils';
 
 export function NotesView({
   uri,

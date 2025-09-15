@@ -1,8 +1,8 @@
 import { FTMLFragment } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
-import { getSlides, Slide } from '@stex-react/api';
-import { getParamsFromUri, PRIMARY_COL } from '@stex-react/utils';
+import { getSlides, Slide } from '@alea/spec';
+import { getParamsFromUri, PRIMARY_COL } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 

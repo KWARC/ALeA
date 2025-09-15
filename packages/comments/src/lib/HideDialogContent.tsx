@@ -10,7 +10,7 @@ import {
   Select,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { HiddenStatus } from '@stex-react/api';
+import { HiddenStatus } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { HiddenState } from './CommentMenu';

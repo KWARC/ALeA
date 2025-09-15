@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetaData, getCourseInfo, SectionInfo } from '@stex-react/api';
-import { LectureEntry } from '@stex-react/utils';
+import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
+import { CURRENT_TERM, LectureEntry } from '@alea/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -125,13 +125,23 @@ export function addCoverageInfo(sections: SectionInfo[], snaps: LectureEntry[]) 
 
 function addClipInfo(allSections: SectionInfo[], jsonData: any) {
   const clipDataMap: { [sectionId: string]: { [slideUri: number]: ClipInfo[] } } = {};
+  let semesterKey: string | undefined;
+  if (CURRENT_TERM && jsonData[CURRENT_TERM]) {
+    semesterKey = CURRENT_TERM;
+  } else {
+    const semesters = Object.keys(jsonData);
+    if (semesters.length === 0) return; 
+    semesterKey = semesters[0];
+  }
+  const semesterData = jsonData[semesterKey];
+  if (!semesterData) return;
 
-  Object.entries(jsonData).forEach(
+  Object.entries(semesterData).forEach(
     ([videoId, videoData]: [
       string,
-      { extracted_content: { [timeStamp: number]: ClipMetaData } }
+      { extracted_content: { [timeStamp: number]: ClipMetadata } }
     ]) => {
-      const extractedContent: { [timeStamp: number]: ClipMetaData } = videoData.extracted_content;
+      const extractedContent: { [timeStamp: number]: ClipMetadata } = videoData.extracted_content;
       if (!extractedContent) return;
       Object.entries(extractedContent).forEach(([timeStamp, clipData]) => {
         const { sectionId, slideUri } = clipData;

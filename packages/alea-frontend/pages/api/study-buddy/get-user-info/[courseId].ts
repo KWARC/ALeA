@@ -3,9 +3,9 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../../comment-utils';
-import { StudyBuddy } from '@stex-react/api';
+import { StudyBuddy } from '@alea/spec';
 import { getSbCourseId } from '../study-buddy-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 
 export default async function handler(
   req: NextApiRequest,

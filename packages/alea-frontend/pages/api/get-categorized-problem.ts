@@ -7,8 +7,8 @@ import {
   getSparqlQueryForLoRelationToDimAndConceptPair,
   Language,
   ProblemData,
-} from '@stex-react/api';
-import { getParamFromUri } from '@stex-react/utils';
+} from '@alea/spec';
+import { getParamFromUri } from '@alea/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours

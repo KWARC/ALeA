@@ -6,8 +6,8 @@ import {
   getLatestProblemDraft,
   QuizProblem,
   UserInfo,
-} from '@stex-react/api';
-import { handleViewSource, ListStepper, UriProblemViewer } from '@stex-react/stex-react-renderer';
+} from '@alea/spec';
+import { handleViewSource, ListStepper, UriProblemViewer } from '@alea/stex-react-renderer';
 import { useEffect, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';

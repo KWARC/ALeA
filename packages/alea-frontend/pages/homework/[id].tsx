@@ -1,8 +1,8 @@
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { canAccessResource, getCourseInfo, getUserInfo } from '@stex-react/api';
-import { Action, CourseInfo, CURRENT_TERM, isFauId, ResourceName } from '@stex-react/utils';
+import { canAccessResource, getCourseInfo, getUserInfo } from '@alea/spec';
+import { Action, CourseInfo, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

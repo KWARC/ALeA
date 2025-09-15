@@ -1,8 +1,8 @@
-import { Phase, QuizWithStatus } from '@stex-react/api';
+import { Phase, QuizWithStatus } from '@alea/spec';
 import axios from 'axios';
 import { createMocks } from 'node-mocks-http';
 import createQuiz from '../pages/api/quiz/create-quiz';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

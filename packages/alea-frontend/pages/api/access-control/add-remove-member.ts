@@ -1,4 +1,4 @@
-import { AccessControlList } from '@stex-react/api';
+import { AccessControlList } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 import {

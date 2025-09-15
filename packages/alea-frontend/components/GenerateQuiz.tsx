@@ -16,9 +16,9 @@ import {
   Divider,
 } from '@mui/material';
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
-import { ListStepper } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL } from '@stex-react/utils';
-import { generateQuizProblems } from '@stex-react/api';
+import { ListStepper } from '@alea/stex-react-renderer';
+import { PRIMARY_COL } from '@alea/utils';
+import { generateQuizProblems } from '@alea/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';

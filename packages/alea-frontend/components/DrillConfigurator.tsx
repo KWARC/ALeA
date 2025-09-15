@@ -20,10 +20,10 @@ import {
   getAuthHeaders,
   isLoggedIn,
   smileyToLevel,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
-import { ConfigureLevelSlider } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL, Window, stableShuffle } from '@stex-react/utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
+import { ConfigureLevelSlider } from '@alea/stex-react-renderer';
+import { PRIMARY_COL, SECONDARY_COL, Window, stableShuffle } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from 'react';

@@ -1,4 +1,4 @@
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@alea/spec';
 import {
   Action,
   ALL_RESOURCE_TYPES,
@@ -6,7 +6,7 @@ import {
   CourseResourceAction,
   CURRENT_TERM,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from './access-control/resource-utils';
 import { getUserIdOrSetError } from './comment-utils';

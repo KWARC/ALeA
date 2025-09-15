@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
-import { getLatestUpdatedSections } from '@stex-react/api';
-import { CommentSection } from '@stex-react/comments';
+import { getLatestUpdatedSections } from '@alea/spec';
+import { CommentSection } from '@alea/comments';
 import { FTMLFragment } from '@kwarc/ftml-react';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';

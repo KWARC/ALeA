@@ -1,4 +1,4 @@
-import { Window } from '@stex-react/utils';
+import { Window } from '@alea/utils';
 import { NextRouter } from 'next/router';
 import { de } from './de';
 import { en } from './en';

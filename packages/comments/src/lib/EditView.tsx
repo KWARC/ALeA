@@ -7,14 +7,14 @@ import {
   addComment,
   editComment,
   getUserInfo,
-} from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
-import { CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
+import { CURRENT_TERM } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@stex-react/utils';
+import { useCommentRefresh } from '@alea/utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {

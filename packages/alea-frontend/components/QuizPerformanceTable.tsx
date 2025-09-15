@@ -17,10 +17,10 @@ import {
   QuizStubInfo,
   RecorrectionInfo,
   getPreviousQuizInfo,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
+import { PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { useRouter } from 'next/router';

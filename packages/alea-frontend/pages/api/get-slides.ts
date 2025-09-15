@@ -1,6 +1,6 @@
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import { Slide, SlideType, getCourseInfo } from '@stex-react/api';
+import { Slide, SlideType, getCourseInfo } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const SLIDE_EXPIRY_TIME_MS = 20 * 60 * 1000; // 20 min

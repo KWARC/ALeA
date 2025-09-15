@@ -24,8 +24,8 @@ import {
   HomeworkStub,
   updateHomework,
   UpdateHomeworkRequest,
-} from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import dayjs from 'dayjs';
 import HomeworkForm from './HomeworkForm';
 import HomeworkList from './HomeworkList';

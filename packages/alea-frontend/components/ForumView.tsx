@@ -30,10 +30,10 @@ import {
   canModerateComment,
   getCourseInstanceThreads,
   getUserInfo,
-} from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
-import { DateView } from '@stex-react/react-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
+import { DateView } from '@alea/react-utils';
+import { CURRENT_TERM } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';

@@ -1,4 +1,4 @@
-import { Comment, GetCommentsRequest, PointsGrant } from '@stex-react/api';
+import { Comment, GetCommentsRequest, PointsGrant } from '@alea/spec';
 import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,

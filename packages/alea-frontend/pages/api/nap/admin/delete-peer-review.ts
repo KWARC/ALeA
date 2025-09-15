@@ -1,4 +1,4 @@
-import { ResourceName, Action, CURRENT_TERM } from '@stex-react/utils';
+import { ResourceName, Action, CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import {

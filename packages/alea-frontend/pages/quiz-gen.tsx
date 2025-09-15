@@ -1,8 +1,25 @@
-import { Alert, Box, Button, CircularProgress, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
-import { getUserInfo, ProblemJson, QuizProblem, runGraphDbSelectQuery, runGraphDbUpdateQuery, UserInfo } from '@stex-react/api';
-import { PRIMARY_COL } from '@stex-react/utils';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  getUserInfo,
+  ProblemJson,
+  QuizProblem,
+  runGraphDbSelectQuery,
+  runGraphDbUpdateQuery,
+  UserInfo,
+} from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuizPanel } from '../components/quiz-gen/QuizPanel';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
@@ -34,33 +51,33 @@ export function isExisting(p: FlatQuizProblem | ExistingProblem): p is ExistingP
 }
 
 export function SparqlTester() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRunQuery = async (type: "select" | "update") => {
+  const handleRunQuery = async (type: 'select' | 'update') => {
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
       let data;
-      if (type === "select") {
+      if (type === 'select') {
         data = await runGraphDbSelectQuery(query);
       } else {
         data = await runGraphDbUpdateQuery(query);
       }
       setResult(data);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
+    <Box sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
       <Typography variant="h5" gutterBottom fontWeight="bold">
         SPARQL Query Tester
       </Typography>
@@ -76,22 +93,22 @@ export function SparqlTester() {
         sx={{ mb: 2 }}
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <Button
           variant="contained"
-          onClick={() => handleRunQuery("select")}
+          onClick={() => handleRunQuery('select')}
           disabled={loading || !query.trim()}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Run Query"}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Run Query'}
         </Button>
 
         <Button
           variant="outlined"
           color="secondary"
-          onClick={() => handleRunQuery("update")}
+          onClick={() => handleRunQuery('update')}
           disabled={loading || !query.trim()}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Run Update"}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Run Update'}
         </Button>
       </Box>
 
@@ -102,19 +119,18 @@ export function SparqlTester() {
       )}
 
       {result && (
-        <Paper sx={{ p: 2, mt: 2, maxHeight: 400, overflow: "auto" }}>
+        <Paper sx={{ p: 2, mt: 2, maxHeight: 400, overflow: 'auto' }}>
           <Typography variant="subtitle1" gutterBottom>
             Result:
           </Typography>
-          <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
-             {JSON.stringify(result, null, 2)} 
+          <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+            {JSON.stringify(result, null, 2)}
           </pre>
         </Paper>
       )}
     </Box>
   );
 }
-
 
 const QuizGen = () => {
   const [generatedProblems, setGeneratedProblems] = useState<FlatQuizProblem[]>([]);
@@ -170,7 +186,7 @@ const QuizGen = () => {
           setGeneratedProblems={setGeneratedProblems}
           setLatestGeneratedProblems={setLatestGeneratedProblems}
         />
-      {/* <SparqlTester/> */}
+        {/* <SparqlTester/> */}
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} loading={loading} />
 
         <QuizPanel

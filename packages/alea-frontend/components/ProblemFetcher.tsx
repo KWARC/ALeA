@@ -1,6 +1,6 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { FTMLProblemWithSolution } from '@stex-react/api';
-import { getPoints, ProblemDisplay } from '@stex-react/stex-react-renderer';
+import { FTMLProblemWithSolution } from '@alea/spec';
+import { getPoints, ProblemDisplay } from '@alea/stex-react-renderer';
 import { useEffect, useState } from 'react';
 
 const ProblemFetcher = ({

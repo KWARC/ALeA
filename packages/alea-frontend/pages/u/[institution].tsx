@@ -3,8 +3,8 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
-import { CURRENT_TERM, CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CURRENT_TERM, CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ import { ReactNode } from 'react';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@stex-react/utils';
+import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (

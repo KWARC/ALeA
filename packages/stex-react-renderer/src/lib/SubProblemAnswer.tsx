@@ -12,9 +12,9 @@ import {
   Problem,
   ReviewType,
   SubProblemData,
-} from '@stex-react/api';
-import { MystEditor, MystViewer } from '@stex-react/myst';
-import { localStore, PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor, MystViewer } from '@alea/myst';
+import { localStore, PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useRouter } from 'next/router';

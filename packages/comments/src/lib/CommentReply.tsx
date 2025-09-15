@@ -1,7 +1,7 @@
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import { getUserInfo} from '@stex-react/api';
+import { getUserInfo} from '@alea/spec';
 import { FTML } from '@kwarc/ftml-viewer';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

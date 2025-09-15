@@ -5,10 +5,10 @@ import {
   DiligenceAndPerformanceData,
   UserAnonData,
   canAccessResource,
-} from '@stex-react/api';
+} from '@alea/spec';
 import { queryMatomoDbAndEndSet500OnError } from './matomo-db-utils';
-import { getAllQuizzes } from '@stex-react/node-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { getAllQuizzes } from '@alea/node-utils';
+import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
 
 // SELECT user_id as userId, SUM(visit_total_time) visit_time  FROM matomo.matomo_log_visit  WHERE user_id IS NOT NULL AND visit_first_action_time >= '2023-10-01 10:00:00' AND visit_last_action_time <= '2023-10-30 10:00:00'   GROUP BY user_id

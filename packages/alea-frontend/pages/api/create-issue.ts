@@ -1,5 +1,5 @@
-import { NotificationType } from '@stex-react/api';
-import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react/utils';
+import { NotificationType } from '@alea/spec';
+import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios, { RawAxiosRequestHeaders } from 'axios';
 import { OpenAI } from 'openai';
 import { sendAlert } from './add-comment';

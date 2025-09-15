@@ -2,9 +2,9 @@ import { CheckCircleOutline } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
-import { FixedPositionMenu } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { conceptUriToName } from '@alea/spec';
+import { FixedPositionMenu } from '@alea/stex-react-renderer';
+import { PRIMARY_COL } from '@alea/utils';
 import { GuidedTourState, UserAction } from '../../pages/guided-tour2/[id]';
 
 export const findNextAvailableIndex = (

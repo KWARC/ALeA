@@ -1,7 +1,7 @@
 import {
   MathJaxBaseContext,
   MathJaxSubscriberProps,
-} from '@stex-react/mathjax';
+} from '@alea/mathjax';
 import { useContext, useEffect, useState } from 'react';
 
 interface MdLatexProps {

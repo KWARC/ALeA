@@ -22,8 +22,8 @@ import {
   getFTMLForConceptView,
   getProblemsForConcept,
   uriWeightToSmileyLevel,
-} from '@stex-react/api';
-import { PRIMARY_COL, PathToTour } from '@stex-react/utils';
+} from '@alea/spec';
+import { PRIMARY_COL, PathToTour } from '@alea/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';

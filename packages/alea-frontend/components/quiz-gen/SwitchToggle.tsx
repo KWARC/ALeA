@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { generateQuizProblems, QuizProblem } from '@stex-react/api';
+import { generateQuizProblems, QuizProblem } from '@alea/spec';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { ScaffoldingDetails, VariantConfig, VariantType } from './VariantDialog';

@@ -1,5 +1,5 @@
-import { HomeworkStatsInfo } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { HomeworkStatsInfo } from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getGradingItemsOrSetError } from '../common-homework-utils';

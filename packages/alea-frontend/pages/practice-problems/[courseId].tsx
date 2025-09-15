@@ -1,7 +1,7 @@
 import { CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@alea/spec';
 import { FTML } from '@kwarc/ftml-viewer';
-import { CourseInfo } from '@stex-react/utils';
+import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

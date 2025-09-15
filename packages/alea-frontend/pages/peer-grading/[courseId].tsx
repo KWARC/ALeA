@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { CourseInfo } from "@stex-react/utils";
+import { CourseInfo } from "@alea/utils";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import { GradingInterface } from '../../components/nap/GradingInterface';

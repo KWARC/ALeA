@@ -11,9 +11,9 @@ import {
   TableRow,
   Tabs,
 } from '@mui/material';
-import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@stex-react/api';
-import { MystViewer } from '@stex-react/myst';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@alea/spec';
+import { MystViewer } from '@alea/myst';
+import { CURRENT_TERM } from '@alea/utils';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';

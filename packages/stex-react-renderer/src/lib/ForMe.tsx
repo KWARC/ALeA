@@ -1,7 +1,7 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { getDefiniedaInSection, getLearningObjects } from '@stex-react/api';
+import { getDefiniedaInSection, getLearningObjects } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';

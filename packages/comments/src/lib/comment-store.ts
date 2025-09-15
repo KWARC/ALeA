@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { Comment } from '@stex-react/api';
+import { Comment } from '@alea/spec';
 import { organizeHierarchically } from './comment-helpers';
 
 export class CommentStore {

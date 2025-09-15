@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { Comment, getComments, RequestAggregator } from '@stex-react/api';
+import { Comment, getComments, RequestAggregator } from '@alea/spec';
 import { from, lastValueFrom, map } from 'rxjs';
 import { CommentStore } from './comment-store';
 
