@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'fs/promises';
-import { semesterPeriods } from '@stex-react/utils';
+import { semesterPeriods } from '@alea/utils';
 
 export interface CourseScheduleInfo {
   lectureStart: string;

@@ -1,5 +1,5 @@
 import { CircularProgress, Typography } from '@mui/material';
-import { resetFakeUserData } from '@stex-react/spec';
+import { resetFakeUserData } from '@alea/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';

@@ -1,7 +1,7 @@
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getAuthHeaders } from '@stex-react/spec';
-import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react/utils';
+import { getAuthHeaders } from '@alea/spec';
+import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios from 'axios';
 
 const THREE_BACKTICKS = '```';

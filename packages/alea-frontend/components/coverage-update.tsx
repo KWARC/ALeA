@@ -11,19 +11,19 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/spec';
+import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
 import {
   convertHtmlStringToPlain,
   CourseInfo,
   CoverageTimeline,
   LectureEntry,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
 import { getFlamsServer } from '@kwarc/ftml-react';
-import { ContentDashboard } from '@stex-react/stex-react-renderer';
+import { ContentDashboard } from '@alea/stex-react-renderer';
 import { MenuBook } from '@mui/icons-material';
 
 export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {

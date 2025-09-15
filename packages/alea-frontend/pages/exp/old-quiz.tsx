@@ -9,7 +9,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@stex-react/spec';
+import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@alea/spec';
 import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 import { useEffect, useState } from 'react';
 

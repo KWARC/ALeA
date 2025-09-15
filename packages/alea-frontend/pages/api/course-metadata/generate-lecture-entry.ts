@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import { executeDontEndSet500OnError, executeAndEndSet500OnError } from '../comment-utils';
-import { Holiday, LectureSchedule } from '@stex-react/spec';
+import { Holiday, LectureSchedule } from '@alea/spec';
 
 function toWeekdayIndex(weekday: string): number | undefined {
   const map: Record<string, number> = {

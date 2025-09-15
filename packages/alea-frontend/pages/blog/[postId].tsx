@@ -11,15 +11,15 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@stex-react/spec';
+import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@alea/spec';
 import fs from 'fs';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
-import { MystViewer } from '@stex-react/myst';
-import { Action, getResourceId, ResourceName } from '@stex-react/utils';
+import { MystViewer } from '@alea/myst';
+import { Action, getResourceId, ResourceName } from '@alea/utils';
 
 const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
   const router = useRouter();

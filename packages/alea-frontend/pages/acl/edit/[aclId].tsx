@@ -24,7 +24,7 @@ import {
   updateAcl,
   deleteAcl,
   hasAclAssociatedResources,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import { ConfirmationDialog } from '../../../components/confirmation-dialog/ConfirmationDialog';
 
 const UpdateAcl: NextPage = () => {

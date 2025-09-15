@@ -1,4 +1,4 @@
-import { getCourseInfo, Language } from '@stex-react/spec';
+import { getCourseInfo, Language } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCategorizedProblems } from './get-categorized-problem';
 

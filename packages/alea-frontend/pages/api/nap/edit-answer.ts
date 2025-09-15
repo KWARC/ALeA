@@ -1,4 +1,4 @@
-import { UpdateAnswerRequest } from '@stex-react/spec';
+import { UpdateAnswerRequest } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,

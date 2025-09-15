@@ -9,14 +9,14 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { LectureEntry } from '@stex-react/utils';
+import { LectureEntry } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageForm, FormData } from './CoverageForm';
 import { CoverageTable } from './CoverageTable';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
 
 export function getSectionNameForUri(
   uri: string,

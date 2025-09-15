@@ -1,7 +1,7 @@
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeDontEndSet500OnError } from '../comment-utils';
-import { HomeworkInfo } from '@stex-react/spec';
+import { HomeworkInfo } from '@alea/spec';
 
 export async function getAllHomeworksOrSetError(
   courseId: string,

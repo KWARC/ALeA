@@ -1,4 +1,4 @@
-import { GradingAnswerClass, GradingInfo, ReviewType } from '@stex-react/spec';
+import { GradingAnswerClass, GradingInfo, ReviewType } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfQueryParameterExistOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 

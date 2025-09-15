@@ -14,8 +14,8 @@ import {
   checkIfUserIdExists,
   logInUser,
   ANON_USER_ID_PREFIX,
-} from '@stex-react/spec';
-import { BG_COLOR, capitalizeFirstLetter, PRIMARY_COL, setCookie } from '@stex-react/utils';
+} from '@alea/spec';
+import { BG_COLOR, capitalizeFirstLetter, PRIMARY_COL, setCookie } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

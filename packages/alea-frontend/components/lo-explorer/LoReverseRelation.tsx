@@ -1,4 +1,4 @@
-import { ALL_LO_TYPES, LoType } from '@stex-react/spec';
+import { ALL_LO_TYPES, LoType } from '@alea/spec';
 import { CartItem } from './LoCartModal';
 import { useEffect, useState } from 'react';
 import {
@@ -10,7 +10,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { capitalizeFirstLetter } from '@stex-react/utils';
+import { capitalizeFirstLetter } from '@alea/utils';
 import LoListDisplay from '../LoListDisplay';
 import { fetchLoFromConceptsAsLoRelations } from './LoFilterAndSearch';
 

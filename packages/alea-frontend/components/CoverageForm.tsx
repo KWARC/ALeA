@@ -20,13 +20,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { LectureEntry } from '@stex-react/utils';
+import { LectureEntry } from '@alea/utils';
 import dayjs from 'dayjs';
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { SecInfo } from '../types';
 import { isLeafSectionId, SlidePicker } from './SlideSelector';
-import { getSlides } from '@stex-react/spec';
-import { InfoOutlined } from '@mui/icons-material';
+import { getSlides } from '@alea/spec';
 
 export type FormData = LectureEntry & {
   sectionName: string;

@@ -3,7 +3,7 @@ import {
   CACHED_VIDEO_SLIDESMAP,
   populateVideoToSlidesMap,
 } from '../../get-section-info/[courseId]';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { courseId, videoId } = req.query;

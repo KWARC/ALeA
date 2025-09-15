@@ -7,8 +7,8 @@ import {
   getSpecificAclIds,
   isValid,
   updateResourceAction,
-} from '@stex-react/spec';
-import { Action, CURRENT_TERM, ResourceActionPair } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceActionPair } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AclDisplay from './AclDisplay';

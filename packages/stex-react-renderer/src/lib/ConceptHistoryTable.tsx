@@ -14,7 +14,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { BloomDimension, ConceptHistory, getConceptHistory, HistoryItem } from '@stex-react/spec';
+import { BloomDimension, ConceptHistory, getConceptHistory, HistoryItem } from '@alea/spec';
 import { useEffect, useState } from 'react';
 import { Chart } from 'react-google-charts';
 import { ConceptView } from './CompetencyTable';

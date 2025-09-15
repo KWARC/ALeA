@@ -1,7 +1,7 @@
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { Box, CircularProgress, Tooltip, tooltipClasses, Typography } from '@mui/material';
-import { getAcl, getAclUserDetails } from '@stex-react/spec';
+import { getAcl, getAclUserDetails } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 interface AclDetails {

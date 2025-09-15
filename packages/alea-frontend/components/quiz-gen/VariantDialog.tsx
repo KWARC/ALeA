@@ -16,8 +16,8 @@ import {
   getProblemVersionHistory,
   saveProblemDraft,
   UserInfo,
-} from '@stex-react/spec';
-import { PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { PreviewSection } from './PreviewSection';

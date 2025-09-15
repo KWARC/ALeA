@@ -1,5 +1,5 @@
-import { QuizStatsResponse } from '@stex-react/spec';
-import { convertHtmlStringToPlain } from '@stex-react/utils';
+import { QuizStatsResponse } from '@alea/spec';
+import { convertHtmlStringToPlain } from '@alea/utils';
 import Chart from 'react-google-charts';
 import { BarChart } from './HomeworkState';
 

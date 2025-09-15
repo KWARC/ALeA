@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tooltip, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { getParamFromUri } from '@stex-react/utils';
+import { getParamFromUri } from '@alea/utils';
 
 interface ProblemIdPreviewProps {
   uri: string;

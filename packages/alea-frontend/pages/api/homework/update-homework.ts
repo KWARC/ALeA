@@ -1,5 +1,5 @@
-import { HomeworkInfo, UpdateHomeworkRequest } from '@stex-react/spec';
-import { Action, ResourceName } from '@stex-react/utils';
+import { HomeworkInfo, UpdateHomeworkRequest } from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import {

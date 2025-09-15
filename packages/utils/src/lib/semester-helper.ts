@@ -4,8 +4,8 @@ import {
   createResourceAction,
   getAcl,
   getInstructorResourceActions
-} from '@stex-react/spec';
-import { Action, CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM } from '@alea/utils';
 
 const ROLES = ['instructors', 'staff', 'tas', 'enrollments'];
 

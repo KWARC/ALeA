@@ -28,7 +28,7 @@ import {
   getCoverageTimeline,
   getUserInfo,
   UserInfo,
-} from '@stex-react/spec';
+} from '@alea/spec';
 import {
   Action,
   BG_COLOR,
@@ -38,7 +38,7 @@ import {
   isFauId,
   ResourceName,
   semesterPeriods,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -50,7 +50,7 @@ import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { ExamSchedule } from '../../components/ExamSchedule';
-import { Announcement } from '@stex-react/spec';
+import { Announcement } from '@alea/spec';
 import Grid from '@mui/material/Grid';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {

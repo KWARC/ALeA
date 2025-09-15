@@ -34,8 +34,8 @@ import {
   recomputeMemberships,
   UpdateResourceAction,
   updateResourceAction,
-} from '@stex-react/spec';
-import { DateView } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { DateView } from '@alea/react-utils';
 import {
   Action,
   ALL_RESOURCE_TYPES,
@@ -43,7 +43,7 @@ import {
   RESOURCE_TYPE_MAP,
   ResourceIdComponent,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';

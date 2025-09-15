@@ -21,9 +21,9 @@ import {
   getDefiniedaInSection,
   getUriWeights,
   isLoggedIn,
-} from '@stex-react/spec';
-import { SafeHtml } from '@stex-react/react-utils';
-import { BG_COLOR } from '@stex-react/utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
+import { BG_COLOR } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';

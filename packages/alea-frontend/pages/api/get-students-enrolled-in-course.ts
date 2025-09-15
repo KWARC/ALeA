@@ -1,4 +1,4 @@
-import { getResourceId, INSTRUCTOR_RESOURCE_AND_ACTION } from '@stex-react/utils';
+import { getResourceId, INSTRUCTOR_RESOURCE_AND_ACTION } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
 import { getAclMembers } from './acl-utils/acl-common-utils';

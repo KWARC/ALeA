@@ -10,7 +10,7 @@ import {
   Select,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { DEFAULT_POINTS, GrantReason } from '@stex-react/spec';
+import { DEFAULT_POINTS, GrantReason } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { getLocaleObject } from './lang/utils';

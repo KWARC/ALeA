@@ -7,9 +7,9 @@ import {
   getCdnImages,
   updateBlogPost,
   uploadCdnImage,
-} from '@stex-react/spec';
-import { MystEditor } from '@stex-react/myst';
-import { Action, localStore, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
+import { Action, localStore, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

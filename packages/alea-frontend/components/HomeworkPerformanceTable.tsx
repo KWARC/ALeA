@@ -8,13 +8,13 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { HomeworkStub, LearnerHomeworkInfo, getHomeworkList } from '@stex-react/spec';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { HomeworkStub, LearnerHomeworkInfo, getHomeworkList } from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
-import { SafeHtml } from '@stex-react/react-utils';
+import { SafeHtml } from '@alea/react-utils';
 
 function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
   const { homeworkPerformanceTable: t, homework: tHW } = getLocaleObject(useRouter());

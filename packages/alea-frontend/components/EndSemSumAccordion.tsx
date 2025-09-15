@@ -14,9 +14,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { generateEndSemesterSummary, QuizWithStatus } from '@stex-react/spec';
-import { SafeHtml } from '@stex-react/react-utils';
-import { downloadFile } from '@stex-react/utils';
+import { generateEndSemesterSummary, QuizWithStatus } from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
+import { downloadFile } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
 
 interface EndSemSumAccordionProps {

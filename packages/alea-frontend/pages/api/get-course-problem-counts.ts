@@ -1,6 +1,6 @@
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
-import { getCourseInfo, getProblemsForSection } from '@stex-react/spec';
+import { getCourseInfo, getProblemsForSection } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 

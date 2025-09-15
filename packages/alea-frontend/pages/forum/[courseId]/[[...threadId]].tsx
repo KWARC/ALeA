@@ -1,6 +1,6 @@
 import { Box, CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@stex-react/spec';
-import { CourseInfo } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

@@ -1,5 +1,5 @@
 import { AbstractResourceAssignmentCache } from './resource-cache-store';
-import { ResourceAction } from '@stex-react/spec';
+import { ResourceAction } from '@alea/spec';
 import { getCacheKey } from './resource-common-utils';
 import { RedisInstance } from '../redis-utils';
 

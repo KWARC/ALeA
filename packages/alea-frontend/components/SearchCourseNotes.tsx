@@ -1,7 +1,7 @@
 import { FTMLDocument } from '@kwarc/ftml-react';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
-import { GptSearchResult, searchCourseNotes } from '@stex-react/spec';
+import { GptSearchResult, searchCourseNotes } from '@alea/spec';
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';

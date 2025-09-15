@@ -3,8 +3,8 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { EnrolledCourseIds } from '@stex-react/spec';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { EnrolledCourseIds } from '@alea/spec';
+import { CURRENT_TERM } from '@alea/utils';
 import { getCourseIdAndInstanceFromSbCourseId } from './study-buddy-utils';
 
 export default async function handler(

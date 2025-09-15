@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { deleteQuizFile } from '@stex-react/node-utils';
+import { deleteQuizFile } from '@alea/node-utils';
 import { checkIfPostOrSetError } from '../comment-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

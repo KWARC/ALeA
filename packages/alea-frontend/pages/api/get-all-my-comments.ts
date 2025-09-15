@@ -1,4 +1,4 @@
-import { Comment } from '@stex-react/spec';
+import { Comment } from '@alea/spec';
 import {
   executeDontEndSet500OnError,
   executeAndEndSet500OnError,

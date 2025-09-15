@@ -8,9 +8,9 @@ import {
   canAccessResource,
   getCommentsForThread,
   updateQuestionState,
-} from '@stex-react/spec';
-import { CommentTree, organizeHierarchically } from '@stex-react/comments';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { CommentTree, organizeHierarchically } from '@alea/comments';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';

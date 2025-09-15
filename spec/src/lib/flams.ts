@@ -8,7 +8,7 @@ import {
   createCourseInfo,
   getParamFromUri,
   waitForNSeconds,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import axios from 'axios';
 
 export async function batchGradeHex(
