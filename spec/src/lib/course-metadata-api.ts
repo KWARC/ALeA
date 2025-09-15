@@ -28,7 +28,7 @@ export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'insta
   lectureEntry: LectureSchedule;
 };
 
-export interface CourseQuizAndHomeorkInfo {
+export interface CourseQuizAndHomeworkInfo {
   hasQuiz: boolean;
   hasHomework: boolean;
 }
@@ -106,9 +106,9 @@ export async function generateLectureEntry(
 export async function getCourseHomeworkAndQuizInfo(
   courseId: string,
   instanceId?: string
-): Promise<CourseQuizAndHomeorkInfo> {
+): Promise<CourseQuizAndHomeworkInfo> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-homework-and-quiz`, {
     params: { courseId, instanceId },
   });
-  return response.data as CourseQuizAndHomeorkInfo;
+  return response.data as CourseQuizAndHomeworkInfo;
 }

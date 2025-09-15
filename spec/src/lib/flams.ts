@@ -9,7 +9,7 @@ import {
   waitForNSeconds,
 } from '@alea/utils';
 import axios from 'axios';
-import { getCourseHomeworkAndQuizInfo } from './course-metadata-api';
+import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -38,6 +38,25 @@ export interface Person {
 
 let CACHED_ARCHIVE_INDEX: FTML.ArchiveIndex[] | undefined = undefined;
 let CACHED_INSTITUTION_INDEX: FTML.Institution[] | undefined = undefined;
+
+const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
+
+async function getCachedCourseHomeworkAndQuizInfo(
+  courseId: string,
+  instanceId?: string
+): Promise<CourseQuizAndHomeworkInfo> {
+  const cacheKey = courseId;
+  if (courseHomeworkQuizCache.has(cacheKey)) {
+    return courseHomeworkQuizCache.get(cacheKey)!;
+  }
+  const result = await getCourseHomeworkAndQuizInfo(courseId, instanceId);
+  courseHomeworkQuizCache.set(cacheKey, result);
+  return result;
+}
+
+export function clearCourseHomeworkQuizCache(): void {
+  courseHomeworkQuizCache.clear();
+}
 
 export async function getDocIdx(institution?: string) {
   if (!CACHED_ARCHIVE_INDEX) {
@@ -96,7 +115,7 @@ export async function getCourseInfo(institution?: string) {
       doc.acronym = doc.acronym.toLowerCase();
 
       const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-      const { hasQuiz, hasHomework } = await getCourseHomeworkAndQuizInfo(
+      const { hasQuiz, hasHomework } = await getCachedCourseHomeworkAndQuizInfo(
         doc.acronym,
         CURRENT_TERM
       );
