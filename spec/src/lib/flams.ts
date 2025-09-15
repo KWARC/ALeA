@@ -2,7 +2,6 @@ import { ProblemFeedbackJson } from '@kwarc/flams';
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
-  COURSES_INFO,
   CURRENT_TERM,
   CourseInfo,
   createCourseInfo,
@@ -10,6 +9,7 @@ import {
   waitForNSeconds,
 } from '@alea/utils';
 import axios from 'axios';
+import { getCourseHomeworkAndQuizInfo } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -96,14 +96,18 @@ export async function getCourseInfo(institution?: string) {
       doc.acronym = doc.acronym.toLowerCase();
 
       const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-
+      const { hasQuiz, hasHomework } = await getCourseHomeworkAndQuizInfo(
+        doc.acronym,
+        CURRENT_TERM
+      );
       courseInfo[doc.acronym] = createCourseInfo(
         doc.acronym,
         doc.title,
         doc.notes,
         doc.landing,
         isCurrent,
-        ['lbs', 'ai-1', 'iwgs-1'].includes(doc.acronym) ? true : doc.quizzes ?? false,
+        hasHomework,
+        hasQuiz,
         doc.institution,
         doc.instances,
         doc.instructors,
@@ -113,8 +117,8 @@ export async function getCourseInfo(institution?: string) {
     }
     return courseInfo;
   } catch (err) {
-    console.log(err);
-    return COURSES_INFO;
+    console.error('Error fetching course info from FLAMS:', err);
+    return {};
   }
 }
 
