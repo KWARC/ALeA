@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 import {
   fetchGeneratedProblems,
-  generateQuizProblems,
   getCourseGeneratedProblemsCountBySection,
   getCourseInfo,
   getCourseProblemCounts,
@@ -190,31 +189,6 @@ export const CourseSectionSelector = ({
     };
     fetchInitialData();
   }, [courseId, startSectionUri, endSectionUri, sections]);
-
-  // const generateNewProblems = async () => {
-  //   setGenerating(true);
-  //   try {
-  //     const response = await generateQuizProblems({
-  //       mode: 'new',
-  //       courseId,
-  //       startSectionUri,
-  //       endSectionUri,
-  //     });
-  //     if (!response?.length) {
-  //       return;
-  //     }
-  //     const parsedProblems: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
-  //       ...rest,
-  //       ...problemJson,
-  //     }));
-  //     setLatestGeneratedProblems(parsedProblems);
-  //     setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
-  //   } catch (error) {
-  //     console.error(' Error generating problems:', error);
-  //   } finally {
-  //     setGenerating(false);
-  //   }
-  // };
 
   return (
     <Paper
@@ -478,7 +452,6 @@ export const CourseSectionSelector = ({
           ) : (
             <Button
               variant="contained"
-              // onClick={() => generateNewProblems()}
               onClick={() => setDialogOpen(true)}
               disabled={!courseId || !startSectionUri || !endSectionUri || loading}
             >

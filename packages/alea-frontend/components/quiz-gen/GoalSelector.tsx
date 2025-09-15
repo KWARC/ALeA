@@ -16,7 +16,6 @@ interface GoalSelectorProps {
   sectionGoals: SectionGoals;
   selectedGoals: { [conceptUri: string]: string[] };
   startSectionUri: string;
-  endSectionUri: string;
   onSelectGoal: (sectionUri: string, goalUri: string, text: string) => void;
   onToggleAll: (sectionUri: string) => void;
 }
@@ -37,7 +36,6 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
   sectionGoals,
   selectedGoals,
   startSectionUri,
-  endSectionUri,
   onToggleAll,
   onSelectGoal,
 }) => {

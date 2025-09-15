@@ -77,14 +77,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
         mb: 2,
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} sx={{
-            color: 'inherit',
-            borderColor: 'currentColor',
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.1)',
-              borderColor: 'currentColor',
-            },
-          }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="h6" color="primary" fontWeight="bold">
           Concept Details : {conceptUriToName(conceptUri)}
         </Typography>
@@ -205,45 +198,6 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
             </Typography>
           )}
         </Box>
-        {/* <Box mb={2} display="flex" flexDirection="column">
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography variant="h6" fontWeight="bold">
-              Goals
-            </Typography>
-            <Box>
-              <Button size="small" onClick={() => onSelectAllGoals(conceptUri)} sx={{ mr: 1 }}>
-                Select All
-              </Button>
-              <Button size="small" onClick={() => onClearAllGoals(conceptUri)}>
-                Clear All
-              </Button>
-            </Box>
-          </Box>
-          <Divider sx={{ mb: 1 }} />
-
-          {sectionGoals[conceptUri]?.length > 0 ? (
-            <List disablePadding>
-              {sectionGoals[conceptUri].map((goal) => (
-                <GoalItem
-                  key={goal.goal_uri}
-                  goal={goal}
-                  conceptUri={conceptUri}
-                  selectedGoals={selectedGoals}
-                  onToggleGoal={onToggleGoal}
-                />
-              ))}
-            </List>
-          ) : (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              fontStyle="italic"
-              sx={{ mt: 1, ml: 2 }}
-            >
-              No goals defined for this concept.
-            </Typography>
-          )}
-        </Box> */}
       </Box>
 
       <Box display="flex" justifyContent="space-between" m={2.5}>
