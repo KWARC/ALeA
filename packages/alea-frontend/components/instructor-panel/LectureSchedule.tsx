@@ -79,6 +79,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       const data = await getLectureEntry({ courseId, instanceId });
       setLectures(data.lectureSchedule || []);
       setHasHomework(!!data.hasHomework);
+      setHasQuiz(!!data.hasQuiz);
     } catch (err) {
       if (err.response?.status === 404) {
         console.warn('No lectures found for this course instance');

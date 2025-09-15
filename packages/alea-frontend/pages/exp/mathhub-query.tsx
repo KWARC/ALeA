@@ -124,7 +124,7 @@ const ResultsDisplay = ({
 };
 
 export default function MathhubQuery() {
-  const [query, setQuery] = useState(# All Predicates\nSELECT DISTINCT ?y  WHERE { ?x ?y ?z . } LIMIT 100');
+  const [query, setQuery] = useState('# All Predicates\nSELECT DISTINCT ?y  WHERE { ?x ?y ?z . } LIMIT 100');
   const [results, setResults] = useState<SparqlResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

@@ -33,9 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!existing?.length) {
     await executeAndEndSet500OnError(
-      `INSERT INTO courseMetadata (courseId, instanceId, lectureSchedule, hasQuiz, updaterId)
-       VALUES (?, ?, ?, ?, ?)`,
-      [courseId, instanceId, JSON.stringify([]), hasQuiz? 1 : 0, updaterId],
+      `INSERT INTO courseMetadata (courseId, instanceId, lectureSchedule, hasQuiz, hasHomework, updaterId)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [courseId, instanceId, JSON.stringify([]), hasQuiz ? 1 : 0, 0, updaterId],
       res
     );
     return res.status(201).end();
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await executeAndEndSet500OnError(
     `UPDATE courseMetadata
-     SET hasHomework = ?, updaterId = ?, updatedAt = CURRENT_TIMESTAMP
+     SET hasQuiz = ?, updaterId = ?, updatedAt = CURRENT_TIMESTAMP
      WHERE courseId = ? AND instanceId = ?`,
     [hasQuiz ? 1 : 0, updaterId, courseId, instanceId],
     res
