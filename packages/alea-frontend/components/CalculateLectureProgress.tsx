@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { LectureEntry } from '@stex-react/utils';
+import { LectureEntry } from '@alea/utils'; 
 import { SecInfo } from '../types';
 import dayjs from 'dayjs';
 
