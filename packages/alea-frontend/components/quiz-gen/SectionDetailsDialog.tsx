@@ -1,4 +1,11 @@
 import {
+  conceptUriToName,
+  generateQuizProblems,
+  getConceptPropertyInSection,
+  getDefiniedaInSection,
+  getSectionGoals,
+} from '@alea/spec';
+import {
   Box,
   Button,
   CircularProgress,
@@ -8,13 +15,6 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import {
-  conceptUriToName,
-  generateQuizProblems,
-  getConceptPropertyInSection,
-  getDefiniedaInSection,
-  getSectionGoals,
-} from '@alea/spec';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
@@ -110,11 +110,6 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const allSelected = concepts.length > 0 && selectedConcepts.length === concepts.length;
   const someSelected = selectedConcepts.length > 0 && selectedConcepts.length < concepts.length;
 
-  const GoalJsonFormat = (allGoals: Goal[], topLevelGoalUris: string[]): SectionGoals => {
-    const trees = buildTrees(topLevelGoalUris, allGoals);
-    const sectionUri = startSectionUri;
-    return { [sectionUri]: trees };
-  };
   //TODO: add option to avoid maximum stack size exceeded
   function createHierarchy(goalUri: string, allGoals: Goal[]): GoalNode {
     const g = allGoals.find((goal) => goal.uri === goalUri);
@@ -144,8 +139,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
 
   useEffect(() => {
     async function getAllGoals() {
-      console.log('HI');
-
+      if (!startSectionUri) return;
       //TODO use courseUri instead of courseId
       const iwgs2_course_uri =
         'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en';
@@ -154,16 +148,14 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         iwgs2_course_uri,
         current_section_uri
       );
-      const transformed = GoalJsonFormat(allGoals, topLevelGoalUris);
-      setSectionGoals(transformed);
-      console.log({ allGoals });
-      console.log({ topLevelGoalUris });
-      const trees = buildTrees(topLevelGoalUris, allGoals);
-      console.log('TREEs', trees);
+      setSectionGoals({
+        [current_section_uri]: buildTrees(topLevelGoalUris, allGoals),
+      });
+      console.log({courseId})
     }
 
     getAllGoals();
-  }, [courseId, open]); //TODO add courseURi here in dependancy array
+  }, [startSectionUri, open]); //TODO add courseURi here in dependancy array
 
   useEffect(() => {
     setCurrentIndex(selectedConcepts.length > 0 ? 0 : -1);
@@ -200,9 +192,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         }
 
         const uniqueUris = [...new Set(allUris)];
-        setConcepts(
-          uniqueUris.map((uri) => ({ label: `${conceptUriToName(uri)} (${uri})`, value: uri }))
-        );
+        setConcepts(uniqueUris.map((uri) => ({ label: `${conceptUriToName(uri)}`, value: uri })));
       } catch (err) {
         console.error('Error fetching concepts in range:', err);
       } finally {
@@ -224,7 +214,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
         endSectionUri,
         selectedGoals,
         selectedConcepts: selectedConcepts.map((sc) => ({
-          name: sc.label,
+          conceptName: sc.label,
           uri: sc.value,
           properties: (selectedProperties[sc.value] || [])
             .map((d) => d.replace(/-\d+$/, ''))

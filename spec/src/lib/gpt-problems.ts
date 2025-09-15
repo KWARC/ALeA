@@ -203,7 +203,7 @@ export interface VariantBase {
 }
 
 type ConceptSelection = {
-  name: string;
+  conceptName: string;
   uri: string;
   properties: string[];
 };

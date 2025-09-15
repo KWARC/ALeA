@@ -65,7 +65,6 @@ export const CourseSectionSelector = ({
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingProblemCount, setLoadingProblemCount] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
@@ -444,20 +443,13 @@ export const CourseSectionSelector = ({
         )}
 
         <Box display="flex">
-          {generating ? (
-            <Button variant="contained" disabled>
-              <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-              Generating...
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              onClick={() => setDialogOpen(true)}
-              disabled={!courseId || !startSectionUri || !endSectionUri || loading}
-            >
-              Generate
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            onClick={() => setDialogOpen(true)}
+            disabled={!courseId || !startSectionUri || !endSectionUri || loading}
+          >
+            Generate
+          </Button>
         </Box>
         <SectionDetailsDialog
           open={dialogOpen}
