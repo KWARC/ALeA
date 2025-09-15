@@ -1,16 +1,4 @@
 import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  MenuItem,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-} from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
-import {
   getUserInfo,
   ProblemJson,
   QuizProblem,
@@ -19,7 +7,17 @@ import {
   UserInfo,
 } from '@alea/spec';
 import { PRIMARY_COL } from '@alea/utils';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Paper,
+  TextField,
+  Typography
+} from '@mui/material';
 import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
 import { QuizPanel } from '../components/quiz-gen/QuizPanel';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';

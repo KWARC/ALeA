@@ -12,8 +12,8 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { conceptUriToName } from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 import React from 'react';
 import { ConceptProperty } from './SectionDetailsDialog';
 

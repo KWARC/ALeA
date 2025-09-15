@@ -1,7 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Chip, Divider, IconButton, Paper, Typography } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
+import { conceptUriToName } from '@alea/spec';
 import React from 'react';
 import { ConceptProperty, QuestionType, SectionGoals } from './SectionDetailsDialog';
 

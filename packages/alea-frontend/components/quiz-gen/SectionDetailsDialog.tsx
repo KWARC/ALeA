@@ -14,7 +14,7 @@ import {
   getConceptPropertyInSection,
   getDefiniedaInSection,
   getSectionGoals,
-} from '@stex-react/api';
+} from '@alea/spec';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
@@ -172,13 +172,15 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const handleToggleAll = () => {
     setSelectedConcepts(allSelected ? [] : concepts);
   };
+
   useEffect(() => {
     if (!startSectionUri || !endSectionUri) return;
-    setConcepts([]);
+    setSelectedGoals({});
     setSelectedConcepts([]);
     setSelectedProperties({});
-    setSelectedGoals({});
-  }, [startSectionUri, endSectionUri, setGeneratedProblems]);
+    setSelectedQuestionTypes([]);
+    setCurrentStep(0);
+  }, [startSectionUri, endSectionUri]);
 
   useEffect(() => {
     if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
@@ -239,6 +241,13 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       }));
       setLatestGeneratedProblems(parsedProblems);
       setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
+
+      setSelectedGoals({});
+      setSelectedConcepts([]);
+      setSelectedProperties({});
+      setSelectedQuestionTypes([]);
+      setCurrentStep(0);
+
       onClose?.();
     } catch (error) {
       console.error(' Error generating problems:', error);

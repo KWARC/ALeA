@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
+import { conceptUriToName } from '@alea/spec';
 import React from 'react';
 
 interface ConceptSelectorProps {

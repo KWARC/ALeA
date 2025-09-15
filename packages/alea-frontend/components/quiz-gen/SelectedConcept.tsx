@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Paper, Tooltip, Typography } from '@mui/material';
-import { conceptUriToName } from '@stex-react/api';
+import { conceptUriToName } from '@alea/spec';
 import React from 'react';
 import { ConceptProperty } from './SectionDetailsDialog';
 

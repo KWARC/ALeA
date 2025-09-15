@@ -9,7 +9,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { QuizProblem } from '@stex-react/api';
+import { QuizProblem } from '@alea/spec';
 import { getSectionNameFromIdOrUri } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 
