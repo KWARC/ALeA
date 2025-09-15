@@ -26,6 +26,7 @@ import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 're
 import { SecInfo } from '../types';
 import { isLeafSectionId, SlidePicker } from './SlideSelector';
 import { getSlides } from '@stex-react/spec';
+import { InfoOutlined } from '@mui/icons-material';
 
 export type FormData = LectureEntry & {
   sectionName: string;
