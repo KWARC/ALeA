@@ -14,12 +14,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [courseId, instanceId],
     res
   );
-
+  if (!result) return;
   if (!result?.length) {
     return res.status(200).json({ hasQuiz: false, hasHomework: false });
   }
 
-  const hasQuiz = !!(result[0].hasQuiz ?? false);
-  const hasHomework = !!(result[0].hasHomework ?? false);
+  const hasQuiz = result[0].hasQuiz;
+  const hasHomework = result[0].hasHomework;
   res.status(200).json({ hasQuiz, hasHomework });
 }

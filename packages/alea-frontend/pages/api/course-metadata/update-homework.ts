@@ -49,6 +49,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [hasHomework ? 1 : 0, updaterId, courseId, instanceId],
     res
   );
-  clearCourseHomeworkQuizCache();
   return res.status(200).end();
 }
