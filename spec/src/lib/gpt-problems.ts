@@ -202,6 +202,12 @@ export interface VariantBase {
   problemUri?: string;
 }
 
+type ConceptSelection = {
+  conceptName: string;
+  uri: string;
+  properties: string[];
+};
+
 export type VariantGenerationParams =
   | (VariantBase & MinorEditVariant)
   | (VariantBase & ReskinVariant)
@@ -214,6 +220,9 @@ interface NewGenerationParams {
   courseId: string;
   startSectionUri: string;
   endSectionUri: string;
+  selectedGoals?: { [conceptUri: string]: string[] };
+  selectedConcepts?: ConceptSelection[];
+  selectedQuestionTypes?: string[];
 }
 interface CopyGenerationParams {
   mode: 'copy';

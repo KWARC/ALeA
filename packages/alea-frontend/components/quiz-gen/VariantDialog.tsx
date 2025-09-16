@@ -1,4 +1,11 @@
 import {
+  checkPossibleVariants,
+  finalizeProblem,
+  getProblemVersionHistory,
+  saveProblemDraft,
+  UserInfo,
+} from '@alea/spec';
+import {
   Box,
   Button,
   CircularProgress,
@@ -10,21 +17,13 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
-import {
-  checkPossibleVariants,
-  finalizeProblem,
-  getProblemVersionHistory,
-  saveProblemDraft,
-  UserInfo,
-} from '@alea/spec';
-import { PRIMARY_COL } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
+import { GenerationParams } from './GenerationParams';
 import { PreviewSection } from './PreviewSection';
 import { flattenQuizProblem } from './QuizPanel';
 import { MinorEditType, SwitchToggle } from './SwitchToggle';
 import { Translate } from './Translate';
-import { GenerationParams } from './GenerationParams';
 
 export type VariantType = 'minorEdit' | 'modifyChoice' | 'thematicReskin' | 'scaffolding';
 export interface VariantConfig {
@@ -260,11 +259,7 @@ export const VariantDialog = ({
                 )}
               </>
             )}
-            <Box
-              flex={1}
-              pr={1}
-              overflow="auto"
-            >
+            <Box flex={1} pr={1} overflow="auto">
               {variantOptionsLoading ? (
                 <LinearProgress />
               ) : (
@@ -277,8 +272,8 @@ export const VariantDialog = ({
                       placeholder="e.g., simplify language, keep same meaning"
                       variantConfig={variantConfig}
                       setVariantConfig={setVariantConfig}
-                      problemData={problemData}
                       availableMinorEdits={availabledMinorEdits}
+                      problemData={problemData}
                       onLoadingChange={setPreviewLoading}
                       onVariantGenerated={(newVariant) => {
                         const flat = flattenQuizProblem(newVariant);
@@ -310,6 +305,8 @@ export const VariantDialog = ({
                     <SwitchToggle
                       title="Thematic Reskinning"
                       typeKey="thematicReskin"
+                      instructionKey="thematicReskinInstruction"
+                      placeholder="e.g., Change the context"
                       variantConfig={variantConfig}
                       themes={availableThemes}
                       setVariantConfig={setVariantConfig}
@@ -390,18 +387,16 @@ export const VariantDialog = ({
             minHeight={0}
             overflow="hidden"
           >
-            {/* <Box flex={1} overflow="auto" pr={1}> */}
-              <PreviewSection
-                previewMode={previewMode}
-                setPreviewMode={setPreviewMode}
-                problemData={problemData}
-                editableSTeX={editableSTeX}
-                setEditableSTeX={setEditableSTeX}
-                previousVersions={versions}
-                isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
-                onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
-              />
-            {/* </Box> */}
+            <PreviewSection
+              previewMode={previewMode}
+              setPreviewMode={setPreviewMode}
+              problemData={problemData}
+              editableSTeX={editableSTeX}
+              setEditableSTeX={setEditableSTeX}
+              previousVersions={versions}
+              isLatest={(isLatestVersion) => setisViewingLatestVersion(isLatestVersion)}
+              onLatestVersionChange={(selectedVersion) => setSelectedVersion(selectedVersion)}
+            />
           </Box>
         </Box>
       </DialogContent>
@@ -412,7 +407,6 @@ export const VariantDialog = ({
             clearSelection();
             onClose();
           }}
-          // sx={{ textTransform: 'none' }}
         >
           Close
         </Button>

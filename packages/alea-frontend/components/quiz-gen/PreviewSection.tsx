@@ -214,12 +214,6 @@ export const PreviewSection = ({
                     display: 'flex',
                     alignItems: 'center',
                   },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
                 }}
               >
                 {filteredVersions.map((version, index) => {
@@ -269,20 +263,6 @@ export const PreviewSection = ({
                         '&.Mui-selected': {
                           backgroundColor: 'rgba(25, 118, 210, 0.08)',
                           border: '1px solid rgba(25, 118, 210, 0.3)',
-
-                          '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                          },
-
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            width: 3,
-                            backgroundColor: '#1976d2',
-                          },
                         },
                       }}
                     >
