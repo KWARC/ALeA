@@ -2,7 +2,6 @@ import { ProblemFeedbackJson } from '@kwarc/flams';
 import { getFlamsServer } from '@kwarc/ftml-react';
 import { FTML } from '@kwarc/ftml-viewer';
 import {
-  COURSES_INFO,
   CURRENT_TERM,
   CourseInfo,
   createCourseInfo,
@@ -10,6 +9,7 @@ import {
   waitForNSeconds,
 } from '@alea/utils';
 import axios from 'axios';
+import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -38,6 +38,25 @@ export interface Person {
 
 let CACHED_ARCHIVE_INDEX: FTML.ArchiveIndex[] | undefined = undefined;
 let CACHED_INSTITUTION_INDEX: FTML.Institution[] | undefined = undefined;
+
+const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
+
+async function getCachedCourseHomeworkAndQuizInfo(
+  courseId: string,
+  instanceId?: string
+): Promise<CourseQuizAndHomeworkInfo> {
+  const cacheKey = courseId;
+  if (courseHomeworkQuizCache.has(cacheKey)) {
+    return courseHomeworkQuizCache.get(cacheKey)!;
+  }
+  const result = await getCourseHomeworkAndQuizInfo(courseId, instanceId);
+  courseHomeworkQuizCache.set(cacheKey, result);
+  return result;
+}
+
+export function clearCourseHomeworkQuizCache(): void {
+  courseHomeworkQuizCache.clear();
+}
 
 export async function getDocIdx(institution?: string) {
   if (!CACHED_ARCHIVE_INDEX) {
@@ -96,14 +115,18 @@ export async function getCourseInfo(institution?: string) {
       doc.acronym = doc.acronym.toLowerCase();
 
       const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-
+      const { hasQuiz, hasHomework } = await getCachedCourseHomeworkAndQuizInfo(
+        doc.acronym,
+        CURRENT_TERM
+      );
       courseInfo[doc.acronym] = createCourseInfo(
         doc.acronym,
         doc.title,
         doc.notes,
         doc.landing,
         isCurrent,
-        ['lbs', 'ai-1', 'iwgs-1'].includes(doc.acronym) ? true : doc.quizzes ?? false,
+        hasHomework,
+        hasQuiz,
         doc.institution,
         doc.instances,
         doc.instructors,
@@ -113,8 +136,8 @@ export async function getCourseInfo(institution?: string) {
     }
     return courseInfo;
   } catch (err) {
-    console.log(err);
-    return COURSES_INFO;
+    console.error('Error fetching course info from FLAMS:', err);
+    return {};
   }
 }
 

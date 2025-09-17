@@ -12,6 +12,7 @@ export interface CourseInfo {
   quizzesLink: string;
   isCurrent: boolean;
   hasQuiz: boolean;
+  hasHomework: boolean;
   institution?: string;
   instances?: { semester: string; instructors?: string[] }[];
   instructors?: string[];
@@ -51,6 +52,7 @@ export function createCourseInfo(
   landing: string,
   isCurrent = false,
   hasQuiz = false,
+  hasHomework = false,
   institution?: string,
   instances?: { semester: string; instructors?: string[] }[],
   instructors?: string[],
@@ -71,6 +73,7 @@ export function createCourseInfo(
     landing,
     isCurrent,
     hasQuiz,
+    hasHomework,
     institution,
     instances,
     instructors,
@@ -102,61 +105,6 @@ export interface LectureEntry {
 export interface CoverageTimeline {
   [courseId: string]: LectureEntry[];
 }
-
-export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
-  'ai-1': createCourseInfo(
-    'ai-1',
-    'Artificial Intelligence - I',
-    'MiKoMH/AI',
-    'course/notes/notes1.tex'
-  ),
-  'ai-2': createCourseInfo(
-    'ai-2',
-    'Artificial Intelligence - II',
-    'MiKoMH/AI',
-    'course/notes/notes2.xhtml',
-    true,
-    true
-  ),
-  'iwgs-1': createCourseInfo('iwgs-1', 'IWGS - I', 'MiKoMH/IWGS', 'course/notes/notes-part1.xhtml'),
-  'iwgs-2': createCourseInfo(
-    'iwgs-2',
-    'IWGS - II',
-    'MiKoMH/IWGS',
-    'course/notes/notes-part2.xhtml',
-    true
-  ),
-  krmt: createCourseInfo(
-    'krmt',
-    'Knowledge Representation for Mathematical Theories',
-    'MiKoMH/KRMT',
-    'course/notes/notes.xhtml'
-  ),
-  lbs: createCourseInfo(
-    'lbs',
-    'Logic-based Natural Language Semantics',
-    'MiKoMH/LBS',
-    'course/notes/notes.xhtml'
-  ),
-  gdp: createCourseInfo(
-    'gdp',
-    'Grundlagen der Programmierung',
-    'courses/FAU/gdp',
-    'course/notes/notes.de.xhtml'
-  ),
-  f29fa1: createCourseInfo(
-    'f29fa1',
-    'Foundations 1',
-    'courses/HW/foundations1',
-    'mod/lect2-stex.tex'
-  ),
-  rip: createCourseInfo(
-    'rip',
-    'Repetitorium Informatik',
-    'courses/FAU/rip/course',
-    'course/notes/notes.de.xhtml'
-  ),
-};
 
 export const MaAI_COURSES: {
   [courseId: string]: {

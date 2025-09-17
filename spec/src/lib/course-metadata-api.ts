@@ -28,6 +28,11 @@ export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'insta
   lectureEntry: LectureSchedule;
 };
 
+export interface CourseQuizAndHomeworkInfo {
+  hasQuiz: boolean;
+  hasHomework: boolean;
+}
+
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
 export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'instanceId'>) {
@@ -96,4 +101,14 @@ export async function generateLectureEntry(
     { headers: getAuthHeaders() }
   );
   return response.data;
+}
+
+export async function getCourseHomeworkAndQuizInfo(
+  courseId: string,
+  instanceId?: string
+): Promise<CourseQuizAndHomeworkInfo> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-homework-and-quiz`, {
+    params: { courseId, instanceId },
+  });
+  return response.data as CourseQuizAndHomeworkInfo;
 }

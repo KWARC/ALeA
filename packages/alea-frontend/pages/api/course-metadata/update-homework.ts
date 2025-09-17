@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Action, ResourceName } from '@alea/utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
+import { clearCourseHomeworkQuizCache } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -48,7 +49,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [hasHomework ? 1 : 0, updaterId, courseId, instanceId],
     res
   );
-
   return res.status(200).end();
 }
-
