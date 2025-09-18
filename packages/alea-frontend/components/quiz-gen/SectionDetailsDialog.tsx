@@ -23,6 +23,7 @@ import { ConceptSelector } from './ConceptSelector';
 import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
 import { GoalSelector } from './GoalSelector';
+import { QuestionCategorySelector } from './QuestionCategorySelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
 
@@ -36,6 +37,12 @@ export interface ConceptProperty {
 }
 
 export interface QuestionType {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface QuestionCategory {
   id: string;
   label: string;
   description: string;
@@ -86,6 +93,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const [selectedGoals, setSelectedGoals] = useState<{ [conceptUri: string]: string[] }>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -104,6 +112,34 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       id: 'fill-blanks',
       label: 'Fill in the Blanks',
       description: 'Complete the missing words or phrases',
+    },
+  ];
+
+  const questionCategories = [
+    {
+      id: 'compare-contrast',
+      label: 'Compare / Contrast',
+      description: 'Ask differences, similarities.',
+    },
+    {
+      id: 'direct',
+      label: 'Direct Question (Theoretical)',
+      description: 'Definition and recall style questions.',
+    },
+    {
+      id: 'real-world',
+      label: 'Real-World Example',
+      description: 'Scenario-driven practical problems.',
+    },
+    {
+      id: 'problem-solving',
+      label: 'Problem-Solving',
+      description: 'Step-by-step reasoning.',
+    },
+    {
+      id: 'application',
+      label: 'Application & Decision-Making',
+      description: 'Judgment calls, design choices, or recommendations.',
     },
   ];
 
@@ -151,9 +187,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       setSectionGoals({
         [current_section_uri]: buildTrees(topLevelGoalUris, allGoals),
       });
-      console.log({courseId})
     }
-
     getAllGoals();
   }, [startSectionUri, open]); //TODO add courseURi here in dependancy array
 
@@ -171,6 +205,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setSelectedConcepts([]);
     setSelectedProperties({});
     setSelectedQuestionTypes([]);
+    setSelectedCategories([]);
     setCurrentStep(0);
   }, [startSectionUri, endSectionUri]);
 
@@ -221,6 +256,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
             .filter((d) => !d.startsWith('http')),
         })),
         selectedQuestionTypes,
+        selectedCategories,
       });
       if (!response?.length) {
         return;
@@ -236,6 +272,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       setSelectedConcepts([]);
       setSelectedProperties({});
       setSelectedQuestionTypes([]);
+      setSelectedCategories([]);
       setCurrentStep(0);
 
       onClose?.();
@@ -347,13 +384,30 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     });
   };
 
+  const handleToggleAllCategories = () => {
+    if (selectedCategories.length === questionCategories.length) {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories(questionCategories.map((c) => c.id));
+    }
+  };
+
+  const handleSelectCategory = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
+    );
+  };
+
+  const handleRemoveCategories = (categoryId: string) => {
+    setSelectedCategories((prev) => prev.filter((id) => id !== categoryId));
+  };
+
   const handleNextStep = () => setCurrentStep((s) => Math.min(s + 1, 2));
   const handlePrevStep = () => setCurrentStep((s) => Math.max(s - 1, 0));
 
   const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, selectedConcepts.length - 1));
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
@@ -446,12 +500,28 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
           )}
 
           {currentStep === 2 && (
-            <QuestionTypeSelector
-              questionTypes={questionTypes}
-              selectedQuestionTypes={selectedQuestionTypes}
-              onToggleAll={handleToggleAllQuestionTypes}
-              onSelectQuestionType={handleSelectQuestionType}
-            />
+            <Box
+              display="flex"
+              flexDirection="column"
+              gap={1}
+              sx={{
+                overflowY: 'auto',
+              }}
+            >
+              <QuestionTypeSelector
+                questionTypes={questionTypes}
+                selectedQuestionTypes={selectedQuestionTypes}
+                onToggleAll={handleToggleAllQuestionTypes}
+                onSelectQuestionType={handleSelectQuestionType}
+              />
+
+              <QuestionCategorySelector
+                categories={questionCategories}
+                selectedCategories={selectedCategories}
+                onToggleAll={handleToggleAllCategories}
+                onSelectCategory={handleSelectCategory}
+              />
+            </Box>
           )}
 
           {currentStep === 1 && (
@@ -472,11 +542,13 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
             <GenerationSummary
               selectedConcepts={selectedConcepts}
               selectedQuestionTypes={selectedQuestionTypes}
+              selectedCategories={selectedCategories}
               selectedProperties={selectedProperties}
               conceptProperties={conceptProperties}
               questionTypes={questionTypes}
-              sectionGoals={sectionGoals}
               selectedGoals={selectedGoals}
+              Categories={questionCategories}
+              onRemoveCategories={handleRemoveCategories}
               onRemoveProperty={handleRemoveProperty}
               onRemoveGoal={handleRemoveGoal}
             />
@@ -501,8 +573,9 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
               variant="contained"
               color="primary"
               disabled={
-                (currentStep === 0 && !Object.keys(selectedGoals).length) ||
-                (currentStep === 1 && selectedConcepts.length === 0)
+                currentStep === 1 &&
+                selectedConcepts.length === 0 &&
+                Object.keys(selectedGoals).length === 0
               }
               onClick={handleNextStep}
             >

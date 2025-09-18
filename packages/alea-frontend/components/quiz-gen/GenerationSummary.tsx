@@ -1,32 +1,36 @@
+import { conceptUriToName } from '@alea/spec';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Chip, Divider, IconButton, Paper, Typography } from '@mui/material';
-import { conceptUriToName } from '@alea/spec';
 import React from 'react';
-import { ConceptProperty, QuestionType, SectionGoals } from './SectionDetailsDialog';
+import { ConceptProperty, QuestionCategory, QuestionType } from './SectionDetailsDialog';
 
 interface GenerationSummaryProps {
   selectedConcepts: { label: string; value: string }[];
   selectedQuestionTypes: string[];
   selectedProperties: { [conceptUri: string]: string[] };
+  selectedCategories?: string[];
   conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   questionTypes: QuestionType[];
-  sectionGoals: SectionGoals;
   selectedGoals: { [conceptUri: string]: string[] };
+  Categories: QuestionCategory[];
   onRemoveProperty: (conceptUri: string, propertyKey: string) => void;
   onRemoveGoal?: (conceptUri: string, goalUri: string) => void;
+  onRemoveCategories?: (categoryId: string) => void;
 }
 
 export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
   selectedConcepts,
   selectedQuestionTypes,
+  selectedCategories,
   selectedProperties,
   conceptProperties,
   questionTypes,
-  sectionGoals,
   selectedGoals,
+  Categories,
   onRemoveProperty,
   onRemoveGoal,
+  onRemoveCategories,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set());
 
@@ -73,9 +77,6 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
               return (
                 <Box key={sectionUri}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    {/* <Typography variant="subtitle1" fontWeight="600" color="primary">
-                      Section: {sectionUri.split('/').pop()}
-                    </Typography> */}
                     <Chip
                       label={`${selected.length} goal${selected.length !== 1 ? 's' : ''} selected`}
                       size="small"
@@ -222,6 +223,36 @@ export const GenerationSummary: React.FC<GenerationSummaryProps> = ({
                     />
                     <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
                       {questionType?.description}
+                    </Typography>
+                  </Box>
+                </Paper>
+              );
+            })}
+          </Box>
+        </Box>
+
+        <Box mb={3}>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Selected Categories ({selectedCategories?.length})
+          </Typography>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {selectedCategories.map((catId) => {
+              const category = Categories.find((c) => c.id === catId);
+
+              return (
+                <Paper key={catId} elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50' }}>
+                  <Box display="flex" alignItems="flex-start" gap={2}>
+                    <Chip
+                      label={category.label}
+                      size="small"
+                      variant="filled"
+                      color="secondary"
+                      sx={{ fontWeight: 500 }}
+                      onDelete={() => onRemoveCategories?.(catId)}
+                      deleteIcon={<CloseIcon />}
+                    />
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                      {category.description || 'No description available'}
                     </Typography>
                   </Box>
                 </Paper>

@@ -223,6 +223,7 @@ interface NewGenerationParams {
   selectedGoals?: { [conceptUri: string]: string[] };
   selectedConcepts?: ConceptSelection[];
   selectedQuestionTypes?: string[];
+  selectedCategories?: string[];
 }
 interface CopyGenerationParams {
   mode: 'copy';
