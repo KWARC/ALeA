@@ -2,12 +2,12 @@ import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from './comment-utils';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { getCourseInfo } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) {
     return;
