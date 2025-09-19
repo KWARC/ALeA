@@ -189,7 +189,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       });
     }
     getAllGoals();
-  }, [startSectionUri, open]); //TODO add courseURi here in dependancy array
+  }, [open]); //TODO add courseURi here in dependancy array
 
   useEffect(() => {
     setCurrentIndex(selectedConcepts.length > 0 ? 0 : -1);
