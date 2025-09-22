@@ -1,3 +1,13 @@
+import { updateRouterQuery } from '@alea/react-utils';
+import {
+  fetchGeneratedProblems,
+  getCourseGeneratedProblemsCountBySection,
+  getCourseInfo,
+  getCourseProblemCounts,
+  getCoverageTimeline,
+  getProblemsPerSection,
+} from '@alea/spec';
+import { CourseInfo, CoverageTimeline } from '@alea/utils';
 import { getFlamsServer } from '@kwarc/ftml-react';
 import {
   Box,
@@ -11,16 +21,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  fetchGeneratedProblems,
-  getCourseGeneratedProblemsCountBySection,
-  getCourseInfo,
-  getCourseProblemCounts,
-  getCoverageTimeline,
-  getProblemsPerSection,
-} from '@alea/spec';
-import { updateRouterQuery } from '@alea/react-utils';
-import { CourseInfo, CoverageTimeline } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
@@ -180,6 +180,7 @@ export const CourseSectionSelector = ({
           })
         );
         setGeneratedProblems(parsedProblems);
+        
       } catch (err) {
         console.error('Error in fetchInitialData:', err);
       } finally {

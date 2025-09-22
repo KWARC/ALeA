@@ -7,15 +7,7 @@ import {
   UserInfo,
 } from '@alea/spec';
 import { PRIMARY_COL } from '@alea/utils';
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Paper, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { CourseSectionSelector } from '../components/quiz-gen/CourseSectionSelector';
@@ -204,6 +196,7 @@ const QuizGen = () => {
         sections={sections}
         viewMode={viewMode}
         existingProblems={existingProblems}
+        problems={problems}
       />
     </Box>
   );
