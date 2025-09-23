@@ -1,5 +1,6 @@
 import { GetCourseGradingItemsResponse } from '@alea/spec';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import { checkIfGetOrSetError, getUserIdOrSetError } from '../comment-utils';
@@ -10,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfGetOrSetError(req, res)) return;
   const courseId = req.query.courseId as string;
   if (!courseId) return res.status(422).send('Missing params.');
-  const instanceId = (req.query.courseInstance as string) ?? CURRENT_TERM;
+  const instanceId = (req.query.courseInstance as string) ?? await getCurrentTermForCourseId(courseId);
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   const isInstructor = await isUserIdAuthorizedForAny(userId, [

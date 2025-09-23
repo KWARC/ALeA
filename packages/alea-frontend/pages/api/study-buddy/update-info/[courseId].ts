@@ -6,7 +6,7 @@ import {
   getUserInfo,
 } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,8 +19,8 @@ export default async function handler(
 
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
-  const sbCourseId = getSbCourseId(courseId, instanceId);
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
+  const sbCourseId = await getSbCourseId(courseId, instanceId);
 
   const {
     intro,
