@@ -1,3 +1,25 @@
+import { DateView } from '@alea/react-utils';
+import {
+  createResourceAction,
+  deleteResourceAction,
+  getAllResourceActions,
+  getCourseInfo,
+  isUserMember,
+  isValid,
+  recomputeMemberships,
+  UpdateResourceAction,
+  updateResourceAction
+} from '@alea/spec';
+import {
+  Action,
+  ALL_RESOURCE_TYPES,
+  ComponentType,
+  CourseInfo,
+  CURRENT_TERM,
+  RESOURCE_TYPE_MAP,
+  ResourceIdComponent,
+  ResourceName,
+} from '@alea/utils';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import EditIcon from '@mui/icons-material/Edit';
@@ -22,25 +44,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  createResourceAction,
-  deleteResourceAction,
-  getAllResourceActions,
-  isUserMember,
-  isValid,
-  recomputeMemberships,
-  UpdateResourceAction,
-  updateResourceAction,
-} from '@alea/spec';
-import { DateView } from '@alea/react-utils';
-import {
-  Action,
-  ALL_RESOURCE_TYPES,
-  ComponentType,
-  RESOURCE_TYPE_MAP,
-  ResourceIdComponent,
-  ResourceName,
-} from '@alea/utils';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -68,11 +71,31 @@ const SysAdmin: NextPage = () => {
     resourceId: string;
     actionId: string;
   } | null>(null);
+  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
 
   async function getAllResources() {
     try {
       const data = await getAllResourceActions();
       setResourceActions(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  async function loadCurrentSemCourses() {
+    try {
+      const courseData = await getCourseInfo();
+      const filteredCourses = Object.entries(courseData).reduce((acc, [courseId, courseInfo]) => {
+        if (
+          courseInfo.instances &&
+          courseInfo.instances.some((instance) => instance.semester === CURRENT_TERM)
+        ) {
+          acc[courseId] = courseInfo;
+        }
+        return acc;
+      }, {} as { [id: string]: CourseInfo });
+
+      setCourses(filteredCourses);
     } catch (e) {
       console.error(e);
     }
@@ -83,6 +106,7 @@ const SysAdmin: NextPage = () => {
       if (!isSysAdmin) router.push('/');
     });
     getAllResources();
+    loadCurrentSemCourses();
   }, []);
 
   useEffect(() => {
@@ -94,6 +118,22 @@ const SysAdmin: NextPage = () => {
       }
     }
   }, [resourceType]);
+
+  useEffect(() => {
+    if (selectedCourseId && resourceType === ResourceName.COURSE_ACCESS) {
+      setResourceComponents((prevComponents) => {
+        return prevComponents.map((component) => {
+          if (component.name === 'courseId') {
+            return { ...component, value: selectedCourseId };
+          }
+          return component;
+        });
+      });
+
+      const aclId = `${selectedCourseId}-${CURRENT_TERM}-instructors`;
+      setAclId(aclId);
+    }
+  }, [selectedCourseId, resourceType]);
 
   async function handleRecomputeClick() {
     try {
@@ -225,6 +265,18 @@ const SysAdmin: NextPage = () => {
   const handleActionClick = (actionId: Action) => {
     setActionId(actionId);
   };
+  const handleCourseSelection = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    if (courseId) {
+      setResourceType(ResourceName.COURSE_ACCESS);
+      setActionId(Action.ACCESS_CONTROL);
+    } else {
+      setResourceType('');
+      setActionId('');
+      setResourceComponents([]);
+      setAclId('');
+    }
+  };
 
   return (
     <MainLayout>
@@ -277,6 +329,49 @@ const SysAdmin: NextPage = () => {
         >
           <Typography fontSize={22} m="10px 0">
             Resource-Action Assignments
+          </Typography>
+          <Typography fontSize={16} m="10px 0" color="text.secondary">
+            Quick Course Access Setup
+          </Typography>
+          <Select
+            fullWidth
+            value={selectedCourseId}
+            onChange={(e) => handleCourseSelection(e.target.value)}
+            displayEmpty
+            variant="outlined"
+            size="small"
+            sx={{ mb: '20px' }}
+          >
+            <MenuItem value="">
+              <em>Select a Course (Auto-fills course access forms)</em>
+            </MenuItem>
+            {Object.entries(courses).map(([courseId, courseInfo]) => (
+              <MenuItem key={courseId} value={courseId}>
+                {courseId} - {courseInfo.courseName}
+              </MenuItem>
+            ))}
+          </Select>
+
+          {selectedCourseId && (
+            <Box
+              sx={{
+                backgroundColor: '#e3f2fd',
+                border: '1px solid #2196f3',
+                borderRadius: '8px',
+                p: '15px',
+                mb: '20px',
+              }}
+            >
+              <Typography fontSize={14} fontWeight="bold" color="primary" mb="10px">
+                Course Access Setup for: <strong>{selectedCourseId}</strong>
+              </Typography>
+              <Typography fontSize={13} color="text.secondary" mb="15px">
+                Course access form is auto-filled when you select a course above.
+              </Typography>
+            </Box>
+          )}
+          <Typography fontSize={16} m="10px 0" color="text.secondary">
+            Manual Resource Type Selection
           </Typography>
           <Select
             fullWidth
@@ -359,7 +454,9 @@ const SysAdmin: NextPage = () => {
             disabled={isSubmitting || !aclId || !resourceId || !actionId}
             sx={{ alignSelf: 'center' }}
           >
-            Add New Assignment
+            {selectedCourseId && resourceType === ResourceName.COURSE_ACCESS
+              ? `Add ${resourceType} Assignment`
+              : 'Add New Assignment'}
           </Button>
         </Box>
 
