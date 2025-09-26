@@ -140,6 +140,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
       await createStaffResourceActions(courseId);
       await createMetadataResourceActions(courseId);
       setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
+      window.location.reload();
       await checkIfAlreadySetup();
     } catch (e) {
       setSemesterSetupMessage(`Semester acl setup failed for courseId ${courseId}`);
