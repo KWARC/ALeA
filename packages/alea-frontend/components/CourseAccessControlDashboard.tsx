@@ -1,6 +1,17 @@
 import CheckIcon from '@mui/icons-material/Check';
 import EditIcon from '@mui/icons-material/Edit';
-import { Alert, Box, Button, Grid, IconButton, List, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  List,
+  Snackbar,
+  TextField,
+  Typography,
+} from '@mui/material';
 import {
   createAcl,
   getCourseAcls,
@@ -13,6 +24,14 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AclDisplay from './AclDisplay';
 import { useStudentCount } from '../hooks/useStudentCount';
+import {
+  createInstructorResourceActions,
+  createMetadataResourceActions,
+  createSemesterAclsForCourse,
+  createStaffResourceActions,
+  createStudentResourceActions,
+  isCourseSemesterSetupComplete,
+} from 'packages/utils/src/lib/semester-helper';
 
 const ALL_SHORT_IDS = [
   'syllabus',
@@ -24,6 +43,7 @@ const ALL_SHORT_IDS = [
   'quiz-preview',
   'quiz-take',
   'homework-take',
+  'metadata',
 ];
 
 export type ShortId = (typeof ALL_SHORT_IDS)[number];
@@ -40,13 +60,14 @@ const EMPTY_ASSIGMENT = ALL_SHORT_IDS.reduce(
 );
 
 const staffAccessResources: Record<ShortId, string> = {
-  'quiz': 'Quiz Management',
+  quiz: 'Quiz Management',
   'quiz-preview': 'Quiz Preview',
   'homework-crud': 'Homework Create/Update',
   'homework-grading': 'Homework Grading',
-  'syllabus': 'Syllabus Management',
+  syllabus: 'Syllabus Management',
   'study-buddy': 'Study Buddy Management',
-  'comments': 'Comments Moderation',
+  comments: 'Comments Moderation',
+  metadata: 'Course Metadata',
 } as const;
 
 const studentAccessResources: Record<ShortId, string> = {
@@ -56,11 +77,11 @@ const studentAccessResources: Record<ShortId, string> = {
 
 const getAclShortIdToResourceActionPair = (courseId: string) =>
   ({
-    'syllabus': {
+    syllabus: {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
       actionId: Action.MUTATE,
     },
-    'quiz': {
+    quiz: {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
       actionId: Action.MUTATE,
     },
@@ -72,7 +93,7 @@ const getAclShortIdToResourceActionPair = (courseId: string) =>
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
       actionId: Action.INSTRUCTOR_GRADING,
     },
-    'comments': {
+    comments: {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
       actionId: Action.MODERATE,
     },
@@ -92,10 +113,42 @@ const getAclShortIdToResourceActionPair = (courseId: string) =>
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
       actionId: Action.TAKE,
     },
+    metadata: {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      actionId: Action.MUTATE,
+    },
   } as Record<ShortId, ResourceActionPair>);
 
 const CourseAccessControlDashboard = ({ courseId }) => {
   const router = useRouter();
+  const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
+  const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
+  const [isAlreadySetup, setIsAlreadySetup] = useState(false);
+
+  async function checkIfAlreadySetup() {
+    const complete = await isCourseSemesterSetupComplete(courseId);
+    setIsAlreadySetup(!!complete);
+  }
+
+  const handleCreateCourseACL = async () => {
+    setSemesterSetupLoading(true);
+    setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
+    try {
+      await createSemesterAclsForCourse(courseId);
+      await createInstructorResourceActions(courseId);
+      await createStudentResourceActions(courseId);
+      await createStaffResourceActions(courseId);
+      await createMetadataResourceActions(courseId);
+      setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
+      window.location.reload();
+      await checkIfAlreadySetup();
+    } catch (e) {
+      setSemesterSetupMessage(`Semester acl setup failed for courseId ${courseId}`);
+    } finally {
+      setSemesterSetupLoading(false);
+    }
+  };
+
   const renderEditableField = (shortId: ShortId) => {
     return isAnyDataEditing[shortId] ? (
       <TextField
@@ -186,6 +239,12 @@ const CourseAccessControlDashboard = ({ courseId }) => {
     getAcls();
   }, [courseId]);
 
+  useEffect(() => {
+    if (courseId) {
+      checkIfAlreadySetup();
+    }
+  }, [courseId]);
+
   async function handleCreateAclClick() {
     if (!newAclId || !courseId) return;
     const aclId = `${courseId}-${CURRENT_TERM}-${newAclId}`;
@@ -215,6 +274,19 @@ const CourseAccessControlDashboard = ({ courseId }) => {
 
   return (
     <Box display="flex" flexDirection="column" maxWidth="900px" m="auto" p="20px" gap="20px">
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" fontWeight="bold">
+          Access Control
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={handleCreateCourseACL}
+          disabled={semesterSetupLoading || isAlreadySetup}
+          startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
+        >
+          {isAlreadySetup ? 'Resource-Action already created' : 'Default Resource-Action Setup'}
+        </Button>
+      </Box>
       <Typography variant="h5">Staff</Typography>
       <Grid container spacing={1}>
         {Object.entries(staffAccessResources).map(([shortId, displayName]) => (
@@ -250,7 +322,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
         ))}
       </Grid>
       <Typography variant="h5">Students</Typography>
-      <Typography variant='h6'>Enrolled Students: {studentCount}</Typography>
+      <Typography variant="h6">Enrolled Students: {studentCount}</Typography>
       <Grid container spacing={1}>
         {Object.entries(studentAccessResources).map(([shortId, displayName]) => (
           <Grid item xs={6} key={shortId}>
@@ -319,6 +391,28 @@ const CourseAccessControlDashboard = ({ courseId }) => {
         </Button>
       </Box>
       {error && <Alert severity="error">{'Something went wrong'}</Alert>}
+      <Snackbar
+        open={!!semesterSetupMessage}
+        autoHideDuration={semesterSetupLoading ? null : 4000}
+        onClose={() => setSemesterSetupMessage('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          severity={
+            semesterSetupLoading
+              ? 'info'
+              : semesterSetupMessage.includes('successful')
+              ? 'success'
+              : semesterSetupMessage.includes('failed')
+              ? 'error'
+              : 'info'
+          }
+          sx={{ width: '100%' }}
+          icon={semesterSetupLoading ? <CircularProgress size={20} /> : undefined}
+        >
+          {semesterSetupMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

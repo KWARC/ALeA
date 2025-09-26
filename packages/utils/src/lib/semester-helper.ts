@@ -117,6 +117,10 @@ export async function createStaffResourceActions(courseId: string) {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
       actionId: Action.MODERATE,
     },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
+      actionId: Action.MUTATE,
+    },
   ];
   for (const { resourceId, actionId } of actions) {
     try {
@@ -129,6 +133,19 @@ export async function createStaffResourceActions(courseId: string) {
     }
   }
 }
+export async function createMetadataResourceActions(courseId: string) {
+  const aclId = `${courseId}-${CURRENT_TERM}-instructors`;
+  try {
+    await createResourceAction({
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      actionId: Action.MUTATE,
+      aclId,
+    });
+    console.log(`Created metadata resource action for instructors: ${aclId}`);
+  } catch (error: any) {
+    console.log(`Error creating metadata resource action for instructors ${aclId}: ${error.message}`);
+  }
+}
 
 export function getExpectedResourceActions(courseId: string) {
   return [
@@ -136,6 +153,11 @@ export function getExpectedResourceActions(courseId: string) {
     {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/**`,
       actionId: Action.ACCESS_CONTROL,
+      aclId: `${courseId}-${CURRENT_TERM}-instructors`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      actionId: Action.MUTATE,
       aclId: `${courseId}-${CURRENT_TERM}-instructors`,
     },
     // Students
@@ -183,6 +205,11 @@ export function getExpectedResourceActions(courseId: string) {
     {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
       actionId: Action.MODERATE,
+      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
+      actionId: Action.MUTATE,
       aclId: `${courseId}-${CURRENT_TERM}-staff`,
     },
   ];

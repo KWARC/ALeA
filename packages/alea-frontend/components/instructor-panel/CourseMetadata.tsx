@@ -2,13 +2,6 @@ import { Box, Typography, Button, CircularProgress, Snackbar, Alert } from '@mui
 import { useEffect, useState } from 'react';
 import AnnouncementsTab from './Announcements';
 import LectureScheduleTab from './LectureSchedule';
-import {
-  createInstructorResourceActions,
-  createSemesterAclsForCourse,
-  createStaffResourceActions,
-  createStudentResourceActions,
-  isCourseSemesterSetupComplete,
-} from 'packages/utils/src/lib/semester-helper';
 import { generateLectureEntry } from '@alea/spec';
 
 interface CourseMetadataProps {
@@ -17,39 +10,8 @@ interface CourseMetadataProps {
 }
 
 const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
-  const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
-  const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
-  const [isAlreadySetup, setIsAlreadySetup] = useState(false);
   const [generateLoading, setGenerateLoading] = useState(false);
   const [generateMessage, setGenerateMessage] = useState('');
-
-  async function checkIfAlreadySetup() {
-    const complete = await isCourseSemesterSetupComplete(courseId);
-    setIsAlreadySetup(!!complete);
-  }
-
-  useEffect(() => {
-    if (courseId) {
-      checkIfAlreadySetup();
-    }
-  }, [courseId]);
-
-  const handleCreateCourseACL = async () => {
-    setSemesterSetupLoading(true);
-    setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
-    try {
-      await createSemesterAclsForCourse(courseId);
-      await createInstructorResourceActions(courseId);
-      await createStudentResourceActions(courseId);
-      await createStaffResourceActions(courseId);
-      setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
-      await checkIfAlreadySetup();
-    } catch (e) {
-      setSemesterSetupMessage(`Semester acl setup failed for courseId ${courseId}`);
-    } finally {
-      setSemesterSetupLoading(false);
-    }
-  };
   const handleGenerateLectureEntry = async () => {
     setGenerateLoading(true);
     setGenerateMessage('Generating lecture entries...');
@@ -81,49 +43,15 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
         <Typography variant="h5" fontWeight="bold">
           Course metadata
         </Typography>
-        <Box display="flex" gap={2}>
-          <Button
-            variant="contained"
-            onClick={handleCreateCourseACL}
-            disabled={semesterSetupLoading || isAlreadySetup}
-            startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
-          >
-            {isAlreadySetup ? "ACL's already created" : 'Create Course ACL'}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleGenerateLectureEntry}
-            disabled={generateLoading}
-            startIcon={generateLoading ? <CircularProgress size={20} /> : null}
-          >
-            Generate Lecture Entry
-          </Button>
-        </Box>
-      </Box>
-
-      <Snackbar
-        open={!!semesterSetupMessage}
-        autoHideDuration={semesterSetupLoading ? null : 4000}
-        onClose={() => setSemesterSetupMessage('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          severity={
-            semesterSetupLoading
-              ? 'info'
-              : semesterSetupMessage.includes('successful')
-              ? 'success'
-              : semesterSetupMessage.includes('failed')
-              ? 'error'
-              : 'info'
-          }
-          sx={{ width: '100%' }}
-          icon={semesterSetupLoading ? <CircularProgress size={20} /> : undefined}
+        <Button
+          variant="contained"
+          onClick={handleGenerateLectureEntry}
+          disabled={generateLoading}
+          startIcon={generateLoading ? <CircularProgress size={20} /> : null}
         >
-          {semesterSetupMessage}
-        </Alert>
-      </Snackbar>
-
+          Generate Lecture Entry
+        </Button>
+      </Box>
       <Snackbar
         open={!!generateMessage}
         autoHideDuration={generateLoading ? null : 4000}
