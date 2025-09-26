@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import {
@@ -49,7 +49,7 @@ function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdat
 }
 
 function getUpdates(
-  objectives: [FTML.CognitiveDimension, FTML.SymbolURI][] | undefined,
+  objectives: [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined,
   quotient: number
 ) {
   if (!objectives) return [];
@@ -113,33 +113,35 @@ export function ProblemViewer({
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
-  });  
-  const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
+  });
+  const isNap = problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
       key={uri}
       fragment={{ type: 'HtmlString', html, uri }}
       allowHovers={isFrozen}
       problemStates={problemStates}
-      onProblem={(response) => {
+      onProblemResponse={(response) => {
         onResponseUpdate?.(response);
       }}
-      {...(!isNap?{onFragment:(problemId, kind) => {
-        if (kind.type === 'Problem') {
-          return (ch: React.ReactNode) => (
-            <Box>
-              {ch}
-              <AnswerAccepter
-                masterProblemId={uri}
-                isHaveSubProblems={isHaveSubProblems}
-                problemTitle={problem.problem.title_html ?? ''}
-                isFrozen={isFrozen}
-                problemId={problemId}
-              ></AnswerAccepter>
-            </Box>
-          );
-        }
-      }}:{}) }
+      {...(!isNap
+        ? {
+            problemWrap: (problemUri) => {
+              return (ch: React.ReactNode) => (
+                <Box>
+                  {ch}
+                  <AnswerAccepter
+                    masterProblemId={uri}
+                    isHaveSubProblems={isHaveSubProblems}
+                    problemTitle={problem.problem.title_html ?? ''}
+                    isFrozen={isFrozen}
+                    problemId={problemUri}
+                  ></AnswerAccepter>
+                </Box>
+              );
+            },
+          }
+        : {})}
     />
   );
 }

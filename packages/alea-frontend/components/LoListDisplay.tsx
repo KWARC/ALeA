@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import { Book, MicExternalOn, Quiz, SupervisedUserCircle } from '@mui/icons-material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';

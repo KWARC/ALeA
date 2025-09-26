@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import { Box } from '@mui/material';
 import {
   FTMLProblemWithSolution,
@@ -59,7 +59,7 @@ const HomeworkDocPage: React.FC = () => {
     }
     getHomework(+id).then((hwInfo) => {
       setHwInfo(hwInfo);
-      for (const e of hwInfo.homework.css ?? []) FTML.injectCss(e);
+      injectCss(hwInfo.homework.css);
       setProblems(hwInfo.homework.problems);
       setAnswers(hwInfo.responses);
       const mildleToMapProblemResponse: Record<string, FTML.ProblemResponse> = {};

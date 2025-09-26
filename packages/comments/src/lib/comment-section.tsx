@@ -9,7 +9,7 @@ import { getPublicCommentTrees, refreshAllComments } from './comment-store-manag
 import { CommentReply } from './CommentReply';
 import { CommentView } from './CommentView';
 
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Refresh } from '@mui/icons-material';
 import { CURRENT_TERM } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -23,7 +23,7 @@ function RenderTree({
   refreshComments,
 }: {
   comment: Comment;
-  uri: FTML.URI;
+  uri: FTML.Uri;
   refreshComments: () => void;
 }) {
   return (
@@ -49,7 +49,7 @@ export function CommentTree({
   refreshComments,
 }: {
   comments: Comment[];
-  uri: FTML.URI;
+  uri: FTML.Uri;
   refreshComments: () => void;
 }) {
   return (
@@ -129,7 +129,7 @@ export function CommentSection({
   selectedElement = undefined,
   allCommentsMode = false,
 }: {
-  uri: FTML.URI;
+  uri: FTML.Uri;
   startDisplay?: boolean;
   selectedText?: string;
   selectedElement?: any;

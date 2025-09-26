@@ -1,11 +1,11 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
 import { CURRENT_TERM, LectureEntry } from '@alea/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000;
 export const CACHED_VIDEO_SLIDESMAP: Record<
@@ -61,7 +61,7 @@ async function getVideoToSlidesMap(courseId: string) {
   return CACHED_VIDEO_SLIDESMAP[courseId];
 }
 
-function getAllSections(data: FTML.TOCElem, level = 0): SectionInfo | SectionInfo[] | undefined {
+function getAllSections(data: FTML.TocElem, level = 0): SectionInfo | SectionInfo[] | undefined {
   const { type } = data;
   if (type === 'Paragraph' || type === 'Slide') return undefined;
   if (type === 'Section') {
@@ -130,7 +130,7 @@ function addClipInfo(allSections: SectionInfo[], jsonData: any) {
     semesterKey = CURRENT_TERM;
   } else {
     const semesters = Object.keys(jsonData);
-    if (semesters.length === 0) return; 
+    if (semesters.length === 0) return;
     semesterKey = semesters[0];
   }
   const semesterData = jsonData[semesterKey];
@@ -188,7 +188,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { notes } = courses[courseId];
 
-  const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
   const allSections: SectionInfo[] = [];
   for (const elem of tocContent) {
     const elemSections = getAllSections(elem);

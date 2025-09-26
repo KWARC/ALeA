@@ -1,4 +1,4 @@
-import {FTML} from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
 import {
   Comment,
@@ -18,7 +18,7 @@ import { useCommentRefresh } from '@alea/utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {
-  uri?: FTML.URI;
+  uri?: FTML.Uri;
   isPrivateNote: boolean;
   postAnonymously: boolean;
   parentId?: number;

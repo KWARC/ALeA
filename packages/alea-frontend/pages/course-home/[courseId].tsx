@@ -1,4 +1,4 @@
-import { FTMLDocument } from '@kwarc/ftml-react';
+import { FTMLDocument } from '@flexiformal/ftml-react';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -619,7 +619,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
         <Box fragment-uri={landing} fragment-kind="Section">
-          <FTMLDocument document={{ type: 'FromBackend', uri: landing, toc: undefined }} />
+          <FTMLDocument document={{ type: 'FromBackend', uri: landing }} />
         </Box>
         <RecordedSyllabus courseId={courseId} />
       </Box>

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import {
@@ -14,14 +14,7 @@ import {
 } from '@alea/spec';
 import { isEmptyResponse } from '@alea/quiz-utils';
 import { QuizDisplay } from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  CURRENT_TERM,
-  isFauId,
-  localStore,
-  ResourceName,
-} from '@alea/utils';
+import { Action, CourseInfo, CURRENT_TERM, isFauId, localStore, ResourceName } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -145,7 +138,7 @@ const QuizPage: NextPage = () => {
   useEffect(() => {
     if (!quizId) return;
     getQuiz(quizId).then((quizInfo) => {
-      for (const e of quizInfo.css || []) FTML.injectCss(e);
+      injectCss(quizInfo.css);
 
       setQuizInfo(quizInfo);
       setProblems(quizInfo.problems);

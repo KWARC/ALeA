@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box } from '@mui/material';
 import { FTMLProblemWithSolution, FTMLProblemWithSubProblems } from '@alea/spec';
 import React from 'react';
@@ -44,7 +44,7 @@ export function QuizFileReader({
 }: {
   setTitle: (title: string) => void;
   setProblems: (problems: Record<string, FTMLProblemWithSolution>) => void;
-  setCss: (css: FTML.CSS[]) => void;
+  setCss: (css: FTML.Css[]) => void;
 }) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

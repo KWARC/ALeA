@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Rule, Visibility } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CommentIcon from '@mui/icons-material/Comment';
@@ -51,7 +51,7 @@ import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 
 interface ColorInfo {
   color: string;
@@ -264,13 +264,13 @@ export async function getLastUpdatedNotes(
       const notesUri = allCourses[courseId]?.notes;
 
       if (notesUri) {
-        const tocResp = await getFlamsServer().contentToc({ uri: notesUri });
+        const tocResp = await contentToc({ uri: notesUri });
         const docSections = tocResp[1];
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const secInfo = sections.reduce((acc, s) => {
           acc[s.uri] = { id: s.uri, title: s.title, uri: s.uri };
           return acc;
-        }, {} as Record<FTML.DocumentURI, SecInfo>);
+        }, {} as Record<FTML.DocumentUri, SecInfo>);
 
         progressStatus = calculateLectureProgress(courseData, secInfo);
       }

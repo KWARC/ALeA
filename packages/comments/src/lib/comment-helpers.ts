@@ -1,5 +1,5 @@
-import { Comment} from '@alea/spec';
-import {FTML} from '@kwarc/ftml-viewer';
+import { Comment } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
 
 export function organizeHierarchically(flatComments: Comment[]) {
   // console.log('organizeHierarchically triggered');
@@ -23,16 +23,12 @@ export function organizeHierarchically(flatComments: Comment[]) {
 
   const topLevel = [] as Comment[];
   commentMap.forEach((comment) => {
-    if (directChildMap.get(0)?.indexOf(comment.commentId) !== -1)
-      topLevel.push(comment);
+    if (directChildMap.get(0)?.indexOf(comment.commentId) !== -1) topLevel.push(comment);
   });
   topLevel.sort(
-    (c1: Comment, c2: Comment) =>
-      (c2.postedTimestampSec || 0) - (c1.postedTimestampSec || 0)
+    (c1: Comment, c2: Comment) => (c2.postedTimestampSec || 0) - (c1.postedTimestampSec || 0)
   );
-  topLevel.forEach((comment) =>
-    generateCommentHierarchy(comment, directChildMap, commentMap)
-  );
+  topLevel.forEach((comment) => generateCommentHierarchy(comment, directChildMap, commentMap));
   return topLevel;
 }
 
@@ -55,8 +51,7 @@ function generateCommentHierarchy(
   }
   // Reverse order at the top level.
   flatComment.childComments?.sort(
-    (c1: Comment, c2: Comment) =>
-      (c1.postedTimestampSec || 0) - (c2.postedTimestampSec || 0)
+    (c1: Comment, c2: Comment) => (c1.postedTimestampSec || 0) - (c2.postedTimestampSec || 0)
   );
 }
 
@@ -69,23 +64,23 @@ export function getTotalComments(comments?: Comment[]): number {
 
 const DRAFT_KEY_PREFIX = 'DRAFT';
 
-function getDraftKey(uri: FTML.URI, commentId: number) {
+function getDraftKey(uri: FTML.Uri, commentId: number) {
   const parts = [DRAFT_KEY_PREFIX, uri];
   if (commentId) parts.push(commentId.toString());
   return parts.join(':');
 }
 
-export function retrieveDraft(uri: FTML.URI, commentId: number) {
+export function retrieveDraft(uri: FTML.Uri, commentId: number) {
   const key = getDraftKey(uri, commentId);
   return localStorage.getItem(key);
 }
 
-export function saveDraft(uri: FTML.URI, commentId: number, draft: string) {
+export function saveDraft(uri: FTML.Uri, commentId: number, draft: string) {
   const key = getDraftKey(uri, commentId);
   localStorage.setItem(key, draft);
 }
 
-export function discardDraft(uri: FTML.URI, commentId: number) {
+export function discardDraft(uri: FTML.Uri, commentId: number) {
   const key = getDraftKey(uri, commentId);
   localStorage.removeItem(key);
 }

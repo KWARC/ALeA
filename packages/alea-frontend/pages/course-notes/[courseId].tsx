@@ -1,5 +1,7 @@
-import { FTMLDocument, FTMLSetup, getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+/* eslint-disable react/display-name, react/no-children-prop */
+import { FTMLDocument, FTMLSetup } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
@@ -68,7 +70,7 @@ const FragmentWrap: React.FC<{
   );
 };
 
-function getSectionUriToTitle(toc: FTML.TOCElem[], uriToTitle: Record<string, string>) {
+function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, string>) {
   for (const elem of toc) {
     if (elem.type === 'Section') {
       uriToTitle[elem.uri] = elem.title;
@@ -84,7 +86,7 @@ const CourseNotesPage: NextPage = () => {
   const courseId = router.query.courseId as string;
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
-  const [toc, setToc] = useState<FTML.TOCElem[] | undefined>(undefined);
+  const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
@@ -115,13 +117,11 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    getFlamsServer()
-      .contentToc({ uri: notes })
-      .then(([css, toc] = [[], []]) => {
-        setToc(toc);
-        uriToTitle.current = {};
-        getSectionUriToTitle(toc, uriToTitle.current);
-      });
+    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+      setToc(toc);
+      uriToTitle.current = {};
+      getSectionUriToTitle(toc, uriToTitle.current);
+    });
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
@@ -192,13 +192,35 @@ const CourseNotesPage: NextPage = () => {
         <FTMLSetup>
           <FTMLDocument
             key={notes}
-            document={{ type: 'FromBackend', uri: notes, toc: { Predefined: toc }, gottos }}
-            onFragment={(uri, kind) => {
-              if (kind.type === 'Section' || kind.type === 'Slide' || kind.type === 'Paragraph') {
+            document={{ type: 'FromBackend', uri: notes }}
+            toc={{ Ready: toc }}
+            tocProgress={gottos}
+            sectionWrap={(uri, _) => {
+              return (ch) => (
+                <FragmentWrap
+                  uri={uri}
+                  fragmentKind={'Section'}
+                  children={ch}
+                  uriToTitle={uriToTitle.current}
+                />
+              );
+            }}
+            slideWrap={(uri) => {
+              return (ch) => (
+                <FragmentWrap
+                  uri={uri}
+                  fragmentKind={'Slide'}
+                  children={ch}
+                  uriToTitle={uriToTitle.current}
+                />
+              );
+            }}
+            paragraphWrap={(uri, kind) => {
+              if (kind === 'Paragraph') {
                 return (ch) => (
                   <FragmentWrap
                     uri={uri}
-                    fragmentKind={kind.type}
+                    fragmentKind={'Paragraph'}
                     children={ch}
                     uriToTitle={uriToTitle.current}
                   />

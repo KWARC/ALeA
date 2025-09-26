@@ -16,7 +16,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());

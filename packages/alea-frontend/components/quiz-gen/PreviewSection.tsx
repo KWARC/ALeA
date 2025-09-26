@@ -1,4 +1,4 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
 import InfoIcon from '@mui/icons-material/Info';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -131,7 +131,7 @@ export const PreviewSection = ({
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
 
   async function fetchRawStexFromUri(problemUri: string) {
-    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+    const sourceLink = await getSourceFile({ uri: problemUri });
     if (!sourceLink) return null;
     const rawStexLink = sourceLink.replace('-/blob', '-/raw');
     const response = await axios.get(rawStexLink);

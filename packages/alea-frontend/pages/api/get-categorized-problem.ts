@@ -1,5 +1,5 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
 import {
   getDefiniedaInSection,
   getQueryResults,
@@ -19,7 +19,7 @@ function isCacheValid(cacheEntry: { timestamp: number } | undefined): boolean {
   return cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_TTL;
 }
 
-function getSections(tocElems: FTML.TOCElem[]): string[] {
+function getSections(tocElems: FTML.TocElem[]): string[] {
   const sectionUris: string[] = [];
   for (const tocElem of tocElems) {
     if (tocElem.type === 'Section') sectionUris.push(tocElem.uri);
@@ -35,7 +35,7 @@ async function getAllConceptUrisForCourse(
   const cached = CONCEPT_URIS_FOR_COURSE.get(courseId);
   if (isCacheValid(cached)) return cached.data;
 
-  const toc = (await getFlamsServer().contentToc({ uri: courseNotesUri }))?.[1] ?? [];
+  const toc = (await contentToc({ uri: courseNotesUri }))?.[1] ?? [];
 
   const sectionUris = getSections(toc);
   const conceptUris = new Set<string>();
@@ -114,7 +114,7 @@ export async function getCategorizedProblems(
   courseId: string,
   sectionUri: string,
   courseNotesUri: string,
-  userLanguages: Language[],
+  userLanguages: Language[]
 ): Promise<ProblemData[]> {
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
   const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);

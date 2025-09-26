@@ -1,5 +1,6 @@
-import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
+import { sourceFile as getSourceFile, solution as flamsSolution } from '@flexiformal/ftml-backend';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
@@ -43,11 +44,9 @@ const commonIconStyles = {
 };
 
 export function handleViewSource(problemUri: string) {
-  getFlamsServer()
-    .sourceFile({ uri: problemUri })
-    .then((sourceLink) => {
-      if (sourceLink) window.open(sourceLink, '_blank');
-    });
+  getSourceFile({ uri: problemUri }).then((sourceLink) => {
+    if (sourceLink) window.open(sourceLink, '_blank');
+  });
 }
 
 export function getProblemType(uri: string): 'quiz' | 'homework' | 'exam' | 'uncategorized' {
@@ -76,7 +75,7 @@ export function UriProblemViewer({
 
   useEffect(() => {
     setSolution(undefined);
-    getFlamsServer().solution({ uri }).then(setSolution);
+    flamsSolution({ uri }).then(setSolution);
   }, [uri]);
 
   useEffect(() => {
@@ -94,7 +93,7 @@ export function UriProblemViewer({
         fragment={{ type: 'FromBackend', uri }}
         allowHovers={isSubmitted}
         problemStates={new Map([[uri, problemState]])}
-        onProblem={(response) => {
+        onProblemResponse={(response) => {
           setResponse?.(response);
         }}
       />

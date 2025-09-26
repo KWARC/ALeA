@@ -1,5 +1,6 @@
-import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import SearchIcon from '@mui/icons-material/Search';
@@ -19,11 +20,7 @@ import {
 } from '@alea/spec';
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
-import {
-  ContentDashboard,
-  LayoutWithFixedMenu,
-  SectionReview,
-} from '@alea/stex-react-renderer';
+import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
 import {
   Action,
   CourseInfo,
@@ -44,12 +41,13 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { SearchDialog } from '../course-notes/[courseId]';
 
+// DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
     <>
       {elements.map((e, idx) => (
         <Fragment key={idx}>
-          <FTMLFragment fragment={{ type: 'HtmlString', html: e }} />
+          <FTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
           {idx < elements.length - 1 && <br />}
         </Fragment>
       ))}
@@ -128,7 +126,7 @@ export function setSlideNumAndSectionId(router: NextRouter, slideNum: number, se
   router.push({ pathname, query });
 }
 
-function getSections(tocElems: FTML.TOCElem[]): string[] {
+function getSections(tocElems: FTML.TocElem[]): string[] {
   const sectionIds: string[] = [];
   for (const tocElem of tocElems) {
     if (tocElem.type === 'Section') {
@@ -142,9 +140,9 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
 }
 
 function findSection(
-  toc: FTML.TOCElem[],
+  toc: FTML.TocElem[],
   sectionId: string
-): Extract<FTML.TOCElem, { type: 'Section' }> | undefined {
+): Extract<FTML.TocElem, { type: 'Section' }> | undefined {
   for (const tocElem of toc) {
     if (tocElem.type === 'Section' && tocElem.id === sectionId) {
       return tocElem;
@@ -193,7 +191,7 @@ const CourseViewPage: NextPage = () => {
   const [timestampSec, setTimestampSec] = useState(0);
   const [autoSync, setAutoSync] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [toc, setToc] = useState<FTML.TOCElem[]>([]);
+  const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -243,13 +241,11 @@ const CourseViewPage: NextPage = () => {
 
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
-    getFlamsServer()
-      .contentToc({ uri: notes })
-      .then(([css, toc] = [[], []]) => {
-        setToc(toc);
-        setCourseSections(getSections(toc));
-        for (const e of css) FTML.injectCss(e);
-      });
+    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+      setToc(toc);
+      setCourseSections(getSections(toc));
+      injectCss(css);
+    });
     getSlideCounts(courseId).then(setSlideCounts);
     getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
   }, [router.isReady, courses, courseId]);
