@@ -1,10 +1,11 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
 import { canAccessResource, getCourseInfo } from '@alea/spec';
 import { updateRouterQuery } from '@alea/react-utils';
-import { Action, CourseInfo, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import CourseAccessControlDashboard from '../../components/CourseAccessControlDashboard';
 import CoverageUpdateTab from '../../components/coverage-update';
 import HomeworkManager from '../../components/HomeworkManager';
@@ -83,9 +84,7 @@ function ChosenTab({
 }
 
 const toUserFriendlyName = (tabName: string) => {
-  return tabName
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (str) => str.toUpperCase());
+  return tabName.replace(/-/g, ' ').replace(/\b\w/g, (str) => str.toUpperCase());
 };
 
 const TabPanel = (props: TabPanelProps) => {
@@ -119,7 +118,14 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const instanceId = (router.query.instanceId as string) ?? CURRENT_TERM;
+  const { currentTerm, setCourseId } = useCurrentTermContext();
+  
+  useEffect(() => {
+    if (courseId) {
+      setCourseId(courseId);
+    }
+  }, [courseId, setCourseId]);
+  const instanceId = (router.query.instanceId as string) ?? currentTerm;
   const tab = router.query.tab as TabName;
 
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
@@ -155,12 +161,12 @@ const InstructorDash: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     async function checkTabAccess() {
       const tabAccessPromises$ = Object.entries(TAB_ACCESS_REQUIREMENTS).map(
         async ([tabName, { resource, actions }]) => {
           for (const action of actions) {
-            if (await canAccessResource(resource, action, { courseId, instanceId: CURRENT_TERM })) {
+            if (await canAccessResource(resource, action, { courseId, instanceId: currentTerm })) {
               return tabName as TabName;
             }
           }
@@ -184,7 +190,7 @@ const InstructorDash: NextPage = () => {
       setAccessibleTabs(sortedTabs);
     }
     checkTabAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     if (accessibleTabs === undefined) return;

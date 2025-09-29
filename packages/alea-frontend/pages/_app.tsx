@@ -9,6 +9,7 @@ import { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 import './styles.scss';
 import { CommentRefreshProvider } from '@alea/utils';
+import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 
 const instance = createInstance({
   urlBase: 'https://matomo.kwarc.info',
@@ -105,11 +106,13 @@ function CustomApp({ Component, pageProps }: AppProps) {
           <ThemeProvider theme={theme}>
             <MathJaxContext>
               <PositionProvider>
-               <div
-                 style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
-               >
-                <Component {...pageProps} />
-                </div>
+                <CurrentTermProvider>
+                  <div
+                    style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+                  >
+                    <Component {...pageProps} />
+                  </div>
+                </CurrentTermProvider>
               </PositionProvider>
             </MathJaxContext>
           </ThemeProvider>

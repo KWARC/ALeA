@@ -8,18 +8,13 @@ import {
   updateUserInfoFromToken,
 } from '@alea/spec';
 import { ServerLinksContext } from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  CourseResourceAction,
-  CURRENT_TERM,
-  PRIMARY_COL,
-} from '@alea/utils';
+import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useContext, useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
@@ -74,7 +69,6 @@ const aleaFeatures = [
       'Interaktive Tests in Echtzeit bieten, aktive Teilnahme und sofortige Feedback fördern, um die Lernergebnisse zu verbessern.',
   },
 ];
-
 
 const FEATURED_COURSES = ['ai-1', 'ai-2', 'gdp', 'iwgs-2', 'krmt', 'smai'];
 
@@ -226,9 +220,9 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
   );
 }
 
-export function CourseCard({ course }) {
+export function CourseCard({ course, currentTerm }) {
   const { imageLink: courseImage, courseName, courseId, institution, instructors } = course;
-  const instructor = getInstructor(course, CURRENT_TERM) ?? instructors[0];
+  const instructor = getInstructor(course, currentTerm) ?? instructors[0];
   return (
     <Link href={`/course-home/${courseId}`}>
       <Box
@@ -307,6 +301,11 @@ function AleaFeatures({ img_url, title, description }) {
 const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: CourseInfo[] }) => {
   const loggedIn = isLoggedIn();
   const router = useRouter();
+  const { currentTerm, setUniversityId } = useCurrentTermContext();
+  
+  useEffect(() => {
+    setUniversityId('FAU');
+  }, [setUniversityId]);
   const [resourcesForInstructor, setResourcesForInstructor] = useState<CourseResourceAction[]>([]);
   useEffect(() => {
     updateUserInfoFromToken();
@@ -475,7 +474,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
             }}
           >
             {filteredCourses.map((course) => (
-              <CourseCard key={course.courseId} course={course} />
+              <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />
             ))}
           </Box>
         </Box>

@@ -32,7 +32,6 @@ import { SafeHtml } from '@alea/react-utils';
 import {
   Action,
   CoverageTimeline,
-  CURRENT_TERM,
   LectureEntry,
   ResourceName,
   roundToMinutes,
@@ -41,6 +40,7 @@ import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { CheckboxWithTimestamp } from './CheckBoxWithTimestamp';
 import { EndSemSumAccordion } from './EndSemSumAccordion';
 import { ExcusedAccordion } from './ExcusedAccordion';
@@ -179,12 +179,19 @@ interface QuizDashboardProps {
 
 const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizIdChange }) => {
   const selectedQuizId = quizId || NEW_QUIZ_ID;
+  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  
+  useEffect(() => {
+    if (courseId) {
+      setCourseId(courseId);
+    }
+  }, [courseId, setCourseId]);
 
   const [title, setTitle] = useState<string>('');
   const [quizStartTs, setQuizStartTs] = useState<number>(roundToMinutes(Date.now()));
   const [quizEndTs, setQuizEndTs] = useState<number>(roundToMinutes(Date.now()));
   const [feedbackReleaseTs, setFeedbackReleaseTs] = useState<number>(roundToMinutes(Date.now()));
-  const [courseTerm, setCourseTerm] = useState<string>(CURRENT_TERM);
+  const [courseTerm, setCourseTerm] = useState<string>('');
   const [sections, setSections] = useState<SecInfo[]>([]);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
@@ -207,6 +214,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [canAccess, setCanAccess] = useState(false);
   const [syllabusLoading, setSyllabusLoading] = useState(false);
   const isNew = isNewQuiz(selectedQuizId);
+
+  // Update courseTerm when currentTerm changes
+  useEffect(() => {
+    if (currentTerm) {
+      setCourseTerm(currentTerm);
+    }
+  }, [currentTerm]);
   const router = useRouter();
 
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedQuizId);
@@ -258,7 +272,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setTitle('');
       setProblems({});
       setCss([]);
-      setCourseTerm(CURRENT_TERM);
+      setCourseTerm(currentTerm);
       return;
     }
 
@@ -283,7 +297,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     async function checkHasAccessAndGetTypeOfAccess() {
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       if (canMutate) {
         setAccessType('MUTATE');
@@ -355,6 +369,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }
 
   if (!canAccess) return <>Unauthorized</>;
+  if (termLoading) return <CircularProgress />;
 
   return (
     <Box m="auto" maxWidth="800px" p="10px">

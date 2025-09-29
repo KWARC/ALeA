@@ -19,7 +19,7 @@ import {
   isValid,
   updateResourceAction,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, ResourceActionPair } from '@alea/utils';
+import { Action, ResourceActionPair } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AclDisplay from './AclDisplay';
@@ -75,7 +75,7 @@ const studentAccessResources: Record<ShortId, string> = {
   'homework-take': 'Homework Take',
 };
 
-const getAclShortIdToResourceActionPair = (courseId: string) =>
+const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string) =>
   ({
     syllabus: {
       resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
@@ -86,11 +86,11 @@ const getAclShortIdToResourceActionPair = (courseId: string) =>
       actionId: Action.MUTATE,
     },
     'homework-crud': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/homework`,
       actionId: Action.MUTATE,
     },
     'homework-grading': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/homework`,
       actionId: Action.INSTRUCTOR_GRADING,
     },
     comments: {
@@ -98,19 +98,19 @@ const getAclShortIdToResourceActionPair = (courseId: string) =>
       actionId: Action.MODERATE,
     },
     'study-buddy': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/study-buddy`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/study-buddy`,
       actionId: Action.MODERATE,
     },
     'quiz-preview': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/quiz`,
       actionId: Action.PREVIEW,
     },
     'quiz-take': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/quiz`,
       actionId: Action.TAKE,
     },
     'homework-take': {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/homework`,
       actionId: Action.TAKE,
     },
     metadata: {
@@ -177,7 +177,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
   const [acls, setAcls] = useState<string[]>([]);
   const [newAclId, setNewAclId] = useState('');
   const [error, setError] = useState('');
-  const studentCount = useStudentCount(courseId, CURRENT_TERM);
+  const studentCount = useStudentCount(courseId, currentTerm);
   const handleAclClick = (aclId: string) => {
     router.push(`/acl/${aclId}`);
   };
@@ -194,7 +194,8 @@ const CourseAccessControlDashboard = ({ courseId }) => {
   };
 
   const updateAclId = async (shortId: ShortId, aclId: string) => {
-    const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(courseId);
+    if (!currentTerm) return;
+    const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(courseId, currentTerm);
     const resourceActionPair = aclShortIdToResourceActionPair[shortId];
     const resourceId = resourceActionPair.resourceId;
     const actionId = resourceActionPair.actionId;
@@ -215,7 +216,8 @@ const CourseAccessControlDashboard = ({ courseId }) => {
 
   useEffect(() => {
     async function getAclData() {
-      const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(courseId);
+      if (!currentTerm) return;
+      const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(courseId, currentTerm);
       const resourceActionPairs = ALL_SHORT_IDS.map((sId) => aclShortIdToResourceActionPair[sId]);
       const aclIds = await getSpecificAclIds(resourceActionPairs);
 
@@ -227,15 +229,16 @@ const CourseAccessControlDashboard = ({ courseId }) => {
       setEditingValues({ ...aclData });
     }
     getAclData();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   async function getAcls() {
-    const data = await getCourseAcls(courseId, CURRENT_TERM);
+    if (!currentTerm) return;
+    const data = await getCourseAcls(courseId, currentTerm);
     setAcls(data);
   }
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     getAcls();
   }, [courseId]);
 
@@ -246,9 +249,9 @@ const CourseAccessControlDashboard = ({ courseId }) => {
   }, [courseId]);
 
   async function handleCreateAclClick() {
-    if (!newAclId || !courseId) return;
-    const aclId = `${courseId}-${CURRENT_TERM}-${newAclId}`;
-    const updaterACLId = `${courseId}-${CURRENT_TERM}-instructors`;
+    if (!newAclId || !courseId || !currentTerm) return;
+    const aclId = `${courseId}-${currentTerm}-${newAclId}`;
+    const updaterACLId = `${courseId}-${currentTerm}-instructors`;
     const res = await isValid(updaterACLId);
     if (!res) {
       setNewAclId('');
@@ -258,7 +261,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
     try {
       await createAcl({
         id: aclId,
-        description: `${newAclId} for ${courseId} (${CURRENT_TERM})`,
+        description: `${newAclId} for ${courseId} (${currentTerm})`,
         memberUserIds: [],
         memberACLIds: [],
         updaterACLId,
@@ -270,6 +273,14 @@ const CourseAccessControlDashboard = ({ courseId }) => {
     }
     setNewAclId('');
     getAcls();
+  }
+
+  if (termLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Typography>Loading...</Typography>
+      </Box>
+    );
   }
 
   return (
@@ -377,7 +388,7 @@ const CourseAccessControlDashboard = ({ courseId }) => {
       <Typography variant="h5">Create New ACL</Typography>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
         <Typography sx={{ ml: 1, fontSize: 14 }}>
-          {courseId ? `${courseId}-${CURRENT_TERM}-` : ''}
+          {courseId && currentTerm ? `${courseId}-${currentTerm}-` : ''}
         </Typography>
         <TextField
           value={newAclId}

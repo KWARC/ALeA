@@ -19,10 +19,11 @@ import {
 } from '@mui/material';
 import { getAllQuizzes, QuizWithStatus } from '@alea/spec';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
-import { CURRENT_TERM, LectureEntry } from '@alea/utils';
+import { LectureEntry } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useStudentCount } from '../hooks/useStudentCount';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { SecInfo } from '../types';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { getSectionNameForUri } from './CoverageUpdater';
@@ -477,12 +478,20 @@ export function CoverageTable({
   const missingTargetsCount = countMissingTargetsInFuture(entries);
   const sortedEntries = [...entries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
   const [quizMatchMap, setQuizMatchMap] = useState<QuizMatchMap>({});
-  const studentCount = useStudentCount(courseId, CURRENT_TERM);
+  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  
+  useEffect(() => {
+    if (courseId) {
+      setCourseId(courseId);
+    }
+  }, [courseId, setCourseId]);
+  const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
     async function fetchQuizzes() {
+      if (!currentTerm) return;
       try {
-        const allQuizzes = await getAllQuizzes(courseId, CURRENT_TERM);
+        const allQuizzes = await getAllQuizzes(courseId, currentTerm);
         const map: QuizMatchMap = {};
         entries.forEach((entry) => {
           const match = allQuizzes.find(
@@ -496,7 +505,7 @@ export function CoverageTable({
       }
     }
     fetchQuizzes();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   return (
     <Box>

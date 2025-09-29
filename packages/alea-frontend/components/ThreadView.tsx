@@ -10,16 +10,24 @@ import {
   updateQuestionState,
 } from '@alea/spec';
 import { CommentTree, organizeHierarchically } from '@alea/comments';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
 import { FTMLFragment } from '@kwarc/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());
+  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  
+  useEffect(() => {
+    if (courseId) {
+      setCourseId(courseId);
+    }
+  }, [courseId, setCourseId]);
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
@@ -34,11 +42,12 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   }, [threadId, updateCounter]);
 
   useEffect(() => {
+    if (!currentTerm) return;
     canAccessResource(ResourceName.COURSE_COMMENTS, Action.MODERATE, {
       courseId,
-      instanceId: CURRENT_TERM,
+      instanceId: currentTerm,
     }).then(setIsUserAuthorized);
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   if (!threadComments?.length) return null;
 
