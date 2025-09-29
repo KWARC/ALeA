@@ -11,8 +11,8 @@ function getProblemsFromQuiz(quiz: FTML.Quiz): Record<string, FTMLProblemWithSol
     return str1.length != str2.length ? longer.startsWith(shorter) : false;
   }
   function processQuizElement(element: FTML.QuizElement) {
-    if ('Problem' in element) {
-      const problem = element.Problem as FTMLProblemWithSubProblems;
+    if (element.type === 'Problem') {
+      const problem = element as FTMLProblemWithSubProblems;
       const answerClasses = quiz.answer_classes[problem.uri];
       const solution = quiz.solutions[problem.uri] || '';
       for (const item of Object.keys(quiz.solutions)) {
@@ -28,8 +28,8 @@ function getProblemsFromQuiz(quiz: FTML.Quiz): Record<string, FTMLProblemWithSol
         }
       }
       result[problem.uri] = { problem, answerClasses, solution };
-    } else if ('Section' in element) {
-      element.Section.elements.forEach(processQuizElement);
+    } else if (element.type === 'Section') {
+      element.elements?.forEach(processQuizElement);
     }
   }
 

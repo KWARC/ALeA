@@ -86,14 +86,14 @@ export function getProblemState(
   solution?: string,
   current_response?: FTML.ProblemResponse
 ): FTML.ProblemState {
-  if (!isFrozen) return { type: 'Interactive', current_response };
+  if (!isFrozen) return { type: 'Interactive', current_response, solution: undefined };
   if (!solution) return { type: 'Finished', current_response };
   const sol = FTML.Solutions.from_jstring(solution.replace(/^"|"$/g, ''));
   const feedback = current_response
     ? sol?.check_response(current_response)
     : sol?.default_feedback();
   if (!feedback) return { type: 'Finished', current_response }; // Something went wrong!!
-  return { type: 'Graded', feedback: feedback.to_json() };
+  return { type: 'Graded', feedback };
 }
 
 export function ProblemViewer({
