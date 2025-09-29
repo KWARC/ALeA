@@ -24,6 +24,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AclDisplay from './AclDisplay';
 import { useStudentCount } from '../hooks/useStudentCount';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import {
   createInstructorResourceActions,
   createMetadataResourceActions,
@@ -78,11 +79,11 @@ const studentAccessResources: Record<ShortId, string> = {
 const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string) =>
   ({
     syllabus: {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/syllabus`,
       actionId: Action.MUTATE,
     },
     quiz: {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/quiz`,
       actionId: Action.MUTATE,
     },
     'homework-crud': {
@@ -94,7 +95,7 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
       actionId: Action.INSTRUCTOR_GRADING,
     },
     comments: {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/comments`,
       actionId: Action.MODERATE,
     },
     'study-buddy': {
@@ -114,13 +115,14 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
       actionId: Action.TAKE,
     },
     metadata: {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      resourceId: `/course/${courseId}/instance/${currentTerm}/metadata`,
       actionId: Action.MUTATE,
     },
   } as Record<ShortId, ResourceActionPair>);
 
-const CourseAccessControlDashboard = ({ courseId }) => {
+const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   const router = useRouter();
+  const { currentTerm, loading: termLoading } = useCurrentTermContext();
   const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
