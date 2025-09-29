@@ -1,6 +1,7 @@
 import { FTML } from '@kwarc/ftml-viewer';
 import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
-import { CURRENT_TERM, LectureEntry } from '@alea/utils';
+import { LectureEntry } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -123,14 +124,14 @@ export function addCoverageInfo(sections: SectionInfo[], snaps: LectureEntry[]) 
   return;
 }
 
-function addClipInfo(allSections: SectionInfo[], jsonData: any) {
+function addClipInfo(allSections: SectionInfo[], jsonData: any, currentTerm?: string) {
   const clipDataMap: { [sectionId: string]: { [slideUri: number]: ClipInfo[] } } = {};
   let semesterKey: string | undefined;
-  if (CURRENT_TERM && jsonData[CURRENT_TERM]) {
-    semesterKey = CURRENT_TERM;
+  if (currentTerm && jsonData[currentTerm]) {
+    semesterKey = currentTerm;
   } else {
     const semesters = Object.keys(jsonData);
-    if (semesters.length === 0) return; 
+    if (semesters.length === 0) return;
     semesterKey = semesters[0];
   }
   const semesterData = jsonData[semesterKey];
@@ -182,6 +183,7 @@ function addClipInfo(allSections: SectionInfo[], jsonData: any) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   const courses = await getCourseInfo();
+  const currentTerm = await getCurrentTermForCourseId(courseId);
   if (!courseId || !courses[courseId]) {
     res.status(404).send(`Course not found [${courseId}]`);
     return;
@@ -199,7 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
   if (videoSlides && Object.keys(videoSlides).length > 0) {
-    addClipInfo(allSections, videoSlides);
+    addClipInfo(allSections, videoSlides, currentTerm);
   }
   res.status(200).send(allSections);
 }

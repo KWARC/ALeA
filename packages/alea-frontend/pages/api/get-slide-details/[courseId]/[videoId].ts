@@ -3,7 +3,7 @@ import {
   CACHED_VIDEO_SLIDESMAP,
   populateVideoToSlidesMap,
 } from '../../get-section-info/[courseId]';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { courseId, videoId } = req.query;
@@ -17,7 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const courseCache = CACHED_VIDEO_SLIDESMAP[courseId as string];
   if (!courseCache) return res.status(404).send( 'Course not found' );
   const semesters = Object.keys(courseCache);
-  const semesterKey = (CURRENT_TERM && courseCache[CURRENT_TERM]) ? CURRENT_TERM : semesters[0];
+  const currentTerm = await getCurrentTermForCourseId(courseId as string);
+  const semesterKey = (currentTerm && courseCache[currentTerm]) ? currentTerm : semesters[0];
   const videoData = courseCache[semesterKey]?.[videoId as string];
   if (!videoData?.extracted_content) return res.status(404).send('Video data not found');
 

@@ -5,7 +5,7 @@ import {
   getUserIdOrSetError,
 } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -14,8 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
-  const sbCourseId = getSbCourseId(courseId, instanceId);
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
+  const sbCourseId = await getSbCourseId(courseId, instanceId);
   const { active } = req.body;
   if (active === undefined) return res.status(400).send('Missing [active]');
 

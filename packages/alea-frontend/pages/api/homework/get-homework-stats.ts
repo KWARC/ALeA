@@ -1,5 +1,5 @@
 import { HomeworkStatsInfo } from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getGradingItemsOrSetError } from '../common-homework-utils';
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const courseId = req.query.courseId as string;
   const homeworkId = Number(req.query.homeworkId);
   if (!courseId) return res.status(422).send('Missing params.');
-  const instanceId = (req.query.courseInstance as string) ?? CURRENT_TERM;
+  const instanceId = (req.query.courseInstance as string) ?? await getCurrentTermForCourseId(courseId);
   const homework = await getHomeworkOrSetError(homeworkId, true, res);
   homework.problems = JSON.parse(homework.problems.toString());
   homework.css = JSON.parse(homework.css.toString());
