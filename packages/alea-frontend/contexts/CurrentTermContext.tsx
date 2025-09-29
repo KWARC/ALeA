@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getCurrentTermForCourse, getCurrentTermForUniversity } from '@alea/utils';
+import { getCurrentTermForCourseId, getCurrentTermForUniversity } from '@alea/utils';
 
 interface CurrentTermContextType {
   currentTerm: string;
@@ -35,7 +35,7 @@ export function CurrentTermProvider({
 
     try {
       if (courseId) {
-        const term = await getCurrentTermForCourse(courseId);
+        const term = await getCurrentTermForCourseId(courseId);
         setCurrentTerm(term);
       } else if (universityId) {
         const term = getCurrentTermForUniversity(universityId);
