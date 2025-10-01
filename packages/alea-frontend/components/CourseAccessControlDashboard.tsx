@@ -122,11 +122,12 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
 
 const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   const router = useRouter();
-  const { currentTerm, loading: termLoading } = useCurrentTermContext();
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
-
+  const currentTerm = currentTermByCourseId[courseId];
+  
   async function checkIfAlreadySetup() {
     const complete = await isCourseSemesterSetupComplete(courseId);
     setIsAlreadySetup(!!complete);
@@ -242,13 +243,13 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   useEffect(() => {
     if (!courseId || !currentTerm) return;
     getAcls();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     if (courseId) {
       checkIfAlreadySetup();
     }
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   async function handleCreateAclClick() {
     if (!newAclId || !courseId || !currentTerm) return;
@@ -277,7 +278,7 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
     getAcls();
   }
 
-  if (termLoading) {
+  if (loadingTermByCourseId) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <Typography>Loading...</Typography>

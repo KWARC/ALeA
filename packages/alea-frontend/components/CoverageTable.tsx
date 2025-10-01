@@ -478,13 +478,8 @@ export function CoverageTable({
   const missingTargetsCount = countMissingTargetsInFuture(entries);
   const sortedEntries = [...entries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
   const [quizMatchMap, setQuizMatchMap] = useState<QuizMatchMap>({});
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
@@ -505,7 +500,7 @@ export function CoverageTable({
       }
     }
     fetchQuizzes();
-  }, [courseId, currentTerm]);
+  }, [courseId, currentTerm, entries]);
 
   return (
     <Box>

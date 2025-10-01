@@ -119,13 +119,8 @@ const QuizPage: NextPage = () => {
   const phase = moderatorPhase ?? quizInfo?.phase;
   const courseId = quizInfo?.courseId;
   const instanceId = quizInfo?.courseTerm;
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
 

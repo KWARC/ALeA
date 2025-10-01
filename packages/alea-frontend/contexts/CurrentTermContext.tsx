@@ -1,13 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getCurrentTermForCourseId, getCurrentTermForUniversity } from '@alea/utils';
+import { getCurrentTermByCourseId, UNIVERSITY_TERMS } from '@alea/utils';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 
 interface CurrentTermContextType {
-  currentTerm: string;
-  loading: boolean;
+  currentTermByCourseId: Record<string, string>;
+  currentTermByUniversityId: Record<string, string>;
+  loadingTermByCourseId: boolean;
   error: string | null;
-  setCourseId: (courseId: string) => void;
-  setUniversityId: (universityId: string) => void;
-  refreshTerm: () => Promise<void>;
 }
 
 const CurrentTermContext = createContext<CurrentTermContextType | undefined>(undefined);
@@ -18,67 +16,36 @@ interface CurrentTermProviderProps {
   initialUniversityId?: string;
 }
 
-export function CurrentTermProvider({
-  children,
-  initialCourseId,
-  initialUniversityId,
-}: CurrentTermProviderProps) {
-  const [currentTerm, setCurrentTerm] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+export function CurrentTermProvider({ children }: CurrentTermProviderProps) {
+  const [currentTermByCourseId, setCurrentTermByCourseId] = useState<Record<string, string>>({});
+  const [loadingTermByCourseId, setLoadingTermByCourseId] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [courseId, setCourseIdState] = useState<string | undefined>(initialCourseId);
-  const [universityId, setUniversityIdState] = useState<string | undefined>(initialUniversityId);
-
-  const resolveTerm = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      if (courseId) {
-        const term = await getCurrentTermForCourseId(courseId);
-        setCurrentTerm(term);
-      } else if (universityId) {
-        const term = getCurrentTermForUniversity(universityId);
-        setCurrentTerm(term);
-      } else {
-        const term = getCurrentTermForUniversity('FAU');
-        setCurrentTerm(term);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to resolve term';
-      setError(errorMessage);
-      console.error('Error resolving current term:', err);
-      setCurrentTerm(getCurrentTermForUniversity('FAU'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setCourseId = (newCourseId: string) => {
-    setCourseIdState(newCourseId);
-    setUniversityIdState(undefined);
-  };
-
-  const setUniversityId = (newUniversityId: string) => {
-    setUniversityIdState(newUniversityId);
-    setCourseIdState(undefined);
-  };
-
-  const refreshTerm = async () => {
-    await resolveTerm();
-  };
+  const currentTermByUniversityId = useMemo(() => {
+    return Object.fromEntries(
+      Object.entries(UNIVERSITY_TERMS).map(([key, value]) => [key, value.currentTerm])
+    );
+  }, []);
 
   useEffect(() => {
-    resolveTerm();
-  }, [courseId, universityId]);
+    const fetchCurrentTermByCourseId = async () => {
+      try {
+        const term = await getCurrentTermByCourseId();
+        setLoadingTermByCourseId(true);
+        setCurrentTermByCourseId(term);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to get current term by course id');
+      } finally {
+        setLoadingTermByCourseId(false);
+      }
+    };
+    fetchCurrentTermByCourseId();
+  }, []);
 
   const value: CurrentTermContextType = {
-    currentTerm,
-    loading,
+    currentTermByCourseId,
+    currentTermByUniversityId,
+    loadingTermByCourseId,
     error,
-    setCourseId,
-    setUniversityId,
-    refreshTerm,
   };
 
   return <CurrentTermContext.Provider value={value}>{children}</CurrentTermContext.Provider>;

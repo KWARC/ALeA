@@ -121,13 +121,8 @@ function ForumViewControls({
   const { forum: t } = getLocaleObject(router);
   const [openQuestionDialog, setOpenQuestionDialog] = useState(false);
   const courseId = router.query?.courseId as string;
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
@@ -244,13 +239,8 @@ export function QuestionStatusIcon({ comment }: { comment: Comment }) {
 export function ForumView() {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [showRemarks, setShowRemarks] = useState(false);
@@ -262,7 +252,7 @@ export function ForumView() {
     getCourseInstanceThreads(courseId, currentTerm).then(setThreadComments);
   }, [courseId, router.isReady, updateCounter, currentTerm]);
 
-  if (!router.isReady || !courseId || termLoading) return <CircularProgress />;
+  if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;
   const toShow = showUnanswered
     ? threadComments.filter((c) => c.questionStatus === QuestionStatus.UNANSWERED)
     : showRemarks

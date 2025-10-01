@@ -301,11 +301,9 @@ function AleaFeatures({ img_url, title, description }) {
 const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: CourseInfo[] }) => {
   const loggedIn = isLoggedIn();
   const router = useRouter();
-  const { currentTerm, setUniversityId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    setUniversityId('FAU');
-  }, [setUniversityId]);
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId['FAU'];
+
   const [resourcesForInstructor, setResourcesForInstructor] = useState<CourseResourceAction[]>([]);
   useEffect(() => {
     updateUserInfoFromToken();

@@ -399,13 +399,9 @@ const CourseHomePage: NextPage = () => {
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
   const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {

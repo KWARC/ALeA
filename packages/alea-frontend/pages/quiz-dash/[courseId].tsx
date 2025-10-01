@@ -138,13 +138,9 @@ const QuizDashPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const { quiz: t, home: tHome } = getLocaleObject(router);
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [userId, setUserId] = useState<string | null>(null);
 
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);

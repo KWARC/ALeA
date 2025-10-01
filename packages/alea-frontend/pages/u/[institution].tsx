@@ -142,13 +142,9 @@ const StudentHomePage: NextPage = ({
   const { query } = router;
   const { home: t, studyBuddy: s } = getLocaleObject({ locale });
   const institution = query.institution as string;
-  const { currentTerm, setUniversityId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (institution) {
-      setUniversityId(institution);
-    }
-  }, [institution, setUniversityId]);
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId[institution];
+
   if (!courses) return null;
   return (
     <MainLayout title="Courses | ALeA">

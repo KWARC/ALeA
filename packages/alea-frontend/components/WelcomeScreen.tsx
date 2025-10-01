@@ -690,11 +690,9 @@ function WelcomeScreen({
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
-  const { currentTerm, setUniversityId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    setUniversityId('FAU'); // Use FAU as default for welcome screen
-  }, [setUniversityId]);
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId['FAU'];
+
   const {
     resource: r,
     home: { newHome: n },

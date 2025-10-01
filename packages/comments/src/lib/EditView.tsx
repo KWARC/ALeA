@@ -44,13 +44,9 @@ export function EditView({
 }: EditViewProps) {
   const router = useRouter();
   const courseId = router.query['courseId'] as string;
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(undefined);
   const [inputText, setInputText] = useState(existingComment?.statement || '');

@@ -139,13 +139,8 @@ export function CommentSection({
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const t = getLocaleObject(router);
   const courseId = router.query.courseId as string;
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   // Menu Crap start
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

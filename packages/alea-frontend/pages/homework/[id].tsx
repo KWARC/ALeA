@@ -17,13 +17,8 @@ const HomeworkPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.id as string;
   const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [forceFauLogin, setForceFauLogin] = useState(false);

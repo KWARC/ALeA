@@ -118,13 +118,9 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const { currentTerm, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const instanceId = (router.query.instanceId as string) ?? currentTerm;
   const tab = router.query.tab as TabName;
 

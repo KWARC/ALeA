@@ -42,13 +42,9 @@ function timestampEOD() {
 }
 
 const HomeworkManager = ({ courseId }) => {
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
   const [homeworks, setHomeworks] = useState<HomeworkStub[]>([]);
   const [stats, setStats] = useState<HomeworkStatsInfo | null>(null);
   const [id, setId] = useState<number | null>(null);

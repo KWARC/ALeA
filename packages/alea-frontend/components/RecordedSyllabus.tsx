@@ -183,13 +183,9 @@ function SyllabusTable({
 
 export function RecordedSyllabus({ courseId }: { courseId: string }) {
   const { courseHome: t } = getLocaleObject(useRouter());
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
   const [lectureDescs, setLectureDescs] = useState<{
     [timestamp_ms: number]: string;
   }>({});
@@ -217,7 +213,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
     });
   }, [courseId]);
 
-  if (!courseId || termLoading) return null;
+  if (!courseId || loadingTermByCourseId) return null;
   const timestamps = Object.keys(lectureDescs)
     .map((n) => +n)
     .sort();

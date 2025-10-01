@@ -179,13 +179,8 @@ interface QuizDashboardProps {
 
 const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizIdChange }) => {
   const selectedQuizId = quizId || NEW_QUIZ_ID;
-  const { currentTerm, loading: termLoading, setCourseId } = useCurrentTermContext();
-  
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [title, setTitle] = useState<string>('');
   const [quizStartTs, setQuizStartTs] = useState<number>(roundToMinutes(Date.now()));
@@ -215,12 +210,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [syllabusLoading, setSyllabusLoading] = useState(false);
   const isNew = isNewQuiz(selectedQuizId);
 
-  // Update courseTerm when currentTerm changes
-  useEffect(() => {
-    if (currentTerm) {
-      setCourseTerm(currentTerm);
-    }
-  }, [currentTerm]);
   const router = useRouter();
 
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedQuizId);
@@ -369,7 +358,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }
 
   if (!canAccess) return <>Unauthorized</>;
-  if (termLoading) return <CircularProgress />;
+  if (loadingTermByCourseId) return <CircularProgress />;
 
   return (
     <Box m="auto" maxWidth="800px" p="10px">

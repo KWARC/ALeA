@@ -156,13 +156,9 @@ const CourseViewPage: NextPage = () => {
   const viewMode = ViewMode[viewModeStr as keyof typeof ViewMode];
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
-  const { currentTerm, setCourseId } = useCurrentTermContext();
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
   
-  useEffect(() => {
-    if (courseId) {
-      setCourseId(courseId);
-    }
-  }, [courseId, setCourseId]);
 
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
