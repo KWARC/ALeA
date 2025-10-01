@@ -33,6 +33,19 @@ export function getCurrentTermForUniversity(universityId: string): string {
   return config.currentTerm;
 }
 
+export async function getCurrentTermByCourseId(): Promise<Record<string, string>> {
+  const allDocs = await getDocIdx();
+  const currentTermByCourseId: Record<string, string> = {};
+  for (const doc of allDocs) {
+    if (doc.type === 'course' && doc.acronym) {
+      currentTermByCourseId[doc.acronym.toLowerCase()] = getCurrentTermForUniversity(
+        doc.institution ?? 'FAU'
+      );
+    }
+  }
+  return currentTermByCourseId;
+}
+
 export async function getCurrentTermForCourseId(courseId: string): Promise<string | null> {
   try {
     const allDocs = await getDocIdx();
