@@ -17,14 +17,6 @@ const nextConfig = {
     locales: ['en', 'de'],
     defaultLocale: 'en',
   },
-  transpilePackages: [
-    '@flexiformal/ftml',
-    '@flexiformal/ftml-backend',
-    '@flexiformal/ftml-react',
-  ],
-  experimental: {
-    esmExternals: 'loose',
-  },
   modularizeImports: {
     // https://github.com/vercel/next.js/issues/46756
     '@mui/material': {
