@@ -366,7 +366,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       }}
     >
       <Grid container spacing={2}>
-        {announcements.map((a) => (
+        {announcements?.map((a) => (
           <Grid item xs={12} key={`${a.courseId}-${a.createdAt}`}>
             <Card
               sx={{
