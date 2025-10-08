@@ -13,11 +13,11 @@ import {
 } from '@mui/material';
 import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@alea/spec';
 import { MystViewer } from '@alea/myst';
-import { CURRENT_TERM } from '@alea/utils';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 
 function joinerForLevel(level: number) {
@@ -125,17 +125,19 @@ function SyllabusTable({
   rows,
   toShow,
   courseId,
-  semester = CURRENT_TERM,
+  semester,
+  currentTerm,
 }: {
   rows: SyllabusRow[];
   toShow: boolean;
   courseId: string;
   semester?: string;
+  currentTerm: string;
 }) {
   const { courseHome: t } = getLocaleObject(useRouter());
   if (!toShow) return null;
   const hasAnyVideoClip = rows.filter((r) => r.clipId?.length > 0).length > 0;
-  const showYear = semester !== CURRENT_TERM;
+  const showYear = semester !== currentTerm;
 
   return (
     <>
@@ -172,7 +174,7 @@ function SyllabusTable({
           ))}
         </TableBody>
       </Table>
-      <IconButton onClick={() => downloadSyllabusData(rows, courseId, semester ?? CURRENT_TERM)}>
+      <IconButton onClick={() => downloadSyllabusData(rows, courseId, semester ?? currentTerm)}>
         <DownloadIcon />
       </IconButton>
     </>
@@ -181,6 +183,9 @@ function SyllabusTable({
 
 export function RecordedSyllabus({ courseId }: { courseId: string }) {
   const { courseHome: t } = getLocaleObject(useRouter());
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
   const [lectureDescs, setLectureDescs] = useState<{
     [timestamp_ms: number]: string;
   }>({});
@@ -208,7 +213,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
     });
   }, [courseId]);
 
-  if (!courseId) return null;
+  if (!courseId || loadingTermByCourseId) return null;
   const timestamps = Object.keys(lectureDescs)
     .map((n) => +n)
     .sort();
@@ -247,6 +252,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
               rows={currentSemRows}
               toShow={selectedTabIndex === 0}
               courseId={courseId}
+              currentTerm={currentTerm}
             />
           )}
           {previousSems.map((semester, idx) => (
@@ -256,6 +262,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
               toShow={selectedTabIndex === idx + (showCurrent ? 1 : 0)}
               courseId={courseId}
               semester={semester}
+              currentTerm={currentTerm}
             />
           ))}
         </Box>

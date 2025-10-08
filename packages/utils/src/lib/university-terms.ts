@@ -8,29 +8,46 @@ export interface UniversityTermConfig {
 export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   FAU: {
     universityId: 'FAU',
-    currentTerm: 'SS25',
+    currentTerm: 'WS25-26',
   },
   IISc: {
     universityId: 'IISc',
-    currentTerm: 'SS25',
+    currentTerm: 'null',
   },
   Jacobs: {
     universityId: 'Jacobs',
-    currentTerm: 'SS25',
+    currentTerm: 'null',
   },
   'Heriot Watt': {
     universityId: 'Heriot Watt',
-    currentTerm: 'SS25',
+    currentTerm: 'null',
+  },
+  Bath:{
+    universityId: 'Bath',
+    currentTerm: 'null',
   },
   others: {
     universityId: 'others',
-    currentTerm: 'SS25',
+    currentTerm: 'null',
   },
 };
 
 export function getCurrentTermForUniversity(universityId: string): string {
   const config = UNIVERSITY_TERMS[universityId];
   return config.currentTerm;
+}
+
+export async function getCurrentTermByCourseId(): Promise<Record<string, string>> {
+  const allDocs = await getDocIdx();
+  const currentTermByCourseId: Record<string, string> = {};
+  for (const doc of allDocs) {
+    if (doc.type === 'course' && doc.acronym) {
+      currentTermByCourseId[doc.acronym.toLowerCase()] = getCurrentTermForUniversity(
+        doc.institution ?? 'FAU'
+      );
+    }
+  }
+  return currentTermByCourseId;
 }
 
 export async function getCurrentTermForCourseId(courseId: string): Promise<string | null> {

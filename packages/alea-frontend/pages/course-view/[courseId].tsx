@@ -19,25 +19,15 @@ import {
 } from '@alea/spec';
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
-import {
-  ContentDashboard,
-  LayoutWithFixedMenu,
-  SectionReview,
-} from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  CURRENT_TERM,
-  localStore,
-  ResourceName,
-  shouldUseDrawer,
-} from '@alea/utils';
+import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
+import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
@@ -166,6 +156,9 @@ const CourseViewPage: NextPage = () => {
   const viewMode = ViewMode[viewModeStr as keyof typeof ViewMode];
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
 
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
@@ -223,16 +216,16 @@ const CourseViewPage: NextPage = () => {
   };
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       setIsQUizMaker(hasAccess);
     };
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);

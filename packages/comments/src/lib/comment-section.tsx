@@ -11,11 +11,11 @@ import { CommentView } from './CommentView';
 
 import { FTML } from '@kwarc/ftml-viewer';
 import { Refresh } from '@mui/icons-material';
-import { CURRENT_TERM } from '@alea/utils';
 import { useRouter } from 'next/router';
 import styles from './comments.module.scss';
 import { getLocaleObject } from './lang/utils';
 import { useCommentRefresh } from '@alea/utils';
+import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 
 function RenderTree({
   comment,
@@ -139,6 +139,8 @@ export function CommentSection({
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const t = getLocaleObject(router);
   const courseId = router.query.courseId as string;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   // Menu Crap start
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -170,8 +172,9 @@ export function CommentSection({
 
   useEffect(() => {
     getUserInfo().then((userInfo) => setCanAddComment(!!userInfo?.userId));
-    canModerateComment(courseId, CURRENT_TERM).then(setCanModerate);
-  }, [courseId]);
+    if (!currentTerm) return;
+    canModerateComment(courseId, currentTerm).then(setCanModerate);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getPublicCommentTrees(uri).then((c) => setCommentsFromStore(c));

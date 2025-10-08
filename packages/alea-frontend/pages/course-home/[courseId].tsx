@@ -33,7 +33,6 @@ import {
   Action,
   BG_COLOR,
   CourseInfo,
-  CURRENT_TERM,
   INSTRUCTOR_RESOURCE_AND_ACTION,
   isFauId,
   ResourceName,
@@ -47,6 +46,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useStudentCount } from '../../hooks/useStudentCount';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { ExamSchedule } from '../../components/ExamSchedule';
@@ -165,20 +165,22 @@ function getWeekdayName(dayOfWeek: number): string {
 function CourseScheduleSection({
   userId,
   courseId,
+  currentTerm,
 }: {
   userId: string | undefined;
   courseId: string;
+  currentTerm: string;
 }) {
   const [nextLectureStartTime, setNextLectureStartTime] = useState<number | null>(null);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
   const courseSchedule = useMemo(
-    () => semesterPeriods[CURRENT_TERM]?.courses.filter((c) => c.courseId === courseId) || [],
-    [courseId]
+    () => semesterPeriods[currentTerm]?.courses.filter((c) => c.courseId === courseId) || [],
+    [courseId, currentTerm]
   );
 
   const examDates =
-    semesterPeriods[CURRENT_TERM]?.examDates.filter((e) => e.courseId === courseId) || [];
+    semesterPeriods[currentTerm]?.examDates.filter((e) => e.courseId === courseId) || [];
 
   useEffect(() => {
     async function fetchNextLectureDates() {
@@ -364,7 +366,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       }}
     >
       <Grid container spacing={2}>
-        {announcements.map((a) => (
+        {announcements?.map((a) => (
           <Grid item xs={12} key={`${a.courseId}-${a.createdAt}`}>
             <Card
               sx={{
@@ -397,7 +399,10 @@ const CourseHomePage: NextPage = () => {
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
-  const studentCount = useStudentCount(courseId, CURRENT_TERM);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
+  const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
     getUserInfo().then((userInfo: UserInfo) => {
@@ -410,25 +415,25 @@ const CourseHomePage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
 
     async function checkAccess() {
       for (const { resource, action } of INSTRUCTOR_RESOURCE_AND_ACTION) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
-          instanceId: CURRENT_TERM,
+          instanceId: currentTerm,
         });
         if (hasAccess) {
           setIsInstructor(true);
@@ -437,9 +442,9 @@ const CourseHomePage: NextPage = () => {
       }
     }
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (!router.isReady || !courses ) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
@@ -465,10 +470,10 @@ const CourseHomePage: NextPage = () => {
   };
 
   const enrollInCourse = async () => {
-    if (!userId || !courseId) {
+    if (!userId || !courseId || !currentTerm) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, CURRENT_TERM);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 
@@ -579,9 +584,9 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={CURRENT_TERM} />
+        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
 
-        <CourseScheduleSection courseId={courseId} userId={userId} />
+        <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         <br />
         {showSearchBar && (
           <Box
