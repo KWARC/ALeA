@@ -10,12 +10,13 @@ import {
   getCourseQuizList,
   getUserInfo,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, CourseInfo, ResourceName, isFauId } from '@alea/utils';
+import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import QuizPerformanceTable from '../../components/QuizPerformanceTable';
 import { getLocaleObject } from '../../lang/utils';
@@ -137,6 +138,9 @@ const QuizDashPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const { quiz: t, home: tHome } = getLocaleObject(router);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [userId, setUserId] = useState<string | null>(null);
 
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);
@@ -174,19 +178,19 @@ const QuizDashPage: NextPage = () => {
     });
   }, [courseId]);
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const enrolledStudentActions = [{ resource: ResourceName.COURSE_QUIZ, action: Action.TAKE }];
     async function checkAccess() {
       for (const { resource, action } of enrolledStudentActions) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
-          instanceId: CURRENT_TERM,
+          instanceId: currentTerm,
         });
         setIsEnrolled(hasAccess);
       }
     }
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
@@ -200,7 +204,7 @@ const QuizDashPage: NextPage = () => {
     if (!userId || !courseId) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, CURRENT_TERM);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 

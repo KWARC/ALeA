@@ -25,8 +25,8 @@ import {
   updateHomework,
   UpdateHomeworkRequest,
 } from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
 import dayjs from 'dayjs';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import HomeworkForm from './HomeworkForm';
 import HomeworkList from './HomeworkList';
 import HomeworkStats from './HomeworkState';
@@ -42,6 +42,9 @@ function timestampEOD() {
 }
 
 const HomeworkManager = ({ courseId }) => {
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
   const [homeworks, setHomeworks] = useState<HomeworkStub[]>([]);
   const [stats, setStats] = useState<HomeworkStatsInfo | null>(null);
   const [id, setId] = useState<number | null>(null);
@@ -104,7 +107,7 @@ const HomeworkManager = ({ courseId }) => {
         const createRequest: CreateHomeworkRequest = {
           ...body,
           courseId,
-          courseInstance: CURRENT_TERM,
+          courseInstance: currentTerm,
         };
         response = await createHomework(createRequest);
       }

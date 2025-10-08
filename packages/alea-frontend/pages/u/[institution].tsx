@@ -4,12 +4,13 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
 import { getCourseInfo } from '@alea/spec';
-import { CURRENT_TERM, CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
+import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
@@ -107,7 +108,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
             </Link>
           </Tooltip>
 
-          {(
+          {
             <Tooltip title={t.quizzes}>
               <Link href={quizzesLink} passHref>
                 <ColoredIconButton>
@@ -115,7 +116,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
                 </ColoredIconButton>
               </Link>
             </Tooltip>
-          )}
+          }
 
           <Tooltip title={t.studyBuddy}>
             <Link href={`/study-buddy/${courseId}`} passHref>
@@ -141,6 +142,9 @@ const StudentHomePage: NextPage = ({
   const { query } = router;
   const { home: t, studyBuddy: s } = getLocaleObject({ locale });
   const institution = query.institution as string;
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId[institution];
+
   if (!courses) return null;
   return (
     <MainLayout title="Courses | ALeA">
@@ -166,7 +170,7 @@ const StudentHomePage: NextPage = ({
             </Tooltip>
           </Link>
 
-          <h2>{`${t.courseSection} (${CURRENT_TERM})`}</h2>
+          <h2>{`${t.courseSection} (${currentTerm})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)
               .filter((course) => course.isCurrent)

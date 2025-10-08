@@ -2,10 +2,11 @@ import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import { canAccessResource, getCourseInfo, getUserInfo } from '@alea/spec';
-import { Action, CourseInfo, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import HomeworkPerformanceTable from '../../components/HomeworkPerformanceTable';
 import { getLocaleObject } from '../../lang/utils';
@@ -16,6 +17,8 @@ const HomeworkPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.id as string;
   const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [forceFauLogin, setForceFauLogin] = useState(false);
@@ -32,16 +35,16 @@ const HomeworkPage: NextPage = () => {
   });
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_HOMEWORK, Action.TAKE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
@@ -63,10 +66,10 @@ const HomeworkPage: NextPage = () => {
     );
   }
   const enrollInCourse = async () => {
-    if (!userId || !courseId) {
+    if (!userId || !courseId || !currentTerm) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, CURRENT_TERM);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     if (enrollmentSuccess) setIsEnrolled(true);
   };
 
