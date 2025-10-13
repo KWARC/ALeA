@@ -175,7 +175,7 @@ async function getLastUpdatedQuiz(
     .filter((quiz) => quiz.quizStartTs > Date.now())
     .sort((a, b) => a.quizStartTs - b.quizStartTs)[0];
   const toShowQuiz = firstFutureQuiz || latestQuiz;
-  const toShowQuizTs = toShowQuiz.quizStartTs;
+  const toShowQuizTs = toShowQuiz?.quizStartTs;
 
   const now = Date.now();
   const nextScheduledQuiz = courseQuizData
@@ -743,7 +743,7 @@ function WelcomeScreen({
     };
 
     fetchDescriptions();
-  }, [groupedResources, router]);
+  }, [groupedResources, router, currentTerm]);
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
