@@ -19,6 +19,7 @@ import {
   GenericCognitiveValues,
   NumericCognitiveValues,
   SHOW_DIMENSIONS,
+  conceptUriToName,
   getFTMLForConceptView,
   getProblemsForConcept,
   uriWeightToSmileyLevel,
@@ -122,7 +123,8 @@ function QuizButton({ uri }: { uri: string }) {
 
 export function ConceptView({ uri }: { uri: string }) {
   const html = getFTMLForConceptView(uri);
-  return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri }} />;
+  // return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri }} />;
+    return <span>{conceptUriToName(uri)}</span>
 }
 
 export function CompetencyTable({
