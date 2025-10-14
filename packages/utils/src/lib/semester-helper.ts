@@ -33,13 +33,20 @@ export async function createSemesterAclsForCourse(courseId: string) {
       console.log(`${aclId} already exists. Skipping.`);
       continue;
     }
+    
+    // For staff ACL, include TAs and instructors as members
+    const memberACLIds: string[] = role === 'staff' ? [
+      `${courseId}-${CURRENT_TERM}-tas`,
+      `${courseId}-${CURRENT_TERM}-instructors`
+    ] : [];
+    
     const acl: CreateACLRequest = {
       id: aclId,
       description: `${courseId} ${CURRENT_TERM} ${role}`,
       isOpen: isAclOpen(role),
       updaterACLId: getUpdaterAclId(courseId, role),
       memberUserIds: [],
-      memberACLIds: [],
+      memberACLIds,
     };
     try {
       await createAcl(acl);
