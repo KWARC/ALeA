@@ -3,11 +3,11 @@ import {
   CreateACLRequest,
   createResourceAction,
   getAcl,
-  getInstructorResourceActions
+  getInstructorResourceActions,
 } from '@alea/spec';
 import { Action, CURRENT_TERM } from '@alea/utils';
 
-const ROLES = ['instructors', 'staff', 'tas', 'enrollments'];
+const ROLES = ['instructors', 'tas', 'staff', 'enrollments'];
 
 function getUpdaterAclId(courseId: string, role: string): string {
   return role === 'instructors' ? 'sys-admin' : `${courseId}-${CURRENT_TERM}-instructors`;
@@ -33,13 +33,20 @@ export async function createSemesterAclsForCourse(courseId: string) {
       console.log(`${aclId} already exists. Skipping.`);
       continue;
     }
+
+    // For staff ACL, include TAs and instructors as members
+    const memberACLIds: string[] =
+      role === 'staff'
+        ? [`${courseId}-${CURRENT_TERM}-tas`, `${courseId}-${CURRENT_TERM}-instructors`]
+        : [];
+
     const acl: CreateACLRequest = {
       id: aclId,
       description: `${courseId} ${CURRENT_TERM} ${role}`,
       isOpen: isAclOpen(role),
       updaterACLId: getUpdaterAclId(courseId, role),
       memberUserIds: [],
-      memberACLIds: [],
+      memberACLIds,
     };
     try {
       await createAcl(acl);
@@ -143,7 +150,9 @@ export async function createMetadataResourceActions(courseId: string) {
     });
     console.log(`Created metadata resource action for instructors: ${aclId}`);
   } catch (error: any) {
-    console.log(`Error creating metadata resource action for instructors ${aclId}: ${error.message}`);
+    console.log(
+      `Error creating metadata resource action for instructors ${aclId}: ${error.message}`
+    );
   }
 }
 
