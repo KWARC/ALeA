@@ -1,6 +1,4 @@
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Box, Button, CircularProgress, IconButton } from '@mui/material';
+import { CommentTree, organizeHierarchically } from '@alea/comments';
 import {
   Comment,
   CommentType,
@@ -9,17 +7,24 @@ import {
   getCommentsForThread,
   updateQuestionState,
 } from '@alea/spec';
-import { CommentTree, organizeHierarchically } from '@alea/comments';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
+import { FTMLFragment } from '@kwarc/ftml-react';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Box, Button, CircularProgress, IconButton } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
 import { FTMLFragment } from '@flexiformal/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
@@ -34,18 +39,19 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   }, [threadId, updateCounter]);
 
   useEffect(() => {
+    if (!currentTerm) return;
     canAccessResource(ResourceName.COURSE_COMMENTS, Action.MODERATE, {
       courseId,
-      instanceId: CURRENT_TERM,
+      instanceId: currentTerm,
     }).then(setIsUserAuthorized);
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   if (!threadComments?.length) return null;
 
   const uri = threadComments[0].uri;
 
   const currentState = threadComments[0].questionStatus;
-  if (isLoading) return <CircularProgress />;
+  if (isLoading || loadingTermByCourseId) return <CircularProgress />;
   return (
     <>
       <Box display="flex" justifyContent="space-between" mb="15px">

@@ -34,7 +34,6 @@ import {
   Action,
   CourseInfo,
   CourseResourceAction,
-  CURRENT_TERM,
   isFauId,
   LectureEntry,
   PRIMARY_COL,
@@ -44,6 +43,7 @@ import dayjs from 'dayjs';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
@@ -119,9 +119,9 @@ const getResourceIcon = (name: ResourceName) => {
   }
 };
 
-async function getCommentsInfo(courseId: string, router: NextRouter) {
+async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, CURRENT_TERM);
+  const comments = await getCourseInstanceThreads(courseId, currentTerm);
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -175,7 +175,7 @@ async function getLastUpdatedQuiz(
     .filter((quiz) => quiz.quizStartTs > Date.now())
     .sort((a, b) => a.quizStartTs - b.quizStartTs)[0];
   const toShowQuiz = firstFutureQuiz || latestQuiz;
-  const toShowQuizTs = toShowQuiz.quizStartTs;
+  const toShowQuizTs = toShowQuiz?.quizStartTs;
 
   const now = Date.now();
   const nextScheduledQuiz = courseQuizData
@@ -411,11 +411,13 @@ async function getLastUpdatedDescriptions({
   name,
   action,
   router,
+  currentTerm,
 }: {
   courseId: string;
   name: ResourceName;
   action: Action;
   router: NextRouter;
+  currentTerm: string;
 }): Promise<ResourceDisplayInfo> {
   let description = null;
   let timeAgo = null;
@@ -453,7 +455,7 @@ async function getLastUpdatedDescriptions({
       }
       break;
     case ResourceName.COURSE_COMMENTS:
-      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(courseId, router));
+      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(courseId, currentTerm, router));
       break;
     default:
       break;
@@ -688,6 +690,9 @@ function WelcomeScreen({
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId['FAU'];
+
   const {
     resource: r,
     home: { newHome: n },
@@ -718,6 +723,7 @@ function WelcomeScreen({
               name: resource.name,
               action: action,
               router,
+              currentTerm: currentTerm, // Use the current term from context
             }).then(({ description, timeAgo, timestamp, quizId, colorInfo }) => {
               newDescriptions[`${courseId}-${resource.name}-${action}`] = {
                 description,
@@ -737,7 +743,7 @@ function WelcomeScreen({
     };
 
     fetchDescriptions();
-  }, [groupedResources, router]);
+  }, [groupedResources, router, currentTerm]);
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
@@ -811,7 +817,7 @@ function WelcomeScreen({
         }}
       >
         {filteredCourses.map((course) => (
-          <CourseCard key={course.courseId} course={course} />
+          <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />
         ))}
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>

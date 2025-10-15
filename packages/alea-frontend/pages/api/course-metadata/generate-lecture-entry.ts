@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const lectureResult = await executeAndEndSet500OnError(
-      `SELECT lectureSchedule FROM courseMetaData WHERE courseId = ? AND instanceId = ?`,
+      `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
       [courseId, instanceId],
       res
     );

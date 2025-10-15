@@ -2,7 +2,7 @@ import {
   Action,
   LectureEntry,
   CoverageTimeline,
-  CURRENT_TERM,
+  getCurrentTermForCourseId,
   ResourceName,
 } from '@alea/utils';
 import fs from 'fs';
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Action.MUTATE,
       {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: await getCurrentTermForCourseId(courseId),
       }
     );
     if (!userId) return;
