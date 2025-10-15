@@ -174,13 +174,11 @@ function CourseScheduleSection({
 }) {
   const [nextLectureStartTime, setNextLectureStartTime] = useState<number | null>(null);
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
-  const [loadingSchedule, setLoadingSchedule] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
   useEffect(() => {
     async function fetchSchedule() {
       if (!courseId || !currentTerm) return;
-      setLoadingSchedule(true);
       const data = await getLectureSchedule(courseId, currentTerm);
       setLectureSchedule(data);
     }
@@ -317,23 +315,7 @@ function CourseScheduleSection({
               );
             })}
           </Box>
-        ) : (
-          <Box
-            sx={{
-              px: { xs: 1, sm: 2 },
-              py: { xs: 1, sm: 1.5 },
-              borderRadius: '8px',
-              background: '#fff',
-              border: '1px solid #e0e0e0',
-            }}
-          >
-            <Typography variant="body2" sx={{ color: '#666' }}>
-              {loadingSchedule
-                ? 'Loading schedule…'
-                : 'No schedule available for this course and term.'}
-            </Typography>
-          </Box>
-        )}
+        ) : null}
         {/* <ExamSchedule examDates={examDates} /> */}
 
         {userId && (
