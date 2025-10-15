@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
 import {
   Comment,

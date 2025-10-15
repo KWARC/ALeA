@@ -8,7 +8,6 @@ import {
   updateQuestionState,
 } from '@alea/spec';
 import { Action, ResourceName } from '@alea/utils';
-import { FTMLFragment } from '@kwarc/ftml-react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Box, Button, CircularProgress, IconButton } from '@mui/material';

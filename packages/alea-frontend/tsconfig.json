@@ -17,7 +17,7 @@
       }
     ],
     "types": ["jest", "node"],
-    "moduleResolution": "bundler",
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "next-env.d.ts"],
   "exclude": [
