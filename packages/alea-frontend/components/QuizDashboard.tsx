@@ -227,6 +227,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
 
   useEffect(() => {
     async function fetchQuizzes() {
+      if (!currentTerm) return; 
       const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
@@ -239,7 +240,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
     }
     fetchQuizzes().catch((err) => console.error('Failed to fetch Quiz', err));
-  }, [courseId, courseTerm, onQuizIdChange, quizId]);
+  }, [courseId, currentTerm, onQuizIdChange, quizId]);
 
   useEffect(() => {
     if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID || quizzes.length === 0) return;
@@ -284,6 +285,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
+      if (!currentTerm) return; 
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
         instanceId: currentTerm,
@@ -295,7 +297,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
       const canPreview = await canAccessResource(ResourceName.COURSE_QUIZ, Action.PREVIEW, {
         courseId,
-        instanceId: courseTerm,
+        instanceId: currentTerm,
       });
       if (canPreview) {
         setAccessType('PREVIEW_ONLY');
@@ -305,7 +307,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
     }
     checkHasAccessAndGetTypeOfAccess();
-  }, []);
+  }, [currentTerm]);
 
   useEffect(() => {
     async function loadAll() {
