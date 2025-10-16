@@ -1,17 +1,16 @@
-import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserIdOrSetError } from './comment-utils';
-import { isMemberOfAcl } from './acl-utils/acl-common-utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
 import { getCourseInfo } from '@alea/spec';
+import { getCurrentTermForCourseId } from '@alea/utils';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
+import { isMemberOfAcl } from './acl-utils/acl-common-utils';
+import { getUserIdOrSetError } from './comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
+  // TODO (Rakesh): Fix this.
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string); 
   const userId = await getUserIdOrSetError(req, res);
-  if (!userId) {
-    return;
-  }
+  if (!userId) return;
 
   const courses = await getCourseInfo();
   const courseIds = Object.keys(courses);
@@ -30,4 +29,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({ enrolledCourseIds });
 }
-
