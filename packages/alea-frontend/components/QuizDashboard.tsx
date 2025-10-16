@@ -359,8 +359,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     onQuizIdChange?.(fallbackQuizId);
   }
 
+  if (loadingTermByCourseId || !currentTerm) return <CircularProgress />;
   if (!canAccess) return <>Unauthorized</>;
-  if (loadingTermByCourseId) return <CircularProgress />;
 
   return (
     <Box m="auto" maxWidth="800px" p="10px">
