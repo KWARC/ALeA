@@ -227,7 +227,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
 
   useEffect(() => {
     async function fetchQuizzes() {
-      const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, courseTerm);
+      const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
         for (const css of q.css || []) FTML.injectCss(css);
@@ -243,13 +243,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
 
   useEffect(() => {
     if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID || quizzes.length === 0) return;
-    getQuizStats(selectedQuizId, courseId, courseTerm).then(setStats);
+    getQuizStats(selectedQuizId, courseId, currentTerm).then(setStats);
     const interval = setInterval(() => {
-      getQuizStats(selectedQuizId, courseId, courseTerm).then(setStats);
+      getQuizStats(selectedQuizId, courseId, currentTerm).then(setStats);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [selectedQuizId, courseId, courseTerm, quizzes]);
+  }, [selectedQuizId, courseId, currentTerm, quizzes]);
 
   useEffect(() => {
     if (selectedQuizId === NEW_QUIZ_ID) {
