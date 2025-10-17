@@ -20,7 +20,7 @@ export async function getConceptPropertyInSection(sectionUri:string){
 
   return resp.data as ConceptPropertiesMap;
 }
-interface Goal{
+export interface Goal{
 uri:string;
 text:string;
 subGoalUris?:string[]

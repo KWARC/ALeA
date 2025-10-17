@@ -28,6 +28,7 @@ import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 import { SectionDetailsDialog } from './SectionDetailsDialog';
+import GoalHierarchyDialog from './GoalHierarchyDialog';
 
 export function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -66,6 +67,7 @@ export const CourseSectionSelector = ({
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
     startSecUri: string;
@@ -443,7 +445,7 @@ export const CourseSectionSelector = ({
           </>
         )}
 
-        <Box display="flex">
+        <Box display="flex"  gap={2}>
           <Button
             variant="contained"
             onClick={() => setDialogOpen(true)}
@@ -451,6 +453,20 @@ export const CourseSectionSelector = ({
           >
             Generate
           </Button>
+          <Button
+            variant="contained"
+            onClick={() => setGoalDialogOpen(true)}
+            disabled={!courseId || !startSectionUri }
+          >
+            Edit Goal Hierarchy
+          </Button>
+
+      <GoalHierarchyDialog
+        open={goalDialogOpen}
+        onClose={() => setGoalDialogOpen(false)}
+        courseNotesUri={courses?.[courseId]?.notes}
+        sectionUri={startSectionUri}
+      />
         </Box>
         <SectionDetailsDialog
           open={dialogOpen}
