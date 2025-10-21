@@ -47,7 +47,7 @@ const UpdateAcl: NextPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [userSuggestions, setUserSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [memberUserId, MemberUserId] = useState('');
+  const [memberUserId, setMemberUserId] = useState('');
 
   useEffect(() => {
     const fetchAclDetails = async () => {
@@ -75,14 +75,14 @@ const UpdateAcl: NextPage = () => {
         try {
           const results = await getUserSuggestions(memberUserId);
           setUserSuggestions(results);
-          console.log({ results });
+          console.log({ userSuggestions });
         } catch (e) {
           console.error('Error fetching user suggestions:', e);
         }
       } else {
         setUserSuggestions([]);
       }
-    }, 300);
+    }, 1500);
     return () => clearTimeout(handler);
   }, [memberUserId]);
 
@@ -222,36 +222,39 @@ const UpdateAcl: NextPage = () => {
             freeSolo
             options={userSuggestions}
             getOptionLabel={(option) =>
-              typeof option === 'string' ? option : `${option.name} (${option.id})`
+              typeof option === 'string' ? option : `${option.FirstName} (${option.userId})`
             }
             renderOption={(props, option) => (
               <li {...props}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AccountCircle sx={{ color: 'text.secondary' }} />
-                  <Box>
-                    <Typography variant="body2" fontWeight="medium">
-                      {option.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {option.id}
-                    </Typography>
-                  </Box>
-                </Box>
+                <strong>{option.FirstName}</strong> — {option.userId}
               </li>
             )}
             inputValue={memberUserId}
-            onInputChange={(_, newValue) => MemberUserId(newValue)}
+            onInputChange={(_, newValue) => setMemberUserId(newValue)}
             onChange={(_, newValue) => {
-              if (typeof newValue === 'string') MemberUserId(newValue);
-              else if (newValue) MemberUserId(newValue.id);
+              if (newValue && typeof newValue !== 'string') {
+                setMemberUserId(newValue.userId);
+              }
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Add Member"
+                label="Add Member ID"
                 variant="outlined"
                 size="small"
                 onKeyDown={handleAddMemberId}
+                sx={{ mb: '10px' }}
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconButton onClick={handleAddMemberId}>
+                        <AccountCircle />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             )}
           />
