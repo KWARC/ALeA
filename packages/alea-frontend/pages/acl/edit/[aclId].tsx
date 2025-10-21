@@ -1,31 +1,34 @@
 import {
+  AutocompleteSuggestion,
+  UpdateACLRequest,
+  deleteAcl,
+  getAcl,
+  getUserSuggestions,
+  hasAclAssociatedResources,
+  isValid,
+  updateAcl,
+} from '@alea/spec';
+import { Delete } from '@mui/icons-material';
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import GroupIcon from '@mui/icons-material/Group';
+import {
+  Alert,
+  Autocomplete,
   Box,
   Button,
   Checkbox,
   Chip,
   FormControlLabel,
+  IconButton,
+  InputAdornment,
   TextField,
   Typography,
-  InputAdornment,
-  IconButton,
-  Alert,
 } from '@mui/material';
-import { Delete } from '@mui/icons-material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import GroupIcon from '@mui/icons-material/Group';
 import { NextPage } from 'next';
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import MainLayout from '../../../layouts/MainLayout';
-import {
-  UpdateACLRequest,
-  getAcl,
-  isValid,
-  updateAcl,
-  deleteAcl,
-  hasAclAssociatedResources,
-} from '@alea/spec';
+import { useEffect, useState } from 'react';
 import { ConfirmationDialog } from '../../../components/confirmation-dialog/ConfirmationDialog';
+import MainLayout from '../../../layouts/MainLayout';
 
 const UpdateAcl: NextPage = () => {
   const router = useRouter();
@@ -43,6 +46,8 @@ const UpdateAcl: NextPage = () => {
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [userSuggestions, setUserSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [memberUserId, MemberUserId] = useState('');
 
   useEffect(() => {
     const fetchAclDetails = async () => {
@@ -63,6 +68,23 @@ const UpdateAcl: NextPage = () => {
     };
     fetchAclDetails();
   }, [query.aclId]);
+
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      if (memberUserId.trim().length > 0) {
+        try {
+          const results = await getUserSuggestions(memberUserId);
+          setUserSuggestions(results);
+          console.log({ results });
+        } catch (e) {
+          console.error('Error fetching user suggestions:', e);
+        }
+      } else {
+        setUserSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [memberUserId]);
 
   const handleAddMemberId = (
     event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
@@ -196,25 +218,44 @@ const UpdateAcl: NextPage = () => {
         />
 
         <Box mb="20px">
-          <TextField
-            label="Add Member ID"
-            variant="outlined"
-            size="small"
-            value={tempMemberUserId}
-            onChange={(e) => setTempMemberUserId(e.target.value)}
-            onKeyDown={handleAddMemberId}
-            sx={{ mb: '10px' }}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleAddMemberId}>
-                    <AccountCircle />
-                  </IconButton>
-                </InputAdornment>
-              ),
+          <Autocomplete
+            freeSolo
+            options={userSuggestions}
+            getOptionLabel={(option) =>
+              typeof option === 'string' ? option : `${option.name} (${option.id})`
+            }
+            renderOption={(props, option) => (
+              <li {...props}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AccountCircle sx={{ color: 'text.secondary' }} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {option.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {option.id}
+                    </Typography>
+                  </Box>
+                </Box>
+              </li>
+            )}
+            inputValue={memberUserId}
+            onInputChange={(_, newValue) => MemberUserId(newValue)}
+            onChange={(_, newValue) => {
+              if (typeof newValue === 'string') MemberUserId(newValue);
+              else if (newValue) MemberUserId(newValue.id);
             }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Add Member"
+                variant="outlined"
+                size="small"
+                onKeyDown={handleAddMemberId}
+              />
+            )}
           />
+
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
             {memberUserIds.map((id, index) => (
               <Chip key={index} label={id} onDelete={() => handleRemoveMemberId(id)} />
