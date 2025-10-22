@@ -39,6 +39,7 @@ interface CoverageFormProps {
   onSubmit: (data: FormData) => void;
   onCancel: () => void;
   courseId: string;
+  timezone?: string;
 }
 
 export function CoverageForm({
@@ -49,6 +50,7 @@ export function CoverageForm({
   onSubmit,
   onCancel,
   courseId,
+  timezone,
 }: CoverageFormProps) {
   // const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
   const hasManuallyToggledCompletion = useRef(false);
@@ -240,6 +242,7 @@ export function CoverageForm({
           onChange={handleStartTimeChange}
           placeholder="Enter Start Time"
           variant="outlined"
+          helperText={timezone ? `(${timezone})` : undefined}
         />
       </Grid>
 
@@ -253,6 +256,7 @@ export function CoverageForm({
           onChange={handleEndTimeChange}
           placeholder="Enter End Time"
           variant="outlined"
+          helperText={timezone ? `(${timezone})` : undefined}
         />
       </Grid>
 
