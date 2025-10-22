@@ -156,14 +156,13 @@ export function CoverageUpdater({
 
   const handleEditDialogSave = (data: FormData) => {
     if (editIndex === null) return;
-    const { sectionName, targetSectionName, ...cleanData } = formData;
-    const updatedSnaps = [...snaps];
-    updatedSnaps[editIndex] = {
-      ...data,
-      autoDetected: snaps[editIndex].autoDetected,
+    const { sectionName, targetSectionName, ...cleanData } = data;
+    const originalTimestamp = snaps[editIndex].timestamp_ms;
+    const entryToSave = {
+      ...cleanData,
+      timestamp_ms: originalTimestamp,
     };
-
-    handleSaveSingle(cleanData);
+    handleSaveSingle(entryToSave);
     handleEditDialogClose();
   };
 
