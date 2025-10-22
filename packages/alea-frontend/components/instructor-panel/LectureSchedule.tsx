@@ -30,6 +30,8 @@ import {
   updateHasHomework,
   updateHasQuiz,
 } from '@alea/spec';
+import { getCourseInfo } from '@alea/spec';
+import { UniversityDetail } from '@alea/utils';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -66,6 +68,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const [loading, setLoading] = useState(true);
   const [hasHomework, setHasHomework] = useState<boolean>(false);
   const [hasQuiz, setHasQuiz] = useState<boolean>(false);
+  const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const [editEntry, setEditEntry] = useState<LectureSchedule | null>(null);
   const [editKeys, setEditKeys] = useState<{
     lectureDay: string;
@@ -95,6 +98,23 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   useEffect(() => {
     fetchLectures();
   }, [fetchLectures]);
+
+  useEffect(() => {
+    async function loadTimezone() {
+      try {
+        const courses = await getCourseInfo();
+        const institution = courses?.[courseId]?.institution;
+        if (institution && UniversityDetail[institution]) {
+          setTimezone(UniversityDetail[institution].defaultTimezone);
+        } else {
+          setTimezone(undefined);
+        }
+      } catch (err) {
+        console.error('Failed to load university timezone', err);
+      }
+    }
+    loadTimezone();
+  }, [courseId]);
 
   const handleDelete = async (lecture: LectureSchedule) => {
     if (!confirm(t.confirmDelete)) return;
@@ -322,8 +342,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         <TableHead>
           <TableRow sx={{ '& > th': { fontWeight: 'bold' } }}>
             <TableCell>{t.day}</TableCell>
-            <TableCell>{t.startTime}</TableCell>
-            <TableCell>{t.endTime}</TableCell>
+            <TableCell>{t.startTime} {timezone && `(${timezone})`}</TableCell>
+            <TableCell>{t.endTime} {timezone && `(${timezone})`}</TableCell>
             <TableCell>{t.venue}</TableCell>
             <TableCell>{t.venueLink}</TableCell>
             <TableCell>{t.homework || 'Homework'}</TableCell>

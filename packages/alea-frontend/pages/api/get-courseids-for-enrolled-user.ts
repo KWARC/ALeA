@@ -6,9 +6,8 @@ import { isMemberOfAcl } from './acl-utils/acl-common-utils';
 import { getUserIdOrSetError } from './comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  let instanceId = req.query.instanceId as string;
-  // TODO (Rakesh): Fix this.
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string); 
+  const instanceId = req.body.instanceId as string;
+
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
