@@ -16,7 +16,7 @@ export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   },
   Jacobs: {
     universityId: 'Jacobs',
-    currentTerm: 'null',
+    currentTerm: 'WS25-26',
   },
   'Heriot Watt': {
     universityId: 'Heriot Watt',

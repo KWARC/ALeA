@@ -214,7 +214,6 @@ function CourseScheduleSection({
   return (
     <Box
       sx={{
-        mt: 3,
         mx: 'auto',
         maxWidth: '650px',
         p: { xs: 0, sm: 1 },
@@ -357,7 +356,9 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       </Box>
     );
   }
-
+  if (!announcements || announcements.length === 0) {
+    return null;
+  }
   return (
     <Box
       mt={3}
@@ -589,7 +590,6 @@ const CourseHomePage: NextPage = () => {
         <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
-        <br />
         {showSearchBar && (
           <Box
             sx={{
@@ -597,7 +597,6 @@ const CourseHomePage: NextPage = () => {
               justifyContent: 'center',
               alignItems: 'center',
               width: '100%',
-              padding: '10px',
               maxWidth: '600px',
               margin: '0 auto',
             }}

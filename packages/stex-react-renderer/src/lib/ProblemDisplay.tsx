@@ -12,11 +12,14 @@ import {
   getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTML } from '@kwarc/ftml-viewer';
+import SaveIcon from '@mui/icons-material/Save';
+import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
-import { ShowSubProblemAnswer, SubProblemAnswer } from './SubProblemAnswer';
+import { ShowSubProblemAnswer } from './SubProblemAnswer';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -109,7 +112,6 @@ export function ProblemViewer({
 }) {
   const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
-  const isHaveSubProblems = problem.problem.subProblems != null;
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));

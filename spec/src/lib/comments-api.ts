@@ -15,7 +15,7 @@ import {
   UserInformation,
   UserSignUpDetail,
 } from './comment';
-import { getAuthHeaders, logoutAndGetToLoginPage } from './lmp';
+import { getAuthHeaders, isLoggedIn, logoutAndGetToLoginPage } from './lmp';
 
 async function commentRequest(apiUrl: string, requestType: string, data?: any) {
   const headers = getAuthHeaders();
@@ -356,6 +356,7 @@ export async function updateUserInfoFromToken() {
 }
 
 export async function getResourcesForUser() {
+  if (!isLoggedIn()) return [];
   const response = await axios.post(
     '/api/get-resources-for-user',
     {},

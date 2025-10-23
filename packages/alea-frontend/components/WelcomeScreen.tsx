@@ -706,8 +706,8 @@ function WelcomeScreen({
   }, []);
 
   useEffect(() => {
-    getCourseIdsForEnrolledUser().then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
-  }, []);
+    getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
+  }, [currentTerm]);
 
   const isFAUId = isFauId(userInfo?.userId);
 
