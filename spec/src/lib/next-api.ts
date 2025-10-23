@@ -43,6 +43,9 @@ export interface ClipDetails {
   r720?: string;
   r1080?: string;
   sub?: string;
+  subEn?:string;
+  subDe?:string;
+  thumbnailUrl?:string;
 }
 
 export interface SlideClipInfo {

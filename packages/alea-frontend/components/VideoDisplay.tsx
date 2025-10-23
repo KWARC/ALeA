@@ -158,7 +158,8 @@ export interface SlidesUriToIndexMap {
 const MediaItem = ({
   audioOnly,
   videoId,
-  sub,
+  subtitles,
+  thumbnail,
   timestampSec,
   markers,
   clipId,
@@ -170,7 +171,8 @@ const MediaItem = ({
   videoId: string;
   clipId: string;
   clipIds: { [sectionId: string]: string };
-  sub?: string;
+  subtitles?: Record<string, string>;
+  thumbnail?: string;
   timestampSec?: number;
   markers?: Marker[];
   slidesUriToIndexMap?: SlidesUriToIndexMap;
@@ -240,14 +242,34 @@ const MediaItem = ({
   }, [autoSync]);
 
   useEffect(() => {
-    if (audioOnly || !playerRef.current) return;
-    const player = videojs(playerRef.current, {
-      controls: !audioOnly,
-      preload: 'auto',
-      autoplay: false,
-      sources: [{ src: videoId, type: 'video/mp4' }],
-    });
-    videoPlayer.current = player;
+    if (audioOnly) {
+      if (videoPlayer.current) {
+        videoPlayer.current.dispose();
+        videoPlayer.current = null;
+      }
+      return;
+    }
+
+    if (!playerRef.current) return;
+    let player = videoPlayer.current;
+
+    if (!player) {
+      player = videojs(playerRef.current, {
+        controls: !audioOnly,
+        preload: 'auto',
+        autoplay: false,
+        sources: [{ src: videoId, type: 'video/mp4' }],
+      });
+      videoPlayer.current = player;
+    } else {
+      const currentTime = player.currentTime();
+      player.src({ src: videoId, type: 'video/mp4' });
+      player.ready(() => {
+        player.currentTime(currentTime);
+        player.play();
+      });
+    }
+
     const controlBar = playerRef.current.parentNode?.querySelector(
       '.vjs-control-bar'
     ) as HTMLElement;
@@ -286,8 +308,10 @@ const MediaItem = ({
     }
 
     return () => {
-      player.dispose();
-      videoPlayer.current = null;
+      if (audioOnly && player) {
+        player.dispose();
+        videoPlayer.current = null;
+      }
     };
   }, [videoId, audioOnly]);
   useEffect(() => {
@@ -426,17 +450,36 @@ const MediaItem = ({
       ></audio>
     );
   }
+  const langs = [
+    { code: 'en', name: 'English' },
+    { code: 'de', name: 'German' },
+  ];
   return (
     <Box style={{ marginBottom: '7px', position: 'relative' }}>
       <video
         key="videoPlayer"
+        poster={thumbnail}
         ref={playerRef as MutableRefObject<HTMLVideoElement>}
         className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
         style={{ border: '0.5px solid black', borderRadius: '8px' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {sub && <track src={sub} label="English" kind="captions" srcLang="en-us" default />}
+        {langs.map(({ code, name }) => {
+          const url = subtitles[code];
+          if (!url) return null;
+          const isDefault = subtitles.default === url;
+          return (
+            <track
+              key={code}
+              src={url}
+              label={isDefault ? `${name}★` : name}
+              kind="captions"
+              srcLang={code}
+              default={isDefault}
+            />
+          );
+        })}
       </video>
 
       {tooltip && (
@@ -766,7 +809,12 @@ export function VideoDisplay({
           clipIds={clipIds}
           timestampSec={timestampSec}
           audioOnly={audioOnly}
-          sub={clipDetails?.sub}
+          subtitles={{
+            default: clipDetails?.sub,
+            en: clipDetails?.subEn,
+            de: clipDetails?.subDe,
+          }}
+          thumbnail={clipDetails?.thumbnailUrl}
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
           autoSync={autoSync}
