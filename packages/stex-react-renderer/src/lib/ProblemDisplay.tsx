@@ -12,14 +12,11 @@ import {
   getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
-import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
+import { MystEditor } from '@alea/myst';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -116,7 +113,7 @@ export function ProblemViewer({
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
-  const isNap = problem.problem.html.includes(`data-ftml-autogradable="true"`);
+  // const isNap = problem.problem.html.includes(`data-ftml-autogradable="true"`);
   return (
     <FTMLFragment
       key={uri}
@@ -126,7 +123,7 @@ export function ProblemViewer({
       onProblemResponse={(response) => {
         onResponseUpdate?.(response);
       }}
-      {...(!isNap
+      /*{...(!isNap
         ? {
             problemWrap: (problemUri) => {
               return (ch: React.ReactNode) => (
@@ -143,7 +140,7 @@ export function ProblemViewer({
               );
             },
           }
-        : {})}
+        : {})}}*/
     />
   );
 }
