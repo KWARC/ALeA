@@ -7,6 +7,8 @@ interface CachedObject {
 }
 
 const CACHED_CLIP_INFO = new Map<string, CachedObject>();
+const FAU_TV_OEMBED_BASE_URL="https://api.video.uni-erlangen.de/services/oembed";
+const FAU_TV_BASE_URL = "https://www.fau.tv";
 
 function isFresh(cachedObject: CachedObject) {
   if (!cachedObject) return false;
@@ -15,8 +17,6 @@ function isFresh(cachedObject: CachedObject) {
 }
 
 export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
-  const FAU_TV_OEMBED_BASE_URL = process.env.FAU_TV_OEMBED_BASE_URL;
-  const FAU_TV_BASE_URL = process.env.FAU_TV_BASE_URL;
   const url = `${FAU_TV_OEMBED_BASE_URL}?url=${FAU_TV_BASE_URL}/clip/id/${clipId}&format=json`;
   const { data } = await axios.get(url);
 
@@ -24,9 +24,11 @@ export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
     r360: data.alternative_Video_size_small_url || undefined,
     r720: data.alternative_Video_size_medium_url || undefined,
     r1080: data.alternative_Video_size_large_url || undefined,
-    sub: data.transcript || undefined,
-    subEn: data.transcript_en || undefined,
-    subDe: data.transcript_de || undefined,
+    subtitles: {
+      default: data.transcript || undefined,
+      en: data.transcript_en || undefined,
+      de: data.transcript_de || undefined,
+    },
     thumbnailUrl: data.thumbnail_url || undefined,
   };
   return videoInfo;

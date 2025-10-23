@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ClipDetails, ClipInfo, getDefiniedaInSection } from '@alea/spec';
-import { formatTime, getParamFromUri, localStore, PathToTour2 } from '@alea/utils';
+import { formatTime, getParamFromUri, languageUrlMap, localStore, PathToTour2 } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import {
@@ -450,10 +450,10 @@ const MediaItem = ({
       ></audio>
     );
   }
-  const langs = [
-    { code: 'en', name: 'English' },
-    { code: 'de', name: 'German' },
-  ];
+  // const langs = [
+  //   { code: 'en', name: 'English' },
+  //   { code: 'de', name: 'German' },
+  // ];
   return (
     <Box style={{ marginBottom: '7px', position: 'relative' }}>
       <video
@@ -465,21 +465,23 @@ const MediaItem = ({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {langs.map(({ code, name }) => {
-          const url = subtitles[code];
-          if (!url) return null;
-          const isDefault = subtitles.default === url;
-          return (
-            <track
-              key={code}
-              src={url}
-              label={isDefault ? `${name}★` : name}
-              kind="captions"
-              srcLang={code}
-              default={isDefault}
-            />
-          );
-        })}
+        {Object.entries(subtitles)
+          .filter(([code]) => code !== 'default') 
+          .map(([code, url]) => {
+            if (!url) return null;
+            const isDefault = subtitles.default === url;
+            const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
+            return (
+              <track
+                key={code}
+                src={url}
+                label={label}
+                kind="captions"
+                srcLang={code}
+                default={isDefault}
+              />
+            );
+          })}
       </video>
 
       {tooltip && (
@@ -809,11 +811,7 @@ export function VideoDisplay({
           clipIds={clipIds}
           timestampSec={timestampSec}
           audioOnly={audioOnly}
-          subtitles={{
-            default: clipDetails?.sub,
-            en: clipDetails?.subEn,
-            de: clipDetails?.subDe,
-          }}
+          subtitles={clipDetails?.subtitles}
           thumbnail={clipDetails?.thumbnailUrl}
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}

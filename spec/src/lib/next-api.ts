@@ -42,9 +42,7 @@ export interface ClipDetails {
   r360?: string;
   r720?: string;
   r1080?: string;
-  sub?: string;
-  subEn?:string;
-  subDe?:string;
+  subtitles?: Record<string, string>;
   thumbnailUrl?:string;
 }
 
