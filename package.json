@@ -14,9 +14,9 @@
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
-    "@flexiformal/ftml": "^0.0.6",
+    "@flexiformal/ftml": "^0.0.7",
     "@flexiformal/ftml-backend": "^0.0.3",
-    "@flexiformal/ftml-react": "^0.0.7",
+    "@flexiformal/ftml-react": "^0.0.8",
     "@jonkoops/matomo-tracker-react": "^0.7.0",
     "@mui/icons-material": "^6.1.10",
     "@mui/lab": "^6.0.0-beta.18",
