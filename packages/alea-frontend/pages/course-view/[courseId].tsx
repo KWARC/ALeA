@@ -261,7 +261,12 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
-    getSlideDetails(courseId, currentClipId).then(setVideoExtractedData);
+    getSlideDetails(courseId, currentClipId)
+      .then(setVideoExtractedData)
+      .catch((err) => {
+        setVideoExtractedData(null);
+        console.error(err);
+      });
   }, [courseId, currentClipId, router.isReady]);
 
   useEffect(() => {
