@@ -765,6 +765,7 @@ export function VideoDisplay({
   useEffect(() => {
     if (!clipId) {
       setIsLoading(false);
+      setClipDetails(undefined);
       return;
     }
     setIsLoading(true);

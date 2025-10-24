@@ -10,9 +10,18 @@ import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000;
 export const CACHED_VIDEO_SLIDESMAP: Record<
-  string /* courseId*/,
-  Record<string /* videoId */, { extracted_content: { [timestampSec: number]: ClipData } }>
+  string, // courseId
+  Record<
+    string, // semesterKey
+    Record<
+      string, // videoId
+      {
+        extracted_content: Record<string, ClipData>;
+      }
+    >
+  >
 > = {};
+
 
 let CACHE_REFRESH_TIME: number | undefined = undefined;
 let CACHE_PROMISE: Promise<void> | null = null;

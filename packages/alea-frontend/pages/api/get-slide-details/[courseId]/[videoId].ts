@@ -4,6 +4,7 @@ import {
   populateVideoToSlidesMap,
 } from '../../get-section-info/[courseId]';
 import { getCurrentTermForCourseId } from '@alea/utils';
+import { ClipData } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { courseId, videoId } = req.query;
@@ -15,12 +16,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const courseCache = CACHED_VIDEO_SLIDESMAP[courseId as string];
-  if (!courseCache) return res.status(404).send( 'Course not found' );
-  const semesters = Object.keys(courseCache);
-  const currentTerm = await getCurrentTermForCourseId(courseId as string);
-  const semesterKey = (currentTerm && courseCache[currentTerm]) ? currentTerm : semesters[0];
-  const videoData = courseCache[semesterKey]?.[videoId as string];
-  if (!videoData?.extracted_content) return res.status(404).send('Video data not found');
+  if (!courseCache) return res.status(404).send('Course not found');
+  let extractedContent: {
+    [timestampSec: number]: ClipData;
+  } | null = null;
+  for (const semesterKey of Object.keys(courseCache)) {
+    const videoData = courseCache[semesterKey]?.[videoId as string];
+    if (videoData?.extracted_content) {
+      extractedContent = videoData.extracted_content;
+      break;
+    }
+  }
+  if (!extractedContent) return res.status(404).send('Video data not found');
 
-  return res.status(200).json(videoData.extracted_content);
+  return res.status(200).json(extractedContent);
 }

@@ -45,13 +45,6 @@ export interface ClipDetails {
   subtitles?: Record<string, string>;
   thumbnailUrl?:string;
 }
-
-export interface SlideClipInfo {
-  clipId: string;
-  startTimeSec?: number;
-  endTimeSec?: number;
-}
-
 export interface ClipInfo {
   video_id: string;
   start_time?: number;
