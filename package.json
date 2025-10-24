@@ -12,6 +12,7 @@
   },
   "private": true,
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.5",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@jonkoops/matomo-tracker-react": "^0.7.0",
@@ -28,6 +29,7 @@
     "@types/dompurify": "^3.2.0",
     "@types/htmlparser2": "^3.10.4",
     "@types/jsonwebtoken": "^9.0.7",
+    "@xyflow/react": "^12.9.0",
     "axios": "1.6.0",
     "bcrypt": "^5.1.1",
     "crypto": "^1.0.1",
