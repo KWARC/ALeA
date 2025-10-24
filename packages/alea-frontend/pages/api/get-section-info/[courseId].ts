@@ -1,5 +1,5 @@
 import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
+import {  ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
 import { LectureEntry } from '@alea/utils';
 import { getCurrentTermForCourseId } from '@alea/utils';
 import { readdir, readFile } from 'fs/promises';
@@ -16,7 +16,7 @@ export const CACHED_VIDEO_SLIDESMAP: Record<
     Record<
       string, // videoId
       {
-        extracted_content: Record<string, ClipData>;
+        extracted_content: Record<string, ClipMetadata>;
       }
     >
   >
@@ -133,20 +133,12 @@ export function addCoverageInfo(sections: SectionInfo[], snaps: LectureEntry[]) 
   return;
 }
 
-function addClipInfo(allSections: SectionInfo[], jsonData: any, currentTerm?: string) {
+function addClipInfo(allSections: SectionInfo[], videoSlides:  Record<string, {
+    extracted_content: Record<string, ClipMetadata>;
+}> ) {
+  if(!videoSlides)return;
   const clipDataMap: { [sectionId: string]: { [slideUri: number]: ClipInfo[] } } = {};
-  let semesterKey: string | undefined;
-  if (currentTerm && jsonData[currentTerm]) {
-    semesterKey = currentTerm;
-  } else {
-    const semesters = Object.keys(jsonData);
-    if (semesters.length === 0) return;
-    semesterKey = semesters[0];
-  }
-  const semesterData = jsonData[semesterKey];
-  if (!semesterData) return;
-
-  Object.entries(semesterData).forEach(
+  Object.entries(videoSlides).forEach(
     ([videoId, videoData]: [
       string,
       { extracted_content: { [timeStamp: number]: ClipMetadata } }
@@ -209,8 +201,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const coverageData = (getCoverageData()[courseId] ?? []).filter((snap) => snap.sectionUri);
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
-  if (videoSlides && Object.keys(videoSlides).length > 0) {
-    addClipInfo(allSections, videoSlides, currentTerm);
+  const currentTermVideoSlides=videoSlides[currentTerm];
+  if (currentTermVideoSlides && Object.keys(currentTermVideoSlides).length > 0) {
+    addClipInfo(allSections, currentTermVideoSlides);
   }
   res.status(200).send(allSections);
 }
