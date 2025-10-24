@@ -8,8 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
   canAccessResource,
-  ClipData,
   ClipInfo,
+  ClipMetadata,
   getCourseInfo,
   getSlideCounts,
   getSlideDetails,
@@ -177,7 +177,7 @@ const CourseViewPage: NextPage = () => {
   }>({});
   const [currentClipId, setCurrentClipId] = useState('');
   const [videoExtractedData, setVideoExtractedData] = useState<{
-    [timestampSec: number]: ClipData;
+    [timestampSec: number]: ClipMetadata;
   }>({});
 
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
