@@ -12,7 +12,6 @@
   },
   "private": true,
   "dependencies": {
-    "@dagrejs/dagre": "^1.1.5",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@jonkoops/matomo-tracker-react": "^0.7.0",
@@ -35,6 +34,7 @@
     "crypto": "^1.0.1",
     "d3": "^7.6.1",
     "d3-dag": "^0.11.5",
+    "dagre": "^0.8.5",
     "dayjs": "^1.11.9",
     "dns": "^0.2.2",
     "dompurify": "^3.2.5",
