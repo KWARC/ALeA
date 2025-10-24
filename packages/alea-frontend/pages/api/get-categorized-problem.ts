@@ -5,10 +5,9 @@ import {
   getQueryResults,
   getSectionDependencies,
   getSparqlQueryForLoRelationToDimAndConceptPair,
-  Language,
   ProblemData,
 } from '@alea/spec';
-import { getParamFromUri } from '@alea/utils';
+import { getParamFromUri, Language, languageUrlMap } from '@alea/utils';
 import { getProblemsBySection } from './get-course-problem-counts';
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
@@ -87,28 +86,6 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
 
   return uniqueUris;
 }
-
-const languageUrlMap: Record<string, Language> = {
-  de: Language.Deutsch,
-  en: Language.English,
-  ar: Language.Arabic,
-  bn: Language.Bengali,
-  hi: Language.Hindi,
-  fr: Language.French,
-  ja: Language.Japanese,
-  ko: Language.Korean,
-  zh: Language.Mandarin,
-  mr: Language.Marathi,
-  fa: Language.Persian,
-  pt: Language.Portuguese,
-  ru: Language.Russian,
-  es: Language.Spanish,
-  ta: Language.Tamil,
-  te: Language.Telugu,
-  tr: Language.Turkish,
-  ur: Language.Urdu,
-  vi: Language.Vietnamese,
-};
 
 export async function getCategorizedProblems(
   courseId: string,

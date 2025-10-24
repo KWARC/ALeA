@@ -7,6 +7,50 @@ export const Window = IS_SERVER ? undefined : window;
 export const PRIMARY_COL = '#203360';
 export const PRIMARY_COL_DARK_HOVER = '#162343';
 export const SECONDARY_COL = '#8c9fb1';
+export enum Language {
+  Deutsch = 'Deutsch',
+  English = 'English',
+  Arabic = 'Arabic',
+  Bengali = 'Bengali',
+  Hindi = 'Hindi',
+  French = 'French',
+  Japanese = 'Japanese',
+  Korean = 'Korean',
+  Mandarin = 'Mandarin',
+  Marathi = 'Marathi',
+  Persian = 'Persian',
+  Portuguese = 'Portuguese',
+  Russian = 'Russian',
+  Spanish = 'Spanish',
+  Tamil = 'Tamil',
+  Telugu = 'Telugu',
+  Turkish = 'Turkish',
+  Urdu = 'Urdu',
+  Vietnamese = 'Vietnamese',
+  Others = 'Others',
+}
+
+export const languageUrlMap: Record<string, Language> = {
+  de: Language.Deutsch,
+  en: Language.English,
+  ar: Language.Arabic,
+  bn: Language.Bengali,
+  hi: Language.Hindi,
+  fr: Language.French,
+  ja: Language.Japanese,
+  ko: Language.Korean,
+  zh: Language.Mandarin,
+  mr: Language.Marathi,
+  fa: Language.Persian,
+  pt: Language.Portuguese,
+  ru: Language.Russian,
+  es: Language.Spanish,
+  ta: Language.Tamil,
+  te: Language.Telugu,
+  tr: Language.Turkish,
+  ur: Language.Urdu,
+  vi: Language.Vietnamese,
+};
 
 export async function waitForNSeconds(n_sec: number) {
   return new Promise((resolve) => setTimeout(resolve, n_sec * 1000));

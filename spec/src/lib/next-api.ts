@@ -42,7 +42,8 @@ export interface ClipDetails {
   r360?: string;
   r720?: string;
   r1080?: string;
-  sub?: string;
+  subtitles?: Record<string, string>;
+  thumbnailUrl?:string;
 }
 
 export interface SlideClipInfo {

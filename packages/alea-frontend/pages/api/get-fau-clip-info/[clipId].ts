@@ -7,6 +7,8 @@ interface CachedObject {
 }
 
 const CACHED_CLIP_INFO = new Map<string, CachedObject>();
+const FAU_TV_OEMBED_BASE_URL="https://api.video.uni-erlangen.de/services/oembed";
+const FAU_TV_BASE_URL = "https://www.fau.tv";
 
 function isFresh(cachedObject: CachedObject) {
   if (!cachedObject) return false;
@@ -14,33 +16,21 @@ function isFresh(cachedObject: CachedObject) {
   return Date.now() - cachedObject.cacheTimeMs < MAX_CACHE_STALENESS_MS;
 }
 
-async function getVideoInfo(clipId: string) {
-  const clipUrl = `https://www.fau.tv/clip/id/${clipId}`;
-  const clipPageContent = (await axios.get(clipUrl)).data;
-  const videoLinks = clipPageContent.match(
-    /www.fau.tv\/webplayer\/id\/([^&]+)\S+maxheight=([0-9]+)/g
-  );
-  if (!videoLinks?.length) return;
-  const videoInfo = {};
-  for (const link of videoLinks) {
-    const group = /www.fau.tv\/webplayer\/id\/([^&]+)\S+maxheight=([0-9]+)/gm.exec(link);
-    const res = group[2];
-    const id = group[1];
-    const embedableLink = `https://api.video.uni-erlangen.de/services/oembed?url=https://www.fau.tv/webplayer/id/${id}&format=iframe`;
-    const embedableLinkData = (await axios.get(embedableLink)).data;
+export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
+  const url = `${FAU_TV_OEMBED_BASE_URL}?url=${FAU_TV_BASE_URL}/clip/id/${clipId}&format=json`;
+  const { data } = await axios.get(url);
 
-    const matches = /http\S+m4v/gm.exec(embedableLinkData);
-    // There are multiple video versions. Eg "Slides and video", "Slides only" etc.
-    // Hope that the first link is always "Slides & Video"
-    if (matches?.[0] && !videoInfo['r' + res]) videoInfo['r' + res] = matches[0];
-  }
-  const subLinks = clipPageContent.match(/http.*vosk-cc.vtt/g);
-  const uniqSubLinks = [...new Set(subLinks || [])];
-
-  if (uniqSubLinks.length >= 2) {
-    console.error('More than one subtitle for video');
-  }
-  if (uniqSubLinks.length === 1) videoInfo['sub'] = uniqSubLinks[0];
+  const videoInfo: ClipDetails = {
+    r360: data.alternative_Video_size_small_url || undefined,
+    r720: data.alternative_Video_size_medium_url || undefined,
+    r1080: data.alternative_Video_size_large_url || undefined,
+    subtitles: {
+      default: data.transcript || undefined,
+      en: data.transcript_en || undefined,
+      de: data.transcript_de || undefined,
+    },
+    thumbnailUrl: data.thumbnail_url || undefined,
+  };
   return videoInfo;
 }
 
@@ -49,6 +39,7 @@ async function getVideoInfoCached(clipId: string) {
   if (isFresh(cachedInfo)) return cachedInfo.videoInfo;
 
   const videoInfo = await getVideoInfo(clipId);
+  if (!videoInfo) throw new Error(`Video info not found for clip ${clipId}`);
   CACHED_CLIP_INFO.set(clipId, {
     cacheTimeMs: Date.now(),
     videoInfo: videoInfo,
@@ -58,6 +49,12 @@ async function getVideoInfoCached(clipId: string) {
 
 export default async function handler(req, res) {
   const { clipId } = req.query;
-  const videoInfo = await getVideoInfoCached(clipId);
-  res.status(200).json(videoInfo);
+  if (!clipId) return res.status(422).json({ error: 'Missing clipId' });
+  try {
+    const videoInfo = await getVideoInfoCached(clipId);
+    res.status(200).json(videoInfo);
+  } catch (error) {
+    console.error(`Failed to fetch video info for ${clipId}:`, error);
+    res.status(500).json({ error: 'Failed to fetch video info' });
+  }
 }

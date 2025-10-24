@@ -1,6 +1,7 @@
-import { getCourseInfo, Language } from '@alea/spec';
+import { getCourseInfo } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCategorizedProblems } from './get-categorized-problem';
+import { Language } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sectionUri = req.query.sectionUri as string;
