@@ -93,7 +93,7 @@ export function getProblemState(
     ? sol?.check_response(current_response)
     : sol?.default_feedback();
   if (!feedback) return { type: 'Finished', current_response }; // Something went wrong!!
-  return { type: 'Graded', feedback };
+  return { type: 'Graded', feedback: feedback.to_json() };
 }
 
 export function ProblemViewer({
