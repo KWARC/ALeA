@@ -110,10 +110,9 @@ class StatusTracker:
         time_between_success_and_alert = last_alert_time - last_success_time
         down_since = time.time() - last_success_time
 
-        if time_since_alert > time_between_success_and_alert or time_since_alert > 3600:
+        remaining = min(time_between_success_and_alert - time_since_alert, 3600 - time_since_alert)
+        if remaining <= 0:
             return (True, f"Last seen up {round((down_since)/60)} min ago")
-
-        remaining = int(time_between_success_and_alert - time_since_alert)
         print(f"Waiting {round(remaining)}s for sending next alert")
         return False, ""
 
