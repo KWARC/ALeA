@@ -14,10 +14,8 @@ from typing import Tuple, Optional, Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Fetch all environment variables at global level
 VOLL_KI_ALERTS_CHANNEL_ID = os.getenv("VOLL_KI_ALERTS_CHANNEL_ID")
 VOLL_KI_ALERTS_BOT_TOKEN = os.getenv("VOLL_KI_ALERTS_BOT_TOKEN")
 MONITOR_STATUS_FILE = os.getenv("MONITOR_STATUS_FILE", "./tmp/monitor-status.json")
@@ -32,7 +30,7 @@ ENDPOINTS = [
 
 
 class StatusTracker:
-    """Tracks endpoint status and manages alert timing with exponential backoff."""
+    """Tracks endpoint status and manages alert timings."""
 
     def __init__(self, status_file: str):
         self.status_file = Path(status_file)
@@ -52,9 +50,7 @@ class StatusTracker:
     def _save_status(self):
         """Save status to file."""
         try:
-            # Ensure parent directory exists
             self.status_file.parent.mkdir(parents=True, exist_ok=True)
-
             with open(self.status_file, "w") as f:
                 json.dump(self.status_data, f, indent=2)
         except IOError as e:
@@ -110,15 +106,12 @@ class StatusTracker:
         ):
             return True, ""
 
-        # If it has been more time since the last alert
         time_since_alert = time.time() - last_alert_time
         time_between_success_and_alert = last_alert_time - last_success_time
+        down_since = time.time() - last_success_time
 
-        if time_since_alert > time_between_success_and_alert:
-            return (
-                True,
-                f"Last seen up {round((time.time()-last_success_time)/60)} min ago",
-            )
+        if time_since_alert > time_between_success_and_alert or time_since_alert > 3600:
+            return (True, f"Last seen up {round((down_since)/60)} min ago")
 
         remaining = int(time_between_success_and_alert - time_since_alert)
         print(f"Waiting {round(remaining)}s for sending next alert")
@@ -129,37 +122,30 @@ class StatusTracker:
         self._save_status()
 
 
-class MatrixAlertSender:
-    """Sends alerts to Matrix room using the same logic as sendAlert in add-comment.ts"""
+def send_alert(message: str) -> bool:
+    """Send an alert message to Matrix room (usually "ALeA - Notifications")."""
+    print(f"Sending alert: {message}")
+    if not VOLL_KI_ALERTS_CHANNEL_ID or not VOLL_KI_ALERTS_BOT_TOKEN:
+        print("WARNING: Matrix credentials not configured. Alert not sent.")
+        return False
 
-    def __init__(self):
-        self.room_id = VOLL_KI_ALERTS_CHANNEL_ID
-        self.token = VOLL_KI_ALERTS_BOT_TOKEN
+    url = f"https://matrix-client.matrix.org/_matrix/client/r0/rooms/{VOLL_KI_ALERTS_CHANNEL_ID}/send/m.room.message"
 
-    def send_alert(self, message: str) -> bool:
-        """Send an alert message to Matrix room."""
-        print(f"Sending alert: {message}")
-        if not self.room_id or not self.token:
-            print("WARNING: Matrix credentials not configured. Alert not sent.")
-            return False
+    payload = {"msgtype": "m.text", "body": message}
 
-        url = f"https://matrix-client.matrix.org/_matrix/client/r0/rooms/{self.room_id}/send/m.room.message"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {VOLL_KI_ALERTS_BOT_TOKEN}",
+    }
 
-        payload = {"msgtype": "m.text", "body": message}
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.token}",
-        }
-
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
-            response.raise_for_status()
-            print(f"Alert sent successfully: {message[:50]}...")
-            return True
-        except requests.exceptions.RequestException as e:
-            print(f"ERROR: Failed to send Matrix alert: {e}")
-            return False
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        print(f"Alert sent successfully: {message[:50]}...")
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Failed to send Matrix alert: {e}")
+        return False
 
 
 def check_endpoint(endpoint: dict, retries: int = 3) -> Tuple[bool, Optional[str]]:
@@ -223,42 +209,26 @@ def check_endpoint(endpoint: dict, retries: int = 3) -> Tuple[bool, Optional[str
 
 def main():
     """Main monitoring function."""
-    # Get configuration from environment
-    retries = 3
-    status_file = MONITOR_STATUS_FILE
 
-    # Initialize status tracker
-    status_tracker = StatusTracker(status_file)
-
-    # Check each endpoint
+    status_tracker = StatusTracker(MONITOR_STATUS_FILE)
     failures = []
     alerts_to_send = []
-
     for endpoint in ENDPOINTS:
-        success, error_msg = check_endpoint(endpoint, retries=retries)
-
-        # Update status
-        status_tracker.update_status(endpoint["name"], success, error_msg)
-
+        success, error_msg = check_endpoint(endpoint)
+        name, url = endpoint["name"], endpoint["url"]
+        status_tracker.update_status(name, success, error_msg)
         if not success:
-            failures.append((endpoint["name"], endpoint["url"], error_msg))
-
-            # Check if we should send an alert
-            should_send, reason = status_tracker.should_send_alert(endpoint["name"])
+            failures.append((name, url, error_msg))
+            should_send, reason = status_tracker.should_send_alert(name)
             if should_send:
-                alerts_to_send.append(
-                    (endpoint["name"], endpoint["url"], error_msg, reason)
-                )
+                alerts_to_send.append((name, url, error_msg, reason))
 
     # Send alerts if needed
-    alert_sender = MatrixAlertSender()
-
     for name, url, error, reason in alerts_to_send:
         alert_message = f"🚨 MONITOR ALERT: {name} is down with error: {error}\n"
-        alert_message += f"  URL: {url}\n"
-        alert_message += f"  {reason}\n"
+        alert_message += f"  URL: {url}\n  {reason}\n"
 
-        alert_sent = alert_sender.send_alert(alert_message)
+        alert_sent = send_alert(alert_message)
         if alert_sent:
             status_tracker.record_alert_sent(name)
         else:
