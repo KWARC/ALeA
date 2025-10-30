@@ -1,24 +1,62 @@
-import { Action, LectureEntry, semesterPeriods } from '@alea/utils';
+import { Action, LectureEntry } from '@alea/utils';
 import ical, { ICalEventData } from 'ical-generator';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
 import { getAuthorizedCourseResources } from '../get-resources-for-user';
+import { executeQuery } from '../comment-utils';
+import { getCourseInfo } from '@alea/spec';
+import { getCurrentTermForCourseId } from '@alea/utils';
+interface SemesterInfo {
+  semesterStart: string;
+  semesterEnd: string;
+  lectureStartDate: string;
+  lectureEndDate: string;
+  holidays: string;
+}
+
+function parseDateDDMMYYYY(dateStr: string): Date {
+  const [dayStr, monthStr, yearStr] = (dateStr || '').split('/');
+  const day = Number(dayStr);
+  const month = Number(monthStr);
+  const year = Number(yearStr);
+  return new Date(year, month - 1, day);
+}
+
+
+async function getSemesterInfoFromDb(
+  universityId: string,
+  instanceId: string
+): Promise<SemesterInfo | null> {
+  try {
+    const result = await executeQuery<SemesterInfo[]>(
+      `SELECT semesterStart, semesterEnd, lectureStartDate, lectureEndDate, holidays
+       FROM semesterInfo
+       WHERE universityId = ? AND instanceId = ?`,
+      [universityId, instanceId]
+    );
+    if ('error' in result) {
+      console.error('Database error fetching semester info:', result.error);
+      return null;
+    }
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error fetching semester info from database:', error);
+    return null;
+  }
+}
 
 function generateCalendarEvents(
   coverageData: Record<string, LectureEntry[]>,
   accessibleCourseIds: Set<string>
 ): ICalEventData[] {
   const events: ICalEventData[] = [];
-
   for (const [courseId, entries] of Object.entries(coverageData)) {
     if (!accessibleCourseIds.has(courseId)) {
       continue;
     }
 
     for (const entry of entries) {
-      const lectureInfo = entry.isQuizScheduled
-        ? '📝 Lecture and Quiz'
-        : '📚 Lecture';
+      const lectureInfo = entry.isQuizScheduled ? '📝 Lecture and Quiz' : '📚 Lecture';
       if (entry.lectureEndTimestamp_ms) {
         events.push({
           start: new Date(entry.timestamp_ms),
@@ -41,67 +79,73 @@ function generateCalendarEvents(
   return events;
 }
 
-function generateSemesterAndHolidayEvents(): ICalEventData[] {
+async function generateSemesterAndHolidayEvents(
+  universityId: string,
+  instanceId: string
+): Promise<ICalEventData[]> {
   const events: ICalEventData[] = [];
+  const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
+  if (!semesterInfo) {
+    console.log(
+      'No semester info found in database for universityId:',
+      universityId,
+      'instanceId:',
+      instanceId
+    );
+    return events;
+  }
+  events.push({
+    start: new Date(semesterInfo.semesterStart),
+    allDay: true,
+    summary: `Semester Start : ${instanceId}`,
+    description: `Start of ${instanceId}`,
+  });
+  events.push({
+    start: new Date(semesterInfo.semesterEnd),
+    allDay: true,
+    summary: `Semester End : ${instanceId}`,
+    description: `End of ${instanceId}`,
+  });
+  events.push({
+    start: new Date(semesterInfo.lectureStartDate),
+    allDay: true,
+    summary: `Lecture Period Start for Semester : ${instanceId}`,
+    description: `Start of lectures for ${instanceId}`,
+  });
+  events.push({
+    start: new Date(semesterInfo.lectureEndDate),
+    allDay: true,
+    summary: `Lecture Period End for Semester : ${instanceId}`,
+    description: `End of lectures for ${instanceId}`,
+  });
 
-  Object.entries(semesterPeriods).forEach(([name, period]) => {
-    events.push({
-      start: new Date(period.semesterStart),
-      allDay: true,
-      summary: `Semester Start : ${name}`,
-      description: `Start of ${name}`,
-    });
-    events.push({
-      start: new Date(period.semesterEnd),
-      allDay: true,
-      summary: `Semester End : ${name}`,
-      description: `End of ${name}`,
-    });
-    events.push({
-      start: new Date(period.lectureStart),
-      allDay: true,
-      summary: `Lecture Period Start for Semester : ${name}`,
-      description: `Start of lectures for ${name}`,
-    });
-    events.push({
-      start: new Date(period.lectureEnd),
-      allDay: true,
-      summary: `Lecture Period End for Semester : ${name}`,
-      description: `End of lectures for ${name}`,
-    });
-    period.holidays.forEach((holiday) => {
+  try {
+    const parsed = JSON.parse(semesterInfo.holidays || '{}');
+    const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as any)?.holidays)
+      ? (parsed as any).holidays
+      : [];
+
+    holidaysArray.forEach((holiday) => {
+      const date = parseDateDDMMYYYY(holiday.date);
+      if (isNaN(date.getTime())) return;
       events.push({
-        start: new Date(holiday.date),
+        start: date,
         allDay: true,
         summary: `Holiday: ${holiday.name}`,
         description: `${holiday.name}`,
       });
     });
-    period.examDates.forEach((exam) => {
-      if (exam.examStartTime && exam.examEndTime) {
-        const startDateTime = new Date(`${exam.examDate}T${exam.examStartTime}`);
-        const endDateTime = new Date(`${exam.examDate}T${exam.examEndTime}`);
-        events.push({
-          start: startDateTime,
-          end: endDateTime,
-          summary: `Exam: ${exam.courseId}`,
-          description: `Exam for ${exam.courseId} in ${name}`,
-        });
-      } else {
-        events.push({
-          start: new Date(exam.examDate),
-          allDay: true,
-          summary: `Exam: ${exam.courseId}`,
-          description: `Exam for ${exam.courseId} in ${name}`,
-        });
-      }
-    });
-  });
-
+  } catch (error) {
+    console.error('Error parsing holidays from database:', error);
+  }
   return events;
 }
 
-async function getUserEvents(userId: string): Promise<ICalEventData[]> {
+async function getUserEvents(
+  userId: string
+): Promise<{ events: ICalEventData[]; universityId?: string; instanceId?: string }> {
   const coverageData = getCoverageData();
   const resourceAndActions = await getAuthorizedCourseResources(userId);
 
@@ -123,9 +167,30 @@ async function getUserEvents(userId: string): Promise<ICalEventData[]> {
       .map((resource: any) => resource.courseId)
   );
 
-  return isInstructor
-    ? generateCalendarEvents(coverageData, accessibleCourseIdsForInstructor)
-    : generateCalendarEvents(coverageData, accessibleCourseIdsForStudent);
+  const accessibleCourseIds = isInstructor
+    ? accessibleCourseIdsForInstructor
+    : accessibleCourseIdsForStudent;
+  const events = generateCalendarEvents(coverageData, accessibleCourseIds);
+
+
+  // Get universityId and instanceId from the first accessible course
+  let universityId: string | undefined;
+  let instanceId: string | undefined;
+
+  if (accessibleCourseIds.size > 0) {
+    const firstCourseId = Array.from(accessibleCourseIds)[0];
+    try {
+      const courses = await getCourseInfo();
+      const courseInfo = courses[firstCourseId];
+      if (courseInfo?.institution) {
+        universityId = courseInfo.institution;
+        instanceId = await getCurrentTermForCourseId(firstCourseId);
+      }
+    } catch (error) {
+      console.error('Error getting course info for universityId and instanceId:', error);
+    }
+  }
+  return { events, universityId, instanceId };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -142,8 +207,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     timezone: 'Europe/Berlin',
   });
 
-  const events = await getUserEvents(userId);
-  const semesterAndHolidayEvents = generateSemesterAndHolidayEvents();
+  const { events, universityId, instanceId } = await getUserEvents(userId);
+
+  const semesterAndHolidayEvents =
+    universityId && instanceId
+      ? await generateSemesterAndHolidayEvents(universityId, instanceId)
+      : [];
+
   [...events, ...semesterAndHolidayEvents].forEach((event) => {
     calendar.createEvent(event);
   });
