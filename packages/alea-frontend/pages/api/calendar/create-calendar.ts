@@ -57,12 +57,17 @@ function generateCalendarEvents(
 
     for (const entry of entries) {
       const lectureInfo = entry.isQuizScheduled ? '📝 Lecture and Quiz' : '📚 Lecture';
+      const location = entry.venue || undefined;
+      let summary = `${courseId} - ${lectureInfo}`;
+      let description = `Course: ${courseId}\n${lectureInfo}`;
+      if (location) description += `\nLocation: ${location}`;
       if (entry.lectureEndTimestamp_ms) {
         events.push({
           start: new Date(entry.timestamp_ms),
           end: new Date(entry.lectureEndTimestamp_ms),
-          summary: `${courseId} - ${lectureInfo}`,
-          description: `Course: ${courseId}\n${lectureInfo}`,
+          summary,
+          description,
+          location,
         });
       } else {
         const start = new Date(entry.timestamp_ms);
@@ -70,8 +75,9 @@ function generateCalendarEvents(
         events.push({
           start,
           allDay: true,
-          summary: `${courseId} - ${lectureInfo}`,
-          description: `Course: ${courseId}\n${lectureInfo}`,
+          summary,
+          description,
+          location,
         });
       }
     }
