@@ -1,16 +1,16 @@
 import {
-  AutocompleteSuggestion,
+  AutocompleteAclSuggestion,
+  AutocompleteUserSuggestion,
   UpdateACLRequest,
   deleteAcl,
   getAcl,
+  getAclSuggestions,
   getUserSuggestions,
   hasAclAssociatedResources,
   isValid,
   updateAcl,
 } from '@alea/spec';
 import { Delete } from '@mui/icons-material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import GroupIcon from '@mui/icons-material/Group';
 import {
   Alert,
   Autocomplete,
@@ -19,14 +19,14 @@ import {
   Checkbox,
   Chip,
   FormControlLabel,
-  IconButton,
-  InputAdornment,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConfirmationDialog } from '../../../components/confirmation-dialog/ConfirmationDialog';
 import MainLayout from '../../../layouts/MainLayout';
 
@@ -39,15 +39,25 @@ const UpdateAcl: NextPage = () => {
   const [memberACLIds, setMemberACLIds] = useState<string[]>([]);
   const [updaterACLId, setUpdaterACLId] = useState<string>('');
   const [isOpen, setIsOpen] = useState(false);
-  const [tempMemberUserId, setTempMemberUserId] = useState<string>('');
-  const [tempMemberACL, setTempMemberACL] = useState<string>('');
-  const [isInvalid, setIsInvalid] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState(true);
+
+  const [tempMemberUserId, setTempMemberUserId] = useState('');
+  const [tempMemberACL, setTempMemberACL] = useState('');
+  const [userSuggestions, setUserSuggestions] = useState<AutocompleteUserSuggestion[]>([]);
+  const [aclSuggestions, setAclSuggestions] = useState<AutocompleteAclSuggestion[]>([]);
+
+  const [memberIdAddStatus, setMemberIdAddStatus] = useState<'initial' | 'success' | 'failure'>(
+    'initial'
+  );
+  const [memberACLAddStatus, setMemberACLAddStatus] = useState<'initial' | 'success' | 'failure'>(
+    'initial'
+  );
+  const [isTypingMemberId, setIsTypingMemberId] = useState(false);
+  const [isTypingMemberACL, setIsTypingMemberACL] = useState(false);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const [userSuggestions, setUserSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [memberUserId, setMemberUserId] = useState('');
 
   useEffect(() => {
     const fetchAclDetails = async () => {
@@ -71,30 +81,36 @@ const UpdateAcl: NextPage = () => {
 
   useEffect(() => {
     const handler = setTimeout(async () => {
-      if (memberUserId.trim().length > 0) {
+      if (tempMemberUserId.trim().length > 0) {
         try {
-          const results = await getUserSuggestions(memberUserId);
+          const results = await getUserSuggestions(tempMemberUserId);
           setUserSuggestions(results);
-          console.log({ userSuggestions });
         } catch (e) {
           console.error('Error fetching user suggestions:', e);
         }
-      } else {
-        setUserSuggestions([]);
-      }
-    }, 1500);
+      } else setUserSuggestions([]);
+    }, 300);
     return () => clearTimeout(handler);
-  }, [memberUserId]);
+  }, [tempMemberUserId]);
 
-  const handleAddMemberId = (
-    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
-  ) => {
-    if (!tempMemberUserId) return;
-    if (isEnterKeyEvent(event) || event.type === 'click') {
-      setMemberUserIds([...memberUserIds, tempMemberUserId]);
-      setTempMemberUserId('');
-    }
-  };
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      if (tempMemberACL.trim()) {
+        try {
+          const results = await getAclSuggestions(tempMemberACL);
+          setAclSuggestions(results);
+        } catch (e) {
+          console.error('Error fetching ACL suggestions:', e);
+        }
+      } else setAclSuggestions([]);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [tempMemberACL]);
+
+  const resetStatus = useCallback((setter: React.Dispatch<React.SetStateAction<any>>) => {
+    const timer = setTimeout(() => setter('initial'), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   function isEnterKeyEvent(
     event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
@@ -102,27 +118,52 @@ const UpdateAcl: NextPage = () => {
     return event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter';
   }
 
-  const handleRemoveMemberId = (idToRemove: string) => {
-    setMemberUserIds(memberUserIds.filter((id) => id !== idToRemove));
-  };
-
-  const handleAddMemberACL = async (
-    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
-  ) => {
-    if (isEnterKeyEvent(event) || event.type === 'click') {
-      const res = await isValid(tempMemberACL);
-      if (tempMemberACL && res) {
-        setMemberACLIds([...memberACLIds, tempMemberACL]);
-        setTempMemberACL('');
-        setIsInvalid('');
-      } else {
-        setIsInvalid(`${tempMemberACL} is not a valid ACL.`);
+  const handleAddMemberId = useCallback(
+    (event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>) => {
+      if (!tempMemberUserId) return;
+      if (isEnterKeyEvent(event) || event.type === 'click') {
+        const idToAdd = tempMemberUserId.trim();
+        if (idToAdd && !memberUserIds.includes(idToAdd)) {
+          setMemberUserIds([...memberUserIds, idToAdd]);
+          setTempMemberUserId('');
+          setMemberIdAddStatus('success');
+        } else {
+          setMemberIdAddStatus('failure');
+        }
+        resetStatus(setMemberIdAddStatus);
       }
-    }
-  };
+    },
+    [tempMemberUserId, memberUserIds, resetStatus]
+  );
 
-  const handleRemoveMemberACL = (aclToRemove: string) => {
-    setMemberACLIds(memberACLIds.filter((acl) => acl !== aclToRemove));
+  const handleAddMemberACL = useCallback(
+    (event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>) => {
+      if (!tempMemberACL) return;
+      if (isEnterKeyEvent(event) || event.type === 'click') {
+        const aclToAdd = tempMemberACL.trim();
+        if (aclToAdd && !memberACLIds.includes(aclToAdd)) {
+          setMemberACLIds([...memberACLIds, aclToAdd]);
+          setTempMemberACL('');
+          setMemberACLAddStatus('success');
+        } else {
+          setMemberACLAddStatus('failure');
+        }
+        resetStatus(setMemberACLAddStatus);
+      }
+    },
+    [tempMemberACL, memberACLIds, resetStatus]
+  );
+
+  const handleRemoveMemberId = (id: string) =>
+    setMemberUserIds(memberUserIds.filter((u) => u !== id));
+
+  const handleRemoveMemberACL = (acl: string) =>
+    setMemberACLIds(memberACLIds.filter((a) => a !== acl));
+
+  const handleUpdaterACLIdBlur = async () => {
+    let valid = !!updaterACLId;
+    if (valid) valid = updaterACLId === aclId || (await isValid(updaterACLId));
+    setIsUpdaterACLValid(valid);
   };
 
   const handleSubmit = async () => {
@@ -144,30 +185,7 @@ const UpdateAcl: NextPage = () => {
     }
   };
 
-  const handleUpdaterACLIdBlur = async () => {
-    let isValidUpdater = !!updaterACLId;
-    if (isValidUpdater) {
-      isValidUpdater = updaterACLId === aclId || (await isValid(updaterACLId));
-    }
-    setIsUpdaterACLValid(isValidUpdater);
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteError('');
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setDeleteError('');
-  };
-
   const handleDeleteConfirm = async () => {
-    setDeleteError('');
-    if (!aclId) {
-      setDeleteError('ACL ID missing. Deletion aborted.');
-      return;
-    }
     try {
       if (await hasAclAssociatedResources(aclId)) {
         setDeleteError('ACL is linked to resources. Cannot delete.');
@@ -181,6 +199,10 @@ const UpdateAcl: NextPage = () => {
       setDeleteError(err?.response?.data?.message || 'Deletion failed due to an unexpected error.');
     }
   };
+  const isUpdateDisabled = useMemo(
+    () => !aclId || !updaterACLId || !isUpdaterACLValid || !!tempMemberUserId || !!tempMemberACL,
+    [aclId, updaterACLId, isUpdaterACLValid, tempMemberUserId, tempMemberACL]
+  );
 
   return (
     <MainLayout>
@@ -209,7 +231,6 @@ const UpdateAcl: NextPage = () => {
 
         <TextField
           label="Description"
-          variant="outlined"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           size="small"
@@ -221,128 +242,143 @@ const UpdateAcl: NextPage = () => {
           <Autocomplete
             freeSolo
             options={userSuggestions}
-            getOptionLabel={(option) =>
-              typeof option === 'string' ? option : `${option.FirstName} (${option.userId})`
+            getOptionLabel={(opt) =>
+              typeof opt === 'string' ? opt : `${opt.FirstName} (${opt.userId})`
             }
-            renderOption={(props, option) => (
-              <li {...props}>
-                <strong>{option.FirstName}</strong> — {option.userId}
-              </li>
-            )}
-            inputValue={memberUserId}
-            onInputChange={(_, newValue) => setMemberUserId(newValue)}
-            onChange={(_, newValue) => {
-              if (newValue && typeof newValue !== 'string') {
-                setMemberUserId(newValue.userId);
+            inputValue={tempMemberUserId}
+            onInputChange={(_, v) => {
+              setTempMemberUserId(v);
+              setIsTypingMemberId(true);
+              if (memberIdAddStatus !== 'initial') setMemberIdAddStatus('initial');
+            }}
+            onChange={(_, val) => {
+              if (val && typeof val !== 'string') {
+                setTempMemberUserId(val.userId);
               }
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Add Member ID"
-                variant="outlined"
                 size="small"
                 onKeyDown={handleAddMemberId}
-                sx={{ mb: '10px' }}
-                fullWidth
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconButton onClick={handleAddMemberId}>
-                        <AccountCircle />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+                helperText={
+                  tempMemberUserId && !isTypingMemberId ? 'Press Enter to add or clear field' : ''
+                }
+                error={!!tempMemberUserId && !isTypingMemberId}
               />
             )}
           />
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {memberUserIds.map((id, index) => (
-              <Chip key={index} label={id} onDelete={() => handleRemoveMemberId(id)} />
+          <Stack spacing={1} mt={1}>
+            {memberIdAddStatus === 'success' && (
+              <Alert variant="outlined" severity="success">
+                Member ID added successfully
+              </Alert>
+            )}
+            {memberIdAddStatus === 'failure' && (
+              <Alert variant="outlined" severity="error">
+                Invalid or duplicate Member ID
+              </Alert>
+            )}
+          </Stack>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+            {memberUserIds.map((id) => (
+              <Tooltip title={id} arrow key={id}>
+                <Chip label={id} onDelete={() => handleRemoveMemberId(id)} />
+              </Tooltip>
             ))}
           </Box>
         </Box>
 
-        <Box mb="20px">
-          <TextField
-            label="Add Member ACL"
-            variant="outlined"
-            size="small"
-            value={tempMemberACL}
-            onChange={(e) => setTempMemberACL(e.target.value)}
-            onKeyDown={handleAddMemberACL}
-            sx={{ mb: '10px' }}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleAddMemberACL}>
-                    <GroupIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
+        <Box mb={3}>
+          <Autocomplete
+            freeSolo
+            options={aclSuggestions}
+            getOptionLabel={(opt) =>
+              typeof opt === 'string' ? opt : `${opt.description} (${opt.id})`
+            }
+            inputValue={tempMemberACL}
+            onInputChange={(_, v) => {
+              setTempMemberACL(v);
+              setIsTypingMemberACL(true);
+              if (memberACLAddStatus !== 'initial') setMemberACLAddStatus('initial');
             }}
+            onChange={(_, val) => {
+              if (val && typeof val !== 'string') {
+                setTempMemberACL(val.id);
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Add Member ACL"
+                size="small"
+                onKeyDown={handleAddMemberACL}
+                helperText={
+                  tempMemberACL && !isTypingMemberACL ? 'Press Enter to add or clear field' : ''
+                }
+                error={!!tempMemberACL && !isTypingMemberACL}
+              />
+            )}
           />
-          {isInvalid && <Typography color="error">{isInvalid}</Typography>}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {memberACLIds.map((acl, index) => (
-              <Chip key={index} label={acl} onDelete={() => handleRemoveMemberACL(acl)} />
+          <Stack spacing={1} mt={1}>
+            {memberACLAddStatus === 'success' && (
+              <Alert variant="outlined" severity="success">
+                Member ACL added successfully
+              </Alert>
+            )}
+            {memberACLAddStatus === 'failure' && (
+              <Alert variant="outlined" severity="error">
+                Invalid or duplicate Member ACL
+              </Alert>
+            )}
+          </Stack>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+            {memberACLIds.map((acl) => (
+              <Tooltip title={acl} arrow key={acl}>
+                <Chip label={acl} onDelete={() => handleRemoveMemberACL(acl)} />
+              </Tooltip>
             ))}
           </Box>
         </Box>
 
         <TextField
           label="Updater ACL"
-          variant="outlined"
           value={updaterACLId}
           onChange={(e) => setUpdaterACLId(e.target.value)}
           onBlur={handleUpdaterACLIdBlur}
           size="small"
-          sx={{ mb: '20px' }}
           fullWidth
-          error={isUpdaterACLValid === false}
-          helperText={isUpdaterACLValid === false ? 'Updater ACL is invalid' : ''}
+          error={!isUpdaterACLValid}
+          helperText={!isUpdaterACLValid ? 'Updater ACL is invalid' : ''}
+          sx={{ mb: 3 }}
         />
 
         <FormControlLabel
           control={<Checkbox checked={isOpen} onChange={(e) => setIsOpen(e.target.checked)} />}
           label="Is Open"
-          sx={{ mb: '20px' }}
         />
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ my: 2 }}>
             {error}
           </Alert>
         )}
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            gap: '16px',
-          }}
-        >
+        <Box display="flex" justifyContent="center" gap={2}>
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#203360', color: '#ffffff', mb: 2 }}
+            sx={{ backgroundColor: '#203360', color: 'white' }}
             onClick={handleSubmit}
-            disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+            disabled={isUpdateDisabled}
           >
             Update
           </Button>
-
           <Button
             variant="contained"
             color="error"
             startIcon={<Delete />}
-            onClick={handleDeleteClick}
-            sx={{ mb: 2 }}
+            onClick={() => setDeleteDialogOpen(true)}
           >
             Delete
           </Button>
@@ -351,7 +387,7 @@ const UpdateAcl: NextPage = () => {
 
       <ConfirmationDialog
         open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
+        onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
         error={deleteError}
         aclId={aclId}

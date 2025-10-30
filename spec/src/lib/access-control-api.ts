@@ -181,15 +181,28 @@ export type CreateACLRequest = Omit<AccessControlList, 'createdAt' | 'updatedAt'
 export type CreateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
 export type UpdateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
 
-export interface AutocompleteSuggestion {
-  id: string;
-  name: string;
+export interface AutocompleteUserSuggestion {
+  userId: string;
+  FirstName: string;
 }
 
-export async function getUserSuggestions(query: string): Promise<AutocompleteSuggestion[]> {
-  const { data } = await axios.get('/api/access-control/autocomplete', {
+export interface AutocompleteAclSuggestion {
+  id: string;
+  description: string;
+}
+
+export async function getUserSuggestions(query: string): Promise<AutocompleteUserSuggestion[]> {
+  const { data } = await axios.get('/api/access-control/autocomplete-member-id', {
     headers: getAuthHeaders(),
     params: { q: query },
   });
-  return data as AutocompleteSuggestion[];
+  return data as AutocompleteUserSuggestion[];
+}
+
+export async function getAclSuggestions(query: string): Promise<AutocompleteAclSuggestion[]> {
+  const { data } = await axios.get('/api/access-control/autocomplete-acl', {
+    headers: getAuthHeaders(),
+    params: { q: query },
+  });
+  return data as AutocompleteAclSuggestion[];
 }

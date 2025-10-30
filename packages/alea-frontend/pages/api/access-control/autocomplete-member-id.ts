@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError } from '../comment-utils';
+import {
+  checkIfGetOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    if (req.method !== 'GET') return res.status(405).send('Method not allowed. Use GET.');
-
+    if (!checkIfGetOrSetError(req, res)) return;
+    const userId = await getUserIdOrSetError(req, res);
+    if (!userId) return;
     const { q } = req.query;
     if (!q || typeof q !== 'string') {
       return res.status(422).send("Missing or invalid query parameter 'q'.");
