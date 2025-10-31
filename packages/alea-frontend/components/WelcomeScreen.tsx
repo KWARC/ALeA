@@ -751,7 +751,7 @@ function WelcomeScreen({
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
-      <Typography
+      {/*<Typography
         sx={{
           bgcolor: 'red',
           color: 'white',
@@ -763,7 +763,7 @@ function WelcomeScreen({
       >
         ALeA login system is down for maintenance. It may take several hours to be restored. In the
         meantime, you can still access course content.
-      </Typography>
+      </Typography>*/}
       <BannerSection tight={true} />
       <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: '#F5F5F5' }}>
         <Typography
