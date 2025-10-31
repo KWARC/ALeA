@@ -143,7 +143,7 @@ def send_alert(message: str) -> bool:
     if not VOLL_KI_ALERTS_CHANNEL_ID or not VOLL_KI_ALERTS_BOT_TOKEN:
         print("WARNING: Matrix credentials not configured. Alert not sent.")
         return False
-    return True
+
     url = f"https://matrix-client.matrix.org/_matrix/client/r0/rooms/{VOLL_KI_ALERTS_CHANNEL_ID}/send/m.room.message"
 
     payload = {"msgtype": "m.text", "body": message}
