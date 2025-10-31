@@ -1,21 +1,3 @@
-import { FTML } from '@kwarc/ftml-viewer';
-import { Rule, Visibility } from '@mui/icons-material';
-import ArticleIcon from '@mui/icons-material/Article';
-import CommentIcon from '@mui/icons-material/Comment';
-import Diversity3Icon from '@mui/icons-material/Diversity3';
-import GradingIcon from '@mui/icons-material/Grading';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import QuizIcon from '@mui/icons-material/Quiz';
-import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  IconButton,
-  Typography,
-} from '@mui/material';
 import {
   CommentType,
   getCourseGradingItems,
@@ -39,6 +21,25 @@ import {
   PRIMARY_COL,
   ResourceName,
 } from '@alea/utils';
+import { getFlamsServer } from '@kwarc/ftml-react';
+import { FTML } from '@kwarc/ftml-viewer';
+import { Rule, Visibility } from '@mui/icons-material';
+import ArticleIcon from '@mui/icons-material/Article';
+import CommentIcon from '@mui/icons-material/Comment';
+import Diversity3Icon from '@mui/icons-material/Diversity3';
+import GradingIcon from '@mui/icons-material/Grading';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import QuizIcon from '@mui/icons-material/Quiz';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  IconButton,
+  Typography,
+} from '@mui/material';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
@@ -51,7 +52,6 @@ import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
 interface ColorInfo {
   color: string;
@@ -455,7 +455,11 @@ async function getLastUpdatedDescriptions({
       }
       break;
     case ResourceName.COURSE_COMMENTS:
-      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(courseId, currentTerm, router));
+      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(
+        courseId,
+        currentTerm,
+        router
+      ));
       break;
     default:
       break;
@@ -747,6 +751,19 @@ function WelcomeScreen({
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
+      <Typography
+        sx={{
+          bgcolor: 'red',
+          color: 'white',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginBottom: 4,
+        }}
+      >
+        ALeA login system is down for maintenance. It may take several hours to be restored. In the
+        meantime, you can still access course content.
+      </Typography>
       <BannerSection tight={true} />
       <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: '#F5F5F5' }}>
         <Typography
