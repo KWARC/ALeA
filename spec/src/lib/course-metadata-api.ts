@@ -24,8 +24,11 @@ export interface GenerateLectureEntryResponse {
   error?: string;
 }
 
+export type ScheduleType = 'lecture' | 'tutorial';
+
 export type AddLectureScheduleRequest = Pick<CourseMetadata, 'courseId' | 'instanceId'> & {
   lectureEntry: LectureSchedule;
+  scheduleType: ScheduleType;
 };
 
 export interface CourseQuizAndHomeworkInfo {

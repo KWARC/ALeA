@@ -8,7 +8,7 @@ import {
   getLectureSchedule,
   getUserInfo,
   LectureScheduleItem,
-  UserInfo
+  UserInfo,
 } from '@alea/spec';
 import {
   Action,
@@ -404,7 +404,7 @@ const CourseHomePage: NextPage = () => {
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
+
   const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
