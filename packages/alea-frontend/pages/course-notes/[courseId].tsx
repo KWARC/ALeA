@@ -92,7 +92,15 @@ const CourseNotesPage: NextPage = () => {
   const [hasResults, setHasResults] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget = !!target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        (target as HTMLElement).isContentEditable
+      );
+      if (isEditableTarget) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -156,7 +164,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -164,15 +172,17 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 2002,
-            bgcolor: 'white',
+            bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+            '&:hover': { 
+              bgcolor: 'rgba(255, 255, 255, 0.3)',
+            },
           }}
           onClick={handleSearchClick}
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
       <SearchDialog

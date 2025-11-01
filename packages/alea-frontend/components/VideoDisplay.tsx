@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipDetails, ClipInfo, getDefiniedaInSection } from '@alea/spec';
+import { ClipDetails, ClipInfo, ClipMetadata, getDefiniedaInSection } from '@alea/spec';
 import { formatTime, getParamFromUri, languageUrlMap, localStore, PathToTour2 } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -30,8 +30,6 @@ import {
 } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-
-import { ClipData } from '@alea/spec';
 import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
@@ -731,7 +729,7 @@ export function VideoDisplay({
   currentSlideClipInfo?: ClipInfo;
   audioOnly: boolean;
   videoExtractedData?: {
-    [timestampSec: number]: ClipData;
+    [timestampSec: number]: ClipMetadata;
   };
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   autoSync?: boolean;
@@ -765,6 +763,7 @@ export function VideoDisplay({
   useEffect(() => {
     if (!clipId) {
       setIsLoading(false);
+      setClipDetails(undefined);
       return;
     }
     setIsLoading(true);

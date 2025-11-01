@@ -19,11 +19,15 @@ function isFresh(cachedObject: CachedObject) {
 export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
   const url = `${FAU_TV_OEMBED_BASE_URL}?url=${FAU_TV_BASE_URL}/clip/id/${clipId}&format=json`;
   const { data } = await axios.get(url);
-
+//TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
+//TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
   const videoInfo: ClipDetails = {
-    r360: data.alternative_Video_size_small_url || undefined,
-    r720: data.alternative_Video_size_medium_url || undefined,
-    r1080: data.alternative_Video_size_large_url || undefined,
+    // r360: data.alternative_Video_size_small_url || undefined,
+    // r720: data.alternative_Video_size_medium_url || undefined,
+    // r1080: data.alternative_Video_size_large_url || undefined,
+    r360: data.file|| undefined,
+    r720: data.file || undefined,
+    r1080: data.file || undefined,
     subtitles: {
       default: data.transcript || undefined,
       en: data.transcript_en || undefined,

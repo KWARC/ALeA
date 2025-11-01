@@ -9,8 +9,8 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
   canAccessResource,
-  ClipData,
   ClipInfo,
+  ClipMetadata,
   getCourseInfo,
   getSlideCounts,
   getSlideDetails,
@@ -179,7 +179,7 @@ const CourseViewPage: NextPage = () => {
   }>({});
   const [currentClipId, setCurrentClipId] = useState('');
   const [videoExtractedData, setVideoExtractedData] = useState<{
-    [timestampSec: number]: ClipData;
+    [timestampSec: number]: ClipMetadata;
   }>({});
 
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
@@ -198,7 +198,15 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget = !!target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        (target as HTMLElement).isContentEditable
+      );
+      if (isEditableTarget) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -261,7 +269,12 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
-    getSlideDetails(courseId, currentClipId).then(setVideoExtractedData);
+    getSlideDetails(courseId, currentClipId)
+      .then(setVideoExtractedData)
+      .catch((err) => {
+        setVideoExtractedData(null);
+        console.error(err);
+      });
   }, [courseId, currentClipId, router.isReady]);
 
   useEffect(() => {
@@ -325,7 +338,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -333,15 +346,17 @@ const CourseViewPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 2002,
-            bgcolor: 'white',
+            bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+            '&:hover': { 
+              bgcolor: 'rgba(255, 255, 255, 0.3)',
+            },
           }}
           onClick={handleSearchClick}
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5}} />
         </IconButton>
       </Tooltip>
       <SearchDialog
