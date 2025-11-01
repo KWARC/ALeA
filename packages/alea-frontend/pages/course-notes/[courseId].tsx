@@ -199,7 +199,7 @@ const CourseNotesPage: NextPage = () => {
           position: 'relative',
         }}
       >
-        <FTMLSetup>
+        <FTMLSetup allowFullscreen={false}>
           <FTMLDocument
             key={notes}
             document={{ type: 'FromBackend', uri: notes }}
