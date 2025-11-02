@@ -154,7 +154,7 @@ def send_alert(message: str) -> bool:
     }
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
         response.raise_for_status()
         print(f"Alert sent successfully: {message[:50]}...")
         return True
