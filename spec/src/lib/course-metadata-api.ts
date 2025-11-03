@@ -14,6 +14,7 @@ export interface CourseMetadata {
   courseId: string;
   instanceId: string;
   lectureSchedule: LectureSchedule[];
+  scheduleType: 'lecture' | 'tutorial';
   hasHomework?: boolean;
 }
 export interface GenerateLectureEntryResponse {
@@ -66,6 +67,7 @@ export async function updateLectureEntry(
     lectureStartTime: string;
     lectureEndTime: string;
     updatedLectureEntry: LectureSchedule;
+     scheduleType: ScheduleType;
   }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-lecture-entry`, data, {
@@ -75,7 +77,7 @@ export async function updateLectureEntry(
 }
 
 export async function deleteLectureEntry(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule }
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { lectureEntry: LectureSchedule,scheduleType: ScheduleType; }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
     headers: getAuthHeaders(),
