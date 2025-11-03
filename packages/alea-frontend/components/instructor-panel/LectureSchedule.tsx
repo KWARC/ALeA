@@ -241,6 +241,52 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
         {t.title.replace('{{courseId}}', courseId)}
       </Typography>
+      <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          <FormControlLabel
+            labelPlacement="start"
+            control={
+              <Checkbox
+                checked={hasHomework}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  if (!confirm('Are you sure to update homework availability?')) return;
+                  try {
+                    await updateHasHomework({ courseId, instanceId, hasHomework: next });
+                    setHasHomework(next);
+                  } catch (err) {
+                    console.error('Failed to update homework availability', err);
+                  }
+                }}
+              />
+            }
+            label="Enable homework for this course"
+            sx={{ m: 0 }}
+          />
+
+          <FormControlLabel
+            labelPlacement="start"
+            control={
+              <Checkbox
+                checked={hasQuiz}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  if (!confirm('Are you sure to update quiz availability?')) return;
+                  try {
+                    await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
+                    setHasQuiz(next);
+                  } catch (err) {
+                    console.error('Failed to update quiz availability', err);
+                  }
+                }}
+              />
+            }
+            label="Enable quiz for this course"
+            sx={{ m: 0 }}
+          />
+        </Box>
+      </Paper>
+
       <Box
         sx={{ display: 'flex', justifyContent: 'center', borderBottom: '2px solid #e0e0e0', mb: 2 }}
       >
@@ -273,50 +319,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           );
         })}
       </Box>
-      <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            labelPlacement="start"
-            control={
-              <Checkbox
-                checked={hasHomework}
-                onChange={async (e) => {
-                  const next = e.target.checked;
-                  if (!confirm('Are you sure to update homework availability?')) return;
-                  try {
-                    await updateHasHomework({ courseId, instanceId, hasHomework: next });
-                    setHasHomework(next);
-                  } catch (err) {
-                    console.error('Failed to update homework availability', err);
-                  }
-                }}
-              />
-            }
-            label={t.isHomeworkAvailable}
-            sx={{ m: 0 }}
-          />
-          <FormControlLabel
-            labelPlacement="start"
-            control={
-              <Checkbox
-                checked={hasQuiz}
-                onChange={async (e) => {
-                  const next = e.target.checked;
-                  if (!confirm('Are you sure to update quiz availability?')) return;
-                  try {
-                    await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
-                    setHasQuiz(next);
-                  } catch (err) {
-                    console.error('Failed to update quiz availability', err);
-                  }
-                }}
-              />
-            }
-            label={'Enable quiz for this course'}
-            sx={{ m: 0 }}
-          />
-        </Box>
-      </Paper>
+
       <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Box
           sx={{
@@ -397,20 +400,18 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             sx={{ width: 110 }}
           />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={
-                  selectedScheduleType === 'lecture'
-                    ? lectureScheduleData.hasQuiz
-                    : tutorialScheduleData.hasQuiz
-                }
-                onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
-              />
-            }
-            label={t.quiz}
-            sx={{ m: 0 }}
-          />
+          {selectedScheduleType === 'lecture' && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={lectureScheduleData.hasQuiz}
+                  onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
+                />
+              }
+              label={t.quiz}
+              sx={{ m: 0 }}
+            />
+          )}
           <Button
             variant="contained"
             size="small"
@@ -425,7 +426,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }}
           >
             <AddIcon fontSize="small" />
-            {t.addLectureButton || 'Add Lecture'}
+            {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
           </Button>
         </Box>
       </Paper>
