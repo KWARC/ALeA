@@ -65,8 +65,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     'Saturday',
     'Sunday',
   ];
-  const [selectedScheduleType, setSelectedScheduleType] = useState<'lecture' | 'tutorial' | null>(
-    null
+  const [selectedScheduleType, setSelectedScheduleType] = useState<'lecture' | 'tutorial'>(
+    'lecture'
   );
 
   const [lectureScheduleData, setLectureScheduleData] = useState<LectureSchedule>(initialNewEntry);
@@ -444,7 +444,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& > th': { fontWeight: 'bold' } }}>
+          <TableRow>
             <TableCell>{t.day}</TableCell>
             <TableCell>
               {t.startTime} {timezone && `(${timezone})`}
@@ -454,11 +454,18 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             </TableCell>
             <TableCell>{t.venue}</TableCell>
             <TableCell>{t.venueLink}</TableCell>
-            <TableCell>{t.homework || 'Homework'}</TableCell>
-            <TableCell>{t.quiz}</TableCell>
+
+            {selectedScheduleType === 'lecture' && (
+              <>
+                <TableCell>{t.homework || 'Homework'}</TableCell>
+                <TableCell>{t.quiz}</TableCell>
+              </>
+            )}
+
             <TableCell>{t.actions}</TableCell>
           </TableRow>
         </TableHead>
+
         <TableBody>
           {scheduleToShow.map((entry, idx) => (
             <TableRow key={idx}>
@@ -471,8 +478,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   {t.link}
                 </a>
               </TableCell>
-              <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
-              <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+              {selectedScheduleType === 'lecture' && (
+                <>
+                  <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
+                  <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+                </>
+              )}
               <TableCell>
                 <Tooltip title={t.edit}>
                   <IconButton
@@ -500,7 +511,13 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         </TableBody>
       </Table>
       <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
-        <DialogTitle>{t.editDialogTitle}</DialogTitle>
+        <DialogTitle>
+          {t.editDialogTitle.replace(
+            '{{type}}',
+            selectedScheduleType === 'lecture' ? 'Lecture' : 'Tutorial'
+          )}
+        </DialogTitle>
+
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
             select
@@ -544,17 +561,19 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }
             InputLabelProps={{ shrink: true }}
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={editEntry?.hasQuiz || false}
-                onChange={(e) =>
-                  setEditEntry((prev) => prev && { ...prev, hasQuiz: e.target.checked })
-                }
-              />
-            }
-            label={t.quiz}
-          />
+          {selectedScheduleType === 'lecture' && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={editEntry?.hasQuiz || false}
+                  onChange={(e) =>
+                    setEditEntry((prev) => prev && { ...prev, hasQuiz: e.target.checked })
+                  }
+                />
+              }
+              label={t.quiz}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditEntry(null)}>{t.cancel}</Button>
