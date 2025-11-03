@@ -15,7 +15,7 @@ import {
   UserInformation,
   UserSignUpDetail,
 } from './comment';
-import { getAuthHeaders, logoutAndGetToLoginPage } from './lmp';
+import { getAuthHeaders, isLoggedIn, logoutAndGetToLoginPage } from './lmp';
 
 async function commentRequest(apiUrl: string, requestType: string, data?: any) {
   const headers = getAuthHeaders();
@@ -137,29 +137,6 @@ export async function getUserInformation() {
     cachedUserInformation = resp.data;
   }
   return cachedUserInformation;
-}
-
-export enum Language {
-  Deutsch = 'Deutsch',
-  English = 'English',
-  Arabic = 'Arabic',
-  Bengali = 'Bengali',
-  Hindi = 'Hindi',
-  French = 'French',
-  Japanese = 'Japanese',
-  Korean = 'Korean',
-  Mandarin = 'Mandarin',
-  Marathi = 'Marathi',
-  Persian = 'Persian',
-  Portuguese = 'Portuguese',
-  Russian = 'Russian',
-  Spanish = 'Spanish',
-  Tamil = 'Tamil',
-  Telugu = 'Telugu',
-  Turkish = 'Turkish',
-  Urdu = 'Urdu',
-  Vietnamese = 'Vietnamese',
-  Others = 'Others',
 }
 
 export interface UserProfile {
@@ -356,6 +333,7 @@ export async function updateUserInfoFromToken() {
 }
 
 export async function getResourcesForUser() {
+  if (!isLoggedIn()) return [];
   const response = await axios.post(
     '/api/get-resources-for-user',
     {},

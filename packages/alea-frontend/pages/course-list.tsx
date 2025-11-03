@@ -11,12 +11,12 @@ import { CourseThumb } from './u/[institution]';
 
 const CourseList: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
-  const [docIdx, setDocIdx] = useState<(FTML.ArchiveIndex | FTML.Institution)[]>([]);
+  // const [docIdx, setDocIdx] = useState<(FTML.ArchiveIndex | FTML.Institution)[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      const docIdxData = await getDocIdx();
-      console.log({ docIdxData });
-      setDocIdx(docIdxData);
+      // const docIdxData = await getDocIdx();
+      // console.log({ docIdxData });
+      // setDocIdx(docIdxData);
 
       const courseInfoData = await getCourseInfo();
       setCourses(courseInfoData);
@@ -31,7 +31,29 @@ const CourseList: NextPage = () => {
     groupedCourses[course.institution].push(course);
   });
 
-  const universities = docIdx.filter((doc) => doc.type === DocIdxType.university) as FTML.Institution[];
+  // const universities = docIdx.filter((doc) => doc.type === DocIdxType.university) as FTML.Institution[];
+
+  const universities = [
+    {
+      type: 'university',
+      title: 'Friedrich Alexander University Erlangen Nürnberg',
+      place: 'Erlangen',
+      country: 'Germany',
+      url: 'https://fau.de',
+      acronym: 'FAU',
+      logo: 'https://mathhub.info/img?a=courses/FAU/meta-inf&rp=source/PIC/FAU_Logo_Bildmarke.png',
+    },
+    {
+      type: 'university',
+      title: 'Jacobs University Bremen (Now Constructor University)',
+      place: 'Bremen',
+      country: 'Germany',
+      url: 'https://jacobs-university.de',
+      acronym: 'Jacobs',
+      logo: 'https://mathhub.info/img?a=courses/Jacobs/meta-inf&rp=source/PIC/jacobs-logo.svg',
+    },
+  ];
+
   return (
     <MainLayout title="Course-List | ALeA">
       <Box m="0 auto" maxWidth="800px">

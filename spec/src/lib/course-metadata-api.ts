@@ -32,6 +32,13 @@ export interface CourseQuizAndHomeworkInfo {
   hasQuiz: boolean;
   hasHomework: boolean;
 }
+export interface LectureScheduleItem {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  venue?: string;
+  venueLink?: string;
+}
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
@@ -111,4 +118,14 @@ export async function getCourseHomeworkAndQuizInfo(
     params: { courseId, instanceId },
   });
   return response.data as CourseQuizAndHomeworkInfo;
+}
+export async function getLectureSchedule(
+  courseId: string,
+  instanceId: string
+): Promise<LectureScheduleItem[]> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-lecture-schedule`, {
+    headers: getAuthHeaders(),
+    params: { courseId, instanceId },
+  });
+  return (response.data?.schedule ?? []) as LectureScheduleItem[];
 }

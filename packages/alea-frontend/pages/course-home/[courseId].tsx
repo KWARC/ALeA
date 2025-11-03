@@ -1,3 +1,23 @@
+import {
+  addRemoveMember,
+  Announcement,
+  canAccessResource,
+  getActiveAnnouncements,
+  getCourseInfo,
+  getCoverageTimeline,
+  getLectureSchedule,
+  getUserInfo,
+  LectureScheduleItem,
+  UserInfo
+} from '@alea/spec';
+import {
+  Action,
+  BG_COLOR,
+  CourseInfo,
+  INSTRUCTOR_RESOURCE_AND_ACTION,
+  isFauId,
+  ResourceName,
+} from '@alea/utils';
 import { FTMLDocument } from '@kwarc/ftml-react';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -13,45 +33,26 @@ import {
   Alert,
   Box,
   Button,
+  Card,
   CircularProgress,
   IconButton,
   InputAdornment,
   TextField,
   Typography,
-  Card,
 } from '@mui/material';
-import {
-  addRemoveMember,
-  canAccessResource,
-  getActiveAnnouncements,
-  getCourseInfo,
-  getCoverageTimeline,
-  getUserInfo,
-  UserInfo,
-} from '@alea/spec';
-import {
-  Action,
-  BG_COLOR,
-  CourseInfo,
-  INSTRUCTOR_RESOURCE_AND_ACTION,
-  isFauId,
-  ResourceName,
-  semesterPeriods,
-} from '@alea/utils';
+import Grid from '@mui/material/Grid';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
-import { useStudentCount } from '../../hooks/useStudentCount';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { ExamSchedule } from '../../components/ExamSchedule';
-import { Announcement } from '@alea/spec';
-import Grid from '@mui/material/Grid';
+import { ExamSchedule } from 'packages/alea-frontend/components/ExamSchedule';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -172,15 +173,17 @@ function CourseScheduleSection({
   currentTerm: string;
 }) {
   const [nextLectureStartTime, setNextLectureStartTime] = useState<number | null>(null);
+  const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
-  const courseSchedule = useMemo(
-    () => semesterPeriods[currentTerm]?.courses.filter((c) => c.courseId === courseId) || [],
-    [courseId, currentTerm]
-  );
-
-  const examDates =
-    semesterPeriods[currentTerm]?.examDates.filter((e) => e.courseId === courseId) || [];
+  useEffect(() => {
+    async function fetchSchedule() {
+      if (!courseId || !currentTerm) return;
+      const data = await getLectureSchedule(courseId, currentTerm);
+      setLectureSchedule(data);
+    }
+    fetchSchedule();
+  }, [currentTerm, courseId]);
 
   useEffect(() => {
     async function fetchNextLectureDates() {
@@ -197,7 +200,7 @@ function CourseScheduleSection({
     }
 
     if (courseId) fetchNextLectureDates();
-  }, [courseId, courseSchedule]);
+  }, [courseId, lectureSchedule, currentTerm]);
   const nextLectureDateFormatted = nextLectureStartTime
     ? new Date(nextLectureStartTime).toLocaleDateString(undefined, {
         day: 'numeric',
@@ -211,7 +214,6 @@ function CourseScheduleSection({
   return (
     <Box
       sx={{
-        mt: 3,
         mx: 'auto',
         maxWidth: '650px',
         p: { xs: 0, sm: 1 },
@@ -227,7 +229,7 @@ function CourseScheduleSection({
           gap: 1.5,
         }}
       >
-        {courseSchedule.length > 0 && (
+        {lectureSchedule.length > 0 ? (
           <Box
             sx={{
               px: { xs: 1, sm: 2 },
@@ -251,7 +253,7 @@ function CourseScheduleSection({
                 Upcoming Lecture: {nextLectureDateFormatted}
               </Typography>
             )}
-            {courseSchedule.map((entry, idx) => {
+            {lectureSchedule.map((entry, idx) => {
               const isNext = false;
               return (
                 <Box
@@ -286,7 +288,7 @@ function CourseScheduleSection({
                         entry.venue
                       )}
                     </Typography>
-                    {courseSchedule.length > 1 && isNext && (
+                    {lectureSchedule.length > 1 && isNext && (
                       <Typography
                         component="span"
                         sx={{
@@ -312,9 +314,8 @@ function CourseScheduleSection({
               );
             })}
           </Box>
-        )}
-
-        <ExamSchedule examDates={examDates} />
+        ) : null}
+        {/* <ExamSchedule examDates={examDates} /> */}
 
         {userId && (
           <PersonalCalendarSection
@@ -355,7 +356,9 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       </Box>
     );
   }
-
+  if (!announcements || announcements.length === 0) {
+    return null;
+  }
   return (
     <Box
       mt={3}
@@ -444,7 +447,7 @@ const CourseHomePage: NextPage = () => {
     checkAccess();
   }, [courseId, currentTerm]);
 
-  if (!router.isReady || !courses ) return <CircularProgress />;
+  if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
@@ -587,7 +590,6 @@ const CourseHomePage: NextPage = () => {
         <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
-        <br />
         {showSearchBar && (
           <Box
             sx={{
@@ -595,7 +597,6 @@ const CourseHomePage: NextPage = () => {
               justifyContent: 'center',
               alignItems: 'center',
               width: '100%',
-              padding: '10px',
               maxWidth: '600px',
               margin: '0 auto',
             }}

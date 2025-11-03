@@ -42,15 +42,9 @@ export interface ClipDetails {
   r360?: string;
   r720?: string;
   r1080?: string;
-  sub?: string;
+  subtitles?: Record<string, string>;
+  thumbnailUrl?:string;
 }
-
-export interface SlideClipInfo {
-  clipId: string;
-  startTimeSec?: number;
-  endTimeSec?: number;
-}
-
 export interface ClipInfo {
   video_id: string;
   start_time?: number;
@@ -107,18 +101,9 @@ export async function getSlideUriToIndexMapping(courseId: string) {
   return response.data as { [sectionId: string]: { [slideUri: string]: number } };
 }
 
-export interface ClipData {
-  sectionId: string;
-  slideIndex: number;
-  title: string;
-  start_time: number;
-  end_time: number;
-  thumbnail?: string;
-}
-
 export async function getSlideDetails(courseId: string, clipId: string) {
   const resp = await axios.get(
     `${BASE_SLIDES_DATA_URL}/api/get-slide-details/${courseId}/${clipId}`
   );
-  return resp.data as { [timestampSec: number]: ClipData };
+  return resp.data as { [timestampSec: number]: ClipMetadata };
 }

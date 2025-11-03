@@ -1,6 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
-import SchoolIcon from '@mui/icons-material/School';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { isEmptyResponse } from '@alea/quiz-utils';
 import {
   canAccessResource,
   FTMLProblemWithSolution,
@@ -12,15 +10,17 @@ import {
   Phase,
   UserInfo,
 } from '@alea/spec';
-import { isEmptyResponse } from '@alea/quiz-utils';
 import { QuizDisplay } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
+import { FTML } from '@kwarc/ftml-viewer';
+import SchoolIcon from '@mui/icons-material/School';
+import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { handleEnrollment } from '../course-home/[courseId]';
@@ -248,7 +248,11 @@ const QuizPage: NextPage = () => {
         {!userInfo ? (
           <Box p="20px">You must be logged in to see quizzes.</Box>
         ) : phase === undefined ? (
-          <CircularProgress />
+          <Box p="20px">
+            <CircularProgress />
+            <Typography variant="body1">Loading quiz, please wait...</Typography>
+            <Typography variant="body2">This may take a few seconds.</Typography>
+          </Box>
         ) : phase === Phase.NOT_STARTED || phase === Phase.UNSET ? (
           <ToBeStarted quizStartTs={clientQuizStartTimeMs} />
         ) : phase === Phase.STARTED && finished ? (
