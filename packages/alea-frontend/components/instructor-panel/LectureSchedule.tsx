@@ -126,16 +126,21 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     }
     loadTimezone();
   }, [courseId]);
-
   const handleDelete = async (lecture: LectureSchedule) => {
+    if (!selectedScheduleType) return;
+
     if (!confirm(t.confirmDelete)) return;
     try {
       await deleteLectureEntry({
         courseId,
         instanceId,
         lectureEntry: lecture,
+        scheduleType: selectedScheduleType,
       });
-      setLectures((prev) =>
+
+      const updateFn = selectedScheduleType === 'lecture' ? setLectures : setTutorials;
+
+      updateFn((prev) =>
         prev.filter(
           (l) =>
             !(
@@ -167,6 +172,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         lectureStartTime: editKeys.lectureStartTime,
         lectureEndTime: editKeys.lectureEndTime,
         updatedLectureEntry: { ...editEntry },
+        scheduleType: selectedScheduleType,
       });
       setEditEntry(null);
       setEditKeys(null);
@@ -185,7 +191,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     const entryToSave =
       selectedScheduleType === 'lecture' ? lectureScheduleData : tutorialScheduleData;
 
-    // Required validation (same as before)
     if (!entryToSave.lectureDay || !entryToSave.lectureStartTime || !entryToSave.lectureEndTime) {
       alert(t.requiredFieldsAlert);
       return;
@@ -200,9 +205,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       });
 
       if (selectedScheduleType === 'lecture') {
-        setLectureScheduleData(initialNewEntry);
+        setLectures((prev) => [...prev, entryToSave]);
       } else {
-        setTutorialScheduleData(initialNewEntry);
+        setTutorials((prev) => [...prev, entryToSave]);
       }
 
       fetchLectures();
@@ -236,7 +241,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
         {t.title.replace('{{courseId}}', courseId)}
       </Typography>
-
       <Box
         sx={{ display: 'flex', justifyContent: 'center', borderBottom: '2px solid #e0e0e0', mb: 2 }}
       >
@@ -269,7 +273,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           );
         })}
       </Box>
-
       <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
           <FormControlLabel
@@ -314,7 +317,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           />
         </Box>
       </Paper>
-
       <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Box
           sx={{
@@ -427,7 +429,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           </Button>
         </Box>
       </Paper>
-
       <Table
         size="small"
         sx={{
@@ -495,6 +496,68 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           ))}
         </TableBody>
       </Table>
+      <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
+        <DialogTitle>{t.editDialogTitle}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField
+            select
+            label={t.day}
+            value={editEntry?.lectureDay || ''}
+            onChange={(e) =>
+              setEditEntry((prev) => prev && { ...prev, lectureDay: e.target.value })
+            }
+          >
+            {weekdayOptions.map((day) => (
+              <MenuItem key={day} value={day}>
+                {day}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label={t.venue}
+            value={editEntry?.venue || ''}
+            onChange={(e) => setEditEntry((prev) => prev && { ...prev, venue: e.target.value })}
+          />
+          <TextField
+            label={t.venueLink}
+            value={editEntry?.venueLink || ''}
+            onChange={(e) => setEditEntry((prev) => prev && { ...prev, venueLink: e.target.value })}
+          />
+          <TextField
+            label={t.startTime}
+            type="time"
+            value={editEntry?.lectureStartTime || ''}
+            onChange={(e) =>
+              setEditEntry((prev) => prev && { ...prev, lectureStartTime: e.target.value })
+            }
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label={t.endTime}
+            type="time"
+            value={editEntry?.lectureEndTime || ''}
+            onChange={(e) =>
+              setEditEntry((prev) => prev && { ...prev, lectureEndTime: e.target.value })
+            }
+            InputLabelProps={{ shrink: true }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={editEntry?.hasQuiz || false}
+                onChange={(e) =>
+                  setEditEntry((prev) => prev && { ...prev, hasQuiz: e.target.checked })
+                }
+              />
+            }
+            label={t.quiz}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditEntry(null)}>{t.cancel}</Button>
+          <Button onClick={handleSaveEdit} variant="contained"></Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
