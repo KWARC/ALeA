@@ -201,13 +201,15 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         courseId,
         instanceId,
         lectureEntry: entryToSave,
-        scheduleType: scheduleType,
+        scheduleType: selectedScheduleType,
       });
 
       if (selectedScheduleType === 'lecture') {
         setLectures((prev) => [...prev, entryToSave]);
+        setLectureScheduleData(initialNewEntry);
       } else {
         setTutorials((prev) => [...prev, entryToSave]);
+        setTutorialScheduleData(initialNewEntry);
       }
 
       fetchLectures();
@@ -556,7 +558,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditEntry(null)}>{t.cancel}</Button>
-          <Button onClick={handleSaveEdit} variant="contained"></Button>
+          <Button onClick={handleSaveEdit} variant="contained">
+            {t.save}
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>
