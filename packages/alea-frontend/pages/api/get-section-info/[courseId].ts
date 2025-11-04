@@ -201,7 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const coverageData = (getCoverageData()[courseId] ?? []).filter((snap) => snap.sectionUri);
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
-  const currentTermVideoSlides=videoSlides[currentTerm];
+  const currentTermVideoSlides=videoSlides?.[currentTerm];
   if (currentTermVideoSlides && Object.keys(currentTermVideoSlides).length > 0) {
     addClipInfo(allSections, currentTermVideoSlides);
   }
