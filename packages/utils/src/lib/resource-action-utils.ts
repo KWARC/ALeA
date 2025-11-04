@@ -38,6 +38,8 @@ export enum ResourceName {
 
   // Announcement and course metadata resources
   COURSE_METADATA = 'COURSE_METADATA',
+
+  SYSADMIN_MONITOR_MESSAGE = 'SYSADMIN_MONITOR_MESSAGE',
 }
 
 export enum ComponentType {
@@ -211,6 +213,15 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'metadata' },
     ],
   },
+
+  {
+    name: ResourceName.SYSADMIN_MONITOR_MESSAGE,
+    possibleActions: [Action.MUTATE],
+    components: [
+      { type: ComponentType.FIXED, value: 'sys-admin' },
+      { type: ComponentType.FIXED, value: 'monitor-message' },
+    ],
+  },
 ];
 
 export const RESOURCE_TYPE_MAP = new Map<ResourceName, ResourceType>(
@@ -246,3 +257,7 @@ export function isValidAction(actionId: Action, resourceName: ResourceName) {
   }
   return resourceType.possibleActions.includes(actionId);
 }
+
+export const SYSADMIN_RESOURCE_AND_ACTION = [
+  { resource: ResourceName.SYSADMIN_MONITOR_MESSAGE, action: Action.MUTATE },
+];
