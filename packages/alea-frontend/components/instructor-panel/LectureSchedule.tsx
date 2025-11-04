@@ -129,7 +129,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const handleDelete = async (lecture: LectureSchedule) => {
     if (!selectedScheduleType) return;
 
-    if (!confirm(t.confirmDelete)) return;
+    const message =
+      selectedScheduleType === 'lecture' ? t.confirmDeleteLecture : t.confirmDeleteTutorial;
+
+    if (!confirm(message)) return;
+
     try {
       await deleteLectureEntry({
         courseId,

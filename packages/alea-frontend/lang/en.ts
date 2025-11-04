@@ -519,7 +519,8 @@ export const en = {
     save: 'Save',
     cancel: 'Cancel',
 
-    confirmDelete: 'Are you sure you want to delete this lecture?',
+    confirmDeleteLecture: 'Are you sure you want to delete this lecture?',
+    confirmDeleteTutorial: 'Are you sure you want to delete this tutorial?',
     requiredFieldsAlert: 'Please fill all required fields: Day, Start Time, End Time',
 
     // Announcements
