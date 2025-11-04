@@ -454,8 +454,8 @@ export const de = {
     ApplyRecorrection: 'Rekorrektur anwenden',
   },
   calendarSection: {
-    schedule: 'Stundenplan',
-    personalCalendar: 'Persönlicher Kalender',
+    schedule: 'Vorlesungsplan',
+    tutorialSchedule: 'Tutorienplan',
     howToUse: 'So verwendest du es',
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
@@ -484,7 +484,7 @@ export const de = {
     save: 'Speichern',
     cancel: 'Abbrechen',
 
-    confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
+    // confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
     confirmDeleteLecture: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
     confirmDeleteTutorial: 'Sind Sie sicher, dass Sie dieses Tutorium löschen möchten?',
 

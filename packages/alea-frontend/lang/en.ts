@@ -489,8 +489,8 @@ export const en = {
     ApplyRecorrection: 'Apply Recorrection',
   },
   calendarSection: {
-    schedule: 'Schedule',
-    personalCalendar: 'Personal Calendar',
+    schedule: 'Lecture Schedule',
+    tutorialSchedule: 'Tutorial Schedule',
     howToUse: 'How to use',
     howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
