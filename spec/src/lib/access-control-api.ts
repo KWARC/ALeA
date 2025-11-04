@@ -192,7 +192,7 @@ export interface AutocompleteAclSuggestion {
 }
 
 export async function getUserSuggestions(query: string): Promise<AutocompleteUserSuggestion[]> {
-  const { data } = await axios.get('/api/access-control/autocomplete-member-id', {
+  const { data } = await axios.get('/api/access-control/get-user-suggestions', {
     headers: getAuthHeaders(),
     params: { q: query },
   });
@@ -200,7 +200,7 @@ export async function getUserSuggestions(query: string): Promise<AutocompleteUse
 }
 
 export async function getAclSuggestions(query: string): Promise<AutocompleteAclSuggestion[]> {
-  const { data } = await axios.get('/api/access-control/autocomplete-acl', {
+  const { data } = await axios.get('/api/access-control/get-acl-suggestions', {
     headers: getAuthHeaders(),
     params: { q: query },
   });
