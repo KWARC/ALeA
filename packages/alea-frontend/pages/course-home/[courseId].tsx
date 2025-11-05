@@ -1,4 +1,3 @@
-import { FTMLDocument } from '@flexiformal/ftml-react';
 import {
   addRemoveMember,
   Announcement,
@@ -9,7 +8,7 @@ import {
   getLectureSchedule,
   getUserInfo,
   LectureScheduleItem,
-  UserInfo
+  UserInfo,
 } from '@alea/spec';
 import {
   Action,
@@ -19,6 +18,7 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
+import { FTMLDocument } from '@flexiformal/ftml-react';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -52,7 +52,6 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { ExamSchedule } from 'packages/alea-frontend/components/ExamSchedule';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -404,7 +403,7 @@ const CourseHomePage: NextPage = () => {
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
+
   const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
@@ -625,7 +624,13 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
         <Box fragment-uri={landing} fragment-kind="Section">
-          <FTMLDocument document={{ type: 'FromBackend', uri: landing }} />
+          <FTMLDocument
+            document={{ type: 'FromBackend', uri: landing }}
+            showContent={false}
+            pdfLink={false}
+            chooseHighlightStyle={false}
+            toc="None"
+          />
         </Box>
         <RecordedSyllabus courseId={courseId} />
       </Box>

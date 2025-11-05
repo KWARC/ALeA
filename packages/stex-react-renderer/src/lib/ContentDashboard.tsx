@@ -1,3 +1,5 @@
+import { getCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, getParamsFromUri, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -5,8 +7,6 @@ import IndeterminateCheckBoxOutlinedIcon from '@mui/icons-material/Indeterminate
 import UnfoldLessDoubleIcon from '@mui/icons-material/UnfoldLessDouble';
 import UnfoldMoreDoubleIcon from '@mui/icons-material/UnfoldMoreDouble';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
-import { getCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -153,18 +153,15 @@ function RenderTree({
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
   const lectureHover = getLectureHover(secLectureInfo);
 
+  const sectionStarted = !!secLectureInfo?.startTime_ms;
+  const sectionCompleted = !!secLectureInfo?.endTime_ms;
+  const sectionInProgress = sectionStarted && !sectionCompleted;
+  const background = sectionInProgress
+    ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
+    : undefined;
+  const backgroundColor = sectionCompleted ? '#FFC' : undefined;
   return (
-    <Box
-      key={(node.tocElem as any).id}
-      sx={{
-        py: '6px',
-        backgroundColor: secLectureInfo?.endTime_ms
-          ? (secLectureInfo.lastLectureIdx ?? 0) % 2 === 0
-            ? '#FFC'
-            : '#FFC' //'#D1FFCC'
-          : undefined,
-      }}
-    >
+    <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
       <Box
         display="flex"
         ml={node.children.length > 0 ? undefined : '23px'}
@@ -258,13 +255,13 @@ export function getCoveredSections(endSecUri: string, elem: FTML.TocElem | undef
 function getOrderedSections(elem: FTML.TocElem): [FTML.Uri[], FTML.Uri[]] {
   const preOrderedList: FTML.Uri[] = [];
   const postOrderedList: FTML.Uri[] = [];
-  if (!elem) return [postOrderedList, preOrderedList];
+  if (!elem) return [preOrderedList, postOrderedList];
   if (elem.type === 'Section') preOrderedList.push(elem.uri);
   if ('children' in elem && elem.children.length) {
     for (const c of elem.children) {
       const [subPreList, subPostList] = getOrderedSections(c);
-      preOrderedList.push(...subPostList);
-      postOrderedList.push(...subPreList);
+      preOrderedList.push(...subPreList);
+      postOrderedList.push(...subPostList);
     }
   }
   if (elem.type === 'Section') postOrderedList.push(elem.uri);
@@ -344,7 +341,7 @@ function getPerSectionLectureInfo(topLevel: FTML.TocElem, lectureData: LectureEn
 
   /*For debugging:
   const toPrintableStr = (uri?: string) =>
-    uri ? getParamsFromUri(uri, ['p', 'd']).join('//') : '<no uri>';
+    uri ? getParamsFromUri(uri, ['p', 'd', 'e']).join('--') : '<no uri>';
   console.log('postOrdered', postOrdered.map(toPrintableStr));
   console.log('preOrdered', preOrdered.map(toPrintableStr));
   console.log('firstSectionNotStarted', firstSectionNotStarted.map(toPrintableStr));
@@ -364,14 +361,11 @@ function getPerSectionLectureInfo(topLevel: FTML.TocElem, lectureData: LectureEn
   }
   currLecIdx = 0;
   for (const secUri of postOrdered) {
-    if (currLecIdx >= lectureData.length) break;
     const currentSnap = lectureData[currLecIdx];
-    if (!currentSnap.sectionUri) break;
-    if (currentSnap.sectionCompleted) {
-      perSectionLectureInfo[secUri] ??= {};
-      perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
-      perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
-    }
+    if (!currentSnap?.sectionUri) break;
+    perSectionLectureInfo[secUri] ??= {};
+    perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
+    perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
 
     while (secUri === lastSectionCompleted[currLecIdx]) currLecIdx++;
     if (!firstSectionNotStarted[currLecIdx]) break;
@@ -403,7 +397,11 @@ export function ContentDashboard({
 
   useEffect(() => {
     async function getCoverageInfo() {
-      if (!courseId || !toc?.length) return;
+      if (!courseId || !toc?.length) {
+        console.log('No courseId or toc');
+        return;
+      }
+      console.log('Getting coverage info for courseId', courseId);
       const timeline = await getCoverageTimeline();
       const snaps = timeline?.[courseId];
       const shadowTopLevel: FTML.TocElem = { type: 'SkippedSection', children: toc };

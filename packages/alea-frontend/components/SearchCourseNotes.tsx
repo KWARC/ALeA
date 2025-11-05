@@ -109,10 +109,11 @@ const SearchCourseNotes = ({
                     }}
                   >
                     <FTMLDocument
-                      document={{
-                        type: 'FromBackend',
-                        uri: reference.uri,
-                      }}
+                      document={{ type: 'FromBackend', uri: reference.uri }}
+                      showContent={false}
+                      pdfLink={false}
+                      chooseHighlightStyle={false}
+                      toc="None"
                     />
                   </Box>
                 ))}

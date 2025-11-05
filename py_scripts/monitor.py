@@ -246,7 +246,7 @@ def main():
 
     # Send alerts if needed
     for name, url, error, reason in alerts_to_send:
-        alert_message = f"🚨 ALERT: {name} is down: {error}\n"
+        alert_message = f"🚨 {name} is down. {error}\n"
         alert_message += f"URL: {url}\n{reason}".strip()
 
         if (name, error) in SKIPPED_ALERTS:
@@ -262,7 +262,6 @@ def main():
     # Send recovery alerts if needed
     for name, url, outage_minutes in recoveries_to_send:
         recovery_message = f"✅ {name} is back up after ~{outage_minutes}min downtime\n"
-        recovery_message += f"URL: {url}"
 
         recovery_sent = send_alert(recovery_message)
         if not recovery_sent:
