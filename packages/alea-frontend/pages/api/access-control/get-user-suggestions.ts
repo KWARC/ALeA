@@ -15,7 +15,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(422).send("Missing or invalid query parameter 'q'.");
     }
     const users = await executeAndEndSet500OnError(
-      `SELECT userId, FirstName FROM userInfo WHERE FirstName LIKE ? ORDER BY FirstName ASC LIMIT 10`,
+      `
+      SELECT 
+        userId,
+        CONCAT(firstName, ' ', lastName) AS fullName
+      FROM userInfo
+      WHERE CONCAT(firstName, ' ', lastName) LIKE ?
+      ORDER BY firstName ASC
+      LIMIT 10
+      `,
       [`%${q}%`],
       res
     );

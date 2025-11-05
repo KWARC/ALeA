@@ -243,7 +243,7 @@ const UpdateAcl: NextPage = () => {
             freeSolo
             options={userSuggestions}
             getOptionLabel={(opt) =>
-              typeof opt === 'string' ? opt : `${opt.FirstName} (${opt.userId})`
+              typeof opt === 'string' ? opt : `${opt.fullName} (${opt.userId})`
             }
             inputValue={tempMemberUserId}
             onInputChange={(_, v) => {

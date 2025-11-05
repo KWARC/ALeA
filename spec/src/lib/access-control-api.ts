@@ -183,7 +183,7 @@ export type UpdateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt
 
 export interface AutocompleteUserSuggestion {
   userId: string;
-  FirstName: string;
+  fullName: string;
 }
 
 export interface AutocompleteAclSuggestion {
