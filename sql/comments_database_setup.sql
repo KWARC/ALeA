@@ -307,6 +307,7 @@ CREATE TABLE courseMetadata (
     instanceId VARCHAR(50) NOT NULL,
     lectureSchedule JSON NOT NULL,
     tutorialSchedule JSON,
+    seriesId VARCHAR(255),
     hasHomework BOOLEAN NOT NULL DEFAULT FALSE,
     hasQuiz BOOLEAN NOT NULL DEFAULT FALSE,
     updaterId VARCHAR(255),

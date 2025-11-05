@@ -505,10 +505,26 @@ const CourseHomePage: NextPage = () => {
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
+  const [seriesId, setSeriesId] = useState<string>('');
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
+
+  useEffect(() => {
+    if (!courseId || !currentTerm) return;
+
+    async function fetchSeries() {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        setSeriesId(data.seriesId || '');
+      } catch (e) {
+        console.error('Failed to load seriesId', e);
+      }
+    }
+
+    fetchSeries();
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getUserInfo().then((userInfo: UserInfo) => {
@@ -611,6 +627,12 @@ const CourseHomePage: NextPage = () => {
           gap="10px"
           ref={containerRef}
         >
+          {seriesId && (
+            <CourseComponentLink href={`https://www.fau.tv/series/${seriesId}`}>
+              🎥 Lecture Videos
+            </CourseComponentLink>
+          )}
+
           <CourseComponentLink href={notesLink}>
             {t.notes}&nbsp;
             <ArticleIcon fontSize="large" />

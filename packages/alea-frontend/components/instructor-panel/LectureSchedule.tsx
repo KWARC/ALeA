@@ -30,6 +30,7 @@ import {
   addLectureSchedule,
   updateHasHomework,
   updateHasQuiz,
+  updateSeriesId,
 } from '@alea/spec';
 import { getCourseInfo } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
@@ -86,6 +87,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     lectureEndTime: string;
   } | null>(null);
   const [newEntry, setNewEntry] = useState<LectureSchedule>(initialNewEntry);
+  const [seriesId, setSeriesIdState] = useState<string>('');
 
   const fetchLectures = useCallback(async () => {
     try {
@@ -94,6 +96,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setTutorials(data.tutorialSchedule || []);
       setHasHomework(!!data.hasHomework);
       setHasQuiz(!!data.hasQuiz);
+      setSeriesIdState(data.seriesId || '');
     } catch (err) {
       if (err.response?.status === 404) {
         console.warn('No lectures found for this course instance');
@@ -289,6 +292,22 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }
             label="Enable quiz for this course"
             sx={{ m: 0 }}
+          />
+
+          <TextField
+            label="Series ID"
+            value={seriesId}
+            size="small"
+            sx={{ width: 140 }}
+            placeholder="4334"
+            onChange={(e) => setSeriesIdState(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                await updateSeriesId({ courseId, instanceId, seriesId });
+                setSeriesIdState('');
+                // fetchLectures(); //todo
+              }
+            }}
           />
         </Box>
       </Paper>
