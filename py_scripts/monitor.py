@@ -83,6 +83,22 @@ class StatusTracker:
 
         self._save_status()
 
+    def is_down(self, endpoint_name: str) -> Tuple[bool, int]:
+        """Return (is_down, outage_minutes) based on last known state."""
+        endpoint_status = self.status_data.get("endpoints", {}).get(endpoint_name)
+        if endpoint_status is None:
+            return False, 0
+        last_success_time = endpoint_status.get("last_success_time")
+        last_failure_time = endpoint_status.get("last_failure_time")
+        if (
+            last_success_time is not None
+            and last_failure_time is not None
+            and last_success_time < last_failure_time
+        ):
+            minutes = int(round((time.time() - last_success_time) / 60))
+            return True, minutes
+        return False, 0
+
     def should_send_alert(self, endpoint_name: str) -> Tuple[bool, str]:
         """
         Determine if an alert should be sent based on time-based exponential backoff.
@@ -138,7 +154,7 @@ def send_alert(message: str) -> bool:
     }
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
         response.raise_for_status()
         print(f"Alert sent successfully: {message[:50]}...")
         return True
@@ -212,15 +228,22 @@ def main():
     status_tracker = StatusTracker(MONITOR_STATUS_FILE)
     failures = []
     alerts_to_send = []
+    recoveries_to_send = []
     for endpoint in ENDPOINTS:
         success, error_msg = check_endpoint(endpoint)
         name, url = endpoint["name"], endpoint["url"]
+        # Check prior state before updating
+        was_down, outage_minutes = status_tracker.is_down(name)
+
         status_tracker.update_status(name, success, error_msg)
         if not success:
             failures.append((name, url, error_msg))
             should_send, reason = status_tracker.should_send_alert(name)
             if should_send:
                 alerts_to_send.append((name, url, error_msg, reason))
+        elif was_down:
+            recover_reason = f"Recovered after about {outage_minutes} min down"
+            recoveries_to_send.append((name, url, recover_reason))
 
     # Send alerts if needed
     for name, url, error, reason in alerts_to_send:
@@ -232,6 +255,15 @@ def main():
             status_tracker.record_alert_sent(name)
         else:
             print(f"WARNING: Failed to send alert for {name}")
+
+    # Send recovery alerts if needed
+    for name, url, reason in recoveries_to_send:
+        recovery_message = f"✅ MONITOR RECOVERY: {name} is back up\n"
+        recovery_message += f"  URL: {url}\n  {reason}\n"
+
+        recovery_sent = send_alert(recovery_message)
+        if not recovery_sent:
+            print(f"WARNING: Failed to send recovery alert for {name}")
 
 
 if __name__ == "__main__":
