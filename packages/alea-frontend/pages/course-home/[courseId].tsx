@@ -627,12 +627,6 @@ const CourseHomePage: NextPage = () => {
           gap="10px"
           ref={containerRef}
         >
-          {seriesId && (
-            <CourseComponentLink href={`https://www.fau.tv/series/${seriesId}`}>
-              🎥 Lecture Videos
-            </CourseComponentLink>
-          )}
-
           <CourseComponentLink href={notesLink}>
             {t.notes}&nbsp;
             <ArticleIcon fontSize="large" />
