@@ -295,7 +295,7 @@ const UpdateAcl: NextPage = () => {
             freeSolo
             options={aclSuggestions}
             getOptionLabel={(opt) =>
-              typeof opt === 'string' ? opt : `${opt.description} (${opt.id})`
+              typeof opt === 'string' ? opt : `${opt.id} (${opt.description})`
             }
             inputValue={tempMemberACL}
             onInputChange={(_, v) => {

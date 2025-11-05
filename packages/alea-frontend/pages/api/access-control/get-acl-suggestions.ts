@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const acls = await executeAndEndSet500OnError(
-      `SELECT id, description FROM AccessControlList WHERE description LIKE ? ORDER BY description ASC LIMIT 10`,
+      `SELECT id, description FROM AccessControlList WHERE id LIKE ? ORDER BY id ASC LIMIT 10`,
       [`%${q}%`],
       res
     );
