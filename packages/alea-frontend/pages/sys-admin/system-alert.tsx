@@ -9,11 +9,9 @@ type MonitorJSON = Record<string, any>;
 const SysAdminSystemAlertPage: NextPage = () => {
   const [message, setMessage] = useState('');
   const [severity, setSeverity] = useState<AlertType>('info');
-  const [monitorMessage, setMonitorMessage] = useState('');
   const [monitor, setMonitor] = useState<MonitorJSON>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingMonitor, setSavingMonitor] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -31,14 +29,12 @@ const SysAdminSystemAlertPage: NextPage = () => {
         }
 
         if (monitorRes.data) {
-          setMonitorMessage(monitorRes.data.message || '');
           setMonitor(monitorRes.data.monitor || {});
         }
-
-        setLoading(false);
       } catch (err: any) {
         console.error(err);
         setError('Failed to load data. Make sure you are authorized.');
+         } finally {
         setLoading(false);
       }
     };
@@ -59,22 +55,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
       setError(err.response?.data?.error || 'Failed to save alert');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSaveMonitorMessage = async () => {
-    setSavingMonitor(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      await axios.post('/api/sys-admin/monitor-message', { message: monitorMessage });
-      setSuccess('Monitor message updated successfully!');
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Failed to save monitor message');
-    } finally {
-      setSavingMonitor(false);
     }
   };
 
@@ -111,31 +91,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
 
         <Button variant="contained" color="primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Update Alert'}
-        </Button>
-      </Paper>
-
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Monitor Message
-        </Typography>
-
-        <TextField
-          label="Monitor Message"
-          fullWidth
-          multiline
-          rows={2}
-          value={monitorMessage}
-          onChange={(e) => setMonitorMessage(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={handleSaveMonitorMessage}
-          disabled={savingMonitor}
-        >
-          {savingMonitor ? 'Saving...' : 'Update Monitor Message'}
         </Button>
       </Paper>
 
