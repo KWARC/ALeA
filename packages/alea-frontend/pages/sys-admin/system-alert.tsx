@@ -3,22 +3,20 @@ import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-// Types for alert and monitor
 type AlertType = 'info' | 'warning' | 'error';
 type MonitorJSON = Record<string, any>;
 
 const SysAdminSystemAlertPage: NextPage = () => {
   const [message, setMessage] = useState('');
   const [severity, setSeverity] = useState<AlertType>('info');
-  const [monitorMessage, setMonitorMessage] = useState(''); // new state for monitor-message.txt
+  const [monitorMessage, setMonitorMessage] = useState('');
   const [monitor, setMonitor] = useState<MonitorJSON>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingMonitor, setSavingMonitor] = useState(false); // new
+  const [savingMonitor, setSavingMonitor] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null); // message instead of boolean
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Fetch alert, monitor message, and monitor JSON on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -48,7 +46,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
     fetchData();
   }, []);
 
-  // Save system alert
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -65,7 +62,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
     }
   };
 
-  // Save monitor message
   const handleSaveMonitorMessage = async () => {
     setSavingMonitor(true);
     setError(null);
@@ -90,7 +86,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
         System Alert Administration
       </Typography>
 
-      {/* System Alert Section */}
       <Paper sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6" gutterBottom>
           Current System Alert
@@ -119,7 +114,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
         </Button>
       </Paper>
 
-      {/* Monitor Message Section */}
       <Paper sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6" gutterBottom>
           Monitor Message
@@ -145,7 +139,6 @@ const SysAdminSystemAlertPage: NextPage = () => {
         </Button>
       </Paper>
 
-      {/* Monitor JSON Section */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Current Monitor Status

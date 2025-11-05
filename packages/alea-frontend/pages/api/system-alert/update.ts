@@ -3,8 +3,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
 import { Action, ResourceName, SYSADMIN_RESOURCE_AND_ACTION } from '@alea/utils';
 
-
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     checkIfPostOrSetError(req, res);
