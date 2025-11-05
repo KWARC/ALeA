@@ -7,11 +7,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     checkIfPostOrSetError(req, res);
 
-    // const userId = await getUserIdOrSetError(req, res);
-    // if (!userId) return;
+    const userId = await getUserIdOrSetError(req, res);
+    if (!userId) return;
+    console.log('abc', { userId });
 
     const allowed = SYSADMIN_RESOURCE_AND_ACTION.some(
-      (ra) => ra.resource === ResourceName.SYSADMIN_MONITOR_MESSAGE && ra.action === Action.MUTATE
+      (ra) => ra.resource === ResourceName.SYSADMIN_SYSTEM_ALERT && ra.action === Action.MUTATE
     );
     if (!allowed) return res.status(403).json({ error: 'Not authorized to update system alert' });
 

@@ -1,10 +1,28 @@
-import { Box, Button, Paper, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Paper,
+  TextField,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 type AlertType = 'info' | 'warning' | 'error';
-type MonitorJSON = Record<string, any>;
+interface EndpointStatus {
+  last_success_time?: number;
+  last_failure_time?: number;
+  last_alert_time?: number;
+  current_error?: string | null;
+}
+type MonitorJSON = Record<string, EndpointStatus>;
 
 const SysAdminSystemAlertPage: NextPage = () => {
   const [message, setMessage] = useState('');
@@ -34,7 +52,7 @@ const SysAdminSystemAlertPage: NextPage = () => {
       } catch (err: any) {
         console.error(err);
         setError('Failed to load data. Make sure you are authorized.');
-         } finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -49,13 +67,25 @@ const SysAdminSystemAlertPage: NextPage = () => {
 
     try {
       await axios.post('/api/system-alert/update', { message, severity });
-      setSuccess('Alert updated successfully!');
+      setSuccess('✅ Alert updated successfully!');
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to save alert');
+      setError(err.response?.data?.error || '❌ Failed to save alert');
     } finally {
       setSaving(false);
     }
+  };
+
+  // Downtime = current_time - last_success_time
+  const formatDowntime = (lastSuccessSec?: number) => {
+    if (!lastSuccessSec) return '—';
+    const diffSec = Math.floor(Date.now() / 1000 - lastSuccessSec);
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const mins = Math.floor(diffSec / 60);
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    const remMin = mins % 60;
+    return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
   };
 
   if (loading) return <Typography>Loading...</Typography>;
@@ -98,7 +128,50 @@ const SysAdminSystemAlertPage: NextPage = () => {
         <Typography variant="h6" gutterBottom>
           Current Monitor Status
         </Typography>
-        <pre>{JSON.stringify(monitor, null, 2)}</pre>
+
+        {Object.keys(monitor).length === 0 ? (
+          <Typography>No monitor data available.</Typography>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <strong>Endpoint</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Last Success</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Last Failure</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Status</strong>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Object.entries(monitor).map(([name, data]) => {
+                  const ls = data.last_success_time ?? 0;
+                  const lf = data.last_failure_time ?? 0;
+                  const isUp = ls > lf;
+
+                  const successTime = ls ? new Date(ls * 1000).toLocaleString() : '—';
+                  const failureTime = lf ? new Date(lf * 1000).toLocaleString() : '—';
+
+                  return (
+                    <TableRow key={name}>
+                      <TableCell>{name}</TableCell>
+                      <TableCell>{successTime}</TableCell>
+                      <TableCell>{failureTime}</TableCell>
+                      <TableCell>{isUp ? <>✓</> : <>× ↓ {formatDowntime(ls)}</>}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       {error && (

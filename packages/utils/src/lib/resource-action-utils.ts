@@ -40,6 +40,7 @@ export enum ResourceName {
   COURSE_METADATA = 'COURSE_METADATA',
 
   SYSADMIN_MONITOR_MESSAGE = 'SYSADMIN_MONITOR_MESSAGE',
+  SYSADMIN_SYSTEM_ALERT = 'SYSADMIN_SYSTEM_ALERT',
 }
 
 export enum ComponentType {
@@ -260,4 +261,5 @@ export function isValidAction(actionId: Action, resourceName: ResourceName) {
 
 export const SYSADMIN_RESOURCE_AND_ACTION = [
   { resource: ResourceName.SYSADMIN_MONITOR_MESSAGE, action: Action.MUTATE },
+  { resource: ResourceName.SYSADMIN_SYSTEM_ALERT, action: Action.MUTATE },
 ];

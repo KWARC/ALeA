@@ -13,7 +13,7 @@ if (!MESSAGE_PATH || !MONITOR_JSON_PATH) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   return executeApiAndSet500OnError(req, res, async () => {
-    // if (!checkIfGetOrSetError(req, res)) return;
+    if (!checkIfGetOrSetError(req, res)) return;
 
     if (req.method === 'GET') {
       const [message, monitor] = await Promise.all([
@@ -29,13 +29,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'POST') {
       // Allow only authorized sys-admins to update message
-      // await getUserIdIfAuthorizedOrSetError(
-      //   req,
-      //   res,
-      //   ResourceName.SYSADMIN_MONITOR_MESSAGE,
-      //   Action.MUTATE,
-      //   {}
-      // );
+      await getUserIdIfAuthorizedOrSetError(
+        req,
+        res,
+        ResourceName.SYSADMIN_MONITOR_MESSAGE,
+        Action.MUTATE,
+        {}
+      );
 
       const { message } = req.body;
       if (typeof message !== 'string') {
