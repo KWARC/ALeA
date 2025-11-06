@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
 import { getSlides, Slide } from '@alea/spec';
 import { getParamsFromUri, PRIMARY_COL } from '@alea/utils';
@@ -15,7 +15,7 @@ type SlideData = Slide & {
 
 export interface SlideDataWithCSS {
   slides: SlideData[];
-  css: FTML.CSS[];
+  css: FTML.Css[];
 }
 
 const EMPTY_SLIDE_DATA: SlideDataWithCSS = { slides: [], css: [] };
@@ -79,7 +79,7 @@ interface SlidePickerProps {
     isLastSlide?: boolean,
     isLeaf?: boolean
   ) => void;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
 }
 
 export function SlidePicker({
@@ -110,7 +110,7 @@ export function SlidePicker({
   };
 
   useEffect(() => {
-    (availableSlides?.css ?? []).forEach((css) => FTML.injectCss(css));
+    injectCss(availableSlides?.css);
   }, [availableSlides]);
 
   useEffect(() => {
@@ -214,7 +214,11 @@ export function SlidePicker({
                     {selectedSlide.slide?.html ? (
                       <FTMLFragment
                         key={selectedSlide.uri}
-                        fragment={{ type: 'HtmlString', html: selectedSlide.slide.html }}
+                        fragment={{
+                          type: 'HtmlString',
+                          html: selectedSlide.slide.html,
+                          uri: selectedSlide.uri,
+                        }}
                       />
                     ) : (
                       <i>No content</i>

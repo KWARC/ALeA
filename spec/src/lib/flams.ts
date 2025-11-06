@@ -1,6 +1,12 @@
-import { ProblemFeedbackJson } from '@kwarc/flams';
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import {
+  batchGradeHex as flamsBatchGradeHex,
+  ProblemFeedbackJson,
+  ArchiveIndex,
+  Institution,
+  index as flamsIndex,
+  learningObjects as flamsLearningObjects,
+} from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
 import {
   COURSES_INFO,
   CURRENT_TERM,
@@ -15,7 +21,7 @@ import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './cours
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
 ): Promise<ProblemFeedbackJson[][] | undefined> {
-  return await getFlamsServer().batchGradeHex(...submissions);
+  return await flamsBatchGradeHex(...submissions);
 }
 
 export function computePointsFromFeedbackJson(
@@ -37,8 +43,8 @@ export interface Person {
   name: string;
 }
 
-let CACHED_ARCHIVE_INDEX: FTML.ArchiveIndex[] | undefined = undefined;
-let CACHED_INSTITUTION_INDEX: FTML.Institution[] | undefined = undefined;
+let CACHED_ARCHIVE_INDEX: ArchiveIndex[] | undefined = undefined;
+let CACHED_INSTITUTION_INDEX: Institution[] | undefined = undefined;
 
 const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
 
@@ -61,10 +67,10 @@ export function clearCourseHomeworkQuizCache(): void {
 
 export async function getDocIdx(institution?: string) {
   if (!CACHED_ARCHIVE_INDEX) {
-    const res = await getFlamsServer().index();
+    const res = await flamsIndex();
     if (res) {
-      CACHED_INSTITUTION_INDEX = res[0] as FTML.Institution[];
-      CACHED_ARCHIVE_INDEX = res[1] as FTML.ArchiveIndex[];
+      CACHED_INSTITUTION_INDEX = res[0] as Institution[];
+      CACHED_ARCHIVE_INDEX = res[1] as ArchiveIndex[];
       CACHED_ARCHIVE_INDEX.forEach((doc) => {
         if (doc.type === 'course') {
           doc.instances = doc.instances?.map((i) => ({
@@ -167,7 +173,7 @@ export async function getProblemsForConcept(conceptUri: string) {
   const MAX_RETRIES = 3;
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      const learningObjects = await getFlamsServer().learningObjects({ uri: conceptUri }, true);
+      const learningObjects = await flamsLearningObjects({ uri: conceptUri }, true);
       if (!learningObjects) return [];
       return learningObjects.filter((obj) => obj[1].type === 'Problem').map((obj) => obj[0]);
     } catch (error) {

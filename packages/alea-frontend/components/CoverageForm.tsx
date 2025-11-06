@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -34,7 +34,7 @@ export type FormData = LectureEntry & {
 interface CoverageFormProps {
   formData: FormData;
   setFormData: Dispatch<SetStateAction<FormData>>;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   isEditing: boolean;
   onSubmit: (data: FormData) => void;
   onCancel: () => void;
@@ -168,7 +168,7 @@ export function CoverageForm({
 
     const selectedSection = secInfo[selectedUri];
     if (selectedSection) {
-     const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
+      const isLeaf = isLeafSectionId(selectedSection.id, secInfo);
       setIsLeafSection(isLeaf);
       setFormData({
         ...formData,

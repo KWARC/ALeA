@@ -5,7 +5,7 @@ import { IconButton, Menu, MenuItem } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
 
 export function ExpandableContextMenu({ uri }: { uri?: string }) {
   const t = getLocaleObject(useRouter());
@@ -25,7 +25,7 @@ export function ExpandableContextMenu({ uri }: { uri?: string }) {
   useEffect(() => {
     if (!uri) return;
     setSourceUrl(undefined);
-    getFlamsServer().sourceFile({ uri }).then(setSourceUrl);
+    getSourceFile({ uri }).then(setSourceUrl);
   }, [uri]);
 
   if (!sourceUrl) return null;

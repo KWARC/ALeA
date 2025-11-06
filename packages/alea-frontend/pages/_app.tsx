@@ -1,5 +1,5 @@
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { initialize } from '@kwarc/ftml-react';
+import { initialize } from '@flexiformal/ftml-react';
 import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { MathJaxContext } from '@alea/mathjax';
@@ -56,7 +56,7 @@ const theme = createTheme({
 let flamsInitialized = false;
 const initStartTime = Date.now();
 // this code runs earlier if its not in the useEffect
-initialize(process.env.NEXT_PUBLIC_FLAMS_URL, false)
+initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
     flamsInitialized = true;
@@ -93,7 +93,6 @@ function CustomApp({ Component, pageProps }: AppProps) {
       clearInterval(interval);
       clearInterval(pollBuildId);
     };
-    
   }, []);
 
   if (!readyToRender) return <CircularProgress />;

@@ -27,7 +27,7 @@ ENDPOINTS = [
     {"name": "LMP", "url": "https://lms.voll-ki.fau.de/lmp/activity"},
     {"name": "ALeA", "url": "https://courses.voll-ki.fau.de"},
 ]
-
+SKIPPED_ALERTS = [("LMP", "Request timed out")]
 
 class StatusTracker:
     """Tracks endpoint status and manages alert timings."""
@@ -182,7 +182,7 @@ def check_endpoint(endpoint: dict, retries: int = 3) -> Tuple[bool, Optional[str
                 print(f"✓ {endpoint['name']}: OK (Status {response.status_code})")
                 return True, None
             else:
-                error_msg = f"Expected status 2XX, got {response.status_code}"
+                error_msg = f"Expected: 2XX, Got: {response.status_code}"
                 if attempt < retries - 1:
                     print(
                         f"✗ {endpoint['name']}: {error_msg} (Attempt {attempt + 1}/{retries})"
@@ -242,13 +242,16 @@ def main():
             if should_send:
                 alerts_to_send.append((name, url, error_msg, reason))
         elif was_down:
-            recover_reason = f"Recovered after about {outage_minutes} min down"
-            recoveries_to_send.append((name, url, recover_reason))
+            recoveries_to_send.append((name, url, outage_minutes))
 
     # Send alerts if needed
     for name, url, error, reason in alerts_to_send:
-        alert_message = f"🚨 MONITOR ALERT: {name} is down with error: {error}\n"
-        alert_message += f"  URL: {url}\n  {reason}\n"
+        alert_message = f"🚨 {name} is down. {error}\n"
+        alert_message += f"URL: {url}\n{reason}".strip()
+
+        if (name, error) in SKIPPED_ALERTS:
+            print(f"SKIPPED ALERT: {name} is down. {error}")
+            continue
 
         alert_sent = send_alert(alert_message)
         if alert_sent:
@@ -257,9 +260,8 @@ def main():
             print(f"WARNING: Failed to send alert for {name}")
 
     # Send recovery alerts if needed
-    for name, url, reason in recoveries_to_send:
-        recovery_message = f"✅ MONITOR RECOVERY: {name} is back up\n"
-        recovery_message += f"  URL: {url}\n  {reason}\n"
+    for name, url, outage_minutes in recoveries_to_send:
+        recovery_message = f"✅ {name} is back up after ~{outage_minutes}min downtime\n"
 
         recovery_sent = send_alert(recovery_message)
         if not recovery_sent:

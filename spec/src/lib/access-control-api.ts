@@ -180,3 +180,29 @@ export type UpdateACLRequest = Omit<AccessControlList, 'updatedAt' | 'createdAt'
 export type CreateACLRequest = Omit<AccessControlList, 'createdAt' | 'updatedAt'>;
 export type CreateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
 export type UpdateResourceAction = Omit<ResourceAction, 'createdAt' | 'updatedAt'>;
+
+export interface AutocompleteUserSuggestion {
+  userId: string;
+  fullName: string;
+}
+
+export interface AutocompleteAclSuggestion {
+  id: string;
+  description: string;
+}
+
+export async function getUserSuggestions(query: string): Promise<AutocompleteUserSuggestion[]> {
+  const { data } = await axios.get('/api/access-control/get-user-suggestions', {
+    headers: getAuthHeaders(),
+    params: { q: query },
+  });
+  return data as AutocompleteUserSuggestion[];
+}
+
+export async function getAclSuggestions(query: string): Promise<AutocompleteAclSuggestion[]> {
+  const { data } = await axios.get('/api/access-control/get-acl-suggestions', {
+    headers: getAuthHeaders(),
+    params: { q: query },
+  });
+  return data as AutocompleteAclSuggestion[];
+}
