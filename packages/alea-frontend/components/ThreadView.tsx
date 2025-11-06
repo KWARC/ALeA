@@ -8,7 +8,6 @@ import {
   updateQuestionState,
 } from '@alea/spec';
 import { Action, ResourceName } from '@alea/utils';
-import { FTMLFragment } from '@kwarc/ftml-react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Box, Button, CircularProgress, IconButton } from '@mui/material';
@@ -18,6 +17,7 @@ import { useEffect, useReducer, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());

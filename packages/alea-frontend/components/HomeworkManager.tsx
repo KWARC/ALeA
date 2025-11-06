@@ -7,11 +7,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Snackbar
+  Snackbar,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   createHomework,
   CreateHomeworkRequest,
@@ -58,7 +58,7 @@ const HomeworkManager = ({ courseId }) => {
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedHomeworkId, setSelectedHomeworkId] = useState<number | null>(null);
-  const [css, setCss] = useState<FTML.CSS[]>([]);
+  const [css, setCss] = useState<FTML.Css[]>([]);
 
   const getHomeworks = async () => {
     try {

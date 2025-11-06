@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBox from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
@@ -331,6 +331,8 @@ export function QuizDisplay({
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',
+                // DM: no uri?
+                uri: undefined,
               }}
             />
           </h2>

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import axios from 'axios';
 import { SmileyCognitiveValues } from './lmp';
 
@@ -63,7 +63,7 @@ export interface ClipMetadata {
 }
 export interface SlidesWithCSS {
   slides: Slide[];
-  css: FTML.CSS[];
+  css: FTML.Css[];
 }
 export interface GetSlidesResponse {
   [sectionId: string]: SlidesWithCSS;
@@ -76,7 +76,7 @@ const BASE_SLIDES_DATA_URL = '';
 export async function getSlides(
   courseId: string,
   sectionId: string
-): Promise<{ slides: Slide[]; css: FTML.CSS[] }> {
+): Promise<{ slides: Slide[]; css: FTML.Css[] }> {
   const response = await axios.get<GetSlidesResponse>(`${BASE_SLIDES_DATA_URL}/api/get-slides`, {
     params: { courseId, sectionIds: sectionId },
   });
