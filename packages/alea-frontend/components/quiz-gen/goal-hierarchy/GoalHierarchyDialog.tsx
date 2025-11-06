@@ -7,7 +7,6 @@ import {
   Box,
   CircularProgress,
   Button,
-
 } from '@mui/material';
 import {
   ReactFlow,
@@ -24,10 +23,11 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { GOAL_NODE_COLORS, GoalNodeComponent, GoalNode, GoalEdge } from './GoalNode';
-import { getSectionGoals, Goal, runGraphDbUpdateQuery } from '@alea/spec';
-import { CreateNodeDialog, EditNodeDialog } from './goal-hierarchy/NodeDialogs';
-import { RightSidebar } from './goal-hierarchy/RightSidebar';
+import { getSectionGoals, getUserInfo, Goal, runGraphDbUpdateQuery, UserInfo } from '@alea/spec';
+import { GoalQuizDialog } from './GoalQuizDialog';
+import { RightSidebar } from './RightSidebar';
+import { CreateNodeDialog, EditNodeDialog } from './NodeDialogs';
+import { GOAL_NODE_COLORS, GoalEdge, GoalNode, GoalNodeComponent } from './GoalNode';
 
 function InstanceSetter({ setInstance }: { setInstance: (instance: ReactFlowInstance) => void }) {
   const instance = useReactFlow();
@@ -91,6 +91,7 @@ interface GoalHierarchyDialogProps {
   open: boolean;
   onClose: () => void;
   courseNotesUri: string;
+  courseId: string;
   sectionUri: string;
 }
 
@@ -98,6 +99,7 @@ export default function GoalHierarchyDialog({
   open,
   onClose,
   courseNotesUri,
+  courseId,
   sectionUri,
 }: GoalHierarchyDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -120,6 +122,16 @@ export default function GoalHierarchyDialog({
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const nodeTypes = { [NodeType.GOAL_NODE]: GoalNodeComponent };
   const pendingConnectionRef = useRef<any>(null);
+  const [quizDialogOpen, setQuizDialogOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+
+  useEffect(() => {
+    getUserInfo().then((info) => {
+      if (!info) return;
+      setUserInfo(info);
+    });
+  }, []);
 
   const fetchGoals = useCallback(async () => {
     setLoading(true);
@@ -174,7 +186,7 @@ export default function GoalHierarchyDialog({
     } finally {
       setLoading(false);
     }
-  }, [direction,courseNotesUri,sectionUri]);
+  }, [direction, courseNotesUri, sectionUri]);
 
   useEffect(() => {
     if (open) fetchGoals();
@@ -335,7 +347,6 @@ export default function GoalHierarchyDialog({
       alert('Failed to update node. Changes were rolled back.');
     }
   };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle>Goal Hierarchy (DAAG)</DialogTitle>
@@ -378,6 +389,13 @@ export default function GoalHierarchyDialog({
                   }));
                   setCreateDialogOpen(true);
                 }}
+                onNodeClick={(e, node) => {
+                  e.preventDefault();
+                  const goalText = node?.data?.label || node?.data?.uri;
+                  if (!goalText) return;
+                  setSelectedGoal(goalText);
+                  setQuizDialogOpen(true);
+                }}
                 fitView
                 minZoom={0.1}
                 maxZoom={2}
@@ -387,6 +405,14 @@ export default function GoalHierarchyDialog({
                 <Background />
                 <InstanceSetter setInstance={setReactFlowInstance} />
               </ReactFlow>
+
+              <GoalQuizDialog
+                open={quizDialogOpen}
+                onClose={() => setQuizDialogOpen(false)}
+                goalText={selectedGoal}
+                courseId={courseId}
+                userInfo={userInfo}
+              />
               {focusedNodeId && (
                 <Button onClick={() => setFocusedNodeId(null)} variant="outlined" size="small">
                   Clear Focus

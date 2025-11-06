@@ -269,3 +269,15 @@ export async function getFinalizedVariants(params: ByProblemId | ByProblemUri) {
   });
   return resp.data as QuizProblem[];
 }
+
+export async function getProblemsByGoal(goal: string) {
+  const resp = await axios.post(`/api/gpt-redirect`, { goal }, 
+    {
+    params: {
+      apiname: 'get-problems-by-goal',
+      projectName: 'quiz-gen',
+    },
+    headers: getAuthHeaders(),
+  });
+  return resp.data;
+}

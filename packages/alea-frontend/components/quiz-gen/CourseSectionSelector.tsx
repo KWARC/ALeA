@@ -28,7 +28,7 @@ import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 import { SectionDetailsDialog } from './SectionDetailsDialog';
-import GoalHierarchyDialog from './GoalHierarchyDialog';
+import GoalHierarchyDialog from './goal-hierarchy/GoalHierarchyDialog';
 
 export function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -465,6 +465,7 @@ export const CourseSectionSelector = ({
         open={goalDialogOpen}
         onClose={() => setGoalDialogOpen(false)}
         courseNotesUri={courses?.[courseId]?.notes}
+        courseId={courseId}
         sectionUri={startSectionUri}
       />
         </Box>
