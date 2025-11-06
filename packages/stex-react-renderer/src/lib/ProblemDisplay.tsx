@@ -1,7 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
-import { FTML } from '@flexiformal/ftml';
-import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
+import { MystEditor } from '@alea/myst';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
@@ -12,11 +9,14 @@ import {
   getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import SaveIcon from '@mui/icons-material/Save';
+import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
-import { MystEditor } from '@alea/myst';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -113,7 +113,8 @@ export function ProblemViewer({
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
-  // const isNap = problem.problem.html.includes(`data-ftml-autogradable="true"`);
+  const hasSubProblems = problem.problem.subProblems != null;
+
   return (
     <FTMLFragment
       key={uri}
@@ -123,24 +124,21 @@ export function ProblemViewer({
       onProblemResponse={(response) => {
         onResponseUpdate?.(response);
       }}
-      /*{...(!isNap
-        ? {
-            problemWrap: (problemUri) => {
-              return (ch: React.ReactNode) => (
-                <Box>
-                  {ch}
-                  <AnswerAccepter
-                    masterProblemId={uri}
-                    isHaveSubProblems={isHaveSubProblems}
-                    problemTitle={problem.problem.title_html ?? ''}
-                    isFrozen={isFrozen}
-                    problemId={problemUri}
-                  ></AnswerAccepter>
-                </Box>
-              );
-            },
-          }
-        : {})}}*/
+      /*{problemWrap={(problemUri, isSubProblem, autogradable) => {
+        if(autogradable) return undefined;
+        return (ch: React.ReactNode) => (
+          <Box>
+            {ch}
+            <AnswerAccepter
+              masterProblemId={uri}
+              hasSubProblems={hasSubProblems}
+              problemTitle={problem.problem.title_html ?? ''}
+              isFrozen={isFrozen}
+              problemId={problemUri}
+            ></AnswerAccepter>
+          </Box>
+        );
+      }}}*/
     />
   );
 }
@@ -148,13 +146,13 @@ export function ProblemViewer({
 function AnswerAccepter({
   problemId,
   masterProblemId,
-  isHaveSubProblems,
+  hasSubProblems,
   isFrozen,
   problemTitle,
 }: {
   problemId: string;
   masterProblemId: string;
-  isHaveSubProblems: boolean;
+  hasSubProblems: boolean;
   isFrozen: boolean;
   problemTitle: string;
 }) {
@@ -166,7 +164,7 @@ function AnswerAccepter({
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
   );
-  const subId = isHaveSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
+  const subId = hasSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
   const router = useRouter();
 
   async function saveAnswer({
@@ -191,7 +189,7 @@ function AnswerAccepter({
       alert('Failed to save answers. Please try again.');
     }
   }
-  if (isHaveSubProblems && isNaN(subId)) return;
+  if (hasSubProblems && isNaN(subId)) return;
   async function onSaveClick() {
     await saveAnswer({ freeTextResponses: answer, subId: problemId });
   }

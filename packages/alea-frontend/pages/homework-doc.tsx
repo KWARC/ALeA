@@ -1,5 +1,3 @@
-import { FTML, injectCss } from '@flexiformal/ftml';
-import { Box } from '@mui/material';
 import {
   FTMLProblemWithSolution,
   getHomework,
@@ -11,12 +9,14 @@ import {
   UserInfo,
 } from '@alea/spec';
 import {
-  GradingContext,
   AnswerContext,
+  GradingContext,
   QuizDisplay,
   ShowGradingFor,
 } from '@alea/stex-react-renderer';
 import { isFauId } from '@alea/utils';
+import { FTML, injectCss } from '@flexiformal/ftml';
+import { Box, CircularProgress } from '@mui/material';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../components/ForceFAULogin';
@@ -27,6 +27,8 @@ const HomeworkDocPage: React.FC = () => {
 
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [userInfo, setUserInfo] = useState<UserInfo | undefined | null>(null);
+  const [fetchingUserInfo, setFetchingUserInfo] = useState(false);
+  const [fetchingHomework, setFetchingHomework] = useState(false);
   const [hwInfo, setHwInfo] = useState<GetHomeworkResponse | undefined>(undefined);
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
@@ -36,12 +38,17 @@ const HomeworkDocPage: React.FC = () => {
   >({});
 
   useEffect(() => {
-    getUserInfo().then((i) => {
-      setUserInfo(i);
-      const uid = i?.userId;
-      if (!uid) return;
-      isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-    });
+    setFetchingUserInfo(true);
+    getUserInfo()
+      .then((i) => {
+        setUserInfo(i);
+        const uid = i?.userId;
+        if (!uid) return;
+        isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+      })
+      .finally(() => {
+        setFetchingUserInfo(false);
+      });
   }, []);
   const courseId = hwInfo?.homework.courseId;
   const instanceId = hwInfo?.homework.courseInstance;
@@ -57,20 +64,25 @@ const HomeworkDocPage: React.FC = () => {
       alert('Invalid homework id');
       router.replace('/');
     }
-    getHomework(+id).then((hwInfo) => {
-      setHwInfo(hwInfo);
-      injectCss(hwInfo.homework.css);
-      setProblems(hwInfo.homework.problems);
-      setAnswers(hwInfo.responses);
-      const mildleToMapProblemResponse: Record<string, FTML.ProblemResponse> = {};
-      Object.entries(answers).forEach(([id, answers]) => {
-        mildleToMapProblemResponse[id] = { uri: id, responses: [] };
-        answers.responses.forEach(
-          (c) => (mildleToMapProblemResponse[id].responses[c.subProblemId] = c.answer)
-        );
+    setFetchingHomework(true);
+    getHomework(+id)
+      .then((hwInfo) => {
+        setHwInfo(hwInfo);
+        injectCss(hwInfo.homework.css);
+        setProblems(hwInfo.homework.problems);
+        setAnswers(hwInfo.responses);
+        const mildleToMapProblemResponse: Record<string, FTML.ProblemResponse> = {};
+        Object.entries(answers).forEach(([id, answers]) => {
+          mildleToMapProblemResponse[id] = { uri: id, responses: [] };
+          answers.responses.forEach(
+            (c) => (mildleToMapProblemResponse[id].responses[c.subProblemId] = c.answer)
+          );
+        });
+        setResponses(mildleToMapProblemResponse);
+      })
+      .finally(() => {
+        setFetchingHomework(false);
       });
-      setResponses(mildleToMapProblemResponse);
-    });
   }, [router.isReady, id]);
 
   const phase = hwInfo && getHomeworkPhase(hwInfo.homework);
@@ -86,10 +98,12 @@ const HomeworkDocPage: React.FC = () => {
   return (
     <MainLayout title={`${courseId ?? ''} Homework | ALeA`}>
       <Box>
-        {!userInfo ? (
+        {fetchingUserInfo || fetchingHomework ? (
+          <CircularProgress />
+        ) : !userInfo ? (
           <Box p="20px">You must be logged in to see homeworks.</Box>
         ) : !phase || phase === 'NOT_GIVEN' ? (
-          <Box>Homework not yet given</Box>
+          <Box>Homework is invalid or not yet given.</Box>
         ) : (
           <GradingContext.Provider
             value={{
