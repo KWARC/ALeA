@@ -20,8 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!alertFile) return res.status(500).json({ error: 'Alert file path not configured' });
 
     const { message, severity } = req.body;
-    if (typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ error: 'Message must be a non-empty string' });
+    if (typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message must be a string' });
     }
     if (!['info', 'warning', 'error'].includes(severity)) {
       return res.status(400).json({ error: 'Severity must be one of: info, warning, error' });

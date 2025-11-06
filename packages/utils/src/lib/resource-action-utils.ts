@@ -223,6 +223,15 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'monitor-message' },
     ],
   },
+
+  {
+    name: ResourceName.SYSADMIN_SYSTEM_ALERT,
+    possibleActions: [Action.MUTATE],
+    components: [
+      { type: ComponentType.FIXED, value: 'sys-admin' },
+      { type: ComponentType.FIXED, value: 'system-alert' },
+    ],
+  },
 ];
 
 export const RESOURCE_TYPE_MAP = new Map<ResourceName, ResourceType>(

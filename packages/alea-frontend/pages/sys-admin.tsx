@@ -4,11 +4,12 @@ import {
   deleteResourceAction,
   getAllResourceActions,
   getCourseInfo,
+  getMonitorStatus,
   isUserMember,
   isValid,
   recomputeMemberships,
   UpdateResourceAction,
-  updateResourceAction
+  updateResourceAction,
 } from '@alea/spec';
 import {
   Action,
@@ -73,6 +74,15 @@ const SysAdmin: NextPage = () => {
   } | null>(null);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [monitor, setMonitor] = useState<
+    Record<
+      string,
+      {
+        last_success_time?: number;
+        last_failure_time?: number;
+      }
+    >
+  >({});
 
   async function getAllResources() {
     try {
@@ -278,6 +288,29 @@ const SysAdmin: NextPage = () => {
     }
   };
 
+  const formatDowntime = (lastSuccessSec?: number) => {
+    if (!lastSuccessSec) return '—';
+    const diffSec = Math.floor(Date.now() / 1000 - lastSuccessSec);
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const mins = Math.floor(diffSec / 60);
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    const remMin = mins % 60;
+    return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
+  };
+
+  useEffect(() => {
+    const loadMonitor = async () => {
+      try {
+        const res = await getMonitorStatus();
+        setMonitor(res.monitor ?? {});
+      } catch (e) {
+        console.error('Failed to load monitor data', e);
+      }
+    };
+    loadMonitor();
+  }, []);
+
   return (
     <MainLayout>
       <Box
@@ -289,33 +322,103 @@ const SysAdmin: NextPage = () => {
           boxSizing: 'border-box',
         }}
       >
-        <Button
+        <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'center',
             alignItems: 'center',
-            margin: '20px auto',
+            gap: 2,
+            mt: 2,
+            mb: 3,
           }}
-          variant="contained"
-          color="primary"
-          disabled={isRecomputing}
-          onClick={() => handleRecomputeClick()}
         >
-          Recompute Memberships
-        </Button>
-        <Link href={`/acl`}>
           <Button
             sx={{
               display: 'flex',
               alignItems: 'center',
-              margin: '10px auto',
             }}
             variant="contained"
             color="primary"
+            disabled={isRecomputing}
+            onClick={() => handleRecomputeClick()}
           >
-            ACL Page
+            Recompute Memberships
           </Button>
-        </Link>
+
+          <Link href={`/acl`}>
+            <Button
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              variant="contained"
+              color="primary"
+            >
+              ACL Page
+            </Button>
+          </Link>
+
+          <Link href="/sys-admin/system-alert">
+            <Button
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              variant="contained"
+              color="primary"
+            >
+              System Alert Page
+            </Button>
+          </Link>
+        </Box>
         <RecorrectionChecker />
+
+        <Paper
+          sx={{
+            m: '0 auto',
+            maxWidth: '100%',
+            p: { xs: '15px', sm: '20px' },
+            boxSizing: 'border-box',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            mt: 2,
+            mb: 2,
+          }}
+        >
+          <Typography fontSize={20} m="0 0 12px 0">
+            Monitor Status
+          </Typography>
+
+          {Object.keys(monitor).length === 0 ? (
+            <Typography color="text.secondary">No monitor data available.</Typography>
+          ) : (
+            <TableContainer>
+              <Table size="small" aria-label="monitor status table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Endpoint</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(monitor).map(([name, data]) => {
+                    const ls = (data as any).last_success_time ?? 0;
+                    const lf = (data as any).last_failure_time ?? 0;
+                    const isUp = ls > lf;
+                    return (
+                      <TableRow key={name}>
+                        <TableCell>{name}</TableCell>
+                        <TableCell>{isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+
         <Box
           sx={{
             m: '0 auto',

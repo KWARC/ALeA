@@ -10,10 +10,19 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import MainLayout from '../../../alea-frontend/layouts/MainLayout';
+import { getSystemAlert, updateSystemAlert, getMonitorStatus, AlertSeverity } from '@alea/spec';
 
 type AlertType = 'info' | 'warning' | 'error';
 interface EndpointStatus {
@@ -32,22 +41,20 @@ const SysAdminSystemAlertPage: NextPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [alertRes, monitorRes] = await Promise.all([
-          axios.get('/api/system-alert/get'),
-          axios.get('/api/sys-admin/monitor-message'),
-        ]);
+        const [alertRes, monitorRes] = await Promise.all([getSystemAlert(), getMonitorStatus()]);
 
-        if (alertRes.data) {
-          setMessage(alertRes.data.message || '');
-          setSeverity(alertRes.data.severity || 'info');
+        if (alertRes) {
+          setMessage(alertRes.message || '');
+          setSeverity(alertRes.severity || 'info');
         }
 
-        if (monitorRes.data) {
-          setMonitor(monitorRes.data.monitor || {});
+        if (monitorRes) {
+          setMonitor(monitorRes.monitor || {});
         }
       } catch (err: any) {
         console.error(err);
@@ -66,11 +73,29 @@ const SysAdminSystemAlertPage: NextPage = () => {
     setSuccess(null);
 
     try {
-      await axios.post('/api/system-alert/update', { message, severity });
+      await updateSystemAlert({ message, severity });
       setSuccess('✅ Alert updated successfully!');
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.error || '❌ Failed to save alert');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearAlert = async () => {
+    setMessage('');
+    setSeverity('info');
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await updateSystemAlert({ message: '', severity: 'info' });
+      setSuccess('✅ Alert cleared!');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.error || '❌ Failed to clear alert');
     } finally {
       setSaving(false);
     }
@@ -91,100 +116,142 @@ const SysAdminSystemAlertPage: NextPage = () => {
   if (loading) return <Typography>Loading...</Typography>;
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        System Alert Administration
-      </Typography>
-
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Current System Alert
+    <MainLayout>
+      <Box sx={{ p: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          System Alert Page
         </Typography>
 
-        <TextField
-          label="Message"
-          fullWidth
-          multiline
-          rows={3}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          sx={{ mb: 2 }}
-        />
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Current System Alert
+          </Typography>
 
-        <TextField
-          label="Severity (info, warning, error)"
-          fullWidth
-          value={severity}
-          onChange={(e) => setSeverity(e.target.value as AlertType)}
-          sx={{ mb: 2 }}
-        />
+          <TextField
+            label="Message"
+            fullWidth
+            multiline
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            sx={{ mb: 2 }}
+          />
 
-        <Button variant="contained" color="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Update Alert'}
-        </Button>
-      </Paper>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="severity-label">Severity</InputLabel>
+            <Select
+              labelId="severity-label"
+              value={severity}
+              label="Severity"
+              onChange={(e) => setSeverity(e.target.value as AlertType)}
+              disabled={message.trim() === ''}
+            >
+              <MenuItem value="info">Info</MenuItem>
+              <MenuItem value="warning">Warning</MenuItem>
+              <MenuItem value="error">Error</MenuItem>
+            </Select>
+          </FormControl>
 
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Current Monitor Status
-        </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="contained" color="primary" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Update Alert'}
+            </Button>
 
-        {Object.keys(monitor).length === 0 ? (
-          <Typography>No monitor data available.</Typography>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <strong>Endpoint</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Last Success</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Last Failure</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Status</strong>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Object.entries(monitor).map(([name, data]) => {
-                  const ls = data.last_success_time ?? 0;
-                  const lf = data.last_failure_time ?? 0;
-                  const isUp = ls > lf;
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => setConfirmClearOpen(true)}
+              disabled={saving}
+            >
+              Clear Alert
+            </Button>
+          </Box>
+        </Paper>
 
-                  const successTime = ls ? new Date(ls * 1000).toLocaleString() : '—';
-                  const failureTime = lf ? new Date(lf * 1000).toLocaleString() : '—';
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Current Monitor Status
+          </Typography>
 
-                  return (
-                    <TableRow key={name}>
-                      <TableCell>{name}</TableCell>
-                      <TableCell>{successTime}</TableCell>
-                      <TableCell>{failureTime}</TableCell>
-                      <TableCell>{isUp ? <>✓</> : <>× ↓ {formatDowntime(ls)}</>}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {Object.keys(monitor).length === 0 ? (
+            <Typography>No monitor data available.</Typography>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <strong>Endpoint</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Last Success</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Last Failure</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Status</strong>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(monitor).map(([name, data]) => {
+                    const ls = data.last_success_time ?? 0;
+                    const lf = data.last_failure_time ?? 0;
+                    const isUp = ls > lf;
+
+                    const successTime = ls ? new Date(ls * 1000).toLocaleString() : '—';
+                    const failureTime = lf ? new Date(lf * 1000).toLocaleString() : '—';
+
+                    return (
+                      <TableRow key={name}>
+                        <TableCell>{name}</TableCell>
+                        <TableCell>{successTime}</TableCell>
+                        <TableCell>{failureTime}</TableCell>
+                        <TableCell>{isUp ? <>✅</> : <>❌ ↓ {formatDowntime(ls)}</>}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+
+        {error && (
+          <Typography color="error" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
         )}
-      </Paper>
+        {success && (
+          <Typography color="success.main" sx={{ mt: 2 }}>
+            {success}
+          </Typography>
+        )}
 
-      {error && (
-        <Typography color="error" sx={{ mt: 2 }}>
-          {error}
-        </Typography>
-      )}
-      {success && (
-        <Typography color="success.main" sx={{ mt: 2 }}>
-          {success}
-        </Typography>
-      )}
-    </Box>
+        <Dialog open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)}>
+          <DialogTitle>Clear System Alert?</DialogTitle>
+
+          <DialogContent>
+            <Typography>This will remove the alert banner from the entire site.</Typography>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => setConfirmClearOpen(false)}>Cancel</Button>
+
+            <Button
+              color="error"
+              onClick={() => {
+                setConfirmClearOpen(false);
+                handleClearAlert();
+              }}
+            >
+              Clear Alert
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </MainLayout>
   );
 };
 

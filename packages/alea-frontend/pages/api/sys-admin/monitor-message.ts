@@ -28,7 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      // Allow only authorized sys-admins to update message
       await getUserIdIfAuthorizedOrSetError(
         req,
         res,
