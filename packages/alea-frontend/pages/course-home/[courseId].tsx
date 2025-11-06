@@ -14,6 +14,7 @@ import {
   Action,
   BG_COLOR,
   CourseInfo,
+  getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
   isFauId,
   ResourceName,
@@ -26,6 +27,7 @@ import Diversity3Icon from '@mui/icons-material/Diversity3';
 import PersonIcon from '@mui/icons-material/Person';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -36,6 +38,7 @@ import {
   Card,
   CircularProgress,
   IconButton,
+  Tooltip,
   InputAdornment,
   TextField,
   Typography,
@@ -507,10 +510,32 @@ const CourseHomePage: NextPage = () => {
           gap="10px"
           ref={containerRef}
         >
-          <CourseComponentLink href={notesLink}>
-            {t.notes}&nbsp;
-            <ArticleIcon fontSize="large" />
-          </CourseComponentLink>
+          <Link href={notesLink}>
+            <Button
+              variant="contained"
+              sx={{ width: '100%', height: '48px', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {t.notes}
+                <ArticleIcon fontSize="large" />
+              </span>
+              {notes && (
+                <Tooltip title="View as PDF" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const pdfUrl = getCoursePdfUrl(notes);
+                      window.open(pdfUrl, '_blank');
+                    }}
+                  >
+                    <PictureAsPdfIcon fontSize="large" sx={{ color: 'white' }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Button>
+          </Link>
           <CourseComponentLink href={slidesLink}>
             {t.slides}&nbsp;
             <SlideshowIcon fontSize="large" />

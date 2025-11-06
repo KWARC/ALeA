@@ -3,6 +3,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
@@ -21,7 +22,14 @@ import {
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import {
+  Action,
+  CourseInfo,
+  getCoursePdfUrl,
+  localStore,
+  ResourceName,
+  shouldUseDrawer,
+} from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -160,7 +168,6 @@ const CourseViewPage: NextPage = () => {
   const audioOnly = audioOnlyStr === 'true';
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
 
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
@@ -199,11 +206,11 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isEditableTarget = !!target && (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        (target as HTMLElement).isContentEditable
-      );
+      const isEditableTarget =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as HTMLElement).isContentEditable);
       if (isEditableTarget) return;
 
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -336,6 +343,8 @@ const CourseViewPage: NextPage = () => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
   };
+  
+
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
@@ -348,7 +357,7 @@ const CourseViewPage: NextPage = () => {
             zIndex: 2002,
             bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { 
+            '&:hover': {
               bgcolor: 'rgba(255, 255, 255, 0.3)',
             },
           }}
@@ -356,7 +365,7 @@ const CourseViewPage: NextPage = () => {
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" sx={{ opacity: 0.5}} />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
       <SearchDialog
@@ -400,9 +409,39 @@ const CourseViewPage: NextPage = () => {
                 }}
               />
               <Link href={courses[courseId]?.notesLink ?? ''} passHref>
-                <Button size="small" variant="contained" sx={{ mr: '10px' }}>
-                  {t.notes}&nbsp;
-                  <ArticleIcon />
+                <Button
+                  size="small"
+                  variant="contained"
+                  sx={{
+                    mr: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                    minWidth: '140px',
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {t.notes}
+                    <ArticleIcon />
+                  </span>
+                  {courses?.[courseId]?.notes && (
+                    <Tooltip title="View as PDF" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const notes = courses?.[courseId]?.notes;
+                          if (!notes) return;
+                          const pdfUrl = getCoursePdfUrl(notes);
+                          window.open(pdfUrl, '_blank');
+                        }}
+                      >
+                        <PictureAsPdfIcon fontSize="medium" sx={{ color: 'white' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Button>
               </Link>
             </Box>
