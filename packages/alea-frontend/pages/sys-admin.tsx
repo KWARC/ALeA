@@ -393,29 +393,26 @@ const SysAdmin: NextPage = () => {
           {Object.keys(monitor).length === 0 ? (
             <Typography color="text.secondary">No monitor data available.</Typography>
           ) : (
-            <TableContainer>
-              <Table size="small" aria-label="monitor status table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Endpoint</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(monitor).map(([name, data]) => {
-                    const ls = (data as any).last_success_time ?? 0;
-                    const lf = (data as any).last_failure_time ?? 0;
-                    const isUp = ls > lf;
-                    return (
-                      <TableRow key={name}>
-                        <TableCell>{name}</TableCell>
-                        <TableCell>{isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}>
+              {Object.entries(monitor).map(([name, data], index) => {
+                const ls = data.last_success_time ?? 0;
+                const lf = data.last_failure_time ?? 0;
+                const isUp = ls > lf;
+
+                return (
+                  <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography sx={{ fontWeight: 600, mr: 0.5 }}>{name}</Typography>
+                    <Typography sx={{ mr: 1 }}>
+                      {isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}
+                    </Typography>
+
+                    {index !== Object.keys(monitor).length - 1 && (
+                      <Typography sx={{ mx: 1 }}>|</Typography>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
           )}
         </Paper>
 

@@ -1,6 +1,6 @@
+import { getSystemAlert } from '@alea/spec';
 import { Alert, AlertTitle, Box } from '@mui/material';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 
 type AlertType = 'error' | 'warning' | 'info' | 'success';
 
@@ -11,10 +11,10 @@ export default function SystemAlertBanner() {
   useEffect(() => {
     const fetchBanner = async () => {
       try {
-        const res = await axios.get('/api/system-alert/get');
-        if (res.data?.message) {
-          setMessage(res.data.message);
-          setSeverity(res.data.severity || 'error');
+        const res = await getSystemAlert();
+        if (res?.message) {
+          setMessage(res.message);
+          setSeverity(res.severity || 'error');
         }
       } catch (err) {
         console.error('Error fetching system alert:', err);

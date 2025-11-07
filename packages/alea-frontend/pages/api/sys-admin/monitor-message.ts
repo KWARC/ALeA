@@ -1,8 +1,6 @@
 import fs from 'fs/promises';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeApiAndSet500OnError } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../../../../alea-frontend/pages/api/access-control/resource-utils';
-import { ResourceName, Action } from '@alea/utils';
 
 const MESSAGE_PATH = process.env.ALEA_MONITOR_MESSAGE_PATH;
 const MONITOR_JSON_PATH = process.env.ALEA_MONITOR_STATUS_PATH;
@@ -25,24 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ]);
 
       return res.status(200).json({ message, monitor: monitor.endpoints || {} });
-    }
-
-    if (req.method === 'POST') {
-      await getUserIdIfAuthorizedOrSetError(
-        req,
-        res,
-        ResourceName.SYSADMIN_MONITOR_MESSAGE,
-        Action.MUTATE,
-        {}
-      );
-
-      const { message } = req.body;
-      if (typeof message !== 'string') {
-        return res.status(400).json({ error: 'Invalid message' });
-      }
-
-      await fs.writeFile(MESSAGE_PATH, message, 'utf-8');
-      return res.status(200).json({ success: true });
     }
   });
 }

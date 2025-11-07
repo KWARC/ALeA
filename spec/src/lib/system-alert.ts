@@ -30,18 +30,8 @@ export async function getMonitorStatus(): Promise<MonitorResponse> {
   return res.data as MonitorResponse;
 }
 
-export async function updateMonitorMessage(message: string) {
-  const res = await axios.post(
-    '/api/sys-admin/monitor-message',
-    { message },
-    { headers: getAuthHeaders() }
-  );
-
-  return res.data;
-}
-
 export async function getSystemAlert(): Promise<SystemAlert> {
-  const res = await axios.get('/api/system-alert/get', {
+  const res = await axios.get('/api/system-alert/get-system-alert', {
     headers: getAuthHeaders(),
   });
 
@@ -54,7 +44,7 @@ export interface UpdateSystemAlertRequest {
 }
 
 export async function updateSystemAlert(data: UpdateSystemAlertRequest) {
-  const res = await axios.post('/api/system-alert/update', data, {
+  const res = await axios.post('/api/system-alert/update-system-alert', data, {
     headers: getAuthHeaders(),
   });
 

@@ -752,7 +752,6 @@ function WelcomeScreen({
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
-
       <SystemAlertBanner />
       {/*<Typography
         sx={{

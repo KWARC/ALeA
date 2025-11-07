@@ -24,7 +24,7 @@ import { useEffect, useState } from 'react';
 import MainLayout from '../../../alea-frontend/layouts/MainLayout';
 import { getSystemAlert, updateSystemAlert, getMonitorStatus, AlertSeverity } from '@alea/spec';
 
-type AlertType = 'info' | 'warning' | 'error';
+// type AlertType = 'info' | 'warning' | 'error';
 interface EndpointStatus {
   last_success_time?: number;
   last_failure_time?: number;
@@ -35,7 +35,7 @@ type MonitorJSON = Record<string, EndpointStatus>;
 
 const SysAdminSystemAlertPage: NextPage = () => {
   const [message, setMessage] = useState('');
-  const [severity, setSeverity] = useState<AlertType>('info');
+  const [severity, setSeverity] = useState<AlertSeverity>('info');
   const [monitor, setMonitor] = useState<MonitorJSON>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -143,7 +143,7 @@ const SysAdminSystemAlertPage: NextPage = () => {
               labelId="severity-label"
               value={severity}
               label="Severity"
-              onChange={(e) => setSeverity(e.target.value as AlertType)}
+              onChange={(e) => setSeverity(e.target.value as AlertSeverity)}
               disabled={message.trim() === ''}
             >
               <MenuItem value="info">Info</MenuItem>
