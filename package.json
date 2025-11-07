@@ -37,6 +37,7 @@
     "dns": "^0.2.2",
     "dompurify": "^3.2.5",
     "domutils": "^3.2.2",
+    "fast-csv": "^5.0.5",
     "html-react-parser": "^5.2.0",
     "html-to-text": "^9.0.5",
     "htmlparser2": "^8.0.1",

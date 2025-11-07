@@ -2,8 +2,7 @@ import {
   Comment,
   NotificationType,
   PointsGrant,
-  UserInfo,
-  lmpResponseToUserInfo,
+  lmpResponseToUserInfo
 } from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';

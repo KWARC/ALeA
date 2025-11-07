@@ -88,17 +88,16 @@ export async function updateGradingDatabase() {
 
     // Update records that need courseId/instanceId populated
     let updatedCount = 0;
-    let skippedCount = 0;
     let errorCount = 0;
+    const notFoundQuizIds = new Map<string, number>();
+    const foundQuizIds = new Map<string, number>();
 
+    console.log(`Starting to process grading ${gradingRecords.length} records...`);
     for (const record of gradingRecords) {
       const quiz = quizMap.get(record.quizId);
 
       if (!quiz) {
-        console.warn(
-          `Quiz not found for quizId: ${record.quizId} (gradingId: ${record.gradingId})`
-        );
-        skippedCount++;
+        notFoundQuizIds.set(record.quizId, (notFoundQuizIds.get(record.quizId) || 0) + 1);
         continue;
       }
 
@@ -107,6 +106,7 @@ export async function updateGradingDatabase() {
         // Already correct, skip
         continue;
       }
+      foundQuizIds.set(record.quizId, (foundQuizIds.get(record.quizId) || 0) + 1);
 
       // Update the record
       if (DRY_RUN) {
@@ -120,6 +120,9 @@ export async function updateGradingDatabase() {
             record.gradingId,
           ]);
           updatedCount++;
+          if(updatedCount % 1000 === 0) {
+            console.log(`Updated ${updatedCount} records so far...`);
+          }
         } catch (error) {
           console.error(`Error updating gradingId ${record.gradingId}:`, error);
           errorCount++;
@@ -129,7 +132,14 @@ export async function updateGradingDatabase() {
 
     console.log(`\n${DRY_RUN ? 'Dry run ' : ''}Update complete:`);
     console.log(`  - ${DRY_RUN ? 'Would update' : 'Updated'}: ${updatedCount}`);
-    console.log(`  - Skipped (quiz not found): ${skippedCount}`);
+    console.log(`  - Skipped (quiz not found): ${notFoundQuizIds.size}`);
+    for (const [quizId, count] of notFoundQuizIds) {
+      console.log(`      QuizId: ${quizId}, Count: ${count}`);
+    }
+    console.log(`  - Found and matched quizzes: ${Object.keys(foundQuizIds).length}`);
+    for (const [quizId, count] of foundQuizIds) {
+      console.log(`      QuizId: ${quizId}, Count: ${count}`);
+    }
     if (DRY_RUN) console.log('\n=== DRY RUN MODE: No actual changes were made ===');
     else console.log(`  - Errors: ${errorCount}`);
     
