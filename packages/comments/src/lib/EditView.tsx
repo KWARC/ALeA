@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {

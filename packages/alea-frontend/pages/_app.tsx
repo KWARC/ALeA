@@ -1,15 +1,15 @@
-import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { initialize } from '@flexiformal/ftml-react';
-import { CircularProgress } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
+import { initialize } from '@flexiformal/ftml-react';
+import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
+import { CircularProgress } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
+import { CommentRefreshProvider } from '@alea/react-utils';
 import { useEffect, useState } from 'react';
-import './styles.scss';
-import { CommentRefreshProvider } from '@alea/utils';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
+import './styles.scss';
 
 const instance = createInstance({
   urlBase: 'https://matomo.kwarc.info',
