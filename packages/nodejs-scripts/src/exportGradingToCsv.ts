@@ -17,16 +17,16 @@ const db = mysql({
 });
 
 interface GradingRecord {
-  quizId: string;
   courseId: string;
   instanceId: string;
+  quizId: string;
   userId: string;
   points: number;
   problemId: string;
 }
 
 
-export async function exportGradingToCsv(courseId: string) {
+export async function exportGradingToCsv() {
   if (!process.env.QUIZ_INFO_DIR || !process.env.QUIZ_LMS_INFO_FILE) {
     console.log(`Env vars not set. Set them at [nodejs-scripts/.env.local] Exiting.`);
     exit(1);
@@ -35,7 +35,7 @@ export async function exportGradingToCsv(courseId: string) {
   try {
     // Query all grading records for the specified course
     const gradingRecords = await db.query<GradingRecord[]>(
-      `SELECT userId, quizId, points, problemId, courseId, instanceId
+      `SELECT courseId, instanceId, quizId, userId, problemId, points 
       FROM grading
       WHERE (quizId, userId, problemId, browserTimestamp_ms) IN (
         SELECT quizId, userId, problemId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
@@ -58,19 +58,21 @@ export async function exportGradingToCsv(courseId: string) {
 
     // Prepare data for CSV
     const csvData = gradingRecords.map(record => {
-      const { userId, quizId, points, problemId } = record;
+      const { courseId, instanceId, quizId, userId, problemId, points } = record;
       const quiz = quizMap.get(quizId);
       return {
-        userId,
+        courseId,
+        instanceId,
         quizId,
-        points,
+        userId,
         problemId,
-        recorrections: !!quiz?.recorrectionInfo.some(r=>r.problemUri === problemId),
+        points,
+         //recorrections: !!quiz?.recorrectionInfo?.some(r=>r.problemUri === problemId),
       };
     });
 
     // Write to CSV file
-    const outputPath = path.join(process.cwd(), `${courseId}-grading-export.csv`);
+    const outputPath = path.join(process.cwd(), 'grading-export.csv');
     const writeStream = fs.createWriteStream(outputPath);
     csv.write(csvData, { headers: true })
       .pipe(writeStream)
