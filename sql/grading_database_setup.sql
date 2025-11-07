@@ -9,6 +9,9 @@ CREATE TABLE grading (
     quizId varchar(255) NOT NULL,
     problemId varchar(255) NOT NULL,
     
+    universityId varchar(255) NOT NULL,
+    courseId varchar(255) NOT NULL,
+    instanceId varchar(255) NOT NULL,
     
     response JSON,
     /* DEPRECATED:
