@@ -24,7 +24,6 @@ import { useEffect, useState } from 'react';
 import MainLayout from '../../../alea-frontend/layouts/MainLayout';
 import { getSystemAlert, updateSystemAlert, getMonitorStatus, AlertSeverity } from '@alea/spec';
 
-// type AlertType = 'info' | 'warning' | 'error';
 interface EndpointStatus {
   last_success_time?: number;
   last_failure_time?: number;
