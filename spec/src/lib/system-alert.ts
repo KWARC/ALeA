@@ -38,12 +38,7 @@ export async function getSystemAlert(): Promise<SystemAlert> {
   return res.data as SystemAlert;
 }
 
-export interface UpdateSystemAlertRequest {
-  message: string;
-  severity: AlertSeverity;
-}
-
-export async function updateSystemAlert(data: UpdateSystemAlertRequest) {
+export async function updateSystemAlert(data: SystemAlert) {
   const res = await axios.post('/api/system-alert/update-system-alert', data, {
     headers: getAuthHeaders(),
   });

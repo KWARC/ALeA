@@ -1,7 +1,10 @@
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { checkIfGetOrSetError } from '../comment-utils';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!checkIfGetOrSetError(req, res)) return;
+
   try {
     const alertFile = process.env.ALEA_SYSTEM_ALERT_PATH;
     if (!alertFile) return res.status(500).send('Alert file path not configured');

@@ -12,14 +12,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const allowed = SYSADMIN_RESOURCE_AND_ACTION.some(
       (ra) => ra.resource === ResourceName.SYSADMIN_SYSTEM_ALERT && ra.action === Action.MUTATE
     );
-    if (!allowed) return res.status(403).send( 'Not authorized to update system alert');
+    if (!allowed) return res.status(403).send('Not authorized to update system alert');
 
     const alertFile = process.env.ALEA_SYSTEM_ALERT_PATH;
     if (!alertFile) return res.status(500).send('Alert file path not configured');
 
     const { message, severity } = req.body;
     if (typeof message !== 'string') {
-      return res.status(400).send( 'Message must be a string');
+      return res.status(400).send('Message must be a string');
     }
     if (!['info', 'warning', 'error'].includes(severity)) {
       return res.status(400).send('Severity must be one of: info, warning, error');
