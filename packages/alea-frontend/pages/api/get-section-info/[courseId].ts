@@ -1,12 +1,11 @@
-import { FTML } from '@kwarc/ftml-viewer';
-import {  ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
-import { LectureEntry } from '@alea/utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
+import { getCurrentTermForCourseId, LectureEntry } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000;
 export const CACHED_VIDEO_SLIDESMAP: Record<
@@ -21,7 +20,6 @@ export const CACHED_VIDEO_SLIDESMAP: Record<
     >
   >
 > = {};
-
 
 let CACHE_REFRESH_TIME: number | undefined = undefined;
 let CACHE_PROMISE: Promise<void> | null = null;
@@ -71,7 +69,7 @@ async function getVideoToSlidesMap(courseId: string) {
   return CACHED_VIDEO_SLIDESMAP[courseId];
 }
 
-function getAllSections(data: FTML.TOCElem, level = 0): SectionInfo | SectionInfo[] | undefined {
+function getAllSections(data: FTML.TocElem, level = 0): SectionInfo | SectionInfo[] | undefined {
   const { type } = data;
   if (type === 'Paragraph' || type === 'Slide') return undefined;
   if (type === 'Section') {
@@ -133,10 +131,16 @@ export function addCoverageInfo(sections: SectionInfo[], snaps: LectureEntry[]) 
   return;
 }
 
-function addClipInfo(allSections: SectionInfo[], videoSlides:  Record<string, {
-    extracted_content: Record<string, ClipMetadata>;
-}> ) {
-  if(!videoSlides)return;
+function addClipInfo(
+  allSections: SectionInfo[],
+  videoSlides: Record<
+    string,
+    {
+      extracted_content: Record<string, ClipMetadata>;
+    }
+  >
+) {
+  if (!videoSlides) return;
   const clipDataMap: { [sectionId: string]: { [slideUri: number]: ClipInfo[] } } = {};
   Object.entries(videoSlides).forEach(
     ([videoId, videoData]: [
@@ -191,7 +195,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { notes } = courses[courseId];
 
-  const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
   const allSections: SectionInfo[] = [];
   for (const elem of tocContent) {
     const elemSections = getAllSections(elem);
@@ -201,7 +205,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const coverageData = (getCoverageData()[courseId] ?? []).filter((snap) => snap.sectionUri);
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
-  const currentTermVideoSlides=videoSlides[currentTerm];
+  const currentTermVideoSlides = videoSlides?.[currentTerm];
   if (currentTermVideoSlides && Object.keys(currentTermVideoSlides).length > 0) {
     addClipInfo(allSections, currentTermVideoSlides);
   }

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, CircularProgress } from '@mui/material';
 import { BG_COLOR, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
@@ -8,7 +8,7 @@ import { ContentDashboard } from './ContentDashboard';
 import { getLocaleObject } from './lang/utils';
 import { LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { PerSectionQuiz } from './PerSectionQuiz';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { getCourseProblemCounts } from '@alea/spec';
 
 export function DocProblemBrowser({
@@ -33,7 +33,7 @@ export function DocProblemBrowser({
     uri: '',
   });
   const [problemCounts, setProblemCounts] = useState<{ [id: string]: number }>({});
-  const [toc, setToc] = useState<FTML.TOCElem[]>([]);
+  const [toc, setToc] = useState<FTML.TocElem[]>([]);
 
   // TODO ALEA4-P1
   //const ancestors = getAncestors(undefined, undefined, selectedSection, docSections);
@@ -47,11 +47,9 @@ export function DocProblemBrowser({
 
   useEffect(() => {
     if (!notesDocUri) return;
-    getFlamsServer()
-      .contentToc({ uri: notesDocUri })
-      .then(([_, toc] = [[], []]) => {
-        setToc(toc);
-      });
+    contentToc({ uri: notesDocUri }).then(([_, toc] = [[], []]) => {
+      setToc(toc);
+    });
   }, [notesDocUri]);
 
   useEffect(() => {
@@ -92,7 +90,7 @@ export function DocProblemBrowser({
         {/*ancestors?.length && (
           <h3>
             <span style={{ color: 'gray' }}>{t.problemsFor}</span> // TODO ALEA4-P1
-            // mmtHTMLToReact(ancestors[ancestors.length - 1].title ?? '') 
+            // mmtHTMLToReact(ancestors[ancestors.length - 1].title ?? '')
           </h3>
         )}*/}
         {!selectedSection && (

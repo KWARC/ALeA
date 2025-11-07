@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -40,7 +40,7 @@ interface CoverageRowProps {
   originalIndex: number;
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   entries: LectureEntry[];
 }
 
@@ -77,7 +77,7 @@ function SectionTooltipContent({
   sectionCompleted,
 }: {
   shouldHighlightNoSection: boolean;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   sectionUri: string;
   sectionCompleted?: boolean;
 }) {
@@ -375,7 +375,7 @@ function CoverageRow({
 
 export function calculateLectureProgress(
   entries: LectureEntry[],
-  secInfo: Record<FTML.DocumentURI, SecInfo>
+  secInfo: Record<FTML.DocumentUri, SecInfo>
 ) {
   const sectionToIndex = new Map(Object.values(secInfo).map((s, i) => [s.uri, i]));
   // This is not post order. I think its simply pre-order. I just added this to get rid of compil errors.
@@ -462,7 +462,7 @@ const getProgressIcon = (status: string) => {
 interface CoverageTableProps {
   courseId: string;
   entries: LectureEntry[];
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
 }

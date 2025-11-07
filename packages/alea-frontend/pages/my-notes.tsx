@@ -5,7 +5,7 @@ import { PRIMARY_COL } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 
 export interface NotesSection {
   uri: string;

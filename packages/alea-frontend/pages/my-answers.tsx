@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -23,10 +23,7 @@ import {
   UserInfo,
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
-import {
-  GradingDisplay,
-  ProblemDisplay
-} from '@alea/stex-react-renderer';
+import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { NextPage } from 'next';

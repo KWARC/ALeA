@@ -18,7 +18,6 @@ import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
-import { getFlamsServer } from '@kwarc/ftml-react';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
@@ -39,7 +38,7 @@ const aleaFeatures = [
     description:
       'Empowering students to learn at their own speed, fostering independence and personalized progress.',
     description_de:
-      'Studenten selbst verwalten lassen, Selbstverwaltung und persönliches Fortschritt fördern.',
+      'Studierende in ihren eigenenen Tempi lernen lassen, Selbstverwaltung und persönlichen Fortschritt fördern.',
   },
   {
     img_url: '/University_Credits.png',
@@ -48,7 +47,7 @@ const aleaFeatures = [
     description:
       'Tailoring content and difficulty based on individual student performance, maximizing engagement and comprehension.',
     description_de:
-      'Inhalte und Schwierigkeit anpassen, basierend auf der individuellen Leistung des Studenten, um Engagement und Verstaendnis zu maximieren.',
+      'Inhalte und Schwierigkeit anpassen, basierend auf der individuellen Leistung der Studierenden, um Engagement und Verständnis zu maximieren.',
   },
   {
     img_url: '/up.png',
@@ -57,7 +56,7 @@ const aleaFeatures = [
     description:
       'Providing real-time insights into student advancement, facilitating targeted support and encouragement.',
     description_de:
-      'Schuelerfortschritt sehen, real-time Informationen über die Fortschritt der Studenten ermöglichen, Zielorientierte Unterstützung und Unterstützung ermöglichen.',
+      'Fortschritt Studierender sehen, real-time Informationen über den Fortschritt der Studierenden ermöglichen, Zielorientierte Unterstützung ermöglichen.',
   },
   {
     img_url: '/quiz.png',
@@ -66,7 +65,7 @@ const aleaFeatures = [
     description:
       'Offering interactive assessments in real-time, promoting active participation and immediate feedback for enhanced learning outcomes.',
     description_de:
-      'Interaktive Tests in Echtzeit bieten, aktive Teilnahme und sofortige Feedback fördern, um die Lernergebnisse zu verbessern.',
+      'Bietet interaktive Tests in Echtzeit, um aktive Teilnahme und sofortiges Feedback zu fördern, und die Lernergebnisse zu verbessern.',
   },
 ];
 

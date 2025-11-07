@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { conceptUriToName, getLeafConcepts, getLearningObjects, LoType } from '@alea/spec';
 import { LayoutWithFixedMenu } from '@alea/stex-react-renderer';

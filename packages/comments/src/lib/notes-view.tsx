@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
 import { Comment, getUserInfo } from '@alea/spec';
@@ -9,7 +9,7 @@ import { CommentReply } from './CommentReply';
 import styles from './comments.module.scss';
 import { CommentView } from './CommentView';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 
 export function NotesView({
   uri,
@@ -17,7 +17,7 @@ export function NotesView({
   selectedElement = undefined,
   allNotesMode = false,
 }: {
-  uri: FTML.URI;
+  uri: FTML.Uri;
   selectedText?: string;
   selectedElement?: any;
   allNotesMode?: boolean;

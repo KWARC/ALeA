@@ -85,7 +85,7 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
+      model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 150,

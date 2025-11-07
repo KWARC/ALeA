@@ -27,7 +27,7 @@ ENDPOINTS = [
     {"name": "LMP", "url": "https://lms.voll-ki.fau.de/lmp/activity"},
     {"name": "ALeA", "url": "https://courses.voll-ki.fau.de"},
 ]
-
+SKIPPED_ALERTS = [("LMP", "Request timed out")]
 
 class StatusTracker:
     """Tracks endpoint status and manages alert timings."""
@@ -82,6 +82,22 @@ class StatusTracker:
             endpoint_status["current_error"] = error_msg
 
         self._save_status()
+
+    def is_down(self, endpoint_name: str) -> Tuple[bool, int]:
+        """Return (is_down, outage_minutes) based on last known state."""
+        endpoint_status = self.status_data.get("endpoints", {}).get(endpoint_name)
+        if endpoint_status is None:
+            return False, 0
+        last_success_time = endpoint_status.get("last_success_time")
+        last_failure_time = endpoint_status.get("last_failure_time")
+        if (
+            last_success_time is not None
+            and last_failure_time is not None
+            and last_success_time < last_failure_time
+        ):
+            minutes = int(round((time.time() - last_success_time) / 60))
+            return True, minutes
+        return False, 0
 
     def should_send_alert(self, endpoint_name: str) -> Tuple[bool, str]:
         """
@@ -138,7 +154,7 @@ def send_alert(message: str) -> bool:
     }
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
         response.raise_for_status()
         print(f"Alert sent successfully: {message[:50]}...")
         return True
@@ -166,7 +182,7 @@ def check_endpoint(endpoint: dict, retries: int = 3) -> Tuple[bool, Optional[str
                 print(f"✓ {endpoint['name']}: OK (Status {response.status_code})")
                 return True, None
             else:
-                error_msg = f"Expected status 2XX, got {response.status_code}"
+                error_msg = f"Expected: 2XX, Got: {response.status_code}"
                 if attempt < retries - 1:
                     print(
                         f"✗ {endpoint['name']}: {error_msg} (Attempt {attempt + 1}/{retries})"
@@ -212,26 +228,44 @@ def main():
     status_tracker = StatusTracker(MONITOR_STATUS_FILE)
     failures = []
     alerts_to_send = []
+    recoveries_to_send = []
     for endpoint in ENDPOINTS:
         success, error_msg = check_endpoint(endpoint)
         name, url = endpoint["name"], endpoint["url"]
+        # Check prior state before updating
+        was_down, outage_minutes = status_tracker.is_down(name)
+
         status_tracker.update_status(name, success, error_msg)
         if not success:
             failures.append((name, url, error_msg))
             should_send, reason = status_tracker.should_send_alert(name)
             if should_send:
                 alerts_to_send.append((name, url, error_msg, reason))
+        elif was_down:
+            recoveries_to_send.append((name, url, outage_minutes))
 
     # Send alerts if needed
     for name, url, error, reason in alerts_to_send:
-        alert_message = f"🚨 MONITOR ALERT: {name} is down with error: {error}\n"
-        alert_message += f"  URL: {url}\n  {reason}\n"
+        alert_message = f"🚨 {name} is down. {error}\n"
+        alert_message += f"URL: {url}\n{reason}".strip()
+
+        if (name, error) in SKIPPED_ALERTS:
+            print(f"SKIPPED ALERT: {name} is down. {error}")
+            continue
 
         alert_sent = send_alert(alert_message)
         if alert_sent:
             status_tracker.record_alert_sent(name)
         else:
             print(f"WARNING: Failed to send alert for {name}")
+
+    # Send recovery alerts if needed
+    for name, url, outage_minutes in recoveries_to_send:
+        recovery_message = f"✅ {name} is back up after ~{outage_minutes}min downtime\n"
+
+        recovery_sent = send_alert(recovery_message)
+        if not recovery_sent:
+            print(f"WARNING: Failed to send recovery alert for {name}")
 
 
 if __name__ == "__main__":

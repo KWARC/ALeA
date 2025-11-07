@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
 import {
   Comment,
@@ -14,11 +14,11 @@ import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {
-  uri?: FTML.URI;
+  uri?: FTML.Uri;
   isPrivateNote: boolean;
   postAnonymously: boolean;
   parentId?: number;

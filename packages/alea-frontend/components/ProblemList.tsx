@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { getCourseProblemCounts } from '@alea/spec';
 
 interface TitleMetadata {
@@ -26,7 +26,7 @@ interface TitleMetadata {
 }
 
 const extractTitlesAndSectionUri = (
-  toc: FTML.TOCElem | null,
+  toc: FTML.TocElem | null,
   chapterTitle = ''
 ): TitleMetadata[] => {
   if (!toc || toc.type === 'Paragraph' || toc.type === 'Slide') {
@@ -50,7 +50,7 @@ const extractTitlesAndSectionUri = (
 };
 
 interface ProblemListProps {
-  courseSections: FTML.TOCElem[];
+  courseSections: FTML.TocElem[];
   courseId: string;
 }
 
