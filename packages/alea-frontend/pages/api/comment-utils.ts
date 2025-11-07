@@ -202,16 +202,3 @@ export function checkIfQueryParameterExistOrSetError(
   }
   return true;
 }
-
-export async function executeApiAndSet500OnError(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  fn: () => Promise<void>
-) {
-  try {
-    await fn();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-}
