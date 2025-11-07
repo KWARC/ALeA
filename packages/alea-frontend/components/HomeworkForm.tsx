@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { getLocaleObject } from '../lang/utils';
 import { QuizFileReader } from './QuizFileReader';
 import { FTMLProblemWithSolution } from '@alea/spec';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { SafeHtml } from '@alea/react-utils';
 
 const HomeworkForm = ({
@@ -31,7 +31,7 @@ const HomeworkForm = ({
   feedbackReleaseTs: Date;
   setFeedbackReleaseTs: (value: Date) => void;
   setTitle: (title: string) => void;
-  setCss: (css: FTML.CSS[]) => void;
+  setCss: (css: FTML.Css[]) => void;
   problems: Record<string, FTMLProblemWithSolution>;
   setProblems: (problems: Record<string, FTMLProblemWithSolution>) => void;
   id: number | null;

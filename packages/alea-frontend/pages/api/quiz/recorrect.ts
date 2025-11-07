@@ -11,7 +11,7 @@ import { updateQuizRecorrectionInfo } from './update-quiz';
 import { checkIfPostOrSetError } from '../comment-utils';
 import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 
 export interface GradingDbData {
   gradingId: number;

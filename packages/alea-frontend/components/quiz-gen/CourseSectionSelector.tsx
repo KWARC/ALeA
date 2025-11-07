@@ -8,7 +8,7 @@ import {
   getProblemsPerSection,
 } from '@alea/spec';
 import { CourseInfo, CoverageTimeline } from '@alea/utils';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 import {
   Box,
   Button,
@@ -93,7 +93,7 @@ export const CourseSectionSelector = ({
       const notesUri = courseInfo.notes;
       setLoadingSections(true);
       try {
-        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
         const formattedSections = toc.flatMap((entry) =>
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );
@@ -180,7 +180,6 @@ export const CourseSectionSelector = ({
           })
         );
         setGeneratedProblems(parsedProblems);
-        
       } catch (err) {
         console.error('Error in fetchInitialData:', err);
       } finally {

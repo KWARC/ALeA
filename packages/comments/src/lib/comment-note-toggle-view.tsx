@@ -9,8 +9,7 @@ import { useState } from 'react';
 import { CommentSection } from './comment-section';
 import { getLocaleObject } from './lang/utils';
 import { NotesView } from './notes-view';
-import {FTML} from '@kwarc/ftml-viewer';
-
+import { FTML } from '@flexiformal/ftml';
 
 function TabPanel(props: { children?: React.ReactNode; index: number; value: number }) {
   const { children, value, index, ...other } = props;
@@ -34,7 +33,7 @@ export function CommentNoteToggleView({
   allNotesMode = false,
   extraPanel = undefined,
 }: {
-  uri: FTML.URI;
+  uri: FTML.Uri;
   defaultPrivate: boolean;
   selectedText?: string;
   selectedElement?: any;

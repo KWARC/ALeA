@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { Box, Button, Link, Typography } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -19,6 +19,7 @@ import {
   GenericCognitiveValues,
   NumericCognitiveValues,
   SHOW_DIMENSIONS,
+  conceptUriToName,
   getFTMLForConceptView,
   getProblemsForConcept,
   uriWeightToSmileyLevel,
@@ -122,7 +123,7 @@ function QuizButton({ uri }: { uri: string }) {
 
 export function ConceptView({ uri }: { uri: string }) {
   const html = getFTMLForConceptView(uri);
-  return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html }} />;
+  return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
 }
 
 export function CompetencyTable({

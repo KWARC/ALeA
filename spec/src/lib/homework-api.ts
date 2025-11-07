@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { HomeworkInfo, HomeworkPhase, HomeworkStatsInfo, HomeworkStub } from './homework';
 import { getAuthHeaders } from './lmp';
 import { GradingInfo } from './nap';

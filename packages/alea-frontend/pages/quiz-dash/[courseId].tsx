@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
@@ -23,6 +23,7 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
 
+//DM: uri:undefined should be discouraged
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
   return (
@@ -37,7 +38,10 @@ function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
           }}
         >
           <Box>
-            <FTMLFragment key={title} fragment={{ type: 'HtmlString', html: title }} />
+            <FTMLFragment
+              key={title}
+              fragment={{ type: 'HtmlString', html: title, uri: undefined }}
+            />
           </Box>
           <Box>
             <b>
@@ -172,7 +176,7 @@ const QuizDashPage: NextPage = () => {
     getCourseQuizList(courseId).then((res) => {
       const quizzes = res as QuizStubInfo[];
       for (const quiz of quizzes) {
-        for (const css of quiz.css || []) FTML.injectCss(css);
+        injectCss(quiz.css);
       }
       setQuizList(quizzes);
     });

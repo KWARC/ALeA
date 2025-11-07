@@ -1,19 +1,19 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { slides as getSlides, contentToc } from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
 import { Slide, SlideType, getCourseInfo } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const SLIDE_EXPIRY_TIME_MS = 20 * 60 * 1000; // 20 min
 interface SlidesWithCSS {
   slides: Slide[];
-  css: FTML.CSS[];
+  css: FTML.Css[];
 }
 interface CachedCourseSlides {
   timestamp: number;
   data: { [sectionId: string]: SlidesWithCSS };
 }
 
-function mergeIntoAccWithoutDuplicates(acc: FTML.CSS[], newCSS: FTML.CSS[]) {
+function mergeIntoAccWithoutDuplicates(acc: FTML.Css[], newCSS: FTML.Css[]) {
   const cssSet = new Set<string>(acc.map((css) => JSON.stringify(css)));
   (newCSS ?? []).forEach((cssItem) => {
     const cssString = JSON.stringify(cssItem);
@@ -27,13 +27,13 @@ function mergeIntoAccWithoutDuplicates(acc: FTML.CSS[], newCSS: FTML.CSS[]) {
 async function recursivelyExpandSlideElementsExcludeSections(
   slideElems: FTML.SlideElement[],
   sectionId: string
-): Promise<{ slides: Slide[]; css: FTML.CSS[] }> {
+): Promise<{ slides: Slide[]; css: FTML.Css[] }> {
   const elems: (Extract<FTML.SlideElement, { type: 'Paragraph' | 'Slide' }> | Slide)[] = [];
-  const accumulatedCSS: FTML.CSS[] = [];
+  const accumulatedCSS: FTML.Css[] = [];
 
   for (const slideElem of slideElems) {
     if (slideElem.type === 'Inputref') {
-      const slidesData = await getFlamsServer().slides({ uri: slideElem.uri });
+      const slidesData = await getSlides({ uri: slideElem.uri });
       if (slidesData?.length > 0) {
         const [css, slideElems] = slidesData;
         const result = await recursivelyExpandSlideElementsExcludeSections(slideElems, sectionId);
@@ -103,11 +103,11 @@ async function recursivelyExpandSlideElementsExcludeSections(
   return { slides: finalSlides, css: accumulatedCSS };
 }
 
-async function getSlidesFromToc(elems: FTML.TOCElem[], bySection: Record<string, SlidesWithCSS>) {
+async function getSlidesFromToc(elems: FTML.TocElem[], bySection: Record<string, SlidesWithCSS>) {
   for (const elem of elems) {
     if (elem.type === 'Section') {
       const secId = elem.id;
-      const slideData = await getFlamsServer().slides({ uri: elem.uri });
+      const slideData = await getSlides({ uri: elem.uri });
       if (slideData) {
         const [css, slideElems] = slideData;
         const result = await recursivelyExpandSlideElementsExcludeSections(slideElems, secId);
@@ -126,7 +126,7 @@ async function getSlidesFromToc(elems: FTML.TOCElem[], bySection: Record<string,
 }
 
 async function computeSlidesForDoc(notesUri: string) {
-  const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+  const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
   const bySection: { [sectionId: string]: SlidesWithCSS } = {};
   await getSlidesFromToc(toc, bySection);
   return bySection;

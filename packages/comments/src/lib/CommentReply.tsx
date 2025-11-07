@@ -1,8 +1,8 @@
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import { getUserInfo} from '@alea/spec';
-import { FTML } from '@kwarc/ftml-viewer';
+import { getUserInfo } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { EditView } from './EditView';
@@ -11,7 +11,7 @@ import { getLocaleObject } from './lang/utils';
 import { SelectedInfo } from './selected-info';
 
 interface CommentReplyProps {
-  uri?: FTML.URI;
+  uri?: FTML.Uri;
   isPrivateNote: boolean;
   parentId?: number;
   placeholder?: string;
@@ -63,11 +63,7 @@ export function CommentReply({
   ) : null;
 
   return (
-    <Box
-      hidden={hidden}
-      display={hidden ? 'none' : 'flex'}
-      alignItems="stretch"
-    >
+    <Box hidden={hidden} display={hidden ? 'none' : 'flex'} alignItems="stretch">
       {isPrivateNote ? (
         <TextSnippetIcon fontSize="large" color="secondary" />
       ) : (

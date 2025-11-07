@@ -1,8 +1,8 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 
 export interface SecInfo {
   id: string;
   title: string;
-  uri: FTML.DocumentURI;
+  uri: FTML.DocumentUri;
   duration?: number;
 }

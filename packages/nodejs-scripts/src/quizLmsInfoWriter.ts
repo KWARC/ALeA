@@ -1,5 +1,5 @@
-import {QuizWithStatus} from '@alea/spec';
-import {FTML} from '@kwarc/ftml-viewer'
+import { QuizWithStatus } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
 import { getAllQuizzes } from '@alea/node-utils';
 import fs from 'fs';
 
@@ -11,8 +11,8 @@ export interface Quiz {
 
 interface ProblemLmsInfo {
   total_points: number;
-  preconditions: [FTML.CognitiveDimension, FTML.SymbolURI][];
-  objectives: [FTML.CognitiveDimension, FTML.SymbolURI][];
+  preconditions: [FTML.CognitiveDimension, FTML.SymbolUri][];
+  objectives: [FTML.CognitiveDimension, FTML.SymbolUri][];
   // todo add more.
 }
 

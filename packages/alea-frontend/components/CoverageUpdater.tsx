@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   Box,
   Dialog,
@@ -22,7 +22,7 @@ import { UniversityDetail } from '@alea/utils';
 
 export function getSectionNameForUri(
   uri: string,
-  secInfo: Record<FTML.DocumentURI, SecInfo>
+  secInfo: Record<FTML.DocumentUri, SecInfo>
 ): string {
   const section = secInfo[uri];
   return section?.title.trim() || '';
@@ -43,7 +43,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   handleSaveSingle: (entry: LectureEntry) => void;
   handleDeleteSingle: (timestamp_ms: number) => void;
 }
@@ -68,7 +68,7 @@ export function CoverageUpdater({
     venue: '',
     venueLink: '',
     lectureEndTimestamp_ms: Date.now(),
-    sectionCompleted:false
+    sectionCompleted: false,
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);

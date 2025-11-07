@@ -1,5 +1,5 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
 import { getAuthHeaders } from '@alea/spec';
 import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios from 'axios';
@@ -7,16 +7,14 @@ import axios from 'axios';
 const THREE_BACKTICKS = '```';
 
 export interface SelectionContext {
-  fragmentUri: FTML.URI;
+  fragmentUri: FTML.Uri;
   fragmentKind: 'Section' | 'Paragraph' | 'Slide' | 'Problem'; // Keep alingned with FTML.FragmentKind
   source?: string;
 }
 async function addSources(context: SelectionContext[]): Promise<SelectionContext[]> {
   return await Promise.all(
     context.map((item) =>
-      getFlamsServer()
-        .sourceFile({ uri: item.fragmentUri })
-        .then((source) => ({ ...item, source }))
+      getSourceFile({ uri: item.fragmentUri }).then((source) => ({ ...item, source }))
     )
   );
 }

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import axios, { AxiosError } from 'axios';
 
 import { getAuthHeaders } from './lmp';

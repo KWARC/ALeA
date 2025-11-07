@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import List from '@mui/material/List';
@@ -89,7 +89,7 @@ function ItemBreadcrumbs({
               <a>
                 <FTMLFragment
                   key={item.header}
-                  fragment={{ type: 'HtmlString', html: item.header }}
+                  fragment={{ type: 'HtmlString', html: item.header, uri }}
                 />
               </a>
             </li>
@@ -115,7 +115,7 @@ function ItemBreadcrumbs({
               >
                 <FTMLFragment
                   key={dep.header}
-                  fragment={{ type: 'HtmlString', html: dep.header }}
+                  fragment={{ type: 'HtmlString', html: dep.header, uri: depUri }}
                 />
               </Button>
             );
@@ -175,7 +175,10 @@ function TourItemDisplay({
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
       <Box display="flex" alignItems="start" mt="15px" mb="5px" justifyContent="space-between">
         <h3 style={{ margin: 0 }}>
-          <FTMLFragment key={item.header} fragment={{ type: 'HtmlString', html: item.header }} />
+          <FTMLFragment
+            key={item.header}
+            fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+          />
         </h3>
         <Box mx="10px" height="30px" sx={{ whiteSpace: 'nowrap' }}>
           <Box display="flex" alignItems="center" gap="5px" zIndex={10}>
@@ -323,7 +326,10 @@ function listItemText(item: TourItem, isIntersecting: boolean) {
   return (
     <Box>
       <span style={{ fontWeight }}>
-        <FTMLFragment key={item.header} fragment={{ type: 'HtmlString', html: item.header }} />
+        <FTMLFragment
+          key={item.header}
+          fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+        />
       </span>
     </Box>
   );

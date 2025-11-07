@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
