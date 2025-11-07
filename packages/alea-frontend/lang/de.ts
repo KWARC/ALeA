@@ -455,6 +455,7 @@ export const de = {
   },
   calendarSection: {
     schedule: 'Vorlesungsplan',
+    personalCalendar: 'Persönlicher Kalender',
     tutorialSchedule: 'Tutorienplan',
     howToUse: 'So verwendest du es',
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,

@@ -190,10 +190,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   };
 
   const handleSaveNew = async () => {
-    if (!selectedScheduleType) {
-      alert('Please first select Lecture Schedule or Tutorial Schedule');
-      return;
-    }
+    if (!newEntry.lectureDay || !newEntry.lectureStartTime || !newEntry.lectureEndTime)
+      if (!selectedScheduleType) {
+        alert('Please first select Lecture Schedule or Tutorial Schedule');
+        return;
+      }
 
     const entryToSave =
       selectedScheduleType === 'lecture' ? lectureScheduleData : tutorialScheduleData;
@@ -202,7 +203,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       alert(t.requiredFieldsAlert);
       return;
     }
-    const scheduleType = selectedScheduleType;
     try {
       await addLectureSchedule({
         courseId,
@@ -303,9 +303,18 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             onChange={(e) => setSeriesIdState(e.target.value)}
             onKeyDown={async (e) => {
               if (e.key === 'Enter') {
-                await updateSeriesId({ courseId, instanceId, seriesId });
-                setSeriesIdState('');
-                // fetchLectures(); //todo
+                const confirmUpdate = confirm('Are you sure you want to update the Series ID?');
+                if (!confirmUpdate) return;
+
+                try {
+                  await updateSeriesId({ courseId, instanceId, seriesId });
+                  alert('Series ID updated successfully!');
+                  setSeriesIdState('');
+                  fetchLectures();
+                } catch (err) {
+                  console.error('Failed to update Series ID', err);
+                  alert('Failed to update Series ID. Please try again.');
+                }
               }
             }}
           />

@@ -490,6 +490,7 @@ export const en = {
   },
   calendarSection: {
     schedule: 'Lecture Schedule',
+    personalCalendar: 'Personal Calendar',
     tutorialSchedule: 'Tutorial Schedule',
     howToUse: 'How to use',
     howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
