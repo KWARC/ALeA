@@ -22,23 +22,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!updaterId) return;
 
-  const fieldName = scheduleType === 'tutorial' ? 'tutorialSchedule' : 'lectureSchedule';
+  const scheduleColumn = scheduleType === 'tutorial' ? 'tutorialSchedule' : 'lectureSchedule';
 
   const result = await executeAndEndSet500OnError(
-    `SELECT ${fieldName}
+    `SELECT ${scheduleColumn}
      FROM courseMetadata
      WHERE courseId = ? AND instanceId = ? AND updaterId = ?`,
     [courseId, instanceId, updaterId],
     res
   );
 
-  if (!result?.length || !result[0][fieldName]) {
+  if (!result?.length || !result[0][scheduleColumn]) {
     return res.status(404).end(`No ${scheduleType} schedule found`);
   }
 
   let schedule: LectureSchedule[];
   try {
-    schedule = JSON.parse(result[0][fieldName] || '[]');
+    schedule = JSON.parse(result[0][scheduleColumn] || '[]');
   } catch {
     return res.status(500).end('Failed to parse schedule JSON');
   }
@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const updateResult = await executeAndEndSet500OnError(
     `UPDATE courseMetadata
-     SET ${fieldName} = ?, updatedAt = CURRENT_TIMESTAMP
+     SET ${scheduleColumn} = ?, updatedAt = CURRENT_TIMESTAMP
      WHERE courseId = ? AND instanceId = ? AND updaterId = ?`,
     [JSON.stringify(filtered), courseId, instanceId, updaterId],
     res
