@@ -1,7 +1,7 @@
+import { Action, getCurrentTermForCourseId, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, ResourceName } from '@alea/utils';
+import { executeAndEndSet500OnError } from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -10,7 +10,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const quizId = req.query.quizId as string;
   const courseId = req.query.courseId as string;
-  const courseInstance = req.query.courseInstance as string;
+  let courseInstance = req.query.courseInstance as string;
+  if (!courseInstance) courseInstance = await getCurrentTermForCourseId(courseId);
+
   if (!quizId || !courseId || !courseInstance) {
     return res.status(422).send('Missing required fields: quizId, courseId, or courseInstance.');
   }
