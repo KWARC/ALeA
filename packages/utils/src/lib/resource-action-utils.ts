@@ -39,7 +39,7 @@ export enum ResourceName {
   // Announcement and course metadata resources
   COURSE_METADATA = 'COURSE_METADATA',
 
-  SYSADMIN_MONITOR_MESSAGE = 'SYSADMIN_MONITOR_MESSAGE',
+  //System-alert related resources
   SYSADMIN_SYSTEM_ALERT = 'SYSADMIN_SYSTEM_ALERT',
 }
 
@@ -216,15 +216,6 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
   },
 
   {
-    name: ResourceName.SYSADMIN_MONITOR_MESSAGE,
-    possibleActions: [Action.MUTATE],
-    components: [
-      { type: ComponentType.FIXED, value: 'sys-admin' },
-      { type: ComponentType.FIXED, value: 'monitor-message' },
-    ],
-  },
-
-  {
     name: ResourceName.SYSADMIN_SYSTEM_ALERT,
     possibleActions: [Action.MUTATE],
     components: [
@@ -269,6 +260,5 @@ export function isValidAction(actionId: Action, resourceName: ResourceName) {
 }
 
 export const SYSADMIN_RESOURCE_AND_ACTION = [
-  { resource: ResourceName.SYSADMIN_MONITOR_MESSAGE, action: Action.MUTATE },
   { resource: ResourceName.SYSADMIN_SYSTEM_ALERT, action: Action.MUTATE },
 ];

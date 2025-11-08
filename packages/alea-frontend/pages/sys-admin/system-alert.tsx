@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
@@ -112,7 +113,22 @@ const SysAdminSystemAlertPage: NextPage = () => {
     return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
+  if (loading) {
+    return (
+      <MainLayout>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '60vh',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
