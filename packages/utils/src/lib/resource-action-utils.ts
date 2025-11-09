@@ -38,6 +38,9 @@ export enum ResourceName {
 
   // Announcement and course metadata resources
   COURSE_METADATA = 'COURSE_METADATA',
+
+  //System-alert related resources
+  SYSTEM_ALERT = 'SYSTEM_ALERT',
 }
 
 export enum ComponentType {
@@ -211,6 +214,15 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'metadata' },
     ],
   },
+
+  {
+    name: ResourceName.SYSTEM_ALERT,
+    possibleActions: [Action.MUTATE],
+    components: [
+      { type: ComponentType.FIXED, value: 'sys-admin' },
+      { type: ComponentType.FIXED, value: 'system-alert' },
+    ],
+  },
 ];
 
 export const RESOURCE_TYPE_MAP = new Map<ResourceName, ResourceType>(
@@ -246,3 +258,7 @@ export function isValidAction(actionId: Action, resourceName: ResourceName) {
   }
   return resourceType.possibleActions.includes(actionId);
 }
+
+export const SYSADMIN_RESOURCE_AND_ACTION = [
+  { resource: ResourceName.SYSTEM_ALERT, action: Action.MUTATE },
+];
