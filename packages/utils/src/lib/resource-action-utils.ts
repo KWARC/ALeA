@@ -40,7 +40,7 @@ export enum ResourceName {
   COURSE_METADATA = 'COURSE_METADATA',
 
   //System-alert related resources
-  SYSADMIN_SYSTEM_ALERT = 'SYSADMIN_SYSTEM_ALERT',
+  SYSTEM_ALERT = 'SYSTEM_ALERT',
 }
 
 export enum ComponentType {
@@ -216,7 +216,7 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
   },
 
   {
-    name: ResourceName.SYSADMIN_SYSTEM_ALERT,
+    name: ResourceName.SYSTEM_ALERT,
     possibleActions: [Action.MUTATE],
     components: [
       { type: ComponentType.FIXED, value: 'sys-admin' },
@@ -260,5 +260,5 @@ export function isValidAction(actionId: Action, resourceName: ResourceName) {
 }
 
 export const SYSADMIN_RESOURCE_AND_ACTION = [
-  { resource: ResourceName.SYSADMIN_SYSTEM_ALERT, action: Action.MUTATE },
+  { resource: ResourceName.SYSTEM_ALERT, action: Action.MUTATE },
 ];

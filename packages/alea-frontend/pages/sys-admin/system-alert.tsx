@@ -57,7 +57,7 @@ const SysAdminSystemAlertPage: NextPage = () => {
     const checkAuthorization = async () => {
       try {
         const authorized = await canAccessResource(
-          ResourceName.SYSADMIN_SYSTEM_ALERT,
+          ResourceName.SYSTEM_ALERT,
           Action.MUTATE
         );
         setIsAuthorized(authorized);

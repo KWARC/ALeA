@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
-    ResourceName.SYSADMIN_SYSTEM_ALERT,
+    ResourceName.SYSTEM_ALERT,
     Action.MUTATE
   );
   if (!userId) return;

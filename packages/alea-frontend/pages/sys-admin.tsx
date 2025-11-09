@@ -303,7 +303,7 @@ const SysAdmin: NextPage = () => {
 
   useEffect(() => {
     const loadMonitor = async () => {
-      const allowed = await canAccessResource(ResourceName.SYSADMIN_SYSTEM_ALERT, Action.MUTATE);
+      const allowed = await canAccessResource(ResourceName.SYSTEM_ALERT, Action.MUTATE);
 
       setIsAuthorizedForSystemAlert(allowed);
 
