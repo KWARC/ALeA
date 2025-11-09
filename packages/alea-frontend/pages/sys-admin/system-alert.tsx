@@ -23,7 +23,15 @@ import {
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../../alea-frontend/layouts/MainLayout';
-import { getSystemAlert, updateSystemAlert, getMonitorStatus, AlertSeverity } from '@alea/spec';
+import {
+  getSystemAlert,
+  updateSystemAlert,
+  getMonitorStatus,
+  AlertSeverity,
+  canAccessResource,
+} from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
+import { useRouter } from 'next/router';
 
 interface EndpointStatus {
   last_success_time?: number;
@@ -42,8 +50,34 @@ const SysAdminSystemAlertPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
+    const checkAuthorization = async () => {
+      try {
+        const authorized = await canAccessResource(
+          ResourceName.SYSADMIN_SYSTEM_ALERT,
+          Action.MUTATE
+        );
+        setIsAuthorized(authorized);
+        if (!authorized) {
+          router.push('/');
+          return;
+        }
+      } catch (err) {
+        console.error('Authorization check failed:', err);
+        setIsAuthorized(false);
+        router.push('/');
+      }
+    };
+
+    checkAuthorization();
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthorized !== true) return;
+
     const fetchData = async () => {
       try {
         const [alertRes, monitorRes] = await Promise.all([getSystemAlert(), getMonitorStatus()]);
@@ -65,7 +99,7 @@ const SysAdminSystemAlertPage: NextPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthorized]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -113,7 +147,7 @@ const SysAdminSystemAlertPage: NextPage = () => {
     return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
   };
 
-  if (loading) {
+  if (isAuthorized === null || loading) {
     return (
       <MainLayout>
         <Box
@@ -128,6 +162,10 @@ const SysAdminSystemAlertPage: NextPage = () => {
         </Box>
       </MainLayout>
     );
+  }
+
+  if (!isAuthorized ) {
+    return null;
   }
 
   return (
