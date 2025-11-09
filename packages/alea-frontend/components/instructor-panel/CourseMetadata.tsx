@@ -1,9 +1,8 @@
 import { Box, Typography, Button, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
 import AnnouncementsTab from './Announcements';
-// import LectureScheduleTab from './LectureSchedule';
 import { generateLectureEntry } from '@alea/spec';
-import { LectureScheduleTab } from './LectureScheduleTab';
+import LectureScheduleTab from './LectureSchedule';
 
 interface CourseMetadataProps {
   courseId: string;

@@ -23,7 +23,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
 import {
   LectureSchedule,
-  ScheduleType,
   getLectureEntry,
   updateLectureEntry,
   deleteLectureEntry,
@@ -204,12 +203,25 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       return;
     }
     try {
+      const cleanEntry =
+        selectedScheduleType === 'lecture'
+          ? entryToSave
+          : {
+              lectureDay: entryToSave.lectureDay,
+              lectureStartTime: entryToSave.lectureStartTime,
+              lectureEndTime: entryToSave.lectureEndTime,
+              venue: entryToSave.venue,
+              venueLink: entryToSave.venueLink,
+            };
+
       await addLectureSchedule({
         courseId,
         instanceId,
-        lectureEntry: entryToSave,
+        lectureEntry: cleanEntry,
         scheduleType: selectedScheduleType,
       });
+
+      setNewEntry(initialNewEntry);
 
       if (selectedScheduleType === 'lecture') {
         setLectures((prev) => [...prev, entryToSave]);
@@ -301,20 +313,17 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             sx={{ width: 140 }}
             placeholder="4334"
             onChange={(e) => setSeriesIdState(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
-                const confirmUpdate = confirm('Are you sure you want to update the Series ID?');
-                if (!confirmUpdate) return;
-
-                try {
-                  await updateSeriesId({ courseId, instanceId, seriesId });
-                  alert('Series ID updated successfully!');
-                  setSeriesIdState('');
-                  fetchLectures();
-                } catch (err) {
-                  console.error('Failed to update Series ID', err);
-                  alert('Failed to update Series ID. Please try again.');
-                }
+            onBlur={async () => {
+              if (!seriesId.trim()) return;
+              const confirmUpdate = confirm('Are you sure you want to update the Series ID?');
+              if (!confirmUpdate) return;
+              try {
+                await updateSeriesId({ courseId, instanceId, seriesId });
+                alert('Series ID updated successfully!');
+                fetchLectures();
+              } catch (err) {
+                console.error('Failed to update Series ID', err);
+                alert('Failed to update Series ID. Please try again.');
               }
             }}
           />
