@@ -1,5 +1,6 @@
 import { DateView } from '@alea/react-utils';
 import {
+  canAccessResource,
   createResourceAction,
   deleteResourceAction,
   getAllResourceActions,
@@ -83,6 +84,7 @@ const SysAdmin: NextPage = () => {
       }
     >
   >({});
+  const [isAuthorizedForSystemAlert, setIsAuthorizedForSystemAlert] = useState(false);
 
   async function getAllResources() {
     try {
@@ -301,11 +303,22 @@ const SysAdmin: NextPage = () => {
 
   useEffect(() => {
     const loadMonitor = async () => {
+      const allowed = await canAccessResource(ResourceName.SYSADMIN_SYSTEM_ALERT, Action.MUTATE);
+
+      setIsAuthorizedForSystemAlert(allowed);
+
+      if (!allowed) return;
+
       try {
         const res = await getMonitorStatus();
         setMonitor(res.monitor ?? {});
-      } catch (e) {
-        console.error('Failed to load monitor data', e);
+        setIsAuthorizedForSystemAlert(true);
+      } catch (e: any) {
+        if (e?.response?.status === 403) {
+          setIsAuthorizedForSystemAlert(false);
+        } else {
+          console.error('Failed to load monitor data', e);
+        }
       }
     };
     loadMonitor();
@@ -359,62 +372,62 @@ const SysAdmin: NextPage = () => {
             </Button>
           </Link>
 
-          <Link href="/sys-admin/system-alert">
+          {isAuthorizedForSystemAlert && (
             <Button
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-              }}
+              sx={{ display: 'flex', alignItems: 'center' }}
               variant="contained"
               color="primary"
+              onClick={() => router.push('/sys-admin/system-alert')}
             >
               System Alert Page
             </Button>
-          </Link>
+          )}
         </Box>
         <RecorrectionChecker />
 
-        <Paper
-          sx={{
-            m: '0 auto',
-            maxWidth: '100%',
-            p: { xs: '15px', sm: '20px' },
-            boxSizing: 'border-box',
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            mt: 2,
-            mb: 2,
-          }}
-        >
-          <Typography fontSize={20} m="0 0 12px 0">
-            Monitor Status
-          </Typography>
+        {isAuthorizedForSystemAlert && (
+          <Paper
+            sx={{
+              m: '0 auto',
+              maxWidth: '100%',
+              p: { xs: '15px', sm: '20px' },
+              boxSizing: 'border-box',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              mt: 2,
+              mb: 2,
+            }}
+          >
+            <Typography fontSize={20} m="0 0 12px 0">
+              Monitor Status
+            </Typography>
 
-          {Object.keys(monitor).length === 0 ? (
-            <Typography color="text.secondary">No monitor data available.</Typography>
-          ) : (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}>
-              {Object.entries(monitor).map(([name, data], index) => {
-                const ls = data.last_success_time ?? 0;
-                const lf = data.last_failure_time ?? 0;
-                const isUp = ls > lf;
+            {Object.keys(monitor).length === 0 ? (
+              <Typography color="text.secondary">No monitor data available.</Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}>
+                {Object.entries(monitor).map(([name, data], index) => {
+                  const ls = data.last_success_time ?? 0;
+                  const lf = data.last_failure_time ?? 0;
+                  const isUp = ls > lf;
 
-                return (
-                  <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography sx={{ fontWeight: 600, mr: 0.5 }}>{name}</Typography>
-                    <Typography sx={{ mr: 1 }}>
-                      {isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}
-                    </Typography>
+                  return (
+                    <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography sx={{ fontWeight: 600, mr: 0.5 }}>{name}</Typography>
+                      <Typography sx={{ mr: 1 }}>
+                        {isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}
+                      </Typography>
 
-                    {index !== Object.keys(monitor).length - 1 && (
-                      <Typography sx={{ mx: 1 }}>|</Typography>
-                    )}
-                  </Box>
-                );
-              })}
-            </Box>
-          )}
-        </Paper>
+                      {index !== Object.keys(monitor).length - 1 && (
+                        <Typography sx={{ mx: 1 }}>|</Typography>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Paper>
+        )}
 
         <Box
           sx={{

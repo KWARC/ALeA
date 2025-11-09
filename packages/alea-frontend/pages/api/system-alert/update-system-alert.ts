@@ -1,18 +1,19 @@
+import { Action, ResourceName } from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
-import { Action, ResourceName, SYSADMIN_RESOURCE_AND_ACTION } from '@alea/utils';
+import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
+import { checkIfPostOrSetError } from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    checkIfPostOrSetError(req, res);
-
-    const userId = await getUserIdOrSetError(req, res);
-    if (!userId) return;
-    const allowed = SYSADMIN_RESOURCE_AND_ACTION.some(
-      (ra) => ra.resource === ResourceName.SYSADMIN_SYSTEM_ALERT && ra.action === Action.MUTATE
+    if (!checkIfPostOrSetError(req, res)) return;
+    const userId = await getUserIdIfAuthorizedOrSetError(
+      req,
+      res,
+      ResourceName.SYSADMIN_SYSTEM_ALERT,
+      Action.MUTATE
     );
-    if (!allowed) return res.status(403).send('Not authorized to update system alert');
+    if (!userId) return;
 
     const alertFile = process.env.ALEA_SYSTEM_ALERT_PATH;
     if (!alertFile) return res.status(500).send('Alert file path not configured');

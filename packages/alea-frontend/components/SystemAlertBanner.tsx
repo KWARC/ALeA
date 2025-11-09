@@ -1,5 +1,5 @@
 import { getSystemAlert } from '@alea/spec';
-import { Alert, AlertTitle, Box } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 type AlertType = 'error' | 'warning' | 'info' | 'success';
@@ -28,7 +28,6 @@ export default function SystemAlertBanner() {
   return (
     <Box sx={{ width: '100%', mt: 1 }}>
       <Alert severity={severity} sx={{ borderRadius: 0 }}>
-        <AlertTitle>System Notice</AlertTitle>
         {message}
       </Alert>
     </Box>

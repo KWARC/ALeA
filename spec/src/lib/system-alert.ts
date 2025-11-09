@@ -11,7 +11,6 @@ export interface EndpointStatus {
 export type MonitorStatus = Record<string, EndpointStatus>;
 
 export interface MonitorResponse {
-  message: string | null;
   monitor: MonitorStatus;
 }
 
