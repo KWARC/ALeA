@@ -1,20 +1,13 @@
+import { COURSES_INFO, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
 import {
-  batchGradeHex as flamsBatchGradeHex,
-  ProblemFeedbackJson,
   ArchiveIndex,
   Institution,
+  ProblemFeedbackJson,
+  batchGradeHex as flamsBatchGradeHex,
   index as flamsIndex,
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
-import { FTML } from '@flexiformal/ftml';
-import {
-  COURSES_INFO,
-  CURRENT_TERM,
-  CourseInfo,
-  createCourseInfo,
-  getParamFromUri,
-  waitForNSeconds,
-} from '@alea/utils';
 import axios from 'axios';
 import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './course-metadata-api';
 
@@ -71,14 +64,6 @@ export async function getDocIdx(institution?: string) {
     if (res) {
       CACHED_INSTITUTION_INDEX = res[0] as Institution[];
       CACHED_ARCHIVE_INDEX = res[1] as ArchiveIndex[];
-      CACHED_ARCHIVE_INDEX.forEach((doc) => {
-        if (doc.type === 'course') {
-          doc.instances = doc.instances?.map((i) => ({
-            ...i,
-            semester: i.semester.replace('/', '-'),
-          }));
-        }
-      });
     }
   }
   const archiveIndex = CACHED_ARCHIVE_INDEX || [];
