@@ -3,6 +3,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
@@ -21,7 +22,7 @@ import {
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -160,7 +161,6 @@ const CourseViewPage: NextPage = () => {
   const audioOnly = audioOnlyStr === 'true';
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
 
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
@@ -199,11 +199,11 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isEditableTarget = !!target && (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        (target as HTMLElement).isContentEditable
-      );
+      const isEditableTarget =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as HTMLElement).isContentEditable);
       if (isEditableTarget) return;
 
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -348,7 +348,7 @@ const CourseViewPage: NextPage = () => {
             zIndex: 2002,
             bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { 
+            '&:hover': {
               bgcolor: 'rgba(255, 255, 255, 0.3)',
             },
           }}
@@ -356,7 +356,7 @@ const CourseViewPage: NextPage = () => {
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" sx={{ opacity: 0.5}} />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
       <SearchDialog
@@ -390,15 +390,36 @@ const CourseViewPage: NextPage = () => {
         <Box display="flex" minHeight="100svh">
           <Box maxWidth="800px" margin="0 auto" width="100%" pl="4px">
             <Box display="flex" alignItems="center" justifyContent="space-between">
-              <ToggleModeButton
-                viewMode={viewMode}
-                updateViewMode={(mode) => {
-                  const modeStr = mode.toString();
-                  localStore?.setItem('defaultMode', modeStr);
-                  router.query.viewMode = modeStr;
-                  router.replace(router);
-                }}
-              />
+              <Box display="flex" alignItems="center">
+                <ToggleModeButton
+                  viewMode={viewMode}
+                  updateViewMode={(mode) => {
+                    const modeStr = mode.toString();
+                    localStore?.setItem('defaultMode', modeStr);
+                    router.query.viewMode = modeStr;
+                    router.replace(router);
+                  }}
+                />
+                {courses?.[courseId]?.slides && (
+                  <Tooltip title="Download slides PDF" placement="bottom">
+                    <IconButton
+                      color="primary"
+                      onClick={() => {
+                        const slides = courses?.[courseId]?.slides;
+                        const notes = courses?.[courseId]?.notes;
+                        const sourceUri = slides || notes;
+                        if (!sourceUri) return;
+                        const pdfUrl = getCoursePdfUrl(sourceUri);
+                        window.open(pdfUrl, '_blank');
+                      }}
+                      size="medium"
+                      aria-label="Download slides PDF"
+                    >
+                      <PictureAsPdfIcon fontSize="medium" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
               <Link href={courses[courseId]?.notesLink ?? ''} passHref>
                 <Button size="small" variant="contained" sx={{ mr: '10px' }}>
                   {t.notes}&nbsp;
