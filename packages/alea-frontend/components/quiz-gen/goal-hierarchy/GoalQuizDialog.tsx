@@ -3,11 +3,11 @@ import { CircularProgress, Dialog, DialogContent, DialogTitle, IconButton } from
 import { Close } from '@mui/icons-material';
 import { QuizPanel } from '../QuizPanel';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
-import { getFlamsServer } from '@kwarc/ftml-react';
 import { getSecInfo } from '../../coverage-update';
 import { getCourseInfo, getProblemsByGoal, UserInfo } from '@alea/spec';
 import { SecInfo } from 'packages/alea-frontend/types';
 import { CourseInfo } from '@alea/utils';
+import { contentToc } from '@flexiformal/ftml-backend';
 
 export const GoalQuizDialog = ({
   open,
@@ -38,10 +38,9 @@ export const GoalQuizDialog = ({
       if (!courseId) return;
       const courseInfo = courses?.[courseId as string];
       if (!courseInfo?.notes) return;
-      const notesUri = courseInfo.notes;
       setLoadingSections(true);
       try {
-        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
         const formattedSections = toc.flatMap((entry) =>
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );
