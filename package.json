@@ -15,7 +15,7 @@
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@flexiformal/ftml": "^0.0.20",
-    "@flexiformal/ftml-backend": "^0.0.3",
+    "@flexiformal/ftml-backend": "^0.0.4",
     "@flexiformal/ftml-react": "^0.0.21",
     "@jonkoops/matomo-tracker-react": "^0.7.0",
     "@mui/icons-material": "^6.1.10",
