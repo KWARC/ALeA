@@ -1,20 +1,20 @@
 import { CircularProgress } from '@mui/material';
 import { getCourseInfo } from '@alea/spec';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import ProblemList from '../../components/ProblemList';
 import MainLayout from '../../layouts/MainLayout';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 
 const CourseProblemsPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
-  const [sectionsData, setSectionsData] = useState<FTML.TOCElem[] | undefined>(undefined);
+  const [sectionsData, setSectionsData] = useState<FTML.TocElem[] | undefined>(undefined);
 
   useEffect(() => {
     getCourseInfo().then(setCourses);
@@ -29,7 +29,7 @@ const CourseProblemsPage: NextPage = () => {
         return;
       }
       const { notes } = courseInfo;
-      const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
+      const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
       setSectionsData(tocContent);
     }
     fetchSectionData();

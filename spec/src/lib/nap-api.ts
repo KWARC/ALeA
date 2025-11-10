@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { CURRENT_TERM } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { HomeworkInfo } from './homework';

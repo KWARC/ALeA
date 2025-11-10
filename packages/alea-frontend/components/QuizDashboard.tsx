@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import { OpenInNew } from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -48,7 +48,7 @@ import { QuizFileReader } from './QuizFileReader';
 import { QuizStatsDisplay } from './QuizStatsDisplay';
 import { RecorrectionDialog } from './RecorrectionDialog';
 import { useRouter } from 'next/router';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from './coverage-update';
 import { SecInfo } from '../types';
 
@@ -96,7 +96,7 @@ function getFormErrorReason(
   manuallySetPhase: string,
   problems: Record<string, FTMLProblemWithSolution>,
   title: string,
-  css: FTML.CSS[]
+  css: FTML.Css[]
 ) {
   const phaseTimes = [quizStartTs, quizEndTs, feedbackReleaseTs].filter((ts) => ts !== 0);
   for (let i = 0; i < phaseTimes.length - 1; i++) {
@@ -194,7 +194,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     endSecUri: string;
   }>({ startSecUri: '', endSecUri: '' });
   const [manuallySetPhase, setManuallySetPhase] = useState<Phase>(Phase.UNSET);
-  const [css, setCss] = useState<FTML.CSS[]>([]);
+  const [css, setCss] = useState<FTML.Css[]>([]);
   const [quizzes, setQuizzes] = useState<QuizWithStatus[]>([]);
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [stats, setStats] = useState<QuizStatsResponse>({
@@ -231,7 +231,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
-        for (const css of q.css || []) FTML.injectCss(css);
+        injectCss(q.css);
       }
       setQuizzes(allQuizzes);
       const validQuiz = allQuizzes.find((q) => q.id === quizId);
@@ -279,11 +279,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }, [selectedQuizId, quizzes]);
 
   useEffect(() => {
-    setQuizEndTs((prev) => Math.max(prev, quizStartTs));
-    setFeedbackReleaseTs((prev) => Math.max(prev, quizStartTs, quizEndTs));
-  }, [quizStartTs, quizEndTs]);
-
-  useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
       if (!currentTerm) return; 
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
@@ -320,7 +315,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         setCoverageTimeline(timelineData);
         const courseInfo = courseData?.[courseId];
         if (courseInfo?.notes) {
-          const toc = (await getFlamsServer().contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
+          const toc = (await contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
           const formattedSections = toc.flatMap((entry) =>
             getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
           );

@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import InfoIcon from '@mui/icons-material/Info';
 import {
   Box,
@@ -122,7 +122,11 @@ function QuizPerformanceTable({
                       <Link href={`/quiz/${quiz.quizId}`} style={{ marginRight: '5px' }}>
                         <FTMLFragment
                           key={quiz.title ?? ''}
-                          fragment={{ type: 'HtmlString', html: quiz.title ?? '<i>Untitled</i>' }}
+                          fragment={{
+                            type: 'HtmlString',
+                            html: quiz.title ?? '<i>Untitled</i>',
+                            uri: undefined,
+                          }}
                         />
                       </Link>
                       <RecorrectionInfoDisp
