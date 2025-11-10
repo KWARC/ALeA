@@ -95,14 +95,10 @@ export async function getDocIdx(institution?: string) {
   return [...filteredArchiveIndex, ...institutionIndex];
 }
 
-export async function getCouseIdsOfSemester(semester: string): Promise<string[]> {
-  const idx = await getDocIdx();
-  return idx.flatMap((doc) => {
-    if (doc.type !== DocIdxType.course) return [];
-    if (!doc.acronym) return [];
-    if (!doc.instances?.some((i) => i.semester === semester)) return [];
-    return [doc.acronym.toLowerCase()];
-  });
+export async function getCourseIdsOfSemester(semester: string): Promise<string[]> {
+  return Object.entries(COURSES_INFO)
+    .filter(([, info]) => info.instances?.some((i) => i.semester === semester))
+    .map(([courseId]) => courseId.toLowerCase());
 }
 
 export async function getCourseInfo(institution?: string) {

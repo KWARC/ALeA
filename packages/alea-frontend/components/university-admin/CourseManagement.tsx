@@ -12,7 +12,7 @@ import {
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../AclDisplay';
-import { createAcl, getCouseIdsOfSemester } from '@alea/spec';
+import { createAcl, getCourseIdsOfSemester } from '@alea/spec';
 
 interface CourseManagementProps {
   semester: string;
@@ -33,7 +33,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   useEffect(() => {
     async function fetchCoursesAndAcls() {
-      const courses = await getCouseIdsOfSemester(semester);
+      const courses = await getCourseIdsOfSemester(semester);
       setCourses(courses);
       const aclChecks: Record<string, boolean> = {};
       const aclIdMap: Record<string, string> = {};

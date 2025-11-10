@@ -1,4 +1,4 @@
-import { getDocIdx } from '@alea/spec';
+import { COURSES_INFO } from './courseInfo';
 
 export interface UniversityTermConfig {
   universityId: string;
@@ -38,32 +38,20 @@ export function getCurrentTermForUniversity(universityId: string): string {
 }
 
 export async function getCurrentTermByCourseId(): Promise<Record<string, string>> {
-  const allDocs = await getDocIdx();
   const currentTermByCourseId: Record<string, string> = {};
-  for (const doc of allDocs) {
-    if (doc.type === 'course' && doc.acronym) {
-      currentTermByCourseId[doc.acronym.toLowerCase()] = getCurrentTermForUniversity(
-        doc.institution ?? 'FAU'
-      );
-    }
+  for (const [courseId, info] of Object.entries(COURSES_INFO)) {
+    const key = courseId.toLowerCase();
+    const institution = info.institution ?? 'FAU';
+    currentTermByCourseId[key] = getCurrentTermForUniversity(institution);
   }
   return currentTermByCourseId;
 }
 
 export async function getCurrentTermForCourseId(courseId: string): Promise<string | null> {
-  try {
-    const allDocs = await getDocIdx();
-    for (const doc of allDocs) {
-      if (doc.type === 'course' && doc.acronym?.toLowerCase() === courseId.toLowerCase()) {
-        const institution = doc.institution;
-        if (institution) {
-          return getCurrentTermForUniversity(institution);
-        }
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching course info from cached data:', error);
-    return null;
-  }
+  const key = courseId.toLowerCase();
+  const info = COURSES_INFO[key];
+  if (!info) return null;
+  const institution = info.institution;
+  if (!institution) return null;
+  return getCurrentTermForUniversity(institution);
 }
