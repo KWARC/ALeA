@@ -261,6 +261,9 @@ def main():
 
     # Send recovery alerts if needed
     for name, url, outage_minutes in recoveries_to_send:
+        if outage_minutes < 6:
+            print(f"SKIPPED recovery message for {name}")
+            continue
         recovery_message = f"✅ {name} is back up after ~{outage_minutes}min downtime\n"
 
         recovery_sent = send_alert(recovery_message)

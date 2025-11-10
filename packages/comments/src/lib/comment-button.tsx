@@ -4,7 +4,7 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { Box, Button, Dialog, DialogActions, IconButton, Tooltip } from '@mui/material';
 import { Comment } from '@alea/spec';
 import { MystViewer } from '@alea/myst';
-import { useCommentRefresh } from '@alea/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getTotalComments } from './comment-helpers';

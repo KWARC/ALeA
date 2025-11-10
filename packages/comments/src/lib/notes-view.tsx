@@ -9,7 +9,7 @@ import { CommentReply } from './CommentReply';
 import styles from './comments.module.scss';
 import { CommentView } from './CommentView';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 
 export function NotesView({
   uri,

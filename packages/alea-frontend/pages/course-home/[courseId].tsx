@@ -5,6 +5,7 @@ import {
   getActiveAnnouncements,
   getCourseInfo,
   getCoverageTimeline,
+  getLectureEntry,
   getLectureSchedule,
   getUserInfo,
   LectureScheduleItem,
@@ -14,6 +15,7 @@ import {
   Action,
   BG_COLOR,
   CourseInfo,
+  getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
   isFauId,
   ResourceName,
@@ -26,6 +28,7 @@ import Diversity3Icon from '@mui/icons-material/Diversity3';
 import PersonIcon from '@mui/icons-material/Person';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -33,9 +36,11 @@ import {
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CircularProgress,
   IconButton,
+  Tooltip,
   InputAdornment,
   TextField,
   Typography,
@@ -173,16 +178,62 @@ function CourseScheduleSection({
 }) {
   const [nextLectureStartTime, setNextLectureStartTime] = useState<number | null>(null);
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
+  const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
   useEffect(() => {
     async function fetchSchedule() {
       if (!courseId || !currentTerm) return;
-      const data = await getLectureSchedule(courseId, currentTerm);
-      setLectureSchedule(data);
+
+      const toWeekdayIndexFromName = (name?: string) => {
+        if (!name) return 0;
+        const n = name.trim().toLowerCase();
+        if (n.startsWith('mon')) return 1;
+        if (n.startsWith('tue')) return 2;
+        if (n.startsWith('wed')) return 3;
+        if (n.startsWith('thu')) return 4;
+        if (n.startsWith('fri')) return 5;
+        if (n.startsWith('sat')) return 6;
+        if (n.startsWith('sun')) return 7;
+        return 0;
+      };
+
+      try {
+        if (typeof (getLectureEntry as any) === 'function') {
+          const data = await (getLectureEntry as any)({ courseId, instanceId: currentTerm });
+
+          const mapStoredToView = (item: any): LectureScheduleItem => ({
+            dayOfWeek: toWeekdayIndexFromName(item.lectureDay || item.day || item.dayOfWeek),
+            startTime: item.lectureStartTime ?? item.startTime ?? '',
+            endTime: item.lectureEndTime ?? item.endTime ?? '',
+            venue: item.venue,
+            venueLink: item.venueLink,
+          });
+
+          const lectures = Array.isArray(data?.lectureSchedule)
+            ? data.lectureSchedule.map(mapStoredToView)
+            : [];
+          const tutorials = Array.isArray(data?.tutorialSchedule)
+            ? data.tutorialSchedule.map(mapStoredToView)
+            : [];
+
+          setLectureSchedule(lectures);
+          setTutorialSchedule(tutorials);
+          return;
+        }
+
+        const fallback = await getLectureSchedule(courseId, currentTerm);
+        setLectureSchedule(Array.isArray(fallback) ? fallback : []);
+        setTutorialSchedule([]);
+      } catch (err) {
+        console.error('Failed to fetch schedules', err);
+        setLectureSchedule([]);
+        setTutorialSchedule([]);
+      }
     }
+
     fetchSchedule();
-  }, [currentTerm, courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function fetchNextLectureDates() {
@@ -314,7 +365,63 @@ function CourseScheduleSection({
             })}
           </Box>
         ) : null}
-        {/* <ExamSchedule examDates={examDates} /> */}
+
+        {tutorialSchedule.length > 0 && (
+          <Box
+            sx={{
+              px: { xs: 1, sm: 2 },
+              py: { xs: 1, sm: 1.5 },
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #e8f5e8, #f0f9ff)',
+              border: '1px solid #ffe0b2',
+              mt: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+              <CalendarMonthIcon sx={{ color: '#004d40', fontSize: '20px' }} />
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#004d40', fontSize: '1rem' }}>
+                Tutorial Schedule
+              </Typography>
+            </Box>
+
+            {tutorialSchedule.map((entry, idx) => (
+              <Box
+                key={idx}
+                sx={{
+                  mb: 1,
+                  p: 1,
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e0f2f1',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
+                    {getWeekdayName(entry.dayOfWeek)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
+                    🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#00695c' }}>
+                    📍Venue:{' '}
+                    {entry.venueLink ? (
+                      <a
+                        href={entry.venueLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'underline', color: '#004d40' }}
+                      >
+                        {entry.venue}
+                      </a>
+                    ) : (
+                      entry.venue
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        )}
 
         {userId && (
           <PersonalCalendarSection
@@ -401,10 +508,26 @@ const CourseHomePage: NextPage = () => {
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
+  const [seriesId, setSeriesId] = useState<string>('');
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
+
+  useEffect(() => {
+    if (!courseId || !currentTerm) return;
+
+    async function fetchSeries() {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        setSeriesId(data.seriesId || '');
+      } catch (e) {
+        console.error('Failed to load seriesId', e);
+      }
+    }
+
+    fetchSeries();
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getUserInfo().then((userInfo: UserInfo) => {
@@ -453,8 +576,17 @@ const CourseHomePage: NextPage = () => {
     return <>Course Not Found!</>;
   }
 
-  const { notesLink, slidesLink, cardsLink, forumLink, quizzesLink, hasQuiz, notes, landing } =
-    courseInfo;
+  const {
+    notesLink,
+    slidesLink,
+    cardsLink,
+    forumLink,
+    quizzesLink,
+    hasQuiz,
+    notes,
+    landing,
+    slides,
+  } = courseInfo;
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
@@ -507,14 +639,52 @@ const CourseHomePage: NextPage = () => {
           gap="10px"
           ref={containerRef}
         >
-          <CourseComponentLink href={notesLink}>
-            {t.notes}&nbsp;
-            <ArticleIcon fontSize="large" />
-          </CourseComponentLink>
-          <CourseComponentLink href={slidesLink}>
-            {t.slides}&nbsp;
-            <SlideshowIcon fontSize="large" />
-          </CourseComponentLink>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
+            <Button
+              component={Link}
+              href={notesLink}
+              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              {t.notes}
+              <ArticleIcon fontSize="large" />
+            </Button>
+            {notes && (
+              <Tooltip title="View as PDF" arrow>
+                <Button
+                  onClick={() => {
+                    const pdfUrl = getCoursePdfUrl(notes);
+                    window.open(pdfUrl, '_blank');
+                  }}
+                  sx={{ minWidth: '48px', px: 1 }}
+                >
+                  <PictureAsPdfIcon fontSize="large" />
+                </Button>
+              </Tooltip>
+            )}
+          </ButtonGroup>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
+            <Button
+              component={Link}
+              href={slidesLink}
+              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              {t.slides}
+              <SlideshowIcon fontSize="large" />
+            </Button>
+            {slides && (
+              <Tooltip title="View as PDF" arrow>
+                <Button
+                  onClick={() => {
+                    const pdfUrl = getCoursePdfUrl(slides);
+                    window.open(pdfUrl, '_blank');
+                  }}
+                  sx={{ minWidth: '48px', px: 1 }}
+                >
+                  <PictureAsPdfIcon fontSize="large" />
+                </Button>
+              </Tooltip>
+            )}
+          </ButtonGroup>
           <CourseComponentLink href={cardsLink}>
             {t.cards}&nbsp;{' '}
             <Image src="/noun-flash-cards-2494102.svg" width={35} height={35} alt="" />

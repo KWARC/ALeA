@@ -1,14 +1,16 @@
 import { DateView } from '@alea/react-utils';
 import {
+  canAccessResource,
   createResourceAction,
   deleteResourceAction,
   getAllResourceActions,
   getCourseInfo,
+  getMonitorStatus,
   isUserMember,
   isValid,
   recomputeMemberships,
   UpdateResourceAction,
-  updateResourceAction
+  updateResourceAction,
 } from '@alea/spec';
 import {
   Action,
@@ -73,6 +75,16 @@ const SysAdmin: NextPage = () => {
   } | null>(null);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [monitor, setMonitor] = useState<
+    Record<
+      string,
+      {
+        last_success_time?: number;
+        last_failure_time?: number;
+      }
+    >
+  >({});
+  const [isAuthorizedForSystemAlert, setIsAuthorizedForSystemAlert] = useState(false);
 
   async function getAllResources() {
     try {
@@ -278,6 +290,40 @@ const SysAdmin: NextPage = () => {
     }
   };
 
+  const formatDowntime = (lastSuccessSec?: number) => {
+    if (!lastSuccessSec) return '—';
+    const diffSec = Math.floor(Date.now() / 1000 - lastSuccessSec);
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const mins = Math.floor(diffSec / 60);
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    const remMin = mins % 60;
+    return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
+  };
+
+  useEffect(() => {
+    const loadMonitor = async () => {
+      const allowed = await canAccessResource(ResourceName.SYSTEM_ALERT, Action.MUTATE);
+
+      setIsAuthorizedForSystemAlert(allowed);
+
+      if (!allowed) return;
+
+      try {
+        const res = await getMonitorStatus();
+        setMonitor(res.monitor ?? {});
+        setIsAuthorizedForSystemAlert(true);
+      } catch (e: any) {
+        if (e?.response?.status === 403) {
+          setIsAuthorizedForSystemAlert(false);
+        } else {
+          console.error('Failed to load monitor data', e);
+        }
+      }
+    };
+    loadMonitor();
+  }, []);
+
   return (
     <MainLayout>
       <Box
@@ -289,33 +335,100 @@ const SysAdmin: NextPage = () => {
           boxSizing: 'border-box',
         }}
       >
-        <Button
+        <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'center',
             alignItems: 'center',
-            margin: '20px auto',
+            gap: 2,
+            mt: 2,
+            mb: 3,
           }}
-          variant="contained"
-          color="primary"
-          disabled={isRecomputing}
-          onClick={() => handleRecomputeClick()}
         >
-          Recompute Memberships
-        </Button>
-        <Link href={`/acl`}>
           <Button
             sx={{
               display: 'flex',
               alignItems: 'center',
-              margin: '10px auto',
             }}
             variant="contained"
             color="primary"
+            disabled={isRecomputing}
+            onClick={() => handleRecomputeClick()}
           >
-            ACL Page
+            Recompute Memberships
           </Button>
-        </Link>
+
+          <Link href={`/acl`}>
+            <Button
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              variant="contained"
+              color="primary"
+            >
+              ACL Page
+            </Button>
+          </Link>
+
+          {isAuthorizedForSystemAlert && (
+            <Button
+              sx={{ display: 'flex', alignItems: 'center' }}
+              variant="contained"
+              color="primary"
+              onClick={() => router.push('/sys-admin/system-alert')}
+            >
+              System Alert Page
+            </Button>
+          )}
+        </Box>
         <RecorrectionChecker />
+
+        {isAuthorizedForSystemAlert && (
+          <Paper
+            sx={{
+              m: '0 auto',
+              maxWidth: '100%',
+              p: { xs: '15px', sm: '20px' },
+              boxSizing: 'border-box',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              mt: 2,
+              mb: 2,
+            }}
+          >
+            <Typography fontSize={20} m="0 0 12px 0">
+              Monitor Status
+            </Typography>
+
+            {Object.keys(monitor).length === 0 ? (
+              <Typography color="text.secondary">No monitor data available.</Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}>
+                {Object.entries(monitor).map(([name, data], index) => {
+                  const ls = data.last_success_time ?? 0;
+                  const lf = data.last_failure_time ?? 0;
+                  const isUp = ls > lf;
+
+                  return (
+                    <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography sx={{ fontWeight: 600, mr: 0.5 }}>{name}</Typography>
+                      <Typography sx={{ mr: 1 }}>
+                        {isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}
+                      </Typography>
+
+                      {index !== Object.keys(monitor).length - 1 && (
+                        <Typography sx={{ mx: 1 }}>|</Typography>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Paper>
+        )}
+
         <Box
           sx={{
             m: '0 auto',

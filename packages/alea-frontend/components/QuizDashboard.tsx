@@ -279,11 +279,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }, [selectedQuizId, quizzes]);
 
   useEffect(() => {
-    setQuizEndTs((prev) => Math.max(prev, quizStartTs));
-    setFeedbackReleaseTs((prev) => Math.max(prev, quizStartTs, quizEndTs));
-  }, [quizStartTs, quizEndTs]);
-
-  useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
       if (!currentTerm) return; 
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
