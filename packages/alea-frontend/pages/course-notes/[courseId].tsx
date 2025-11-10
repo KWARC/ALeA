@@ -16,7 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import { getCourseInfo } from '@alea/spec';
 import { CommentButton } from '@alea/comments';
 import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
-import { CourseInfo, getCoursePdfUrl, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -24,7 +24,6 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
 import Tooltip from '@mui/material/Tooltip';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
   return (
@@ -165,31 +164,6 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <Tooltip title="View as PDF" placement="left-start">
-        <IconButton
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 128,
-            right: 24,
-            zIndex: 2002,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
-            boxShadow: 3,
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
-            },
-          }}
-          onClick={() => {
-            if (!notes) return;
-            const pdfUrl = getCoursePdfUrl(notes);
-            window.open(pdfUrl, '_blank');
-          }}
-          size="large"
-          aria-label="View as PDF"
-        >
-          <PictureAsPdfIcon fontSize="large" sx={{ opacity: 0.5 }} />
-        </IconButton>
-      </Tooltip>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"

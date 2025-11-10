@@ -22,14 +22,7 @@ import {
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  getCoursePdfUrl,
-  localStore,
-  ResourceName,
-  shouldUseDrawer,
-} from '@alea/utils';
+import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -343,8 +336,6 @@ const CourseViewPage: NextPage = () => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
   };
-  
-
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
@@ -399,49 +390,40 @@ const CourseViewPage: NextPage = () => {
         <Box display="flex" minHeight="100svh">
           <Box maxWidth="800px" margin="0 auto" width="100%" pl="4px">
             <Box display="flex" alignItems="center" justifyContent="space-between">
-              <ToggleModeButton
-                viewMode={viewMode}
-                updateViewMode={(mode) => {
-                  const modeStr = mode.toString();
-                  localStore?.setItem('defaultMode', modeStr);
-                  router.query.viewMode = modeStr;
-                  router.replace(router);
-                }}
-              />
-              <Link href={courses[courseId]?.notesLink ?? ''} passHref>
-                <Button
-                  size="small"
-                  variant="contained"
-                  sx={{
-                    mr: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 1,
-                    minWidth: '140px',
+              <Box display="flex" alignItems="center">
+                <ToggleModeButton
+                  viewMode={viewMode}
+                  updateViewMode={(mode) => {
+                    const modeStr = mode.toString();
+                    localStore?.setItem('defaultMode', modeStr);
+                    router.query.viewMode = modeStr;
+                    router.replace(router);
                   }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {t.notes}
-                    <ArticleIcon />
-                  </span>
-                  {courses?.[courseId]?.notes && (
-                    <Tooltip title="View as PDF" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const notes = courses?.[courseId]?.notes;
-                          if (!notes) return;
-                          const pdfUrl = getCoursePdfUrl(notes);
-                          window.open(pdfUrl, '_blank');
-                        }}
-                      >
-                        <PictureAsPdfIcon fontSize="medium" sx={{ color: 'white' }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
+                />
+                {courses?.[courseId]?.slides && (
+                  <Tooltip title="Download slides PDF" placement="bottom">
+                    <IconButton
+                      color="primary"
+                      onClick={() => {
+                        const slides = courses?.[courseId]?.slides;
+                        const notes = courses?.[courseId]?.notes;
+                        const sourceUri = slides || notes;
+                        if (!sourceUri) return;
+                        const pdfUrl = getCoursePdfUrl(sourceUri);
+                        window.open(pdfUrl, '_blank');
+                      }}
+                      size="medium"
+                      aria-label="Download slides PDF"
+                    >
+                      <PictureAsPdfIcon fontSize="medium" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+              <Link href={courses[courseId]?.notesLink ?? ''} passHref>
+                <Button size="small" variant="contained" sx={{ mr: '10px' }}>
+                  {t.notes}&nbsp;
+                  <ArticleIcon />
                 </Button>
               </Link>
             </Box>

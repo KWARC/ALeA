@@ -35,6 +35,7 @@ import {
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CircularProgress,
   IconButton,
@@ -456,8 +457,17 @@ const CourseHomePage: NextPage = () => {
     return <>Course Not Found!</>;
   }
 
-  const { notesLink, slidesLink, cardsLink, forumLink, quizzesLink, hasQuiz, notes, landing } =
-    courseInfo;
+  const {
+    notesLink,
+    slidesLink,
+    cardsLink,
+    forumLink,
+    quizzesLink,
+    hasQuiz,
+    notes,
+    landing,
+    slides,
+  } = courseInfo;
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
@@ -510,36 +520,52 @@ const CourseHomePage: NextPage = () => {
           gap="10px"
           ref={containerRef}
         >
-          <Link href={notesLink}>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
             <Button
-              variant="contained"
-              sx={{ width: '100%', height: '48px', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              component={Link}
+              href={notesLink}
+              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {t.notes}
-                <ArticleIcon fontSize="large" />
-              </span>
-              {notes && (
-                <Tooltip title="View as PDF" arrow>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const pdfUrl = getCoursePdfUrl(notes);
-                      window.open(pdfUrl, '_blank');
-                    }}
-                  >
-                    <PictureAsPdfIcon fontSize="large" sx={{ color: 'white' }} />
-                  </IconButton>
-                </Tooltip>
-              )}
+              {t.notes}
+              <ArticleIcon fontSize="large" />
             </Button>
-          </Link>
-          <CourseComponentLink href={slidesLink}>
-            {t.slides}&nbsp;
-            <SlideshowIcon fontSize="large" />
-          </CourseComponentLink>
+            {notes && (
+              <Tooltip title="View as PDF" arrow>
+                <Button
+                  onClick={() => {
+                    const pdfUrl = getCoursePdfUrl(notes);
+                    window.open(pdfUrl, '_blank');
+                  }}
+                  sx={{ minWidth: '48px', px: 1 }}
+                >
+                  <PictureAsPdfIcon fontSize="large" />
+                </Button>
+              </Tooltip>
+            )}
+          </ButtonGroup>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
+            <Button
+              component={Link}
+              href={slidesLink}
+              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              {t.slides}
+              <SlideshowIcon fontSize="large" />
+            </Button>
+            {slides && (
+              <Tooltip title="View as PDF" arrow>
+                <Button
+                  onClick={() => {
+                    const pdfUrl = getCoursePdfUrl(slides);
+                    window.open(pdfUrl, '_blank');
+                  }}
+                  sx={{ minWidth: '48px', px: 1 }}
+                >
+                  <PictureAsPdfIcon fontSize="large" />
+                </Button>
+              </Tooltip>
+            )}
+          </ButtonGroup>
           <CourseComponentLink href={cardsLink}>
             {t.cards}&nbsp;{' '}
             <Image src="/noun-flash-cards-2494102.svg" width={35} height={35} alt="" />
