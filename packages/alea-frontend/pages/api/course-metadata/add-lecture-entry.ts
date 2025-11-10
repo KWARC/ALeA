@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-} from '../comment-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { ResourceName, Action } from '@alea/utils';
 import { AddLectureScheduleRequest } from '@alea/spec';
@@ -10,7 +7,8 @@ import { AddLectureScheduleRequest } from '@alea/spec';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { courseId, instanceId, lectureEntry } = req.body as AddLectureScheduleRequest;
+  const { courseId, instanceId, lectureEntry, scheduleType } =
+    req.body as AddLectureScheduleRequest;
 
   if (
     !courseId ||
@@ -18,7 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     !lectureEntry ||
     !lectureEntry.lectureDay ||
     !lectureEntry.lectureStartTime ||
-    !lectureEntry.lectureEndTime
+    !lectureEntry.lectureEndTime ||
+    !scheduleType
   ) {
     res.status(422).send('Missing required fields');
     return;
@@ -33,22 +32,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!updaterId) return;
 
+  const scheduleColumn = scheduleType === 'lecture' ? 'lectureSchedule' : 'tutorialSchedule';
+
   const existing = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+    `SELECT ${scheduleColumn} FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
 
-  let lectureSchedule: any[] = [];
-  if (existing?.length && existing[0].lectureSchedule) {
+  let scheduleData: any[] = [];
+  if (existing?.length && existing[0][scheduleColumn]) {
     try {
-      lectureSchedule = JSON.parse(existing[0].lectureSchedule);
+      scheduleData = JSON.parse(existing[0][scheduleColumn]);
     } catch {
-      lectureSchedule = [];
+      scheduleData = [];
     }
   }
 
-  const idx = lectureSchedule.findIndex(
+  const idx = scheduleData.findIndex(
     (e) =>
       e.lectureDay === lectureEntry.lectureDay &&
       e.lectureStartTime === lectureEntry.lectureStartTime &&
@@ -57,24 +58,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   if (idx >= 0) {
-    lectureSchedule[idx] = { ...lectureSchedule[idx], ...lectureEntry };
+    scheduleData[idx] = { ...scheduleData[idx], ...lectureEntry };
   } else {
-    lectureSchedule.push(lectureEntry);
+    scheduleData.push(lectureEntry);
   }
 
   if (existing?.length) {
     await executeAndEndSet500OnError(
       `UPDATE courseMetadata
-       SET lectureSchedule = ?, updaterId = ?, updatedAt = CURRENT_TIMESTAMP
+       SET ${scheduleColumn} = ?, updaterId = ?, updatedAt = CURRENT_TIMESTAMP
        WHERE courseId = ? AND instanceId = ?`,
-      [JSON.stringify(lectureSchedule), updaterId, courseId, instanceId],
+      [JSON.stringify(scheduleData), updaterId, courseId, instanceId],
       res
     );
   } else {
     await executeAndEndSet500OnError(
-      `INSERT INTO courseMetadata (courseId, instanceId, lectureSchedule, updaterId)
+      `INSERT INTO courseMetadata (courseId, instanceId, ${scheduleColumn}, updaterId)
        VALUES (?, ?, ?, ?)`,
-      [courseId, instanceId, JSON.stringify(lectureSchedule), updaterId],
+      [courseId, instanceId, JSON.stringify(scheduleData), updaterId],
       res
     );
   }
