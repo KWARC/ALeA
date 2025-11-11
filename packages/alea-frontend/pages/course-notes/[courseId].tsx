@@ -171,7 +171,7 @@ const CourseNotesPage: NextPage = () => {
             position: 'fixed',
             bottom: 64,
             right: 24,
-            zIndex: 2002,
+            zIndex: 1000,
             bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
             '&:hover': { 

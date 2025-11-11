@@ -42,6 +42,16 @@ export function getNotesLink(courseId: string) {
 export function getQuizzesLink(courseId: string) {
   return `/quiz-dash/${courseId}`;
 }
+export function getCoursePdfUrl(notesUri: string): string {
+  try {
+    const url = new URL(notesUri);
+    url.pathname = '/doc';
+    url.searchParams.set('format', 'pdf');
+    return url.toString();
+  } catch (e) {
+    return notesUri.replace('mathhub.info', 'mathhub.info/doc') + '&format=pdf';
+  }
+}
 
 export const CURRENT_TERM = 'WS25-26';
 
