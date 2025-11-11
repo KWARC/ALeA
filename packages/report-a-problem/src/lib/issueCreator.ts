@@ -73,6 +73,7 @@ function createIssueData(
 }
 
 export async function createNewIssue(
+  title: string,
   desc: string,
   selectedText: string,
   context: SelectionContext[],
@@ -85,6 +86,7 @@ export async function createNewIssue(
     const response = await axios.post(
       '/api/create-issue',
       {
+        title,
         data,
         description: desc,
         selectedText,
