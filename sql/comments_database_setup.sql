@@ -321,7 +321,6 @@ CREATE TABLE courseMetadata (
     slides VARCHAR(255) NOT NULL,
     institution VARCHAR(255),
     teaser TEXT,
-    imageLink VARCHAR(255) DEFAULT NULL,
     instances JSON NOT NULL,
     instructors JSON NOT NULL,
     isCurrent BOOLEAN NOT NULL DEFAULT FALSE,

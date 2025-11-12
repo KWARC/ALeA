@@ -18,6 +18,26 @@ export interface CourseMetadata {
   hasHomework?: boolean;
   seriesId?: string;
 }
+
+export interface InstructorInfo {
+  id: string;
+  name: string;
+}
+
+export interface CourseInfoMetadata extends CourseMetadata {
+  courseName: string;
+  notes: string;
+  landing: string;
+  slides: string;
+  institution?: string;
+  teaser?: string | null;
+  instances: string[];
+  instructors: InstructorInfo[];
+  isCurrent: boolean;
+  hasQuiz: boolean;
+  updaterId?: string;
+}
+
 export interface GenerateLectureEntryResponse {
   courseId: string;
   count: number;
@@ -149,4 +169,29 @@ export async function getLectureSchedule(
     params: { courseId, instanceId },
   });
   return (response.data?.schedule ?? []) as LectureScheduleItem[];
+}
+
+export async function addCourseMetadata(data: CourseInfoMetadata) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-course-metadata`, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+}
+
+export async function updateCourseInfo(data: Partial<CourseInfoMetadata>) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-course-info`, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+}
+
+export async function getCourseInfo(
+  courseId: string,
+  instanceId: string
+): Promise<CourseInfoMetadata | null> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-info`, {
+    headers: getAuthHeaders(),
+    params: { courseId, instanceId },
+  });
+  return response.data;
 }
