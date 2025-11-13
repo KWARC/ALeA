@@ -47,10 +47,11 @@ async function sendReportNotifications(userId: string | null = null, link: strin
   );
 }
 
-async function generateIssueTitle(
+async function generateIssueTitleAndClassify(
   description: string,
   selectedText: string,
-  context: string
+  context: string,
+  issueTitle: string
 ): Promise<IssueClassification> {
   if (!description || description.length <= 10) {
     return { title: '', category: IssueCategory.CONTENT };
@@ -66,6 +67,14 @@ Context:
 - Selected Text: ${selectedText}
 - Description: ${description}
 - Fragment context: ${JSON.stringify(context)}
+- User Title: ${issueTitle || '(none provided)'}
+
+Your tasks:
+1. If user title is missing: generate a concise title (max 60 chars).
+2. If user provided a title → return it as "title"
+3. Always classify the issue into:
+   - CONTENT
+   - DISPLAY
 
 The classification is important because it determines where the issue will be reported:
 - CONTENT → GitLab
@@ -77,7 +86,7 @@ Classification Guidelines:
 
 Respond with a valid JSON object in this exact format:
 {
-  "title": "Brief descriptive title (max 60 characters)",
+  "title": "string", 
   "category": "CONTENT" or "DISPLAY",
 }
 
@@ -125,73 +134,31 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
   }
 }
 
-async function generateIssueCategory(
-  description: string,
-  selectedText: string,
-  context: string
-): Promise<IssueCategory> {
-  const prompt = `
-You are an assistant that classifies reported issues.
-Decide if the issue is related to CONTENT or DISPLAY based on this input:
-
-The classification is important because it determines where the issue will be reported:
-- CONTENT → GitLab
-- DISPLAY → GitHub
-
-Selected Text: ${selectedText}
-Description: ${description}
-Context: ${JSON.stringify(context)}
-
-Classification Guidelines:
-- CONTENT: Issues related to information accuracy, missing content, typos, spelling errors, factual problems
-- DISPLAY: Issues related to visual presentation, formatting, layout, rendering problems
-
-Respond with only one word: CONTENT or DISPLAY.`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.1,
-      max_tokens: 10,
-    });
-
-    const text = response.choices[0].message.content?.trim().toUpperCase();
-    return text === 'DISPLAY' ? IssueCategory.DISPLAY : IssueCategory.CONTENT;
-  } catch (err) {
-    console.error('Category classification error:', err);
-    return IssueCategory.CONTENT;
-  }
-}
-
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserId(req);
   const body = req.body;
 
-  let generatedTitle = body.title?.trim() || '';
+  const issueTitle = body.title?.trim() || '';
   let issueCategory = IssueCategory.CONTENT;
 
   const { project } = extractProjectAndFilepath(body.context);
   const projectId = project || 'sTeX/meta-inf';
 
-  if (!generatedTitle && body.description && body.selectedText) {
-    const classification = await generateIssueTitle(
-      body.description,
-      body.selectedText,
-      body.context
-    );
-    generatedTitle = classification.title;
-    issueCategory = classification.category;
-  } else if (generatedTitle && body.description && body.selectedText) {
-    issueCategory = await generateIssueCategory(body.description, body.selectedText, body.context);
-  }
+  const classification = await generateIssueTitleAndClassify(
+    body.description,
+    body.selectedText,
+    body.context,
+    issueTitle
+  );
 
+  const finalTitle = issueTitle || classification.title;
+  issueCategory = classification.category;
   const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
 
   const issuePayload = isGitlab
-    ? { description: body.data, title: generatedTitle }
-    : { body: body.data, labels: ['user-reported'], title: generatedTitle };
+    ? { description: body.data, title: finalTitle }
+    : { body: body.data, labels: ['user-reported'], title: finalTitle };
 
   body.createNewIssueUrl = getNewIssueUrl(
     { category: issueCategory } as IssueClassification,
@@ -208,7 +175,7 @@ export default async function handler(req, res) {
 
   res.status(200).json({
     issue_url,
-    generatedTitle,
+    finalTitle,
     category: issueCategory,
   });
 
