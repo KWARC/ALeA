@@ -15,13 +15,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     slides,
     institution,
     teaser,
-    instances,
     instructors,
     isCurrent,
   } = req.body;
 
   if (!courseId || !instanceId) {
     return res.status(422).end('Missing courseId or instanceId');
+  }
+
+  for (const inst of instructors) {
+    if (!inst.id || !inst.name) {
+      return res.status(422).end('Instructor id and name required');
+    }
   }
 
   const updaterId = await getUserIdIfAuthorizedOrSetError(
@@ -42,7 +47,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        slides = COALESCE(?, slides),
        institution = COALESCE(?, institution),
        teaser = COALESCE(?, teaser),
-       instances = COALESCE(?, instances),
        instructors = COALESCE(?, instructors),
        isCurrent = COALESCE(?, isCurrent),
        updaterId = ?,
@@ -55,7 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       slides,
       institution,
       teaser,
-      instances ? JSON.stringify(instances) : null,
       instructors ? JSON.stringify(instructors) : null,
       isCurrent,
       updaterId,

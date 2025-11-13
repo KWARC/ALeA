@@ -21,7 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const data = result[0];
   try {
-    data.instances = JSON.parse(data.instances || '[]');
     data.instructors = JSON.parse(data.instructors || '[]');
     data.lectureSchedule = JSON.parse(data.lectureSchedule || '[]');
     data.tutorialSchedule = JSON.parse(data.tutorialSchedule || '[]');

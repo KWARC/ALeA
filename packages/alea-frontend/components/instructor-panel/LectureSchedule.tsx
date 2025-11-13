@@ -38,6 +38,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { getLocaleObject } from '../../lang/utils';
+import CourseInfoTab from './CourseInfo';
 
 interface LectureScheduleTabProps {
   courseId: string;
@@ -68,6 +69,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const [selectedScheduleType, setSelectedScheduleType] = useState<'lecture' | 'tutorial'>(
     'lecture'
   );
+
+  const [selectedTab, setSelectedTab] = useState<'lecture' | 'tutorial' | 'courseInfo'>('lecture');
 
   const [lectureScheduleData, setLectureScheduleData] = useState<LectureSchedule>(initialNewEntry);
   const [tutorialScheduleData, setTutorialScheduleData] =
@@ -115,7 +118,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getCourseInfo();
+        const courses = await getCourseInfo(courseId, instanceId);
         const institution = courses?.[courseId]?.institution;
         if (institution && UniversityDetail[institution]) {
           setTimezone(UniversityDetail[institution].defaultTimezone);
@@ -334,14 +337,21 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         sx={{ display: 'flex', justifyContent: 'center', borderBottom: '2px solid #e0e0e0', mb: 2 }}
       >
         {[
-          { label: 'Lecture Schedule', type: 'lecture' },
-          { label: 'Tutorial Schedule', type: 'tutorial' },
+          { label: 'Lecture Schedule', type: 'lecture' as const },
+          { label: 'Tutorial Schedule', type: 'tutorial' as const },
+          { label: 'Course Info', type: 'courseInfo' as const },
         ].map((item) => {
-          const isActive = selectedScheduleType === item.type;
+          const isActive = selectedTab === item.type;
           return (
             <Box
               key={item.type}
-              onClick={() => setSelectedScheduleType(item.type as 'lecture' | 'tutorial')}
+              onClick={() => {
+                setSelectedTab(item.type);
+
+                if (item.type === 'lecture' || item.type === 'tutorial') {
+                  setSelectedScheduleType(item.type);
+                }
+              }}
               sx={{
                 px: 2,
                 py: 1.5,
@@ -363,194 +373,198 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         })}
       </Box>
 
-      <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1.5,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <TextField
-            select
-            label={t.day}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureDay
-                : tutorialScheduleData.lectureDay
-            }
-            onChange={(e) => handleFieldChange('lectureDay', e.target.value)}
-            size="small"
-            sx={{ width: 140 }}
-          >
-            {weekdayOptions.map((day) => (
-              <MenuItem key={day} value={day}>
-                {day}
-              </MenuItem>
-            ))}
-          </TextField>
+      {selectedTab !== 'courseInfo' && (
+        <>
+          <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              <TextField
+                select
+                label={t.day}
+                value={
+                  selectedScheduleType === 'lecture'
+                    ? lectureScheduleData.lectureDay
+                    : tutorialScheduleData.lectureDay
+                }
+                onChange={(e) => handleFieldChange('lectureDay', e.target.value)}
+                size="small"
+                sx={{ width: 140 }}
+              >
+                {weekdayOptions.map((day) => (
+                  <MenuItem key={day} value={day}>
+                    {day}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-          <TextField
-            label={t.venue}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.venue
-                : tutorialScheduleData.venue
-            }
-            onChange={(e) => handleFieldChange('venue', e.target.value)}
-            size="small"
-            sx={{ width: 120 }}
-          />
+              <TextField
+                label={t.venue}
+                value={
+                  selectedScheduleType === 'lecture'
+                    ? lectureScheduleData.venue
+                    : tutorialScheduleData.venue
+                }
+                onChange={(e) => handleFieldChange('venue', e.target.value)}
+                size="small"
+                sx={{ width: 120 }}
+              />
 
-          <TextField
-            label={t.venueLink}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.venueLink
-                : tutorialScheduleData.venueLink
-            }
-            onChange={(e) => handleFieldChange('venueLink', e.target.value)}
-            size="small"
-            sx={{ width: 140 }}
-          />
+              <TextField
+                label={t.venueLink}
+                value={
+                  selectedScheduleType === 'lecture'
+                    ? lectureScheduleData.venueLink
+                    : tutorialScheduleData.venueLink
+                }
+                onChange={(e) => handleFieldChange('venueLink', e.target.value)}
+                size="small"
+                sx={{ width: 140 }}
+              />
 
-          <TextField
-            label={t.startTime}
-            type="time"
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureStartTime
-                : tutorialScheduleData.lectureStartTime
-            }
-            onChange={(e) => handleFieldChange('lectureStartTime', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            sx={{ width: 110 }}
-          />
+              <TextField
+                label={t.startTime}
+                type="time"
+                value={
+                  selectedScheduleType === 'lecture'
+                    ? lectureScheduleData.lectureStartTime
+                    : tutorialScheduleData.lectureStartTime
+                }
+                onChange={(e) => handleFieldChange('lectureStartTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                size="small"
+                sx={{ width: 110 }}
+              />
 
-          <TextField
-            label={t.endTime}
-            type="time"
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureEndTime
-                : tutorialScheduleData.lectureEndTime
-            }
-            onChange={(e) => handleFieldChange('lectureEndTime', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            sx={{ width: 110 }}
-          />
+              <TextField
+                label={t.endTime}
+                type="time"
+                value={
+                  selectedScheduleType === 'lecture'
+                    ? lectureScheduleData.lectureEndTime
+                    : tutorialScheduleData.lectureEndTime
+                }
+                onChange={(e) => handleFieldChange('lectureEndTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                size="small"
+                sx={{ width: 110 }}
+              />
 
-          {selectedScheduleType === 'lecture' && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={lectureScheduleData.hasQuiz}
-                  onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
+              {selectedScheduleType === 'lecture' && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={lectureScheduleData.hasQuiz}
+                      onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
+                    />
+                  }
+                  label={t.quiz}
+                  sx={{ m: 0 }}
                 />
-              }
-              label={t.quiz}
-              sx={{ m: 0 }}
-            />
-          )}
-          <Button
-            variant="contained"
+              )}
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleSaveNew}
+                sx={{
+                  px: 2,
+                  py: 0.5,
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <AddIcon fontSize="small" />
+                {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
+              </Button>
+            </Box>
+          </Paper>
+          <Table
             size="small"
-            onClick={handleSaveNew}
             sx={{
-              px: 2,
-              py: 0.5,
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
+              mt: 1,
+              backgroundColor: '#fafbfc',
+              '& thead': { backgroundColor: '#f5f7fa' },
+              '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+              borderRadius: 2,
+              overflow: 'hidden',
             }}
           >
-            <AddIcon fontSize="small" />
-            {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
-          </Button>
-        </Box>
-      </Paper>
-      <Table
-        size="small"
-        sx={{
-          mt: 1,
-          backgroundColor: '#fafbfc',
-          '& thead': { backgroundColor: '#f5f7fa' },
-          '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>{t.day}</TableCell>
-            <TableCell>
-              {t.startTime} {timezone && `(${timezone})`}
-            </TableCell>
-            <TableCell>
-              {t.endTime} {timezone && `(${timezone})`}
-            </TableCell>
-            <TableCell>{t.venue}</TableCell>
-            <TableCell>{t.venueLink}</TableCell>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t.day}</TableCell>
+                <TableCell>
+                  {t.startTime} {timezone && `(${timezone})`}
+                </TableCell>
+                <TableCell>
+                  {t.endTime} {timezone && `(${timezone})`}
+                </TableCell>
+                <TableCell>{t.venue}</TableCell>
+                <TableCell>{t.venueLink}</TableCell>
 
-            {selectedScheduleType === 'lecture' && (
-              <>
-                <TableCell>{t.homework || 'Homework'}</TableCell>
-                <TableCell>{t.quiz}</TableCell>
-              </>
-            )}
+                {selectedScheduleType === 'lecture' && (
+                  <>
+                    <TableCell>{t.homework || 'Homework'}</TableCell>
+                    <TableCell>{t.quiz}</TableCell>
+                  </>
+                )}
 
-            <TableCell>{t.actions}</TableCell>
-          </TableRow>
-        </TableHead>
+                <TableCell>{t.actions}</TableCell>
+              </TableRow>
+            </TableHead>
 
-        <TableBody>
-          {scheduleToShow.map((entry, idx) => (
-            <TableRow key={idx}>
-              <TableCell>{entry.lectureDay}</TableCell>
-              <TableCell>{entry.lectureStartTime}</TableCell>
-              <TableCell>{entry.lectureEndTime}</TableCell>
-              <TableCell>{entry.venue}</TableCell>
-              <TableCell>
-                <a href={entry.venueLink} target="_blank" rel="noreferrer">
-                  {t.link}
-                </a>
-              </TableCell>
-              {selectedScheduleType === 'lecture' && (
-                <>
-                  <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
-                  <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
-                </>
-              )}
-              <TableCell>
-                <Tooltip title={t.edit}>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setEditEntry(entry);
-                      setEditKeys({
-                        lectureDay: entry.lectureDay,
-                        lectureStartTime: entry.lectureStartTime,
-                        lectureEndTime: entry.lectureEndTime,
-                      });
-                    }}
-                  >
-                    <EditIcon fontSize="small" color="primary" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={t.delete}>
-                  <IconButton size="small" onClick={() => handleDelete(entry)}>
-                    <DeleteIcon fontSize="small" color="error" />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            <TableBody>
+              {scheduleToShow.map((entry, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{entry.lectureDay}</TableCell>
+                  <TableCell>{entry.lectureStartTime}</TableCell>
+                  <TableCell>{entry.lectureEndTime}</TableCell>
+                  <TableCell>{entry.venue}</TableCell>
+                  <TableCell>
+                    <a href={entry.venueLink} target="_blank" rel="noreferrer">
+                      {t.link}
+                    </a>
+                  </TableCell>
+                  {selectedScheduleType === 'lecture' && (
+                    <>
+                      <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
+                      <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+                    </>
+                  )}
+                  <TableCell>
+                    <Tooltip title={t.edit}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setEditEntry(entry);
+                          setEditKeys({
+                            lectureDay: entry.lectureDay,
+                            lectureStartTime: entry.lectureStartTime,
+                            lectureEndTime: entry.lectureEndTime,
+                          });
+                        }}
+                      >
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={t.delete}>
+                      <IconButton size="small" onClick={() => handleDelete(entry)}>
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
+      )}
       <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
         <DialogTitle>
           {t.editDialogTitle.replace(
@@ -623,6 +637,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           </Button>
         </DialogActions>
       </Dialog>
+
+      {selectedTab === 'courseInfo' && (
+        <Box sx={{ mt: 3 }}>
+          <CourseInfoTab courseId={courseId} instanceId={instanceId} />
+        </Box>
+      )}
     </Paper>
   );
 };

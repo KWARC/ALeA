@@ -15,22 +15,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     slides,
     institution,
     teaser,
-    instances,
     instructors,
     isCurrent,
   } = req.body;
 
-  if (
-    !courseId ||
-    !instanceId ||
-    !courseName ||
-    !notes ||
-    !landing ||
-    !slides ||
-    !instances ||
-    !instructors
-  ) {
+  if (!courseId || !instanceId || !courseName || !notes || !landing || !slides || !instructors) {
     return res.status(422).end('Missing required fields');
+  }
+
+  for (const inst of instructors) {
+    if (!inst.id || !inst.name) {
+      return res.status(422).end('Instructor id and name required');
+    }
   }
 
   const updaterId = await getUserIdIfAuthorizedOrSetError(
@@ -46,8 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `INSERT INTO courseMetadata (
       courseId, instanceId, lectureSchedule, tutorialSchedule, seriesId, hasHomework, hasQuiz,
       updaterId, courseName, notes, landing, slides, institution, teaser,
-      instances, instructors, isCurrent
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     instructors, isCurrent
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       courseId,
       instanceId,
@@ -63,7 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       slides,
       institution || null,
       teaser || null,
-      JSON.stringify(instances),
       JSON.stringify(instructors),
       isCurrent || false,
     ],

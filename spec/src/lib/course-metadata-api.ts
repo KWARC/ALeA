@@ -31,7 +31,6 @@ export interface CourseInfoMetadata extends CourseMetadata {
   slides: string;
   institution?: string;
   teaser?: string | null;
-  instances: string[];
   instructors: InstructorInfo[];
   isCurrent: boolean;
   hasQuiz: boolean;
