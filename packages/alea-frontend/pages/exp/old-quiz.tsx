@@ -8,7 +8,10 @@ import {
   Button,
   Paper,
   Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@alea/spec';
 import { FTMLFragment } from '@flexiformal/ftml-react';
 import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
@@ -185,8 +188,36 @@ function OldQuizPage() {
                         );
                       }
 
+                      const handleCopyUri = async () => {
+                        try {
+                          await navigator.clipboard.writeText(uri);
+                        } catch (err) {
+                          console.error('Failed to copy URI:', err);
+                        }
+                      };
+
                       return (
                         <Box key={pid} sx={{ mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                              p: 1,
+                              bgcolor: 'grey.100',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ flex: 1, fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>
+                              Problem URI: {uri}
+                            </Typography>
+                            <Tooltip title="Copy URI">
+                              <IconButton size="small" onClick={handleCopyUri} sx={{ ml: 1 }}>
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                           {titleHtml && (
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
                               <FTMLFragment
