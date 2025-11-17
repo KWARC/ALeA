@@ -1,54 +1,163 @@
 import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  CircularProgress,
-  Button,
-  Divider,
-  IconButton,
-  Tooltip,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useEffect, useState } from 'react';
-import {
-  getCourseInfoMetadata,
-  updateCourseInfoMetadata,
+  addCourseMetadata,
   CourseInfoMetadata,
+  getAclUserDetails,
+  getCourseAcls,
+  getCourseInfoMetadata,
   InstructorInfo,
+  updateCourseInfoMetadata,
+  updateHasHomework,
+  updateHasQuiz,
 } from '@alea/spec';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Divider,
+  FormControlLabel,
+  Paper,
+  Snackbar,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 interface CourseInfoTabProps {
   courseId: string;
   instanceId: string;
 }
+
+interface CourseInstructorExt {
+  id: string;
+  name: string;
+  isNamed: boolean;
+}
+
 export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabProps) {
   const router = useRouter();
-  // const courseId = router.query.courseId as string;
-  // const instanceId = router.query.instanceId as string;
 
   const [courseInfo, setCourseInfo] = useState<CourseInfoMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [isNew, setIsNew] = useState(false);
+
+  const [instructors, setInstructors] = useState<CourseInstructorExt[]>([]);
+  const [instructorsLoading, setInstructorsLoading] = useState(true);
+
   useEffect(() => {
     if (!router.isReady || !courseId || !instanceId) return;
     async function load() {
+      setLoading(true);
+      setInstructorsLoading(true);
+
+      let resolvedInfo: CourseInfoMetadata | null = null;
+
       try {
         const info = await getCourseInfoMetadata(courseId, instanceId);
+        resolvedInfo = info;
         setCourseInfo(info);
+        setIsNew(false);
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          resolvedInfo = {
+            courseId,
+            instanceId,
+
+            universityId: '',
+            courseName: '',
+            institution: '',
+            notes: '',
+            landing: '',
+            slides: '',
+            teaser: '',
+
+            instructors: [],
+
+            lectureSchedule: [],
+            scheduleType: 'lecture',
+            hasHomework: false,
+            hasQuiz: false,
+            seriesId: '',
+            updaterId: '',
+          };
+          setCourseInfo(resolvedInfo);
+          setIsNew(true);
+        } else {
+          console.error('Failed to load course info', err);
+          setToast({ type: 'error', text: 'Failed to load course info' });
+          setLoading(false);
+          setInstructorsLoading(false);
+          return;
+        }
+      }
+
+      try {
+        const savedInstructors = resolvedInfo!.instructors ?? [];
+        const savedMap = new Map<string, InstructorInfo>(
+          resolvedInfo.instructors.map((s) => [s.id, s])
+        );
+
+        const aclIds = await getCourseAcls(courseId, instanceId);
+        const instructorAclIds = (aclIds || []).filter((id) => id.endsWith('-instructors'));
+
+        const aclMemberLists = await Promise.all(
+          instructorAclIds.map(async (aclId) => {
+            try {
+              const users = await getAclUserDetails(aclId);
+              return Array.isArray(users) ? users : [];
+            } catch (e) {
+              return [];
+            }
+          })
+        );
+
+        const memberMap = new Map<string, { userId: string; fullName?: string }>();
+        for (const list of aclMemberLists) {
+          for (const u of list) {
+            if (!memberMap.has(u.userId)) {
+              memberMap.set(u.userId, { userId: u.userId, fullName: u.fullName });
+            }
+          }
+        }
+
+        for (const s of savedInstructors) {
+          if (!memberMap.has(s.id)) {
+            memberMap.set(s.id, { userId: s.id, fullName: s.name || '' });
+          }
+        }
+
+        const merged: CourseInstructorExt[] = savedInstructors.map((saved) => ({
+          id: saved.id,
+          name: saved.name,
+          isNamed: true,
+        }));
+
+        for (const [id, { fullName }] of memberMap.entries()) {
+          if (!savedMap.has(id)) {
+            merged.push({
+              id,
+              name: fullName || '',
+              isNamed: false,
+            });
+          }
+        }
+
+        setInstructors(merged);
       } catch (err) {
         console.error(err);
-        setToast({ type: 'error', text: 'Failed to load course info' });
+        setToast({ type: 'error', text: 'Failed to fetch instructors' });
       } finally {
         setLoading(false);
+        setInstructorsLoading(false);
       }
     }
+
     load();
   }, [router.isReady, courseId, instanceId]);
 
@@ -56,38 +165,31 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
     setCourseInfo((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  const handleAddInstructor = () => {
-    if (!courseInfo) return;
-    const next = [...courseInfo.instructors, { id: '', name: '' }];
-    setField('instructors', next);
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const items = [...instructors];
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
+
+    setInstructors(items);
   };
 
-  const handleInstructorChange = (index: number, field: keyof InstructorInfo, value: string) => {
-    if (!courseInfo) return;
-    const updated = [...courseInfo.instructors];
-    updated[index] = { ...updated[index], [field]: value };
-    setField('instructors', updated);
+  const handleNameChange = (i: number, v: string) => {
+    setInstructors((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], name: v };
+      return next;
+    });
   };
 
-  const handleRemoveInstructor = async (index: number) => {
-    if (!courseInfo) return;
+  const handleNamedToggle = (i: number, checked: boolean) => {
+    setInstructors((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], isNamed: checked };
 
-    if (!confirm('Are you sure you want to remove this instructor?')) return;
-
-    const updated = [...courseInfo.instructors];
-    updated.splice(index, 1);
-    setField('instructors', updated);
-
-    try {
-      setSaving(true);
-      await updateCourseInfoMetadata({ ...courseInfo, instructors: updated });
-      setToast({ type: 'success', text: 'Instructor removed successfully' });
-    } catch (err) {
-      console.error(err);
-      setToast({ type: 'error', text: 'Failed to update instructors' });
-    } finally {
-      setSaving(false);
-    }
+      return next;
+    });
   };
 
   const handleSave = async () => {
@@ -95,11 +197,31 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
     setSaving(true);
     try {
-      await updateCourseInfoMetadata(courseInfo);
-      setToast({ type: 'success', text: 'Course info updated successfully' });
+      const instructorsToSave: InstructorInfo[] = instructors
+        .filter((ins) => ins.isNamed)
+        .map((ins) => ({
+          id: ins.id,
+          name: ins.name.trim(),
+        }));
+
+      const payload: CourseInfoMetadata = {
+        ...courseInfo,
+        instructors: instructorsToSave,
+      };
+      if (isNew) {
+        await addCourseMetadata(payload);
+
+        setToast({ type: 'success', text: 'Course info created successfully' });
+
+        setIsNew(false);
+      } else {
+        await updateCourseInfoMetadata(payload);
+        setToast({ type: 'success', text: 'Course info updated successfully' });
+      }
+      setCourseInfo(payload);
     } catch (err) {
       console.error(err);
-      setToast({ type: 'error', text: 'Failed to update course info' });
+      setToast({ type: 'error', text: 'Failed to save course info' });
     } finally {
       setSaving(false);
     }
@@ -121,6 +243,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
         <TextField
+          required
           label="Course Name"
           value={courseInfo.courseName}
           onChange={(e) => setField('courseName', e.target.value)}
@@ -128,6 +251,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="University ID"
           value={courseInfo.universityId || ''}
           onChange={(e) => setField('universityId', e.target.value)}
@@ -135,6 +259,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="Institution"
           value={courseInfo.institution || ''}
           onChange={(e) => setField('institution', e.target.value)}
@@ -142,6 +267,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="Notes URL"
           value={courseInfo.notes}
           onChange={(e) => setField('notes', e.target.value)}
@@ -149,6 +275,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="Landing Page"
           value={courseInfo.landing}
           onChange={(e) => setField('landing', e.target.value)}
@@ -156,6 +283,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="Slides URL"
           value={courseInfo.slides}
           onChange={(e) => setField('slides', e.target.value)}
@@ -163,6 +291,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
 
         <TextField
+          required
           label="Teaser"
           value={courseInfo.teaser || ''}
           onChange={(e) => setField('teaser', e.target.value)}
@@ -172,56 +301,130 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
       </Box>
 
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={courseInfo.hasHomework || false}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                if (!confirm('Are you sure to update homework availability?')) return;
+                try {
+                  await updateHasHomework({ courseId, instanceId, hasHomework: next });
+                  setField('hasHomework', next);
+                } catch (err) {
+                  console.error('Failed to update homework', err);
+                  setToast({ type: 'error', text: 'Failed to update homework setting' });
+                }
+              }}
+            />
+          }
+          label="Enable homework for this course"
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={courseInfo.hasQuiz || false}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                if (!confirm('Are you sure to update quiz availability?')) return;
+                try {
+                  await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
+                  setField('hasQuiz', next);
+                } catch (err) {
+                  console.error('Failed to update quiz', err);
+                  setToast({ type: 'error', text: 'Failed to update quiz setting' });
+                }
+              }}
+            />
+          }
+          label="Enable quiz for this course"
+        />
+      </Box>
+
       {/* Instructors */}
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-        Instructors
+        Instructors ( draggable)
       </Typography>
 
-      {courseInfo.instructors.map((inst, idx) => (
-        <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
-          <TextField
-            label="Instructor ID"
-            value={inst.id}
-            sx={{ width: 200 }}
-            onChange={(e) => handleInstructorChange(idx, 'id', e.target.value)}
-          />
-          <TextField
-            label="Instructor Name"
-            value={inst.name}
-            sx={{ width: 250 }}
-            onChange={(e) => handleInstructorChange(idx, 'name', e.target.value)}
-          />
-          <Tooltip title="Remove Instructor">
-            <IconButton color="error" onClick={() => handleRemoveInstructor(idx)}>
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+      {instructorsLoading ? (
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
-      ))}
+      ) : instructors.length === 0 ? (
+        <Box sx={{ p: 2, color: 'text.secondary' }}>No instructors found.</Box>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="instructors">
+            {(provided) => (
+              <Box ref={provided.innerRef} {...provided.droppableProps}>
+                {instructors.map((inst, i) => (
+                  <Draggable key={inst.id} draggableId={inst.id} index={i}>
+                    {(p) => (
+                      <Box
+                        ref={p.innerRef}
+                        {...p.draggableProps}
+                        {...p.dragHandleProps}
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          alignItems: 'center',
+                          p: 1.5,
+                          mb: 1,
+                          border: '1px solid #ccc',
+                          borderRadius: 1,
+                        }}
+                      >
+                        <TextField
+                          label="Instructor ID"
+                          value={inst.id}
+                          InputProps={{ readOnly: true }}
+                          sx={{ width: 200 }}
+                        />
 
-      <Button
-        variant="outlined"
-        startIcon={<AddIcon />}
-        onClick={handleAddInstructor}
-        sx={{ mt: 1 }}
-      >
-        Add Instructor
-      </Button>
+                        <TextField
+                          label="Instructor Name"
+                          value={inst.name}
+                          InputProps={{ readOnly: !inst.isNamed }}
+                          onChange={(e) => handleNameChange(i, e.target.value)}
+                          sx={{ width: 250 }}
+                        />
 
-      {/* Save Button */}
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={inst.isNamed}
+                              onChange={(e) => handleNamedToggle(i, e.target.checked)}
+                            />
+                          }
+                          label="Named"
+                        />
+                      </Box>
+                    )}
+                  </Draggable>
+                ))}
+
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
+
       <Divider sx={{ my: 3 }} />
+
       <Button
         variant="contained"
         color="primary"
         onClick={handleSave}
         disabled={saving}
-        sx={{ px: 3, py: 1 }}
+        sx={{ px: 3 }}
       >
         {saving ? 'Saving...' : 'Save Changes'}
       </Button>
 
-      {/* Toast */}
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)}>
         <Alert severity={toast?.type}>{toast?.text}</Alert>
       </Snackbar>

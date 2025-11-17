@@ -17,7 +17,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     institution,
     teaser,
     instructors,
-    isCurrent,
   } = req.body;
 
   if (
@@ -52,8 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `INSERT INTO courseMetadata (
   courseId, instanceId, lectureSchedule, tutorialSchedule, seriesId, hasHomework, hasQuiz,
   updaterId, universityId, courseName, notes, landing, slides, institution, teaser,
-  instructors, isCurrent
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  instructors
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `,
     [
       courseId,
@@ -72,7 +71,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       institution || null,
       teaser || null,
       JSON.stringify(instructors),
-      isCurrent || false,
     ],
     res
   );

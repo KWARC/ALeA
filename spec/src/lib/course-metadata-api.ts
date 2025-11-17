@@ -24,6 +24,7 @@ export interface InstructorInfo {
   name: string;
 }
 
+
 export interface CourseInfoMetadata extends CourseMetadata {
   courseName: string;
   notes: string;
@@ -32,7 +33,6 @@ export interface CourseInfoMetadata extends CourseMetadata {
   institution?: string;
   teaser?: string | null;
   instructors: InstructorInfo[];
-  isCurrent: boolean;
   hasQuiz: boolean;
   updaterId?: string;
   universityId: string;
@@ -199,3 +199,5 @@ export async function getCourseInfoMetadata(
   });
   return response.data;
 }
+
+

@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
 
-  if (!result?.length) {
+  if (!result || result.length === 0) {
     return res.status(404).end('Course metadata not found');
   }
 

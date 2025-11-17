@@ -322,6 +322,5 @@ CREATE TABLE courseMetadata (
     institution VARCHAR(255),
     teaser TEXT,
     instructors JSON NOT NULL,
-    isCurrent BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (courseId, instanceId)
 );

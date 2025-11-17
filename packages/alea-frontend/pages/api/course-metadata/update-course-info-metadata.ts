@@ -17,7 +17,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     institution,
     teaser,
     instructors,
-    isCurrent,
   } = req.body;
 
   if (!courseId || !instanceId || !universityId) {
@@ -51,7 +50,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        institution = COALESCE(?, institution),
        teaser = COALESCE(?, teaser),
        instructors = COALESCE(?, instructors),
-       isCurrent = COALESCE(?, isCurrent),
        universityId = COALESCE(?, universityId),
        updaterId = ?,
        updatedAt = CURRENT_TIMESTAMP
@@ -64,7 +62,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       institution,
       teaser,
       instructors ? JSON.stringify(instructors) : null,
-      isCurrent,
       universityId || null,
       updaterId,
       courseId,
