@@ -200,4 +200,58 @@ export async function getCourseInfoMetadata(
   return response.data;
 }
 
+export async function getCourseIdsByUniversity(
+  universityId: string,
+  instanceId?: string
+): Promise<string[]> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-ids-by-university`, {
+    headers: getAuthHeaders(),
+    params: { universityId, ...(instanceId && { instanceId }) },
+  });
+  return response.data?.courseIds || [];
+}
 
+export async function addCourseToSemester(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/add-course-to-semester',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}
+
+export async function removeCourseFromSemester(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/remove-course-from-semester',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}
+
+export async function createNewCourse(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/create-new-course',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}

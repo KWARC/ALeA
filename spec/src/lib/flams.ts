@@ -9,7 +9,7 @@ import {
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
-import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './course-metadata-api';
+import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo, getCourseIdsByUniversity } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -80,7 +80,15 @@ export async function getDocIdx(institution?: string) {
   return [...filteredArchiveIndex, ...institutionIndex];
 }
 
-export async function getCourseIdsOfSemester(semester: string): Promise<string[]> {
+export async function getCourseIdsOfSemester(semester: string, universityId?: string): Promise<string[]> {
+  if (universityId) {
+    try {
+      return await getCourseIdsByUniversity(universityId, semester);
+    } catch (error) {
+      // Fall back to old behavior if courseMetadata fetch fails
+    }
+  }
+  
   return Object.entries(COURSES_INFO)
     .filter(([, info]) => info.instances?.some((i) => i.semester === semester))
     .map(([courseId]) => courseId.toLowerCase());
