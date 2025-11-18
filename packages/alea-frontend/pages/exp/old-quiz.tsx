@@ -8,8 +8,12 @@ import {
   Button,
   Paper,
   Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@alea/spec';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +28,7 @@ function extractCourseIds(files: string[], semester: string): Promise<string[]> 
     return Array.from(courseIds);
   });
 }
-
+const newQuizPatternSem=['SS25']
 function OldQuizPage() {
   const [semesters, setSemesters] = useState<string[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>('');
@@ -162,15 +166,114 @@ function OldQuizPage() {
                 {quizContent.problems &&
                 typeof quizContent.problems === 'object' &&
                 Object.keys(quizContent.problems).length > 0 ? (
-                  Object.entries(quizContent.problems).map(([pid, html]: [string, string]) => (
-                    <Box key={pid} sx={{ mb: 2 }}>
-                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                        Problem ID: {pid}
-                      </Typography>
-                      <div dangerouslySetInnerHTML={{ __html: html }} />
-                      <Divider sx={{ mt: 2 }} />
-                    </Box>
-                  ))
+                  Object.entries(quizContent.problems).map(([pid, problemData]: [string, any]) => {
+                    const isNewPattern = newQuizPatternSem.includes(selectedSemester);
+                    
+                    if (isNewPattern) {
+                      const html = problemData?.problem?.html;
+                      const titleHtml = problemData?.problem?.title_html;
+                      const uri = problemData?.problem?.uri || pid;
+
+                      if (!html) {
+                        return (
+                          <Box key={pid} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                            <Typography color="text.secondary">
+                              Unable to parse problem format
+                            </Typography>
+                            <Divider sx={{ mt: 2 }} />
+                          </Box>
+                        );
+                      }
+
+                      const handleCopyUri = async () => {
+                        try {
+                          await navigator.clipboard.writeText(uri);
+                        } catch (err) {
+                          console.error('Failed to copy URI:', err);
+                        }
+                      };
+
+                      return (
+                        <Box key={pid} sx={{ mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                              p: 1,
+                              bgcolor: 'grey.100',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ flex: 1, fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>
+                              Problem URI: {uri}
+                            </Typography>
+                            <Tooltip title="Copy URI">
+                              <IconButton size="small" onClick={handleCopyUri} sx={{ ml: 1 }}>
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          {titleHtml && (
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              <FTMLFragment
+                                fragment={{
+                                  type: 'HtmlString',
+                                  html: titleHtml,
+                                  uri: uri,
+                                }}
+                              />
+                            </Typography>
+                          )}
+                          {!titleHtml && (
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                          )}
+                          <Box sx={{ mt: 1 }}>
+                            <FTMLFragment
+                              fragment={{
+                                type: 'HtmlString',
+                                html: html,
+                                uri: uri,
+                              }}
+                            />
+                          </Box>
+                          <Divider sx={{ mt: 2 }} />
+                        </Box>
+                      );
+                    } else {
+                      const html = typeof problemData === 'string' ? problemData : undefined;
+                      
+                      if (!html) {
+                        return (
+                          <Box key={pid} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                            <Typography color="text.secondary">
+                              Unable to parse problem format
+                            </Typography>
+                            <Divider sx={{ mt: 2 }} />
+                          </Box>
+                        );
+                      }
+
+                      return (
+                        <Box key={pid} sx={{ mb: 2 }}>
+                          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            Problem ID: {pid}
+                          </Typography>
+                          <div dangerouslySetInnerHTML={{ __html: html }} />
+                          <Divider sx={{ mt: 2 }} />
+                        </Box>
+                      );
+                    }
+                  })
                 ) : (
                   <Typography color="text.secondary">
                     No problems found in this quiz file.
