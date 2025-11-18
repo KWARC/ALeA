@@ -10,6 +10,7 @@ import {
   updateHasQuiz,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
   Alert,
   Box,
@@ -23,6 +24,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -173,14 +175,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
     items.splice(result.destination.index, 0, moved);
 
     setInstructors(items);
-  };
-
-  const handleNameChange = (i: number, v: string) => {
-    setInstructors((prev) => {
-      const next = [...prev];
-      next[i] = { ...next[i], name: v };
-      return next;
-    });
   };
 
   const handleNamedToggle = (i: number, checked: boolean) => {
@@ -343,7 +337,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
       </Box>
 
-      {/* Instructors */}
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
         Instructors ( draggable)
@@ -366,31 +359,31 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
                       <Box
                         ref={p.innerRef}
                         {...p.draggableProps}
-                        {...p.dragHandleProps}
                         sx={{
                           display: 'flex',
-                          gap: 2,
                           alignItems: 'center',
-                          p: 1.5,
+                          gap: 2,
+
+                          p: 1,
                           mb: 1,
-                          border: '1px solid #ccc',
-                          borderRadius: 1,
+                          borderBottom: '1px solid #ddd',
                         }}
                       >
-                        <TextField
-                          label="Instructor ID"
-                          value={inst.id}
-                          InputProps={{ readOnly: true }}
-                          sx={{ width: 200 }}
-                        />
+                        <Box
+                          {...p.dragHandleProps}
+                          sx={{
+                            cursor: 'grab',
+                            pr: 1,
+                            color: 'text.secondary',
+                          }}
+                        >
+                          <DragIndicatorIcon />
+                        </Box>
 
-                        <TextField
-                          label="Instructor Name"
-                          value={inst.name}
-                          InputProps={{ readOnly: !inst.isNamed }}
-                          onChange={(e) => handleNameChange(i, e.target.value)}
-                          sx={{ width: 250 }}
-                        />
+                        <Typography sx={{ minWidth: 260 }}>
+                          <strong>{inst.id}</strong> &nbsp;
+                          <span style={{ color: '#666' }}>({inst.name})</span>
+                        </Typography>
 
                         <FormControlLabel
                           control={
