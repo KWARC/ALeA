@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import AnnouncementsTab from './Announcements';
 import { generateLectureEntry } from '@alea/spec';
 import LectureScheduleTab from './LectureSchedule';
+import CourseInfoTab from './CourseInfo';
 
 interface CourseMetadataProps {
   courseId: string;
@@ -75,6 +76,10 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
         <AnnouncementsTab courseId={courseId} instanceId={instanceId} />
+      </Box>
+
+      <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
+        <CourseInfoTab courseId={courseId} instanceId={instanceId} />
       </Box>
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
