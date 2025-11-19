@@ -2,7 +2,6 @@ import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import {
-  getCourseInfo,
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
@@ -19,6 +18,7 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
+import { getAllCoursesFromDb } from './api/get-all-courses';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -485,7 +485,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
 export default StudentHomePage;
 
 export async function getStaticProps() {
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
   const filteredKeys = Object.keys(courses).filter((key) =>
     FEATURED_COURSES.includes(courses[key].courseId)
   );

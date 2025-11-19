@@ -2,7 +2,6 @@ import {
   Action,
   LectureEntry,
   CoverageTimeline,
-  getCurrentTermForCourseId,
   ResourceName,
 } from '@alea/utils';
 import fs from 'fs';
@@ -10,6 +9,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
 import { checkIfPostOrSetError } from './comment-utils';
 import { CURRENT_SEM_FILE } from './get-coverage-timeline';
+import { getCurrentTermForCourseId } from './get-current-term';
 
 function backupFileName() {
   return (

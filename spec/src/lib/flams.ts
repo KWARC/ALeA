@@ -94,46 +94,7 @@ export async function getCourseIdsOfSemester(semester: string, universityId?: st
     .map(([courseId]) => courseId.toLowerCase());
 }
 
-export async function getCourseInfo(institution?: string) {
-  /*  const filtered = { ...COURSES_INFO };
 
-  // Don't show Luka's course on production.
-  if (process.env['NEXT_PUBLIC_SITE_VERSION'] === 'production') {
-    delete filtered['f29fa1'];
-  }
-  return filtered;*/
-  // try {
-  //   const docIdx = await getDocIdx(institution);
-  //   const courseInfo: { [courseId: string]: CourseInfo } = {};
-  //   for (const doc of docIdx) {
-  //     if (doc.type !== DocIdxType.course) continue;
-  //     if (!doc.acronym || !doc.landing || !doc.notes) continue;
-  //     doc.acronym = doc.acronym.toLowerCase();
-
-  //     const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-  //     courseInfo[doc.acronym] = createCourseInfo(
-  //       doc.acronym,
-  //       doc.title,
-  //       doc.notes,
-  //       doc.landing,
-  //       isCurrent,
-  //       true,
-  //       ['lbs', 'ai-1', 'iwgs-1'].includes(doc.acronym) ? true : doc.quizzes ?? false,
-  //       doc.institution,
-  //       doc.instances,
-  //       doc.instructors,
-  //       doc.teaser,
-  //       doc.slides
-  //     );
-  //   }
-  //   console.log('Fetched course info from FLAMS:', courseInfo);
-  //   return courseInfo;
-  // } catch (err) {
-  //   console.log(err);
-  //   return COURSES_INFO;
-  // }
-  return COURSES_INFO;
-}
 
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;

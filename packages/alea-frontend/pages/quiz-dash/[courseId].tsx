@@ -6,7 +6,7 @@ import Alert from '@mui/material/Alert';
 import {
   QuizStubInfo,
   canAccessResource,
-  getCourseInfo,
+  getAllCourses,
   getCourseQuizList,
   getUserInfo,
 } from '@alea/spec';
@@ -168,7 +168,7 @@ const QuizDashPage: NextPage = () => {
   });
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

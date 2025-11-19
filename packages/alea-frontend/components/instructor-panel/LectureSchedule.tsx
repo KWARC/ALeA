@@ -31,7 +31,7 @@ import {
   updateHasQuiz,
   updateSeriesId,
 } from '@alea/spec';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -118,7 +118,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getCourseInfo();
+        const courses = await getAllCourses();
         const institution = courses?.[courseId]?.institution;
         if (institution && UniversityDetail[institution]) {
           setTimezone(UniversityDetail[institution].defaultTimezone);

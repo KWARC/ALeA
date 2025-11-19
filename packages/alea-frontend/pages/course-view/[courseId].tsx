@@ -12,7 +12,7 @@ import {
   canAccessResource,
   ClipInfo,
   ClipMetadata,
-  getCourseInfo,
+  getAllCourses,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -238,7 +238,7 @@ const CourseViewPage: NextPage = () => {
   }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

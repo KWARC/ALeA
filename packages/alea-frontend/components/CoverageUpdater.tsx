@@ -17,7 +17,7 @@ import { CoverageTable } from './CoverageTable';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
 
 export function getSectionNameForUri(
@@ -90,7 +90,7 @@ export function CoverageUpdater({
   useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getCourseInfo();
+        const courses = await getAllCourses();
         const institution = courses?.[courseId]?.institution;
         if (institution && UniversityDetail[institution]) {
           setTimezone(UniversityDetail[institution].defaultTimezone);

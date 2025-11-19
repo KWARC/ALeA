@@ -1,6 +1,6 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
-import { DocIdxType, getCourseInfo, getDocIdx } from '@alea/spec';
+import { DocIdxType, getAllCourses, getDocIdx } from '@alea/spec';
 import { ArchiveIndex, Institution } from '@flexiformal/ftml-backend';
 import { CourseInfo, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
@@ -18,7 +18,7 @@ const CourseList: NextPage = () => {
       // console.log({ docIdxData });
       // setDocIdx(docIdxData);
 
-      const courseInfoData = await getCourseInfo();
+      const courseInfoData = await getAllCourses();
       setCourses(courseInfoData);
     };
     fetchData();

@@ -1,7 +1,7 @@
-import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeDontEndSet500OnError } from '../comment-utils';
 import { HomeworkInfo } from '@alea/spec';
+import { getCurrentTermForCourseId } from '../get-current-term';
 
 export async function getAllHomeworksOrSetError(
   courseId: string,
