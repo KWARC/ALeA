@@ -3,7 +3,7 @@ import {
   Announcement,
   canAccessResource,
   getActiveAnnouncements,
-  getCourseInfo,
+  getAllCourses,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
@@ -536,7 +536,7 @@ const CourseHomePage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

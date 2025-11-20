@@ -1,5 +1,7 @@
-import { ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
-import { getCurrentTermForCourseId, LectureEntry } from '@alea/utils';
+import { ClipInfo, ClipMetadata, SectionInfo } from '@alea/spec';
+import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCurrentTermForCourseId } from '../get-current-term';
+import { LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { readdir, readFile } from 'fs/promises';
@@ -187,7 +189,7 @@ function addClipInfo(
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
   const currentTerm = await getCurrentTermForCourseId(courseId);
   if (!courseId || !courses[courseId]) {
     res.status(404).send(`Course not found [${courseId}]`);

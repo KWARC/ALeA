@@ -7,7 +7,7 @@ import {
   sendNotification,
 } from '../../comment-utils';
 import { getSbCourseId } from '../study-buddy-utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 
 export default async function handler(
   req: NextApiRequest,

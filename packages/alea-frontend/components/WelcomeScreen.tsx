@@ -2,7 +2,7 @@ import {
   CommentType,
   getCourseGradingItems,
   getCourseIdsForEnrolledUser,
-  getCourseInfo,
+  getAllCourses,
   getCourseInstanceThreads,
   getCourseQuizList,
   getCoverageTimeline,
@@ -261,7 +261,7 @@ export async function getLastUpdatedNotes(
     let progressStatus: string | null = null;
 
     if (targetUsed) {
-      const allCourses = await getCourseInfo();
+      const allCourses = await getAllCourses();
       const notesUri = allCourses[courseId]?.notes;
 
       if (notesUri) {
@@ -525,7 +525,7 @@ const handleResourceClick = (
 function MyCourses({ enrolledCourseIds }) {
   const [allCourses, setAllCourses] = useState<Record<string, CourseInfo>>({});
   useEffect(() => {
-    getCourseInfo().then(setAllCourses);
+    getAllCourses().then(setAllCourses);
   }, []);
   return (
     <>

@@ -4,7 +4,7 @@ import {
   createResourceAction,
   deleteResourceAction,
   getAllResourceActions,
-  getCourseInfo,
+  getAllCourses,
   getMonitorStatus,
   isUserMember,
   isValid,
@@ -96,12 +96,9 @@ const SysAdmin: NextPage = () => {
   }
   async function loadCurrentSemCourses() {
     try {
-      const courseData = await getCourseInfo();
-      const filteredCourses = Object.entries(courseData).reduce((acc, [courseId, courseInfo]) => {
-        if (
-          courseInfo.instances &&
-          courseInfo.instances.some((instance) => instance.semester === CURRENT_TERM)
-        ) {
+      const courseData = await getAllCourses();
+      const filteredCourses = Object.entries(courseData).reduce((acc, [courseId, courseInfo]: [string, CourseInfo]) => {
+        if (courseInfo.isCurrent) {
           acc[courseId] = courseInfo;
         }
         return acc;

@@ -1,5 +1,6 @@
-import { getCurrentTermByCourseId, UNIVERSITY_TERMS } from '@alea/utils';
+import { UNIVERSITY_TERMS } from '@alea/utils';
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { getCurrentTerm } from '@alea/spec';
 
 interface CurrentTermContextType {
   currentTermByCourseId: Record<string, string>;
@@ -29,9 +30,9 @@ export function CurrentTermProvider({ children }: CurrentTermProviderProps) {
   useEffect(() => {
     const fetchCurrentTermByCourseId = async () => {
       try {
-        const term = await getCurrentTermByCourseId();
         setLoadingTermByCourseId(true);
-        setCurrentTermByCourseId(term);
+        const currentTermData = await getCurrentTerm();
+        setCurrentTermByCourseId(currentTermData as Record<string, string>);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to get current term by course id');
       } finally {

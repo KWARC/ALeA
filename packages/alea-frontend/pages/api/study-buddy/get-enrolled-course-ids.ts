@@ -4,7 +4,7 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { EnrolledCourseIds } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 import { getCourseIdAndInstanceFromSbCourseId } from './study-buddy-utils';
 
 export default async function handler(

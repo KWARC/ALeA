@@ -1,5 +1,5 @@
 import { Comment, CommentType, DEFAULT_POINTS, GrantReason, NotificationType } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from './get-current-term';
 import axios from 'axios';
 import { canUserModerateComments } from './access-control/resource-utils';
 import {

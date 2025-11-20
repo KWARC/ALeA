@@ -1,4 +1,3 @@
-import { getCourseInfo } from '@alea/spec';
 import {
   Action,
   ALL_RESOURCE_TYPES,
@@ -6,10 +5,11 @@ import {
   CourseResourceAction,
   ResourceName,
 } from '@alea/utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from './get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from './access-control/resource-utils';
 import { getUserIdOrSetError } from './comment-utils';
+import { getAllCoursesFromDb } from './get-all-courses';
 
 function getValidActionsForResource(resourceName: ResourceName): Action[] {
   const resource = ALL_RESOURCE_TYPES.find((resource) => resource.name === resourceName);
@@ -20,7 +20,7 @@ function getValidActionsForResource(resourceName: ResourceName): Action[] {
 }
 
 export async function getAuthorizedCourseResources(userId: string) {
-  const courseIds = Object.keys(await getCourseInfo());
+  const courseIds = Object.keys(await getAllCoursesFromDb());
   const resourceNames = COURSE_SPECIFIC_RESOURCENAMES;
 
   const resourceActions: CourseResourceAction[] = courseIds.flatMap((courseId) =>

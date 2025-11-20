@@ -1,7 +1,7 @@
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { canAccessResource, getCourseInfo, getUserInfo } from '@alea/spec';
+import { canAccessResource, getAllCourses, getUserInfo } from '@alea/spec';
 import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -47,7 +47,7 @@ const HomeworkPage: NextPage = () => {
   }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   if (!router.isReady || !courses) return <CircularProgress />;

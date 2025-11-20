@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
+import { getAllCourses, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
 import { convertHtmlStringToPlain, CourseInfo, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -60,7 +60,7 @@ const CoverageUpdateTab = () => {
   }, []);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

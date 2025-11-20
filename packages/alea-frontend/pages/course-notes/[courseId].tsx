@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { CommentButton } from '@alea/comments';
 import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
@@ -118,7 +118,7 @@ const CourseNotesPage: NextPage = () => {
   };
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

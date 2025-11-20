@@ -6,7 +6,7 @@ import {
 } from '../../comment-utils';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 import { GradingWithAnswer } from '@alea/spec';
 import { addAnswerClassesToGradingOrSetError } from '../nap-utils';
 

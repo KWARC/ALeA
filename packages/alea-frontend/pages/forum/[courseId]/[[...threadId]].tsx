@@ -1,5 +1,5 @@
 import { Box, CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -19,7 +19,7 @@ const ForumPage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   if (!router.isReady || !courses) return <CircularProgress />;

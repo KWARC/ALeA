@@ -4,7 +4,7 @@ import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import {
   canAccessResource,
   FTMLProblemWithSolution,
-  getCourseInfo,
+  getAllCourses,
   getQuiz,
   GetQuizResponse,
   getUserInfo,
@@ -202,7 +202,7 @@ const QuizPage: NextPage = () => {
   }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setAllCourses);
+    getAllCourses().then(setAllCourses);
   }, []);
 
   const notesUri = allCourses?.[courseId]?.notes;

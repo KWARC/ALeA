@@ -1,6 +1,7 @@
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
-import { CardsWithSmileys, getCourseInfo, getDefiniedaInSection, getUriSmileys } from '@alea/spec';
+import { CardsWithSmileys, getDefiniedaInSection, getUriSmileys } from '@alea/spec';
+import { getAllCoursesFromDb } from '../get-all-courses';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 const CARDS_CACHE: { [courseId: string]: CourseCards } = {};
@@ -57,7 +58,7 @@ export async function getCardsBySection(notesUri: string) {
 export default async function handler(req, res) {
   const { courseId } = req.query;
   const Authorization = req.headers.authorization;
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     res.status(404).json({ error: `Course not found: [${courseId}]` });

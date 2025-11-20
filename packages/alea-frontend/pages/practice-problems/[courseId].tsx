@@ -1,5 +1,5 @@
 import { CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
 import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
@@ -17,7 +17,7 @@ const CourseProblemsPage: NextPage = () => {
   const [sectionsData, setSectionsData] = useState<FTML.TocElem[] | undefined>(undefined);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { AllCoursesStats } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res);

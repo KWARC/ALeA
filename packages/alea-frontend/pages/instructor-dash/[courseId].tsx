@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
-import { canAccessResource, getCourseInfo } from '@alea/spec';
+import { canAccessResource, getAllCourses } from '@alea/spec';
 import { updateRouterQuery } from '@alea/react-utils';
 import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
@@ -153,7 +153,7 @@ const InstructorDash: NextPage = () => {
     updateRouterQuery(router, newQuery, false);
   };
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
