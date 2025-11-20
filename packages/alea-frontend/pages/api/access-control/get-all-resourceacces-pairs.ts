@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { isMemberOfAcl } from '../acl-utils/acl-common-utils';
 import {
   checkIfGetOrSetError,
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { isMemberOfAcl } from '../acl-utils/acl-common-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;

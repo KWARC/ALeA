@@ -1,10 +1,6 @@
+import { CourseInfo, createCourseInfo, getCurrentTermForUniversity } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeQuery } from './comment-utils';
-import {
-  CourseInfo,
-  createCourseInfo,
-  CURRENT_TERM,
-} from '@alea/utils';
 
 interface CourseMetadataRow {
   courseId: string;
@@ -31,92 +27,94 @@ function parseJsonWithFallback<T>(jsonString: string | null | undefined, fallbac
   }
 }
 
-function extractInstructorNames(instructorList: Array<{ id: string; name: string }> | null | undefined): string[] | null {
+function extractInstructorNames(
+  instructorList: Array<{ id: string; name: string }> | null | undefined
+): string[] | null {
   if (!instructorList || !Array.isArray(instructorList)) return null;
   return instructorList.map((instructor) => instructor.name || instructor.id).filter(Boolean);
 }
 
-function transformDbRowToMetadata(dbRow: any): CourseMetadataRow {
-  return {
-    courseId: dbRow.courseId,
-    instanceId: dbRow.instanceId,
-    courseName: dbRow.courseName,
-    notes: dbRow.notes || null,
-    landing: dbRow.landing || null,
-    slides: dbRow.slides || null,
-    institution: dbRow.institution || null,
-    teaser: dbRow.teaser || null,
-    instructors: dbRow.instructors || null,
-    hasQuiz: dbRow.hasQuiz || false,
-    hasHomework: dbRow.hasHomework || false,
-    universityId: dbRow.universityId || null,
-  };
+function computeCurrentTermByCourseId(
+  courseMetadataRows: CourseMetadataRow[]
+): Record<string, string> {
+  const currentTermByCourseId: Record<string, string> = {};
+
+  for (const row of courseMetadataRows) {
+    if (!row.courseId) continue;
+    const normalizedId = row.courseId.toLowerCase();
+    if (!currentTermByCourseId[normalizedId]) {
+      const institution = row.institution ?? 'FAU';
+      currentTermByCourseId[normalizedId] = getCurrentTermForUniversity(institution);
+    }
+  }
+
+  return currentTermByCourseId;
 }
 
 function transformMetadataToCoursesInfo(
   courseMetadataRows: CourseMetadataRow[],
-  currentTerm: string = CURRENT_TERM
+  currentTermByCourseId: Record<string, string>
 ): Record<string, CourseInfo> {
-  const coursesGroupedById = new Map<string, CourseMetadataRow[]>();
-  
-  for (const metadataRow of courseMetadataRows) {
-    if (!metadataRow?.courseId) continue;
-    const normalizedCourseId = metadataRow.courseId.toLowerCase();
-    if (!coursesGroupedById.has(normalizedCourseId)) {
-      coursesGroupedById.set(normalizedCourseId, []);
-    }
-    coursesGroupedById.get(normalizedCourseId)!.push(metadataRow);
+  const grouped = new Map<string, CourseMetadataRow[]>();
+
+  // group by courseId
+  for (const row of courseMetadataRows) {
+    const id = row.courseId.toLowerCase();
+    if (!grouped.has(id)) grouped.set(id, []);
+    grouped.get(id)!.push(row);
   }
 
   const coursesInfoMap: Record<string, CourseInfo> = {};
 
-  for (const [courseId, courseInstances] of coursesGroupedById.entries()) {
-    if (!courseInstances.length) continue;
-    
-    const instancesSortedByCurrentTerm = [...courseInstances].sort((instanceA, instanceB) => {
-      const instanceAIsCurrent = instanceA.instanceId === currentTerm;
-      const instanceBIsCurrent = instanceB.instanceId === currentTerm;
-      if (instanceAIsCurrent && !instanceBIsCurrent) return -1;
-      if (!instanceAIsCurrent && instanceBIsCurrent) return 1;
+  for (const [courseId, instances] of grouped.entries()) {
+    const currentTerm = currentTermByCourseId[courseId] ?? 'null';
+
+    // sort current term first
+    const sorted = [...instances].sort((a, b) => {
+      const aIsCurrent = a.instanceId === currentTerm;
+      const bIsCurrent = b.instanceId === currentTerm;
+      if (aIsCurrent && !bIsCurrent) return -1;
+      if (!aIsCurrent && bIsCurrent) return 1;
       return 0;
     });
 
-    const primaryCourseInstance = instancesSortedByCurrentTerm[0];
-    if (!primaryCourseInstance) continue;
+    const primary = sorted[0];
+    if (!primary) continue;
 
-    const isCurrentTerm = instancesSortedByCurrentTerm.some((instance) => instance.instanceId === currentTerm);
-    const hasQuizEnabled = instancesSortedByCurrentTerm.some((instance) => !!instance.hasQuiz);
-    const hasHomeworkEnabled = instancesSortedByCurrentTerm.some((instance) => !!instance.hasHomework);
+    const isCurrentTerm = sorted.some((i) => i.instanceId === currentTerm);
+    const hasQuiz = sorted.some((i) => !!i.hasQuiz);
+    const hasHomework = sorted.some((i) => !!i.hasHomework);
 
-    const semesterInstances = instancesSortedByCurrentTerm
-      .filter((instance) => !!instance.instanceId)
-      .map((instance) => {
-        const instructorList = parseJsonWithFallback<Array<{ id: string; name: string }>>(instance.instructors, []);
-        return {
-          semester: instance.instanceId,
-          instructors: extractInstructorNames(instructorList),
-        };
-      });
+    const semesterInstances = sorted.map((instance) => {
+      const instructorList = parseJsonWithFallback<Array<{ id: string; name: string }>>(
+        instance.instructors,
+        []
+      );
+      return {
+        semester: instance.instanceId,
+        instructors: extractInstructorNames(instructorList),
+      };
+    });
 
     const primaryInstructorList = parseJsonWithFallback<Array<{ id: string; name: string }>>(
-      primaryCourseInstance.instructors,
+      primary.instructors,
       []
     );
-    const primaryInstructorNames = extractInstructorNames(primaryInstructorList);
+    const primaryInstructorNames = extractInstructorNames(primaryInstructorList) ?? undefined;
 
     coursesInfoMap[courseId] = createCourseInfo(
       courseId,
-      primaryCourseInstance.courseName || courseId.toUpperCase(),
-      primaryCourseInstance.notes || '',
-      primaryCourseInstance.landing || '',
+      primary.courseName,
+      primary.notes || '',
+      primary.landing || '',
       isCurrentTerm,
-      hasQuizEnabled,
-      hasHomeworkEnabled,
-      primaryCourseInstance.institution || primaryCourseInstance.universityId || undefined,
-      semesterInstances.length > 0 ? semesterInstances : undefined,
+      hasQuiz,
+      hasHomework,
+      primary.institution || primary.universityId || undefined,
+      semesterInstances,
       primaryInstructorNames,
-      primaryCourseInstance.teaser ?? null,
-      primaryCourseInstance.slides ?? undefined
+      primary.teaser ?? null,
+      primary.slides ?? undefined
     );
   }
 
@@ -127,29 +125,46 @@ export async function getAllCoursesFromDb(
   universityId?: string,
   institution?: string
 ): Promise<Record<string, CourseInfo>> {
-  let sqlQuery: string;
-  let queryParameters: any[];
+  let sqlQuery = `
+    SELECT
+      courseId,
+      instanceId,
+      courseName,
+      notes,
+      landing,
+      slides,
+      institution,
+      teaser,
+      instructors,
+      hasQuiz,
+      hasHomework,
+      universityId
+    FROM courseMetadata
+  `;
+
+  const params: any[] = [];
 
   if (universityId) {
-    sqlQuery = `SELECT * FROM courseMetadata WHERE universityId = ? ORDER BY courseId, instanceId`;
-    queryParameters = [universityId];
+    sqlQuery += ' WHERE universityId = ?';
+    params.push(universityId);
   } else if (institution) {
-    sqlQuery = `SELECT * FROM courseMetadata WHERE institution = ? ORDER BY courseId, instanceId`;
-    queryParameters = [institution];
-  } else {
-    sqlQuery = `SELECT * FROM courseMetadata ORDER BY courseId, instanceId`;
-    queryParameters = [];
+    sqlQuery += ' WHERE institution = ?';
+    params.push(institution);
   }
 
-  const dbQueryResults = await executeQuery<any[]>(sqlQuery, queryParameters);
+  sqlQuery += ' ORDER BY courseId, instanceId';
 
-  if (!dbQueryResults || (dbQueryResults as any).error || !Array.isArray(dbQueryResults)) {
-    console.warn('[getAllCoursesFromDb] Failed to fetch courses from database');
+  const dbResults = await executeQuery<CourseMetadataRow[]>(sqlQuery, params);
+
+  if (!Array.isArray(dbResults)) {
+    console.warn('[getAllCoursesFromDb] Failed to fetch rows');
     return {};
   }
 
-  const courseMetadataRows: CourseMetadataRow[] = dbQueryResults.map(transformDbRowToMetadata);
-  const coursesInfoMap = transformMetadataToCoursesInfo(courseMetadataRows, CURRENT_TERM);
+  const rows = dbResults;
+
+  const currentTermByCourseId = computeCurrentTermByCourseId(rows);
+  const coursesInfoMap = transformMetadataToCoursesInfo(rows, currentTermByCourseId);
 
   return coursesInfoMap;
 }
@@ -163,7 +178,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const coursesInfoMap = await getAllCoursesFromDb(universityId, institution);
     res.status(200).json(coursesInfoMap);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[get-all-courses] Error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
