@@ -33,7 +33,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ message: 'Course already exists for this semester' });
   }
 
-  // If we reach here, existing is an empty array [], meaning the course doesn't exist yet
 
   const insertResult = await executeAndEndSet500OnError(
     `INSERT INTO courseMetadata (
