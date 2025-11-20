@@ -33,64 +33,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ message: 'Course already exists for this semester' });
   }
 
-  const courseFromOtherSemester = await executeAndEndSet500OnError(
-    `SELECT * FROM courseMetadata WHERE courseId = ? AND universityId = ? AND instanceId != ? LIMIT 1`,
-    [courseId, universityId, instanceId],
+  // If we reach here, existing is an empty array [], meaning the course doesn't exist yet
+
+  const insertResult = await executeAndEndSet500OnError(
+    `INSERT INTO courseMetadata (
+      courseId,
+      instanceId,
+      universityId,
+      institution,
+      lectureSchedule,
+      tutorialSchedule,
+      seriesId,
+      hasHomework,
+      hasQuiz,
+      updaterId,
+      courseName,
+      notes,
+      landing,
+      slides,
+      teaser,
+      instructors
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      courseId,
+      instanceId,
+      universityId,
+      null,
+      JSON.stringify([]),
+      JSON.stringify([]),
+      null,
+      false,
+      false,
+      userId,
+      '',
+      '',
+      '',
+      '',
+      null,
+      JSON.stringify([]),
+    ],
     res
   );
 
-  if (!courseFromOtherSemester) return;
+  if (!insertResult) return;
 
-  if (Array.isArray(courseFromOtherSemester) && courseFromOtherSemester.length > 0) {
-    const sourceCourse = courseFromOtherSemester[0];
-    const lectureSchedule = sourceCourse.lectureSchedule || JSON.stringify([]);
-    const tutorialSchedule = sourceCourse.tutorialSchedule || JSON.stringify([]);
-    
-    const insertResult = await executeAndEndSet500OnError(
-      `INSERT INTO courseMetadata (
-        courseId,
-        instanceId,
-        universityId,
-        lectureSchedule,
-        tutorialSchedule,
-        seriesId,
-        hasHomework,
-        hasQuiz,
-        updaterId,
-        courseName,
-        notes,
-        landing,
-        slides,
-        institution,
-        teaser,
-        instructors
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        courseId,
-        instanceId,
-        universityId,
-        lectureSchedule,
-        tutorialSchedule,
-        sourceCourse.seriesId || null,
-        sourceCourse.hasHomework || false,
-        sourceCourse.hasQuiz || false,
-        userId,
-        sourceCourse.courseName,
-        sourceCourse.notes,
-        sourceCourse.landing,
-        sourceCourse.slides,
-        sourceCourse.institution || null,
-        sourceCourse.teaser || null,
-        sourceCourse.instructors || JSON.stringify([]),
-      ],
-      res
-    );
-    
-    if (!insertResult) return;
-    
-    return res.status(201).json({ message: 'Course added to semester successfully' });
-  } else {
-    return res.status(404).end('Course not found in courseMetadata. Please add course metadata first.');
-  }
+  return res.status(201).json({ message: 'Course added to semester successfully' });
 }
-
