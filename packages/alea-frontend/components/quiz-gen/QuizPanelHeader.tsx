@@ -1,13 +1,13 @@
 import { Folder, PublishedWithChanges } from '@mui/icons-material';
 import {
-    Box,
-    Chip,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    Tooltip,
-    Typography,
+  Box,
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import { QuizProblem } from '@alea/spec';
 import { getSectionNameFromIdOrUri } from '../../pages/quiz-gen';
@@ -24,6 +24,7 @@ interface QuizPanelHeaderProps {
   onVariantChange: (value: number) => void;
   onGoToSection: (courseId: string, sectionId: string) => void;
   onOpenVariantDialog: () => void;
+  hideVariantGeneration?: boolean;
 }
 
 export function QuizPanelHeader({
@@ -37,6 +38,7 @@ export function QuizPanelHeader({
   onVariantChange,
   onGoToSection,
   onOpenVariantDialog,
+  hideVariantGeneration = false,
 }: QuizPanelHeaderProps) {
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} overflow="auto">
@@ -58,28 +60,31 @@ export function QuizPanelHeader({
           }}
         />
       </Tooltip>
+      {!hideVariantGeneration && (
+        <>
+          <Tooltip title="Finalized variants of this problem" placement="top">
+            <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
+              <InputLabel>Variants</InputLabel>
+              <Select
+                value={selectedProblemIndex ?? ''}
+                onChange={(e) => onVariantChange(e.target.value as number)}
+                label="Variants"
+              >
+                <MenuItem value={null}>Original</MenuItem>
+                {finalizedProblems?.map((variant, idx) => (
+                  <MenuItem key={variant.problemId} value={idx}>
+                    Variant {idx + 1}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Tooltip>
 
-      <Tooltip title="Finalized variants of this problem" placement="top">
-        <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
-          <InputLabel>Variants</InputLabel>
-          <Select
-            value={selectedProblemIndex ?? ''}
-            onChange={(e) => onVariantChange(e.target.value as number)}
-            label="Variants"
-          >
-            <MenuItem value={null}>Original</MenuItem>
-            {finalizedProblems?.map((variant, idx) => (
-              <MenuItem key={variant.problemId} value={idx}>
-                Variant {idx + 1}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Tooltip>
-
-      <Tooltip title="Create a new Variant">
-        <PublishedWithChanges onClick={onOpenVariantDialog} />
-      </Tooltip>
+          <Tooltip title="Create a new Variant">
+            <PublishedWithChanges onClick={onOpenVariantDialog} />
+          </Tooltip>
+        </>
+      )}
     </Box>
   );
 }
