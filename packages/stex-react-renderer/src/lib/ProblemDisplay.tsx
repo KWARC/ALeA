@@ -121,10 +121,10 @@ export function ProblemViewer({
       allowHovers={isFrozen}
       problemStates={problemStates}
       onProblemResponse={(response) => {
-        onResponseUpdate?.(response);
+        onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
       }}
       problemWrap={(problemUri, isSubProblem, autogradable) => {
-        if(autogradable) return undefined;
+        if (autogradable) return undefined;
         return (ch: React.ReactNode) => (
           <Box>
             {ch}
@@ -154,20 +154,17 @@ function AnswerAccepter({
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
-  const serverAnswer =
-    previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)?.answer ??
-    null;
+  let serverAnswer = '';
+  if (previousAnswer !== undefined)
+    serverAnswer =
+      previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)
+        ?.answer ?? '';
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
   );
   const router = useRouter();
 
-  async function saveAnswer({
-    freeTextResponses,
-  }: {
-    subId?: string;
-    freeTextResponses: string;
-  }) {
+  async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
       createAnswer({
         answer: freeTextResponses,

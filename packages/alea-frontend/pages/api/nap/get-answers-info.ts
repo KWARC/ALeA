@@ -7,7 +7,6 @@ export async function getAllGradingsOrSetError(
   res: NextApiResponse
 ) {
   if (Object.keys(subProblemToAnswerIds).length === 0) return {};
-
   const latestGrades = await executeAndEndSet500OnError<GradingInfo[]>(
     `SELECT id, checkerId, reviewType, answerId, customFeedback, totalPoints, createdAt, updatedAt
     FROM Grading
