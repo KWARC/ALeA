@@ -102,13 +102,23 @@ export async function getAnswersWithGrading(
     })
     .then((c) => c.data as GetAnswersWithGradingResponse);
 }
-export async function getAnswerInfo(answerId: number, courseId: string) {
+export async function getAnswerAdmin(courseId: string, answerId: number) {
+  return axios.get('/api/nap/admin/get-answer', {
+    params: {
+      courseId,
+      answerId,
+    },
+    headers:getAuthHeaders()
+  }).then(c=>c.data);
+}
+export async function getAnswerInfo(answerId: number, courseId: string, questionId: string) {
   return axios
     .get('/api/nap/get-answers-info', {
       params: {
         answerId,
         courseId,
         courseInstance: CURRENT_TERM,
+        questionId,
       },
       headers: getAuthHeaders(),
     })
