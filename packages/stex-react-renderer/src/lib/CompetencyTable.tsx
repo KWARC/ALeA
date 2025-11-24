@@ -24,7 +24,7 @@ import {
   getProblemsForConcept,
   uriWeightToSmileyLevel,
 } from '@alea/spec';
-import { PRIMARY_COL, PathToTour } from '@alea/utils';
+import { PRIMARY_COL, PathToTour2 } from '@alea/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -309,7 +309,7 @@ export function CompetencyTable({
                     }}
                   >
                     <Link
-                      href={PathToTour(conceptUris[index])}
+                      href={PathToTour2(conceptUris[index])}
                       target="_blank"
                       sx={{ marginRight: '10px' }}
                     >
