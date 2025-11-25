@@ -766,7 +766,6 @@ const CourseHomePage: NextPage = () => {
               display: 'flex',
               justifyContent: 'center',
               flexDirection: 'column',
-              marginTop: '10px',
             }}
           >
             <Button
