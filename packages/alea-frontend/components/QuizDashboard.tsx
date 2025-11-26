@@ -29,13 +29,7 @@ import {
 } from '@alea/spec';
 import { getQuizPhase } from '@alea/quiz-utils';
 import { SafeHtml } from '@alea/react-utils';
-import {
-  Action,
-  CoverageTimeline,
-  LectureEntry,
-  ResourceName,
-  roundToMinutes,
-} from '@alea/utils';
+import { Action, CoverageTimeline, LectureEntry, ResourceName, roundToMinutes } from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -51,6 +45,7 @@ import { useRouter } from 'next/router';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from './coverage-update';
 import { SecInfo } from '../types';
+import { getLectureEntry, LectureSchedule } from '@alea/spec';
 
 const NEW_QUIZ_ID = 'New';
 
@@ -224,10 +219,23 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   );
 
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
+  const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
+
+  useEffect(() => {
+    async function loadLectureSchedule() {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        setLectureSchedule(data.lectureSchedule || []);
+      } catch (err) {
+        console.error('Failed to load lecture schedule', err);
+      }
+    }
+    if (currentTerm) loadLectureSchedule();
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function fetchQuizzes() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
@@ -253,34 +261,69 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }, [selectedQuizId, courseId, currentTerm, quizzes]);
 
   useEffect(() => {
-    if (selectedQuizId === NEW_QUIZ_ID) {
+    if (selectedQuizId !== NEW_QUIZ_ID) return;
+    const now = Date.now();
+    const upcomingLecture = lectureSchedule
+      .filter((lec) => lec.hasQuiz)
+      .map((lec) => {
+        const [sh, sm] = lec.lectureStartTime.split(':').map(Number);
+
+        // Convert weekday string → index
+        const weekdayIndex = [
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ].indexOf(lec.lectureDay);
+        let lectureDate = dayjs().day(weekdayIndex);
+        if (lectureDate.isBefore(dayjs(), 'day')) {
+          lectureDate = lectureDate.add(1, 'week');
+        }
+
+        const lectureStartMs = lectureDate.hour(sh).minute(sm).second(0).valueOf();
+
+        return { ...lec, lectureStartMs };
+      })
+      .filter((lec) => lec.lectureStartMs >= now)
+      .sort((a, b) => a.lectureStartMs - b.lectureStartMs)[0];
+
+    if (!upcomingLecture) {
       const ts = roundToMinutes(Date.now());
       setQuizStartTs(ts);
       setQuizEndTs(ts);
       setFeedbackReleaseTs(ts);
-      setManuallySetPhase(Phase.UNSET);
       setTitle('');
       setProblems({});
       setCss([]);
       setCourseTerm(currentTerm);
       return;
     }
+    const [endH, endM] = upcomingLecture.lectureEndTime.split(':').map(Number);
+    const lectureStart = dayjs(upcomingLecture.lectureStartMs);
+    const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
+    const referenceTime =
+      (upcomingLecture.quizOffsetReference || 'start') === 'start' ? lectureStart : lectureEnd;
 
-    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
-    if (!selected) return;
-    setQuizStartTs(selected.quizStartTs);
-    setQuizEndTs(selected.quizEndTs);
-    setFeedbackReleaseTs(selected.feedbackReleaseTs);
-    setManuallySetPhase(selected.manuallySetPhase);
-    setTitle(selected.title);
-    setProblems(selected.problems);
-    setCss(selected.css || []);
-    setCourseTerm(selected.courseTerm);
-  }, [selectedQuizId, quizzes]);
+    const quizStart = referenceTime.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
+
+    const quizEnd = quizStart.add(upcomingLecture.quizDurationMinutes || 0, 'minutes');
+    const feedbackRelease = quizEnd.add(upcomingLecture.quizFeedbackDelayMinutes || 0, 'minutes');
+    setQuizStartTs(quizStart.valueOf());
+    setQuizEndTs(quizEnd.valueOf());
+    setFeedbackReleaseTs(feedbackRelease.valueOf());
+    setManuallySetPhase(Phase.UNSET);
+    setTitle('');
+    setProblems({});
+    setCss([]);
+    setCourseTerm(currentTerm);
+  }, [selectedQuizId, lectureSchedule, currentTerm]);
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
         instanceId: currentTerm,

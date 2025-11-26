@@ -171,13 +171,20 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       return;
     }
     try {
+      const minutes = editEntry.quizOffsetMinutes || 0;
+      const direction = editEntry.quizOffsetDirection || 'before';
+      const finalOffset = direction === 'before' ? -minutes : minutes;
+      const updatedEntry = {
+        ...editEntry,
+        quizOffsetMinutes: finalOffset,
+      };
       await updateLectureEntry({
         courseId,
         instanceId,
         lectureDay: editKeys.lectureDay,
         lectureStartTime: editKeys.lectureStartTime,
         lectureEndTime: editKeys.lectureEndTime,
-        updatedLectureEntry: { ...editEntry },
+        updatedLectureEntry: updatedEntry,
         scheduleType: selectedScheduleType,
       });
       setEditEntry(null);
@@ -203,17 +210,24 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       return;
     }
     try {
-      const cleanEntry =
-        selectedScheduleType === 'lecture'
-          ? entryToSave
-          : {
-              lectureDay: entryToSave.lectureDay,
-              lectureStartTime: entryToSave.lectureStartTime,
-              lectureEndTime: entryToSave.lectureEndTime,
-              venue: entryToSave.venue,
-              venueLink: entryToSave.venueLink,
-            };
-
+      let cleanEntry;
+      if (selectedScheduleType === 'lecture') {
+        const minutes = entryToSave.quizOffsetMinutes || 0;
+        const direction = entryToSave.quizOffsetDirection || 'before';
+        const signedOffset = direction === 'before' ? -minutes : minutes;
+        cleanEntry = {
+          ...entryToSave,
+          quizOffsetMinutes: signedOffset,
+        };
+      } else {
+        cleanEntry = {
+          lectureDay: entryToSave.lectureDay,
+          lectureStartTime: entryToSave.lectureStartTime,
+          lectureEndTime: entryToSave.lectureEndTime,
+          venue: entryToSave.venue,
+          venueLink: entryToSave.venueLink,
+        };
+      }
       await addLectureSchedule({
         courseId,
         instanceId,
@@ -237,7 +251,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     }
   };
 
-  const handleFieldChange = (field: keyof LectureSchedule, value: string | boolean) => {
+  const handleFieldChange = (field: keyof LectureSchedule, value: string | boolean | number) => {
     if (!selectedScheduleType) {
       alert('Please first select Lecture Schedule or Tutorial Schedule');
       return;
@@ -455,6 +469,74 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               sx={{ m: 0 }}
             />
           )}
+          {selectedScheduleType === 'lecture' && lectureScheduleData.hasQuiz && (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                mt: 1,
+                pl: 1,
+                borderLeft: '3px solid #203360',
+              }}
+            >
+              <Typography fontWeight="bold" sx={{ width: '100%' }}>
+                Quiz Settings
+              </Typography>
+
+              <TextField
+                label="Offset (min)"
+                type="number"
+                value={lectureScheduleData.quizOffsetMinutes || ''}
+                onChange={(e) => handleFieldChange('quizOffsetMinutes', Number(e.target.value))}
+                size="small"
+                sx={{ width: 120 }}
+              />
+              <TextField
+                select
+                label="Before/After"
+                value={lectureScheduleData.quizOffsetDirection || 'before'}
+                onChange={(e) => handleFieldChange('quizOffsetDirection', e.target.value)}
+                size="small"
+                sx={{ width: 140 }}
+              >
+                <MenuItem value="before">Before</MenuItem>
+                <MenuItem value="after">After</MenuItem>
+              </TextField>
+              <TextField
+                select
+                label="From"
+                value={lectureScheduleData.quizOffsetReference || 'start'}
+                onChange={(e) => handleFieldChange('quizOffsetReference', e.target.value)}
+                size="small"
+                sx={{ width: 170 }}
+              >
+                <MenuItem value="start">Start of Lecture</MenuItem>
+                <MenuItem value="end">End of Lecture</MenuItem>
+              </TextField>
+
+              <TextField
+                label="Quiz Duration (min)"
+                type="number"
+                value={lectureScheduleData.quizDurationMinutes || ''}
+                onChange={(e) => handleFieldChange('quizDurationMinutes', Number(e.target.value))}
+                size="small"
+                sx={{ width: 160 }}
+              />
+
+              <TextField
+                label="Feedback Delay (min)"
+                type="number"
+                value={lectureScheduleData.quizFeedbackDelayMinutes || ''}
+                onChange={(e) =>
+                  handleFieldChange('quizFeedbackDelayMinutes', Number(e.target.value))
+                }
+                size="small"
+                sx={{ width: 180 }}
+              />
+            </Box>
+          )}
           <Button
             variant="contained"
             size="small"
@@ -530,7 +612,16 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   <IconButton
                     size="small"
                     onClick={() => {
-                      setEditEntry(entry);
+                      const absMinutes = Math.abs(entry.quizOffsetMinutes || 0);
+                      const direction =
+                        entry.quizOffsetMinutes && entry.quizOffsetMinutes < 0 ? 'before' : 'after';
+
+                      setEditEntry({
+                        ...entry,
+                        quizOffsetMinutes: absMinutes,
+                        quizOffsetDirection: direction,
+                        quizOffsetReference: entry.quizOffsetReference || 'start',
+                      });
                       setEditKeys({
                         lectureDay: entry.lectureDay,
                         lectureStartTime: entry.lectureStartTime,
@@ -602,18 +693,101 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             }
             InputLabelProps={{ shrink: true }}
           />
-          {selectedScheduleType === 'lecture' && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={editEntry?.hasQuiz || false}
-                  onChange={(e) =>
-                    setEditEntry((prev) => prev && { ...prev, hasQuiz: e.target.checked })
-                  }
-                />
-              }
-              label={t.quiz}
-            />
+          {selectedScheduleType === 'lecture' && editEntry?.hasQuiz && (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                mt: 1,
+                pl: 1,
+                borderLeft: '3px solid #203360',
+              }}
+            >
+              <Typography fontWeight="bold" sx={{ width: '100%' }}>
+                Quiz Settings
+              </Typography>
+
+              <TextField
+                label="Offset (min)"
+                type="number"
+                value={editEntry?.quizOffsetMinutes || ''}
+                onChange={(e) =>
+                  setEditEntry(
+                    (prev) => prev && { ...prev, quizOffsetMinutes: Number(e.target.value) }
+                  )
+                }
+                size="small"
+                sx={{ width: 120 }}
+              />
+
+              <TextField
+                select
+                label="Before/After"
+                value={editEntry?.quizOffsetDirection || 'before'}
+                onChange={(e) =>
+                  setEditEntry(
+                    (prev) =>
+                      prev && {
+                        ...prev,
+                        quizOffsetDirection: e.target.value as 'before' | 'after',
+                      }
+                  )
+                }
+                size="small"
+                sx={{ width: 140 }}
+              >
+                <MenuItem value="before">Before</MenuItem>
+                <MenuItem value="after">After</MenuItem>
+              </TextField>
+
+              <TextField
+                select
+                label="From"
+                value={editEntry?.quizOffsetReference || 'start'}
+                onChange={(e) =>
+                  setEditEntry(
+                    (prev) =>
+                      prev && {
+                        ...prev,
+                        quizOffsetReference: e.target.value as 'start' | 'end',
+                      }
+                  )
+                }
+                size="small"
+                sx={{ width: 170 }}
+              >
+                <MenuItem value="start">Start of Lecture</MenuItem>
+                <MenuItem value="end">End of Lecture</MenuItem>
+              </TextField>
+
+              <TextField
+                label="Quiz Duration (min)"
+                type="number"
+                value={editEntry?.quizDurationMinutes || ''}
+                onChange={(e) =>
+                  setEditEntry(
+                    (prev) => prev && { ...prev, quizDurationMinutes: Number(e.target.value) }
+                  )
+                }
+                size="small"
+                sx={{ width: 160 }}
+              />
+
+              <TextField
+                label="Feedback Delay (min)"
+                type="number"
+                value={editEntry?.quizFeedbackDelayMinutes || ''}
+                onChange={(e) =>
+                  setEditEntry(
+                    (prev) => prev && { ...prev, quizFeedbackDelayMinutes: Number(e.target.value) }
+                  )
+                }
+                size="small"
+                sx={{ width: 180 }}
+              />
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
