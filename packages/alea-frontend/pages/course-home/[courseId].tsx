@@ -51,6 +51,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
@@ -610,6 +611,12 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
+  const details = [
+    { name: 'Prof. Michael Kohlhase' },
+    { name: 'Prof.John' },
+    { name: 'Prof. Sophia ' },
+    { name: 'Prof. Marry' },
+  ];
 
   return (
     <MainLayout
@@ -732,6 +739,7 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
+            <InstructorDetails details={details} />
             <Button
               onClick={enrollInCourse}
               variant="contained"
