@@ -58,3 +58,6 @@ static
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# Ignore Next.js auto-generated type file
+next-env.d.ts
