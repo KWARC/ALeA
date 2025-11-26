@@ -6,7 +6,7 @@ function InstructorDetails({ details = [] }) {
   return (
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Typography variant="h6" sx={{ fontSize: '0.85rem', color: PRIMARY_COL, fontWeight: 800 }}>
-        Instructor Names:
+        Instructors :
       </Typography>
 
       {details.map((item, index) => (
