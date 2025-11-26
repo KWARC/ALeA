@@ -57,6 +57,7 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
+import InstructorDetails from 'packages/alea-frontend/components/InstructorDetails';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -610,6 +611,12 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
+const details = [
+  { name: "Prof. Michael Kohlhase" },
+  { name: "Prof.John" },
+  { name: "Prof. Sophia " },
+  { name: "Prof. Marry" }
+];
 
   return (
     <MainLayout
@@ -636,6 +643,8 @@ const CourseHomePage: NextPage = () => {
         <Box
           display="grid"
           gridTemplateColumns="repeat(auto-fill,minmax(185px, 1fr))"
+          // gridTemplateColumns="repeat(2, 1fr)"
+
           gap="10px"
           ref={containerRef}
         >
@@ -732,6 +741,27 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
+            {/* <Button
+           variant="contained"
+          sx={{
+         backgroundColor: '#203360',
+          width: '220px',
+          height: '48px',
+         display: 'flex',
+         justifyContent: 'center',
+         alignItems: 'center',
+         fontSize: '16px',
+         color: 'white',
+          borderRadius: '8px',
+         marginBottom: '20px',
+  }}
+>
+  Prof. KK
+</Button> */}
+<InstructorDetails details={details}/>
+
+{/* <p className ="text"> prof.k.k</p> */}
+
             <Button
               onClick={enrollInCourse}
               variant="contained"
