@@ -267,8 +267,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       .filter((lec) => lec.hasQuiz)
       .map((lec) => {
         const [sh, sm] = lec.lectureStartTime.split(':').map(Number);
-
-        // Convert weekday string → index
         const weekdayIndex = [
           'Sunday',
           'Monday',
