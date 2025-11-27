@@ -93,7 +93,7 @@ export async function handleUnEnrollment(userId: string, courseId: string, curre
     await addRemoveMember({
       memberId: userId,
       aclId: getCourseEnrollmentAcl(courseId, currentTerm),
-      isAclMember: true,
+      isAclMember: false,
       toBeAdded: false,
     });
 
