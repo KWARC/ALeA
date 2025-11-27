@@ -766,6 +766,7 @@ const CourseHomePage: NextPage = () => {
               display: 'flex',
               justifyContent: 'center',
               flexDirection: 'column',
+              marginTop: '10px',
             }}
           >
             <Button
@@ -792,24 +793,14 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        {enrolled === true && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              marginTop: '10px',
-            }}
-          >
+        {enrolled && (
+          <Box sx={{ m: 2, textAlign: 'center' }}>
             <Button
               onClick={unEnrollFromCourse}
               variant="contained"
               sx={{
-                backgroundColor: '#ffb3b3',
+                bgcolor: '#ffb3b3',
                 color: '#7a0000',
-                width: 'max-content',
-                alignSelf: 'center',
-                marginBottom: '10px',
               }}
             >
               Un-Enroll
