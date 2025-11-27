@@ -83,6 +83,29 @@ export async function handleEnrollment(userId: string, courseId: string, current
   }
 }
 
+export async function handleUnEnrollment(userId: string, courseId: string, currentTerm: string) {
+  if (!userId || !isFauId(userId)) {
+    alert('Please Login Using FAU Id.');
+    return false;
+  }
+
+  try {
+    await addRemoveMember({
+      memberId: userId,
+      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
+      isAclMember: true,
+      toBeAdded: false,
+    });
+
+    alert('You have been unenrolled.');
+    return true;
+  } catch (error) {
+    console.error('Error during unenrollment:', error);
+    alert('Unable to unenroll. Please try again.');
+    return false;
+  }
+}
+
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -611,6 +634,20 @@ const CourseHomePage: NextPage = () => {
     setIsEnrolled(enrollmentSuccess);
   };
 
+  const unEnrollFromCourse = async () => {
+    if (!userId || !courseId || !currentTerm) {
+      return router.push('/login');
+    }
+
+    const confirmed = window.confirm('Are you sure you want to un-enroll?');
+    if (!confirmed) return;
+
+    const success = await handleUnEnrollment(userId, courseId, currentTerm);
+    if (success) {
+      setIsEnrolled(false);
+    }
+  };
+
   return (
     <MainLayout
       title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
@@ -753,6 +790,21 @@ const CourseHomePage: NextPage = () => {
             <Alert severity="info" sx={{ display: 'flex', justifyContent: 'center' }}>
               {q.enrollmentMessage}
             </Alert>
+          </Box>
+        )}
+
+        {enrolled && (
+          <Box sx={{ m: 2, textAlign: 'center' }}>
+            <Button
+              onClick={unEnrollFromCourse}
+              variant="contained"
+              sx={{
+                bgcolor: '#ffb3b3',
+                color: '#7a0000',
+              }}
+            >
+              Un-Enroll
+            </Button>
           </Box>
         )}
 
