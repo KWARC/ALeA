@@ -20,19 +20,23 @@ import {
 import Box from '@mui/material/Box';
 import {
   AnswerClass,
+  AnswerResponse,
   CreateAnswerClassRequest,
   createGrading,
   FTMLProblemWithSolution,
+  getAnswerAdmin,
   getAnswerInfo,
   getAnswersWithGrading,
   getCourseGradingItems,
   GradingInfo,
   GradingItem,
   HomeworkInfo,
+  ResponseWithSubProblemId,
   Tristate,
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
 import {
+  AnswerContext,
   GradingContext,
   GradingCreator,
   ProblemDisplay,
@@ -388,20 +392,28 @@ function GradingItemDisplay({
   onNextGradingItem: () => void;
   onPrevGradingItem: () => void;
 }) {
-  const [studentResponse, setStudentResponse] = useState<FTML.ProblemResponse | undefined>(
-    undefined
-  );
+  const [studentResponse, setStudentResponse] =
+    useState<Record<string, ResponseWithSubProblemId>>();
   const [problem, setProblem] = useState<FTMLProblemWithSolution | null>(
     questionMap[questionId] || null
   );
   const [answerClasses, setAnswerClasses] = useState<AnswerClass[]>();
   const refreshGradingInfo = useCallback(() => {
-    setStudentResponse(undefined);
-    getAnswerInfo(answerId, courseId).then((r) => {
+    if (!isPeerGrading) {
+      getAnswerAdmin(courseId, answerId).then((c) => {
+        const r: Record<string, ResponseWithSubProblemId> = {};
+        r[questionId] = {
+          problemId: questionId,
+          responses: [{ subProblemId: c.subProblemId, answer: c.answer }],
+        };
+        setStudentResponse(r);
+      });
+    }
+    getAnswerInfo(answerId, courseId, questionId).then((r) => {
       if (r.subProblemId === questionId) setAnswerClasses(problem.answerClasses);
       else
         setAnswerClasses(
-          problem.problem.subProblems.filter((c) => c.id === r.subProblemId)[0].answerClasses
+          problem.problem.subProblems.filter((c) => c.id === r.subProblemId)[0]?.answerClasses
         );
     });
   }, [homeworkId, questionId, studentId]);
@@ -431,18 +443,20 @@ function GradingItemDisplay({
 
   return (
     <Box maxWidth={900}>
-      <ProblemDisplay
-        isFrozen={true}
-        r={studentResponse}
-        // problemId={questionId} TODO ALEA4-P4
-        problem={problem}
-        onResponseUpdate={() => {
-          console.log('onResponseUpdate');
-        }}
-      />
+      <AnswerContext.Provider value={studentResponse}>
+        <ProblemDisplay
+          isFrozen={true}
+          // problemId={questionId} TODO ALEA4-P4
+          problem={problem}
+          onResponseUpdate={() => {
+            console.log('onResponseUpdate');
+          }}
+        />
+      </AnswerContext.Provider>
       <GradingProblem
         answerClasses={answerClasses}
         onNewGrading={async (acs, feedback) => {
+          
           await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
           refreshGradingInfo();
         }}
