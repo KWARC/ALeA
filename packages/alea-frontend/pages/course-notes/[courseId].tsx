@@ -164,7 +164,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -191,7 +191,7 @@ const CourseNotesPage: NextPage = () => {
         courseId={courseId}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      />
+      /> */}
       <Box
         sx={{
           height: 'calc(100vh - 120px)',

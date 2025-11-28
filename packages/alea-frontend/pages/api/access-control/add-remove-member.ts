@@ -35,6 +35,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else query = 'select userId from userInfo where userId=?';
     const itemsExist = (await executeAndEndSet500OnError(query, [memberId], res))[0];
     if (itemsExist?.length) return res.status(422).send('Invalid input');
+
+    const memberField = isAclMember ? 'memberACLId' : 'memberUserId';
+ 
+    const checkMembershipQuery = `SELECT id FROM ACLMembership WHERE parentACLId=? AND ${memberField}=?`;
+    const existingMembership = await executeAndEndSet500OnError(
+      checkMembershipQuery,
+      [aclId, memberId],
+      res
+    );
+
+    if (existingMembership && existingMembership.length > 0) {
+      res.status(200).end();
+      return;
+    }
     query = 'INSERT INTO ACLMembership (parentACLId, memberACLId, memberUserId) VALUES (?, ?, ?)';
     params = isAclMember ? [aclId, memberId, null] : [aclId, null, memberId];
   } else {

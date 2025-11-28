@@ -246,29 +246,39 @@ const UpdateAcl: NextPage = () => {
               typeof opt === 'string' ? opt : `${opt.fullName} (${opt.userId})`
             }
             inputValue={tempMemberUserId}
-            onInputChange={(_, v) => {
+            onInputChange={(_, v, reason) => {
+              if (reason === 'reset') return;
               setTempMemberUserId(v);
-              setIsTypingMemberId(true);
-              if (memberIdAddStatus !== 'initial') setMemberIdAddStatus('initial');
             }}
             onChange={(_, val) => {
-              if (val && typeof val !== 'string') {
-                setTempMemberUserId(val.userId);
+              if (!val) return;
+              const extracted = typeof val === 'string' ? val : val.userId;
+
+              if (extracted && !memberUserIds.includes(extracted)) {
+                setMemberUserIds([...memberUserIds, extracted]);
+                setMemberIdAddStatus('success');
+                resetStatus(setMemberIdAddStatus);
+              } else if (memberUserIds.includes(extracted)) {
+                setMemberIdAddStatus('failure');
+                resetStatus(setMemberIdAddStatus);
               }
+
+              setTempMemberUserId('');
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Add Member ID"
                 size="small"
-                onKeyDown={handleAddMemberId}
-                helperText={
-                  tempMemberUserId && !isTypingMemberId ? 'Press Enter to add or clear field' : ''
-                }
-                error={!!tempMemberUserId && !isTypingMemberId}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             )}
           />
+
           <Stack spacing={1} mt={1}>
             {memberIdAddStatus === 'success' && (
               <Alert variant="outlined" severity="success">
@@ -298,29 +308,39 @@ const UpdateAcl: NextPage = () => {
               typeof opt === 'string' ? opt : `${opt.id} (${opt.description})`
             }
             inputValue={tempMemberACL}
-            onInputChange={(_, v) => {
+            onInputChange={(_, v, reason) => {
+              if (reason === 'reset') return;
               setTempMemberACL(v);
-              setIsTypingMemberACL(true);
-              if (memberACLAddStatus !== 'initial') setMemberACLAddStatus('initial');
             }}
             onChange={(_, val) => {
-              if (val && typeof val !== 'string') {
-                setTempMemberACL(val.id);
+              if (!val) return;
+              const extracted = typeof val === 'string' ? val : val.id;
+
+              if (extracted && !memberACLIds.includes(extracted)) {
+                setMemberACLIds([...memberACLIds, extracted]);
+                setMemberACLAddStatus('success');
+                resetStatus(setMemberACLAddStatus);
+              } else if (memberACLIds.includes(extracted)) {
+                setMemberACLAddStatus('failure');
+                resetStatus(setMemberACLAddStatus);
               }
+
+              setTempMemberACL('');
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Add Member ACL"
                 size="small"
-                onKeyDown={handleAddMemberACL}
-                helperText={
-                  tempMemberACL && !isTypingMemberACL ? 'Press Enter to add or clear field' : ''
-                }
-                error={!!tempMemberACL && !isTypingMemberACL}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             )}
           />
+
           <Stack spacing={1} mt={1}>
             {memberACLAddStatus === 'success' && (
               <Alert variant="outlined" severity="success">
