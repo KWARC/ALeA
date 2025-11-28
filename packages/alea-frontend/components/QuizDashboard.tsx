@@ -29,7 +29,15 @@ import {
 } from '@alea/spec';
 import { getQuizPhase } from '@alea/quiz-utils';
 import { SafeHtml } from '@alea/react-utils';
-import { Action, CoverageTimeline, LectureEntry, ResourceName, roundToMinutes, toWeekdayIndex, parseTimeString } from '@alea/utils';
+import {
+  Action,
+  CoverageTimeline,
+  LectureEntry,
+  ResourceName,
+  roundToMinutes,
+  toWeekdayIndex,
+  parseTimeString,
+} from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -306,11 +314,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     const lectureStart = dayjs(upcomingLecture.lectureStartMs);
     const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
     const referenceSource = upcomingLecture.quizOffsetReference || 'lecture-start';
-    // Treat anything other than 'lecture-end' as start of lecture (backward compatible)
     const referenceTime = referenceSource === 'lecture-end' ? lectureEnd : lectureStart;
-
     const quizStart = referenceTime.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
-
     const quizEnd = quizStart.add(upcomingLecture.quizDurationMinutes || 0, 'minutes');
     const feedbackRelease = quizEnd.add(upcomingLecture.quizFeedbackDelayMinutes || 0, 'minutes');
     setQuizStartTs(quizStart.valueOf());

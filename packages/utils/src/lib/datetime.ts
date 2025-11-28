@@ -1,8 +1,24 @@
-export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+export const WEEKDAYS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
 
-export const WEEKDAYS_UI_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+export const WEEKDAYS_UI_ORDER = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
 
-export type WeekdayName = typeof WEEKDAYS[number];
+export type WeekdayName = (typeof WEEKDAYS)[number];
 
 export function toWeekdayIndex(weekday: string): number | undefined {
   const index = WEEKDAYS.indexOf(weekday as WeekdayName);
@@ -23,4 +39,3 @@ export function parseTimeString(timeString: string): [number, number] | undefine
   }
   return [parts[0], parts[1]];
 }
-

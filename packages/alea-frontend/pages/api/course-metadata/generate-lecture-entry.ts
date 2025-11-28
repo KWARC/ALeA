@@ -145,7 +145,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-
       for (const lectureDate of generateLectureDates(
         lectureStartDate,
         lectureEndDate,
