@@ -486,7 +486,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 label="Offset (min)"
                 type="number"
                 value={lectureScheduleData.quizOffsetMinutes || ''}
-                onChange={(e) => handleFieldChange('quizOffsetMinutes', Number(e.target.value))}
+                onChange={(e) => {
+                    const quizOffsetMinutes = Number(e.target.value) * (lectureScheduleData.quizOffsetDirection == 'before' ? -1 : 1); 
+                    handleFieldChange('quizOffsetMinutes', quizOffsetMinutes)
+                  }
+                }
                 size="small"
                 sx={{ width: 120 }}
               />
