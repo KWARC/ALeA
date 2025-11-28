@@ -76,5 +76,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!insertResult) return;
 
-  return res.status(201).json({ message: 'Course added to semester successfully' });
+  return res.status(201).end();
 }
