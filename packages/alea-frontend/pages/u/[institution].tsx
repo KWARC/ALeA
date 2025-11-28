@@ -232,10 +232,10 @@ export async function getStaticProps({ params, locale }) {
       ? Object.keys(allCourses)
           .filter(
             (key) =>
-              !PARTNERED_UNIVERSITIES.map((uni) => uni.code).includes(allCourses[key].institution)
+              !PARTNERED_UNIVERSITIES.map((uni) => uni.code).includes(allCourses[key].universityId)
           )
           .map((key) => allCourses[key])
-      : await getAllCoursesFromDb(undefined, params.institution);
+      : await getAllCoursesFromDb(params.institution);
 
   return {
     props: {

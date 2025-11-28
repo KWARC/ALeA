@@ -319,7 +319,6 @@ CREATE TABLE courseMetadata (
     notes VARCHAR(255) NOT NULL,
     landing VARCHAR(255) NOT NULL,
     slides VARCHAR(255) NOT NULL,
-    institution VARCHAR(255),
     teaser TEXT,
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)

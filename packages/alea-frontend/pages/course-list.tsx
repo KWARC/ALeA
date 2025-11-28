@@ -17,12 +17,13 @@ const CourseList: NextPage = () => {
     };
     fetchData();
   }, []);
-  const groupedCourses: { [institution: string]: CourseInfo[] } = {};
+  const groupedCourses: { [universityId: string]: CourseInfo[] } = {};
   Object.values(courses).forEach((course) => {
-    if (!groupedCourses[course.institution]) {
-      groupedCourses[course.institution] = [];
+    const universityId = course.universityId || 'Unknown';
+    if (!groupedCourses[universityId]) {
+      groupedCourses[universityId] = [];
     }
-    groupedCourses[course.institution].push(course);
+    groupedCourses[universityId].push(course);
   });
 
   const universities = [
@@ -49,11 +50,11 @@ const CourseList: NextPage = () => {
   return (
     <MainLayout title="Course-List | ALeA">
       <Box m="0 auto" maxWidth="800px">
-        {Object.entries(groupedCourses).map(([institution, institutionCourses]) => (
-          <Box key={institution}>
-            <Typography variant="h3">{institution}</Typography>
+        {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
+          <Box key={universityId}>
+            <Typography variant="h3">{universityId}</Typography>
             {universities.map((uni) => {
-              if (uni.acronym !== institution) return null;
+              if (uni.acronym !== universityId) return null;
               return (
                 <Box key={uni.title}>
                   <Typography display="flex" alignItems="center" fontWeight="bold">

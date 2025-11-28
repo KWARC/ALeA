@@ -14,7 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     notes,
     landing,
     slides,
-    institution,
     teaser,
     instructors,
   } = req.body;
@@ -47,7 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        notes = COALESCE(?, notes),
        landing = COALESCE(?, landing),
        slides = COALESCE(?, slides),
-       institution = COALESCE(?, institution),
        teaser = COALESCE(?, teaser),
        instructors = COALESCE(?, instructors),
        universityId = COALESCE(?, universityId),
@@ -59,7 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       notes,
       landing,
       slides,
-      institution,
       teaser,
       instructors ? JSON.stringify(instructors) : null,
       universityId || null,

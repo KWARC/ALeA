@@ -119,9 +119,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     async function loadTimezone() {
       try {
         const courses = await getAllCourses();
-        const institution = courses?.[courseId]?.institution;
-        if (institution && UniversityDetail[institution]) {
-          setTimezone(UniversityDetail[institution].defaultTimezone);
+        const universityId = courses?.[courseId]?.universityId;
+        if (universityId && UniversityDetail[universityId]) {
+          setTimezone(UniversityDetail[universityId].defaultTimezone);
         } else {
           setTimezone(undefined);
         }
@@ -479,47 +479,48 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           </TableHead>
 
           <TableBody>
-            {scheduleToShow.map((entry, idx) => (
-              <TableRow key={idx}>
-                <TableCell>{entry.lectureDay}</TableCell>
-                <TableCell>{entry.lectureStartTime}</TableCell>
-                <TableCell>{entry.lectureEndTime}</TableCell>
-                <TableCell>{entry.venue}</TableCell>
-                <TableCell>
-                  <a href={entry.venueLink} target="_blank" rel="noreferrer">
-                    {t.link}
-                  </a>
-                </TableCell>
-                {selectedScheduleType === 'lecture' && (
-                  <>
-                    <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
-                    <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
-                  </>
-                )}
-                <TableCell>
-                  <Tooltip title={t.edit}>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditEntry(entry);
-                        setEditKeys({
-                          lectureDay: entry.lectureDay,
-                          lectureStartTime: entry.lectureStartTime,
-                          lectureEndTime: entry.lectureEndTime,
-                        });
-                      }}
-                    >
-                      <EditIcon fontSize="small" color="primary" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={t.delete}>
-                    <IconButton size="small" onClick={() => handleDelete(entry)}>
-                      <DeleteIcon fontSize="small" color="error" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
+            {scheduleToShow.length > 0 &&
+              scheduleToShow.map((entry, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{entry.lectureDay}</TableCell>
+                  <TableCell>{entry.lectureStartTime}</TableCell>
+                  <TableCell>{entry.lectureEndTime}</TableCell>
+                  <TableCell>{entry.venue}</TableCell>
+                  <TableCell>
+                    <a href={entry.venueLink} target="_blank" rel="noreferrer">
+                      {t.link}
+                    </a>
+                  </TableCell>
+                  {selectedScheduleType === 'lecture' && (
+                    <>
+                      <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
+                      <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+                    </>
+                  )}
+                  <TableCell>
+                    <Tooltip title={t.edit}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setEditEntry(entry);
+                          setEditKeys({
+                            lectureDay: entry.lectureDay,
+                            lectureStartTime: entry.lectureStartTime,
+                            lectureEndTime: entry.lectureEndTime,
+                          });
+                        }}
+                      >
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={t.delete}>
+                      <IconButton size="small" onClick={() => handleDelete(entry)}>
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </>

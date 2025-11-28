@@ -373,11 +373,10 @@ export async function getCourseIdsForEnrolledUser(instanceId?: string) {
   return response.data;
 }
 
-export async function getAllCourses(universityId?: string, institution?: string) {
+export async function getAllCourses(universityId?: string) {
   const response = await axios.get('/api/get-all-courses', {
     params: {
       ...(universityId ? { universityId } : {}),
-      ...(institution ? { institution } : {}),
     },
   });
   return response.data;

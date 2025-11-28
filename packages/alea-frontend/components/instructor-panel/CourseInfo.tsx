@@ -73,7 +73,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
             universityId: '',
             courseName: '',
-            institution: '',
             notes: '',
             landing: '',
             slides: '',
@@ -252,13 +251,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           fullWidth
         />
 
-        <TextField
-          required
-          label="Institution"
-          value={courseInfo.institution || ''}
-          onChange={(e) => setField('institution', e.target.value)}
-          fullWidth
-        />
 
         <TextField
           required

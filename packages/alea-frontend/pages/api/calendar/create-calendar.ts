@@ -188,8 +188,8 @@ async function getUserEvents(
     try {
       const courses = await getAllCoursesFromDb();
       const courseInfo = courses[firstCourseId];
-      if (courseInfo?.institution) {
-        universityId = courseInfo.institution;
+      if (courseInfo?.universityId) {
+        universityId = courseInfo.universityId;
         instanceId = await getCurrentTermForCourseId(firstCourseId);
       }
     } catch (error) {

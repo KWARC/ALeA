@@ -91,9 +91,9 @@ export function CoverageUpdater({
     async function loadTimezone() {
       try {
         const courses = await getAllCourses();
-        const institution = courses?.[courseId]?.institution;
-        if (institution && UniversityDetail[institution]) {
-          setTimezone(UniversityDetail[institution].defaultTimezone);
+        const universityId = courses?.[courseId]?.universityId;
+        if (universityId && UniversityDetail[universityId]) {
+          setTimezone(UniversityDetail[universityId].defaultTimezone);
         } else {
           setTimezone(undefined);
         }

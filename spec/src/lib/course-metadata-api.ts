@@ -30,7 +30,6 @@ export interface CourseInfoMetadata extends CourseMetadata {
   notes: string;
   landing: string;
   slides: string;
-  institution?: string;
   teaser?: string | null;
   instructors: InstructorInfo[];
   hasQuiz: boolean;

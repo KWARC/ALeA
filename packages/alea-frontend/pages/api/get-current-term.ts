@@ -7,8 +7,8 @@ export async function getCurrentTermByCourseId(): Promise<Record<string, string>
   const courseInfo = await getAllCoursesFromDb();
   for (const [courseId, info] of Object.entries(courseInfo)) {
     const key = courseId.toLowerCase();
-    const institution = info.institution ?? 'FAU';
-    currentTermByCourseId[key] = getCurrentTermForUniversity(institution);
+    const universityId = info.universityId ?? 'FAU';
+    currentTermByCourseId[key] = getCurrentTermForUniversity(universityId);
   }
   return currentTermByCourseId;
 }
@@ -19,9 +19,9 @@ export async function getCurrentTermForCourseId(courseId: string): Promise<strin
   const courseInfo = await getAllCoursesFromDb();
   const info = courseInfo[key];
   if (!info) return null;
-  const institution = info.institution;
-  if (!institution) return null;
-  return getCurrentTermForUniversity(institution);
+  const universityId = info.universityId;
+  if (!universityId) return null;
+  return getCurrentTermForUniversity(universityId);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

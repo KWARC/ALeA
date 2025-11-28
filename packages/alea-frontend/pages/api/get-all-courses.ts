@@ -9,7 +9,6 @@ interface CourseMetadataRow {
   notes: string | null;
   landing: string | null;
   slides: string | null;
-  institution: string | null;
   teaser: string | null;
   instructors: string | null;
   hasQuiz: boolean;
@@ -43,8 +42,8 @@ function computeCurrentTermByCourseId(
     if (!row.courseId) continue;
     const normalizedId = row.courseId.toLowerCase();
     if (!currentTermByCourseId[normalizedId]) {
-      const institution = row.institution ?? 'FAU';
-      currentTermByCourseId[normalizedId] = getCurrentTermForUniversity(institution);
+      const universityId = row.universityId ?? 'FAU';
+      currentTermByCourseId[normalizedId] = getCurrentTermForUniversity(universityId);
     }
   }
 
@@ -110,7 +109,7 @@ function transformMetadataToCoursesInfo(
       isCurrentTerm,
       hasQuiz,
       hasHomework,
-      primary.institution || primary.universityId || undefined,
+      primary.universityId || undefined,
       semesterInstances,
       primaryInstructorNames,
       primary.teaser ?? null,
@@ -122,8 +121,7 @@ function transformMetadataToCoursesInfo(
 }
 
 export async function getAllCoursesFromDb(
-  universityId?: string,
-  institution?: string
+  universityId?: string
 ): Promise<Record<string, CourseInfo>> {
   let sqlQuery = `
     SELECT
@@ -133,7 +131,6 @@ export async function getAllCoursesFromDb(
       notes,
       landing,
       slides,
-      institution,
       teaser,
       instructors,
       hasQuiz,
@@ -147,9 +144,6 @@ export async function getAllCoursesFromDb(
   if (universityId) {
     sqlQuery += ' WHERE universityId = ?';
     params.push(universityId);
-  } else if (institution) {
-    sqlQuery += ' WHERE institution = ?';
-    params.push(institution);
   }
 
   sqlQuery += ' ORDER BY courseId, instanceId';
@@ -173,10 +167,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfGetOrSetError(req, res)) return;
 
   const universityId = req.query.universityId as string | undefined;
-  const institution = req.query.institution as string | undefined;
 
   try {
-    const coursesInfoMap = await getAllCoursesFromDb(universityId, institution);
+    const coursesInfoMap = await getAllCoursesFromDb(universityId);
     res.status(200).json(coursesInfoMap);
   } catch (error) {
     console.error('[get-all-courses] Error:', error);

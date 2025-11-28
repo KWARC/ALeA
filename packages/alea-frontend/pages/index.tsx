@@ -220,7 +220,7 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
 }
 
 export function CourseCard({ course, currentTerm }) {
-  const { imageLink: courseImage, courseName, courseId, institution, instructors } = course;
+  const { imageLink: courseImage, courseName, courseId, universityId, instructors } = course;
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
   return (
     <Link href={`/course-home/${courseId}`}>
@@ -259,7 +259,7 @@ export function CourseCard({ course, currentTerm }) {
           >
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
           </Typography>
-          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{institution}</Typography>
+          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
         </Box>
       </Box>

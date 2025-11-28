@@ -58,27 +58,6 @@ export function clearCourseHomeworkQuizCache(): void {
   courseHomeworkQuizCache.clear();
 }
 
-export async function getDocIdx(institution?: string) {
-  if (!CACHED_ARCHIVE_INDEX) {
-    const res = await flamsIndex();
-    if (res) {
-      CACHED_INSTITUTION_INDEX = res[0] as Institution[];
-      CACHED_ARCHIVE_INDEX = res[1] as ArchiveIndex[];
-    }
-  }
-  const archiveIndex = CACHED_ARCHIVE_INDEX || [];
-  const institutionIndex = CACHED_INSTITUTION_INDEX || [];
-
-  if (!institution) {
-    return [...archiveIndex, ...institutionIndex];
-  }
-
-  const filteredArchiveIndex = archiveIndex.filter(
-    (doc) => doc.type === 'course' && doc.institution === institution
-  );
-
-  return [...filteredArchiveIndex, ...institutionIndex];
-}
 
 
 export function getFTMLForConceptView(conceptUri: string) {

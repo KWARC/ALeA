@@ -14,7 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     notes,
     landing,
     slides,
-    institution,
     teaser,
     instructors,
   } = req.body;
@@ -50,9 +49,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await executeAndEndSet500OnError(
     `INSERT INTO courseMetadata (
   courseId, instanceId, lectureSchedule, tutorialSchedule, seriesId, hasHomework, hasQuiz,
-  updaterId, universityId, courseName, notes, landing, slides, institution, teaser,
+  updaterId, universityId, courseName, notes, landing, slides, teaser,
   instructors
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `,
     [
       courseId,
@@ -68,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       notes,
       landing,
       slides,
-      institution || null,
       teaser || null,
       JSON.stringify(instructors),
     ],

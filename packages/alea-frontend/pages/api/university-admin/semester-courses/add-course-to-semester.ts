@@ -39,7 +39,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       courseId,
       instanceId,
       universityId,
-      institution,
       lectureSchedule,
       tutorialSchedule,
       seriesId,
@@ -52,12 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       slides,
       teaser,
       instructors
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       courseId,
       instanceId,
       universityId,
-      null,
       JSON.stringify([]),
       JSON.stringify([]),
       null,

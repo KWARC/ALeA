@@ -47,10 +47,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       notes,
       landing,
       slides,
-      institution,
       teaser,
       instructors
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       courseId,
       instanceId,
@@ -64,7 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       '',
       '',
       '',
-      null,
       null,
       JSON.stringify([]),
     ],
