@@ -306,10 +306,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     const lectureStart = dayjs(upcomingLecture.lectureStartMs);
     const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
     const referenceSource = upcomingLecture.quizOffsetReference || 'lecture-start';
-    const referenceTime =
-      referenceSource === 'lecture-start' || referenceSource === 'start'
-        ? lectureStart
-        : lectureEnd;
+    // Treat anything other than 'lecture-end' as start of lecture (backward compatible)
+    const referenceTime = referenceSource === 'lecture-end' ? lectureEnd : lectureStart;
 
     const quizStart = referenceTime.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
 
@@ -349,7 +347,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
     }
     checkHasAccessAndGetTypeOfAccess();
-  }, [currentTerm]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function loadAll() {
