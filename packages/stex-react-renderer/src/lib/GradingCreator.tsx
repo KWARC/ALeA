@@ -90,7 +90,7 @@ export function GradingCreator({
       .filter((c) => c.count > 0);
     onNewGrading?.(acs, feedback);
     setFeedBack('');
-    // setSelectAnswerClass(answerClasses[0]);
+    setSelectAnswerClass(answerClasses[0]);
   }
   return (
     <form onSubmit={onSaveGrading}>

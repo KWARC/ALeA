@@ -30,5 +30,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
   res.send(answer[0]);
-  return;
 }

@@ -318,8 +318,6 @@ function GradingItemsList({
   problemMap: Record<string, FTMLProblemWithSolution>;
   isPeerGrading: boolean;
 }) {
-  console.log(problemMap);
-  
   return (
     <Box maxHeight="50vh" overflow="scroll">
       <List disablePadding>
