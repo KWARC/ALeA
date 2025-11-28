@@ -29,7 +29,7 @@ import {
 } from '@alea/spec';
 import { getQuizPhase } from '@alea/quiz-utils';
 import { SafeHtml } from '@alea/react-utils';
-import { Action, CoverageTimeline, LectureEntry, ResourceName, roundToMinutes } from '@alea/utils';
+import { Action, CoverageTimeline, LectureEntry, ResourceName, roundToMinutes, toWeekdayIndex, parseTimeString } from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -266,16 +266,15 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     const upcomingLecture = lectureSchedule
       .filter((lec) => lec.hasQuiz)
       .map((lec) => {
-        const [sh, sm] = lec.lectureStartTime.split(':').map(Number);
-        const weekdayIndex = [
-          'Sunday',
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday',
-        ].indexOf(lec.lectureDay);
+        const timeParts = parseTimeString(lec.lectureStartTime);
+        if (!timeParts) {
+          return null;
+        }
+        const [sh, sm] = timeParts;
+        const weekdayIndex = toWeekdayIndex(lec.lectureDay);
+        if (weekdayIndex === undefined) {
+          return null;
+        }
         let lectureDate = dayjs().day(weekdayIndex);
         if (lectureDate.isBefore(dayjs(), 'day')) {
           lectureDate = lectureDate.add(1, 'week');
@@ -285,6 +284,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
 
         return { ...lec, lectureStartMs };
       })
+      .filter((lec): lec is NonNullable<typeof lec> => lec !== null)
       .filter((lec) => lec.lectureStartMs >= now)
       .sort((a, b) => a.lectureStartMs - b.lectureStartMs)[0];
 
@@ -299,7 +299,9 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setCourseTerm(currentTerm);
       return;
     }
-    const [endH, endM] = upcomingLecture.lectureEndTime.split(':').map(Number);
+    const endTimeParts = parseTimeString(upcomingLecture.lectureEndTime);
+    if (!endTimeParts) return;
+    const [endH, endM] = endTimeParts;
     const lectureStart = dayjs(upcomingLecture.lectureStartMs);
     const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
     const referenceTime =

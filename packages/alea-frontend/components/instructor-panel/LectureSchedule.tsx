@@ -32,7 +32,7 @@ import {
   updateSeriesId,
 } from '@alea/spec';
 import { getCourseInfo } from '@alea/spec';
-import { UniversityDetail } from '@alea/utils';
+import { UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -56,15 +56,7 @@ const initialNewEntry: LectureSchedule = {
 const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
   const router = useRouter();
   const { courseMetadata: t } = getLocaleObject(router);
-  const weekdayOptions = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  const weekdayOptions = WEEKDAYS_UI_ORDER;
   const [selectedScheduleType, setSelectedScheduleType] = useState<'lecture' | 'tutorial'>(
     'lecture'
   );
