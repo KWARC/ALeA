@@ -8,6 +8,10 @@ export interface LectureSchedule {
   lectureStartTime: string;
   lectureEndTime: string;
   hasQuiz?: boolean;
+  quizOffsetMinutes?: number;
+  quizOffsetReference?: 'lecture-start' | 'lecture-end';
+  quizDurationMinutes?: number;
+  quizFeedbackDelayMinutes?: number;
 }
 
 export interface CourseMetadata {
@@ -23,7 +27,6 @@ export interface InstructorInfo {
   id: string;
   name: string;
 }
-
 
 export interface CourseInfoMetadata extends CourseMetadata {
   courseName: string;

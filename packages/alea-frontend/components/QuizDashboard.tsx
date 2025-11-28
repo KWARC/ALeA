@@ -35,6 +35,8 @@ import {
   LectureEntry,
   ResourceName,
   roundToMinutes,
+  toWeekdayIndex,
+  parseTimeString,
 } from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
@@ -51,6 +53,7 @@ import { useRouter } from 'next/router';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from './coverage-update';
 import { SecInfo } from '../types';
+import { getLectureEntry, LectureSchedule } from '@alea/spec';
 
 const NEW_QUIZ_ID = 'New';
 
@@ -224,10 +227,23 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   );
 
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
+  const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
+
+  useEffect(() => {
+    async function loadLectureSchedule() {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        setLectureSchedule(data.lectureSchedule || []);
+      } catch (err) {
+        console.error('Failed to load lecture schedule', err);
+      }
+    }
+    if (currentTerm) loadLectureSchedule();
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function fetchQuizzes() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
@@ -253,34 +269,68 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }, [selectedQuizId, courseId, currentTerm, quizzes]);
 
   useEffect(() => {
-    if (selectedQuizId === NEW_QUIZ_ID) {
+    if (selectedQuizId !== NEW_QUIZ_ID) return;
+    const now = Date.now();
+    const upcomingLecture = lectureSchedule
+      .filter((lec) => lec.hasQuiz)
+      .map((lec) => {
+        const timeParts = parseTimeString(lec.lectureStartTime);
+        if (!timeParts) {
+          return null;
+        }
+        const [sh, sm] = timeParts;
+        const weekdayIndex = toWeekdayIndex(lec.lectureDay);
+        if (weekdayIndex === undefined) {
+          return null;
+        }
+        let lectureDate = dayjs().day(weekdayIndex).hour(sh).minute(sm).second(0).millisecond(0);
+        const now = dayjs();
+        if (lectureDate.isBefore(now)) {
+          lectureDate = lectureDate.add(1, 'week');
+        }
+
+        const lectureStartMs = lectureDate.valueOf();
+
+        return { ...lec, lectureStartMs };
+      })
+      .filter((lec): lec is NonNullable<typeof lec> => lec !== null)
+      .filter((lec) => lec.lectureStartMs >= now)
+      .sort((a, b) => a.lectureStartMs - b.lectureStartMs)[0];
+
+    if (!upcomingLecture) {
       const ts = roundToMinutes(Date.now());
       setQuizStartTs(ts);
       setQuizEndTs(ts);
       setFeedbackReleaseTs(ts);
-      setManuallySetPhase(Phase.UNSET);
       setTitle('');
       setProblems({});
       setCss([]);
       setCourseTerm(currentTerm);
       return;
     }
-
-    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
-    if (!selected) return;
-    setQuizStartTs(selected.quizStartTs);
-    setQuizEndTs(selected.quizEndTs);
-    setFeedbackReleaseTs(selected.feedbackReleaseTs);
-    setManuallySetPhase(selected.manuallySetPhase);
-    setTitle(selected.title);
-    setProblems(selected.problems);
-    setCss(selected.css || []);
-    setCourseTerm(selected.courseTerm);
-  }, [selectedQuizId, quizzes]);
+    const endTimeParts = parseTimeString(upcomingLecture.lectureEndTime);
+    if (!endTimeParts) return;
+    const [endH, endM] = endTimeParts;
+    const lectureStart = dayjs(upcomingLecture.lectureStartMs);
+    const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
+    const referenceSource = upcomingLecture.quizOffsetReference || 'lecture-start';
+    const referenceTime = referenceSource === 'lecture-end' ? lectureEnd : lectureStart;
+    const quizStart = referenceTime.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
+    const quizEnd = quizStart.add(upcomingLecture.quizDurationMinutes || 0, 'minutes');
+    const feedbackRelease = quizEnd.add(upcomingLecture.quizFeedbackDelayMinutes || 0, 'minutes');
+    setQuizStartTs(quizStart.valueOf());
+    setQuizEndTs(quizEnd.valueOf());
+    setFeedbackReleaseTs(feedbackRelease.valueOf());
+    setManuallySetPhase(Phase.UNSET);
+    setTitle('');
+    setProblems({});
+    setCss([]);
+    setCourseTerm(currentTerm);
+  }, [selectedQuizId, lectureSchedule, currentTerm]);
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
         instanceId: currentTerm,
@@ -302,7 +352,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
     }
     checkHasAccessAndGetTypeOfAccess();
-  }, [currentTerm]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function loadAll() {
@@ -339,6 +389,21 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setUpcomingQuizSyllabus(syllabus);
     }
   }, [coverageTimeline, courseId, sections]);
+
+  useEffect(() => {
+    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
+
+    if (!selected) return;
+
+    setQuizStartTs(selected.quizStartTs);
+    setQuizEndTs(selected.quizEndTs);
+    setFeedbackReleaseTs(selected.feedbackReleaseTs);
+    setManuallySetPhase(selected.manuallySetPhase);
+    setTitle(selected.title);
+    setProblems(selected.problems);
+    setCss(selected.css || []);
+    setCourseTerm(selected.courseTerm);
+  }, [selectedQuizId, quizzes]);
 
   if (!selectedQuiz && !isNew) return <>Error</>;
 

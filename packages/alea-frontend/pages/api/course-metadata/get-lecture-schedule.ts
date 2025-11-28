@@ -1,6 +1,6 @@
+import { toWeekdayIndex } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
-import { toWeekdayIndex } from './generate-lecture-entry';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { courseId, instanceId } = req.query as { courseId?: string; instanceId?: string };

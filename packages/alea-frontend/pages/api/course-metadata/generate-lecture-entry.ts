@@ -3,19 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { executeDontEndSet500OnError, executeAndEndSet500OnError } from '../comment-utils';
 import { Holiday, LectureSchedule } from '@alea/spec';
-
-export function toWeekdayIndex(weekday: string): number | undefined {
-  const map: Record<string, number> = {
-    Sunday: 0,
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-  };
-  return map[weekday];
-}
+import { toWeekdayIndex } from '@alea/utils';
 
 function parseDate(dateInput: string | Date): Date {
   if (dateInput instanceof Date) {
@@ -156,7 +144,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.warn(`Invalid weekday: ${lecture.lectureDay}`);
         continue;
       }
-
 
       for (const lectureDate of generateLectureDates(
         lectureStartDate,
