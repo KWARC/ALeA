@@ -171,12 +171,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       return;
     }
     try {
-      const minutes = editEntry.quizOffsetMinutes || 0;
-      const direction = editEntry.quizOffsetDirection || 'before';
-      const finalOffset = direction === 'before' ? -minutes : minutes;
       const updatedEntry = {
         ...editEntry,
-        quizOffsetMinutes: finalOffset,
+        quizOffsetMinutes: editEntry.quizOffsetMinutes || 0,
       };
       await updateLectureEntry({
         courseId,
