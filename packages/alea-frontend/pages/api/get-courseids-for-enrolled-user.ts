@@ -1,5 +1,5 @@
-import { getCourseInfo } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getAllCoursesFromDb } from './get-all-courses';
+import { getCurrentTermForCourseId } from './get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
   const courseIds = Object.keys(courses);
   const enrolledCourseIds: string[] = [];
 

@@ -1,11 +1,11 @@
 import { ResourceName, Action } from '@alea/utils';
-import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import {
   checkIfQueryParameterExistOrSetError,
   executeAndEndSet500OnError,
 } from '../../comment-utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfQueryParameterExistOrSetError(req, res, 'id')) return;

@@ -1,4 +1,4 @@
-import { getCourseInfo } from '@alea/spec';
+import { getAllCoursesFromDb } from './get-all-courses';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCategorizedProblems } from './get-categorized-problem';
 import { Language } from '@alea/utils';
@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required query param: sectionUri/courseId');
   }
 
-  const courseInfo = await getCourseInfo();
+  const courseInfo = await getAllCoursesFromDb();
   const notesUri = courseInfo?.[courseId]?.notes;
   if (!notesUri) return res.status(404).end();
 

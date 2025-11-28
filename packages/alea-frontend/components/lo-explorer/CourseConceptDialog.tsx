@@ -19,7 +19,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@alea/spec';
+import { conceptUriToName, getAllCourses, getDefiniedaInSection } from '@alea/spec';
 import { CourseInfo } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
 import { contentToc } from '@flexiformal/ftml-backend';
@@ -49,7 +49,7 @@ export const CourseConceptsDialog = ({
   const selectAllKey = 'Select All';
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
