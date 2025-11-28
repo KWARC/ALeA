@@ -9,7 +9,6 @@ export interface LectureSchedule {
   lectureEndTime: string;
   hasQuiz?: boolean;
   quizOffsetMinutes?: number;
-  quizOffsetDirection?: 'before' | 'after';
   quizOffsetReference?: 'lecture-start' | 'lecture-end';
   quizDurationMinutes?: number;
   quizFeedbackDelayMinutes?: number;

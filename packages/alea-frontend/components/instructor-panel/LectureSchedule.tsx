@@ -44,7 +44,11 @@ interface LectureScheduleTabProps {
   instanceId: string;
 }
 
-const initialNewEntry: LectureSchedule = {
+type LectureScheduleUI = LectureSchedule & {
+  quizOffsetDirection?: 'before' | 'after';
+};
+
+const initialNewEntry: LectureScheduleUI = {
   lectureDay: '',
   lectureStartTime: '',
   lectureEndTime: '',
@@ -61,9 +65,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     'lecture'
   );
 
-  const [lectureScheduleData, setLectureScheduleData] = useState<LectureSchedule>(initialNewEntry);
+  const [lectureScheduleData, setLectureScheduleData] = useState<LectureScheduleUI>(initialNewEntry);
   const [tutorialScheduleData, setTutorialScheduleData] =
-    useState<LectureSchedule>(initialNewEntry);
+    useState<LectureScheduleUI>(initialNewEntry);
   const [lectures, setLectures] = useState<LectureSchedule[]>([]);
   const [tutorials, setTutorials] = useState<LectureSchedule[]>([]);
   const scheduleToShow = selectedScheduleType === 'lecture' ? lectures : tutorials;
@@ -71,7 +75,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const [hasHomework, setHasHomework] = useState<boolean>(false);
   const [hasQuiz, setHasQuiz] = useState<boolean>(false);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
-  const [editEntry, setEditEntry] = useState<LectureSchedule | null>(null);
+  const [editEntry, setEditEntry] = useState<LectureScheduleUI | null>(null);
   const [editKeys, setEditKeys] = useState<{
     lectureDay: string;
     lectureStartTime: string;
@@ -98,7 +102,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     } finally {
       setLoading(false);
     }
-  }, [courseId, instanceId, t]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     fetchLectures();
@@ -240,7 +244,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     }
   };
 
-  const handleFieldChange = (field: keyof LectureSchedule, value: string | boolean | number) => {
+  const handleFieldChange = (field: keyof LectureScheduleUI, value: string | boolean | number) => {
     if (!selectedScheduleType) {
       alert('Please first select Lecture Schedule or Tutorial Schedule');
       return;
@@ -477,10 +481,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               <TextField
                 label="Offset (min)"
                 type="number"
-                value={lectureScheduleData.quizOffsetMinutes || ''}
+                value={Math.abs(lectureScheduleData.quizOffsetMinutes)}
                 onChange={(e) => {
-                    const quizOffsetMinutes = Number(e.target.value) * (lectureScheduleData.quizOffsetDirection == 'before' ? -1 : 1); 
-                    handleFieldChange('quizOffsetMinutes', quizOffsetMinutes)
+                    const absMinutes = Number(e.target.value);
+                    const direction = lectureScheduleData.quizOffsetDirection || 'before';
+                    const signedOffset = direction === 'before' ? -absMinutes : absMinutes;
+                    handleFieldChange('quizOffsetMinutes', signedOffset);
                   }
                 }
                 size="small"
@@ -500,13 +506,18 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               <TextField
                 select
                 label="From"
-                value={lectureScheduleData.quizOffsetReference || 'start'}
-                onChange={(e) => handleFieldChange('quizOffsetReference', e.target.value)}
+                value={lectureScheduleData.quizOffsetReference || 'lecture-start'}
+                onChange={(e) =>
+                  handleFieldChange(
+                    'quizOffsetReference',
+                    e.target.value as 'lecture-start' | 'lecture-end'
+                  )
+                }
                 size="small"
                 sx={{ width: 170 }}
               >
-                <MenuItem value="start">Start of Lecture</MenuItem>
-                <MenuItem value="end">End of Lecture</MenuItem>
+                <MenuItem value="lecture-start">Start of Lecture</MenuItem>
+                <MenuItem value="lecture-end">End of Lecture</MenuItem>
               </TextField>
 
               <TextField
@@ -613,7 +624,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                         ...entry,
                         quizOffsetMinutes: absMinutes,
                         quizOffsetDirection: direction,
-                        quizOffsetReference: entry.quizOffsetReference || 'start',
+                        quizOffsetReference: entry.quizOffsetReference || 'lecture-start',
                       });
                       setEditKeys({
                         lectureDay: entry.lectureDay,
@@ -705,12 +716,15 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               <TextField
                 label="Offset (min)"
                 type="number"
-                value={editEntry?.quizOffsetMinutes || ''}
-                onChange={(e) =>
+                value={Math.abs(editEntry?.quizOffsetMinutes || 0)}
+                onChange={(e) => {
+                  const absMinutes = Number(e.target.value);
+                  const direction = editEntry?.quizOffsetDirection || 'before';
+                  const signedOffset = direction === 'before' ? -absMinutes : absMinutes;
                   setEditEntry(
-                    (prev) => prev && { ...prev, quizOffsetMinutes: Number(e.target.value) }
-                  )
-                }
+                    (prev) => prev && { ...prev, quizOffsetMinutes: signedOffset }
+                  );
+                }}
                 size="small"
                 sx={{ width: 120 }}
               />
@@ -738,21 +752,21 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               <TextField
                 select
                 label="From"
-                value={editEntry?.quizOffsetReference || 'start'}
+                value={editEntry?.quizOffsetReference || 'lecture-start'}
                 onChange={(e) =>
                   setEditEntry(
                     (prev) =>
                       prev && {
                         ...prev,
-                        quizOffsetReference: e.target.value as 'start' | 'end',
+                        quizOffsetReference: e.target.value as 'lecture-start' | 'lecture-end',
                       }
                   )
                 }
                 size="small"
                 sx={{ width: 170 }}
               >
-                <MenuItem value="start">Start of Lecture</MenuItem>
-                <MenuItem value="end">End of Lecture</MenuItem>
+                <MenuItem value="lecture-start">Start of Lecture</MenuItem>
+                <MenuItem value="lecture-end">End of Lecture</MenuItem>
               </TextField>
 
               <TextField

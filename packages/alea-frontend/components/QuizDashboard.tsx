@@ -275,12 +275,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         if (weekdayIndex === undefined) {
           return null;
         }
-        let lectureDate = dayjs().day(weekdayIndex);
-        if (lectureDate.isBefore(dayjs(), 'day')) {
+        let lectureDate = dayjs().day(weekdayIndex).hour(sh).minute(sm).second(0).millisecond(0);
+        const now = dayjs();
+        if (lectureDate.isBefore(now)) {
           lectureDate = lectureDate.add(1, 'week');
         }
 
-        const lectureStartMs = lectureDate.hour(sh).minute(sm).second(0).valueOf();
+        const lectureStartMs = lectureDate.valueOf();
 
         return { ...lec, lectureStartMs };
       })
@@ -304,8 +305,11 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     const [endH, endM] = endTimeParts;
     const lectureStart = dayjs(upcomingLecture.lectureStartMs);
     const lectureEnd = lectureStart.hour(endH).minute(endM).second(0);
+    const referenceSource = upcomingLecture.quizOffsetReference || 'lecture-start';
     const referenceTime =
-      (upcomingLecture.quizOffsetReference || 'start') === 'start' ? lectureStart : lectureEnd;
+      referenceSource === 'lecture-start' || referenceSource === 'start'
+        ? lectureStart
+        : lectureEnd;
 
     const quizStart = referenceTime.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
 
@@ -382,6 +386,21 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setUpcomingQuizSyllabus(syllabus);
     }
   }, [coverageTimeline, courseId, sections]);
+
+  useEffect(() => {
+    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
+
+    if (!selected) return;
+
+    setQuizStartTs(selected.quizStartTs);
+    setQuizEndTs(selected.quizEndTs);
+    setFeedbackReleaseTs(selected.feedbackReleaseTs);
+    setManuallySetPhase(selected.manuallySetPhase);
+    setTitle(selected.title);
+    setProblems(selected.problems);
+    setCss(selected.css || []);
+    setCourseTerm(selected.courseTerm);
+  }, [selectedQuizId, quizzes]);
 
   if (!selectedQuiz && !isNew) return <>Error</>;
 
