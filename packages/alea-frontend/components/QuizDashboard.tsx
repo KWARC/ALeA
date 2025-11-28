@@ -19,7 +19,7 @@ import {
   deleteQuiz,
   FTMLProblemWithSolution,
   getAllQuizzes,
-  getCourseInfo,
+  getAllCourses,
   getCoverageTimeline,
   getQuizStats,
   Phase,
@@ -356,7 +356,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setSyllabusLoading(true);
       try {
         const [courseData, timelineData] = await Promise.all([
-          getCourseInfo(),
+          getAllCourses(),
           getCoverageTimeline(),
         ]);
         setCoverageTimeline(timelineData);
