@@ -3,7 +3,6 @@ import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer'
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { initialize, FTMLSetup } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
 import { CommentRefreshProvider } from '@alea/react-utils';
@@ -100,7 +99,12 @@ function CustomApp({ Component, pageProps }: AppProps) {
                 <CurrentTermProvider>
                   <FTMLSetup key={router.asPath} allowFullscreen={false}>
                     <div
-                      style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+                      style={{
+                        width: '100vw',
+                        height: '100vh',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                      }}
                     >
                       <Component {...pageProps} />
                     </div>
