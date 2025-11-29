@@ -12,7 +12,7 @@ import {
   canAccessResource,
   ClipInfo,
   ClipMetadata,
-  getCourseInfo,
+  getAllCourses,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -238,7 +238,7 @@ const CourseViewPage: NextPage = () => {
   }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -338,7 +338,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -365,7 +365,7 @@ const CourseViewPage: NextPage = () => {
         courseId={courseId}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      />
+      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (

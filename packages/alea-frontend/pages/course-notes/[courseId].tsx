@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { CommentButton } from '@alea/comments';
 import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
@@ -118,7 +118,7 @@ const CourseNotesPage: NextPage = () => {
   };
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -191,7 +191,7 @@ const CourseNotesPage: NextPage = () => {
         courseId={courseId}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      />
+      /> */}
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
