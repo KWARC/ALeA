@@ -1,13 +1,14 @@
 import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
-import { initialize } from '@flexiformal/ftml-react';
+import { initialize, FTMLSetup } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
 import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
 import { CommentRefreshProvider } from '@alea/react-utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import './styles.scss';
 
@@ -66,14 +67,8 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   });
 
 function CustomApp({ Component, pageProps }: AppProps) {
-  const [readyToRender, setReadyToRender] = useState(false);
+  const router = useRouter();
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (flamsInitialized) {
-        setReadyToRender(true);
-        clearInterval(interval);
-      }
-    }, 10);
     const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
     const pollBuildId = setInterval(async () => {
       try {
@@ -90,12 +85,9 @@ function CustomApp({ Component, pageProps }: AppProps) {
     }, 60000);
 
     return () => {
-      clearInterval(interval);
       clearInterval(pollBuildId);
     };
   }, []);
-
-  if (!readyToRender) return <CircularProgress />;
 
   console.log('rendering after: ', Date.now() - initStartTime, 'ms');
   return (
@@ -106,11 +98,13 @@ function CustomApp({ Component, pageProps }: AppProps) {
             <MathJaxContext>
               <PositionProvider>
                 <CurrentTermProvider>
-                  <div
-                    style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
-                  >
-                    <Component {...pageProps} />
-                  </div>
+                  <FTMLSetup key={router.asPath} allowFullscreen={false}>
+                    <div
+                      style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+                    >
+                      <Component {...pageProps} />
+                    </div>
+                  </FTMLSetup>
                 </CurrentTermProvider>
               </PositionProvider>
             </MathJaxContext>

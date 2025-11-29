@@ -93,11 +93,11 @@ const CourseNotesPage: NextPage = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isEditableTarget = !!target && (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        (target as HTMLElement).isContentEditable
-      );
+      const isEditableTarget =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as HTMLElement).isContentEditable);
       if (isEditableTarget) return;
 
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -174,7 +174,7 @@ const CourseNotesPage: NextPage = () => {
             zIndex: 1000,
             bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { 
+            '&:hover': {
               bgcolor: 'rgba(255, 255, 255, 0.3)',
             },
           }}
@@ -199,49 +199,47 @@ const CourseNotesPage: NextPage = () => {
           position: 'relative',
         }}
       >
-        <FTMLSetup allowFullscreen={false}>
-          <FTMLDocument
-            key={notes}
-            document={{ type: 'FromBackend', uri: notes }}
-            toc={{ Ready: toc }}
-            tocProgress={gottos}
-            sectionWrap={(uri, _) => {
+        <FTMLDocument
+          key={notes}
+          document={{ type: 'FromBackend', uri: notes }}
+          toc={{ Ready: toc }}
+          tocProgress={gottos}
+          sectionWrap={(uri, _) => {
+            return (ch) => (
+              <FragmentWrap
+                uri={uri}
+                fragmentKind={'Section'}
+                children={ch}
+                uriToTitle={uriToTitle.current}
+              />
+            );
+          }}
+          slideWrap={(uri) => {
+            return (ch) => (
+              <FragmentWrap
+                uri={uri}
+                fragmentKind={'Slide'}
+                children={ch}
+                uriToTitle={uriToTitle.current}
+              />
+            );
+          }}
+          paragraphWrap={(uri, kind) => {
+            if (kind === 'Paragraph') {
               return (ch) => (
                 <FragmentWrap
                   uri={uri}
-                  fragmentKind={'Section'}
+                  fragmentKind={'Paragraph'}
                   children={ch}
                   uriToTitle={uriToTitle.current}
                 />
               );
-            }}
-            slideWrap={(uri) => {
-              return (ch) => (
-                <FragmentWrap
-                  uri={uri}
-                  fragmentKind={'Slide'}
-                  children={ch}
-                  uriToTitle={uriToTitle.current}
-                />
-              );
-            }}
-            paragraphWrap={(uri, kind) => {
-              if (kind === 'Paragraph') {
-                return (ch) => (
-                  <FragmentWrap
-                    uri={uri}
-                    fragmentKind={'Paragraph'}
-                    children={ch}
-                    uriToTitle={uriToTitle.current}
-                  />
-                );
-              }
-            }}
-            onSectionTitle={(uri, lvl) => {
-              return <TrafficLightIndicator sectionUri={uri} />;
-            }}
-          />
-        </FTMLSetup>
+            }
+          }}
+          onSectionTitle={(uri, lvl) => {
+            return <TrafficLightIndicator sectionUri={uri} />;
+          }}
+        />
       </Box>
     </MainLayout>
   );
