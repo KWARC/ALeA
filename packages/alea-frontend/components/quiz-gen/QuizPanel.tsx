@@ -47,6 +47,7 @@ export function QuizPanel({
   sections,
   courseId,
   userInfo,
+  hideVariantGeneration=false,
 }: {
   problems: (FlatQuizProblem | ExistingProblem)[];
   currentIdx: number;
@@ -54,6 +55,7 @@ export function QuizPanel({
   sections: SecInfo[];
   courseId: string;
   userInfo: UserInfo | undefined;
+  hideVariantGeneration?:boolean;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -185,6 +187,7 @@ export function QuizPanel({
           onVariantChange={handleVariantChange}
           onGoToSection={handleGoToSection}
           onOpenVariantDialog={handleOpenVariantDialog}
+          hideVariantGeneration={hideVariantGeneration}
         />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
