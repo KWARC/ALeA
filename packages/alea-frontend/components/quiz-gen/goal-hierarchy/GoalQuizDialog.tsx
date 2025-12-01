@@ -4,7 +4,7 @@ import { Close } from '@mui/icons-material';
 import { QuizPanel } from '../QuizPanel';
 import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
 import { getSecInfo } from '../../coverage-update';
-import { getCourseInfo, getProblemsByGoal, UserInfo } from '@alea/spec';
+import { getAllCourses, getProblemsByGoal, UserInfo } from '@alea/spec';
 import { SecInfo } from 'packages/alea-frontend/types';
 import { CourseInfo } from '@alea/utils';
 import { contentToc } from '@flexiformal/ftml-backend';
@@ -30,7 +30,7 @@ export const GoalQuizDialog = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
