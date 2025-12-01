@@ -59,7 +59,6 @@ const theme = createTheme({
 
 let flamsInitialized = false;
 
-// Initialize FTML asynchronously
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized');
