@@ -10,13 +10,13 @@ import {
   Typography,
 } from '@mui/material';
 import React from 'react';
-import { GoalNode, SectionGoals } from './SectionDetailsDialog';
+import { GoalNode, SectionGoals } from '../SectionDetailsDialog';
 
 interface GoalSelectorProps {
   sectionGoals: SectionGoals;
-  selectedGoals: { [conceptUri: string]: string[] };
+  selectedGoals: { [sectionUri: string]: string[] };
   startSectionUri: string;
-  onSelectGoal: (sectionUri: string, goalUri: string, text: string) => void;
+  onSelectGoal: (sectionUri: string, text: string) => void;
   onToggleAll: (sectionUri: string) => void;
 }
 
@@ -97,7 +97,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                     checked={isSelected}
                     onChange={(e) => {
                       e.stopPropagation();
-                      onSelectGoal(startSectionUri, goal.uri, goal.text);
+                      onSelectGoal(startSectionUri, goal.text);
                     }}
                     size="small"
                     sx={{
@@ -144,7 +144,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
                 <Checkbox
                   checked={isSelected}
-                  onChange={() => onSelectGoal(startSectionUri, goal.uri, goal.text)}
+                  onChange={() => onSelectGoal(startSectionUri, goal.text)}
                   size="small"
                   sx={{
                     color: 'text.secondary',
