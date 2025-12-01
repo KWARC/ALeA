@@ -137,29 +137,14 @@ export default function GoalHierarchyDialog({
     setLoading(true);
     try {
       const data = await getSectionGoals(courseNotesUri, sectionUri);
-      // const nodeMap = new Map<string, number>();
-      // const assignLevel = (goal: Goal, level = 1) => {
-      //   nodeMap.set(goal.uri, level);
-      //   goal.subGoalUris.forEach((subUri: string) => {
-      //     const subGoal = data.allGoals.find((g: any) => g.uri === subUri);
-      //     if (subGoal) assignLevel(subGoal, level + 1);
-      //   });
-      // };
-
-      // data.topLevelGoalUris.forEach((uri: string) => {
-      //   const top = data.allGoals.find((g: any) => g.uri === uri);
-      //   if (top) assignLevel(top, 1);
-      // });
 
       const baseNodes: GoalNode[] = data.allGoals.map((goal: any) => {
-        // const level = nodeMap.get(goal.uri) || 1;
         return {
           id: goal.uri,
           type: NodeType.GOAL_NODE,
           position: { x: 0, y: 0 },
           data: {
             label: goal.text || 'Untitled Goal',
-            // level,
             uri: goal.uri,
             subGoalUris: goal.subGoalUris,
             setFocusedNodeId,
@@ -177,7 +162,6 @@ export default function GoalHierarchyDialog({
         }))
       );
 
-      // setMaxLevel(Math.max(...Array.from(nodeMap.values())));
       const layouted = getLayoutedElementsBT(baseNodes, baseEdges, direction);
       setNodes(layouted);
       setEdges(baseEdges);
@@ -193,9 +177,6 @@ export default function GoalHierarchyDialog({
   }, [open, fetchGoals]);
 
   const filteredNodes = useMemo(() => {
-    // const isAllLevels = selectedLevels.includes('All');
-    // const levelSet = new Set(selectedLevels.map((l) => Number(l)));
-
     let visibleNodeIds: Set<string> | null = null;
     if (focusedNodeId) {
       const connectedEdges = edges.filter(
@@ -209,7 +190,6 @@ export default function GoalHierarchyDialog({
 
     return nodes.filter(
       (n) =>
-        // (isAllLevels || levelSet.has(n.data.level)) && (!visibleNodeIds || visibleNodeIds.has(n.id))
          (!visibleNodeIds || visibleNodeIds.has(n.id))
     );
   }, [nodes, edges, selectedLevels, focusedNodeId]);
@@ -299,9 +279,6 @@ export default function GoalHierarchyDialog({
   );
 
   const handleNodeUpdate = async (oldUri: string, newLabel: string) => {
-    // const newUri = `http://mathhub.info?goal=${encodeURIComponent(
-    //   newLabel.trim().replace(/\s+/g, '_')
-    // )}`;
     const sparqlUpdate = `
      PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX ulo: <http://mathhub.info/ulo#>
@@ -330,15 +307,6 @@ WHERE {
             : n
         )
       );
-      // setEdges((prev) =>
-      //   prev.map((e) =>
-      //     e.source === oldUri
-      //       ? { ...e, source: newUri }
-      //       : e.target === oldUri
-      //       ? { ...e, target: newUri }
-      //       : e
-      //   )
-      // );
       await runGraphDbUpdateQuery(sparqlUpdate);
       setEditDialogOpen(false);
     } catch (err) {
@@ -361,12 +329,8 @@ WHERE {
             <Box flex={1.2} border="1px solid #ddd" borderRadius={2} overflow="hidden">
               <ReactFlow
                 defaultEdgeOptions={{
-    style: { stroke: '#000'},  
-    // markerEnd: {
-    //   type: MarkerType.ArrowClosed,
-    //   color: '#000'
-    // }
-  }}
+                style: { stroke: '#000'},  
+               }}
                 nodes={filteredNodes}
                 edges={filteredEdges}
                 nodeTypes={nodeTypes}
@@ -427,13 +391,6 @@ WHERE {
                 </Button>
               )}
             </Box>
-            {/* <RightSidebar
-              maxLevel={maxLevel}
-              selectedLevels={selectedLevels}
-              setSelectedLevels={setSelectedLevels}
-              direction={direction}
-              setDirection={setDirection}
-            /> */}
           </Box>
         )}
       </DialogContent>
