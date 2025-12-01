@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule, hasHomework, hasQuiz FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule, tutorialSchedule, hasHomework, hasQuiz, seriesId  FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
@@ -22,13 +22,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   let lectureSchedule: any[] = [];
+  let tutorialSchedule: any[] = [];
   try {
-    lectureSchedule = JSON.parse(result[0].lectureSchedule);
+    lectureSchedule = result[0].lectureSchedule ? JSON.parse(result[0].lectureSchedule) : [];
+    tutorialSchedule = result[0].tutorialSchedule ? JSON.parse(result[0].tutorialSchedule) : [];
   } catch {
     return res.status(500).end('Failed to parse lecture schedule JSON');
   }
-  
+
   const hasHomework = !!(result[0].hasHomework ?? false);
   const hasQuiz = !!(result[0].hasQuiz ?? false);
-  res.status(200).json({ courseId, instanceId, lectureSchedule, hasHomework, hasQuiz });
+  res
+    .status(200)
+    .json({
+      courseId,
+      instanceId,
+      lectureSchedule,
+      tutorialSchedule,
+      hasHomework,
+      hasQuiz,
+      seriesId: result[0].seriesId,
+    });
 }

@@ -128,16 +128,15 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserId(req);
-
   const body = req.body;
 
-  let generatedTitle = '';
+  let generatedTitle = body.title?.trim() || '';
   let issueCategory = IssueCategory.CONTENT;
 
   const { project } = extractProjectAndFilepath(body.context);
   const projectId = project || 'sTeX/meta-inf';
 
-  if (body.description && body.selectedText) {
+  if (!generatedTitle && body.description && body.selectedText) {
     const classification = await generateIssueTitle(
       body.description,
       body.selectedText,

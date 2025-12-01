@@ -99,7 +99,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim() || !visibleUntil) {
-      setSnackbarMessage(`${t.fieldTitle}, ${t.fieldContent}, ${t.fieldVisibleUntil} ${'are required.'}`);
+      setSnackbarMessage(
+        `${t.fieldTitle}, ${t.fieldContent}, ${t.fieldVisibleUntil} ${'are required.'}`
+      );
       setSnackbarOpen(true);
       return;
     }
@@ -297,9 +299,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           {t.confirmDeleteAnnouncementTitle}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            {t.confirmDeleteAnnouncementMessage}
-          </DialogContentText>
+          <DialogContentText>{t.confirmDeleteAnnouncementMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>{t.cancel}</Button>
