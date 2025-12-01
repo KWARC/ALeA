@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
@@ -42,7 +42,7 @@ function RenderElements({ elements }: { elements: string[] }) {
     <>
       {elements.map((e, idx) => (
         <Fragment key={idx}>
-          <FTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
+          <SafeFTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
           {idx < elements.length - 1 && <br />}
         </Fragment>
       ))}

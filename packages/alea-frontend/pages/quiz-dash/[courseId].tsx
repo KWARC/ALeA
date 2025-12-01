@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
@@ -38,7 +38,7 @@ function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
           }}
         >
           <Box>
-            <FTMLFragment
+            <SafeFTMLFragment
               key={title}
               fragment={{ type: 'HtmlString', html: title, uri: undefined }}
             />

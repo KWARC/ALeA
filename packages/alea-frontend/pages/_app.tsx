@@ -1,13 +1,17 @@
 import { MathJaxContext } from '@alea/mathjax';
-import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer';
+import {
+  PositionProvider,
+  ServerLinksContext,
+  setFlamsInitialized,
+} from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
-import { initialize, FTMLSetup } from '@flexiformal/ftml-react';
+import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
+import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
 import { CommentRefreshProvider } from '@alea/react-utils';
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import './styles.scss';
 
@@ -54,19 +58,33 @@ const theme = createTheme({
 });
 
 let flamsInitialized = false;
-const initStartTime = Date.now();
-// this code runs earlier if its not in the useEffect
+
+// Initialize FTML asynchronously
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
-    console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
+    console.log('FTML initialized');
     flamsInitialized = true;
+    setFlamsInitialized(true);
   })
   .catch((err) => {
     console.error(`FTML initialization failed: [${process.env.NEXT_PUBLIC_FLAMS_URL}]`, err);
   });
 
 function CustomApp({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+  const [readyToRender, setReadyToRender] = useState(false);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (flamsInitialized) {
+        setReadyToRender(true);
+        clearInterval(interval);
+      }
+    }, 10);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
     const pollBuildId = setInterval(async () => {
@@ -88,7 +106,8 @@ function CustomApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  console.log('rendering after: ', Date.now() - initStartTime, 'ms');
+  if (!readyToRender) return <CircularProgress />;
+
   return (
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
@@ -97,18 +116,16 @@ function CustomApp({ Component, pageProps }: AppProps) {
             <MathJaxContext>
               <PositionProvider>
                 <CurrentTermProvider>
-                  <FTMLSetup key={router.asPath} allowFullscreen={false}>
-                    <div
-                      style={{
-                        width: '100vw',
-                        height: '100vh',
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                      }}
-                    >
-                      <Component {...pageProps} />
-                    </div>
-                  </FTMLSetup>
+                  <div
+                    style={{
+                      width: '100vw',
+                      height: '100vh',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                    }}
+                  >
+                    <Component {...pageProps} />
+                  </div>
                 </CurrentTermProvider>
               </PositionProvider>
             </MathJaxContext>

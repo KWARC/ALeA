@@ -6,7 +6,7 @@ import {
   NavigateBefore,
   NavigateNext,
 } from '@mui/icons-material';
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -283,7 +283,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
   if (slide.slideType === SlideType.FRAME) {
     return (
       <Box fragment-uri={slide.slide?.uri} fragment-kind="Slide">
-        <FTMLFragment
+        <SafeFTMLFragment
           key={slide.slide?.uri}
           fragment={{ type: 'HtmlString', html: slide.slide?.html, uri: slide.slide.uri }}
         />
@@ -294,7 +294,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box className={styles['text-frame']}>
         {slide.paragraphs?.map((p, idx) => (
           <Box key={p.uri} fragment-uri={p.uri} fragment-kind="Paragraph">
-            <FTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }} />
+            <SafeFTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }} />
             {idx < slide.paragraphs.length - 1 && <br />}
           </Box>
         ))}

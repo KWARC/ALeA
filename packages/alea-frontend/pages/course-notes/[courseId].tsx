@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name, react/no-children-prop */
-import { FTMLDocument, FTMLSetup } from '@flexiformal/ftml-react';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
@@ -199,7 +199,7 @@ const CourseNotesPage: NextPage = () => {
           position: 'relative',
         }}
       >
-        <FTMLDocument
+        <SafeFTMLDocument
           key={notes}
           document={{ type: 'FromBackend', uri: notes }}
           toc={{ Ready: toc }}
