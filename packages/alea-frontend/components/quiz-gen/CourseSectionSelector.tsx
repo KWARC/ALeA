@@ -2,7 +2,7 @@ import { updateRouterQuery } from '@alea/react-utils';
 import {
   fetchGeneratedProblems,
   getCourseGeneratedProblemsCountBySection,
-  getCourseInfo,
+  getAllCourses,
   getCourseProblemCounts,
   getCoverageTimeline,
   getProblemsPerSection,
@@ -76,7 +76,7 @@ export const CourseSectionSelector = ({
   // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
   useEffect(() => {
     async function fetchCoverageTimeline() {

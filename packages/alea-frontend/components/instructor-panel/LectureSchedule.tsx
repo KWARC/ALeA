@@ -31,7 +31,7 @@ import {
   updateHasQuiz,
   updateSeriesId,
 } from '@alea/spec';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -43,6 +43,8 @@ interface LectureScheduleTabProps {
   courseId: string;
   instanceId: string;
 }
+
+type TabType = 'lecture' | 'tutorial';
 
 const initialNewEntry: LectureSchedule = {
   lectureDay: '',
@@ -87,6 +89,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   } | null>(null);
   const [newEntry, setNewEntry] = useState<LectureSchedule>(initialNewEntry);
   const [seriesId, setSeriesIdState] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<TabType>('lecture');
 
   const fetchLectures = useCallback(async () => {
     try {
@@ -115,10 +118,10 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getCourseInfo();
-        const institution = courses?.[courseId]?.institution;
-        if (institution && UniversityDetail[institution]) {
-          setTimezone(UniversityDetail[institution].defaultTimezone);
+        const courses = await getAllCourses();
+        const universityId = courses?.[courseId]?.universityId;
+        if (universityId && UniversityDetail[universityId]) {
+          setTimezone(UniversityDetail[universityId].defaultTimezone);
         } else {
           setTimezone(undefined);
         }
@@ -264,48 +267,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       </Typography>
       <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            labelPlacement="start"
-            control={
-              <Checkbox
-                checked={hasHomework}
-                onChange={async (e) => {
-                  const next = e.target.checked;
-                  if (!confirm('Are you sure to update homework availability?')) return;
-                  try {
-                    await updateHasHomework({ courseId, instanceId, hasHomework: next });
-                    setHasHomework(next);
-                  } catch (err) {
-                    console.error('Failed to update homework availability', err);
-                  }
-                }}
-              />
-            }
-            label="Enable homework for this course"
-            sx={{ m: 0 }}
-          />
-
-          <FormControlLabel
-            labelPlacement="start"
-            control={
-              <Checkbox
-                checked={hasQuiz}
-                onChange={async (e) => {
-                  const next = e.target.checked;
-                  if (!confirm('Are you sure to update quiz availability?')) return;
-                  try {
-                    await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
-                    setHasQuiz(next);
-                  } catch (err) {
-                    console.error('Failed to update quiz availability', err);
-                  }
-                }}
-              />
-            }
-            label="Enable quiz for this course"
-            sx={{ m: 0 }}
-          />
-
           <TextField
             label="Series ID"
             value={seriesId}
@@ -331,17 +292,26 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       </Paper>
 
       <Box
-        sx={{ display: 'flex', justifyContent: 'center', borderBottom: '2px solid #e0e0e0', mb: 2 }}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          borderBottom: '2px solid #684848ff',
+          mb: 2,
+        }}
       >
         {[
           { label: 'Lecture Schedule', type: 'lecture' },
           { label: 'Tutorial Schedule', type: 'tutorial' },
         ].map((item) => {
-          const isActive = selectedScheduleType === item.type;
+          const isActive = activeTab === item.type;
           return (
             <Box
               key={item.type}
-              onClick={() => setSelectedScheduleType(item.type as 'lecture' | 'tutorial')}
+              onClick={() => {
+                setActiveTab(item.type as TabType);
+
+                setSelectedScheduleType(item.type as 'lecture' | 'tutorial');
+              }}
               sx={{
                 px: 2,
                 py: 1.5,
@@ -363,194 +333,197 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         })}
       </Box>
 
-      <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1.5,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <TextField
-            select
-            label={t.day}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureDay
-                : tutorialScheduleData.lectureDay
-            }
-            onChange={(e) => handleFieldChange('lectureDay', e.target.value)}
-            size="small"
-            sx={{ width: 140 }}
-          >
-            {weekdayOptions.map((day) => (
-              <MenuItem key={day} value={day}>
-                {day}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            label={t.venue}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.venue
-                : tutorialScheduleData.venue
-            }
-            onChange={(e) => handleFieldChange('venue', e.target.value)}
-            size="small"
-            sx={{ width: 120 }}
-          />
-
-          <TextField
-            label={t.venueLink}
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.venueLink
-                : tutorialScheduleData.venueLink
-            }
-            onChange={(e) => handleFieldChange('venueLink', e.target.value)}
-            size="small"
-            sx={{ width: 140 }}
-          />
-
-          <TextField
-            label={t.startTime}
-            type="time"
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureStartTime
-                : tutorialScheduleData.lectureStartTime
-            }
-            onChange={(e) => handleFieldChange('lectureStartTime', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            sx={{ width: 110 }}
-          />
-
-          <TextField
-            label={t.endTime}
-            type="time"
-            value={
-              selectedScheduleType === 'lecture'
-                ? lectureScheduleData.lectureEndTime
-                : tutorialScheduleData.lectureEndTime
-            }
-            onChange={(e) => handleFieldChange('lectureEndTime', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            sx={{ width: 110 }}
-          />
-
-          {selectedScheduleType === 'lecture' && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={lectureScheduleData.hasQuiz}
-                  onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
-                />
-              }
-              label={t.quiz}
-              sx={{ m: 0 }}
-            />
-          )}
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSaveNew}
+      <>
+        <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+          <Box
             sx={{
-              px: 2,
-              py: 0.5,
-              borderRadius: 10,
               display: 'flex',
+              gap: 1.5,
               alignItems: 'center',
-              gap: 1,
+              flexWrap: 'wrap',
             }}
           >
-            <AddIcon fontSize="small" />
-            {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
-          </Button>
-        </Box>
-      </Paper>
-      <Table
-        size="small"
-        sx={{
-          mt: 1,
-          backgroundColor: '#fafbfc',
-          '& thead': { backgroundColor: '#f5f7fa' },
-          '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>{t.day}</TableCell>
-            <TableCell>
-              {t.startTime} {timezone && `(${timezone})`}
-            </TableCell>
-            <TableCell>
-              {t.endTime} {timezone && `(${timezone})`}
-            </TableCell>
-            <TableCell>{t.venue}</TableCell>
-            <TableCell>{t.venueLink}</TableCell>
+            <TextField
+              select
+              label={t.day}
+              value={
+                selectedScheduleType === 'lecture'
+                  ? lectureScheduleData.lectureDay
+                  : tutorialScheduleData.lectureDay
+              }
+              onChange={(e) => handleFieldChange('lectureDay', e.target.value)}
+              size="small"
+              sx={{ width: 140 }}
+            >
+              {weekdayOptions.map((day) => (
+                <MenuItem key={day} value={day}>
+                  {day}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              label={t.venue}
+              value={
+                selectedScheduleType === 'lecture'
+                  ? lectureScheduleData.venue
+                  : tutorialScheduleData.venue
+              }
+              onChange={(e) => handleFieldChange('venue', e.target.value)}
+              size="small"
+              sx={{ width: 120 }}
+            />
+
+            <TextField
+              label={t.venueLink}
+              value={
+                selectedScheduleType === 'lecture'
+                  ? lectureScheduleData.venueLink
+                  : tutorialScheduleData.venueLink
+              }
+              onChange={(e) => handleFieldChange('venueLink', e.target.value)}
+              size="small"
+              sx={{ width: 140 }}
+            />
+
+            <TextField
+              label={t.startTime}
+              type="time"
+              value={
+                selectedScheduleType === 'lecture'
+                  ? lectureScheduleData.lectureStartTime
+                  : tutorialScheduleData.lectureStartTime
+              }
+              onChange={(e) => handleFieldChange('lectureStartTime', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ width: 110 }}
+            />
+
+            <TextField
+              label={t.endTime}
+              type="time"
+              value={
+                selectedScheduleType === 'lecture'
+                  ? lectureScheduleData.lectureEndTime
+                  : tutorialScheduleData.lectureEndTime
+              }
+              onChange={(e) => handleFieldChange('lectureEndTime', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ width: 110 }}
+            />
 
             {selectedScheduleType === 'lecture' && (
-              <>
-                <TableCell>{t.homework || 'Homework'}</TableCell>
-                <TableCell>{t.quiz}</TableCell>
-              </>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={lectureScheduleData.hasQuiz}
+                    onChange={(e) => handleFieldChange('hasQuiz', e.target.checked)}
+                  />
+                }
+                label={t.quiz}
+                sx={{ m: 0 }}
+              />
             )}
-
-            <TableCell>{t.actions}</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {scheduleToShow.map((entry, idx) => (
-            <TableRow key={idx}>
-              <TableCell>{entry.lectureDay}</TableCell>
-              <TableCell>{entry.lectureStartTime}</TableCell>
-              <TableCell>{entry.lectureEndTime}</TableCell>
-              <TableCell>{entry.venue}</TableCell>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSaveNew}
+              sx={{
+                px: 2,
+                py: 0.5,
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <AddIcon fontSize="small" />
+              {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
+            </Button>
+          </Box>
+        </Paper>
+        <Table
+          size="small"
+          sx={{
+            mt: 1,
+            backgroundColor: '#fafbfc',
+            '& thead': { backgroundColor: '#f5f7fa' },
+            '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>{t.day}</TableCell>
               <TableCell>
-                <a href={entry.venueLink} target="_blank" rel="noreferrer">
-                  {t.link}
-                </a>
+                {t.startTime} {timezone && `(${timezone})`}
               </TableCell>
+              <TableCell>
+                {t.endTime} {timezone && `(${timezone})`}
+              </TableCell>
+              <TableCell>{t.venue}</TableCell>
+              <TableCell>{t.venueLink}</TableCell>
+
               {selectedScheduleType === 'lecture' && (
                 <>
-                  <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
-                  <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+                  <TableCell>{t.homework || 'Homework'}</TableCell>
+                  <TableCell>{t.quiz}</TableCell>
                 </>
               )}
-              <TableCell>
-                <Tooltip title={t.edit}>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setEditEntry(entry);
-                      setEditKeys({
-                        lectureDay: entry.lectureDay,
-                        lectureStartTime: entry.lectureStartTime,
-                        lectureEndTime: entry.lectureEndTime,
-                      });
-                    }}
-                  >
-                    <EditIcon fontSize="small" color="primary" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={t.delete}>
-                  <IconButton size="small" onClick={() => handleDelete(entry)}>
-                    <DeleteIcon fontSize="small" color="error" />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
+
+              <TableCell>{t.actions}</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+
+          <TableBody>
+            {scheduleToShow.length > 0 &&
+              scheduleToShow.map((entry, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{entry.lectureDay}</TableCell>
+                  <TableCell>{entry.lectureStartTime}</TableCell>
+                  <TableCell>{entry.lectureEndTime}</TableCell>
+                  <TableCell>{entry.venue}</TableCell>
+                  <TableCell>
+                    <a href={entry.venueLink} target="_blank" rel="noreferrer">
+                      {t.link}
+                    </a>
+                  </TableCell>
+                  {selectedScheduleType === 'lecture' && (
+                    <>
+                      <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
+                      <TableCell>{entry.hasQuiz ? t.yes : t.no}</TableCell>
+                    </>
+                  )}
+                  <TableCell>
+                    <Tooltip title={t.edit}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setEditEntry(entry);
+                          setEditKeys({
+                            lectureDay: entry.lectureDay,
+                            lectureStartTime: entry.lectureStartTime,
+                            lectureEndTime: entry.lectureEndTime,
+                          });
+                        }}
+                      >
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={t.delete}>
+                      <IconButton size="small" onClick={() => handleDelete(entry)}>
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </>
       <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
         <DialogTitle>
           {t.editDialogTitle.replace(
