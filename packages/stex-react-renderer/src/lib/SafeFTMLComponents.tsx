@@ -3,7 +3,6 @@ import { CircularProgress } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { getFlamsInitialized } from './helper/ftml-init';
 
-
 function useFTMLReady(): boolean {
   const [isReady, setIsReady] = useState(getFlamsInitialized());
 

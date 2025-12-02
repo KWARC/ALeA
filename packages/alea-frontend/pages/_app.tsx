@@ -3,15 +3,15 @@ import {
   PositionProvider,
   ServerLinksContext,
   setFlamsInitialized,
+  getInitStartTime,
 } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
 import { CommentRefreshProvider } from '@alea/react-utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import './styles.scss';
 
@@ -57,12 +57,9 @@ const theme = createTheme({
   },
 });
 
-let flamsInitialized = false;
-
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
-    console.log('FTML initialized');
-    flamsInitialized = true;
+    console.log('FTML initialized: ', Date.now() - getInitStartTime(), 'ms');
     setFlamsInitialized(true);
   })
   .catch((err) => {
@@ -70,20 +67,6 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   });
 
 function CustomApp({ Component, pageProps }: AppProps) {
-  const [readyToRender, setReadyToRender] = useState(false);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (flamsInitialized) {
-        setReadyToRender(true);
-        clearInterval(interval);
-      }
-    }, 10);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
   useEffect(() => {
     const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
     const pollBuildId = setInterval(async () => {
@@ -104,8 +87,6 @@ function CustomApp({ Component, pageProps }: AppProps) {
       clearInterval(pollBuildId);
     };
   }, []);
-
-  if (!readyToRender) return <CircularProgress />;
 
   return (
     <CommentRefreshProvider>
