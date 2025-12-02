@@ -7,20 +7,14 @@ function useFTMLReady(): boolean {
   return useContext(FTMLReadyContext);
 }
 
-export function SafeFTMLFragment(
-  props: React.ComponentProps<typeof FTMLFragment> & {
-    allowHovers?: boolean;
-  }
-) {
+export function SafeFTMLFragment(props: React.ComponentProps<typeof FTMLFragment>) {
   const isReady = useFTMLReady();
 
   if (!isReady) {
     return <CircularProgress />;
   }
 
-  return (
-      <FTMLFragment {...props} />
-  );
+  return <FTMLFragment {...props} />;
 }
 
 export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument>) {
@@ -30,15 +24,11 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
     return <CircularProgress />;
   }
 
-  return (
-      <FTMLDocument {...props} />
-  );
+  return <FTMLDocument {...props} />;
 }
-
 
 export function SafeFTMLSetup(
   props: React.ComponentProps<typeof FTMLSetup> & {
-    allowFullscreen?: boolean;
     children: React.ReactNode;
   }
 ) {
@@ -48,6 +38,5 @@ export function SafeFTMLSetup(
     return <CircularProgress />;
   }
 
-  return <FTMLSetup {...props} allowFullscreen={props.allowFullscreen ?? false} />;
+  return <FTMLSetup {...props} />;
 }
-
