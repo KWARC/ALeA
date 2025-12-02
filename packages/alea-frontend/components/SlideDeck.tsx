@@ -6,7 +6,7 @@ import {
   NavigateBefore,
   NavigateNext,
 } from '@mui/icons-material';
-import { SafeFTMLFragment } from '@alea/stex-react-renderer';
+import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -294,7 +294,10 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box className={styles['text-frame']}>
         {slide.paragraphs?.map((p, idx) => (
           <Box key={p.uri} fragment-uri={p.uri} fragment-kind="Paragraph">
-            <SafeFTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }} />
+            <SafeFTMLFragment
+              key={p.uri}
+              fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }}
+            />
             {idx < slide.paragraphs.length - 1 && <br />}
           </Box>
         ))}
@@ -459,7 +462,9 @@ export const SlideDeck = memo(function SlidesFromUrl({
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
         <Box id="slide-renderer-container" sx={{ '& *': { boxSizing: 'border-box' } }}>
-          <SlideRenderer key={slideNum} slide={currentSlide} />
+          <SafeFTMLSetup allowFullscreen={false}>
+            <SlideRenderer key={slideNum} slide={currentSlide} />
+          </SafeFTMLSetup>
         </Box>
       ) : (
         <Box

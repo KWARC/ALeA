@@ -19,7 +19,7 @@ export function SafeFTMLFragment(
   }
 
   return (
-      <FTMLFragment {...props} allowHovers={props.allowHovers ?? true} />
+      <FTMLFragment {...props} />
   );
 }
 
