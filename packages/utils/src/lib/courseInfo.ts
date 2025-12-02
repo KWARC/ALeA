@@ -13,7 +13,7 @@ export interface CourseInfo {
   isCurrent: boolean;
   hasQuiz: boolean;
   hasHomework: boolean;
-  institution?: string;
+  universityId?: string;
   instances?: { semester: string; instructors?: string[] | null }[];
   instructors?: string[] | null;
   teaser?: string | null;
@@ -63,7 +63,7 @@ export function createCourseInfo(
   isCurrent = false,
   hasQuiz = false,
   hasHomework = false,
-  institution?: string,
+  universityId?: string,
   instances?: { semester: string; instructors?: string[] | null }[],
   instructors?: string[] | null,
   teaser?: string | null,
@@ -84,7 +84,7 @@ export function createCourseInfo(
     isCurrent,
     hasQuiz,
     hasHomework,
-    institution,
+    universityId,
     instances,
     instructors,
     teaser,

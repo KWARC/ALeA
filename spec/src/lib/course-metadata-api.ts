@@ -8,6 +8,10 @@ export interface LectureSchedule {
   lectureStartTime: string;
   lectureEndTime: string;
   hasQuiz?: boolean;
+  quizOffsetMinutes?: number;
+  quizOffsetReference?: 'lecture-start' | 'lecture-end';
+  quizDurationMinutes?: number;
+  quizFeedbackDelayMinutes?: number;
 }
 
 export interface CourseMetadata {
@@ -18,6 +22,24 @@ export interface CourseMetadata {
   hasHomework?: boolean;
   seriesId?: string;
 }
+
+export interface InstructorInfo {
+  id: string;
+  name: string;
+}
+
+export interface CourseInfoMetadata extends CourseMetadata {
+  courseName: string;
+  notes: string;
+  landing: string;
+  slides: string;
+  teaser?: string | null;
+  instructors: InstructorInfo[];
+  hasQuiz: boolean;
+  updaterId?: string;
+  universityId: string;
+}
+
 export interface GenerateLectureEntryResponse {
   courseId: string;
   count: number;
@@ -149,4 +171,89 @@ export async function getLectureSchedule(
     params: { courseId, instanceId },
   });
   return (response.data?.schedule ?? []) as LectureScheduleItem[];
+}
+
+export async function addCourseMetadata(data: CourseInfoMetadata) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-course-metadata`, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+}
+
+export async function updateCourseInfoMetadata(data: Partial<CourseInfoMetadata>) {
+  const response = await axios.post(
+    `${COURSE_METADATA_BASE_URL}/update-course-info-metadata`,
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}
+
+export async function getCourseInfoMetadata(
+  courseId: string,
+  instanceId: string
+): Promise<CourseInfoMetadata | null> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-info-metadata`, {
+    headers: getAuthHeaders(),
+    params: { courseId, instanceId },
+  });
+  return response.data;
+}
+
+export async function getCourseIdsByUniversity(
+  universityId: string,
+  instanceId?: string
+): Promise<string[]> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-ids-by-university`, {
+    headers: getAuthHeaders(),
+    params: { universityId, ...(instanceId && { instanceId }) },
+  });
+  return response.data?.courseIds || [];
+}
+
+export async function addCourseToSemester(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/add-course-to-semester',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}
+
+export async function removeCourseFromSemester(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/remove-course-from-semester',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+}
+
+export async function createNewCourse(data: {
+  universityId: string;
+  instanceId: string;
+  courseId: string;
+}) {
+  const response = await axios.post(
+    '/api/university-admin/semester-courses/create-new-course',
+    data,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
 }

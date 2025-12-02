@@ -22,7 +22,7 @@ import { ConceptDetails } from './ConceptDetails';
 import { ConceptSelector } from './ConceptSelector';
 import { getSectionRange } from './CourseSectionSelector';
 import { GenerationSummary } from './GenerationSummary';
-import { GoalSelector } from './GoalSelector';
+import { GoalSelector } from './goal-hierarchy/GoalSelector';
 import { QuestionCategorySelector } from './QuestionCategorySelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
@@ -90,7 +90,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     {}
   );
   const [sectionGoals, setSectionGoals] = useState<SectionGoals>({});
-  const [selectedGoals, setSelectedGoals] = useState<{ [conceptUri: string]: string[] }>({});
+  const [selectedGoals, setSelectedGoals] = useState<{ [sectionUri: string]: string[] }>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -344,10 +344,10 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     });
   };
 
-  const handleRemoveGoal = (conceptUri: string, goalUri: string) => {
+  const handleRemoveGoal = (sectionUri: string, goalUri: string) => {
     setSelectedGoals((prev) => ({
       ...prev,
-      [conceptUri]: prev[conceptUri]?.filter((g) => g !== goalUri) ?? [],
+      [sectionUri]: prev[sectionUri]?.filter((g) => g !== goalUri) ?? [],
     }));
   };
 
@@ -364,7 +364,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     }));
   };
 
-  const handleSelectGoal = (sectionUri: string, goalUri: string, goalText: string) => {
+  const handleSelectGoal = (sectionUri: string, goalText: string) => {
     setSelectedGoals((prev) => {
       const sectionArray = prev[sectionUri] || [];
       return {

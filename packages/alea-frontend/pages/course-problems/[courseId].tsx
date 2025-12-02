@@ -1,5 +1,5 @@
 import { Button, CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { DocProblemBrowser } from '@alea/stex-react-renderer';
 import { CourseInfo } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -18,7 +18,7 @@ const CourseProblemsPage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   if (!router.isReady || !courses) return <CircularProgress />;

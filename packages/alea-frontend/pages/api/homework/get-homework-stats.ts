@@ -1,5 +1,5 @@
 import { HomeworkStatsInfo } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { getGradingItemsOrSetError } from '../common-homework-utils';
