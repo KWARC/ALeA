@@ -795,16 +795,30 @@ const CourseHomePage: NextPage = () => {
 
         {enrolled && (
           <Box sx={{ m: 2, textAlign: 'center' }}>
-            <Button
-              onClick={unEnrollFromCourse}
-              variant="contained"
-              sx={{
-                bgcolor: '#ffb3b3',
-                color: '#7a0000',
-              }}
-            >
-              Un-Enroll
-            </Button>
+            {studentCount !== null && (
+              <Typography
+                variant="body2"
+                component="div"
+                sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                You and {Math.max(studentCount - 1, 0)} other learners are enrolled.{' '}
+                <Box
+                  component="span"
+                  onClick={unEnrollFromCourse}
+                  sx={{
+                    cursor: 'pointer',
+                    color: '#b00020',
+                    ml: 0.5,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Un-Enroll
+                </Box>
+              </Typography>
+            )}
           </Box>
         )}
 
