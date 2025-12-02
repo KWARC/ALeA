@@ -35,9 +35,14 @@ import {
   LectureEntry,
   ResourceName,
   roundToMinutes,
+  toWeekdayIndex,
+  parseTimeString,
+  UniversityDetail,
 } from '@alea/utils';
 import { AxiosResponse } from 'axios';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
@@ -51,6 +56,9 @@ import { useRouter } from 'next/router';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from './coverage-update';
 import { SecInfo } from '../types';
+import { getLectureEntry, LectureSchedule } from '@alea/spec';
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 const NEW_QUIZ_ID = 'New';
 
@@ -208,6 +216,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [isUpdating, setIsUpdating] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
   const [syllabusLoading, setSyllabusLoading] = useState(false);
+  const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const isNew = isNewQuiz(selectedQuizId);
 
   const router = useRouter();
@@ -224,10 +233,40 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   );
 
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
+  const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
+
+  useEffect(() => {
+    async function loadTimezone() {
+      try {
+        const courses = await getAllCourses();
+        const universityId = courses?.[courseId]?.universityId;
+        if (universityId && UniversityDetail[universityId]) {
+          setTimezone(UniversityDetail[universityId].defaultTimezone);
+        } else {
+          setTimezone(undefined);
+        }
+      } catch (err) {
+        console.error('Failed to load university timezone', err);
+      }
+    }
+    loadTimezone();
+  }, [courseId]);
+
+  useEffect(() => {
+    async function loadLectureSchedule() {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        setLectureSchedule(data.lectureSchedule || []);
+      } catch (err) {
+        console.error('Failed to load lecture schedule', err);
+      }
+    }
+    if (currentTerm) loadLectureSchedule();
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function fetchQuizzes() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
       allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
       for (const q of allQuizzes ?? []) {
@@ -253,12 +292,47 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   }, [selectedQuizId, courseId, currentTerm, quizzes]);
 
   useEffect(() => {
-    if (selectedQuizId === NEW_QUIZ_ID) {
+    if (selectedQuizId !== NEW_QUIZ_ID) return;
+    if (!timezone) return;
+    const nowUtc = dayjs().utc();
+    const upcomingLecture = lectureSchedule
+      .filter((lec) => lec.hasQuiz)
+      .map((lec) => {
+        const timeParts = parseTimeString(lec.lectureStartTime);
+        if (!timeParts) {
+          return null;
+        }
+        const [sh, sm] = timeParts;
+        const weekdayIndex = toWeekdayIndex(lec.lectureDay);
+        if (weekdayIndex === undefined) {
+          return null;
+        }
+
+        let lectureDateTz = dayjs()
+          .tz(timezone)
+          .day(weekdayIndex)
+          .hour(sh)
+          .minute(sm)
+          .second(0)
+          .millisecond(0);
+        const nowTz = dayjs().tz(timezone);
+        if (lectureDateTz.isBefore(nowTz)) {
+          lectureDateTz = lectureDateTz.add(1, 'week');
+        }
+
+        const lectureStartMs = lectureDateTz.toDate().getTime();
+
+        return { ...lec, lectureStartMs };
+      })
+      .filter((lec): lec is NonNullable<typeof lec> => lec !== null)
+      .filter((lec) => lec.lectureStartMs >= nowUtc.valueOf())
+      .sort((a, b) => a.lectureStartMs - b.lectureStartMs)[0];
+
+    if (!upcomingLecture) {
       const ts = roundToMinutes(Date.now());
       setQuizStartTs(ts);
       setQuizEndTs(ts);
       setFeedbackReleaseTs(ts);
-      setManuallySetPhase(Phase.UNSET);
       setTitle('');
       setProblems({});
       setCss([]);
@@ -266,21 +340,36 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       return;
     }
 
-    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
-    if (!selected) return;
-    setQuizStartTs(selected.quizStartTs);
-    setQuizEndTs(selected.quizEndTs);
-    setFeedbackReleaseTs(selected.feedbackReleaseTs);
-    setManuallySetPhase(selected.manuallySetPhase);
-    setTitle(selected.title);
-    setProblems(selected.problems);
-    setCss(selected.css || []);
-    setCourseTerm(selected.courseTerm);
-  }, [selectedQuizId, quizzes]);
+    const endTimeParts = parseTimeString(upcomingLecture.lectureEndTime);
+    if (!endTimeParts) return;
+    const [endH, endM] = endTimeParts;
+
+    const lectureStartTz = dayjs(upcomingLecture.lectureStartMs).tz(timezone);
+    const lectureEndTz = lectureStartTz.hour(endH).minute(endM).second(0);
+
+    const referenceSource = upcomingLecture.quizOffsetReference || 'lecture-start';
+    const referenceTimeTz = referenceSource === 'lecture-end' ? lectureEndTz : lectureStartTz;
+
+    const quizStartTz = referenceTimeTz.add(upcomingLecture.quizOffsetMinutes || 0, 'minutes');
+    const quizEndTz = quizStartTz.add(upcomingLecture.quizDurationMinutes || 0, 'minutes');
+    const feedbackReleaseTz = quizEndTz.add(
+      upcomingLecture.quizFeedbackDelayMinutes || 0,
+      'minutes'
+    );
+
+    setQuizStartTs(quizStartTz.toDate().getTime());
+    setQuizEndTs(quizEndTz.toDate().getTime());
+    setFeedbackReleaseTs(feedbackReleaseTz.toDate().getTime());
+    setManuallySetPhase(Phase.UNSET);
+    setTitle('');
+    setProblems({});
+    setCss([]);
+    setCourseTerm(currentTerm);
+  }, [selectedQuizId, lectureSchedule, currentTerm, timezone]);
 
   useEffect(() => {
     async function checkHasAccessAndGetTypeOfAccess() {
-      if (!currentTerm) return; 
+      if (!currentTerm) return;
       const canMutate = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
         instanceId: currentTerm,
@@ -302,7 +391,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       }
     }
     checkHasAccessAndGetTypeOfAccess();
-  }, [currentTerm]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     async function loadAll() {
@@ -339,6 +428,21 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
       setUpcomingQuizSyllabus(syllabus);
     }
   }, [coverageTimeline, courseId, sections]);
+
+  useEffect(() => {
+    const selected = quizzes.find((quiz) => quiz.id === selectedQuizId);
+
+    if (!selected) return;
+
+    setQuizStartTs(selected.quizStartTs);
+    setQuizEndTs(selected.quizEndTs);
+    setFeedbackReleaseTs(selected.feedbackReleaseTs);
+    setManuallySetPhase(selected.manuallySetPhase);
+    setTitle(selected.title);
+    setProblems(selected.problems);
+    setCss(selected.css || []);
+    setCourseTerm(selected.courseTerm);
+  }, [selectedQuizId, quizzes]);
 
   if (!selectedQuiz && !isNew) return <>Error</>;
 
@@ -439,16 +543,19 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         timestamp={quizStartTs}
         setTimestamp={setQuizStartTs}
         label="Quiz start time"
+        timezone={timezone}
       />
       <CheckboxWithTimestamp
         timestamp={quizEndTs}
         setTimestamp={setQuizEndTs}
         label="Quiz end time"
+        timezone={timezone}
       />
       <CheckboxWithTimestamp
         timestamp={feedbackReleaseTs}
         setTimestamp={setFeedbackReleaseTs}
         label="Feedback release time"
+        timezone={timezone}
       />
       <FormControl variant="outlined" sx={{ minWidth: '300px', m: '10px 0' }}>
         <InputLabel id="manually-set-phase-label">Manually set phase</InputLabel>
