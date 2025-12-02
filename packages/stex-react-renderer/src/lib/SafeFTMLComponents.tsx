@@ -1,27 +1,10 @@
 import { FTMLDocument, FTMLFragment, FTMLSetup } from '@flexiformal/ftml-react';
 import { CircularProgress } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { getFlamsInitialized } from './helper/ftml-init';
+import React, { useContext } from 'react';
+import { FTMLReadyContext } from './stex-react-renderer';
 
 function useFTMLReady(): boolean {
-  const [isReady, setIsReady] = useState(getFlamsInitialized());
-
-  useEffect(() => {
-    if (isReady) return;
-
-    const interval = setInterval(() => {
-      if (getFlamsInitialized()) {
-        setIsReady(true);
-        clearInterval(interval);
-      }
-    }, 10);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isReady]);
-
-  return isReady;
+  return useContext(FTMLReadyContext);
 }
 
 export function SafeFTMLFragment(
@@ -36,9 +19,7 @@ export function SafeFTMLFragment(
   }
 
   return (
-    <FTMLSetup allowFullscreen={false}>
       <FTMLFragment {...props} allowHovers={props.allowHovers ?? true} />
-    </FTMLSetup>
   );
 }
 
@@ -50,9 +31,7 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
   }
 
   return (
-    <FTMLSetup allowFullscreen={false}>
       <FTMLDocument {...props} />
-    </FTMLSetup>
   );
 }
 
