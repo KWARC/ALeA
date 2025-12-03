@@ -200,6 +200,7 @@ const CourseNotesPage: NextPage = () => {
         }}
       >
         <SafeFTMLDocument
+          allowFullscreen={false}
           key={notes}
           document={{ type: 'FromBackend', uri: notes }}
           toc={{ Ready: toc }}
