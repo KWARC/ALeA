@@ -10,7 +10,7 @@ import {
 import { AnswerClass, CreateAnswerClassRequest } from '@alea/spec';
 import { DEFAULT_ANSWER_CLASSES } from '@alea/quiz-utils';
 import { useRouter } from 'next/router';
-import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 export function GradingCreator({
   rawAnswerClasses = [],
@@ -34,18 +34,21 @@ export function GradingCreator({
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
   const isAnswerClassSelected = !!selectedAnswerClass;
 
-  useEffect(() => {
-    setAnswerClasses(
-      [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c) => ({
-        count: 0,
-        ...c,
-      }))
-    );
+  const mergedAnswerClasses = useMemo(() => {
+    return [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c) => ({
+      count: 0,
+      ...c,
+    }));
   }, [rawAnswerClasses]);
+  useEffect(() => {
+    if (mergedAnswerClasses.length !== answerClasses.length) setAnswerClasses(mergedAnswerClasses);
+  }, [mergedAnswerClasses]);
   const handleAnswerClassesChange = (
     id: string,
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
+    console.log('g');
+
     const newAnswerClasses = answerClasses.map((answerclass) => {
       //TODO:Check
       if (answerclass.className === id) {
@@ -58,6 +61,8 @@ export function GradingCreator({
     setAnswerClasses(newAnswerClasses);
   };
   const handleDefaultAnswerClassesChange = (id: string) => {
+    console.log(id);
+
     const newAnswerClasses = answerClasses.map((answerclass) => {
       if (answerclass.className === id) {
         setSelectAnswerClass(answerclass);
@@ -70,6 +75,8 @@ export function GradingCreator({
   };
   async function onSaveGrading(event: SyntheticEvent) {
     event.preventDefault();
+    console.log(answerClasses);
+
     const acs: CreateAnswerClassRequest[] = answerClasses
       .map((c) => ({
         answerClassId: c.className,

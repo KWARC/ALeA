@@ -113,7 +113,6 @@ export function ProblemViewer({
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
-  const hasSubProblems = problem.problem.subProblems != null;
 
   return (
     <SafeFTMLFragment
@@ -122,23 +121,22 @@ export function ProblemViewer({
       allowHovers={isFrozen}
       problemStates={problemStates}
       onProblemResponse={(response) => {
-        onResponseUpdate?.(response);
+        onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
       }}
-      /*{problemWrap={(problemUri, isSubProblem, autogradable) => {
-        if(autogradable) return undefined;
+      problemWrap={(problemUri, isSubProblem, autogradable) => {
+        if (autogradable) return undefined;
         return (ch: React.ReactNode) => (
           <Box>
             {ch}
             <AnswerAccepter
               masterProblemId={uri}
-              hasSubProblems={hasSubProblems}
               problemTitle={problem.problem.title_html ?? ''}
               isFrozen={isFrozen}
               problemId={problemUri}
             ></AnswerAccepter>
           </Box>
         );
-      }}}*/
+      }}
     />
   );
 }
@@ -146,40 +144,33 @@ export function ProblemViewer({
 function AnswerAccepter({
   problemId,
   masterProblemId,
-  hasSubProblems,
   isFrozen,
   problemTitle,
 }: {
   problemId: string;
   masterProblemId: string;
-  hasSubProblems: boolean;
   isFrozen: boolean;
   problemTitle: string;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
-  const serverAnswer =
-    previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)?.answer ??
-    null;
+  let serverAnswer = '';
+  if (previousAnswer !== undefined)
+    serverAnswer =
+      previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)
+        ?.answer ?? '';
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
   );
-  const subId = hasSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
   const router = useRouter();
 
-  async function saveAnswer({
-    subId,
-    freeTextResponses,
-  }: {
-    subId?: string;
-    freeTextResponses: string;
-  }) {
+  async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
       createAnswer({
         answer: freeTextResponses,
         questionId: masterProblemId ? masterProblemId : problemId,
         questionTitle: problemTitle,
-        subProblemId: subId ?? '',
+        subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
         homeworkId: +(router.query.id ?? 0),
       });
@@ -189,7 +180,6 @@ function AnswerAccepter({
       alert('Failed to save answers. Please try again.');
     }
   }
-  if (hasSubProblems && isNaN(subId)) return;
   async function onSaveClick() {
     await saveAnswer({ freeTextResponses: answer, subId: problemId });
   }
