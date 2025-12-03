@@ -462,7 +462,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
         <Box id="slide-renderer-container" sx={{ '& *': { boxSizing: 'border-box' } }}>
-          <SafeFTMLSetup allowFullscreen={false}>
+          <SafeFTMLSetup key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'} allowFullscreen={false}>
             <SlideRenderer key={slideNum} slide={currentSlide} />
           </SafeFTMLSetup>
         </Box>
