@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { Box, Button, Link, Typography } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -123,7 +123,7 @@ function QuizButton({ uri }: { uri: string }) {
 
 export function ConceptView({ uri }: { uri: string }) {
   const html = getFTMLForConceptView(uri);
-  return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
+  return <SafeFTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
 }
 
 export function CompetencyTable({

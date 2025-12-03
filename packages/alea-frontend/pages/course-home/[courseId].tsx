@@ -20,7 +20,7 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
-import { FTMLDocument } from '@flexiformal/ftml-react';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -860,7 +860,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
         <Box fragment-uri={landing} fragment-kind="Section">
-          <FTMLDocument
+          <SafeFTMLDocument
             document={{ type: 'FromBackend', uri: landing }}
             showContent={false}
             pdfLink={false}

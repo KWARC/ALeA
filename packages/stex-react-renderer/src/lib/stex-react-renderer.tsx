@@ -31,6 +31,7 @@ import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
 import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@alea/spec';
 
 export const ServerLinksContext = createContext({ gptUrl: '' });
+export const FTMLReadyContext = createContext<boolean>(false);
 
 export function getPoints(problem: FTMLProblemWithSolution, response?: FTML.ProblemResponse) {
   if (!response) return 0;
