@@ -315,7 +315,7 @@ function CourseScheduleSection({
           gap: 1.5,
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
           {lectureSchedule.length > 0 && (
             <Box sx={{ flex: 1, minWidth: 40 }}>
               <Box
