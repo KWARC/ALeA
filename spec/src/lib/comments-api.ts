@@ -372,3 +372,23 @@ export async function getCourseIdsForEnrolledUser(instanceId?: string) {
   );
   return response.data;
 }
+
+export async function getAllCourses(universityId?: string) {
+  const response = await axios.get('/api/get-all-courses', {
+    params: {
+      ...(universityId ? { universityId } : {}),
+    },
+  });
+  return response.data;
+}
+
+export async function getCurrentTerm(courseId?: string): Promise<string | Record<string, string>> {
+  const response = await axios.get<Record<string, string> | { courseId: string; currentTerm: string }>('/api/get-current-term', {
+    params: courseId ? { courseId } : {},
+  });
+  if (courseId) {
+    return (response.data as { courseId: string; currentTerm: string }).currentTerm;
+  }
+  return response.data as Record<string, string>;
+}
+

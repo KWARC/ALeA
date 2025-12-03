@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { FTML } from '@flexiformal/ftml';
 import { sourceFile as getSourceFile, solution as flamsSolution } from '@flexiformal/ftml-backend';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -88,7 +88,7 @@ export function UriProblemViewer({
   const problemState = getProblemState(isSubmitted, solution, response);
   return (
     <Box fragment-uri={uri} fragment-kind="Problem">
-      <FTMLFragment
+      <SafeFTMLFragment
         key={`${uri}-${problemState.type}`}
         fragment={{ type: 'FromBackend', uri }}
         allowHovers={isSubmitted}

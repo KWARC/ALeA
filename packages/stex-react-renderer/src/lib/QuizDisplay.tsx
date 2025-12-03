@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { FTML } from '@flexiformal/ftml';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBox from '@mui/icons-material/CheckBox';
@@ -325,7 +325,7 @@ export function QuizDisplay({
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <h2>
             {t.problem} {problemIdx + 1} {t.of} {problemIds.length}&nbsp;
-            <FTMLFragment
+            <SafeFTMLFragment
               key={problem.problem.html ?? ''}
               allowHovers={isFrozen}
               fragment={{

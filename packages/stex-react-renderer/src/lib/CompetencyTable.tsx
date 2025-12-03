@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { Box, Button, Link, Typography } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -24,7 +24,7 @@ import {
   getProblemsForConcept,
   uriWeightToSmileyLevel,
 } from '@alea/spec';
-import { PRIMARY_COL, PathToTour } from '@alea/utils';
+import { PRIMARY_COL, PathToTour2 } from '@alea/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -123,7 +123,7 @@ function QuizButton({ uri }: { uri: string }) {
 
 export function ConceptView({ uri }: { uri: string }) {
   const html = getFTMLForConceptView(uri);
-  return <FTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
+  return <SafeFTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
 }
 
 export function CompetencyTable({
@@ -309,7 +309,7 @@ export function CompetencyTable({
                     }}
                   >
                     <Link
-                      href={PathToTour(conceptUris[index])}
+                      href={PathToTour2(conceptUris[index])}
                       target="_blank"
                       sx={{ marginRight: '10px' }}
                     >

@@ -2,7 +2,6 @@ import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import {
-  getCourseInfo,
   getResourcesForUser,
   isLoggedIn,
   updateUserInfoFromToken,
@@ -19,6 +18,7 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
+import { getAllCoursesFromDb } from './api/get-all-courses';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -220,7 +220,7 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
 }
 
 export function CourseCard({ course, currentTerm }) {
-  const { imageLink: courseImage, courseName, courseId, institution, instructors } = course;
+  const { imageLink: courseImage, courseName, courseId, universityId, instructors } = course;
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
   return (
     <Link href={`/course-home/${courseId}`}>
@@ -259,7 +259,7 @@ export function CourseCard({ course, currentTerm }) {
           >
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
           </Typography>
-          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{institution}</Typography>
+          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
         </Box>
       </Box>
@@ -485,7 +485,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
 export default StudentHomePage;
 
 export async function getStaticProps() {
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
   const filteredKeys = Object.keys(courses).filter((key) =>
     FEATURED_COURSES.includes(courses[key].courseId)
   );

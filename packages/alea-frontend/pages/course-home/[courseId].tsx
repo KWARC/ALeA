@@ -3,7 +3,7 @@ import {
   Announcement,
   canAccessResource,
   getActiveAnnouncements,
-  getCourseInfo,
+  getAllCourses,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
@@ -20,7 +20,7 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
-import { FTMLDocument } from '@flexiformal/ftml-react';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -79,6 +79,29 @@ export async function handleEnrollment(userId: string, courseId: string, current
   } catch (error) {
     console.error('Error during enrollment:', error);
     alert('Enrollment failed. Please try again.');
+    return false;
+  }
+}
+
+export async function handleUnEnrollment(userId: string, courseId: string, currentTerm: string) {
+  if (!userId || !isFauId(userId)) {
+    alert('Please Login Using FAU Id.');
+    return false;
+  }
+
+  try {
+    await addRemoveMember({
+      memberId: userId,
+      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
+      isAclMember: false,
+      toBeAdded: false,
+    });
+
+    alert('You have been unenrolled.');
+    return true;
+  } catch (error) {
+    console.error('Error during unenrollment:', error);
+    alert('Unable to unenroll. Please try again.');
     return false;
   }
 }
@@ -536,7 +559,7 @@ const CourseHomePage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -609,6 +632,20 @@ const CourseHomePage: NextPage = () => {
     }
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
+  };
+
+  const unEnrollFromCourse = async () => {
+    if (!userId || !courseId || !currentTerm) {
+      return router.push('/login');
+    }
+
+    const confirmed = window.confirm('Are you sure you want to un-enroll?');
+    if (!confirmed) return;
+
+    const success = await handleUnEnrollment(userId, courseId, currentTerm);
+    if (success) {
+      setIsEnrolled(false);
+    }
   };
 
   return (
@@ -756,6 +793,35 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
+        {enrolled && (
+          <Box sx={{ m: 2, textAlign: 'center' }}>
+            {studentCount !== null && (
+              <Typography
+                variant="body2"
+                component="div"
+                sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                You and {Math.max(studentCount - 1, 0)} other learners are enrolled.{' '}
+                <Box
+                  component="span"
+                  onClick={unEnrollFromCourse}
+                  sx={{
+                    cursor: 'pointer',
+                    color: '#b00020',
+                    ml: 0.5,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Un-Enroll
+                </Box>
+              </Typography>
+            )}
+          </Box>
+        )}
+
         <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
@@ -794,7 +860,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
         <Box fragment-uri={landing} fragment-kind="Section">
-          <FTMLDocument
+          <SafeFTMLDocument
             document={{ type: 'FromBackend', uri: landing }}
             showContent={false}
             pdfLink={false}

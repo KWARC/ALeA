@@ -10,7 +10,7 @@ import {
   postAnswerToLMP,
 } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
@@ -115,7 +115,7 @@ export function ProblemViewer({
   });
 
   return (
-    <FTMLFragment
+    <SafeFTMLFragment
       key={uri}
       fragment={{ type: 'HtmlString', html, uri }}
       allowHovers={isFrozen}

@@ -17,6 +17,7 @@ const PerSectionQuizPage: React.FC = () => {
   const courseId = router.query.courseId as string;
 
   if (!sectionUri) return <div>Invalid URL: sectionUri is undefined</div>;
+  if (!courseId) return <div>Invalid URL: courseId is undefined</div>;
 
   const goToAllPracticeProblems = () => {
     router.push(`/practice-problems/${courseId}`);

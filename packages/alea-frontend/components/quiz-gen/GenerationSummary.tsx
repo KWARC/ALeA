@@ -12,10 +12,10 @@ interface GenerationSummaryProps {
   selectedCategories?: string[];
   conceptProperties: { [conceptUri: string]: ConceptProperty[] };
   questionTypes: QuestionType[];
-  selectedGoals: { [conceptUri: string]: string[] };
+  selectedGoals: { [sectionUri: string]: string[] };
   Categories: QuestionCategory[];
   onRemoveProperty: (conceptUri: string, propertyKey: string) => void;
-  onRemoveGoal?: (conceptUri: string, goalUri: string) => void;
+  onRemoveGoal?: (sectionUri: string, goalUri: string) => void;
   onRemoveCategories?: (categoryId: string) => void;
 }
 

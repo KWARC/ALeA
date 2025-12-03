@@ -1,5 +1,5 @@
 import { QuizStubInfo } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllQuizzes } from '../quiz-utils';
 
