@@ -2,8 +2,10 @@ import {
   addRemoveMember,
   Announcement,
   canAccessResource,
+  CourseInfoMetadata,
   getActiveAnnouncements,
   getAllCourses,
+  getCourseInfoMetadata,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
@@ -537,6 +539,7 @@ const CourseHomePage: NextPage = () => {
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
+  const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -593,12 +596,31 @@ const CourseHomePage: NextPage = () => {
     checkAccess();
   }, [courseId, currentTerm]);
 
+  useEffect(() => {
+    if (!courseId || !currentTerm) return;
+
+    async function loadMetadata() {
+      try {
+        const info = await getCourseInfoMetadata(courseId, currentTerm);
+        setCourseMetadata(info);
+      } catch (e) {
+        console.error('filled to load metadata', e);
+        setCourseMetadata(null);
+      }
+    }
+    loadMetadata();
+  }, [courseId, currentTerm]);
+
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+  const instructorDetails =
+    courseMetadata?.instructors?.map((ins) => ({
+      name: ins.name,
+    })) ?? [];
 
   const {
     notesLink,
@@ -634,12 +656,12 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
-  const details = [
-    { name: 'Prof. Michael Kohlhase' },
-    { name: 'Prof.John' },
-    { name: 'Prof. Sophia ' },
-    { name: 'Prof. Marry' },
-  ];
+  // const details = [
+  //   { name: 'Prof. Michael Kohlhase' },
+  //   { name: 'Prof.John' },
+  //   { name: 'Prof. Sophia ' },
+  //   { name: 'Prof. Marry' },
+  // ];
 
   const unEnrollFromCourse = async () => {
     if (!userId || !courseId || !currentTerm) {
@@ -776,7 +798,7 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
-            <InstructorDetails details={details} />
+            <InstructorDetails details={instructorDetails} />
             <Button
               onClick={enrollInCourse}
               variant="contained"
