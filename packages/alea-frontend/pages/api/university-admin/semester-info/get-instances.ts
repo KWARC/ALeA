@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeQuery<Array<{ instanceId: string }>>(
-    `SELECT DISTINCT instanceId FROM semesterInfo WHERE universityId = ?`,
+    `SELECT instanceId FROM semesterInfo WHERE universityId = ? GROUP BY instanceId ORDER BY MAX(createdAt) DESC`,
     [universityId]
   );
 
