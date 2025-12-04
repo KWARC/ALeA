@@ -206,16 +206,8 @@ function CourseScheduleSection({
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
-  const visibleLectures = showAllLectures ? lectureSchedule : lectureSchedule.slice(0, 4);
-  const visibleTutorials = showAllTutorials ? tutorialSchedule : tutorialSchedule.slice(0, 4);
-
   const hasMoreLectures = lectureSchedule.length > 4;
   const hasMoreTutorials = tutorialSchedule.length > 4;
-
-  const blurStyle = {
-    filter: 'blur(2px)',
-    opacity: 0.6,
-  };
 
   useEffect(() => {
     async function fetchSchedule() {
@@ -315,9 +307,9 @@ function CourseScheduleSection({
           gap: 1.5,
         }}
       >
-        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           {lectureSchedule.length > 0 && (
-            <Box sx={{ flex: 1, minWidth: 40 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 300 } }}>
               <Box
                 sx={{
                   px: { xs: 1, sm: 2 },
@@ -343,44 +335,65 @@ function CourseScheduleSection({
                   </Typography>
                 )}
 
-                {visibleLectures.map((entry, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      mb: 1,
-                      p: 1,
-                      borderRadius: 1,
-                      backgroundColor: '#fff',
-                      border: '1px solid #e0f2f1',
-                      ...(!showAllLectures && idx >= 4 ? blurStyle : {}),
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
-                        {getWeekdayName(entry.dayOfWeek)}
-                      </Typography>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    maxHeight: showAllLectures ? 'none' : 260,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {lectureSchedule.map((entry, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        mb: 1,
+                        p: 1,
+                        borderRadius: 1,
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0f2f1',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
+                          {getWeekdayName(entry.dayOfWeek)}
+                        </Typography>
 
-                      <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
-                        🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
-                      </Typography>
+                        <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
+                          🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                        </Typography>
 
-                      <Typography variant="body2" sx={{ color: '#00695c' }}>
-                        📍 Venue:{' '}
-                        {entry.venueLink ? (
-                          <Link
-                            href={entry.venueLink}
-                            target="_blank"
-                            style={{ textDecoration: 'underline', color: '#004d40' }}
-                          >
-                            {entry.venue}
-                          </Link>
-                        ) : (
-                          entry.venue
-                        )}
-                      </Typography>
+                        <Typography variant="body2" sx={{ color: '#00695c' }}>
+                          📍 Venue:{' '}
+                          {entry.venueLink ? (
+                            <Link
+                              href={entry.venueLink}
+                              target="_blank"
+                              style={{ textDecoration: 'underline', color: '#004d40' }}
+                            >
+                              {entry.venue}
+                            </Link>
+                          ) : (
+                            entry.venue
+                          )}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                ))}
+                  ))}
+
+                  {!showAllLectures && hasMoreLectures && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 70,
+                        background: 'linear-gradient(to bottom, transparent, #f8f9fa)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </Box>
 
                 {hasMoreLectures && (
                   <Typography
@@ -401,7 +414,7 @@ function CourseScheduleSection({
           )}
 
           {tutorialSchedule.length > 0 && (
-            <Box sx={{ flex: 1, minWidth: 40 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 300 } }}>
               <Box
                 sx={{
                   px: { xs: 1, sm: 2 },
@@ -418,33 +431,65 @@ function CourseScheduleSection({
                   </Typography>
                 </Box>
 
-                {visibleTutorials.map((entry, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      mb: 1,
-                      p: 1,
-                      borderRadius: 1,
-                      backgroundColor: '#fff',
-                      border: '1px solid #e0f2f1',
-                      ...(!showAllTutorials && idx >= 4 ? blurStyle : {}),
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
-                        {getWeekdayName(entry.dayOfWeek)}
-                      </Typography>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    maxHeight: showAllTutorials ? 'none' : 260,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {tutorialSchedule.map((entry, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        mb: 1,
+                        p: 1,
+                        borderRadius: 1,
+                        backgroundColor: '#fff',
+                        border: '1px solid #e0f2f1',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
+                          {getWeekdayName(entry.dayOfWeek)}
+                        </Typography>
 
-                      <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
-                        🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
-                      </Typography>
+                        <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
+                          🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                        </Typography>
 
-                      <Typography variant="body2" sx={{ color: '#00695c' }}>
-                        📍 Venue: {entry.venue}
-                      </Typography>
+                        <Typography variant="body2" sx={{ color: '#00695c' }}>
+                          📍 Venue:{' '}
+                          {entry.venueLink ? (
+                            <Link
+                              href={entry.venueLink}
+                              target="_blank"
+                              style={{ textDecoration: 'underline', color: '#004d40' }}
+                            >
+                              {entry.venue}
+                            </Link>
+                          ) : (
+                            entry.venue
+                          )}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                ))}
+                  ))}
+
+                  {!showAllTutorials && hasMoreTutorials && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 70,
+                        background: 'linear-gradient(to bottom, transparent, #f8f9fa)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </Box>
 
                 {hasMoreTutorials && (
                   <Typography
