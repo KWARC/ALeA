@@ -23,6 +23,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -59,6 +60,10 @@ const UpdateAcl: NextPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  const [confirmAclIdInput, setConfirmAclIdInput] = useState('');
+  const [aclHasResources, setAclHasResources] = useState(false);
+  const [checkingResources, setCheckingResources] = useState<boolean>(false);
+
   useEffect(() => {
     const fetchAclDetails = async () => {
       if (query.aclId) {
@@ -70,6 +75,8 @@ const UpdateAcl: NextPage = () => {
           setMemberACLIds(acl.memberACLIds);
           setUpdaterACLId(acl.updaterACLId);
           setIsOpen(acl.isOpen);
+          const hasResources = await hasAclAssociatedResources(acl.id);
+          setAclHasResources(hasResources);
         } catch (e) {
           console.error('Error fetching ACL details:', e);
           setError('Failed to load ACL details.');
@@ -187,18 +194,37 @@ const UpdateAcl: NextPage = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      if (await hasAclAssociatedResources(aclId)) {
-        setDeleteError('ACL is linked to resources. Cannot delete.');
+      if (aclHasResources && confirmAclIdInput.trim() !== aclId) {
+        setDeleteError('Entered ACL ID does not match.');
         return;
       }
       await deleteAcl(aclId);
       setDeleteDialogOpen(false);
+      setConfirmAclIdInput('');
+      setDeleteError('');
       router.push('/acl');
     } catch (err: any) {
       console.error('Deletion error:', err);
       setDeleteError(err?.response?.data?.message || 'Deletion failed due to an unexpected error.');
     }
   };
+
+  const handleOpenDelete = async () => {
+    try {
+      setCheckingResources(true);
+      if (aclId) {
+        const hasResourcesNow = await hasAclAssociatedResources(aclId);
+        setAclHasResources(hasResourcesNow);
+      }
+      setConfirmAclIdInput('');
+    } catch (e) {
+      console.error('Error checking resources before delete:', e);
+    } finally {
+      setCheckingResources(false);
+      setDeleteDialogOpen(true);
+    }
+  };
+
   const isUpdateDisabled = useMemo(
     () => !aclId || !updaterACLId || !isUpdaterACLValid || !!tempMemberUserId || !!tempMemberACL,
     [aclId, updaterACLId, isUpdaterACLValid, tempMemberUserId, tempMemberACL]
@@ -397,20 +423,35 @@ const UpdateAcl: NextPage = () => {
           <Button
             variant="contained"
             color="error"
-            startIcon={<Delete />}
-            onClick={() => setDeleteDialogOpen(true)}
+            startIcon={!checkingResources ? <Delete /> : undefined}
+            onClick={handleOpenDelete}
+            disabled={checkingResources}
           >
-            Delete
+            {checkingResources ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <CircularProgress size={16} thickness={6} />
+                Checking…
+              </span>
+            ) : (
+              'Delete'
+            )}
           </Button>
         </Box>
       </Box>
 
       <ConfirmationDialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setConfirmAclIdInput('');
+          setDeleteError('');
+        }}
         onConfirm={handleDeleteConfirm}
         error={deleteError}
         aclId={aclId}
+        showAclIdInput={aclHasResources}
+        confirmAclIdInput={confirmAclIdInput}
+        onConfirmAclIdInputChange={setConfirmAclIdInput}
       />
     </MainLayout>
   );

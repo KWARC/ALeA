@@ -17,8 +17,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     'DELETE FROM ResourceAccess WHERE aclId=?',
     [id],
-    'DELETE FROM ACLMembership WHERE parentACLId=?',
-    [id],
+    'DELETE FROM ACLMembership WHERE parentACLId=? OR memberACLId=?',
+    [id, id],
+
     'DELETE FROM AccessControlList WHERE id=?',
     [id]
   );
