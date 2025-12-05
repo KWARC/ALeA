@@ -251,7 +251,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           fullWidth
         />
 
-
         <TextField
           required
           label="Notes URL"

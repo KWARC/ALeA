@@ -2,8 +2,10 @@ import {
   addRemoveMember,
   Announcement,
   canAccessResource,
+  CourseInfoMetadata,
   getActiveAnnouncements,
   getAllCourses,
+  getCourseInfoMetadata,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
@@ -51,6 +53,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
@@ -536,6 +539,7 @@ const CourseHomePage: NextPage = () => {
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
+  const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -592,12 +596,31 @@ const CourseHomePage: NextPage = () => {
     checkAccess();
   }, [courseId, currentTerm]);
 
+  useEffect(() => {
+    if (!courseId || !currentTerm) return;
+
+    async function loadMetadata() {
+      try {
+        const info = await getCourseInfoMetadata(courseId, currentTerm);
+        setCourseMetadata(info);
+      } catch (e) {
+        console.error('filled to load metadata', e);
+        setCourseMetadata(null);
+      }
+    }
+    loadMetadata();
+  }, [courseId, currentTerm]);
+
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+  const instructorDetails =
+    courseMetadata?.instructors?.map((ins) => ({
+      name: ins.name,
+    })) ?? [];
 
   const {
     notesLink,
@@ -769,6 +792,7 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
+            <InstructorDetails details={instructorDetails} />
             <Button
               onClick={enrollInCourse}
               variant="contained"
