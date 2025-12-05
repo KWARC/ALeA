@@ -387,8 +387,10 @@ function CourseScheduleSection({
                         bottom: 0,
                         left: 0,
                         right: 0,
-                        height: 70,
-                        background: 'linear-gradient(to bottom, transparent, #f8f9fa)',
+                        height: 55,
+                        background: `linear-gradient( to bottom,rgba(248,249,250,0) 0%, rgba(248,249,250,0.4) 35%, rgba(248,249,250,0.75) 100%)`,
+                        backdropFilter: 'blur(1.5px)',
+                        WebkitBackdropFilter: 'blur(1.5px)',
                         pointerEvents: 'none',
                       }}
                     />
@@ -483,8 +485,10 @@ function CourseScheduleSection({
                         bottom: 0,
                         left: 0,
                         right: 0,
-                        height: 70,
-                        background: 'linear-gradient(to bottom, transparent, #f8f9fa)',
+                        height: 55,
+                        background: `linear-gradient(to bottom,rgba(248,249,250,0) 0%, rgba(248,249,250,0.4) 35%, rgba(248,249,250,0.75) 100%)`,
+                        backdropFilter: 'blur(1.5px)',
+                        WebkitBackdropFilter: 'blur(1.5px)',
                         pointerEvents: 'none',
                       }}
                     />
