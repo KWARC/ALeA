@@ -656,12 +656,6 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
-  // const details = [
-  //   { name: 'Prof. Michael Kohlhase' },
-  //   { name: 'Prof.John' },
-  //   { name: 'Prof. Sophia ' },
-  //   { name: 'Prof. Marry' },
-  // ];
 
   const unEnrollFromCourse = async () => {
     if (!userId || !courseId || !currentTerm) {
