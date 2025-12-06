@@ -170,7 +170,6 @@ const StudentHomePage: NextPage = ({
               ) : null}
             </Tooltip>
           </Link>
-
           <h2>{`${t.courseSection} (${currentTerm})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)

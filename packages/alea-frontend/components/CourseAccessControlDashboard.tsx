@@ -127,7 +127,6 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
   const currentTerm = currentTermByCourseId[courseId];
-
   async function checkIfAlreadySetup() {
     const complete = await isCourseSemesterSetupComplete(courseId);
     setIsAlreadySetup(!!complete);
