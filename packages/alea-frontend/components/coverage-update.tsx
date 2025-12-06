@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   Alert,
   Backdrop,
@@ -11,22 +11,17 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@stex-react/api';
-import {
-  convertHtmlStringToPlain,
-  CourseInfo,
-  CoverageTimeline,
-  LectureEntry,
-} from '@stex-react/utils';
+import { getCourseInfo, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, CourseInfo, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { ContentDashboard } from '@stex-react/stex-react-renderer';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { ContentDashboard } from '@alea/stex-react-renderer';
 import { MenuBook } from '@mui/icons-material';
 
-export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {
+export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
 
   if (data.type === 'Section' && data.title) {
@@ -48,13 +43,13 @@ export function getSecInfo(data: FTML.TOCElem, level = 0): SecInfo[] {
 const CoverageUpdateTab = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const [secInfo, setSecInfo] = useState<Record<FTML.DocumentURI, SecInfo>>({});
+  const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
-  const [toc, setToc] = useState<FTML.TOCElem[]>([]);
+  const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -75,19 +70,24 @@ const CoverageUpdateTab = () => {
       const { notes: notesUri } = courseInfo;
       setLoading(true);
       try {
-        const docSections = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        const docSections = (await contentToc({ uri: notesUri }))?.[1] ?? [];
         setToc(docSections);
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const baseSecInfo = sections.reduce((acc, s) => {
           acc[s.uri] = s;
           return acc;
-        }, {} as Record<FTML.DocumentURI, SecInfo>);
+        }, {} as Record<FTML.DocumentUri, SecInfo>);
         try {
           const res = await fetch(`/api/get-teaching-duration-per-section?courseId=${courseId}`);
           const durationData = await res.json();
-          for (const uri in baseSecInfo) {
-            if (durationData.sectionDurations?.[uri]) {
-              baseSecInfo[uri].duration = durationData.sectionDurations[uri];
+          for (const semKey in durationData) {
+            const semDurations = durationData[semKey];
+            if (!semDurations || !semDurations.sectionDurations) continue;
+
+            for (const uri in semDurations.sectionDurations) {
+              const duration = semDurations.sectionDurations[uri];
+              baseSecInfo[uri] = baseSecInfo[uri] || ({} as SecInfo);
+              baseSecInfo[uri].duration = (baseSecInfo[uri].duration || 0) + duration;
             }
           }
         } catch (durationError) {

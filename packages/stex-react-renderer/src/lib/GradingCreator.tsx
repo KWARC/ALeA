@@ -7,8 +7,8 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { AnswerClass, CreateAnswerClassRequest } from '@stex-react/api';
-import { DEFAULT_ANSWER_CLASSES } from '@stex-react/quiz-utils';
+import { AnswerClass, CreateAnswerClassRequest } from '@alea/spec';
+import { DEFAULT_ANSWER_CLASSES } from '@alea/quiz-utils';
 import { useRouter } from 'next/router';
 import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';

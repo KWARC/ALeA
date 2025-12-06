@@ -1,6 +1,5 @@
-import { AnswerClass, Phase,QuizWithStatus } from '@stex-react/api';
-import { FTML } from '@kwarc/ftml-viewer';
-
+import { AnswerClass, Phase, QuizWithStatus } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
 
 export const PROBLEM_PARSED_MARKER = 'problem-parsed';
 

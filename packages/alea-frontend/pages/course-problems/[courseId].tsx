@@ -1,7 +1,7 @@
 import { Button, CircularProgress } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
-import { DocProblemBrowser } from '@stex-react/stex-react-renderer';
-import { CourseInfo } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { DocProblemBrowser } from '@alea/stex-react-renderer';
+import { CourseInfo } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

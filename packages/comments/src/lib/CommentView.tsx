@@ -1,10 +1,10 @@
-import { Comment } from '@stex-react/api';
+import { Comment } from '@alea/spec';
 import { useState } from 'react';
 import { CommentLabel } from './CommentLabel';
 import { CommentReply } from './CommentReply';
 import { EditView } from './EditView';
 
-import { MystViewer } from '@stex-react/myst';
+import { MystViewer } from '@alea/myst';
 import { discardDraft } from './comment-helpers';
 import styles from './comments.module.scss';
 import { SelectedInfo } from './selected-info';

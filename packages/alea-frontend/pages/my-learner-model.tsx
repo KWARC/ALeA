@@ -7,8 +7,8 @@ import {
   Snackbar,
   Tooltip,
 } from '@mui/material';
-import { ConceptCompetenceInfo, getMyCompleteModel } from '@stex-react/api';
-import { CompetencyTable } from '@stex-react/stex-react-renderer';
+import { ConceptCompetenceInfo, getMyCompleteModel } from '@alea/spec';
+import { CompetencyTable } from '@alea/stex-react-renderer';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

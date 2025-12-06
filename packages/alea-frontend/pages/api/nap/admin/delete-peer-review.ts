@@ -1,4 +1,5 @@
-import { ResourceName, Action, CURRENT_TERM } from '@stex-react/utils';
+import { ResourceName, Action } from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
 import {
@@ -12,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     {
       name: ResourceName.COURSE_PEERREVIEW,
       action: Action.MUTATE,
-      variables: { courseId: req.query.courseId as string, instanceId: CURRENT_TERM },
+      variables: { courseId: req.query.courseId as string, instanceId: await getCurrentTermForCourseId(req.query.courseId as string) },
     },
   ]);
   if (!userId) return;

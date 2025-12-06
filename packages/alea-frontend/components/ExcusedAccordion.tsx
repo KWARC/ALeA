@@ -19,7 +19,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { createExcused, deleteExcused, getExcused } from '@stex-react/api';
+import { createExcused, deleteExcused, getExcused } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
 export function ExcusedAccordion({ quizId, courseId, courseInstance }) {

@@ -23,7 +23,7 @@ import {
   getTemplates,
   saveEval,
   saveTemplate,
-} from '@stex-react/api';
+} from '@alea/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -31,7 +31,7 @@ import { CreateGptProblemsForm } from '../../components/CreateGptProblemsForm';
 import MainLayout from '../../layouts/MainLayout';
 import CompletionEvalForm from '../../components/GptEvalForm';
 import Link from 'next/link';
-import { Action, ResourceName } from '@stex-react/utils';
+import { Action, ResourceName } from '@alea/utils';
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard

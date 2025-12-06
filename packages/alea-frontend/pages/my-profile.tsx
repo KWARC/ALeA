@@ -19,14 +19,15 @@ import {
   sendVerificationEmail,
   updateSectionReviewStatus,
   updateTrafficLightStatus,
-} from '@stex-react/api';
-import { PRIMARY_COL } from '@stex-react/utils';
+  UserProfile,
+} from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { getLocaleObject } from '../lang/utils';
-import MainLayout from '../layouts/MainLayout';
 import { DataExportTab } from '../components/profile/DataExportTab';
 import { ProfileTab } from '../components/profile/ProfileTab';
 import { SettingsTab } from '../components/profile/SettingsTab';
+import { getLocaleObject } from '../lang/utils';
+import MainLayout from '../layouts/MainLayout';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -52,7 +53,7 @@ const MyProfilePage = () => {
   const [sectionReviewStatus, setSectionReviewStatus] = useState(false);
   const [isVerifiedUser, setIsVerifiedUser] = useState(false);
   const [tabValue, setTabValue] = useState(0);
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [isProfileUpdated, setIsProfileUpdated] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
@@ -83,7 +84,7 @@ const MyProfilePage = () => {
         })
         .catch((err) => {
           console.error('Error fetching profile data:', err);
-          setProfileData({ error: 'Failed to load profile information' });
+          setProfileData(null);
         });
     }
   }, [tabValue, profileData, isProfileUpdated]);
@@ -204,7 +205,6 @@ const MyProfilePage = () => {
 
           <TabPanel value={tabValue} index={0}>
             <ProfileTab
-              t={t}
               profileData={profileData}
               userInfo={userInfo}
               setOpenEditDialog={setOpenEditDialog}

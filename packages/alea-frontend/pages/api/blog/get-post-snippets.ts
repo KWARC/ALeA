@@ -1,4 +1,4 @@
-import { PostSnippet } from '@stex-react/api';
+import { PostSnippet } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeDontEndSet500OnError } from '../comment-utils';
 

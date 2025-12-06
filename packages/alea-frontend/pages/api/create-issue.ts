@@ -1,5 +1,5 @@
-import { NotificationType } from '@stex-react/api';
-import { extractRepoAndFilepath as extractProjectAndFilepath } from '@stex-react/utils';
+import { NotificationType } from '@alea/spec';
+import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios, { RawAxiosRequestHeaders } from 'axios';
 import { OpenAI } from 'openai';
 import { sendAlert } from './add-comment';
@@ -85,7 +85,7 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
+      model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 150,
@@ -128,16 +128,15 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
 export default async function handler(req, res) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserId(req);
-
   const body = req.body;
 
-  let generatedTitle = '';
+  let generatedTitle = body.title?.trim() || '';
   let issueCategory = IssueCategory.CONTENT;
 
   const { project } = extractProjectAndFilepath(body.context);
   const projectId = project || 'sTeX/meta-inf';
 
-  if (body.description && body.selectedText) {
+  if (!generatedTitle && body.description && body.selectedText) {
     const classification = await generateIssueTitle(
       body.description,
       body.selectedText,
@@ -150,8 +149,8 @@ export default async function handler(req, res) {
   const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
 
   const issuePayload = isGitlab
-    ? { description: body.data.body, title: generatedTitle }
-    : { body: body.data.body, labels: ['user-reported'], title: generatedTitle };
+    ? { description: body.data, title: generatedTitle }
+    : { body: body.data, labels: ['user-reported'], title: generatedTitle };
 
   body.createNewIssueUrl = getNewIssueUrl(
     { category: issueCategory } as IssueClassification,

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import {
@@ -11,25 +11,19 @@ import {
   insertQuizResponse,
   Phase,
   UserInfo,
-} from '@stex-react/api';
-import { isEmptyResponse } from '@stex-react/quiz-utils';
-import { QuizDisplay } from '@stex-react/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  CURRENT_TERM,
-  isFauId,
-  localStore,
-  ResourceName,
-} from '@stex-react/utils';
+} from '@alea/spec';
+import { QuizDisplay } from '@alea/stex-react-renderer';
+import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { handleEnrollment } from '../course-home/[courseId]';
+import { isEmptyResponse } from '@alea/quiz-utils';
 
 function ToBeStarted({ quizStartTs }: { quizStartTs?: number }) {
   const [showReload, setShowReload] = useState(false);
@@ -125,12 +119,14 @@ const QuizPage: NextPage = () => {
   const phase = moderatorPhase ?? quizInfo?.phase;
   const courseId = quizInfo?.courseId;
   const instanceId = quizInfo?.courseTerm;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
 
   const enrollInCourse = async () => {
-    if (!userInfo.userId || !courseId) return;
-    const enrollmentSuccess = await handleEnrollment(userInfo.userId, courseId, CURRENT_TERM);
+    if (!userInfo.userId || !courseId || !currentTerm) return;
+    const enrollmentSuccess = await handleEnrollment(userInfo.userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 
@@ -145,7 +141,7 @@ const QuizPage: NextPage = () => {
   useEffect(() => {
     if (!quizId) return;
     getQuiz(quizId).then((quizInfo) => {
-      for (const e of quizInfo.css || []) FTML.injectCss(e);
+      injectCss(quizInfo.css);
 
       setQuizInfo(quizInfo);
       setProblems(quizInfo.problems);
@@ -194,16 +190,16 @@ const QuizPage: NextPage = () => {
   }, [courseId, instanceId]);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getCourseInfo().then(setAllCourses);
@@ -252,7 +248,11 @@ const QuizPage: NextPage = () => {
         {!userInfo ? (
           <Box p="20px">You must be logged in to see quizzes.</Box>
         ) : phase === undefined ? (
-          <CircularProgress />
+          <Box p="20px">
+            <CircularProgress />
+            <Typography variant="body1">Loading quiz, please wait...</Typography>
+            <Typography variant="body2">This may take a few seconds.</Typography>
+          </Box>
         ) : phase === Phase.NOT_STARTED || phase === Phase.UNSET ? (
           <ToBeStarted quizStartTs={clientQuizStartTimeMs} />
         ) : phase === Phase.STARTED && finished ? (

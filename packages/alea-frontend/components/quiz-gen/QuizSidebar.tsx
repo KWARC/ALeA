@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import { useMemo, useState } from 'react';
 import {
   ExistingProblem,
@@ -29,6 +29,7 @@ export const QuestionSidebar = ({
   setCurrentIdx,
   hideSections = false,
   existingProblems = [],
+  problems,
 }: {
   sections?: SecInfo[];
   viewMode?: QuizViewMode;
@@ -38,6 +39,7 @@ export const QuestionSidebar = ({
   setCurrentIdx: (idx: number) => void;
   hideSections?: boolean;
   existingProblems?: ExistingProblem[];
+  problems: (FlatQuizProblem | ExistingProblem)[];
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -110,12 +112,20 @@ export const QuestionSidebar = ({
       {currentTabProbs.length > 0 ? (
         <List dense component="ul">
           {currentTabProbs.map((item, idx) => {
-            const isSelected = currentIdx === idx;
+            const globalIdx = problems.findIndex((p) =>
+              isGenerated(p) && isGenerated(item)
+                ? p.problemId === item.problemId
+                : !isGenerated(p) && !isGenerated(item)
+                ? p.uri === item.uri
+                : false
+            );
+
+            const isSelected = currentIdx === globalIdx;
 
             const content = isGenerated(item) ? (
               <Tooltip title={item.problem}>
                 <Typography variant="subtitle2" fontWeight={isSelected ? 600 : 500} color="#0d47a1">
-                  Q{idx + 1}: {item.problem.slice(0, 50)}...
+                  Q{idx + 1}: {item?.problem?.slice(0, 50)}...
                 </Typography>
               </Tooltip>
             ) : (
@@ -132,11 +142,13 @@ export const QuestionSidebar = ({
             const sectionText = isGenerated(item)
               ? getSectionNameFromIdOrUri(item.sectionId, sections) //TODO check again
               : getSectionNameFromIdOrUri(item.sectionUri, sections);
-
+              
             return (
               <ListItemButton
-                key={idx}
-                onClick={() => setCurrentIdx(idx)}
+                key={isGenerated(item) ? item.problemId : item.uri}
+                onClick={() => {
+                  if (globalIdx !== -1) setCurrentIdx(globalIdx);
+                }}
                 selected={isSelected}
                 sx={{
                   borderRadius: 2,

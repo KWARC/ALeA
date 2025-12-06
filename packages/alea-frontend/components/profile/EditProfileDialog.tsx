@@ -15,8 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Language, myprofile, updateUserProfile } from '@stex-react/api';
-import { isFauId } from '@stex-react/utils';
+import { UserProfile, updateUserProfile } from '@alea/spec';
+import { isFauId, Language } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../../lang/utils';
@@ -24,7 +24,7 @@ import { getLocaleObject } from '../../lang/utils';
 export function EditProfileDialog({ open, onClose, profileData, userId, onSave }) {
   const router = useRouter();
   const { myProfile: t } = getLocaleObject(router);
-  const [formData, setFormData] = useState<myprofile>({
+  const [formData, setFormData] = useState<UserProfile>({
     firstName: '',
     lastName: '',
     email: '',

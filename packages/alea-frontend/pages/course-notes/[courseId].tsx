@@ -1,5 +1,7 @@
-import { FTMLDocument, FTMLSetup, getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+/* eslint-disable react/display-name, react/no-children-prop */
+import { FTMLDocument, FTMLSetup } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
@@ -11,10 +13,10 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getCourseInfo } from '@stex-react/api';
-import { CommentButton } from '@stex-react/comments';
-import { SectionReview, TrafficLightIndicator } from '@stex-react/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CommentButton } from '@alea/comments';
+import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -68,7 +70,7 @@ const FragmentWrap: React.FC<{
   );
 };
 
-function getSectionUriToTitle(toc: FTML.TOCElem[], uriToTitle: Record<string, string>) {
+function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, string>) {
   for (const elem of toc) {
     if (elem.type === 'Section') {
       uriToTitle[elem.uri] = elem.title;
@@ -84,13 +86,21 @@ const CourseNotesPage: NextPage = () => {
   const courseId = router.query.courseId as string;
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
-  const [toc, setToc] = useState<FTML.TOCElem[] | undefined>(undefined);
+  const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget = !!target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        (target as HTMLElement).isContentEditable
+      );
+      if (isEditableTarget) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -115,13 +125,11 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    getFlamsServer()
-      .contentToc({ uri: notes })
-      .then(([css, toc] = [[], []]) => {
-        setToc(toc);
-        uriToTitle.current = {};
-        getSectionUriToTitle(toc, uriToTitle.current);
-      });
+    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+      setToc(toc);
+      uriToTitle.current = {};
+      getSectionUriToTitle(toc, uriToTitle.current);
+    });
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
@@ -156,23 +164,25 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
             position: 'fixed',
             bottom: 64,
             right: 24,
-            zIndex: 2002,
-            bgcolor: 'white',
+            zIndex: 1000,
+            bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+            '&:hover': { 
+              bgcolor: 'rgba(255, 255, 255, 0.3)',
+            },
           }}
           onClick={handleSearchClick}
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
       <SearchDialog
@@ -189,16 +199,38 @@ const CourseNotesPage: NextPage = () => {
           position: 'relative',
         }}
       >
-        <FTMLSetup>
+        <FTMLSetup allowFullscreen={false}>
           <FTMLDocument
             key={notes}
-            document={{ type: 'FromBackend', uri: notes, toc: { Predefined: toc }, gottos }}
-            onFragment={(uri, kind) => {
-              if (kind.type === 'Section' || kind.type === 'Slide' || kind.type === 'Paragraph') {
+            document={{ type: 'FromBackend', uri: notes }}
+            toc={{ Ready: toc }}
+            tocProgress={gottos}
+            sectionWrap={(uri, _) => {
+              return (ch) => (
+                <FragmentWrap
+                  uri={uri}
+                  fragmentKind={'Section'}
+                  children={ch}
+                  uriToTitle={uriToTitle.current}
+                />
+              );
+            }}
+            slideWrap={(uri) => {
+              return (ch) => (
+                <FragmentWrap
+                  uri={uri}
+                  fragmentKind={'Slide'}
+                  children={ch}
+                  uriToTitle={uriToTitle.current}
+                />
+              );
+            }}
+            paragraphWrap={(uri, kind) => {
+              if (kind === 'Paragraph') {
                 return (ch) => (
                   <FragmentWrap
                     uri={uri}
-                    fragmentKind={kind.type}
+                    fragmentKind={'Paragraph'}
                     children={ch}
                     uriToTitle={uriToTitle.current}
                   />

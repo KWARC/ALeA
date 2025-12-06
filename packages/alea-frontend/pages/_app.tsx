@@ -1,14 +1,15 @@
+import { MathJaxContext } from '@alea/mathjax';
+import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer';
+import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
+import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { initialize } from '@kwarc/ftml-react';
 import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { MathJaxContext } from '@stex-react/mathjax';
-import { PositionProvider, ServerLinksContext } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL } from '@stex-react/utils';
 import { AppProps } from 'next/app';
+import { CommentRefreshProvider } from '@alea/react-utils';
 import { useEffect, useState } from 'react';
+import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import './styles.scss';
-import { CommentRefreshProvider } from '@stex-react/utils';
 
 const instance = createInstance({
   urlBase: 'https://matomo.kwarc.info',
@@ -55,7 +56,7 @@ const theme = createTheme({
 let flamsInitialized = false;
 const initStartTime = Date.now();
 // this code runs earlier if its not in the useEffect
-initialize(process.env.NEXT_PUBLIC_FLAMS_URL, false)
+initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
     flamsInitialized = true;
@@ -92,7 +93,6 @@ function CustomApp({ Component, pageProps }: AppProps) {
       clearInterval(interval);
       clearInterval(pollBuildId);
     };
-    
   }, []);
 
   if (!readyToRender) return <CircularProgress />;
@@ -105,11 +105,13 @@ function CustomApp({ Component, pageProps }: AppProps) {
           <ThemeProvider theme={theme}>
             <MathJaxContext>
               <PositionProvider>
-               <div
-                 style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
-               >
-                <Component {...pageProps} />
-                </div>
+                <CurrentTermProvider>
+                  <div
+                    style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+                  >
+                    <Component {...pageProps} />
+                  </div>
+                </CurrentTermProvider>
               </PositionProvider>
             </MathJaxContext>
           </ThemeProvider>

@@ -3,9 +3,9 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../../comment-utils';
-import { StudyBuddy } from '@stex-react/api';
+import { StudyBuddy } from '@alea/spec';
 import { getSbCourseId } from '../study-buddy-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,10 +14,10 @@ export default async function handler(
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
 
   const courseId = req.query.courseId as string;
-  const sbCourseId = getSbCourseId(courseId, instanceId);
+  const sbCourseId = await getSbCourseId(courseId, instanceId);
   // TODO: should not select *
   const results: any[] = await executeAndEndSet500OnError(
     'SELECT * FROM StudyBuddyUsers WHERE userId=? AND sbCourseId=?',

@@ -1,5 +1,5 @@
-import { QuizStubInfo } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { QuizStubInfo } from '@alea/spec';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllQuizzes } from '../quiz-utils';
 
@@ -13,8 +13,9 @@ export default async function handler(
     return;
   }
 
+  const currentTerm = await getCurrentTermForCourseId(courseId);
   const quizzesInfo: QuizStubInfo[] = getAllQuizzes()
-    .filter((q) => q.courseId === courseId && q.courseTerm === CURRENT_TERM)
+    .filter((q) => q.courseId === courseId && q.courseTerm === currentTerm)
     .map((q) => ({
       quizId: q.id,
       quizStartTs: q.quizStartTs,

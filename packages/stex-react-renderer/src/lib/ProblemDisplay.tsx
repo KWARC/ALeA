@@ -1,7 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
-import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
+import { MystEditor } from '@alea/myst';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
@@ -11,8 +8,11 @@ import {
   createAnswer,
   getUserInfo,
   postAnswerToLMP,
-} from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
+} from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import SaveIcon from '@mui/icons-material/Save';
+import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
@@ -49,7 +49,7 @@ function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdat
 }
 
 function getUpdates(
-  objectives: [FTML.CognitiveDimension, FTML.SymbolURI][] | undefined,
+  objectives: [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined,
   quotient: number
 ) {
   if (!objectives) return [];
@@ -86,7 +86,7 @@ export function getProblemState(
   solution?: string,
   current_response?: FTML.ProblemResponse
 ): FTML.ProblemState {
-  if (!isFrozen) return { type: 'Interactive', current_response };
+  if (!isFrozen) return { type: 'Interactive', current_response, solution: undefined };
   if (!solution) return { type: 'Finished', current_response };
   const sol = FTML.Solutions.from_jstring(solution.replace(/^"|"$/g, ''));
   const feedback = current_response
@@ -109,39 +109,36 @@ export function ProblemViewer({
 }) {
   const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
-  const isHaveSubProblems = problem.problem.subProblems != null;
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
+  const hasSubProblems = problem.problem.subProblems != null;
+
   return (
     <FTMLFragment
       key={uri}
       fragment={{ type: 'HtmlString', html, uri }}
       allowHovers={isFrozen}
       problemStates={problemStates}
-      onProblem={(response) => {
+      onProblemResponse={(response) => {
         onResponseUpdate?.(response);
       }}
-      /*
-       TODO (Behrooz): This is needed only for non-autogradable problems.
-      onFragment={(problemId, kind) => {
-        if (kind.type === 'Problem') {
-          return (ch) => (
-            <Box>
-              {ch}
-              <AnswerAccepter
-                masterProblemId={uri}
-                isHaveSubProblems={isHaveSubProblems}
-                problemTitle={problem.problem.title_html ?? ''}
-                isFrozen={isFrozen}
-                problemId={problemId}
-              ></AnswerAccepter>
-            </Box>
-          );
-        }
-      }}
-      */
+      /*{problemWrap={(problemUri, isSubProblem, autogradable) => {
+        if(autogradable) return undefined;
+        return (ch: React.ReactNode) => (
+          <Box>
+            {ch}
+            <AnswerAccepter
+              masterProblemId={uri}
+              hasSubProblems={hasSubProblems}
+              problemTitle={problem.problem.title_html ?? ''}
+              isFrozen={isFrozen}
+              problemId={problemUri}
+            ></AnswerAccepter>
+          </Box>
+        );
+      }}}*/
     />
   );
 }
@@ -149,13 +146,13 @@ export function ProblemViewer({
 function AnswerAccepter({
   problemId,
   masterProblemId,
-  isHaveSubProblems,
+  hasSubProblems,
   isFrozen,
   problemTitle,
 }: {
   problemId: string;
   masterProblemId: string;
-  isHaveSubProblems: boolean;
+  hasSubProblems: boolean;
   isFrozen: boolean;
   problemTitle: string;
 }) {
@@ -167,7 +164,7 @@ function AnswerAccepter({
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
   );
-  const subId = isHaveSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
+  const subId = hasSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
   const router = useRouter();
 
   async function saveAnswer({
@@ -192,7 +189,7 @@ function AnswerAccepter({
       alert('Failed to save answers. Please try again.');
     }
   }
-  if (isHaveSubProblems && isNaN(subId)) return;
+  if (hasSubProblems && isNaN(subId)) return;
   async function onSaveClick() {
     await saveAnswer({ freeTextResponses: answer, subId: problemId });
   }

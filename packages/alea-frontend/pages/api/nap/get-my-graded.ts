@@ -1,5 +1,5 @@
 import { executeAndEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
-import { GradingWithAnswer } from '@stex-react/api';
+import { GradingWithAnswer } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { addAnswerClassesToGradingOrSetError } from './nap-utils';
 

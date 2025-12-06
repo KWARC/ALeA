@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,15 +24,15 @@ import {
   getUriSmileys,
   isLoggedIn,
   smileyToLevel,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
 import {
   FixedPositionMenu,
   LayoutWithFixedMenu,
   LevelIcon,
   SelfAssessment2,
-} from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL, getParamFromUri, localStore } from '@stex-react/utils';
+} from '@alea/stex-react-renderer';
+import { PRIMARY_COL, getParamFromUri, localStore } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';

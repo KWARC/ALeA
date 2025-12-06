@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Modal, Snackbar, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 import { CartItem } from './LoCartModal';
-import { getParamsFromUri } from '@stex-react/utils';
+import { getParamsFromUri } from '@alea/utils';
 
 interface QuizModalProps {
   open: boolean;

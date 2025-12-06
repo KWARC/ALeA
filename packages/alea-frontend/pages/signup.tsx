@@ -6,14 +6,14 @@ import {
   signUpUser,
   isLoggedIn,
   loginUsingRedirect,
-} from '@stex-react/api';
+} from '@alea/spec';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
-import { BG_COLOR, IS_SERVER } from '@stex-react/utils';
+import { BG_COLOR, IS_SERVER } from '@alea/utils';
 import { LoginInfoBox } from './login';
 
 export const passwordRegex =

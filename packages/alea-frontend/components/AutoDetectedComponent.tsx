@@ -1,15 +1,15 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Typography } from '@mui/material';
-import { Slide } from '@stex-react/api';
+import { Slide } from '@alea/spec';
 import { getSlideTitle } from './SlideSelector';
 interface AutoDetectedTooltipContentProps {
   autoDetected?: {
     clipId?: string;
-    sectionUri?: FTML.DocumentURI;
+    sectionUri?: FTML.DocumentUri;
     slideUri?: string;
     sectionCompleted?: boolean;
   };
-  getSectionName: (uri: FTML.DocumentURI) => string;
+  getSectionName: (uri: FTML.DocumentUri) => string;
   showResolvedSectionName?: boolean;
 }
 

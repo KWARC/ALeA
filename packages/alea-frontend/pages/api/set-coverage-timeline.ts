@@ -2,9 +2,9 @@ import {
   Action,
   LectureEntry,
   CoverageTimeline,
-  CURRENT_TERM,
+  getCurrentTermForCourseId,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Action.MUTATE,
       {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: await getCurrentTermForCourseId(courseId),
       }
     );
     if (!userId) return;

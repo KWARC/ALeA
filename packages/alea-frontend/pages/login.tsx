@@ -15,8 +15,8 @@ import {
   logInUser,
   loginUsingRedirect,
   logout,
-} from '@stex-react/api';
-import { BG_COLOR, IS_SERVER, setCookie } from '@stex-react/utils';
+} from '@alea/spec';
+import { BG_COLOR, IS_SERVER, setCookie } from '@alea/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -26,7 +26,7 @@ import { useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import styles from '../styles/utils.module.scss';
-import { MystViewer } from '@stex-react/myst';
+import { MystViewer } from '@alea/myst';
 
 const PresetPersonas = [
   { label: 'sabrina', info: 'FAU CS student' },

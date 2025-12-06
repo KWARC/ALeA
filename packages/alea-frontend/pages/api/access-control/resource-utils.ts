@@ -1,4 +1,4 @@
-import { Action, getResourceId, isValidAction, ResourceName } from '@stex-react/utils';
+import { Action, getResourceId, isValidAction, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isMemberOfAcl } from '../acl-utils/acl-common-utils';
 import { returnAclIdForResourceIdAndActionId } from '../acl-utils/resourceaccess-utils/resource-common-utils';

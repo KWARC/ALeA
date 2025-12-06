@@ -1,7 +1,8 @@
-import { CURRENT_TERM } from '@stex-react/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 
-export function getSbCourseId(courseId: string, instanceId: string = CURRENT_TERM) {
-  return `${courseId}||${instanceId}`;
+export async function getSbCourseId(courseId: string, instanceId?: string) {
+  const resolvedInstanceId = instanceId || await getCurrentTermForCourseId(courseId);
+  return `${courseId}||${resolvedInstanceId}`;
 }
 
 export function getCourseIdAndInstanceFromSbCourseId(sbCourseId: string) {

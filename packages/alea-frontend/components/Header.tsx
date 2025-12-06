@@ -3,9 +3,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
-import { getUserInfo, isLoggedIn, logout } from '@stex-react/api';
-import { CountryFlag, useScrollDirection } from '@stex-react/react-utils';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { getUserInfo, isLoggedIn, logout } from '@alea/spec';
+import { CountryFlag, useScrollDirection } from '@alea/react-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -13,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import styles from '../styles/header.module.scss';
 import NotificationButton from './NotificationButton';
+import { PRIMARY_COL } from '@alea/utils';
 
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
 

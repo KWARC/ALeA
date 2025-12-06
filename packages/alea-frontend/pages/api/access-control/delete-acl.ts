@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeTxnAndEndSet500OnError } from '../comment-utils';
-import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
+import { checkResourceAssociatedOrSet500OnError, isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 
 export async function deleteAclOrSetError(
   id: string,
@@ -11,9 +11,16 @@ export async function deleteAclOrSetError(
     res.status(422).send('Missing id.');
     return;
   }
-  if (!(await isCurrentUserMemberOfAClupdater(id, req))) {
+  if (!(await isCurrentUserMemberOfAClupdater(id,res, req))) {
     res.status(403).end();
     return;
+  }
+  const check = await checkResourceAssociatedOrSet500OnError(id, res);
+  if (!check) return;
+  if (check.used) {
+    return res
+      .status(400)
+      .json({ error: 'Resources are still linked with this ACL.cannot delete.' });
   }
   const result = await executeTxnAndEndSet500OnError(
     res,

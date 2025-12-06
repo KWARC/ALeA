@@ -1,0 +1,291 @@
+import {
+  Box,
+  Select,
+  MenuItem,
+  Typography,
+  List,
+  ListItem,
+  Button,
+  Paper,
+  Divider,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@alea/spec';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
+import { useEffect, useState } from 'react';
+
+function extractCourseIds(files: string[], semester: string): Promise<string[]> {
+  return Promise.all(
+    files.map((filename) => getOldQuizFile(semester, filename).catch(() => null))
+  ).then((quizFiles) => {
+    const courseIds = new Set<string>();
+    quizFiles.forEach((qc) => {
+      if (qc && qc.courseId) courseIds.add(qc.courseId);
+    });
+    return Array.from(courseIds);
+  });
+}
+const newQuizPatternSem=['SS25']
+function OldQuizPage() {
+  const [semesters, setSemesters] = useState<string[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [files, setFiles] = useState<string[]>([]);
+  const [courseIds, setCourseIds] = useState<string[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<string>('');
+  const [quizContent, setQuizContent] = useState<any>(null);
+  const [courseFileInfos, setCourseFileInfos] = useState<
+    { filename: string; quizStartTs?: number }[]
+  >([]);
+
+  useEffect(() => {
+    getOldSemesters().then(setSemesters);
+  }, []);
+
+  useEffect(() => {
+    if (selectedSemester) {
+      getOldQuizFiles(selectedSemester).then(async (allFiles) => {
+        setFiles(allFiles);
+        setSelectedCourseId('');
+        setSelectedFile('');
+        setQuizContent(null);
+        const ids = await extractCourseIds(allFiles, selectedSemester);
+        setCourseIds(ids);
+      });
+    }
+  }, [selectedSemester]);
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      Promise.all(
+        files.map((filename) =>
+          getOldQuizFile(selectedSemester, filename)
+            .then((qc) => ({
+              filename,
+              courseId: qc.courseId,
+              quizStartTs: qc.quizStartTs,
+            }))
+            .catch(() => null)
+        )
+      ).then((fileInfos) => {
+        const filtered = fileInfos
+          .filter((f) => f && f.courseId === selectedCourseId)
+          .map((f) => ({ filename: f.filename, quizStartTs: f.quizStartTs }));
+        setCourseFileInfos(filtered);
+        setSelectedFile('');
+        setQuizContent(null);
+      });
+    }
+  }, [selectedCourseId, selectedSemester, files]);
+
+  const handleFileClick = (filename: string) => {
+    setSelectedFile(filename);
+    getOldQuizFile(selectedSemester, filename).then(setQuizContent);
+  };
+
+  return (
+    <MainLayout title="Old Quiz | ALeA">
+      <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 4, p: 2 }}>
+        <Box sx={{ display: 'flex', gap: 3 }}>
+          <Box sx={{ width: 320 }}>
+            <Typography variant="h6" gutterBottom>
+              Semester
+            </Typography>
+            <Select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+              displayEmpty
+              fullWidth
+              sx={{ mb: 2 }}
+            >
+              <MenuItem value="" disabled>
+                Select semester
+              </MenuItem>
+              {semesters.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </Select>
+
+            {selectedSemester && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  Course IDs
+                </Typography>
+                <List>
+                  {courseIds.map((cid) => (
+                    <ListItem key={cid} disablePadding>
+                      <Button
+                        variant={selectedCourseId === cid ? 'contained' : 'outlined'}
+                        onClick={() => setSelectedCourseId(cid)}
+                        fullWidth
+                      >
+                        {cid}
+                      </Button>
+                    </ListItem>
+                  ))}
+                </List>
+              </>
+            )}
+
+            {selectedCourseId && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  Quiz Files for <b>{selectedCourseId}</b>
+                </Typography>
+                <List>
+                  {[...courseFileInfos]
+                    .sort((a, b) => b?.quizStartTs - a.quizStartTs)
+                    .map(({ filename, quizStartTs }) => (
+                      <ListItem key={filename} disablePadding>
+                        <Button
+                          variant={selectedFile === filename ? 'contained' : 'outlined'}
+                          onClick={() => handleFileClick(filename)}
+                          fullWidth
+                        >
+                          {quizStartTs && new Date(quizStartTs).toLocaleDateString()}
+                          {` (${filename.split('.')[0]})`}
+                        </Button>
+                      </ListItem>
+                    ))}
+                </List>
+              </>
+            )}
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            {quizContent && (
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Problems
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                {quizContent.problems &&
+                typeof quizContent.problems === 'object' &&
+                Object.keys(quizContent.problems).length > 0 ? (
+                  Object.entries(quizContent.problems).map(([pid, problemData]: [string, any]) => {
+                    const isNewPattern = newQuizPatternSem.includes(selectedSemester);
+                    
+                    if (isNewPattern) {
+                      const html = problemData?.problem?.html;
+                      const titleHtml = problemData?.problem?.title_html;
+                      const uri = problemData?.problem?.uri || pid;
+
+                      if (!html) {
+                        return (
+                          <Box key={pid} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                            <Typography color="text.secondary">
+                              Unable to parse problem format
+                            </Typography>
+                            <Divider sx={{ mt: 2 }} />
+                          </Box>
+                        );
+                      }
+
+                      const handleCopyUri = async () => {
+                        try {
+                          await navigator.clipboard.writeText(uri);
+                        } catch (err) {
+                          console.error('Failed to copy URI:', err);
+                        }
+                      };
+
+                      return (
+                        <Box key={pid} sx={{ mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                              p: 1,
+                              bgcolor: 'grey.100',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ flex: 1, fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>
+                              Problem URI: {uri}
+                            </Typography>
+                            <Tooltip title="Copy URI">
+                              <IconButton size="small" onClick={handleCopyUri} sx={{ ml: 1 }}>
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          {titleHtml && (
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              <FTMLFragment
+                                fragment={{
+                                  type: 'HtmlString',
+                                  html: titleHtml,
+                                  uri: uri,
+                                }}
+                              />
+                            </Typography>
+                          )}
+                          {!titleHtml && (
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                          )}
+                          <Box sx={{ mt: 1 }}>
+                            <FTMLFragment
+                              fragment={{
+                                type: 'HtmlString',
+                                html: html,
+                                uri: uri,
+                              }}
+                            />
+                          </Box>
+                          <Divider sx={{ mt: 2 }} />
+                        </Box>
+                      );
+                    } else {
+                      const html = typeof problemData === 'string' ? problemData : undefined;
+                      
+                      if (!html) {
+                        return (
+                          <Box key={pid} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                              Problem ID: {pid}
+                            </Typography>
+                            <Typography color="text.secondary">
+                              Unable to parse problem format
+                            </Typography>
+                            <Divider sx={{ mt: 2 }} />
+                          </Box>
+                        );
+                      }
+
+                      return (
+                        <Box key={pid} sx={{ mb: 2 }}>
+                          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            Problem ID: {pid}
+                          </Typography>
+                          <div dangerouslySetInnerHTML={{ __html: html }} />
+                          <Divider sx={{ mt: 2 }} />
+                        </Box>
+                      );
+                    }
+                  })
+                ) : (
+                  <Typography color="text.secondary">
+                    No problems found in this quiz file.
+                  </Typography>
+                )}
+              </Paper>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    </MainLayout>
+  );
+}
+
+export default OldQuizPage;

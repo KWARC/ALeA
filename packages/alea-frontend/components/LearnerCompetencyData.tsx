@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getUriWeights } from '@stex-react/api';
-import { CompetencyTable } from '@stex-react/stex-react-renderer';
+import { getUriWeights } from '@alea/spec';
+import { CompetencyTable } from '@alea/stex-react-renderer';
 
 const LearnerCompetencyData = ({ URIs }: { URIs: string[] }) => {
   const [competencyData, setCompetencyData] = useState(null);

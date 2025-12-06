@@ -1,6 +1,6 @@
-import {QuizWithStatus} from '@stex-react/api';
-import {FTML} from '@kwarc/ftml-viewer'
-import { getAllQuizzes } from '@stex-react/node-utils';
+import { QuizWithStatus } from '@alea/spec';
+import { FTML } from '@flexiformal/ftml';
+import { getAllQuizzes } from '@alea/node-utils';
 import fs from 'fs';
 
 import { exit } from 'process';
@@ -11,8 +11,8 @@ export interface Quiz {
 
 interface ProblemLmsInfo {
   total_points: number;
-  preconditions: [FTML.CognitiveDimension, FTML.SymbolURI][];
-  objectives: [FTML.CognitiveDimension, FTML.SymbolURI][];
+  preconditions: [FTML.CognitiveDimension, FTML.SymbolUri][];
+  objectives: [FTML.CognitiveDimension, FTML.SymbolUri][];
   // todo add more.
 }
 

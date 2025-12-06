@@ -1,4 +1,4 @@
-import {FTML} from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
 import {
   Comment,
@@ -7,18 +7,18 @@ import {
   addComment,
   editComment,
   getUserInfo,
-} from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
-import { CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@stex-react/utils';
+import { useCommentRefresh } from '@alea/react-utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {
-  uri?: FTML.URI;
+  uri?: FTML.Uri;
   isPrivateNote: boolean;
   postAnonymously: boolean;
   parentId?: number;
@@ -43,13 +43,16 @@ export function EditView({
   onUpdate,
 }: EditViewProps) {
   const router = useRouter();
+  const courseId = router.query['courseId'] as string;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(undefined);
   const [inputText, setInputText] = useState(existingComment?.statement || '');
   const [userName, setUserName] = useState<string | undefined>(undefined);
   const [needsResponse, setNeedsResponse] = useState(true);
   const t = getLocaleObject(router);
-  const courseId = router.query['courseId'] as string;
   const { triggerRefresh } = useCommentRefresh();
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export function EditView({
   }, [uri, parentId, existingComment]);
 
   function getNewComment() {
-    const courseTerm = courseId ? CURRENT_TERM : undefined;
+    const courseTerm = courseId ? currentTerm : undefined;
     const isQuestion = needsResponse && !parentId && !isPrivateNote;
 
     return {

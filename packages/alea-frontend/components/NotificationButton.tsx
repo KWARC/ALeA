@@ -15,9 +15,9 @@ import {
   getUserNotifications,
   isLoggedIn,
   updateNotificationSeenTime,
-} from '@stex-react/api';
-import { DateView } from '@stex-react/react-utils';
-import { PRIMARY_COL, localStore } from '@stex-react/utils';
+} from '@alea/spec';
+import { DateView } from '@alea/react-utils';
+import { PRIMARY_COL, localStore } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

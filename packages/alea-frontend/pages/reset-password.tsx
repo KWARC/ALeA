@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import { resetPassword } from '@stex-react/api';
+import { resetPassword } from '@alea/spec';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useState } from 'react';

@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   Box,
   Dialog,
@@ -9,18 +9,20 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { LectureEntry } from '@stex-react/utils';
+import { LectureEntry } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageForm, FormData } from './CoverageForm';
 import { CoverageTable } from './CoverageTable';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
+import { getCourseInfo } from '@alea/spec';
+import { UniversityDetail } from '@alea/utils';
 
 export function getSectionNameForUri(
   uri: string,
-  secInfo: Record<FTML.DocumentURI, SecInfo>
+  secInfo: Record<FTML.DocumentUri, SecInfo>
 ): string {
   const section = secInfo[uri];
   return section?.title.trim() || '';
@@ -41,7 +43,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   handleSaveSingle: (entry: LectureEntry) => void;
   handleDeleteSingle: (timestamp_ms: number) => void;
 }
@@ -66,10 +68,11 @@ export function CoverageUpdater({
     venue: '',
     venueLink: '',
     lectureEndTimestamp_ms: Date.now(),
-    sectionCompleted:false
+    sectionCompleted: false,
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
   useEffect(() => {
@@ -83,6 +86,23 @@ export function CoverageUpdater({
       }));
     }
   }, [snaps, secInfo]);
+
+  useEffect(() => {
+    async function loadTimezone() {
+      try {
+        const courses = await getCourseInfo();
+        const institution = courses?.[courseId]?.institution;
+        if (institution && UniversityDetail[institution]) {
+          setTimezone(UniversityDetail[institution].defaultTimezone);
+        } else {
+          setTimezone(undefined);
+        }
+      } catch (err) {
+        console.error('Failed to load university timezone', err);
+      }
+    }
+    loadTimezone();
+  }, [courseId]);
 
   const handleDeleteItem = (index: number) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
@@ -156,14 +176,13 @@ export function CoverageUpdater({
 
   const handleEditDialogSave = (data: FormData) => {
     if (editIndex === null) return;
-    const { sectionName, targetSectionName, ...cleanData } = formData;
-    const updatedSnaps = [...snaps];
-    updatedSnaps[editIndex] = {
-      ...data,
-      autoDetected: snaps[editIndex].autoDetected,
+    const { sectionName, targetSectionName, ...cleanData } = data;
+    const originalTimestamp = snaps[editIndex].timestamp_ms;
+    const entryToSave = {
+      ...cleanData,
+      timestamp_ms: originalTimestamp,
     };
-
-    handleSaveSingle(cleanData);
+    handleSaveSingle(entryToSave);
     handleEditDialogClose();
   };
 
@@ -272,6 +291,7 @@ export function CoverageUpdater({
             onSubmit={handleEditDialogSave}
             onCancel={handleEditDialogClose}
             courseId={courseId}
+            timezone={timezone}
           />
         </DialogContent>
       </Dialog>
@@ -297,6 +317,7 @@ export function CoverageUpdater({
             isEditing={false}
             onSubmit={handleSubmitForm}
             onCancel={handleCancelEdit}
+            timezone={timezone}
           />
         )}
       </Paper>

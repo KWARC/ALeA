@@ -1,5 +1,5 @@
 import { Box, Button, Divider, List, ListItem, ListItemText } from '@mui/material';
-import { getAllAclIds } from '@stex-react/api';
+import { getAllAclIds } from '@alea/spec';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';

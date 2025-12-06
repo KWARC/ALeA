@@ -3,15 +3,15 @@ import {
   computePointsFromFeedbackJson,
   FTMLProblemWithSolution,
   RecorrectionInfo,
-} from '@stex-react/api';
-import { getAllQuizzes } from '@stex-react/node-utils';
+} from '@alea/spec';
+import { getAllQuizzes } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { queryGradingDbAndEndSet500OnError } from '../grading-db-utils';
 import { updateQuizRecorrectionInfo } from './update-quiz';
 import { checkIfPostOrSetError } from '../comment-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 
 export interface GradingDbData {
   gradingId: number;

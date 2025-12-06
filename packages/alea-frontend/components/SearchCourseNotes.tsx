@@ -1,7 +1,7 @@
-import { FTMLDocument } from '@kwarc/ftml-react';
+import { FTMLDocument } from '@flexiformal/ftml-react';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
-import { GptSearchResult, searchCourseNotes } from '@stex-react/api';
+import { GptSearchResult, searchCourseNotes } from '@alea/spec';
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
@@ -96,25 +96,27 @@ const SearchCourseNotes = ({
         references.length > 0 && (
           <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
             <Box maxWidth="800px" m="0 auto" p="10px">
-              {references.filter(reference => reference.uri).map((reference) => (
-                <Box
-                  key={reference.uri}
-                  sx={{
-                    border: '1px',
-                    borderRadius: 1,
-                    mb: 2,
-                    p: 1,
-                  }}
-                >
-                  <FTMLDocument
-                    document={{
-                      type: 'FromBackend',
-                      uri: reference.uri,
-                      toc: undefined,
+              {references
+                .filter((reference) => reference.uri)
+                .map((reference) => (
+                  <Box
+                    key={reference.uri}
+                    sx={{
+                      border: '1px',
+                      borderRadius: 1,
+                      mb: 2,
+                      p: 1,
                     }}
-                  />
-                </Box>
-              ))}
+                  >
+                    <FTMLDocument
+                      document={{ type: 'FromBackend', uri: reference.uri }}
+                      showContent={false}
+                      pdfLink={false}
+                      chooseHighlightStyle={false}
+                      toc="None"
+                    />
+                  </Box>
+                ))}
             </Box>
           </Box>
         )

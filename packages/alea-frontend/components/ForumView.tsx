@@ -30,13 +30,13 @@ import {
   canModerateComment,
   getCourseInstanceThreads,
   getUserInfo,
-} from '@stex-react/api';
-import { MystEditor } from '@stex-react/myst';
-import { DateView } from '@stex-react/react-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor } from '@alea/myst';
+import { DateView } from '@alea/react-utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 function getDraftKey(courseId: string) {
   return `question-draft-${courseId}`;
@@ -121,6 +121,9 @@ function ForumViewControls({
   const { forum: t } = getLocaleObject(router);
   const [openQuestionDialog, setOpenQuestionDialog] = useState(false);
   const courseId = router.query?.courseId as string;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
 
@@ -129,9 +132,9 @@ function ForumViewControls({
   }, []);
 
   useEffect(() => {
-    if (!courseId) return;
-    canModerateComment(courseId, CURRENT_TERM).then(setIsUserAuthorized);
-  }, [courseId]);
+    if (!courseId || !currentTerm) return;
+    canModerateComment(courseId, currentTerm).then(setIsUserAuthorized);
+  }, [courseId, currentTerm]);
 
   return (
     <Box
@@ -187,7 +190,7 @@ function ForumViewControls({
             addComment({
               commentId: -1,
               courseId,
-              courseTerm: CURRENT_TERM,
+              courseTerm: currentTerm,
               isPrivate: false,
               isAnonymous,
               commentType: CommentType.QUESTION,
@@ -236,17 +239,20 @@ export function QuestionStatusIcon({ comment }: { comment: Comment }) {
 export function ForumView() {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [showRemarks, setShowRemarks] = useState(false);
   const [showUnanswered, setShowUnanswered] = useState(false);
   const [updateCounter, markUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
-    if (!router.isReady || !courseId) return;
-    getCourseInstanceThreads(courseId, CURRENT_TERM).then(setThreadComments);
-  }, [courseId, router.isReady, updateCounter]);
+    if (!router.isReady || !courseId || !currentTerm) return;
+    getCourseInstanceThreads(courseId, currentTerm).then(setThreadComments);
+  }, [courseId, router.isReady, updateCounter, currentTerm]);
 
-  if (!router.isReady || !courseId) return <CircularProgress />;
+  if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;
   const toShow = showUnanswered
     ? threadComments.filter((c) => c.questionStatus === QuestionStatus.UNANSWERED)
     : showRemarks

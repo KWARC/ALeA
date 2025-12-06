@@ -17,7 +17,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { checkPendingRecorrections } from '@stex-react/api';
+import { checkPendingRecorrections } from '@alea/spec';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { GradingDbData } from '../pages/api/quiz/recorrect';

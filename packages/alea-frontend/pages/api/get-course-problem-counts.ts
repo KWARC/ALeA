@@ -1,11 +1,11 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
-import { getCourseInfo, getProblemsForSection } from '@stex-react/api';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
+import { getCourseInfo, getProblemsForSection } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 
 interface CourseCacheInfo {
-  problems: Record<FTML.DocumentElementURI, string[]>;
+  problems: Record<FTML.DocumentElementUri, string[]>;
   lastUpdatedTs_ms: number;
 }
 
@@ -42,8 +42,8 @@ export async function getProblemsBySection(sectionUri: string) {
   return problems;
 }
 
-function collectSectionUris(toc: FTML.TOCElem[]): FTML.DocumentElementURI[] {
-  const result: FTML.DocumentElementURI[] = [];
+function collectSectionUris(toc: FTML.TocElem[]): FTML.DocumentElementUri[] {
+  const result: FTML.DocumentElementUri[] = [];
   for (const elem of toc) {
     if (elem.type === 'Section' && elem.uri) result.push(elem.uri);
     if ('children' in elem) result.push(...collectSectionUris(elem.children));
@@ -51,11 +51,11 @@ function collectSectionUris(toc: FTML.TOCElem[]): FTML.DocumentElementURI[] {
   return result;
 }
 
-async function fetchProblems(notesUri: string): Promise<Record<FTML.DocumentElementURI, string[]>> {
-  const tocContent = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+async function fetchProblems(notesUri: string): Promise<Record<FTML.DocumentElementUri, string[]>> {
+  const tocContent = (await contentToc({ uri: notesUri }))?.[1] ?? [];
   const sectionUris = collectSectionUris(tocContent);
 
-  const problems: Record<FTML.DocumentElementURI, string[]> = {};
+  const problems: Record<FTML.DocumentElementUri, string[]> = {};
   await Promise.all(
     sectionUris.map(async (uri) => {
       problems[uri] = await getProblemsForSection(uri);
@@ -74,5 +74,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     Object.entries(problems).map(([uri, problems]) => [uri, problems.length])
   );
 
-  res.status(200).json(counts as Record<FTML.DocumentElementURI, number>);
+  res.status(200).json(counts as Record<FTML.DocumentElementUri, number>);
 }

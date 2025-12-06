@@ -1,11 +1,11 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { getMyNotesSections } from '@stex-react/api';
-import { NotesView } from '@stex-react/comments';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { getMyNotesSections } from '@alea/spec';
+import { NotesView } from '@alea/comments';
+import { PRIMARY_COL } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 
 export interface NotesSection {
   uri: string;

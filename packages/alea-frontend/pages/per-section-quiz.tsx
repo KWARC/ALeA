@@ -1,8 +1,8 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { SafeHtml } from '@stex-react/react-utils';
-import { PerSectionQuiz } from '@stex-react/stex-react-renderer';
-import { getParamFromUri, PRIMARY_COL } from '@stex-react/utils';
+import { SafeHtml } from '@alea/react-utils';
+import { PerSectionQuiz } from '@alea/stex-react-renderer';
+import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { getLocaleObject } from '../lang/utils';
@@ -17,6 +17,7 @@ const PerSectionQuizPage: React.FC = () => {
   const courseId = router.query.courseId as string;
 
   if (!sectionUri) return <div>Invalid URL: sectionUri is undefined</div>;
+  if (!courseId) return <div>Invalid URL: courseId is undefined</div>;
 
   const goToAllPracticeProblems = () => {
     router.push(`/practice-problems/${courseId}`);
@@ -49,7 +50,7 @@ const PerSectionQuizPage: React.FC = () => {
             </span>
           </b>
         </Box>
-        <PerSectionQuiz sectionUri={sectionUri} showButtonFirst={false} />
+        <PerSectionQuiz courseId={courseId} sectionUri={sectionUri} showButtonFirst={false} />
         <br />
         <Box textAlign="left" mx="auto" mt="20px">
           <b style={{ color: 'red' }}>{t.warning}&nbsp;</b>

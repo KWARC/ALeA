@@ -1,11 +1,33 @@
+import { DateView } from '@alea/react-utils';
+import {
+  canAccessResource,
+  createResourceAction,
+  deleteResourceAction,
+  getAllResourceActions,
+  getCourseInfo,
+  getMonitorStatus,
+  isUserMember,
+  isValid,
+  recomputeMemberships,
+  UpdateResourceAction,
+  updateResourceAction,
+} from '@alea/spec';
+import {
+  Action,
+  ALL_RESOURCE_TYPES,
+  ComponentType,
+  CourseInfo,
+  CURRENT_TERM,
+  RESOURCE_TYPE_MAP,
+  ResourceIdComponent,
+  ResourceName,
+} from '@alea/utils';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
-  Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,7 +37,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -25,25 +46,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  createResourceAction,
-  deleteResourceAction,
-  getAllResourceActions,
-  isUserMember,
-  isValid,
-  recomputeMemberships,
-  UpdateResourceAction,
-  updateResourceAction,
-} from '@stex-react/api';
-import { DateView } from '@stex-react/react-utils';
-import {
-  Action,
-  ALL_RESOURCE_TYPES,
-  ComponentType,
-  RESOURCE_TYPE_MAP,
-  ResourceIdComponent,
-  ResourceName,
-} from '@stex-react/utils';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -51,13 +53,6 @@ import { useEffect, useState } from 'react';
 import AclDisplay from '../components/AclDisplay';
 import RecorrectionChecker from '../components/RecorrectionChecker';
 import MainLayout from '../layouts/MainLayout';
-import {
-  createInstructorResourceActions,
-  createSemesterAclsForCourse,
-  createStaffResourceActions,
-  createStudentResourceActions,
-} from 'packages/utils/src/lib/semester-helper';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
 const SysAdmin: NextPage = () => {
   const router = useRouter();
@@ -78,40 +73,41 @@ const SysAdmin: NextPage = () => {
     resourceId: string;
     actionId: string;
   } | null>(null);
-  const [courseId, setCourseId] = useState('');
-  const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
-  const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
-  const [courseIds, setCourseIds] = useState([]);
-
-  useEffect(() => {
-    getFlamsServer().index().then((data) => {
-      const courseId = data[1]
-        .filter((obj) => obj.type === 'course')
-        .map((courseObj) => courseObj.acronym.toLowerCase());
-      setCourseIds(courseId);
-    });
-  }, []);
-
-  async function semesterSetup() {
-    setSemesterSetupLoading(true);
-    setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
-    try {
-      await createSemesterAclsForCourse(courseId);
-      await createInstructorResourceActions(courseId);
-      await createStudentResourceActions(courseId);
-      await createStaffResourceActions(courseId);
-      setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
-    } catch (e) {
-      setSemesterSetupMessage(`Semester acl setup failed for courseId ${courseId}`);
-    } finally {
-      setSemesterSetupLoading(false);
-    }
-  }
+  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [monitor, setMonitor] = useState<
+    Record<
+      string,
+      {
+        last_success_time?: number;
+        last_failure_time?: number;
+      }
+    >
+  >({});
+  const [isAuthorizedForSystemAlert, setIsAuthorizedForSystemAlert] = useState(false);
 
   async function getAllResources() {
     try {
       const data = await getAllResourceActions();
       setResourceActions(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  async function loadCurrentSemCourses() {
+    try {
+      const courseData = await getCourseInfo();
+      const filteredCourses = Object.entries(courseData).reduce((acc, [courseId, courseInfo]) => {
+        if (
+          courseInfo.instances &&
+          courseInfo.instances.some((instance) => instance.semester === CURRENT_TERM)
+        ) {
+          acc[courseId] = courseInfo;
+        }
+        return acc;
+      }, {} as { [id: string]: CourseInfo });
+
+      setCourses(filteredCourses);
     } catch (e) {
       console.error(e);
     }
@@ -122,6 +118,7 @@ const SysAdmin: NextPage = () => {
       if (!isSysAdmin) router.push('/');
     });
     getAllResources();
+    loadCurrentSemCourses();
   }, []);
 
   useEffect(() => {
@@ -133,6 +130,22 @@ const SysAdmin: NextPage = () => {
       }
     }
   }, [resourceType]);
+
+  useEffect(() => {
+    if (selectedCourseId && resourceType === ResourceName.COURSE_ACCESS) {
+      setResourceComponents((prevComponents) => {
+        return prevComponents.map((component) => {
+          if (component.name === 'courseId') {
+            return { ...component, value: selectedCourseId };
+          }
+          return component;
+        });
+      });
+
+      const aclId = `${selectedCourseId}-${CURRENT_TERM}-instructors`;
+      setAclId(aclId);
+    }
+  }, [selectedCourseId, resourceType]);
 
   async function handleRecomputeClick() {
     try {
@@ -215,7 +228,7 @@ const SysAdmin: NextPage = () => {
     setNewAclId(aclId);
   };
 
-  function handleDeleteClick(resId: string, actionId: string) {
+  function handleDeleteClickForEntry(resId: string, actionId: string) {
     setDeleteDialogOpen(true);
     setDeleteResource({ resourceId: resId, actionId: actionId });
   }
@@ -227,18 +240,26 @@ const SysAdmin: NextPage = () => {
 
   async function handleDeleteConfirm() {
     try {
-      await deleteResourceAction(deleteResource?.resourceId, deleteResource?.actionId);
-      setResourceActions((prev) =>
-        prev.filter(
-          (entry) =>
-            entry.resourceId !== deleteResource?.resourceId ||
-            entry.actionId !== deleteResource?.actionId
-        )
-      );
+      if (deleteResource) {
+        await deleteResourceAction(deleteResource.resourceId, deleteResource.actionId);
+        setResourceActions((prev) =>
+          prev.filter(
+            (entry) =>
+              entry.resourceId !== deleteResource.resourceId ||
+              entry.actionId !== deleteResource.actionId
+          )
+        );
+        setDeleteDialogOpen(false);
+        setDeleteResource(null);
+      } else {
+        console.warn('Attempted to confirm delete with no resource selected.');
+        setDeleteDialogOpen(false);
+      }
+    } catch (e) {
+      console.error(e);
+
       setDeleteDialogOpen(false);
       setDeleteResource(null);
-    } catch (e) {
-      console.log(e);
     }
   }
 
@@ -256,107 +277,214 @@ const SysAdmin: NextPage = () => {
   const handleActionClick = (actionId: Action) => {
     setActionId(actionId);
   };
+  const handleCourseSelection = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    if (courseId) {
+      setResourceType(ResourceName.COURSE_ACCESS);
+      setActionId(Action.ACCESS_CONTROL);
+    } else {
+      setResourceType('');
+      setActionId('');
+      setResourceComponents([]);
+      setAclId('');
+    }
+  };
+
+  const formatDowntime = (lastSuccessSec?: number) => {
+    if (!lastSuccessSec) return '—';
+    const diffSec = Math.floor(Date.now() / 1000 - lastSuccessSec);
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const mins = Math.floor(diffSec / 60);
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    const remMin = mins % 60;
+    return `${hours} hr${remMin ? ` ${remMin} min` : ''} ago`;
+  };
+
+  useEffect(() => {
+    const loadMonitor = async () => {
+      const allowed = await canAccessResource(ResourceName.SYSTEM_ALERT, Action.MUTATE);
+
+      setIsAuthorizedForSystemAlert(allowed);
+
+      if (!allowed) return;
+
+      try {
+        const res = await getMonitorStatus();
+        setMonitor(res.monitor ?? {});
+        setIsAuthorizedForSystemAlert(true);
+      } catch (e: any) {
+        if (e?.response?.status === 403) {
+          setIsAuthorizedForSystemAlert(false);
+        } else {
+          console.error('Failed to load monitor data', e);
+        }
+      }
+    };
+    loadMonitor();
+  }, []);
 
   return (
     <MainLayout>
       <Box
         sx={{
           m: '0 auto',
-          maxWidth: '70%',
-          p: '20px',
+          maxWidth: { xs: '95%', md: '90%', lg: '1200px' },
+          p: { xs: '10px', sm: '20px' },
           width: '100%',
           boxSizing: 'border-box',
         }}
       >
-        <Button
+        <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'center',
             alignItems: 'center',
-            margin: '20px auto',
+            gap: 2,
+            mt: 2,
+            mb: 3,
           }}
-          variant="contained"
-          color="primary"
-          disabled={isRecomputing}
-          onClick={() => handleRecomputeClick()}
         >
-          Recompute Memberships
-        </Button>
-        <Link href={`/acl`}>
           <Button
             sx={{
               display: 'flex',
               alignItems: 'center',
-              margin: '10px auto',
             }}
             variant="contained"
             color="primary"
+            disabled={isRecomputing}
+            onClick={() => handleRecomputeClick()}
           >
-            ACL Page
+            Recompute Memberships
           </Button>
-        </Link>
-        <RecorrectionChecker />
-        <Box sx={{ my: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            displayEmpty
-            variant="outlined"
-            size="small"
-            sx={{ mr: 1, minWidth: 200 }}
-          >
-            <MenuItem value="">
-              <em>Select Course</em>
-            </MenuItem>
-            {courseIds.map((id) => (
-              <MenuItem key={id} value={id}>
-                {id}
-              </MenuItem>
-            ))}
-          </Select>
-          <Button
-            variant="contained"
-            onClick={semesterSetup}
-            disabled={!courseId || semesterSetupLoading}
-            sx={{ minWidth: 160 }}
-            startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
-          >
-            Semester ACL Setup
-          </Button>
+
+          <Link href={`/acl`}>
+            <Button
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              variant="contained"
+              color="primary"
+            >
+              ACL Page
+            </Button>
+          </Link>
+
+          {isAuthorizedForSystemAlert && (
+            <Button
+              sx={{ display: 'flex', alignItems: 'center' }}
+              variant="contained"
+              color="primary"
+              onClick={() => router.push('/sys-admin/system-alert')}
+            >
+              System Alert Page
+            </Button>
+          )}
         </Box>
-        <Snackbar
-          open={!!semesterSetupMessage}
-          autoHideDuration={semesterSetupLoading ? null : 4000}
-          onClose={() => setSemesterSetupMessage('')}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert
-            severity={
-              semesterSetupLoading
-                ? 'info'
-                : semesterSetupMessage.includes('successful')
-                ? 'success'
-                : semesterSetupMessage.includes('failed')
-                ? 'error'
-                : 'info'
-            }
-            sx={{ width: '100%' }}
-            icon={semesterSetupLoading ? <CircularProgress size={20} /> : undefined}
+        <RecorrectionChecker />
+
+        {isAuthorizedForSystemAlert && (
+          <Paper
+            sx={{
+              m: '0 auto',
+              maxWidth: '100%',
+              p: { xs: '15px', sm: '20px' },
+              boxSizing: 'border-box',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              mt: 2,
+              mb: 2,
+            }}
           >
-            {semesterSetupMessage}
-          </Alert>
-        </Snackbar>
+            <Typography fontSize={20} m="0 0 12px 0">
+              Monitor Status
+            </Typography>
+
+            {Object.keys(monitor).length === 0 ? (
+              <Typography color="text.secondary">No monitor data available.</Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}>
+                {Object.entries(monitor).map(([name, data], index) => {
+                  const ls = data.last_success_time ?? 0;
+                  const lf = data.last_failure_time ?? 0;
+                  const isUp = ls > lf;
+
+                  return (
+                    <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography sx={{ fontWeight: 600, mr: 0.5 }}>{name}</Typography>
+                      <Typography sx={{ mr: 1 }}>
+                        {isUp ? '✅' : `❌ ↓ ${formatDowntime(ls)}`}
+                      </Typography>
+
+                      {index !== Object.keys(monitor).length - 1 && (
+                        <Typography sx={{ mx: 1 }}>|</Typography>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Paper>
+        )}
+
         <Box
           sx={{
             m: '0 auto',
             maxWidth: '100%',
-            p: '20px',
+            p: { xs: '15px', sm: '20px' },
             boxSizing: 'border-box',
             backgroundColor: '#f9f9f9',
             borderRadius: '8px',
+            mt: 4,
           }}
         >
           <Typography fontSize={22} m="10px 0">
             Resource-Action Assignments
+          </Typography>
+          <Typography fontSize={16} m="10px 0" color="text.secondary">
+            Quick Course Access Setup
+          </Typography>
+          <Select
+            fullWidth
+            value={selectedCourseId}
+            onChange={(e) => handleCourseSelection(e.target.value)}
+            displayEmpty
+            variant="outlined"
+            size="small"
+            sx={{ mb: '20px' }}
+          >
+            <MenuItem value="">
+              <em>Select a Course (Auto-fills course access forms)</em>
+            </MenuItem>
+            {Object.entries(courses).map(([courseId, courseInfo]) => (
+              <MenuItem key={courseId} value={courseId}>
+                {courseId} - {courseInfo.courseName}
+              </MenuItem>
+            ))}
+          </Select>
+
+          {selectedCourseId && (
+            <Box
+              sx={{
+                backgroundColor: '#e3f2fd',
+                border: '1px solid #2196f3',
+                borderRadius: '8px',
+                p: '15px',
+                mb: '20px',
+              }}
+            >
+              <Typography fontSize={14} fontWeight="bold" color="primary" mb="10px">
+                Course Access Setup for: <strong>{selectedCourseId}</strong>
+              </Typography>
+              <Typography fontSize={13} color="text.secondary" mb="15px">
+                Course access form is auto-filled when you select a course above.
+              </Typography>
+            </Box>
+          )}
+          <Typography fontSize={16} m="10px 0" color="text.secondary">
+            Manual Resource Type Selection
           </Typography>
           <Select
             fullWidth
@@ -364,7 +492,6 @@ const SysAdmin: NextPage = () => {
             onChange={(e) => setResourceType(e.target.value as ResourceName)}
             displayEmpty
             variant="outlined"
-            // margin="normal"
             size="small"
           >
             <MenuItem value="">
@@ -406,7 +533,6 @@ const SysAdmin: NextPage = () => {
             onChange={(e) => handleActionClick(e.target.value as Action)}
             displayEmpty
             variant="outlined"
-            // margin="normal"
             size="small"
             disabled={!resourceType}
             sx={{ mb: '20px' }}
@@ -441,15 +567,17 @@ const SysAdmin: NextPage = () => {
             disabled={isSubmitting || !aclId || !resourceId || !actionId}
             sx={{ alignSelf: 'center' }}
           >
-            Add New Assignment
+            {selectedCourseId && resourceType === ResourceName.COURSE_ACCESS
+              ? `Add ${resourceType} Assignment`
+              : 'Add New Assignment'}
           </Button>
         </Box>
 
         <Box sx={{ textAlign: 'center', my: 4 }}>
           <Typography variant="h6">Resource Access Management</Typography>
         </Box>
-        <TableContainer component={Paper} sx={{ margin: 'auto' }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ margin: 'auto', overflow: 'auto', mt: 2 }}>
+          <Table sx={{ minWidth: 650 }} aria-label="resource actions table">
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Resource ID</TableCell>
@@ -463,8 +591,8 @@ const SysAdmin: NextPage = () => {
             <TableBody>
               {resourceActions.map((entry) => (
                 <TableRow key={`${entry.resourceId}-${entry.actionId}`}>
-                  <TableCell>{entry.resourceId}</TableCell>
-                  <TableCell>{entry.actionId}</TableCell>
+                  <TableCell sx={{ wordBreak: 'break-word' }}>{entry.resourceId}</TableCell>
+                  <TableCell sx={{ wordBreak: 'break-word' }}>{entry.actionId}</TableCell>
                   <TableCell>
                     {error &&
                       editing?.aclId === entry.aclId &&
@@ -497,7 +625,7 @@ const SysAdmin: NextPage = () => {
                   <TableCell>
                     <DateView timestampMs={new Date(entry.updatedAt).getTime()} />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', display: 'flex' }}>
+                  <TableCell sx={{ textAlign: 'center' }}>
                     {editing?.aclId === entry.aclId &&
                     editing?.resourceId === entry.resourceId &&
                     editing?.actionId === entry.actionId ? (
@@ -514,7 +642,7 @@ const SysAdmin: NextPage = () => {
                     )}
                     <IconButton
                       color="warning"
-                      onClick={() => handleDeleteClick(entry.resourceId, entry.actionId)}
+                      onClick={() => handleDeleteClickForEntry(entry.resourceId, entry.actionId)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -541,7 +669,7 @@ const SysAdmin: NextPage = () => {
             <Button onClick={handleDeleteCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleDeleteConfirm} color="secondary" autoFocus>
+            <Button onClick={handleDeleteConfirm} color="error" autoFocus>
               Delete
             </Button>
           </DialogActions>

@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import InfoIcon from '@mui/icons-material/Info';
 import {
   Box,
@@ -17,10 +17,10 @@ import {
   QuizStubInfo,
   RecorrectionInfo,
   getPreviousQuizInfo,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
-import { PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
+import { PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -122,7 +122,11 @@ function QuizPerformanceTable({
                       <Link href={`/quiz/${quiz.quizId}`} style={{ marginRight: '5px' }}>
                         <FTMLFragment
                           key={quiz.title ?? ''}
-                          fragment={{ type: 'HtmlString', html: quiz.title ?? '<i>Untitled</i>' }}
+                          fragment={{
+                            type: 'HtmlString',
+                            html: quiz.title ?? '<i>Untitled</i>',
+                            uri: undefined,
+                          }}
                         />
                       </Link>
                       <RecorrectionInfoDisp

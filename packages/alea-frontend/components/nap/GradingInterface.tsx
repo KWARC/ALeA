@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -30,23 +30,15 @@ import {
   GradingItem,
   HomeworkInfo,
   Tristate,
-} from '@stex-react/api';
-import { SafeHtml } from '@stex-react/react-utils';
+} from '@alea/spec';
+import { SafeHtml } from '@alea/react-utils';
 import {
   GradingContext,
   GradingCreator,
   ProblemDisplay,
   ShowGradingFor,
-} from '@stex-react/stex-react-renderer';
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+} from '@alea/stex-react-renderer';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from './MultiItemsSelector';
 const MULTI_SELECT_FIELDS = ['homeworkId', 'questionId', 'studentId'] as const;
 const ALL_SORT_FIELDS = ['homeworkDate', 'questionTitle', 'updatedAt', 'studentId'] as const;

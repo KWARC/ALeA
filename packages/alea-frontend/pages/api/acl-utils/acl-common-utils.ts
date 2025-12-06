@@ -1,21 +1,26 @@
-import { AccessControlList } from '@stex-react/api';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError, executeQuery, getUserId } from '../comment-utils';
+import { AccessControlList } from '@alea/spec';
+import { NextApiResponse } from 'next';
+import { executeAndEndSet500OnError, executeQuery, getUserIdOrSetError } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';
+
+export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
+  const resources = await executeAndEndSet500OnError(
+    'select resourceId from ResourceAccess where aclId=? LIMIT 1',
+    [aclId],
+    res
+  );
+  if (!resources) return;
+  return { used: resources.length > 0 };
+}
 
 export function getCacheKey(aclId: string) {
   return `acl-membership:${aclId}`;
 }
-
 export async function isMemberOfAcl(acl: string, userId: string) {
   return await CACHE_STORE.isMemberOfSet(getCacheKey(acl), userId);
 }
-
-export async function isCurrentUserMemberOfAClupdater(
-  aclId: string,
-  req: NextApiRequest
-): Promise<boolean> {
-  const userId = await getUserId(req);
+export async function isCurrentUserMemberOfAClupdater(aclId: string, res, req): Promise<boolean> {
+  const userId = await getUserIdOrSetError(req, res);
   if (!userId) return false;
   const queryResult = (
     await executeQuery('select updaterACLId from AccessControlList where id=?', [aclId])
@@ -24,7 +29,7 @@ export async function isCurrentUserMemberOfAClupdater(
   return await isMemberOfAcl(queryResult.updaterACLId, userId);
 }
 
-export async function areMemberUsersAndAclIdsValid(
+export async function validateMemberAndAclIds(
   memberUserIds: string[],
   memberACLIds: string[]
 ) {

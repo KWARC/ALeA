@@ -3,14 +3,13 @@ import PersonIcon from '@mui/icons-material/Person';
 import PublicIcon from '@mui/icons-material/Public';
 import { Box, Tab, Tabs } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { CommentSection } from './comment-section';
 import { getLocaleObject } from './lang/utils';
 import { NotesView } from './notes-view';
-import {FTML} from '@kwarc/ftml-viewer';
-
+import { FTML } from '@flexiformal/ftml';
 
 function TabPanel(props: { children?: React.ReactNode; index: number; value: number }) {
   const { children, value, index, ...other } = props;
@@ -34,7 +33,7 @@ export function CommentNoteToggleView({
   allNotesMode = false,
   extraPanel = undefined,
 }: {
-  uri: FTML.URI;
+  uri: FTML.Uri;
   defaultPrivate: boolean;
   selectedText?: string;
   selectedElement?: any;

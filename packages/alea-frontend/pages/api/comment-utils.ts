@@ -2,9 +2,8 @@ import {
   Comment,
   NotificationType,
   PointsGrant,
-  UserInfo,
-  lmpResponseToUserInfo,
-} from '@stex-react/api';
+  lmpResponseToUserInfo
+} from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import mysql from 'serverless-mysql';

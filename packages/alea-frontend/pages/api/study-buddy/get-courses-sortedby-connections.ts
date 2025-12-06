@@ -1,5 +1,5 @@
-import { GetSortedCoursesByConnectionsResponse } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { GetSortedCoursesByConnectionsResponse } from '@alea/spec';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';
 import { executeAndEndSet500OnError } from '../comment-utils';
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
 
   const results: any[] = await executeAndEndSet500OnError(
     `SELECT COUNT(sbCourseId) as member, sbCourseId

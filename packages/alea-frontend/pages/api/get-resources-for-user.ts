@@ -1,12 +1,12 @@
-import { getCourseInfo } from '@stex-react/api';
+import { getCourseInfo } from '@alea/spec';
 import {
   Action,
   ALL_RESOURCE_TYPES,
   COURSE_SPECIFIC_RESOURCENAMES,
   CourseResourceAction,
-  CURRENT_TERM,
   ResourceName,
-} from '@stex-react/utils';
+} from '@alea/utils';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from './access-control/resource-utils';
 import { getUserIdOrSetError } from './comment-utils';
@@ -38,10 +38,11 @@ export async function getAuthorizedCourseResources(userId: string) {
     await Promise.all(
       resourceActions.map(async ({ name, courseId, actions }) => {
         const validActions = [];
+        const currentTerm = await getCurrentTermForCourseId(courseId);
 
         for (const action of actions) {
           const isAuthorized = await isUserIdAuthorizedForAny(userId, [
-            { name, action, variables: { courseId, instanceId: CURRENT_TERM } },
+            { name, action, variables: { courseId, instanceId: currentTerm } },
           ]);
 
           if (isAuthorized) validActions.push(action);

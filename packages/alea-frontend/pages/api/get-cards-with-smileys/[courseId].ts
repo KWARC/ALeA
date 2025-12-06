@@ -1,11 +1,6 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
-import {
-  CardsWithSmileys,
-  getCourseInfo,
-  getDefiniedaInSection,
-  getUriSmileys,
-} from '@stex-react/api';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { FTML } from '@flexiformal/ftml';
+import { CardsWithSmileys, getCourseInfo, getDefiniedaInSection, getUriSmileys } from '@alea/spec';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 const CARDS_CACHE: { [courseId: string]: CourseCards } = {};
@@ -23,7 +18,7 @@ interface TopLevelSection {
   sectionTitle: string;
 }
 
-function getChapterAndSections(toc: FTML.TOCElem, chapterTitle = ''): TopLevelSection[] {
+function getChapterAndSections(toc: FTML.TocElem, chapterTitle = ''): TopLevelSection[] {
   if (toc.type === 'Paragraph' || toc.type === 'Slide') {
     return [];
   }
@@ -46,7 +41,7 @@ function getChapterAndSections(toc: FTML.TOCElem, chapterTitle = ''): TopLevelSe
 }
 
 export async function getCardsBySection(notesUri: string) {
-  const tocContent = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notesUri }))?.[1] ?? [];
   const topLevelSections = tocContent.map((toc) => getChapterAndSections(toc)).flat();
   const courseCards: CourseCards = {};
   const cardsBySection = await Promise.all(

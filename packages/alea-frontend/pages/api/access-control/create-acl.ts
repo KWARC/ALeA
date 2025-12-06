@@ -1,7 +1,9 @@
-import { AccessControlList } from '@stex-react/api';
+import { AccessControlList } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { areMemberUsersAndAclIdsValid } from '../acl-utils/acl-common-utils';
+import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
+
+
 
 export async function createAclOrSetError(
   acl: {
@@ -26,11 +28,11 @@ export async function createAclOrSetError(
   ) {
     return res.status(422).send('Missing required fields.');
   }
-  if (!(await areMemberUsersAndAclIdsValid(memberUserIds, memberACLIds))) {
+  if (!(await validateMemberAndAclIds(memberUserIds, memberACLIds))) {
     return res.status(422).send('Invalid items');
   }
   const result = await executeAndEndSet500OnError(
-    'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?,?, ?,?)',
+    'INSERT INTO AccessControlList (id, description, updaterACLId, isOpen) VALUES (?, ?, ?, ?)',
     [id, description, updaterACLId, isOpen],
     res
   );

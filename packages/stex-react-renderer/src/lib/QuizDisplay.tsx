@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML } from '@flexiformal/ftml';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBox from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
@@ -9,9 +9,9 @@ import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Box, Button, CircularProgress, Dialog, IconButton } from '@mui/material';
-import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@stex-react/api';
-import { isEmptyResponse } from '@stex-react/quiz-utils';
-import { shouldUseDrawer } from '@stex-react/utils';
+import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@alea/spec';
+import { isEmptyResponse } from '@alea/quiz-utils';
+import { shouldUseDrawer } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
@@ -331,6 +331,8 @@ export function QuizDisplay({
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',
+                // DM: no uri?
+                uri: undefined,
               }}
             />
           </h2>

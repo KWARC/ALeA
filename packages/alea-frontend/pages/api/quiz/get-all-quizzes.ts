@@ -1,11 +1,13 @@
-import { getAllQuizzes } from '@stex-react/node-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+import { getAllQuizzes } from '@alea/node-utils';
+import { Action, getCurrentTermForCourseId, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
-  const instanceId = req.query.courseTerm as string;
+  if (!courseId) return res.status(400).json({ message: 'Missing courseId.' });
+  let instanceId = req.query.instanceId as string;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,

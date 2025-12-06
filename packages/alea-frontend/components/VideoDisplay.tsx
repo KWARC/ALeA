@@ -15,8 +15,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipDetails, ClipInfo, getDefiniedaInSection } from '@stex-react/api';
-import { formatTime, getParamFromUri, localStore, PathToTour2 } from '@stex-react/utils';
+import { ClipDetails, ClipInfo, ClipMetadata, getDefiniedaInSection } from '@alea/spec';
+import { formatTime, getParamFromUri, languageUrlMap, localStore, PathToTour2 } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import {
@@ -30,8 +30,6 @@ import {
 } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-
-import { ClipData } from '@stex-react/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
@@ -158,7 +156,8 @@ export interface SlidesUriToIndexMap {
 const MediaItem = ({
   audioOnly,
   videoId,
-  sub,
+  subtitles,
+  thumbnail,
   timestampSec,
   markers,
   clipId,
@@ -170,7 +169,8 @@ const MediaItem = ({
   videoId: string;
   clipId: string;
   clipIds: { [sectionId: string]: string };
-  sub?: string;
+  subtitles?: Record<string, string>;
+  thumbnail?: string;
   timestampSec?: number;
   markers?: Marker[];
   slidesUriToIndexMap?: SlidesUriToIndexMap;
@@ -240,14 +240,34 @@ const MediaItem = ({
   }, [autoSync]);
 
   useEffect(() => {
-    if (audioOnly || !playerRef.current) return;
-    const player = videojs(playerRef.current, {
-      controls: !audioOnly,
-      preload: 'auto',
-      autoplay: false,
-      sources: [{ src: videoId, type: 'video/mp4' }],
-    });
-    videoPlayer.current = player;
+    if (audioOnly) {
+      if (videoPlayer.current) {
+        videoPlayer.current.dispose();
+        videoPlayer.current = null;
+      }
+      return;
+    }
+
+    if (!playerRef.current) return;
+    let player = videoPlayer.current;
+
+    if (!player) {
+      player = videojs(playerRef.current, {
+        controls: !audioOnly,
+        preload: 'auto',
+        autoplay: false,
+        sources: [{ src: videoId, type: 'video/mp4' }],
+      });
+      videoPlayer.current = player;
+    } else {
+      const currentTime = player.currentTime();
+      player.src({ src: videoId, type: 'video/mp4' });
+      player.ready(() => {
+        player.currentTime(currentTime);
+        player.play();
+      });
+    }
+
     const controlBar = playerRef.current.parentNode?.querySelector(
       '.vjs-control-bar'
     ) as HTMLElement;
@@ -286,8 +306,10 @@ const MediaItem = ({
     }
 
     return () => {
-      player.dispose();
-      videoPlayer.current = null;
+      if (audioOnly && player) {
+        player.dispose();
+        videoPlayer.current = null;
+      }
     };
   }, [videoId, audioOnly]);
   useEffect(() => {
@@ -426,17 +448,38 @@ const MediaItem = ({
       ></audio>
     );
   }
+  // const langs = [
+  //   { code: 'en', name: 'English' },
+  //   { code: 'de', name: 'German' },
+  // ];
   return (
     <Box style={{ marginBottom: '7px', position: 'relative' }}>
       <video
         key="videoPlayer"
+        poster={thumbnail}
         ref={playerRef as MutableRefObject<HTMLVideoElement>}
         className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
         style={{ border: '0.5px solid black', borderRadius: '8px' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {sub && <track src={sub} label="English" kind="captions" srcLang="en-us" default />}
+        {Object.entries(subtitles)
+          .filter(([code]) => code !== 'default') 
+          .map(([code, url]) => {
+            if (!url) return null;
+            const isDefault = subtitles.default === url;
+            const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
+            return (
+              <track
+                key={code}
+                src={url}
+                label={label}
+                kind="captions"
+                srcLang={code}
+                default={isDefault}
+              />
+            );
+          })}
       </video>
 
       {tooltip && (
@@ -686,7 +729,7 @@ export function VideoDisplay({
   currentSlideClipInfo?: ClipInfo;
   audioOnly: boolean;
   videoExtractedData?: {
-    [timestampSec: number]: ClipData;
+    [timestampSec: number]: ClipMetadata;
   };
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   autoSync?: boolean;
@@ -720,6 +763,7 @@ export function VideoDisplay({
   useEffect(() => {
     if (!clipId) {
       setIsLoading(false);
+      setClipDetails(undefined);
       return;
     }
     setIsLoading(true);
@@ -766,7 +810,8 @@ export function VideoDisplay({
           clipIds={clipIds}
           timestampSec={timestampSec}
           audioOnly={audioOnly}
-          sub={clipDetails?.sub}
+          subtitles={clipDetails?.subtitles}
+          thumbnail={clipDetails?.thumbnailUrl}
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
           autoSync={autoSync}

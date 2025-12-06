@@ -1,12 +1,12 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { getCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, getParamsFromUri, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import IndeterminateCheckBoxOutlinedIcon from '@mui/icons-material/IndeterminateCheckBoxOutlined';
 import UnfoldLessDoubleIcon from '@mui/icons-material/UnfoldLessDouble';
 import UnfoldMoreDoubleIcon from '@mui/icons-material/UnfoldMoreDouble';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
-import { getCoverageTimeline } from '@stex-react/api';
-import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@stex-react/utils';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,7 +17,7 @@ import styles from './stex-react-renderer.module.scss';
 interface SectionTreeNode {
   parentNode?: SectionTreeNode;
   children: SectionTreeNode[];
-  tocElem: Extract<FTML.TOCElem, { type: 'Section' }>;
+  tocElem: Extract<FTML.TocElem, { type: 'Section' }>;
   isCovered?: boolean;
   lectureIdx?: number;
   started?: Date;
@@ -38,7 +38,7 @@ function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
 }
 
 function getTopLevelSections(
-  tocElems: FTML.TOCElem[],
+  tocElems: FTML.TocElem[],
   parentNode: SectionTreeNode
 ): SectionTreeNode[] {
   return tocElems
@@ -49,7 +49,7 @@ function getTopLevelSections(
 }
 
 function getSectionTree(
-  tocElem: FTML.TOCElem,
+  tocElem: FTML.TocElem,
   parentNode: SectionTreeNode
 ): SectionTreeNode | SectionTreeNode[] | undefined {
   if (tocElem.type === 'Paragraph' || tocElem.type === 'Slide') return undefined;
@@ -139,7 +139,7 @@ function RenderTree({
   level: number;
   defaultOpen: boolean;
   selectedSection: string;
-  perSectionLectureInfo: Record<FTML.URI, SectionLectureInfo>;
+  perSectionLectureInfo: Record<FTML.Uri, SectionLectureInfo>;
   preAdornment?: (sectionId: string) => JSX.Element;
   onSectionClick?: (sectionId: string, sectionUri: string) => void;
 }) {
@@ -153,18 +153,15 @@ function RenderTree({
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
   const lectureHover = getLectureHover(secLectureInfo);
 
+  const sectionStarted = !!secLectureInfo?.startTime_ms;
+  const sectionCompleted = !!secLectureInfo?.endTime_ms;
+  const sectionInProgress = sectionStarted && !sectionCompleted;
+  const background = sectionInProgress
+    ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
+    : undefined;
+  const backgroundColor = sectionCompleted ? '#FFC' : undefined;
   return (
-    <Box
-      key={(node.tocElem as any).id}
-      sx={{
-        py: '6px',
-        backgroundColor: secLectureInfo?.endTime_ms
-          ? (secLectureInfo.lastLectureIdx ?? 0) % 2 === 0
-            ? '#FFC'
-            : '#FFC' //'#D1FFCC'
-          : undefined,
-      }}
-    >
+    <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
       <Box
         display="flex"
         ml={node.children.length > 0 ? undefined : '23px'}
@@ -241,7 +238,7 @@ function RenderTree({
   );
 }
 
-export function getCoveredSections(endSecUri: string, elem: FTML.TOCElem | undefined): string[] {
+export function getCoveredSections(endSecUri: string, elem: FTML.TocElem | undefined): string[] {
   const coveredUris: string[] = [];
   if (!elem) return coveredUris;
   if ('children' in elem && elem.children.length) {
@@ -255,23 +252,23 @@ export function getCoveredSections(endSecUri: string, elem: FTML.TOCElem | undef
   return coveredUris;
 }
 
-function getOrderedSections(elem: FTML.TOCElem): [FTML.URI[], FTML.URI[]] {
-  const preOrderedList: FTML.URI[] = [];
-  const postOrderedList: FTML.URI[] = [];
-  if (!elem) return [postOrderedList, preOrderedList];
+function getOrderedSections(elem: FTML.TocElem): [FTML.Uri[], FTML.Uri[]] {
+  const preOrderedList: FTML.Uri[] = [];
+  const postOrderedList: FTML.Uri[] = [];
+  if (!elem) return [preOrderedList, postOrderedList];
   if (elem.type === 'Section') preOrderedList.push(elem.uri);
   if ('children' in elem && elem.children.length) {
     for (const c of elem.children) {
       const [subPreList, subPostList] = getOrderedSections(c);
-      preOrderedList.push(...subPostList);
-      postOrderedList.push(...subPreList);
+      preOrderedList.push(...subPreList);
+      postOrderedList.push(...subPostList);
     }
   }
   if (elem.type === 'Section') postOrderedList.push(elem.uri);
   return [preOrderedList, postOrderedList];
 }
 
-function getNextSectionInList(sectionUri?: FTML.URI, uriList?: FTML.URI[]) {
+function getNextSectionInList(sectionUri?: FTML.Uri, uriList?: FTML.Uri[]) {
   if (!sectionUri || !uriList?.length) return undefined;
   const idx = uriList.findIndex((uri) => uri === sectionUri);
   if (idx === -1) return undefined;
@@ -280,9 +277,9 @@ function getNextSectionInList(sectionUri?: FTML.URI, uriList?: FTML.URI[]) {
 }
 
 function getPrevSectionInPostOrderNotAChild(
-  sectionUri?: FTML.URI,
-  preOrdered?: FTML.URI[],
-  postOrdered?: FTML.URI[]
+  sectionUri?: FTML.Uri,
+  preOrdered?: FTML.Uri[],
+  postOrdered?: FTML.Uri[]
 ) {
   if (!sectionUri || !preOrdered?.length || !postOrdered?.length) return undefined;
   const idxInPostOrder = postOrdered.findIndex((uri) => uri === sectionUri);
@@ -299,9 +296,9 @@ function getPrevSectionInPostOrderNotAChild(
 }
 
 function getNextSectionInPreOrderNotAChild(
-  sectionUri?: FTML.URI,
-  preOrdered?: FTML.URI[],
-  postOrdered?: FTML.URI[]
+  sectionUri?: FTML.Uri,
+  preOrdered?: FTML.Uri[],
+  postOrdered?: FTML.Uri[]
 ) {
   if (!sectionUri || !preOrdered?.length || !postOrdered?.length) return undefined;
   const idxInPreOrder = preOrdered.findIndex((uri) => uri === sectionUri);
@@ -323,8 +320,8 @@ interface SectionLectureInfo {
   lastLectureIdx?: number;
 }
 
-function getPerSectionLectureInfo(topLevel: FTML.TOCElem, lectureData: LectureEntry[]) {
-  const perSectionLectureInfo: Record<FTML.URI, SectionLectureInfo> = {};
+function getPerSectionLectureInfo(topLevel: FTML.TocElem, lectureData: LectureEntry[]) {
+  const perSectionLectureInfo: Record<FTML.Uri, SectionLectureInfo> = {};
   lectureData = lectureData?.filter((snap) => snap.sectionUri);
   if (!lectureData?.length) return perSectionLectureInfo;
   const [preOrdered, postOrdered] = getOrderedSections(topLevel);
@@ -344,7 +341,7 @@ function getPerSectionLectureInfo(topLevel: FTML.TOCElem, lectureData: LectureEn
 
   /*For debugging:
   const toPrintableStr = (uri?: string) =>
-    uri ? getParamsFromUri(uri, ['p', 'd']).join('//') : '<no uri>';
+    uri ? getParamsFromUri(uri, ['p', 'd', 'e']).join('--') : '<no uri>';
   console.log('postOrdered', postOrdered.map(toPrintableStr));
   console.log('preOrdered', preOrdered.map(toPrintableStr));
   console.log('firstSectionNotStarted', firstSectionNotStarted.map(toPrintableStr));
@@ -364,14 +361,11 @@ function getPerSectionLectureInfo(topLevel: FTML.TOCElem, lectureData: LectureEn
   }
   currLecIdx = 0;
   for (const secUri of postOrdered) {
-    if (currLecIdx >= lectureData.length) break;
     const currentSnap = lectureData[currLecIdx];
-    if (!currentSnap.sectionUri) break;
-    if (currentSnap.sectionCompleted) {
-      perSectionLectureInfo[secUri] ??= {};
-      perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
-      perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
-    }
+    if (!currentSnap?.sectionUri) break;
+    perSectionLectureInfo[secUri] ??= {};
+    perSectionLectureInfo[secUri].endTime_ms = currentSnap.timestamp_ms;
+    perSectionLectureInfo[secUri].lastLectureIdx = currLecIdx;
 
     while (secUri === lastSectionCompleted[currLecIdx]) currLecIdx++;
     if (!firstSectionNotStarted[currLecIdx]) break;
@@ -387,7 +381,7 @@ export function ContentDashboard({
   onClose,
   onSectionClick,
 }: {
-  toc: FTML.TOCElem[];
+  toc: FTML.TocElem[];
   selectedSection: string;
   courseId?: string;
   preAdornment?: (sectionId: string) => JSX.Element;
@@ -398,15 +392,19 @@ export function ContentDashboard({
   const [filterStr, setFilterStr] = useState('');
   const [defaultOpen, setDefaultOpen] = useState(true);
   const [perSectionLectureInfo, setPerSectionLectureInfo] = useState<
-    Record<FTML.URI, SectionLectureInfo>
+    Record<FTML.Uri, SectionLectureInfo>
   >({});
 
   useEffect(() => {
     async function getCoverageInfo() {
-      if (!courseId || !toc?.length) return;
+      if (!courseId || !toc?.length) {
+        console.log('No courseId or toc');
+        return;
+      }
+      console.log('Getting coverage info for courseId', courseId);
       const timeline = await getCoverageTimeline();
       const snaps = timeline?.[courseId];
-      const shadowTopLevel: FTML.TOCElem = { type: 'SkippedSection', children: toc };
+      const shadowTopLevel: FTML.TocElem = { type: 'SkippedSection', children: toc };
       setPerSectionLectureInfo(getPerSectionLectureInfo(shadowTopLevel, snaps));
     }
     getCoverageInfo();

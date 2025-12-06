@@ -3,8 +3,8 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { EnrolledCourseIds } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { EnrolledCourseIds } from '@alea/spec';
+import { getCurrentTermForCourseId } from '@alea/utils';
 import { getCourseIdAndInstanceFromSbCourseId } from './study-buddy-utils';
 
 export default async function handler(
@@ -15,7 +15,7 @@ export default async function handler(
   if (!userId) return;
 
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
 
   const results: any[] = await executeAndEndSet500OnError(
     `SELECT sbCourseId, active as activeStatus from StudyBuddyUsers 

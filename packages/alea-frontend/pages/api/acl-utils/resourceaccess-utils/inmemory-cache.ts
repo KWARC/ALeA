@@ -1,4 +1,4 @@
-import { ResourceAction } from '@stex-react/api';
+import { ResourceAction } from '@alea/spec';
 import { AbstractResourceAssignmentCache } from './resource-cache-store';
 import { getCacheKey } from './resource-common-utils';
 

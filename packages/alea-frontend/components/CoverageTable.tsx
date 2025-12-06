@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -17,12 +17,13 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { getAllQuizzes, QuizWithStatus } from '@stex-react/api';
-import { NoMaxWidthTooltip } from '@stex-react/stex-react-renderer';
-import { CURRENT_TERM, LectureEntry } from '@stex-react/utils';
+import { getAllQuizzes, QuizWithStatus } from '@alea/spec';
+import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
+import { LectureEntry } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useStudentCount } from '../hooks/useStudentCount';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { SecInfo } from '../types';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { getSectionNameForUri } from './CoverageUpdater';
@@ -39,7 +40,7 @@ interface CoverageRowProps {
   originalIndex: number;
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   entries: LectureEntry[];
 }
 
@@ -76,7 +77,7 @@ function SectionTooltipContent({
   sectionCompleted,
 }: {
   shouldHighlightNoSection: boolean;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   sectionUri: string;
   sectionCompleted?: boolean;
 }) {
@@ -374,7 +375,7 @@ function CoverageRow({
 
 export function calculateLectureProgress(
   entries: LectureEntry[],
-  secInfo: Record<FTML.DocumentURI, SecInfo>
+  secInfo: Record<FTML.DocumentUri, SecInfo>
 ) {
   const sectionToIndex = new Map(Object.values(secInfo).map((s, i) => [s.uri, i]));
   // This is not post order. I think its simply pre-order. I just added this to get rid of compil errors.
@@ -461,7 +462,7 @@ const getProgressIcon = (status: string) => {
 interface CoverageTableProps {
   courseId: string;
   entries: LectureEntry[];
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   onEdit: (index: number, prefill?: Partial<LectureEntry>) => void;
   onDelete: (index: number) => void;
 }
@@ -477,12 +478,15 @@ export function CoverageTable({
   const missingTargetsCount = countMissingTargetsInFuture(entries);
   const sortedEntries = [...entries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
   const [quizMatchMap, setQuizMatchMap] = useState<QuizMatchMap>({});
-  const studentCount = useStudentCount(courseId, CURRENT_TERM);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  const studentCount = useStudentCount(courseId, currentTerm);
 
   useEffect(() => {
     async function fetchQuizzes() {
+      if (!currentTerm) return;
       try {
-        const allQuizzes = await getAllQuizzes(courseId, CURRENT_TERM);
+        const allQuizzes = await getAllQuizzes(courseId, currentTerm);
         const map: QuizMatchMap = {};
         entries.forEach((entry) => {
           const match = allQuizzes.find(
@@ -496,7 +500,7 @@ export function CoverageTable({
       }
     }
     fetchQuizzes();
-  }, [courseId]);
+  }, [courseId, currentTerm, entries]);
 
   return (
     <Box>

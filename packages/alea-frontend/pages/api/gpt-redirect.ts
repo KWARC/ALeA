@@ -35,6 +35,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(response.status).json(responseData);
   } catch (error) {
     console.error('Proxy error:', error);
+    if (error.response) {
+      return res.status(error.response.status).json({
+        error: error.response.data,
+      });
+    }
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

@@ -1,21 +1,21 @@
+import { canModerateComment, Comment, getUserInfo } from '@alea/spec';
 import CheckIcon from '@mui/icons-material/Check';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Box, Button, CircularProgress, Dialog, IconButton, Menu, MenuItem } from '@mui/material';
-import { canModerateComment, Comment, getUserInfo } from '@stex-react/api';
 import { ReactNode, useEffect, useReducer, useRef, useState } from 'react';
 import { CommentFilters } from './comment-filters';
 import { getPublicCommentTrees, refreshAllComments } from './comment-store-manager';
 import { CommentReply } from './CommentReply';
 import { CommentView } from './CommentView';
 
-import { FTML } from '@kwarc/ftml-viewer';
+import { useCommentRefresh } from '@alea/react-utils';
+import { FTML } from '@flexiformal/ftml';
 import { Refresh } from '@mui/icons-material';
-import { CURRENT_TERM } from '@stex-react/utils';
 import { useRouter } from 'next/router';
+import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 import styles from './comments.module.scss';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@stex-react/utils';
 
 function RenderTree({
   comment,
@@ -23,7 +23,7 @@ function RenderTree({
   refreshComments,
 }: {
   comment: Comment;
-  uri: FTML.URI;
+  uri: FTML.Uri;
   refreshComments: () => void;
 }) {
   return (
@@ -49,7 +49,7 @@ export function CommentTree({
   refreshComments,
 }: {
   comments: Comment[];
-  uri: FTML.URI;
+  uri: FTML.Uri;
   refreshComments: () => void;
 }) {
   return (
@@ -129,7 +129,7 @@ export function CommentSection({
   selectedElement = undefined,
   allCommentsMode = false,
 }: {
-  uri: FTML.URI;
+  uri: FTML.Uri;
   startDisplay?: boolean;
   selectedText?: string;
   selectedElement?: any;
@@ -139,6 +139,8 @@ export function CommentSection({
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const t = getLocaleObject(router);
   const courseId = router.query.courseId as string;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   // Menu Crap start
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -170,8 +172,9 @@ export function CommentSection({
 
   useEffect(() => {
     getUserInfo().then((userInfo) => setCanAddComment(!!userInfo?.userId));
-    canModerateComment(courseId, CURRENT_TERM).then(setCanModerate);
-  }, [courseId]);
+    if (!currentTerm) return;
+    canModerateComment(courseId, currentTerm).then(setCanModerate);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     getPublicCommentTrees(uri).then((c) => setCommentsFromStore(c));

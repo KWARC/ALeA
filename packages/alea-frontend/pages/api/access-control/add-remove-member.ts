@@ -1,4 +1,3 @@
-import { AccessControlList } from '@stex-react/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 import {
@@ -37,7 +36,7 @@ export async function addRemoveMemberOrSetError(
   let updateParams: string[] = [];
 
   if (toBeAdded) {
-    if (!(await isAclOpen(aclId) || (await isCurrentUserMemberOfAClupdater(aclId, req)))) {
+    if (!(await isAclOpen(aclId) || (await isCurrentUserMemberOfAClupdater(aclId,res, req)))) {
       res.status(403).end();
       return;
     }
@@ -50,10 +49,25 @@ export async function addRemoveMemberOrSetError(
       res.status(422).send('Invalid input');
       return;
     }
+    
+    const memberField = isAclMember ? 'memberACLId' : 'memberUserId';
+ 
+    const checkMembershipQuery = `SELECT id FROM ACLMembership WHERE parentACLId=? AND ${memberField}=?`;
+    const existingMembership = await executeAndEndSet500OnError(
+      checkMembershipQuery,
+      [aclId, memberId],
+      res
+    );
+
+    if (existingMembership && existingMembership.length > 0) 
+      {
+      res.status(200).end();
+      return;
+    }
     updateQuery = 'INSERT INTO ACLMembership (parentACLId, memberACLId, memberUserId) VALUES (?, ?, ?)';
     updateParams = isAclMember ? [aclId, memberId, null] : [aclId, null, memberId];
   } else {
-    if (memberId != userId && !(await isCurrentUserMemberOfAClupdater(aclId, req))) {
+    if (memberId != userId && !(await isCurrentUserMemberOfAClupdater(aclId, res, req))) {
       res.status(403).end();
       return;
     }

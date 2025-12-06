@@ -3,41 +3,19 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getCourseInfo } from '@stex-react/api';
-import { CURRENT_TERM, CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 
 import Diversity3 from '@mui/icons-material/Diversity3';
-import { PARTNERED_UNIVERSITIES } from '..';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-
-const UniversityDetail = {
-  FAU: {
-    fullName: 'Friedrich-Alexander-Universität Erlangen-Nürnberg',
-    logo: 'https://community.fau.de/wp-content/themes/community.fau-erlangen/img/FAU_Logo_Bildmarke.svg',
-  },
-  Jacobs: {
-    fullName: 'Jacobs University',
-    logo: '/jacoblogo.png',
-  },
-  IISc: {
-    fullName: 'India Institute of Science and Technology',
-    logo: '/iisc.png',
-  },
-  'Heriot Watt': {
-    fullName: 'Heriot-Watt University',
-    logo: '/heriott_logo.png',
-  },
-  others: {
-    fullName: 'Other Institutions',
-    logo: '/others.png',
-  },
-};
+import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
@@ -164,6 +142,9 @@ const StudentHomePage: NextPage = ({
   const { query } = router;
   const { home: t, studyBuddy: s } = getLocaleObject({ locale });
   const institution = query.institution as string;
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId[institution];
+
   if (!courses) return null;
   return (
     <MainLayout title="Courses | ALeA">
@@ -192,7 +173,7 @@ const StudentHomePage: NextPage = ({
           <Button variant="contained" sx={{ mt: 2 }} onClick={() => router.push('/job-portal')}>
             Job Portal
           </Button>
-          <h2>{`${t.courseSection} (${CURRENT_TERM})`}</h2>
+          <h2>{`${t.courseSection} (${currentTerm})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)
               .filter((course) => course.isCurrent)

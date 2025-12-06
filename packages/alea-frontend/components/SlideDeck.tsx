@@ -6,8 +6,8 @@ import {
   NavigateBefore,
   NavigateNext,
 } from '@mui/icons-material';
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTMLFragment } from '@flexiformal/ftml-react';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
@@ -20,8 +20,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipInfo, getSlides, Slide, SlideType } from '@stex-react/api';
-import { ExpandableContextMenu } from '@stex-react/stex-react-renderer';
+import { ClipInfo, getSlides, Slide, SlideType } from '@alea/spec';
+import { ExpandableContextMenu } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
@@ -285,7 +285,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box fragment-uri={slide.slide?.uri} fragment-kind="Slide">
         <FTMLFragment
           key={slide.slide?.uri}
-          fragment={{ type: 'HtmlString', html: slide.slide?.html }}
+          fragment={{ type: 'HtmlString', html: slide.slide?.html, uri: slide.slide.uri }}
         />
       </Box>
     );
@@ -294,7 +294,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box className={styles['text-frame']}>
         {slide.paragraphs?.map((p, idx) => (
           <Box key={p.uri} fragment-uri={p.uri} fragment-kind="Paragraph">
-            <FTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html }} />
+            <FTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }} />
             {idx < slide.paragraphs.length - 1 && <br />}
           </Box>
         ))}
@@ -348,16 +348,14 @@ export const SlideDeck = memo(function SlidesFromUrl({
   videoLoaded?: boolean;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
-  const [css, setCss] = useState<FTML.CSS[]>([]);
+  const [css, setCss] = useState<FTML.Css[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadedSectionId, setLoadedSectionId] = useState('');
   const [currentSlide, setCurrentSlide] = useState(undefined as Slide | undefined);
   const router = useRouter();
 
   useEffect(() => {
-    (css ?? []).forEach((cssItem) => {
-      FTML.injectCss(cssItem);
-    });
+    injectCss(css);
   }, [css]);
 
   useEffect(() => {

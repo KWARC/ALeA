@@ -1,5 +1,5 @@
-import { QuizStatsResponse } from '@stex-react/api';
-import { convertHtmlStringToPlain } from '@stex-react/utils';
+import { QuizStatsResponse } from '@alea/spec';
+import { convertHtmlStringToPlain } from '@alea/utils';
 import Chart from 'react-google-charts';
 import { BarChart } from './HomeworkState';
 
@@ -61,6 +61,17 @@ export function QuizStatsDisplay({
   stats: QuizStatsResponse;
   maxProblems: number;
 }) {
+  if (stats.totalStudents === 0) {
+    return (
+      <>
+        <h2>
+          Quiz attempted by <b style={{ color: 'red' }}>{stats.totalStudents}</b> students
+        </h2>
+        <p>No responses yet. Charts will appear once students start taking the quiz.</p>
+      </>
+    );
+  }
+
   return (
     <>
       <h2>

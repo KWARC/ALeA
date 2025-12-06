@@ -1,5 +1,5 @@
-import { getCourseInfo } from '@stex-react/api';
-import { CourseInfo } from '@stex-react/utils';
+import { getCourseInfo } from '@alea/spec';
+import { CourseInfo } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSlidesForCourse } from './get-slides';
 

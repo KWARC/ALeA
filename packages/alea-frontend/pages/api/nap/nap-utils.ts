@@ -1,4 +1,4 @@
-import { GradingWithAnswer, GradingAnswerClass } from '@stex-react/api';
+import { GradingWithAnswer, GradingAnswerClass } from '@alea/spec';
 import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 

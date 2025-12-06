@@ -12,10 +12,11 @@ export interface CourseInfo {
   quizzesLink: string;
   isCurrent: boolean;
   hasQuiz: boolean;
+  hasHomework: boolean;
   institution?: string;
-  instances?: { semester: string; instructors?: string[] }[];
-  instructors?: string[];
-  teaser?: string;
+  instances?: { semester: string; instructors?: string[] | null }[];
+  instructors?: string[] | null;
+  teaser?: string | null;
   slides?: string;
 }
 
@@ -41,8 +42,18 @@ export function getNotesLink(courseId: string) {
 export function getQuizzesLink(courseId: string) {
   return `/quiz-dash/${courseId}`;
 }
+export function getCoursePdfUrl(notesUri: string): string {
+  try {
+    const url = new URL(notesUri);
+    url.pathname = '/doc';
+    url.searchParams.set('format', 'pdf');
+    return url.toString();
+  } catch (e) {
+    return notesUri.replace('mathhub.info', 'mathhub.info/doc') + '&format=pdf';
+  }
+}
 
-export const CURRENT_TERM = 'SS25';
+export const CURRENT_TERM = 'WS25-26';
 
 export function createCourseInfo(
   courseId: string,
@@ -51,10 +62,11 @@ export function createCourseInfo(
   landing: string,
   isCurrent = false,
   hasQuiz = false,
+  hasHomework = false,
   institution?: string,
-  instances?: { semester: string; instructors?: string[] }[],
-  instructors?: string[],
-  teaser?: string,
+  instances?: { semester: string; instructors?: string[] | null }[],
+  instructors?: string[] | null,
+  teaser?: string | null,
   slides?: string
 ): CourseInfo {
   return {
@@ -71,6 +83,7 @@ export function createCourseInfo(
     landing,
     isCurrent,
     hasQuiz,
+    hasHomework,
     institution,
     instances,
     instructors,
@@ -106,55 +119,223 @@ export interface CoverageTimeline {
 export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
   'ai-1': createCourseInfo(
     'ai-1',
-    'Artificial Intelligence - I',
-    'MiKoMH/AI',
-    'course/notes/notes1.tex'
+    'Artificial Intelligence I',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=notes1&l=en',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=coursepage1&l=en',
+    true,
+    true,
+    true,
+    'FAU',
+    [{ semester: 'WS25-26', instructors: null }],
+    ['Michael Kohlhase'],
+    'A classical course on symbolic artificial intelligence covering the whole range of methods from search-based problem solving, via constraint propagation and logical/formal methods to planning.',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=slides1&l=en'
   ),
   'ai-2': createCourseInfo(
     'ai-2',
-    'Artificial Intelligence - II',
-    'MiKoMH/AI',
-    'course/notes/notes2.xhtml',
+    'Artificial Intelligence II',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=notes2&l=en',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=coursepage2&l=en',
+    false,
     true,
-    true
-  ),
-  'iwgs-1': createCourseInfo('iwgs-1', 'IWGS - I', 'MiKoMH/IWGS', 'course/notes/notes-part1.xhtml'),
-  'iwgs-2': createCourseInfo(
-    'iwgs-2',
-    'IWGS - II',
-    'MiKoMH/IWGS',
-    'course/notes/notes-part2.xhtml',
-    true
-  ),
-  krmt: createCourseInfo(
-    'krmt',
-    'Knowledge Representation for Mathematical Theories',
-    'MiKoMH/KRMT',
-    'course/notes/notes.xhtml'
-  ),
-  lbs: createCourseInfo(
-    'lbs',
-    'Logic-based Natural Language Semantics',
-    'MiKoMH/LBS',
-    'course/notes/notes.xhtml'
+    true,
+    'FAU',
+    [{ semester: 'SS25', instructors: null }],
+    ['Michael Kohlhase'],
+    'A classical course on statistical and subsymbolic artificial intelligence covering the whole range of methods from reasoning with uncertainty, decision theory, MDPs and POMDPs to machine learning and natural language processing.',
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=slides2&l=en'
   ),
   gdp: createCourseInfo(
     'gdp',
     'Grundlagen der Programmierung',
-    'courses/FAU/gdp',
-    'course/notes/notes.de.xhtml'
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/FAU/GDP/course&p=course/notes&d=notes&l=en',
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/FAU/GDP/course&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    true,
+    'FAU',
+    [
+      { semester: 'WS23-24', instructors: null },
+      { semester: 'WS24-25', instructors: null },
+    ],
+    ['Vanessa Klein'],
+    null,
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/FAU/GDP/course&p=course/notes&d=slides&l=en'
   ),
-  f29fa1: createCourseInfo(
-    'f29fa1',
-    'Foundations 1',
-    'courses/HW/foundations1',
-    'mod/lect2-stex.tex'
+  'iwgs-1': createCourseInfo(
+    'iwgs-1',
+    'Informatische Werkzeuge für die Geistes- und Sozialwissenschaften I',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part1&l=en',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=coursepage1&l=en',
+    true,
+    true,
+    true,
+    'FAU',
+    [{ semester: 'WS25-26', instructors: null }],
+    ['Michael Kohlhase'],
+    'This course introduces computational tools for the humanities and social studies: it covers basic programming in phython, introduces the content types of strings, documents, and how to compute with them. This is then used to introduce basic web applications (HTML, CSS, HTTP, server side scripting and JQuery in theory an practice.',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=slides-part1&l=en'
   ),
-  rip: createCourseInfo(
-    'rip',
-    'Repetitorium Informatik',
-    'courses/FAU/rip/course',
-    'course/notes/notes.de.xhtml'
+  'iwgs-2': createCourseInfo(
+    'iwgs-2',
+    'Informatische Werkzeuge für die Geistes- und Sozialwissenschaften II',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=notes-part2&l=en',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=coursepage2&l=en',
+    false,
+    true,
+    true,
+    'FAU',
+    [{ semester: 'SS25', instructors: null }],
+    ['Michael Kohlhase'],
+    'This course continues the introduction of computational tools for the humanities and social studies (HSS) from IWGS-1: It covers databases as the persistence-layer of web applications, XML and JSON as interchange formats, image formats and processing, then then introduces linked open data as a FAIR research data format for object-centered data, culminating in an in-depth look at the WissKI system that uses them for HSS data collection, curation, and querying.',
+    'https://mathhub.info?a=courses/FAU/IWGS/course&p=course/notes&d=slides-part2&l=en'
+  ),
+  krmt: createCourseInfo(
+    'krmt',
+    'Knowledge Representation of Mathematical Theories',
+    'https://mathhub.info?a=courses/FAU/KRMT/course&p=dennis/course&d=notes&l=en',
+    'https://mathhub.info?a=courses/FAU/KRMT/course&p=dennis/course&d=coursepage&l=en',
+    false,
+    true,
+    true,
+    'FAU',
+    [{ semester: 'SS25', instructors: ['Dennis Müller'] }],
+    ['Michael Kohlhase'],
+    '<p>This repository contains the sources for the notes of the course <em>Logik-Basierte Wissensrepräsentation für Mathematisch/Technisches Wissen </em> at FAU Erlangen-Nürnberg.</p>',
+    'https://mathhub.info?a=courses/FAU/KRMT/course&p=dennis/course&d=slides&l=en'
+  ),
+  lbs: createCourseInfo(
+    'lbs',
+    'Logic-Based Natural Language Semantics',
+    'https://mathhub.info?a=courses/FAU/LBS/course&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/FAU/LBS/course&p=course/notes&d=coursepage&l=en',
+    true,
+    true,
+    true,
+    'FAU',
+    [{ semester: 'WS25-26', instructors: null }],
+    ['Michael Kohlhase'],
+    "This course covers the construction of logic-based models for natural language sentences and discourses. If starts with an introduction of Montague's method of fragments, and then covers selected phenomena like discourse logics, propositional attitudes and modalities.",
+    'https://mathhub.info?a=courses/FAU/LBS/course&p=course/notes&d=slides&l=en'
+  ),
+  smai: createCourseInfo(
+    'smai',
+    'Symbolic Methods for Artificial Intelligence',
+    'https://mathhub.info?a=courses/FAU/SMAI/course&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/FAU/SMAI/course&p=course/notes&d=coursepage&l=en',
+    true,
+    true,
+    true,
+    'FAU',
+    [
+      { semester: 'SS25', instructors: null },
+      { semester: 'WS25-26', instructors: null },
+    ],
+    ['Michael Kohlhase'],
+    'This course introduces the scientific methods used in symbolic AI. It is geared towards closing the gap many student experience between their engineering-oriented undergradudate education and the abstract, mathematical methods needed for symbolic AI.',
+    'https://mathhub.info?a=courses/FAU/SMAI/course&p=course/notes&d=slides&l=en'
+  ),
+  acs: createCourseInfo(
+    'acs',
+    'Advanced Computer Science (Fragment)',
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/Jacobs/ACS/course&p=course/notes&d=notes&l=en',
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/Jacobs/ACS/course&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [{ semester: 'Fall 2006', instructors: null }],
+    ['Michael Kohlhase'],
+    null,
+    'https://stexmmt.mathhub.info/:sTeX?a=courses/Jacobs/ACS/course&p=course/notes&d=slides&l=en'
+  ),
+  comsem: createCourseInfo(
+    'comsem',
+    'Computational Semantics of Natural Language',
+    'https://mathhub.info?a=courses/Jacobs/ComSem&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/Jacobs/ComSem&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [],
+    ['Michael Kohlhase'],
+    ' <p>This repository contains the sources for the notes of the course <em>Computational Semantics of Natural Language</em> at Jacobs University Bremen. The course covers the semantics construction and semantic analysis processes in the "Method of Fragments", progressing from simple fragments expressible in first-order logics to Montagovian Semantics.</p>',
+    'https://mathhub.info?a=courses/Jacobs/ComSem&p=course/notes&d=slides&l=en'
+  ),
+  complog: createCourseInfo(
+    'complog',
+    'Computational Logic',
+    'https://mathhub.info?a=courses/Jacobs/CompLog&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/Jacobs/CompLog&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [],
+    ['Michael Kohlhase'],
+    '<p>This repository contains the sources for the notes of the course <em>Computational Logic</em> at Jacobs University Bremen. The course covers the syntax, semantics, and calculi of first-order, higher-order, modal, dynamic, and description logics with a particular focus on the computational properties.</p>',
+    'https://mathhub.info?a=courses/Jacobs/CompLog&p=course/notes&d=slides&l=en'
+  ),
+  'gencs i': createCourseInfo(
+    'gencs i',
+    'General Computer Science I',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=notes1&l=en',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=coursepage1&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [],
+    ['Michael Kohlhase'],
+    '<p>This repository contains the sources for the notes of the course <em>General Computer Science</em> at Jacobs University Bremen. The course covers conceptual aspects of many of the foundational topics of Computer Science from the ground up.</p>',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=slides1&l=en'
+  ),
+  'gencs ii': createCourseInfo(
+    'gencs ii',
+    'General Computer Science II',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=notes2&l=en',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=coursepage2&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [],
+    ['Michael Kohlhase'],
+    '<p>This repository contains the sources for the notes of the course <em>General Computer Science</em> at Jacobs University Bremen. The course covers conceptual aspects of many of the foundational topics of Computer Science from the ground up.</p>',
+    'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=slides2&l=en'
+  ),
+  genict: createCourseInfo(
+    'genict',
+    'General Information and Communication Technology',
+    'https://mathhub.info?a=courses/Jacobs/GenICT/course&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/Jacobs/GenICT/course&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [
+      { semester: 'Fall 2014', instructors: null },
+      { semester: 'Fall 2015', instructors: null },
+      { semester: 'Spring 2015', instructors: null },
+    ],
+    ['Michael Kohlhase'],
+    null,
+    'https://mathhub.info?a=courses/Jacobs/GenICT/course&p=course/notes&d=slides&l=en'
+  ),
+  tdm: createCourseInfo(
+    'tdm',
+    'Text and Digital Media ',
+    'https://mathhub.info?a=courses/Jacobs/TDM/course&p=course/notes&d=notes&l=en',
+    'https://mathhub.info?a=courses/Jacobs/TDM/course&p=course/notes&d=coursepage&l=en',
+    false,
+    true,
+    false,
+    'Jacobs',
+    [],
+    ['Michael Kohlhase'],
+    '<p>This repository contains the sources for the notes of the transdisciplinary course <em>Text and Digital Media</em> at Jacobs University Bremen.</p>',
+    'https://mathhub.info?a=courses/Jacobs/TDM/course&p=course/notes&d=slides&l=en'
   ),
 };
 

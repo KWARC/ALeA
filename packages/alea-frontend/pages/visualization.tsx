@@ -1,5 +1,5 @@
 import { Box, Link } from '@mui/material';
-import { PathToTour } from '@stex-react/utils';
+import { PathToTour } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useState } from 'react';

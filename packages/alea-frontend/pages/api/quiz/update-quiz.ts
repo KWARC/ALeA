@@ -1,11 +1,11 @@
-import { QuizWithStatus } from '@stex-react/api';
+import { QuizWithStatus } from '@alea/spec';
 import {
   doesQuizExist,
   getBackupQuizFilePath,
   getQuiz,
   writeQuizFile,
-} from '@stex-react/node-utils';
-import { Action, ResourceName } from '@stex-react/utils';
+} from '@alea/node-utils';
+import { Action, ResourceName } from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';

@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { FTMLFragment } from '@flexiformal/ftml-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import List from '@mui/material/List';
@@ -11,8 +11,10 @@ import {
   getUriSmileys,
   SmileyCognitiveValues,
   smileyToLevel,
-} from '@stex-react/api';
-import { shouldUseDrawer, simpleHash } from '@stex-react/utils';
+  getQueryResults,
+  getSparlQueryForDefinition,
+} from '@alea/spec';
+import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
@@ -87,7 +89,7 @@ function ItemBreadcrumbs({
               <a>
                 <FTMLFragment
                   key={item.header}
-                  fragment={{ type: 'HtmlString', html: item.header }}
+                  fragment={{ type: 'HtmlString', html: item.header, uri }}
                 />
               </a>
             </li>
@@ -113,7 +115,7 @@ function ItemBreadcrumbs({
               >
                 <FTMLFragment
                   key={dep.header}
-                  fragment={{ type: 'HtmlString', html: dep.header }}
+                  fragment={{ type: 'HtmlString', html: dep.header, uri: depUri }}
                 />
               </Button>
             );
@@ -143,6 +145,7 @@ function TourItemDisplay({
   onHideTemp: () => void;
   addToTempShowUri: (uri: string) => void;
 }) {
+  const [definitionUris, setDefinitionUris] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const ref = useRef();
   const isVisible = useOnScreen(ref);
@@ -150,11 +153,32 @@ function TourItemDisplay({
     visibilityUpdate(isVisible);
   }, [isVisible]);
 
+  useEffect(() => {
+    async function fetchDefinition(uri: string) {
+      const query = getSparlQueryForDefinition(uri);
+      const results = await getQueryResults(query);
+
+      const allUris = results?.results?.bindings?.map((b) => b?.loname?.value) ?? [];
+
+      let uris = allUris.filter((u: string) => u.includes(`&l=${lang}`));
+
+      if (uris.length === 0 && allUris.length > 0) {
+        uris = [allUris[0]];
+      }
+
+      setDefinitionUris(uris.slice(0, 1));
+    }
+    fetchDefinition(item.uri);
+  }, [item.uri, lang]);
+
   return (
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
       <Box display="flex" alignItems="start" mt="15px" mb="5px" justifyContent="space-between">
         <h3 style={{ margin: 0 }}>
-          <FTMLFragment key={item.header} fragment={{ type: 'HtmlString', html: item.header }} />
+          <FTMLFragment
+            key={item.header}
+            fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+          />
         </h3>
         <Box mx="10px" height="30px" sx={{ whiteSpace: 'nowrap' }}>
           <Box display="flex" alignItems="center" gap="5px" zIndex={10}>
@@ -190,13 +214,11 @@ function TourItemDisplay({
       </Box>
       <ItemBreadcrumbs item={item} allItemsMap={allItemsMap} addToTempShowUri={addToTempShowUri} />
       <Box sx={{ mt: '20px' }}>
-        {/*<ContentFromUrl
-          displayReason={DisplayReason.GUIDED_TOUR}
-          url={`/:vollki/frag?path=${item.uri}&lang=${lang}`}
-          modifyRendered={getChildrenOfBodyNode}
-        />*/}
-        //TODO ALEA4-G2
-        {/* <FTMLFragment key={item.uri} fragment={{ uri: item.uri }} /> */}
+        {definitionUris.map((uri) => (
+          <Box key={uri} mb={1.5}>
+            <FTMLFragment fragment={{ type: 'FromBackend', uri }} />
+          </Box>
+        ))}
       </Box>
 
       <Divider />
@@ -304,7 +326,10 @@ function listItemText(item: TourItem, isIntersecting: boolean) {
   return (
     <Box>
       <span style={{ fontWeight }}>
-        <FTMLFragment key={item.header} fragment={{ type: 'HtmlString', html: item.header }} />
+        <FTMLFragment
+          key={item.header}
+          fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+        />
       </span>
     </Box>
   );

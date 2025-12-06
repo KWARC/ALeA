@@ -3,8 +3,8 @@ import {
   GetPreviousQuizInfoResponse,
   Phase,
   PreviousQuizInfo,
-} from '@stex-react/api';
-import { getQuizPhase } from '@stex-react/quiz-utils';
+} from '@alea/spec';
+import { getQuizPhase } from '@alea/quiz-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdOrSetError } from '../../comment-utils';
 import { queryGradingDbAndEndSet500OnError } from '../../grading-db-utils';

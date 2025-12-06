@@ -1,6 +1,6 @@
-import { BlogPost } from '@stex-react/api';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { BlogPost } from '@alea/spec';
 import { executeDontEndSet500OnError } from '../comment-utils';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { postId } = req.query;

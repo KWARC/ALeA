@@ -12,9 +12,9 @@ import {
   Problem,
   ReviewType,
   SubProblemData,
-} from '@stex-react/api';
-import { MystEditor, MystViewer } from '@stex-react/myst';
-import { localStore, PRIMARY_COL } from '@stex-react/utils';
+} from '@alea/spec';
+import { MystEditor, MystViewer } from '@alea/myst';
+import { localStore, PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useRouter } from 'next/router';
@@ -323,7 +323,7 @@ export function ShowSubProblemAnswer({
 }) {
   const { showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
   if (!showGrading) return <></>;
-  const gradingInfo = g[problemId][subproblemId]?.filter((c) => {
+  const gradingInfo = g?.[problemId]?.[subproblemId]?.filter((c) => {
     if (showGradingFor === ShowGradingFor.INSTRUCTOR && c.reviewType === ReviewType.INSTRUCTOR)
       return c;
     if (showGradingFor === ShowGradingFor.PEER && c.reviewType === ReviewType.PEER) return c;

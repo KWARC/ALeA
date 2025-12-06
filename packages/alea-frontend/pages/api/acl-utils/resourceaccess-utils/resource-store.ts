@@ -1,4 +1,4 @@
-import { ResourceAction } from '@stex-react/api';
+import { ResourceAction } from '@alea/spec';
 import { RedisCache } from './redis-cache';
 import { InmemoryCache } from './inmemory-cache';
 import { executeQuery } from '../../comment-utils';

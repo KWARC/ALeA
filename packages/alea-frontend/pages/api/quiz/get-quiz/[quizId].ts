@@ -1,17 +1,16 @@
-import { FTMLProblemWithSolution, GetQuizResponse, Phase } from '@stex-react/api';
-import { getQuiz, getQuizTimes } from '@stex-react/node-utils';
-import { getQuizPhase } from '@stex-react/quiz-utils';
-import { Action, ResourceName, simpleNumberHash } from '@stex-react/utils';
+import { getQuiz, getQuizTimes } from '@alea/node-utils';
+import { getQuizPhase } from '@alea/quiz-utils';
+import { FTMLProblemWithSolution, GetQuizResponse, Phase } from '@alea/spec';
+import { Action, ResourceName, simpleNumberHash } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  isUserIdAuthorizedForAny,
-  ResourceActionParams,
-} from '../../access-control/resource-utils';
+import { isUserIdAuthorizedForAny } from '../../access-control/resource-utils';
 import { getUserIdOrSetError } from '../../comment-utils';
-import { queryGradingDbAndEndSet500OnError } from '../../grading-db-utils';
+import { queryGradingDb, queryGradingDbAndEndSet500OnError } from '../../grading-db-utils';
 
 async function getUserQuizResponseOrSetError(quizId: string, userId: string, res: NextApiResponse) {
-  const results: any[] = await queryGradingDbAndEndSet500OnError(
+  const results = await queryGradingDbAndEndSet500OnError<
+    { problemId: string; response: string }[]
+  >(
     `SELECT problemId, response
     FROM grading
     WHERE (quizId, problemId, browserTimestamp_ms) IN (
@@ -80,6 +79,74 @@ function getPhaseAppropriateProblems(
   }
 }
 
+async function isQuizModerator(userId: string, courseId: string, courseTerm: string) {
+  return await isUserIdAuthorizedForAny(userId, [
+    {
+      name: ResourceName.COURSE_QUIZ,
+      action: Action.MUTATE,
+      variables: { courseId, instanceId: courseTerm },
+    },
+    {
+      name: ResourceName.COURSE_QUIZ,
+      action: Action.PREVIEW,
+      variables: { courseId, instanceId: courseTerm },
+    },
+  ]);
+}
+
+const LEARNERS_WITH_RESPONSES_CACHE = new Map<
+  string,
+  { learners: string[]; cacheCreated_ms: number }
+>();
+const LEARNERS_WITH_RESPONSES_CACHE_VALID_FOR_MS = 1000 * 6; // 6 seconds
+const LEARNERS_WITH_RESPONSES_CACHE_REVALIDATE_MS = 1000 * 2; // 2 seconds
+
+async function recomputeLearnersWithResponsesAndUpdateCache(quizId: string) {
+  console.log('Recomputing learners with responses and updating cache for quiz:', quizId);
+  const learnersWithResponses = await queryGradingDb<{ userId: string }[]>(
+    `SELECT userId FROM grading WHERE quizId = ? GROUP BY userId`,
+    [quizId]
+  );
+  if ('error' in learnersWithResponses) throw new Error('DB error');
+  const learners = learnersWithResponses.map((learner) => learner.userId);
+  LEARNERS_WITH_RESPONSES_CACHE.set(quizId, { learners, cacheCreated_ms: Date.now() });
+  return learners;
+}
+
+async function getLearnersWithResponsesOrSetError(quizId: string, res: NextApiResponse) {
+  const cachedLearnersWithResponses = LEARNERS_WITH_RESPONSES_CACHE.get(quizId);
+  if (
+    cachedLearnersWithResponses &&
+    Date.now() - cachedLearnersWithResponses.cacheCreated_ms <
+      LEARNERS_WITH_RESPONSES_CACHE_VALID_FOR_MS
+  ) {
+    return cachedLearnersWithResponses.learners;
+  }
+  try {
+    return await recomputeLearnersWithResponsesAndUpdateCache(quizId);
+  } catch (error) {
+    console.error('Error recomputing learners with responses:', error);
+    res.status(500).send('Internal server error');
+    return;
+  }
+}
+
+async function getResponsesOrSetError(
+  quizId: string,
+  isModerator: boolean,
+  phase: Phase,
+  userId: string,
+  res: NextApiResponse
+) {
+  if (!isModerator && ![Phase.STARTED, Phase.ENDED, Phase.FEEDBACK_RELEASED].includes(phase)) {
+    return {};
+  }
+  const learners = await getLearnersWithResponsesOrSetError(quizId, res);
+  if (!learners) return;
+  if (!learners.includes(userId)) return {};
+  return await getUserQuizResponseOrSetError(quizId, userId, res);
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<string | GetQuizResponse>
@@ -94,24 +161,11 @@ export default async function handler(
     res.status(400).send(`Quiz not found: [${quizId}]`);
     return;
   }
-  const moderatorActions: ResourceActionParams[] = [
-    {
-      name: ResourceName.COURSE_QUIZ,
-      action: Action.MUTATE,
-      variables: { courseId, instanceId: courseTerm },
-    },
-    {
-      name: ResourceName.COURSE_QUIZ,
-      action: Action.PREVIEW,
-      variables: { courseId, instanceId: courseTerm },
-    },
-  ];
-  const isModerator = await isUserIdAuthorizedForAny(userId, moderatorActions);
-
+  const isModerator = await isQuizModerator(userId, courseId, courseTerm);
   const phase = getQuizPhase(quizInfo);
   const quizTimes = getQuizTimes(quizInfo);
   const problems = getPhaseAppropriateProblems(quizInfo.problems, isModerator, phase);
-  const responses = await getUserQuizResponseOrSetError(quizId, userId, res);
+  const responses = await getResponsesOrSetError(quizId, isModerator, phase, userId, res);
   if (!responses) return;
 
   res.status(200).json({
@@ -124,5 +178,8 @@ export default async function handler(
     problems: reorderBasedOnUserId(isModerator, problems, userId),
     responses,
   } as GetQuizResponse);
-  return;
+
+  if (Date.now() - quizTimes.quizStartTs > LEARNERS_WITH_RESPONSES_CACHE_REVALIDATE_MS) {
+    await recomputeLearnersWithResponsesAndUpdateCache(quizId);
+  }
 }

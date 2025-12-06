@@ -17,7 +17,7 @@ import {
   LikertType,
   ProblemEval,
   Tristate,
-} from '@stex-react/api';
+} from '@alea/spec';
 import { Fragment, useEffect, useState } from 'react';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 
