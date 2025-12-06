@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material';
+import { getJobCategories, InitialJobData, JobCategoryInfo } from '@alea/spec';
 import { JobCategoryDetails } from '../../pages/job-portal/admin-dashboard';
-import { getJobCategories, InitialJobData, JobCategoryInfo } from '@stex-react/api';
-import { CURRENT_TERM } from '@stex-react/utils';
 import JobPostInfoForm from './JobPostInfoForm';
+import { CURRENT_TERM } from '@alea/utils';
 
 type CurrentView = 'jobList' | 'jobDetails';
 const RecruiterJobDialog = ({

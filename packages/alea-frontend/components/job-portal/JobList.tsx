@@ -18,7 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { createJobPost, getJobPosts, RecruiterData, updateJobPost } from '@stex-react/api';
+import { createJobPost, getJobPosts, RecruiterData, updateJobPost } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
 export const EligibilityForm = ({ formData, handleChange }) => {

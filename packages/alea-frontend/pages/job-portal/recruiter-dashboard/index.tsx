@@ -18,8 +18,8 @@ import {
   OrganizationData,
   RecruiterAndOrgData,
   RecruiterData,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import RecruiterProfileDialog from '../../../../alea-frontend/components/job-portal/RecruiterProfileDialog';

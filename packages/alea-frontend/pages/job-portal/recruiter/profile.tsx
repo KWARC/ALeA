@@ -13,8 +13,8 @@ import {
   getRecruiterProfile,
   RecruiterData,
   updateRecruiterProfile,
-} from '@stex-react/api';
-import { Action, PRIMARY_COL, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { OrganizationDetails } from '../../../components/job-portal/OrganizationDetails';

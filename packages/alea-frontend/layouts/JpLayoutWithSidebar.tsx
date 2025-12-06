@@ -12,7 +12,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Header } from '../components/Header';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useRouter } from 'next/router';
 import DashboardIcon from '@mui/icons-material/Dashboard';

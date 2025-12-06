@@ -34,8 +34,8 @@ import {
   createJobCategory,
   getJobCategories,
   JobCategoryInfo,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';

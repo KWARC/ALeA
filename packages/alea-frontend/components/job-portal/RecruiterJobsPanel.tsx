@@ -15,15 +15,7 @@ import {
   TableRow,
   Tooltip,
 } from '@mui/material';
-import {
-  deleteJobPost,
-  getJobApplicationsByJobPost,
-  getStudentProfileUsingUserId,
-  JobPostInfo,
-  updateJobApplication,
-  StudentData,
-  ApplicantWithProfile,
-} from '@stex-react/api';
+import { ApplicantWithProfile, deleteJobPost, getJobApplicationsByJobPost, getStudentProfileUsingUserId, JobPostInfo, StudentData, updateJobApplication } from '@alea/spec';
 import { useState } from 'react';
 import JobPostInfoForm from './JobPostInfoForm';
 import { ApplicantActionDialog } from './ApplicantActionDialog';

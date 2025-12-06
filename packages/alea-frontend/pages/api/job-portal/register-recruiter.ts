@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
-import { CURRENT_TERM } from '@stex-react/utils';
+import { CURRENT_TERM } from '@alea/utils';
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
 import { checkInviteToOrgOrSet500OnError } from './check-org-invitations';
 import { getOrganizationByDomainOrSet500OnError } from './get-org-by-domain';
@@ -9,7 +9,7 @@ import { createRecruiterProfileOrSet500OnError } from './create-recruiter-profil
 import { createAclOrSetError } from '../access-control/create-acl';
 import { addRemoveMemberOrSetError } from '../access-control/add-remove-member';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
-import { RecruiterData } from '@stex-react/api';
+import { RecruiterData } from '@alea/spec';
 import { deleteRecruiterProfileOrSetError } from './delete-recruiter-profile';
 import { deleteOrganizationProfileOrSetError } from './delete-organization-profile';
 

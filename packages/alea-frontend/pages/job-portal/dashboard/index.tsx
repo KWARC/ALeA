@@ -22,8 +22,8 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import { canAccessResource, getStudentProfile, StudentData } from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { canAccessResource, getStudentProfile, StudentData } from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Chart } from 'react-google-charts';

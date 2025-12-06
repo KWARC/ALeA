@@ -12,8 +12,8 @@ import {
   createStudentProfile,
   getStudentProfile,
   StudentData,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';

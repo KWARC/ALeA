@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeDontEndSet500OnError } from '../comment-utils';
-import { OrganizationData } from '@stex-react/api';
+import { OrganizationData } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;

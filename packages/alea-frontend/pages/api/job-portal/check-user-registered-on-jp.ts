@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeDontEndSet500OnError } from '../comment-utils';
-import { isFauId } from '@stex-react/utils';
+import { isFauId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { userId } = req.body;

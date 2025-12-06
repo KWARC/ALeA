@@ -7,8 +7,8 @@ import {
   JobApplicationInfo,
   JobPostInfo,
   StudentData,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 import { useEffect, useState } from 'react';

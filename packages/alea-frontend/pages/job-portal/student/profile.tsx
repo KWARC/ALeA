@@ -7,8 +7,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { canAccessResource, getStudentProfile, updateStudentProfile } from '@stex-react/api';
-import { Action, CURRENT_TERM, PRIMARY_COL, ResourceName } from '@stex-react/utils';
+import { canAccessResource, getStudentProfile, updateStudentProfile } from '@alea/spec';
+import { Action, CURRENT_TERM, PRIMARY_COL, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';

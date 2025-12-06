@@ -1,4 +1,4 @@
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';

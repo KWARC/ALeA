@@ -21,7 +21,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ApplicantWithProfile, updateJobApplication } from '@stex-react/api';
+import { ApplicantWithProfile, updateJobApplication } from '@alea/spec';
 import Link from 'next/link';
 import { useState } from 'react';
 import { getSocialIcon, UserProfileCard } from './UserProfileCard';

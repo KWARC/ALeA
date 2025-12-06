@@ -16,15 +16,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  createJobPost,
-  getRecruiterProfile,
-  InitialJobData,
-  JobPostInfo,
-  updateJobPost,
-} from '@stex-react/api';
-import { PRIMARY_COL } from '@stex-react/utils';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
+import { createJobPost, getRecruiterProfile, InitialJobData, updateJobPost } from '@alea/spec';
+import { PRIMARY_COL } from '@alea/utils';
 
 const HeaderWithStepper = ({ activeStep }) => {
   const steps = ['Training Details', 'Offer Details', 'Eligibility'];

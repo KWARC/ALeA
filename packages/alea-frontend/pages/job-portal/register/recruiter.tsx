@@ -11,8 +11,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { getRecruiterProfile, registerRecruiter } from '@stex-react/api';
-import { isBusinessDomain } from '@stex-react/utils';
+import { getRecruiterProfile, registerRecruiter } from '@alea/spec';
+import { isBusinessDomain } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';

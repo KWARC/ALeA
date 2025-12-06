@@ -16,7 +16,7 @@ import {
   TableRow,
   Tooltip,
 } from '@mui/material';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 
 const Applications = () => {
   const [sortOrder, setSortOrder] = useState('newest');

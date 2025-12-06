@@ -16,7 +16,7 @@ import {
   RecruiterData,
   updateOrganizationProfile,
   updateRecruiterProfile,
-} from '@stex-react/api';
+} from '@alea/spec';
 import { useState } from 'react';
 
 type FormSection = 'recruiterDetails' | 'organizationInfo';

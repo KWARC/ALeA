@@ -10,8 +10,8 @@ import {
   JobPostInfo,
   OrganizationData,
   RecruiterData,
-} from '@stex-react/api';
-import { Action, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import {

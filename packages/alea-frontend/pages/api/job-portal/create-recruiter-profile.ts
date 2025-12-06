@@ -5,8 +5,8 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, isFauId, ResourceName } from '@stex-react/utils';
-import { RecruiterData } from '@stex-react/api';
+import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
+import { RecruiterData } from '@alea/spec';
 
 export async function createRecruiterProfileOrSet500OnError(
   {

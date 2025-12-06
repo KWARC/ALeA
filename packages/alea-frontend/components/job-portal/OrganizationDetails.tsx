@@ -1,6 +1,6 @@
 import { Edit } from '@mui/icons-material';
 import { Box, Button, CircularProgress, IconButton, TextField, Typography } from '@mui/material';
-import { OrganizationData, updateOrganizationProfile } from '@stex-react/api';
+import { OrganizationData, updateOrganizationProfile } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
 export function OrganizationDetails({ data }: { data: OrganizationData }) {

@@ -7,8 +7,8 @@ import {
   getRecruiterProfile,
   getStudentProfileUsingUserId,
   JobPostInfo,
-} from '@stex-react/api';
-import { Action, PRIMARY_COL, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { ApplicantTable } from '../../../components/job-portal/ApplicantsTable';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';

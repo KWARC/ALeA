@@ -4,7 +4,7 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
-import { OrganizationData } from '@stex-react/api';
+import { OrganizationData } from '@alea/spec';
 async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: OrganizationData[] = await executeDontEndSet500OnError(
     `SELECT id,companyName,incorporationYear,isStartup, about, companyType,officeAddress,officePostalCode,website,domain

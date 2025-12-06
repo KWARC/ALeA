@@ -20,8 +20,8 @@ import {
   JobPostInfo,
   RecruiterData,
   updateJobPost,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {

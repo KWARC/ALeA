@@ -9,7 +9,7 @@ import {
   Work,
 } from '@mui/icons-material';
 import { Box, Button, Divider, Modal, Stack, Typography } from '@mui/material';
-import { getOrganizationProfile } from '@stex-react/api';
+import { getOrganizationProfile } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 

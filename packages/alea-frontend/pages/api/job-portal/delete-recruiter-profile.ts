@@ -4,7 +4,7 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
-import { RecruiterData } from '@stex-react/api';
+import { RecruiterData } from '@alea/spec';
 
 async function getRecruiterProfileByUserIdOrSet500OnError(userId: string, res: NextApiResponse) {
   const results: RecruiterData[] = await executeDontEndSet500OnError(

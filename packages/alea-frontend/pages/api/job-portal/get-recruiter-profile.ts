@@ -4,7 +4,7 @@ import {
   executeDontEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { RecruiterData } from '@stex-react/api';
+import { RecruiterData } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;

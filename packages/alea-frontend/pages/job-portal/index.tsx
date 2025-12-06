@@ -4,8 +4,8 @@ import {
   checkIfUserRegisteredOnJP,
   getUserInfo,
   isLoggedIn,
-} from '@stex-react/api';
-import { Action, CURRENT_TERM, isFauId, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

@@ -15,7 +15,7 @@ import { IconButton } from '@mui/material';
 import { FileOpen, PersonAdd, Cancel, Pause } from '@mui/icons-material';
 import { Chart } from 'react-google-charts';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-import { PRIMARY_COL } from '@stex-react/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import { JobSelect } from './applications';
 
 const applicantData = [

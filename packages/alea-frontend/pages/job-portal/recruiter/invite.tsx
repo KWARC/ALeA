@@ -13,8 +13,8 @@ import {
   getRecruiterProfile,
   inviteRecruiterToOrg,
   RecruiterData,
-} from '@stex-react/api';
-import { Action, ResourceName } from '@stex-react/utils';
+} from '@alea/spec';
+import { Action, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';

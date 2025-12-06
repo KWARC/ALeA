@@ -3,7 +3,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import ChatIcon from '@mui/icons-material/Chat';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 import { Box, Card, Chip, CircularProgress, Grid, Icon, Typography } from '@mui/material';
-import { getJobApplicationsByUserId } from '@stex-react/api';
+import { getJobApplicationsByUserId } from '@alea/spec';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 import { useEffect, useState } from 'react';
 import Chart from 'react-google-charts';

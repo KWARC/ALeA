@@ -4,9 +4,9 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
-import { JobCategoryInfo } from '@stex-react/api';
+import { JobCategoryInfo } from '@alea/spec';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@stex-react/utils';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 
 export async function getJobPostUsingIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: any = await executeDontEndSet500OnError(

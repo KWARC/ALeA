@@ -1,6 +1,6 @@
 import { Cancel, CheckCircle, Send, Visibility } from "@mui/icons-material";
 import { Dialog, DialogContent, DialogTitle, IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
-import { ApplicantWithProfile, JobPostInfo, StudentData } from "@stex-react/api";
+import { ApplicantWithProfile, JobPostInfo, StudentData } from "@alea/spec";
 
 export const ApplicantActionDialog=({
     openDialog,

@@ -10,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { OrganizationData, RecruiterData, StudentData } from '@stex-react/api';
+import { OrganizationData, RecruiterData, StudentData } from '@alea/spec';
 import Link from 'next/link';
 import { useState } from 'react';
 
