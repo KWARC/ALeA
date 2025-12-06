@@ -1,9 +1,8 @@
 import { MathJaxContext } from '@alea/mathjax';
-import { PositionProvider, ServerLinksContext } from '@alea/stex-react-renderer';
+import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
 import { CommentRefreshProvider } from '@alea/react-utils';
@@ -55,7 +54,6 @@ const theme = createTheme({
 
 let flamsInitialized = false;
 const initStartTime = Date.now();
-// this code runs earlier if its not in the useEffect
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
@@ -66,14 +64,23 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   });
 
 function CustomApp({ Component, pageProps }: AppProps) {
-  const [readyToRender, setReadyToRender] = useState(false);
+  const [readyToRender, setReadyToRender] = useState(flamsInitialized);
   useEffect(() => {
+    if (readyToRender) return;
+
     const interval = setInterval(() => {
       if (flamsInitialized) {
         setReadyToRender(true);
         clearInterval(interval);
       }
     }, 10);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [readyToRender]);
+  
+  useEffect(() => {
     const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
     const pollBuildId = setInterval(async () => {
       try {
@@ -90,29 +97,32 @@ function CustomApp({ Component, pageProps }: AppProps) {
     }, 60000);
 
     return () => {
-      clearInterval(interval);
       clearInterval(pollBuildId);
     };
   }, []);
 
-  if (!readyToRender) return <CircularProgress />;
-
-  console.log('rendering after: ', Date.now() - initStartTime, 'ms');
   return (
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
         <MatomoProvider value={instance}>
           <ThemeProvider theme={theme}>
             <MathJaxContext>
-              <PositionProvider>
-                <CurrentTermProvider>
-                  <div
-                    style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
-                  >
-                    <Component {...pageProps} />
-                  </div>
-                </CurrentTermProvider>
-              </PositionProvider>
+              <FTMLReadyContext.Provider value={readyToRender}>
+                <PositionProvider>
+                  <CurrentTermProvider>
+                    <div
+                      style={{
+                        width: '100vw',
+                        height: '100vh',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                      }}
+                    >
+                      <Component {...pageProps} />
+                    </div>
+                  </CurrentTermProvider>
+                </PositionProvider>
+              </FTMLReadyContext.Provider>
             </MathJaxContext>
           </ThemeProvider>
         </MatomoProvider>

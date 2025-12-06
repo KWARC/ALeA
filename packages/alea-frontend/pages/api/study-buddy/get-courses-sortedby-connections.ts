@@ -1,5 +1,5 @@
 import { GetSortedCoursesByConnectionsResponse } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';
 import { executeAndEndSet500OnError } from '../comment-utils';

@@ -220,7 +220,7 @@ interface NewGenerationParams {
   courseId: string;
   startSectionUri: string;
   endSectionUri: string;
-  selectedGoals?: { [conceptUri: string]: string[] };
+  selectedGoals?: { [sectionUri: string]: string[] };
   selectedConcepts?: ConceptSelection[];
   selectedQuestionTypes?: string[];
   selectedCategories?: string[];

@@ -18,6 +18,14 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { createNewIssue, SelectionContext } from './issueCreator';
 import { getLocaleObject } from './lang/utils';
 
+function getIssueTitle(title: string, description: string) {
+  if (title?.trim()?.length > 0) return title;
+  const trimmedDescription = description?.trim();
+  if (!trimmedDescription?.length) return '';
+  if (trimmedDescription.length < 60) return trimmedDescription;
+  return trimmedDescription.substring(0, 50) + '...';
+}
+
 export function ReportProblemDialog({
   open,
   setOpen,
@@ -150,7 +158,7 @@ export function ReportProblemDialog({
             setIsCreating(true);
             try {
               const issueLink = await createNewIssue(
-                title,
+                getIssueTitle(title, description),
                 description,
                 selectedText,
                 context,

@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { getLatestUpdatedSections } from '@alea/spec';
 import { CommentSection } from '@alea/comments';
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';

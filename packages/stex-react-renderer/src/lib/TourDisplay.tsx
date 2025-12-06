@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import List from '@mui/material/List';
@@ -87,7 +87,7 @@ function ItemBreadcrumbs({
           return (
             <li key={uri} onClick={() => scrollToItem(item)}>
               <a>
-                <FTMLFragment
+                <SafeFTMLFragment
                   key={item.header}
                   fragment={{ type: 'HtmlString', html: item.header, uri }}
                 />
@@ -113,7 +113,7 @@ function ItemBreadcrumbs({
                   scrollToItem(dep);
                 }}
               >
-                <FTMLFragment
+                <SafeFTMLFragment
                   key={dep.header}
                   fragment={{ type: 'HtmlString', html: dep.header, uri: depUri }}
                 />
@@ -175,7 +175,7 @@ function TourItemDisplay({
     <Box id={expandedItemId(item)} maxWidth="600px" width="100%" ref={ref}>
       <Box display="flex" alignItems="start" mt="15px" mb="5px" justifyContent="space-between">
         <h3 style={{ margin: 0 }}>
-          <FTMLFragment
+          <SafeFTMLFragment
             key={item.header}
             fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
           />
@@ -216,7 +216,7 @@ function TourItemDisplay({
       <Box sx={{ mt: '20px' }}>
         {definitionUris.map((uri) => (
           <Box key={uri} mb={1.5}>
-            <FTMLFragment fragment={{ type: 'FromBackend', uri }} />
+            <SafeFTMLFragment fragment={{ type: 'FromBackend', uri }} />
           </Box>
         ))}
       </Box>
@@ -326,7 +326,7 @@ function listItemText(item: TourItem, isIntersecting: boolean) {
   return (
     <Box>
       <span style={{ fontWeight }}>
-        <FTMLFragment
+        <SafeFTMLFragment
           key={item.header}
           fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
         />

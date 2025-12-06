@@ -4,8 +4,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
 import { getAuthorizedCourseResources } from '../get-resources-for-user';
 import { executeQuery } from '../comment-utils';
-import { getCourseInfo } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCurrentTermForCourseId } from '../get-current-term';
 interface SemesterInfo {
   semesterStart: string;
   semesterEnd: string;
@@ -186,10 +186,10 @@ async function getUserEvents(
   if (accessibleCourseIds.size > 0) {
     const firstCourseId = Array.from(accessibleCourseIds)[0];
     try {
-      const courses = await getCourseInfo();
+      const courses = await getAllCoursesFromDb();
       const courseInfo = courses[firstCourseId];
-      if (courseInfo?.institution) {
-        universityId = courseInfo.institution;
+      if (courseInfo?.universityId) {
+        universityId = courseInfo.universityId;
         instanceId = await getCurrentTermForCourseId(firstCourseId);
       }
     } catch (error) {

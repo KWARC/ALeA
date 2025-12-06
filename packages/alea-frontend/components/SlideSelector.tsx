@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
 import { getSlides, Slide } from '@alea/spec';
@@ -212,7 +212,7 @@ export function SlidePicker({
                 <Card sx={{ mb: 3, overflow: 'hidden' }}>
                   <Box sx={{ height: '300px', overflow: 'auto', borderBottom: '1px solid #eee' }}>
                     {selectedSlide.slide?.html ? (
-                      <FTMLFragment
+                      <SafeFTMLFragment
                         key={selectedSlide.uri}
                         fragment={{
                           type: 'HtmlString',

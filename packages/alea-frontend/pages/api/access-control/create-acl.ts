@@ -1,7 +1,7 @@
 import { AccessControlList } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 
 

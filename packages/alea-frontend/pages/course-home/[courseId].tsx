@@ -2,8 +2,10 @@ import {
   addRemoveMember,
   Announcement,
   canAccessResource,
+  CourseInfoMetadata,
   getActiveAnnouncements,
-  getCourseInfo,
+  getAllCourses,
+  getCourseInfoMetadata,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
@@ -20,7 +22,7 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
-import { FTMLDocument } from '@flexiformal/ftml-react';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -51,6 +53,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
@@ -79,6 +82,29 @@ export async function handleEnrollment(userId: string, courseId: string, current
   } catch (error) {
     console.error('Error during enrollment:', error);
     alert('Enrollment failed. Please try again.');
+    return false;
+  }
+}
+
+export async function handleUnEnrollment(userId: string, courseId: string, currentTerm: string) {
+  if (!userId || !isFauId(userId)) {
+    alert('Please Login Using FAU Id.');
+    return false;
+  }
+
+  try {
+    await addRemoveMember({
+      memberId: userId,
+      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
+      isAclMember: false,
+      toBeAdded: false,
+    });
+
+    alert('You have been unenrolled.');
+    return true;
+  } catch (error) {
+    console.error('Error during unenrollment:', error);
+    alert('Unable to unenroll. Please try again.');
     return false;
   }
 }
@@ -513,6 +539,7 @@ const CourseHomePage: NextPage = () => {
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
+  const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -536,7 +563,7 @@ const CourseHomePage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -569,12 +596,31 @@ const CourseHomePage: NextPage = () => {
     checkAccess();
   }, [courseId, currentTerm]);
 
+  useEffect(() => {
+    if (!courseId || !currentTerm) return;
+
+    async function loadMetadata() {
+      try {
+        const info = await getCourseInfoMetadata(courseId, currentTerm);
+        setCourseMetadata(info);
+      } catch (e) {
+        console.error('filled to load metadata', e);
+        setCourseMetadata(null);
+      }
+    }
+    loadMetadata();
+  }, [courseId, currentTerm]);
+
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+  const instructorDetails =
+    courseMetadata?.instructors?.map((ins) => ({
+      name: ins.name,
+    })) ?? [];
 
   const {
     notesLink,
@@ -609,6 +655,20 @@ const CourseHomePage: NextPage = () => {
     }
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
+  };
+
+  const unEnrollFromCourse = async () => {
+    if (!userId || !courseId || !currentTerm) {
+      return router.push('/login');
+    }
+
+    const confirmed = window.confirm('Are you sure you want to un-enroll?');
+    if (!confirmed) return;
+
+    const success = await handleUnEnrollment(userId, courseId, currentTerm);
+    if (success) {
+      setIsEnrolled(false);
+    }
   };
 
   return (
@@ -732,6 +792,7 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
+            <InstructorDetails details={instructorDetails} />
             <Button
               onClick={enrollInCourse}
               variant="contained"
@@ -753,6 +814,35 @@ const CourseHomePage: NextPage = () => {
             <Alert severity="info" sx={{ display: 'flex', justifyContent: 'center' }}>
               {q.enrollmentMessage}
             </Alert>
+          </Box>
+        )}
+
+        {enrolled && (
+          <Box sx={{ m: 2, textAlign: 'center' }}>
+            {studentCount !== null && (
+              <Typography
+                variant="body2"
+                component="div"
+                sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                You and {Math.max(studentCount - 1, 0)} other learners are enrolled.{' '}
+                <Box
+                  component="span"
+                  onClick={unEnrollFromCourse}
+                  sx={{
+                    cursor: 'pointer',
+                    color: '#b00020',
+                    ml: 0.5,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Un-Enroll
+                </Box>
+              </Typography>
+            )}
           </Box>
         )}
 
@@ -794,7 +884,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
         <Box fragment-uri={landing} fragment-kind="Section">
-          <FTMLDocument
+          <SafeFTMLDocument
             document={{ type: 'FromBackend', uri: landing }}
             showContent={false}
             pdfLink={false}

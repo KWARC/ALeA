@@ -17,7 +17,7 @@ import { useEffect, useReducer, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 
 export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
   const { forum: t } = getLocaleObject(useRouter());
@@ -107,7 +107,9 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
             borderRadius="5px"
             mb="15px"
           >
-            <FTMLFragment fragment={{ type: 'FromBackend', uri: uri }} />
+            <SafeFTMLSetup allowFullscreen={false}>
+              <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: uri }} />
+            </SafeFTMLSetup>
           </Box>
         ) : (
           <Button onClick={() => setShowContent(true)} variant="contained" sx={{ mb: '15px' }}>

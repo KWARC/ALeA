@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
@@ -12,7 +12,7 @@ import {
   canAccessResource,
   ClipInfo,
   ClipMetadata,
-  getCourseInfo,
+  getAllCourses,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -42,7 +42,7 @@ function RenderElements({ elements }: { elements: string[] }) {
     <>
       {elements.map((e, idx) => (
         <Fragment key={idx}>
-          <FTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
+          <SafeFTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
           {idx < elements.length - 1 && <br />}
         </Fragment>
       ))}
@@ -238,7 +238,7 @@ const CourseViewPage: NextPage = () => {
   }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -338,7 +338,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -365,7 +365,7 @@ const CourseViewPage: NextPage = () => {
         courseId={courseId}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      />
+      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
