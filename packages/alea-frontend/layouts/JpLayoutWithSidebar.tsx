@@ -182,7 +182,6 @@ const JpLayoutWithSidebar = ({
       <Box
         sx={{
           borderRadius: '32px',
-          pb: { md: '16px' },
           bgcolor: '#f9f5f2',
           ml: {
             xs: 0,
@@ -201,6 +200,7 @@ const JpLayoutWithSidebar = ({
             flexGrow: 1,
             pb: '10px',
             position: 'relative',
+            bgcolor: '#f9f5f2',
           }}
         >
           {!isMdUp && (

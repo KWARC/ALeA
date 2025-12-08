@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     req,
     res,
     ResourceName.JOB_PORTAL_ORG,
-    Action.ACCESS_CONTROL,
+    Action.MANAGE_JOB_POSTS,
     { orgId }
   );
   if (!inviterId) return;

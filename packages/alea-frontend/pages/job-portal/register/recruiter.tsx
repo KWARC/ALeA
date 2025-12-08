@@ -21,7 +21,6 @@ export interface RecruiterRegistrationData {
   email: string;
   companyName: string;
   position: string;
-  hasDefinedOrg: number;
 }
 
 export default function RecruiterRegistration() {
@@ -30,7 +29,6 @@ export default function RecruiterRegistration() {
     email: '',
     companyName: '',
     position: '',
-    hasDefinedOrg: 0,
   });
   const [errors, setErrors] = useState({ email: '' });
   const router = useRouter();

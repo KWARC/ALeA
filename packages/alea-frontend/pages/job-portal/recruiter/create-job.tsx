@@ -9,6 +9,7 @@ import {
   Step,
   StepLabel,
   Stepper,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -129,15 +130,13 @@ const JobPostPage = () => {
         jobCategoryId: selectedJobCategoryId,
         organizationId: recruiter?.organizationId,
       };
-
-      if (!selectedJob) {
-        setIsFormDisabled(true);
-        setLoading(true);
-        await createJobPost(jobPostPayload);
-      } else {
+      setIsFormDisabled(true);
+      setLoading(true);
+      if (selectedJob) {
         await updateJobPost({ ...jobPostPayload, id: selectedJob.id });
+      } else {
+        await createJobPost(jobPostPayload);
       }
-
       setSelectedJob(null);
       fetchData();
       setIsFormDisabled(false);
@@ -160,67 +159,73 @@ const JobPostPage = () => {
         mx: 'auto',
       }}
     >
-      <Box
-        sx={{
-          backgroundColor: '#ebecf0',
-          borderRadius: '16px',
-          mb: '10px',
-        }}
-      >
-        <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2, bgcolor: 'white' }}>
-          <InputLabel id="job-category-select-label">Select Job Category</InputLabel>
-          <Select
-            labelId="job-category-select-label"
-            value={selectedJobCategoryId}
-            onChange={handleJobCategoryChange}
-            label="Select Job Category"
-            fullWidth
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-              '& .MuiSelect-icon': {
-                right: 8,
-              },
-            }}
-          >
-            {jobCategories.map((job, index) => (
-              <MenuItem key={index} value={job.id}>
-                {job.jobCategory}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2, bgcolor: 'white' }}>
+        <InputLabel id="job-category-select-label">Select Job Category</InputLabel>
+        <Select
+          labelId="job-category-select-label"
+          value={selectedJobCategoryId}
+          onChange={handleJobCategoryChange}
+          label="Select Job Category"
+          fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+            },
+            '& .MuiSelect-icon': {
+              right: 8,
+            },
+          }}
+        >
+          {jobCategories.map((job, index) => (
+            <MenuItem key={index} value={job.id}>
+              {job.jobCategory}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      {!jobCategories.length && (
+        <Typography color="error" variant="subtitle2">
+          No job categories available. Please contact job portal admin to create job categories so
+          you can create a job post.
+        </Typography>
+      )}
       <Box
         sx={{
           bgcolor: '#ededed',
           p: 5,
           borderRadius: '20px',
+          position: 'relative',
         }}
       >
         {isFormDisabled && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(64, 56, 64, 0.2)', // Translucent overlay
-              borderRadius: '20px',
-              zIndex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
+          <Tooltip
+            title={
+              !loading && !jobCategories.length && 'No job Categories available to create job.'
+            }
+            arrow
           >
-            {loading && (
-              <Box>
-                <CircularProgress />
-              </Box>
-            )}
-          </Box>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(64, 56, 64, 0.2)', // Translucent overlay
+                borderRadius: '20px',
+                zIndex: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              {loading && (
+                <Box>
+                  <CircularProgress />
+                </Box>
+              )}
+            </Box>
+          </Tooltip>
         )}
         <Typography variant="h4" fontWeight="bold">
           {selectedJob ? 'Update Job Post' : 'Create a New Job Post'}

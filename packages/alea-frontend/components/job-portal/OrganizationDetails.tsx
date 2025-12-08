@@ -1,5 +1,14 @@
 import { Edit } from '@mui/icons-material';
-import { Box, Button, CircularProgress, IconButton, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControlLabel,
+  IconButton,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { OrganizationData, updateOrganizationProfile } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
@@ -11,7 +20,7 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
     if (data) setOrgData(data);
   }, [data]);
 
-  const handleChange = (key: keyof OrganizationData, value: string) => {
+  const handleChange = (key: keyof OrganizationData, value: string | boolean) => {
     setOrgData((prev) => ({ ...prev, [key]: value }));
   };
   const handleSave = async () => {
@@ -48,6 +57,7 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
             m: 2,
           }}
         />
+
         {isEditing ? (
           <Box display="flex" gap={2}>
             <Button
@@ -95,16 +105,34 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
           ].map(([label, key]) => (
             <Box key={key} mb={2}>
               {isEditing ? (
-                <TextField
-                  fullWidth
-                  label={label}
-                  variant="standard"
-                  value={orgData[key as keyof OrganizationData] || ''}
-                  onChange={(e) => handleChange(key as keyof OrganizationData, e.target.value)}
-                />
+                key === 'isStartup' ? (
+                  <FormControlLabel
+                    label={label}
+                    labelPlacement="start"
+                    control={
+                      <Switch
+                        checked={!!orgData.isStartup}
+                        onChange={(e) => handleChange('isStartup', e.target.checked)}
+                      />
+                    }
+                  />
+                ) : (
+                  <TextField
+                    fullWidth
+                    label={label}
+                    variant="standard"
+                    value={orgData[key as keyof OrganizationData] || ''}
+                    onChange={(e) => handleChange(key as keyof OrganizationData, e.target.value)}
+                  />
+                )
               ) : (
                 <Typography>
-                  <strong>{label}:</strong> {orgData[key as keyof OrganizationData] || 'N/A'}
+                  <strong>{label}:</strong>{' '}
+                  {key === 'isStartup'
+                    ? orgData.isStartup
+                      ? 'Yes'
+                      : 'No'
+                    : orgData[key as keyof OrganizationData] || 'N/A'}
                 </Typography>
               )}
             </Box>

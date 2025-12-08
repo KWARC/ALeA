@@ -293,6 +293,7 @@ CREATE TABLE studentProfile (
 CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     companyName VARCHAR(255) , 
+    domain VARCHAR(255) ,
     incorporationYear YEAR ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
@@ -312,6 +313,7 @@ CREATE TABLE recruiterProfile (
     mobile VARCHAR(15) ,
     altMobile VARCHAR (15),
     socialLinks JSON,
+    about TEXT, 
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, 
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
     CONSTRAINT fk_recruiter FOREIGN KEY (userId) REFERENCES userInfo(userId) ,
@@ -358,7 +360,7 @@ CREATE TABLE jobPost (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id),  
-    FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id)
+    FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
     FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
 );
 
