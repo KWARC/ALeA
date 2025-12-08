@@ -206,8 +206,8 @@ function CourseScheduleSection({
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
 
-  const hasMoreLectures = lectureSchedule.length > 4;
-  const hasMoreTutorials = tutorialSchedule.length > 4;
+  const hasMoreLectures = lectureSchedule.length > 3;
+  const hasMoreTutorials = tutorialSchedule.length > 3;
 
   useEffect(() => {
     async function fetchSchedule() {
