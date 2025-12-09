@@ -851,6 +851,7 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
         </Box>
+        <InstructorDetails details={instructorDetails} />
         {enrolled === false && (
           <Box
             sx={{
@@ -860,7 +861,6 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
-            <InstructorDetails details={instructorDetails} />
             <Button
               onClick={enrollInCourse}
               variant="contained"
