@@ -8,6 +8,7 @@ import {
   updateCourseInfoMetadata,
   updateHasHomework,
   updateHasQuiz,
+  getAllAclMembers,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -110,7 +111,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         const aclMemberLists = await Promise.all(
           instructorAclIds.map(async (aclId) => {
             try {
-              const users = await getAclUserDetails(aclId);
+              const users = await getAllAclMembers(aclId);
               return Array.isArray(users) ? users : [];
             } catch (e) {
               return [];
@@ -330,7 +331,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-        Instructors ( draggable)
+        Instructors
       </Typography>
 
       {instructorsLoading ? (
