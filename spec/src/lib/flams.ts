@@ -148,7 +148,7 @@ export async function getQueryResults(query: string) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }
     );
-    return JSON.parse(resp.data) as SparqlResponse;
+    return resp.data as SparqlResponse;
   } catch (error) {
     console.error('Error executing SPARQL query:', error);
     throw error;
