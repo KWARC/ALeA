@@ -332,10 +332,10 @@ export const SYSTEM_UPDATES = [
     id: 'quizzes',
     header: 'Quizzes in ALᴇA',
     content:
-      'We are pleased to announce the introduction of our new Quiz Feature on our ALᴇA! We will be utilizing this feature for the weekly quizzes in the AI-1 course conducted during lectures. To stay informed about upcoming quizzes, kindly visit the [quiz dashboard](https://courses.voll-ki.fau.de/quiz-dash/ai-1).',
+      'We are pleased to announce the introduction of our new Quiz Feature on our ALᴇA! We will be utilizing this feature for the weekly quizzes in the AI-1 course conducted during lectures. To stay informed about upcoming quizzes, kindly visit the AI-1 quiz dashboard.',
     header_de: 'Quizze in ALᴇA',
     content_de:
-      'Wir freuen uns, die Einführung unseres neuen Quiz-Features auf unserem ALᴇA bekannt zu geben! Wir werden diese Funktion für die wöchentlichen Tests im AI-1-Kurs nutzen, die während der Vorlesungen durchgeführt werden. Um über bevorstehende Quizze auf dem Laufenden zu bleiben, besuchen Sie bitte das [Quiz-Dashboard](https://courses.voll-ki.fau.de/quiz-dash/ai-1).',
+      'Wir freuen uns, die Einführung unseres neuen Quiz-Features auf unserem ALᴇA bekannt zu geben! Wir werden diese Funktion für die wöchentlichen Tests im AI-1-Kurs nutzen, die während der Vorlesungen durchgeführt werden. Um über bevorstehende Quizze auf dem Laufenden zu bleiben, besuchen Sie bitte das AI-1 Quiz-Dashboard.',
     postedTimestamp: '2023-10-11T20:40:00+05:30',
   },
   {

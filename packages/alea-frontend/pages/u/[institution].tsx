@@ -3,7 +3,7 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getCourseInfo } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -16,6 +16,7 @@ import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
+import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
@@ -224,17 +225,17 @@ export async function getStaticProps({ params, locale }) {
       },
     };
   }
-  const allCourses = await getCourseInfo();
+  const allCourses = await getAllCoursesFromDb();
 
   const courses =
     params.institution === 'others'
       ? Object.keys(allCourses)
           .filter(
             (key) =>
-              !PARTNERED_UNIVERSITIES.map((uni) => uni.code).includes(allCourses[key].institution)
+              !PARTNERED_UNIVERSITIES.map((uni) => uni.code).includes(allCourses[key].universityId)
           )
           .map((key) => allCourses[key])
-      : await getCourseInfo(params.institution);
+      : await getAllCoursesFromDb(params.institution);
 
   return {
     props: {

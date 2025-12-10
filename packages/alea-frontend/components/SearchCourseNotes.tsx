@@ -1,4 +1,4 @@
-import { FTMLDocument } from '@flexiformal/ftml-react';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { GptSearchResult, searchCourseNotes } from '@alea/spec';
@@ -108,7 +108,7 @@ const SearchCourseNotes = ({
                       p: 1,
                     }}
                   >
-                    <FTMLDocument
+                    <SafeFTMLDocument
                       document={{ type: 'FromBackend', uri: reference.uri }}
                       showContent={false}
                       pdfLink={false}

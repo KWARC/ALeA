@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import {
   connectionRequest,
-  getCourseInfo,
+  getAllCourses,
   GetStudyBuddiesResponse,
   getStudyBuddyList,
   getStudyBuddyUserInfo,
@@ -84,7 +84,7 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, fromServer?.active]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {

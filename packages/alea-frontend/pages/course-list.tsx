@@ -1,8 +1,7 @@
+import { getAllCourses } from '@alea/spec';
+import { CourseInfo, PRIMARY_COL } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
-import { DocIdxType, getCourseInfo, getDocIdx } from '@alea/spec';
-import { ArchiveIndex, Institution } from '@flexiformal/ftml-backend';
-import { CourseInfo, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -11,27 +10,21 @@ import { CourseThumb } from './u/[institution]';
 
 const CourseList: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
-  // const [docIdx, setDocIdx] = useState<(FTML.ArchiveIndex | FTML.Institution)[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      // const docIdxData = await getDocIdx();
-      // console.log({ docIdxData });
-      // setDocIdx(docIdxData);
-
-      const courseInfoData = await getCourseInfo();
+      const courseInfoData = await getAllCourses();
       setCourses(courseInfoData);
     };
     fetchData();
   }, []);
-  const groupedCourses: { [institution: string]: CourseInfo[] } = {};
+  const groupedCourses: { [universityId: string]: CourseInfo[] } = {};
   Object.values(courses).forEach((course) => {
-    if (!groupedCourses[course.institution]) {
-      groupedCourses[course.institution] = [];
+    const universityId = course.universityId || 'Unknown';
+    if (!groupedCourses[universityId]) {
+      groupedCourses[universityId] = [];
     }
-    groupedCourses[course.institution].push(course);
+    groupedCourses[universityId].push(course);
   });
-
-  // const universities = docIdx.filter((doc) => doc.type === DocIdxType.university) as FTML.Institution[];
 
   const universities = [
     {
@@ -57,11 +50,11 @@ const CourseList: NextPage = () => {
   return (
     <MainLayout title="Course-List | ALeA">
       <Box m="0 auto" maxWidth="800px">
-        {Object.entries(groupedCourses).map(([institution, institutionCourses]) => (
-          <Box key={institution}>
-            <Typography variant="h3">{institution}</Typography>
+        {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
+          <Box key={universityId}>
+            <Typography variant="h3">{universityId}</Typography>
             {universities.map((uni) => {
-              if (uni.acronym !== institution) return null;
+              if (uni.acronym !== universityId) return null;
               return (
                 <Box key={uni.title}>
                   <Typography display="flex" alignItems="center" fontWeight="bold">

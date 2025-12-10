@@ -11,7 +11,7 @@ export function PersonalCalendarSection({
   hintGoogle: string;
   hintApple: string;
 }) {
-  const calendarURL = `https://courses.voll-ki.fau.de/api/calendar/create-calendar?userId=${userId}`;
+  const calendarURL = `${window.location.origin}/api/calendar/create-calendar?userId=${userId}`;
   const [calendarLinkCopied, setCalendarLinkCopied] = useState(false);
   if (!userId) return null;
   return (

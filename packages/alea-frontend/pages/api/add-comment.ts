@@ -1,5 +1,5 @@
 import { Comment, CommentType, DEFAULT_POINTS, GrantReason, NotificationType } from '@alea/spec';
-import { getCurrentTermForCourseId } from '@alea/utils';
+import { getCurrentTermForCourseId } from './get-current-term';
 import axios from 'axios';
 import { canUserModerateComments } from './access-control/resource-utils';
 import {
@@ -27,7 +27,7 @@ async function sendCommentAlert(
   courseTerm
 ) {
   if (isPrivate) return;
-  const fullLink = `https://courses.voll-ki.fau.de${link}`;
+  const fullLink = `https://${process.env.NEXT_PUBLIC_NON_FAU_DOMAIN}${link}`;
   const message = (await canUserModerateComments(userId, courseId, courseTerm))
     ? `A moderator posted at ${fullLink}`
     : `A ${isQuestion ? 'question' : 'comment'} was posted at ${fullLink}`;

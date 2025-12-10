@@ -1,4 +1,5 @@
-import { Action, getCurrentTermForCourseId, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';

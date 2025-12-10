@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { getOldQuizFiles, getOldQuizFile, getOldSemesters } from '@alea/spec';
-import { FTMLFragment } from '@flexiformal/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 import { useEffect, useState } from 'react';
 
@@ -220,7 +220,7 @@ function OldQuizPage() {
                           </Box>
                           {titleHtml && (
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                              <FTMLFragment
+                              <SafeFTMLFragment
                                 fragment={{
                                   type: 'HtmlString',
                                   html: titleHtml,
@@ -235,7 +235,7 @@ function OldQuizPage() {
                             </Typography>
                           )}
                           <Box sx={{ mt: 1 }}>
-                            <FTMLFragment
+                            <SafeFTMLFragment
                               fragment={{
                                 type: 'HtmlString',
                                 html: html,

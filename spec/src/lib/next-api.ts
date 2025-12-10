@@ -69,7 +69,7 @@ export interface GetSlidesResponse {
   [sectionId: string]: SlidesWithCSS;
 }
 
-// Can use for 'https://courses.voll-ki.fau.de' for faster debugging and/or to get latest server data.
+// Can use for 'https://alea.education' for faster debugging and/or to get latest server data.
 // However, you will need some use CORS unblocker. eg https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino
 const BASE_SLIDES_DATA_URL = '';
 

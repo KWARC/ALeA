@@ -9,7 +9,7 @@ import {
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
-import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo } from './course-metadata-api';
+import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo, getCourseIdsByUniversity } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -58,74 +58,7 @@ export function clearCourseHomeworkQuizCache(): void {
   courseHomeworkQuizCache.clear();
 }
 
-export async function getDocIdx(institution?: string) {
-  if (!CACHED_ARCHIVE_INDEX) {
-    const res = await flamsIndex();
-    if (res) {
-      CACHED_INSTITUTION_INDEX = res[0] as Institution[];
-      CACHED_ARCHIVE_INDEX = res[1] as ArchiveIndex[];
-    }
-  }
-  const archiveIndex = CACHED_ARCHIVE_INDEX || [];
-  const institutionIndex = CACHED_INSTITUTION_INDEX || [];
 
-  if (!institution) {
-    return [...archiveIndex, ...institutionIndex];
-  }
-
-  const filteredArchiveIndex = archiveIndex.filter(
-    (doc) => doc.type === 'course' && doc.institution === institution
-  );
-
-  return [...filteredArchiveIndex, ...institutionIndex];
-}
-
-export async function getCourseIdsOfSemester(semester: string): Promise<string[]> {
-  return Object.entries(COURSES_INFO)
-    .filter(([, info]) => info.instances?.some((i) => i.semester === semester))
-    .map(([courseId]) => courseId.toLowerCase());
-}
-
-export async function getCourseInfo(institution?: string) {
-  /*  const filtered = { ...COURSES_INFO };
-
-  // Don't show Luka's course on production.
-  if (process.env['NEXT_PUBLIC_SITE_VERSION'] === 'production') {
-    delete filtered['f29fa1'];
-  }
-  return filtered;*/
-  // try {
-  //   const docIdx = await getDocIdx(institution);
-  //   const courseInfo: { [courseId: string]: CourseInfo } = {};
-  //   for (const doc of docIdx) {
-  //     if (doc.type !== DocIdxType.course) continue;
-  //     if (!doc.acronym || !doc.landing || !doc.notes) continue;
-  //     doc.acronym = doc.acronym.toLowerCase();
-
-  //     const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-  //     courseInfo[doc.acronym] = createCourseInfo(
-  //       doc.acronym,
-  //       doc.title,
-  //       doc.notes,
-  //       doc.landing,
-  //       isCurrent,
-  //       true,
-  //       ['lbs', 'ai-1', 'iwgs-1'].includes(doc.acronym) ? true : doc.quizzes ?? false,
-  //       doc.institution,
-  //       doc.instances,
-  //       doc.instructors,
-  //       doc.teaser,
-  //       doc.slides
-  //     );
-  //   }
-  //   console.log('Fetched course info from FLAMS:', courseInfo);
-  //   return courseInfo;
-  // } catch (err) {
-  //   console.log(err);
-  //   return COURSES_INFO;
-  // }
-  return COURSES_INFO;
-}
 
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
@@ -215,7 +148,7 @@ export async function getQueryResults(query: string) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }
     );
-    return JSON.parse(resp.data) as SparqlResponse;
+    return resp.data as SparqlResponse;
   } catch (error) {
     console.error('Error executing SPARQL query:', error);
     throw error;
