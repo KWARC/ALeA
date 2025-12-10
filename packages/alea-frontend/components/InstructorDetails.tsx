@@ -1,6 +1,7 @@
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Tooltip } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { PRIMARY_COL } from '@alea/utils';
+import Link from 'next/link';
 
 function InstructorDetails({ details = [] }) {
   if (!details.length) return;
@@ -13,17 +14,33 @@ function InstructorDetails({ details = [] }) {
       {details.map((item, index) => (
         <Box display="flex" key={index} gap={0.5} alignItems="center">
           <PersonIcon sx={{ color: PRIMARY_COL, fontSize: '1rem' }} />
-
-          <Typography
-            sx={{
-              fontSize: '0.95rem',
-              fontWeight: 400,
-              color: PRIMARY_COL,
-            }}
-          >
-            {item.name}
-          </Typography>
-
+          {item.url ? (
+            <Tooltip title={item.url}>
+              <Link
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  textDecoration: 'underline',
+                  color: PRIMARY_COL,
+                  fontSize: '0.95rem',
+                  fontWeight: 400,
+                }}
+              >
+                {item.name}
+              </Link>
+            </Tooltip>
+          ) : (
+            <Typography
+              sx={{
+                fontSize: '0.95rem',
+                fontWeight: 400,
+                color: PRIMARY_COL,
+              }}
+            >
+              {item.name}
+            </Typography>
+          )}
           {index < details.length - 1 && (
             <Typography
               sx={{
