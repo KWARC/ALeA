@@ -374,6 +374,7 @@ CREATE TABLE jobApplication (
         'ON_HOLD', 
         'REJECTED', 
         'OFFERED', 
+        'OFFER_REVOKED',
         'APPLICATION_WITHDRAWN', 
         'OFFER_ACCEPTED', 
         'OFFER_REJECTED'
@@ -389,6 +390,7 @@ CREATE TABLE jobApplication (
         'ON_HOLD', 
         'REJECT', 
         'SEND_OFFER',
+        'REVOKE_OFFER',
         'NONE'
     ) DEFAULT 'NONE',
     studentMessage VARCHAR(255), 

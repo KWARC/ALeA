@@ -80,10 +80,11 @@ export const JobSelect = ({
 }: {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setApplicants: React.Dispatch<React.SetStateAction<ApplicantWithProfile[]>>;
-  jobPosts:JobPostInfo[];
+  jobPosts: JobPostInfo[];
 }) => {
-  const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
-  
+  const [selectedJob, setSelectedJob] = useState<JobPostInfo | null>(
+    jobPosts.length > 0 ? jobPosts[0] : null
+  );
   async function getApplicants(job: JobPostInfo) {
     if (!job) return;
     setLoading(true);
@@ -114,7 +115,6 @@ export const JobSelect = ({
       setApplicants([]);
     }
   }, [selectedJob]);
-
 
   return (
     <FormControl
@@ -159,7 +159,7 @@ const Applications = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setAccessCheckLoading(true);
       let recruiterData: RecruiterData;
@@ -200,7 +200,7 @@ const Applications = () => {
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <JobSelect  setLoading={setLoading} setApplicants={setApplicants} jobPosts={jobPosts}/>
+          <JobSelect setLoading={setLoading} setApplicants={setApplicants} jobPosts={jobPosts} />
           <StatusFilter applicants={applicants} setFilteredApplicants={setFilteredApplicants} />
         </Box>
         <hr />

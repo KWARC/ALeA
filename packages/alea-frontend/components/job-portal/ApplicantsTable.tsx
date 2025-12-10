@@ -11,7 +11,6 @@ import {
   Button,
   CircularProgress,
   IconButton,
-  Modal,
   Table,
   TableBody,
   TableCell,
@@ -24,7 +23,8 @@ import {
 import { ApplicantWithProfile, updateJobApplication } from '@alea/spec';
 import Link from 'next/link';
 import { useState } from 'react';
-import { getSocialIcon, UserProfileCard } from './UserProfileCard';
+import { getSocialIcon } from './UserProfileCard';
+import { UserProfileModal } from 'packages/alea-frontend/pages/job-portal/recruiter/make-offer';
 
 const ActionButtons = ({
   applicant,
@@ -38,6 +38,7 @@ const ActionButtons = ({
       ...applicant,
       applicationStatus: 'SHORTLISTED_FOR_INTERVIEW',
       recruiterAction: 'SHORTLIST_FOR_INTERVIEW',
+      applicantAction: 'NONE',
     };
     const res = await updateJobApplication(application);
     updateApplicant(application);
@@ -48,6 +49,7 @@ const ActionButtons = ({
       ...applicant,
       applicationStatus: 'REJECTED',
       recruiterAction: 'REJECT',
+      applicantAction: 'NONE',
     };
     const res = await updateJobApplication(application);
     updateApplicant(application);
@@ -57,6 +59,7 @@ const ActionButtons = ({
       ...applicant,
       applicationStatus: 'ON_HOLD',
       recruiterAction: 'ON_HOLD',
+      applicantAction: 'NONE',
     };
     const res = await updateJobApplication(application);
     updateApplicant(application);
@@ -65,7 +68,9 @@ const ActionButtons = ({
     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
       <Tooltip
         title={
-          applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'
+          applicant.recruiterAction === 'SEND_OFFER'
+            ? 'Offer already made'
+            : applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'
             ? 'Shortlisted'
             : 'Shortlist for Interview'
         }
@@ -74,31 +79,62 @@ const ActionButtons = ({
           <IconButton
             color="primary"
             onClick={() => handleShortlistApplication(applicant)}
-            disabled={applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'}
+            disabled={
+              applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW' ||
+              applicant.recruiterAction === 'SEND_OFFER' ||
+              applicant.applicantAction === 'ACCEPT_OFFER' ||
+              applicant.applicantAction === 'REJECT_OFFER'
+            }
           >
             <PersonAdd />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip title={applicant.applicationStatus === 'ON_HOLD' ? 'On Hold' : 'Keep on Hold'}>
+      <Tooltip
+        title={
+          applicant.applicantAction === 'ACCEPT_OFFER' ||
+          applicant.applicantAction === 'REJECT_OFFER'
+            ? 'Offer already made'
+            : applicant.applicationStatus === 'ON_HOLD'
+            ? 'On Hold'
+            : 'Keep on Hold'
+        }
+      >
         <span>
           <IconButton
             color="warning"
             onClick={() => handleKeepOnHoldApplication(applicant)}
-            disabled={applicant.applicationStatus === 'ON_HOLD'}
+            disabled={
+              applicant.applicationStatus === 'ON_HOLD' ||
+              applicant.applicantAction === 'ACCEPT_OFFER' ||
+              applicant.applicantAction === 'REJECT_OFFER'
+            }
           >
             <PauseCircle />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip title={applicant.applicationStatus === 'REJECTED' ? 'Rejected' : 'Reject Applicant'}>
+      <Tooltip
+        title={
+          applicant.applicantAction === 'ACCEPT_OFFER' ||
+          applicant.applicantAction === 'REJECT_OFFER'
+            ? 'Offer already made'
+            : applicant.applicationStatus === 'REJECTED'
+            ? 'Rejected'
+            : 'Reject Applicant'
+        }
+      >
         <span>
           <IconButton
             color="error"
             onClick={() => handleRejectApplication(applicant)}
-            disabled={applicant.applicationStatus === 'REJECTED'}
+            disabled={
+              applicant.applicationStatus === 'REJECTED' ||
+              applicant.applicantAction === 'ACCEPT_OFFER' ||
+              applicant.applicantAction === 'REJECT_OFFER'
+            }
           >
             <Cancel />
           </IconButton>
@@ -117,10 +153,8 @@ const SocialLinks = ({ socialLinks }) => {
     );
 
   const normalizeUrl = (url) => {
- if (!url || url.trim() === '' || url === 'N/A') return null;
-     return url.startsWith('http://') || url.startsWith('https://')
-      ? url
-      : `https://${url}`;
+    if (!url || url.trim() === '' || url === 'N/A') return null;
+    return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
   };
 
   return (
@@ -129,17 +163,13 @@ const SocialLinks = ({ socialLinks }) => {
         const url = normalizeUrl(String(rawUrl));
 
         return (
-          <Tooltip
-            key={index}
-            title={platform.charAt(0).toUpperCase() + platform.slice(1)}
-            arrow
-          >
+          <Tooltip key={index} title={platform.charAt(0).toUpperCase() + platform.slice(1)} arrow>
             <span>
               <IconButton
                 component="a"
                 href={url || undefined}
-                target={url ? "_blank" : undefined}
-                rel={url ? "noopener noreferrer" : undefined}
+                target={url ? '_blank' : undefined}
+                rel={url ? 'noopener noreferrer' : undefined}
                 disabled={!url}
                 sx={{
                   opacity: url ? 1 : 0.4,
@@ -209,46 +239,11 @@ const ApplicantRow = ({
             </Typography>
           </Box>
         </Box>
-
-        <Modal sx={{ zIndex: 2005 }} open={Boolean(selectedProfile)} onClose={handleCloseProfile}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              backgroundColor: '#e0e0e0',
-              maxWidth: '600px',
-              maxHeight: '80vh',
-              p: 2,
-              borderRadius: 2,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <IconButton
-              onClick={handleCloseProfile}
-              sx={{
-                position: 'absolute',
-                top: 10,
-                right: 10,
-                zIndex: 1,
-                bgcolor: '#f5f3f0',
-              }}
-            >
-              <Cancel sx={{ color: 'red' }} />
-            </IconButton>
-
-            <Box
-              sx={{
-                overflowY: 'auto',
-                paddingRight: 1,
-              }}
-            >
-              <UserProfileCard type="student" userData={selectedProfile} showPortfolioLinks />
-            </Box>
-          </Box>
-        </Modal>
+        <UserProfileModal
+          open={Boolean(selectedProfile)}
+          profile={selectedProfile}
+          onClose={handleCloseProfile}
+        />
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>{applicant?.jobPostTitle}</TableCell>
       <TableCell sx={{ textAlign: 'center' }}>

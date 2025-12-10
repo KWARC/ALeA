@@ -1,8 +1,10 @@
 import {
+  Block,
   Cancel,
   CheckCircle,
   ExpandLess,
   ExpandMore,
+  MailOutline,
   Pause,
   PendingActions,
 } from '@mui/icons-material';
@@ -235,18 +237,30 @@ const Applications = () => {
                       <TableCell align="center">{jobApplication.companyName}</TableCell>
                       <TableCell align="center">{jobApplication.jobTitle}</TableCell>
                       <TableCell align="center">
-                        {jobApplication.applicationStatus === 'OFFERED' ||
-                        jobApplication.applicationStatus === 'OFFER_ACCEPTED' ||
-                        jobApplication.applicationStatus === 'OFFER_REJECTED' ? (
-                          <Chip label="Offer Received" color="success" icon={<CheckCircle />} />
+                        {jobApplication.applicationStatus === 'OFFERED' ? (
+                          <Chip label="Offer Received" color="info" icon={<MailOutline />} />
                         ) : jobApplication.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW' ? (
                           <Chip
                             label="Shortlisted For Interview "
                             color="primary"
                             icon={<CheckCircle />}
                           />
-                        ) : jobApplication.applicationStatus === 'REJECTED' ? (
-                          <Chip label="Application Rejected" color="error" icon={<Cancel />} />
+                        ) : jobApplication.applicationStatus === 'OFFER_ACCEPTED' ? (
+                          <Chip label="Offer Accepted" color="success" icon={<CheckCircle />} />
+                        ) : jobApplication.applicationStatus === 'OFFER_REJECTED' ? (
+                          <Chip
+                            label="Offer Rejected"
+                            color="error"
+                            icon={<Cancel />}
+                            variant="filled"
+                          />
+                        ) :( jobApplication.applicationStatus === 'REJECTED'||jobApplication.applicationStatus === 'OFFER_REVOKED') ? (
+                          <Chip
+                            label="Application Rejected"
+                            color="error"
+                            icon={<Block />}
+                            variant="outlined"
+                          />
                         ) : jobApplication.applicationStatus === 'ON_HOLD' ? (
                           <Chip
                             label="Application Kept On Hold"

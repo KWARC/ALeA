@@ -371,7 +371,7 @@ function RecruiterStatistics() {
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <Box sx={{ backgroundColor: '#f5f5f5', borderRadius: '16px', padding: '16px' }}>
-                  <JobSelect setLoading={setLoading} setApplicants={setApplicants} />
+                  {/* <JobSelect setLoading={setLoading} setApplicants={setApplicants} /> */}
                 </Box>
               </Grid>
             </Grid>

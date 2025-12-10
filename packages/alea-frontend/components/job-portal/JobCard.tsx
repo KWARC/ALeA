@@ -7,6 +7,7 @@ import {
   MonetizationOn,
   People,
   Work,
+  WorkOutline,
 } from '@mui/icons-material';
 import { Box, Button, Divider, Modal, Stack, Typography } from '@mui/material';
 import { getOrganizationProfile } from '@alea/spec';
@@ -39,7 +40,10 @@ const JobDetails = ({ job }) => {
         <LocationOn fontSize="small" color="action" />
         <Typography variant="body2">{job.trainingLocation}</Typography>
       </Stack>
-
+      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+        <WorkOutline fontSize="small"  color="primary" />
+        <Typography variant="body2">{job.workMode}</Typography>
+      </Stack>
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
         <MonetizationOn fontSize="small" color="success" />
         <Typography variant="body2">

@@ -23,6 +23,7 @@ import {
   Close,
   GroupAdd,
   PostAdd,
+  Send,
   Work,
 } from '@mui/icons-material';
 
@@ -60,6 +61,11 @@ const Sidebar = ({
         label: 'Applications',
         path: '/job-portal/recruiter/applications',
         icon: <AssignmentTurnedIn />,
+      },
+      {
+        label: ' Make Offer',
+        path: '/job-portal/recruiter/make-offer',
+        icon: <Send />,
       },
       { label: 'Profile', path: '/job-portal/recruiter/profile', icon: <AccountCircle /> },
       // { label: 'Statistics', path: '/job-portal/recruiter/statistics', icon: <BarChart /> },
