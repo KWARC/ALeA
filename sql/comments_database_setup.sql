@@ -280,7 +280,7 @@ CREATE TABLE studentProfile (
     yearOfGraduation YEAR, 
     courses TEXT, 
     about TEXT, 
-    gpa DECIMAL(4,3) DEFAULT 0.000,
+    gpa FLOAT,
     location VARCHAR(100),
     altMobile VARCHAR(15),
     socialLinks JSON,
