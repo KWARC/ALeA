@@ -15,6 +15,7 @@ CREATE TABLE comments (
     questionStatus ENUM('UNANSWERED', 'ANSWERED', 'ACCEPTED', 'OTHER'),
     courseId varchar(255),
     courseTerm varchar(255),
+    institutionId varchar(255),
     isEdited tinyint,
     isPrivate tinyint,
     isDeleted tinyint,

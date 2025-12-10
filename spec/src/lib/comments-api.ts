@@ -103,11 +103,13 @@ export async function updateQuestionState(
 
 export async function getCourseInstanceThreads(
   courseId: string,
-  courseTerm: string
+  courseTerm: string,
+  institutionId: string
 ): Promise<Comment[]> {
   const comments: Comment[] = await commentRequest(`/api/get-course-instance-threads`, 'POST', {
     courseId,
     courseTerm,
+    institutionId,
   });
   return comments;
 }
