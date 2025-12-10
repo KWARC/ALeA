@@ -1,3 +1,5 @@
+import { getUserInfo } from '@alea/spec';
+import { handleViewSource } from '@alea/stex-react-renderer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {
   Box,
@@ -11,12 +13,18 @@ import {
   FormHelperText,
   TextField,
 } from '@mui/material';
-import { getUserInfo } from '@alea/spec';
-import { handleViewSource } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { createNewIssue, SelectionContext } from './issueCreator';
 import { getLocaleObject } from './lang/utils';
+
+function getIssueTitle(title: string, description: string) {
+  if (title?.trim()?.length > 0) return title;
+  const trimmedDescription = description?.trim();
+  if (!trimmedDescription?.length) return '';
+  if (trimmedDescription.length < 60) return trimmedDescription;
+  return trimmedDescription.substring(0, 50) + '...';
+}
 
 export function ReportProblemDialog({
   open,
@@ -32,13 +40,19 @@ export function ReportProblemDialog({
   onCreateIssue: (issueUrl: string) => void;
 }) {
   const t = getLocaleObject(useRouter());
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [userName, setUserName] = useState('');
   const [postAnonymously, setPostAnonymously] = useState(false);
 
-  const descriptionError = !description?.length;
-  const anyError = descriptionError;
+  const descRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open && descRef.current) {
+      setTimeout(() => descRef.current?.focus(), 100);
+    }
+  }, [open]);
 
   useEffect(() => {
     getUserInfo().then((userInfo) => {
@@ -46,6 +60,9 @@ export function ReportProblemDialog({
       setUserName(userInfo.fullName);
     });
   }, []);
+
+  const descriptionError = !description?.trim();
+  const anyError = descriptionError;
 
   return (
     <Dialog
@@ -57,6 +74,7 @@ export function ReportProblemDialog({
       <Box sx={{ borderBottom: '1px solid #eee', justifyContent: 'center', display: 'flex' }}>
         <h2>{t.reportProblem}</h2>
       </Box>
+
       <DialogContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#00000099' }}>{t.selectedContent}</span>
@@ -86,18 +104,34 @@ export function ReportProblemDialog({
         >
           {selectedText}
         </Box>
+
         <FormHelperText sx={{ margin: '0 5px 15px 0' }}>*{t.helperText}</FormHelperText>
+
+        <Box sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            label="Issue Title (optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </Box>
 
         <TextField
           error={descriptionError}
+          inputRef={descRef}
           fullWidth
           label={t.issueDescription}
-          style={{ textAlign: 'left' }}
           multiline
           rows={4}
+          autoFocus
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          sx={{
+            textAlign: 'left',
+            borderColor: descriptionError ? 'error.main' : undefined,
+          }}
         />
+
         {!!userName && (
           <FormControlLabel
             control={
@@ -124,6 +158,7 @@ export function ReportProblemDialog({
             setIsCreating(true);
             try {
               const issueLink = await createNewIssue(
+                getIssueTitle(title, description),
                 description,
                 selectedText,
                 context,

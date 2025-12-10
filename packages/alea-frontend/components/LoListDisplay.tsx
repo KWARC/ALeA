@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { Book, MicExternalOn, Quiz, SupervisedUserCircle } from '@mui/icons-material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -96,7 +96,7 @@ export const LoViewer: React.FC<{ uri: string; uriType: LoType }> = ({ uri, uriT
   return (
     <Box sx={{ padding: 2, border: '1px solid #ccc', borderRadius: 4, backgroundColor: '#f9f9f9' }}>
       {uri ? (
-        <FTMLFragment key={uri} fragment={{ type: 'FromBackend', uri: uri }} />
+        <SafeFTMLFragment key={uri} fragment={{ type: 'FromBackend', uri: uri }} />
       ) : (
         <Typography>No {uriType} found.</Typography>
       )}

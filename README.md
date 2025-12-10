@@ -16,11 +16,14 @@ $ npm start alea-frontend
 
 #### Serve for production
 
-alea-frontend is currently being served at https://courses.voll-ki.fau.de using the following command:
+alea-frontend is currently being served at https://alea.education and https://courses.voll-ki.fau.de using the following command:
 
 ```
-$ sudo true && git pull && nx reset && npm run build alea-frontend && sudo nice -n -20 nx serve alea-frontend --prod --port=3300 --hostname=0.0.0.0
+$ ./update-and-build.sh
+$ ./deploy.sh
 ```
+
+If there are changes in package.json, you also need to run `npm ci`.
 
 # Generic NX documentation follows:
 

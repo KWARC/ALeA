@@ -1,5 +1,5 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
+import { FTML } from '@flexiformal/ftml';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBox from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
@@ -325,12 +325,14 @@ export function QuizDisplay({
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <h2>
             {t.problem} {problemIdx + 1} {t.of} {problemIds.length}&nbsp;
-            <FTMLFragment
+            <SafeFTMLFragment
               key={problem.problem.html ?? ''}
               allowHovers={isFrozen}
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',
+                // DM: no uri?
+                uri: undefined,
               }}
             />
           </h2>

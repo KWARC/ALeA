@@ -307,6 +307,17 @@ export function getAuthHeaders() {
 export function loginUsingRedirect(returnBackUrl?: string) {
   if (!returnBackUrl) returnBackUrl = window.location.href;
 
+  // Check if we need cross-domain auth
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+  const nonFauDomain = process.env['NEXT_PUBLIC_NON_FAU_DOMAIN'];
+  if (currentHost === nonFauDomain) {
+    // Redirect to FAU domain for cross-domain auth
+    const fauDomain = process.env.NEXT_PUBLIC_FAU_DOMAIN || 'courses.voll-ki.fau.de';
+    const crossDomainAuthUrl = `https://${fauDomain}/cross-domain-auth/init?target=${encodeURIComponent(returnBackUrl)}`;
+    window.location.replace(crossDomainAuthUrl);
+    return;
+  }
+
   const redirectUrl = `${SERVER_TO_ADDRESS.auth}/login?target=${encodeURIComponent(returnBackUrl)}`;
 
   window.location.replace(redirectUrl);

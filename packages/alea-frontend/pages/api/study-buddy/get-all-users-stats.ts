@@ -2,13 +2,13 @@ import { AllCoursesStats } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from '../comment-utils';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../access-control/resource-utils';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res);
   if (!userId) return;
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
   /*
     This query counts a user multiple times if the user registered in multiple courses.
     The reasons of this action 

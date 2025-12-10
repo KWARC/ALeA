@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { FTMLProblemWithSolution } from '@alea/spec';
 import { getPoints, ProblemDisplay } from '@alea/stex-react-renderer';
 import { useEffect, useState } from 'react';

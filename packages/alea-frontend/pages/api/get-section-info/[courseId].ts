@@ -1,16 +1,26 @@
-import { FTML } from '@kwarc/ftml-viewer';
-import { ClipData, ClipInfo, ClipMetadata, getCourseInfo, SectionInfo } from '@alea/spec';
-import { CURRENT_TERM, LectureEntry } from '@alea/utils';
+import { ClipInfo, ClipMetadata, SectionInfo } from '@alea/spec';
+import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCurrentTermForCourseId } from '../get-current-term';
+import { LectureEntry } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCoverageData } from '../get-coverage-timeline';
-import { getFlamsServer } from '@kwarc/ftml-react';
 
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000;
 export const CACHED_VIDEO_SLIDESMAP: Record<
-  string /* courseId*/,
-  Record<string /* videoId */, { extracted_content: { [timestampSec: number]: ClipData } }>
+  string, // courseId
+  Record<
+    string, // semesterKey
+    Record<
+      string, // videoId
+      {
+        extracted_content: Record<string, ClipMetadata>;
+      }
+    >
+  >
 > = {};
 
 let CACHE_REFRESH_TIME: number | undefined = undefined;
@@ -61,7 +71,7 @@ async function getVideoToSlidesMap(courseId: string) {
   return CACHED_VIDEO_SLIDESMAP[courseId];
 }
 
-function getAllSections(data: FTML.TOCElem, level = 0): SectionInfo | SectionInfo[] | undefined {
+function getAllSections(data: FTML.TocElem, level = 0): SectionInfo | SectionInfo[] | undefined {
   const { type } = data;
   if (type === 'Paragraph' || type === 'Slide') return undefined;
   if (type === 'Section') {
@@ -123,20 +133,18 @@ export function addCoverageInfo(sections: SectionInfo[], snaps: LectureEntry[]) 
   return;
 }
 
-function addClipInfo(allSections: SectionInfo[], jsonData: any) {
+function addClipInfo(
+  allSections: SectionInfo[],
+  videoSlides: Record<
+    string,
+    {
+      extracted_content: Record<string, ClipMetadata>;
+    }
+  >
+) {
+  if (!videoSlides) return;
   const clipDataMap: { [sectionId: string]: { [slideUri: number]: ClipInfo[] } } = {};
-  let semesterKey: string | undefined;
-  if (CURRENT_TERM && jsonData[CURRENT_TERM]) {
-    semesterKey = CURRENT_TERM;
-  } else {
-    const semesters = Object.keys(jsonData);
-    if (semesters.length === 0) return; 
-    semesterKey = semesters[0];
-  }
-  const semesterData = jsonData[semesterKey];
-  if (!semesterData) return;
-
-  Object.entries(semesterData).forEach(
+  Object.entries(videoSlides).forEach(
     ([videoId, videoData]: [
       string,
       { extracted_content: { [timeStamp: number]: ClipMetadata } }
@@ -181,14 +189,15 @@ function addClipInfo(allSections: SectionInfo[], jsonData: any) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
-  const courses = await getCourseInfo();
+  const courses = await getAllCoursesFromDb();
+  const currentTerm = await getCurrentTermForCourseId(courseId);
   if (!courseId || !courses[courseId]) {
     res.status(404).send(`Course not found [${courseId}]`);
     return;
   }
   const { notes } = courses[courseId];
 
-  const tocContent = (await getFlamsServer().contentToc({ uri: notes }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
   const allSections: SectionInfo[] = [];
   for (const elem of tocContent) {
     const elemSections = getAllSections(elem);
@@ -198,8 +207,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const coverageData = (getCoverageData()[courseId] ?? []).filter((snap) => snap.sectionUri);
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
-  if (videoSlides && Object.keys(videoSlides).length > 0) {
-    addClipInfo(allSections, videoSlides);
+  const currentTermVideoSlides = videoSlides?.[currentTerm];
+  if (currentTermVideoSlides && Object.keys(currentTermVideoSlides).length > 0) {
+    addClipInfo(allSections, currentTermVideoSlides);
   }
   res.status(200).send(allSections);
 }

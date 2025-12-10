@@ -1,4 +1,14 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { updateRouterQuery } from '@alea/react-utils';
+import {
+  fetchGeneratedProblems,
+  getCourseGeneratedProblemsCountBySection,
+  getAllCourses,
+  getCourseProblemCounts,
+  getCoverageTimeline,
+  getProblemsPerSection,
+} from '@alea/spec';
+import { CourseInfo, CoverageTimeline } from '@alea/utils';
+import { contentToc } from '@flexiformal/ftml-backend';
 import {
   Box,
   Button,
@@ -11,25 +21,16 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  fetchGeneratedProblems,
-  generateQuizProblems,
-  getCourseGeneratedProblemsCountBySection,
-  getCourseInfo,
-  getCourseProblemCounts,
-  getCoverageTimeline,
-  getProblemsPerSection,
-} from '@alea/spec';
-import { updateRouterQuery } from '@alea/react-utils';
-import { CourseInfo, CoverageTimeline } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { ExistingProblem, FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
+import { SectionDetailsDialog } from './SectionDetailsDialog';
+import GoalHierarchyDialog from './goal-hierarchy/GoalHierarchyDialog';
 
-function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
+export function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
   const startIdx = sections.findIndex((s) => s.uri === startUri);
   const endIdx = sections.findIndex((s) => s.uri === endUri);
@@ -65,7 +66,8 @@ export const CourseSectionSelector = ({
   const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingProblemCount, setLoadingProblemCount] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [upcomingQuizSyllabus, setUpcomingQuizSyllabus] = useState<{
     startSecUri: string;
@@ -74,7 +76,7 @@ export const CourseSectionSelector = ({
   // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
   useEffect(() => {
     async function fetchCoverageTimeline() {
@@ -93,7 +95,7 @@ export const CourseSectionSelector = ({
       const notesUri = courseInfo.notes;
       setLoadingSections(true);
       try {
-        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
         const formattedSections = toc.flatMap((entry) =>
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );
@@ -188,31 +190,6 @@ export const CourseSectionSelector = ({
     };
     fetchInitialData();
   }, [courseId, startSectionUri, endSectionUri, sections]);
-
-  const generateNewProblems = async () => {
-    setGenerating(true);
-    try {
-      const response = await generateQuizProblems({
-        mode: 'new',
-        courseId,
-        startSectionUri,
-        endSectionUri,
-      });
-      if (!response?.length) {
-        return;
-      }
-      const parsedProblems: FlatQuizProblem[] = response.map(({ problemJson, ...rest }) => ({
-        ...rest,
-        ...problemJson,
-      }));
-      setLatestGeneratedProblems(parsedProblems);
-      setGeneratedProblems((prev) => [...prev, ...parsedProblems]);
-    } catch (error) {
-      console.error(' Error generating problems:', error);
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   return (
     <Paper
@@ -409,7 +386,7 @@ export const CourseSectionSelector = ({
                           border: '1px solid #ccc',
                         }}
                       >
-                       {loadingProblemCount ? (
+                        {loadingProblemCount ? (
                           <Tooltip title="Fetching problems…">
                             <Box
                               px={1.2}
@@ -467,22 +444,40 @@ export const CourseSectionSelector = ({
           </>
         )}
 
-        <Box display="flex">
-          {generating ? (
-            <Button variant="contained" disabled>
-              <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-              Generating...
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              onClick={() => generateNewProblems()}
-              disabled={!courseId || !startSectionUri || !endSectionUri || loading}
-            >
-              Generate
-            </Button>
-          )}
+        <Box display="flex"  gap={2}>
+          <Button
+            variant="contained"
+            onClick={() => setDialogOpen(true)}
+            disabled={!courseId || !startSectionUri || !endSectionUri || loading}
+          >
+            Generate
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setGoalDialogOpen(true)}
+            disabled={!courseId || !startSectionUri }
+          >
+            Edit Goal Hierarchy
+          </Button>
+
+      <GoalHierarchyDialog
+        open={goalDialogOpen}
+        onClose={() => setGoalDialogOpen(false)}
+        courseNotesUri={courses?.[courseId]?.notes}
+        courseId={courseId}
+        sectionUri={startSectionUri}
+      />
         </Box>
+        <SectionDetailsDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          courseId={courseId}
+          startSectionUri={startSectionUri}
+          endSectionUri={endSectionUri}
+          sections={sections}
+          setGeneratedProblems={setGeneratedProblems}
+          setLatestGeneratedProblems={setLatestGeneratedProblems}
+        />
       </Box>
     </Paper>
   );

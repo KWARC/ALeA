@@ -1,17 +1,5 @@
-import { Folder, OpenInNew, PublishedWithChanges } from '@mui/icons-material';
-import {
-  Box,
-  Card,
-  Chip,
-  CircularProgress,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { OpenInNew } from '@mui/icons-material';
+import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import {
   generateQuizProblems,
   getFinalizedVariants,
@@ -21,16 +9,11 @@ import {
 } from '@alea/spec';
 import { handleViewSource, ListStepper, UriProblemViewer } from '@alea/stex-react-renderer';
 import { useEffect, useState } from 'react';
-import {
-  ExistingProblem,
-  FlatQuizProblem,
-  getSectionNameFromIdOrUri,
-  isExisting,
-  isGenerated,
-} from '../../pages/quiz-gen';
+import { ExistingProblem, FlatQuizProblem, isExisting, isGenerated } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { QuizProblemViewer } from '../GenerateQuiz';
 import { FeedbackSection, HiddenFeedback } from './Feedback';
+import { QuizPanelHeader } from './QuizPanelHeader';
 import { VariantDialog } from './VariantDialog';
 
 export const handleGoToSection = (courseId: string, sectionId: string) => {
@@ -64,6 +47,7 @@ export function QuizPanel({
   sections,
   courseId,
   userInfo,
+  hideVariantGeneration=false,
 }: {
   problems: (FlatQuizProblem | ExistingProblem)[];
   currentIdx: number;
@@ -71,6 +55,7 @@ export function QuizPanel({
   sections: SecInfo[];
   courseId: string;
   userInfo: UserInfo | undefined;
+  hideVariantGeneration?:boolean;
 }) {
   const currentProblem = problems[currentIdx] ?? problems[0];
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -158,17 +143,17 @@ export function QuizPanel({
 
   const handleOpenVariantDialog = async () => {
     setLoading(true);
-     let success = false;
+    let success = false;
     try {
-     success= await createCopyAndCheckVariants(currentProblem);
+      success = await createCopyAndCheckVariants(currentProblem);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
     if (success) {
-    setVariantDialogOpen(true);
-    } 
+      setVariantDialogOpen(true);
+    }
   };
 
   if (!currentProblem) {
@@ -191,51 +176,19 @@ export function QuizPanel({
   return (
     <Box mt={3}>
       <Card sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-          overflow="auto"
-        >
-          <Typography variant="h5" color="#0d47a1">
-            Question {Math.min(currentIdx, problems.length - 1) + 1} of {problems.length}
-          </Typography>
-          <Tooltip title="Go to this section">
-            <Chip
-              icon={<Folder style={{ color: '#bbdefb' }} />}
-              label={`Section: ${getSectionNameFromIdOrUri(currentProblem.sectionId, sections)}`}
-              variant="outlined"
-              onClick={() => handleGoToSection(courseId, currentProblem.sectionId)}
-              clickable
-              sx={{
-                color: '#1976d2',
-                borderColor: '#1976d2',
-                fontWeight: 500,
-              }}
-            />
-          </Tooltip>
-          <Tooltip title="Finalized variants of this problem" placement="top">
-            <FormControl size="small" sx={{ minWidth: '100px', m: 1 }}>
-              <InputLabel>Variants</InputLabel>
-              <Select
-                value={selectedProblemIndex ?? ''}
-                onChange={(e) => handleVariantChange(e.target.value as number)}
-                label="Variants"
-              >
-                <MenuItem value={null}>Original</MenuItem>
-                {finalizedProblems?.map((variant, idx) => (
-                  <MenuItem key={variant.problemId} value={idx}>
-                    Variant {idx + 1}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Tooltip>
-          <Tooltip title="Create a new Variant">
-            <PublishedWithChanges onClick={handleOpenVariantDialog} />
-          </Tooltip>
-        </Box>
+        <QuizPanelHeader
+          currentIdx={currentIdx}
+          totalProblems={problems.length}
+          currentProblem={currentProblem}
+          sections={sections}
+          courseId={courseId}
+          finalizedProblems={finalizedProblems}
+          selectedProblemIndex={selectedProblemIndex}
+          onVariantChange={handleVariantChange}
+          onGoToSection={handleGoToSection}
+          onOpenVariantDialog={handleOpenVariantDialog}
+          hideVariantGeneration={hideVariantGeneration}
+        />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <ListStepper idx={currentIdx} listSize={problems.length} onChange={setCurrentIdx} />

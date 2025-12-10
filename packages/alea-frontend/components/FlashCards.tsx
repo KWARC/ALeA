@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
@@ -182,7 +182,7 @@ function FlashCardBack({
         >
           {definitionUri && (
             <Box fragment-uri={definitionUri} fragment-kind="Section">
-              <FTMLFragment
+              <SafeFTMLFragment
                 key={definitionUri}
                 fragment={{ type: 'FromBackend', uri: definitionUri }}
               />

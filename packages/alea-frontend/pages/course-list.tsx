@@ -1,8 +1,7 @@
+import { getAllCourses } from '@alea/spec';
+import { CourseInfo, PRIMARY_COL } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
-import { DocIdxType, getCourseInfo, getDocIdx } from '@alea/spec';
-import { FTML } from '@kwarc/ftml-viewer';
-import { CourseInfo, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -11,35 +10,51 @@ import { CourseThumb } from './u/[institution]';
 
 const CourseList: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
-  const [docIdx, setDocIdx] = useState<(FTML.ArchiveIndex | FTML.Institution)[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      const docIdxData = await getDocIdx();
-      console.log({ docIdxData });
-      setDocIdx(docIdxData);
-
-      const courseInfoData = await getCourseInfo();
+      const courseInfoData = await getAllCourses();
       setCourses(courseInfoData);
     };
     fetchData();
   }, []);
-  const groupedCourses: { [institution: string]: CourseInfo[] } = {};
+  const groupedCourses: { [universityId: string]: CourseInfo[] } = {};
   Object.values(courses).forEach((course) => {
-    if (!groupedCourses[course.institution]) {
-      groupedCourses[course.institution] = [];
+    const universityId = course.universityId || 'Unknown';
+    if (!groupedCourses[universityId]) {
+      groupedCourses[universityId] = [];
     }
-    groupedCourses[course.institution].push(course);
+    groupedCourses[universityId].push(course);
   });
 
-  const universities = docIdx.filter((doc) => doc.type === DocIdxType.university) as FTML.Institution[];
+  const universities = [
+    {
+      type: 'university',
+      title: 'Friedrich Alexander University Erlangen Nürnberg',
+      place: 'Erlangen',
+      country: 'Germany',
+      url: 'https://fau.de',
+      acronym: 'FAU',
+      logo: 'https://mathhub.info/img?a=courses/FAU/meta-inf&rp=source/PIC/FAU_Logo_Bildmarke.png',
+    },
+    {
+      type: 'university',
+      title: 'Jacobs University Bremen (Now Constructor University)',
+      place: 'Bremen',
+      country: 'Germany',
+      url: 'https://jacobs-university.de',
+      acronym: 'Jacobs',
+      logo: 'https://mathhub.info/img?a=courses/Jacobs/meta-inf&rp=source/PIC/jacobs-logo.svg',
+    },
+  ];
+
   return (
     <MainLayout title="Course-List | ALeA">
       <Box m="0 auto" maxWidth="800px">
-        {Object.entries(groupedCourses).map(([institution, institutionCourses]) => (
-          <Box key={institution}>
-            <Typography variant="h3">{institution}</Typography>
+        {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
+          <Box key={universityId}>
+            <Typography variant="h3">{universityId}</Typography>
             {universities.map((uni) => {
-              if (uni.acronym !== institution) return null;
+              if (uni.acronym !== universityId) return null;
               return (
                 <Box key={uni.title}>
                   <Typography display="flex" alignItems="center" fontWeight="bold">

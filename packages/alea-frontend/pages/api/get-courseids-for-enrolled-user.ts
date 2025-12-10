@@ -1,19 +1,17 @@
-import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
+import { getAllCoursesFromDb } from './get-all-courses';
+import { getCurrentTermForCourseId } from './get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserIdOrSetError } from './comment-utils';
+import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
-import { CURRENT_TERM } from '@alea/utils';
-import { getCourseInfo } from '@alea/spec';
+import { getUserIdOrSetError } from './comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
-  const userId = await getUserIdOrSetError(req, res);
-  if (!userId) {
-    return;
-  }
+  const instanceId = req.body.instanceId as string;
 
-  const courses = await getCourseInfo();
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
+
+  const courses = await getAllCoursesFromDb();
   const courseIds = Object.keys(courses);
   const enrolledCourseIds: string[] = [];
 
@@ -30,4 +28,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({ enrolledCourseIds });
 }
-

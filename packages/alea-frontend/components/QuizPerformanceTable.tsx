@@ -1,4 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import InfoIcon from '@mui/icons-material/Info';
 import {
   Box,
@@ -120,9 +120,13 @@ function QuizPerformanceTable({
                   >
                     <Box display="flex" alignItems="center">
                       <Link href={`/quiz/${quiz.quizId}`} style={{ marginRight: '5px' }}>
-                        <FTMLFragment
+                        <SafeFTMLFragment
                           key={quiz.title ?? ''}
-                          fragment={{ type: 'HtmlString', html: quiz.title ?? '<i>Untitled</i>' }}
+                          fragment={{
+                            type: 'HtmlString',
+                            html: quiz.title ?? '<i>Untitled</i>',
+                            uri: undefined,
+                          }}
                         />
                       </Link>
                       <RecorrectionInfoDisp

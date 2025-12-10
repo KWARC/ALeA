@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 
 export enum Phase {
   UNSET = 'UNSET',
@@ -38,7 +38,7 @@ export interface QuizWithStatus {
 
   title: string;
   problems: Record<string, FTMLProblemWithSolution>;
-  css: FTML.CSS[];
+  css: FTML.Css[];
 
   recorrectionInfo?: RecorrectionInfo[];
 
@@ -132,7 +132,7 @@ export interface GetQuizResponse {
   feedbackReleaseTs?: number;
 
   phase: Phase;
-  css: FTML.CSS[];
+  css: FTML.Css[];
 
   problems: { [problemId: string]: FTMLProblemWithSolution };
   responses: { [problemId: string]: FTML.ProblemResponse };
@@ -164,7 +164,7 @@ export interface QuizStubInfo {
   quizStartTs: number;
   quizEndTs: number;
   title: string;
-  css: FTML.CSS[];
+  css: FTML.Css[];
 }
 
 export function getTotalElapsedTime(events: TimerEvent[]) {

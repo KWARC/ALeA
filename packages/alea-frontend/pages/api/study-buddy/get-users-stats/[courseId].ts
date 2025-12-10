@@ -1,5 +1,5 @@
 import { UserStats } from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfCanModerateStudyBuddyOrSetError } from '../../access-control/resource-utils';
 import { executeAndEndSet500OnError } from '../../comment-utils';
@@ -11,9 +11,9 @@ export default async function handler(
 ) {
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = CURRENT_TERM;
-  const sbCourseId = getSbCourseId(courseId, instanceId);
-  const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res, courseId, CURRENT_TERM);
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
+  const sbCourseId = await getSbCourseId(courseId, instanceId);
+  const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res, courseId, instanceId);
   if (!userId) return;
   
   const result1: any[] = await executeAndEndSet500OnError(

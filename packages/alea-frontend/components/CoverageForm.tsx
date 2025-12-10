@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -36,11 +36,12 @@ export type FormData = LectureEntry & {
 interface CoverageFormProps {
   formData: FormData;
   setFormData: Dispatch<SetStateAction<FormData>>;
-  secInfo: Record<FTML.DocumentURI, SecInfo>;
+  secInfo: Record<FTML.DocumentUri, SecInfo>;
   isEditing: boolean;
   onSubmit: (data: FormData) => void;
   onCancel: () => void;
   courseId: string;
+  timezone?: string;
 }
 
 export function CoverageForm({
@@ -51,6 +52,7 @@ export function CoverageForm({
   onSubmit,
   onCancel,
   courseId,
+  timezone,
 }: CoverageFormProps) {
   // const [isLastSlideSelected, setIsLastSlideSelected] = useState(false);
   const hasManuallyToggledCompletion = useRef(false);
@@ -242,6 +244,7 @@ export function CoverageForm({
           onChange={handleStartTimeChange}
           placeholder="Enter Start Time"
           variant="outlined"
+          helperText={timezone ? `(${timezone})` : undefined}
         />
       </Grid>
 
@@ -255,6 +258,7 @@ export function CoverageForm({
           onChange={handleEndTimeChange}
           placeholder="Enter End Time"
           variant="outlined"
+          helperText={timezone ? `(${timezone})` : undefined}
         />
       </Grid>
 

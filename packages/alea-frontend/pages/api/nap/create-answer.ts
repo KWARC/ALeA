@@ -1,5 +1,5 @@
 import { CreateAnswerRequest, getHomeworkPhase } from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!answer || !questionId) return res.status(422).end();
-  if (!courseInstance) courseInstance = CURRENT_TERM;
+  if (!courseInstance) courseInstance = await getCurrentTermForCourseId(courseId);
   answer = answer.trim();
   const result = await executeAndEndSet500OnError(
     `INSERT INTO Answer (questionId, userId, answer, questionTitle, subProblemId, courseId, courseInstance, homeworkId) VALUES (?,?,?,?,?,?,?,?)`,

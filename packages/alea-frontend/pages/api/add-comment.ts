@@ -1,11 +1,5 @@
-import {
-  Comment,
-  CommentType,
-  DEFAULT_POINTS,
-  GrantReason,
-  NotificationType,
-} from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
+import { Comment, CommentType, DEFAULT_POINTS, GrantReason, NotificationType } from '@alea/spec';
+import { getCurrentTermForCourseId } from './get-current-term';
 import axios from 'axios';
 import { canUserModerateComments } from './access-control/resource-utils';
 import {
@@ -17,7 +11,7 @@ import {
 } from './comment-utils';
 
 function linkToComment({ threadId, courseId, courseTerm, pageUrl }: any) {
-  if (threadId && courseId && courseTerm === CURRENT_TERM) {
+  if (threadId && courseId && courseTerm) {
     return `/forum/${courseId}/${threadId}`;
   }
   if (courseId) return `/forum/${courseId}`;
@@ -33,7 +27,7 @@ async function sendCommentAlert(
   courseTerm
 ) {
   if (isPrivate) return;
-  const fullLink = `https://courses.voll-ki.fau.de${link}`;
+  const fullLink = `https://${process.env.NEXT_PUBLIC_NON_FAU_DOMAIN}${link}`;
   const message = (await canUserModerateComments(userId, courseId, courseTerm))
     ? `A moderator posted at ${fullLink}`
     : `A ${isQuestion ? 'question' : 'comment'} was posted at ${fullLink}`;
@@ -107,7 +101,7 @@ export default async function handler(req, res) {
     res.status(400).json({ message: 'Anonymous comments can not be private!' });
     return;
   }
-
+  const currentTerm = await getCurrentTermForCourseId(courseId);
   let threadId: number | undefined = undefined;
   let parentComment: Comment = undefined;
   if (parentCommentId) {
@@ -170,7 +164,7 @@ export default async function handler(req, res) {
     userId,
     isPrivate,
     commentType === CommentType.QUESTION,
-    linkToComment({ threadId, courseId, courseTerm, pageUrl }),
+    linkToComment({ threadId, courseId, currentTerm, pageUrl }),
     courseId,
     courseTerm
   );

@@ -1,16 +1,18 @@
-import { FTMLFragment, getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
   canAccessResource,
-  ClipData,
   ClipInfo,
-  getCourseInfo,
+  ClipMetadata,
+  getAllCourses,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -19,37 +21,28 @@ import {
 } from '@alea/spec';
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
-import {
-  ContentDashboard,
-  LayoutWithFixedMenu,
-  SectionReview,
-} from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  CURRENT_TERM,
-  localStore,
-  ResourceName,
-  shouldUseDrawer,
-} from '@alea/utils';
+import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
+import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { SearchDialog } from '../course-notes/[courseId]';
 
+// DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
     <>
       {elements.map((e, idx) => (
         <Fragment key={idx}>
-          <FTMLFragment fragment={{ type: 'HtmlString', html: e }} />
+          <SafeFTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
           {idx < elements.length - 1 && <br />}
         </Fragment>
       ))}
@@ -128,7 +121,7 @@ export function setSlideNumAndSectionId(router: NextRouter, slideNum: number, se
   router.push({ pathname, query });
 }
 
-function getSections(tocElems: FTML.TOCElem[]): string[] {
+function getSections(tocElems: FTML.TocElem[]): string[] {
   const sectionIds: string[] = [];
   for (const tocElem of tocElems) {
     if (tocElem.type === 'Section') {
@@ -142,9 +135,9 @@ function getSections(tocElems: FTML.TOCElem[]): string[] {
 }
 
 function findSection(
-  toc: FTML.TOCElem[],
+  toc: FTML.TocElem[],
   sectionId: string
-): Extract<FTML.TOCElem, { type: 'Section' }> | undefined {
+): Extract<FTML.TocElem, { type: 'Section' }> | undefined {
   for (const tocElem of toc) {
     if (tocElem.type === 'Section' && tocElem.id === sectionId) {
       return tocElem;
@@ -166,6 +159,8 @@ const CourseViewPage: NextPage = () => {
   const viewMode = ViewMode[viewModeStr as keyof typeof ViewMode];
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
 
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
@@ -184,7 +179,7 @@ const CourseViewPage: NextPage = () => {
   }>({});
   const [currentClipId, setCurrentClipId] = useState('');
   const [videoExtractedData, setVideoExtractedData] = useState<{
-    [timestampSec: number]: ClipData;
+    [timestampSec: number]: ClipMetadata;
   }>({});
 
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
@@ -193,7 +188,7 @@ const CourseViewPage: NextPage = () => {
   const [timestampSec, setTimestampSec] = useState(0);
   const [autoSync, setAutoSync] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [toc, setToc] = useState<FTML.TOCElem[]>([]);
+  const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -203,7 +198,15 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as HTMLElement).isContentEditable);
+      if (isEditableTarget) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setDialogOpen(true);
       }
@@ -223,19 +226,19 @@ const CourseViewPage: NextPage = () => {
   };
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
-        instanceId: CURRENT_TERM,
+        instanceId: currentTerm,
       });
       setIsQUizMaker(hasAccess);
     };
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -243,13 +246,11 @@ const CourseViewPage: NextPage = () => {
 
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
-    getFlamsServer()
-      .contentToc({ uri: notes })
-      .then(([css, toc] = [[], []]) => {
-        setToc(toc);
-        setCourseSections(getSections(toc));
-        for (const e of css) FTML.injectCss(e);
-      });
+    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+      setToc(toc);
+      setCourseSections(getSections(toc));
+      injectCss(css);
+    });
     getSlideCounts(courseId).then(setSlideCounts);
     getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
   }, [router.isReady, courses, courseId]);
@@ -268,7 +269,12 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
-    getSlideDetails(courseId, currentClipId).then(setVideoExtractedData);
+    getSlideDetails(courseId, currentClipId)
+      .then(setVideoExtractedData)
+      .catch((err) => {
+        setVideoExtractedData(null);
+        console.error(err);
+      });
   }, [courseId, currentClipId, router.isReady]);
 
   useEffect(() => {
@@ -332,7 +338,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      <Tooltip title="Search (Shift+F or Ctrl+Shift+F)" placement="left-start">
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -340,15 +346,17 @@ const CourseViewPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 2002,
-            bgcolor: 'white',
+            bgcolor: 'rgba(255, 255, 255, 0.15)',
             boxShadow: 3,
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.08)' },
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.3)',
+            },
           }}
           onClick={handleSearchClick}
           size="large"
           aria-label="Open search dialog"
         >
-          <SearchIcon fontSize="large" />
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
       <SearchDialog
@@ -357,7 +365,7 @@ const CourseViewPage: NextPage = () => {
         courseId={courseId}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      />
+      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
@@ -382,15 +390,36 @@ const CourseViewPage: NextPage = () => {
         <Box display="flex" minHeight="100svh">
           <Box maxWidth="800px" margin="0 auto" width="100%" pl="4px">
             <Box display="flex" alignItems="center" justifyContent="space-between">
-              <ToggleModeButton
-                viewMode={viewMode}
-                updateViewMode={(mode) => {
-                  const modeStr = mode.toString();
-                  localStore?.setItem('defaultMode', modeStr);
-                  router.query.viewMode = modeStr;
-                  router.replace(router);
-                }}
-              />
+              <Box display="flex" alignItems="center">
+                <ToggleModeButton
+                  viewMode={viewMode}
+                  updateViewMode={(mode) => {
+                    const modeStr = mode.toString();
+                    localStore?.setItem('defaultMode', modeStr);
+                    router.query.viewMode = modeStr;
+                    router.replace(router);
+                  }}
+                />
+                {courses?.[courseId]?.slides && (
+                  <Tooltip title="Download slides PDF" placement="bottom">
+                    <IconButton
+                      color="primary"
+                      onClick={() => {
+                        const slides = courses?.[courseId]?.slides;
+                        const notes = courses?.[courseId]?.notes;
+                        const sourceUri = slides || notes;
+                        if (!sourceUri) return;
+                        const pdfUrl = getCoursePdfUrl(sourceUri);
+                        window.open(pdfUrl, '_blank');
+                      }}
+                      size="medium"
+                      aria-label="Download slides PDF"
+                    >
+                      <PictureAsPdfIcon fontSize="medium" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
               <Link href={courses[courseId]?.notesLink ?? ''} passHref>
                 <Button size="small" variant="contained" sx={{ mr: '10px' }}>
                   {t.notes}&nbsp;

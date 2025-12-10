@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   AnswerResponse,
   FTMLProblemWithSolution,
@@ -18,10 +18,7 @@ import {
   executeDontEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import {
-  convertToSubProblemIdToAnswerId,
-  getAllGradingsOrSetError,
-} from '../nap/get-answers-info';
+import { convertToSubProblemIdToAnswerId, getAllGradingsOrSetError } from '../nap/get-answers-info';
 
 function getPhaseAppropriateProblems(
   problems: { [problemId: string]: FTMLProblemWithSolution },
@@ -54,10 +51,10 @@ export async function getAllAnswersForHomeworkOrSetError(
 ) {
   const answerEntries = await executeAndEndSet500OnError<AnswerResponse[]>(
     `SELECT questionId, subProblemId, answer, id
-      FROM Answer 
+      FROM Answer
       WHERE (homeworkId, questionId, subProblemId, updatedAt) IN (
-        SELECT homeworkId, questionId, subProblemId, MAX(updatedAt) AS updatedAt 
-        FROM Answer 
+        SELECT homeworkId, questionId, subProblemId, MAX(updatedAt) AS updatedAt
+        FROM Answer
         WHERE homeworkId=? AND userId=? ${questionId ? 'AND questionId=?' : ''}
         GROUP BY homeworkId, questionId, subProblemId
       )
@@ -109,8 +106,8 @@ export async function getHomeworkOrSetError(
   const homeworks: any[] = await executeDontEndSet500OnError(
     `SELECT id, title, givenTs, dueTs, feedbackReleaseTs, courseId, css, courseInstance ${
       getProblems ? ', problems' : ''
-    } 
-    FROM homework 
+    }
+    FROM homework
     WHERE id = ?`,
     [homeworkId],
     res
@@ -174,5 +171,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.status(200).json({ homework, responses, gradingInfo } as GetHomeworkResponse );
+  res.status(200).json({ homework, responses, gradingInfo } as GetHomeworkResponse);
 }

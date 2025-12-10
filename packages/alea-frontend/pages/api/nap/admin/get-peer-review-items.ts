@@ -5,7 +5,8 @@ import {
   executeAndEndSet500OnError,
 } from '../../comment-utils';
 import { getUserIdIfAnyAuthorizedOrSetError } from '../../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 import { GradingWithAnswer } from '@alea/spec';
 import { addAnswerClassesToGradingOrSetError } from '../nap-utils';
 
@@ -17,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     {
       name: ResourceName.COURSE_PEERREVIEW,
       action: Action.MUTATE,
-      variables: { courseId: courseId, instanceId: CURRENT_TERM },
+      variables: { courseId: courseId, instanceId: await getCurrentTermForCourseId(courseId) },
     },
   ]);
   if (!userId) return;

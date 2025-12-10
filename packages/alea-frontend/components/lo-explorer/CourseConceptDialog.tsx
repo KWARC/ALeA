@@ -19,10 +19,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getCourseInfo, getDefiniedaInSection } from '@alea/spec';
+import { conceptUriToName, getAllCourses, getDefiniedaInSection } from '@alea/spec';
 import { CourseInfo } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from '../coverage-update';
 import { SecInfo } from 'packages/alea-frontend/types';
 
@@ -49,7 +49,7 @@ export const CourseConceptsDialog = ({
   const selectAllKey = 'Select All';
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const CourseConceptsDialog = ({
       for (const courseId of Object.keys(courses)) {
         const notesUri = courses?.[courseId]?.notes;
         if (!notesUri) continue;
-        const toc = (await getFlamsServer().contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
         secDetails[courseId] = toc.flatMap((entry) => getSecInfo(entry));
       }
       setAllSectionDetails(secDetails);

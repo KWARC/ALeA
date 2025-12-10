@@ -3,16 +3,23 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import { roundToMinutes } from '@alea/utils';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import React from 'react';
+
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 export function CheckboxWithTimestamp({
   timestamp,
   setTimestamp,
   label = 'Timestamp',
+  timezone,
 }: {
   timestamp: number;
   setTimestamp: React.Dispatch<React.SetStateAction<number>>;
   label: string;
+  timezone?: string;
 }) {
   const isChecked = timestamp !== 0;
 
@@ -23,7 +30,11 @@ export function CheckboxWithTimestamp({
           <Checkbox
             checked={isChecked}
             onChange={(e) =>
-              setTimestamp(e.target.checked ? roundToMinutes(Date.now()) : 0)
+              setTimestamp(
+                e.target.checked
+                  ? roundToMinutes((timezone ? dayjs().tz(timezone) : dayjs()).valueOf())
+                  : 0
+              )
             }
             color="primary"
           />
@@ -36,9 +47,21 @@ export function CheckboxWithTimestamp({
         fullWidth
         type="datetime-local"
         disabled={!isChecked}
-        value={isChecked ? dayjs(timestamp).format('YYYY-MM-DDTHH:mm') : ''}
+        value={
+          isChecked
+            ? (timezone ? dayjs(timestamp).tz(timezone) : dayjs(timestamp)).format(
+                'YYYY-MM-DDTHH:mm'
+              )
+            : ''
+        }
         onChange={(e) => {
-          setTimestamp(dayjs(e.target.value).valueOf());
+          const input = e.target.value;
+          if (!input) {
+            setTimestamp(0);
+            return;
+          }
+          const next = timezone ? dayjs.tz(input, timezone) : dayjs(input);
+          setTimestamp(next.valueOf());
         }}
         InputLabelProps={{ shrink: true }}
       />

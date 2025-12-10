@@ -5,7 +5,7 @@ import { PRIMARY_COL } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { FTMLFragment } from '@kwarc/ftml-react';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 
 export interface NotesSection {
   uri: string;
@@ -69,7 +69,7 @@ const MyNotesPage: NextPage = () => {
                     m="10px"
                   >
                     {/* TODO ALeA4-N8: FTMLFragment won't render slides using URI - it uses HTML. This case will be handled later */}
-                    <FTMLFragment fragment={{ type: 'FromBackend', uri: section.uri }} />
+                    <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: section.uri }} />
                     <NotesView uri={section.uri} allNotesMode={true} />
                   </Box>
                 ))}

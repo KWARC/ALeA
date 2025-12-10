@@ -6,8 +6,8 @@ import {
   NavigateBefore,
   NavigateNext,
 } from '@mui/icons-material';
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
@@ -283,9 +283,9 @@ function SlideRenderer({ slide }: { slide: Slide }) {
   if (slide.slideType === SlideType.FRAME) {
     return (
       <Box fragment-uri={slide.slide?.uri} fragment-kind="Slide">
-        <FTMLFragment
+        <SafeFTMLFragment
           key={slide.slide?.uri}
-          fragment={{ type: 'HtmlString', html: slide.slide?.html }}
+          fragment={{ type: 'HtmlString', html: slide.slide?.html, uri: slide.slide.uri }}
         />
       </Box>
     );
@@ -294,7 +294,10 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box className={styles['text-frame']}>
         {slide.paragraphs?.map((p, idx) => (
           <Box key={p.uri} fragment-uri={p.uri} fragment-kind="Paragraph">
-            <FTMLFragment key={p.uri} fragment={{ type: 'HtmlString', html: p.html }} />
+            <SafeFTMLFragment
+              key={p.uri}
+              fragment={{ type: 'HtmlString', html: p.html, uri: p.uri }}
+            />
             {idx < slide.paragraphs.length - 1 && <br />}
           </Box>
         ))}
@@ -348,16 +351,14 @@ export const SlideDeck = memo(function SlidesFromUrl({
   videoLoaded?: boolean;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
-  const [css, setCss] = useState<FTML.CSS[]>([]);
+  const [css, setCss] = useState<FTML.Css[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadedSectionId, setLoadedSectionId] = useState('');
   const [currentSlide, setCurrentSlide] = useState(undefined as Slide | undefined);
   const router = useRouter();
 
   useEffect(() => {
-    (css ?? []).forEach((cssItem) => {
-      FTML.injectCss(cssItem);
-    });
+    injectCss(css);
   }, [css]);
 
   useEffect(() => {
@@ -427,7 +428,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
         id: (index + 1).toString(),
         video_id: item.video_id,
         title: `Clip no. ${index + 1}  || VideoId : ${item.video_id}`,
-        thumbnail: 'https://courses.voll-ki.fau.de/fau_kwarc.png',
+        thumbnail: `${window.location.origin}/fau_kwarc.png`,
         start_time: item.start_time,
         end_time: item.end_time,
         duration: `${formatDuration(
@@ -461,7 +462,9 @@ export const SlideDeck = memo(function SlidesFromUrl({
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
         <Box id="slide-renderer-container" sx={{ '& *': { boxSizing: 'border-box' } }}>
-          <SlideRenderer key={slideNum} slide={currentSlide} />
+          <SafeFTMLSetup key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'} allowFullscreen={false}>
+            <SlideRenderer key={slideNum} slide={currentSlide} />
+          </SafeFTMLSetup>
         </Box>
       ) : (
         <Box

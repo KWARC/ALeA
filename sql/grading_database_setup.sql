@@ -9,6 +9,9 @@ CREATE TABLE grading (
     quizId varchar(255) NOT NULL,
     problemId varchar(255) NOT NULL,
     
+    universityId varchar(255) NOT NULL DEFAULT '',
+    courseId varchar(255) NOT NULL DEFAULT '',
+    instanceId varchar(255) NOT NULL DEFAULT '',
     
     response JSON,
     /* DEPRECATED:
@@ -22,3 +25,6 @@ CREATE TABLE grading (
     postedTimestamp timestamp DEFAULT CURRENT_TIMESTAMP
 );
 SELECT * FROM grading;
+
+-- For optimizing the get-quiz API
+CREATE INDEX idx_grading_optimus ON grading (quizId, userId, problemId, browserTimestamp_ms); 

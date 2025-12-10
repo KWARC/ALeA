@@ -1,7 +1,4 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
-import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
+import { MystEditor } from '@alea/myst';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
@@ -12,11 +9,14 @@ import {
   getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { FTML } from '@flexiformal/ftml';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
+import SaveIcon from '@mui/icons-material/Save';
+import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
-import { ShowSubProblemAnswer, SubProblemAnswer } from './SubProblemAnswer';
+import { ShowSubProblemAnswer } from './SubProblemAnswer';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -49,7 +49,7 @@ function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdat
 }
 
 function getUpdates(
-  objectives: [FTML.CognitiveDimension, FTML.SymbolURI][] | undefined,
+  objectives: [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined,
   quotient: number
 ) {
   if (!objectives) return [];
@@ -86,7 +86,7 @@ export function getProblemState(
   solution?: string,
   current_response?: FTML.ProblemResponse
 ): FTML.ProblemState {
-  if (!isFrozen) return { type: 'Interactive', current_response };
+  if (!isFrozen) return { type: 'Interactive', current_response, solution: undefined };
   if (!solution) return { type: 'Finished', current_response };
   const sol = FTML.Solutions.from_jstring(solution.replace(/^"|"$/g, ''));
   const feedback = current_response
@@ -109,37 +109,34 @@ export function ProblemViewer({
 }) {
   const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
-  const isHaveSubProblems = problem.problem.subProblems != null;
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
-  });  
-  const isNap=problem.problem.html.includes(`data-ftml-autogradable="true"`);
+  });
+
   return (
-    <FTMLFragment
+    <SafeFTMLFragment
       key={uri}
       fragment={{ type: 'HtmlString', html, uri }}
       allowHovers={isFrozen}
       problemStates={problemStates}
-      onProblem={(response) => {
-        onResponseUpdate?.(response);
+      onProblemResponse={(response) => {
+        onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
       }}
-      {...(!isNap?{onFragment:(problemId, kind) => {
-        if (kind.type === 'Problem') {
-          return (ch: React.ReactNode) => (
-            <Box>
-              {ch}
-              <AnswerAccepter
-                masterProblemId={uri}
-                isHaveSubProblems={isHaveSubProblems}
-                problemTitle={problem.problem.title_html ?? ''}
-                isFrozen={isFrozen}
-                problemId={problemId}
-              ></AnswerAccepter>
-            </Box>
-          );
-        }
-      }}:{}) }
+      problemWrap={(problemUri, isSubProblem, autogradable) => {
+        if (autogradable) return undefined;
+        return (ch: React.ReactNode) => (
+          <Box>
+            {ch}
+            <AnswerAccepter
+              masterProblemId={uri}
+              problemTitle={problem.problem.title_html ?? ''}
+              isFrozen={isFrozen}
+              problemId={problemUri}
+            ></AnswerAccepter>
+          </Box>
+        );
+      }}
     />
   );
 }
@@ -147,40 +144,33 @@ export function ProblemViewer({
 function AnswerAccepter({
   problemId,
   masterProblemId,
-  isHaveSubProblems,
   isFrozen,
   problemTitle,
 }: {
   problemId: string;
   masterProblemId: string;
-  isHaveSubProblems: boolean;
   isFrozen: boolean;
   problemTitle: string;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
-  const serverAnswer =
-    previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)?.answer ??
-    null;
+  let serverAnswer = '';
+  if (previousAnswer !== undefined)
+    serverAnswer =
+      previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)
+        ?.answer ?? '';
   const [answer, setAnsewr] = useState<string>(
     serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
   );
-  const subId = isHaveSubProblems ? +problemId.charAt(problemId.length - 1) : 0;
   const router = useRouter();
 
-  async function saveAnswer({
-    subId,
-    freeTextResponses,
-  }: {
-    subId?: string;
-    freeTextResponses: string;
-  }) {
+  async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
       createAnswer({
         answer: freeTextResponses,
         questionId: masterProblemId ? masterProblemId : problemId,
         questionTitle: problemTitle,
-        subProblemId: subId ?? '',
+        subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
         homeworkId: +(router.query.id ?? 0),
       });
@@ -190,7 +180,6 @@ function AnswerAccepter({
       alert('Failed to save answers. Please try again.');
     }
   }
-  if (isHaveSubProblems && isNaN(subId)) return;
   async function onSaveClick() {
     await saveAnswer({ freeTextResponses: answer, subId: problemId });
   }

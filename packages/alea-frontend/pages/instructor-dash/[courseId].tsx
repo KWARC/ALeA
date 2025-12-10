@@ -1,10 +1,11 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
-import { canAccessResource, getCourseInfo } from '@alea/spec';
+import { canAccessResource, getAllCourses } from '@alea/spec';
 import { updateRouterQuery } from '@alea/react-utils';
-import { Action, CourseInfo, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import CourseAccessControlDashboard from '../../components/CourseAccessControlDashboard';
 import CoverageUpdateTab from '../../components/coverage-update';
 import HomeworkManager from '../../components/HomeworkManager';
@@ -45,7 +46,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
-  'course-metadata': { resource: ResourceName.COURSE_ACCESS, actions: [Action.ACCESS_CONTROL] },
+  'course-metadata': { resource: ResourceName.COURSE_METADATA, actions: [Action.MUTATE] },
 };
 function ChosenTab({
   tabName,
@@ -83,9 +84,7 @@ function ChosenTab({
 }
 
 const toUserFriendlyName = (tabName: string) => {
-  return tabName
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (str) => str.toUpperCase());
+  return tabName.replace(/-/g, ' ').replace(/\b\w/g, (str) => str.toUpperCase());
 };
 
 const TabPanel = (props: TabPanelProps) => {
@@ -119,7 +118,10 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const instanceId = (router.query.instanceId as string) ?? CURRENT_TERM;
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
+  const instanceId = (router.query.instanceId as string) ?? currentTerm;
   const tab = router.query.tab as TabName;
 
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
@@ -151,16 +153,16 @@ const InstructorDash: NextPage = () => {
     updateRouterQuery(router, newQuery, false);
   };
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     async function checkTabAccess() {
       const tabAccessPromises$ = Object.entries(TAB_ACCESS_REQUIREMENTS).map(
         async ([tabName, { resource, actions }]) => {
           for (const action of actions) {
-            if (await canAccessResource(resource, action, { courseId, instanceId: CURRENT_TERM })) {
+            if (await canAccessResource(resource, action, { courseId, instanceId: currentTerm })) {
               return tabName as TabName;
             }
           }
@@ -184,7 +186,7 @@ const InstructorDash: NextPage = () => {
       setAccessibleTabs(sortedTabs);
     }
     checkTabAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     if (accessibleTabs === undefined) return;

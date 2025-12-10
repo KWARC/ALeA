@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { FTMLProblemWithSolution } from './quiz';
 
 export type HomeworkPhase =
@@ -16,7 +16,7 @@ export interface HomeworkInfo {
   feedbackReleaseTs: string;
   courseId: string;
   courseInstance: string;
-  css: FTML.CSS[];
+  css: FTML.Css[];
   problems: Record<string, FTMLProblemWithSolution>;
 }
 

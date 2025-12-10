@@ -1,20 +1,20 @@
-import { ProblemFeedbackJson } from '@kwarc/flams';
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { COURSES_INFO, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
 import {
-  COURSES_INFO,
-  CURRENT_TERM,
-  CourseInfo,
-  createCourseInfo,
-  getParamFromUri,
-  waitForNSeconds,
-} from '@alea/utils';
+  ArchiveIndex,
+  Institution,
+  ProblemFeedbackJson,
+  batchGradeHex as flamsBatchGradeHex,
+  index as flamsIndex,
+  learningObjects as flamsLearningObjects,
+} from '@flexiformal/ftml-backend';
 import axios from 'axios';
+import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo, getCourseIdsByUniversity } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
 ): Promise<ProblemFeedbackJson[][] | undefined> {
-  return await getFlamsServer().batchGradeHex(...submissions);
+  return await flamsBatchGradeHex(...submissions);
 }
 
 export function computePointsFromFeedbackJson(
@@ -36,87 +36,29 @@ export interface Person {
   name: string;
 }
 
-let CACHED_ARCHIVE_INDEX: FTML.ArchiveIndex[] | undefined = undefined;
-let CACHED_INSTITUTION_INDEX: FTML.Institution[] | undefined = undefined;
+let CACHED_ARCHIVE_INDEX: ArchiveIndex[] | undefined = undefined;
+let CACHED_INSTITUTION_INDEX: Institution[] | undefined = undefined;
 
-export async function getDocIdx(institution?: string) {
-  if (!CACHED_ARCHIVE_INDEX) {
-    const res = await getFlamsServer().index();
-    if (res) {
-      CACHED_INSTITUTION_INDEX = res[0] as FTML.Institution[];
-      CACHED_ARCHIVE_INDEX = res[1] as FTML.ArchiveIndex[];
-      CACHED_ARCHIVE_INDEX.forEach((doc) => {
-        if (doc.type === 'course') {
-          doc.instances = doc.instances?.map((i) => ({
-            ...i,
-            semester: i.semester.replace('/', '-'),
-          }));
-        }
-      });
-    }
+const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
+
+async function getCachedCourseHomeworkAndQuizInfo(
+  courseId: string,
+  instanceId?: string
+): Promise<CourseQuizAndHomeworkInfo> {
+  const cacheKey = courseId;
+  if (courseHomeworkQuizCache.has(cacheKey)) {
+    return courseHomeworkQuizCache.get(cacheKey)!;
   }
-  const archiveIndex = CACHED_ARCHIVE_INDEX || [];
-  const institutionIndex = CACHED_INSTITUTION_INDEX || [];
-
-  if (!institution) {
-    return [...archiveIndex, ...institutionIndex];
-  }
-
-  const filteredArchiveIndex = archiveIndex.filter(
-    (doc) => doc.type === 'course' && doc.institution === institution
-  );
-
-  return [...filteredArchiveIndex, ...institutionIndex];
+  const result = await getCourseHomeworkAndQuizInfo(courseId, instanceId);
+  courseHomeworkQuizCache.set(cacheKey, result);
+  return result;
 }
 
-export async function getCouseIdsOfSemester(semester: string): Promise<string[]> {
-  const idx = await getDocIdx();
-  return idx.flatMap((doc) => {
-    if (doc.type !== DocIdxType.course) return [];
-    if (!doc.acronym) return [];
-    if (!doc.instances?.some((i) => i.semester === semester)) return [];
-    return [doc.acronym.toLowerCase()];
-  });
+export function clearCourseHomeworkQuizCache(): void {
+  courseHomeworkQuizCache.clear();
 }
 
-export async function getCourseInfo(institution?: string) {
-  /*  const filtered = { ...COURSES_INFO };
 
-  // Don't show Luka's course on production.
-  if (process.env['NEXT_PUBLIC_SITE_VERSION'] === 'production') {
-    delete filtered['f29fa1'];
-  }
-  return filtered;*/
-  try {
-    const docIdx = await getDocIdx(institution);
-    const courseInfo: { [courseId: string]: CourseInfo } = {};
-    for (const doc of docIdx) {
-      if (doc.type !== DocIdxType.course) continue;
-      if (!doc.acronym || !doc.landing || !doc.notes) continue;
-      doc.acronym = doc.acronym.toLowerCase();
-
-      const isCurrent = doc.instances?.some((i) => i.semester === CURRENT_TERM);
-
-      courseInfo[doc.acronym] = createCourseInfo(
-        doc.acronym,
-        doc.title,
-        doc.notes,
-        doc.landing,
-        isCurrent,
-        ['lbs', 'ai-1', 'iwgs-1'].includes(doc.acronym) ? true : doc.quizzes ?? false,
-        doc.institution,
-        doc.instances,
-        doc.instructors,
-        doc.teaser,
-        doc.slides
-      );
-    }
-    return courseInfo;
-  } catch (err) {
-    console.log(err);
-    return COURSES_INFO;
-  }
-}
 
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
@@ -145,7 +87,7 @@ export async function getProblemsForConcept(conceptUri: string) {
   const MAX_RETRIES = 3;
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      const learningObjects = await getFlamsServer().learningObjects({ uri: conceptUri }, true);
+      const learningObjects = await flamsLearningObjects({ uri: conceptUri }, true);
       if (!learningObjects) return [];
       return learningObjects.filter((obj) => obj[1].type === 'Problem').map((obj) => obj[0]);
     } catch (error) {
@@ -206,7 +148,7 @@ export async function getQueryResults(query: string) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }
     );
-    return JSON.parse(resp.data) as SparqlResponse;
+    return resp.data as SparqlResponse;
   } catch (error) {
     console.error('Error executing SPARQL query:', error);
     throw error;

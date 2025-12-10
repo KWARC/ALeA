@@ -1,4 +1,4 @@
-import { getFlamsServer } from '@kwarc/ftml-react';
+import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
 import InfoIcon from '@mui/icons-material/Info';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -131,7 +131,7 @@ export const PreviewSection = ({
     Array.isArray(selectedVersion?.manualEdits) && selectedVersion?.manualEdits.length > 0;
 
   async function fetchRawStexFromUri(problemUri: string) {
-    const sourceLink = await getFlamsServer().sourceFile({ uri: problemUri });
+    const sourceLink = await getSourceFile({ uri: problemUri });
     if (!sourceLink) return null;
     const rawStexLink = sourceLink.replace('-/blob', '-/raw');
     const response = await axios.get(rawStexLink);
@@ -214,12 +214,6 @@ export const PreviewSection = ({
                     display: 'flex',
                     alignItems: 'center',
                   },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
                 }}
               >
                 {filteredVersions.map((version, index) => {
@@ -269,20 +263,6 @@ export const PreviewSection = ({
                         '&.Mui-selected': {
                           backgroundColor: 'rgba(25, 118, 210, 0.08)',
                           border: '1px solid rgba(25, 118, 210, 0.3)',
-
-                          '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                          },
-
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            width: 3,
-                            backgroundColor: '#1976d2',
-                          },
                         },
                       }}
                     >

@@ -1,4 +1,28 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import {
+  CommentType,
+  getCourseGradingItems,
+  getCourseIdsForEnrolledUser,
+  getAllCourses,
+  getCourseInstanceThreads,
+  getCourseQuizList,
+  getCoverageTimeline,
+  getHomeworkList,
+  getUserInfo,
+  QuestionStatus,
+  QuizStubInfo,
+  UserInfo,
+} from '@alea/spec';
+import {
+  Action,
+  CourseInfo,
+  CourseResourceAction,
+  isFauId,
+  LectureEntry,
+  PRIMARY_COL,
+  ResourceName,
+} from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { Rule, Visibility } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CommentIcon from '@mui/icons-material/Comment';
@@ -16,42 +40,19 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import {
-  CommentType,
-  getCourseGradingItems,
-  getCourseIdsForEnrolledUser,
-  getCourseInfo,
-  getCourseInstanceThreads,
-  getCourseQuizList,
-  getCoverageTimeline,
-  getHomeworkList,
-  getUserInfo,
-  QuestionStatus,
-  QuizStubInfo,
-  UserInfo,
-} from '@alea/spec';
-import {
-  Action,
-  CourseInfo,
-  CourseResourceAction,
-  CURRENT_TERM,
-  isFauId,
-  LectureEntry,
-  PRIMARY_COL,
-  ResourceName,
-} from '@alea/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
-import { getFlamsServer } from '@kwarc/ftml-react';
-import { calculateLectureProgress } from './CalculateLectureProgress';
+import { calculateLectureProgress } from './CoverageTable';
+import SystemAlertBanner from './SystemAlertBanner';
 
 interface ColorInfo {
   color: string;
@@ -119,9 +120,9 @@ const getResourceIcon = (name: ResourceName) => {
   }
 };
 
-async function getCommentsInfo(courseId: string, router: NextRouter) {
+async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, CURRENT_TERM);
+  const comments = await getCourseInstanceThreads(courseId, currentTerm);
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -175,7 +176,7 @@ async function getLastUpdatedQuiz(
     .filter((quiz) => quiz.quizStartTs > Date.now())
     .sort((a, b) => a.quizStartTs - b.quizStartTs)[0];
   const toShowQuiz = firstFutureQuiz || latestQuiz;
-  const toShowQuizTs = toShowQuiz.quizStartTs;
+  const toShowQuizTs = toShowQuiz?.quizStartTs;
 
   const now = Date.now();
   const nextScheduledQuiz = courseQuizData
@@ -260,17 +261,17 @@ export async function getLastUpdatedNotes(
     let progressStatus: string | null = null;
 
     if (targetUsed) {
-      const allCourses = await getCourseInfo();
+      const allCourses = await getAllCourses();
       const notesUri = allCourses[courseId]?.notes;
 
       if (notesUri) {
-        const tocResp = await getFlamsServer().contentToc({ uri: notesUri });
+        const tocResp = await contentToc({ uri: notesUri });
         const docSections = tocResp[1];
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const secInfo = sections.reduce((acc, s) => {
           acc[s.uri] = { id: s.uri, title: s.title, uri: s.uri };
           return acc;
-        }, {} as Record<FTML.DocumentURI, SecInfo>);
+        }, {} as Record<FTML.DocumentUri, SecInfo>);
 
         progressStatus = calculateLectureProgress(courseData, secInfo);
       }
@@ -411,11 +412,13 @@ async function getLastUpdatedDescriptions({
   name,
   action,
   router,
+  currentTerm,
 }: {
   courseId: string;
   name: ResourceName;
   action: Action;
   router: NextRouter;
+  currentTerm: string;
 }): Promise<ResourceDisplayInfo> {
   let description = null;
   let timeAgo = null;
@@ -453,7 +456,11 @@ async function getLastUpdatedDescriptions({
       }
       break;
     case ResourceName.COURSE_COMMENTS:
-      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(courseId, router));
+      ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(
+        courseId,
+        currentTerm,
+        router
+      ));
       break;
     default:
       break;
@@ -518,7 +525,7 @@ const handleResourceClick = (
 function MyCourses({ enrolledCourseIds }) {
   const [allCourses, setAllCourses] = useState<Record<string, CourseInfo>>({});
   useEffect(() => {
-    getCourseInfo().then(setAllCourses);
+    getAllCourses().then(setAllCourses);
   }, []);
   return (
     <>
@@ -688,6 +695,9 @@ function WelcomeScreen({
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
+  const { currentTermByUniversityId } = useCurrentTermContext();
+  const currentTerm = currentTermByUniversityId['FAU'];
+
   const {
     resource: r,
     home: { newHome: n },
@@ -701,8 +711,8 @@ function WelcomeScreen({
   }, []);
 
   useEffect(() => {
-    getCourseIdsForEnrolledUser().then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
-  }, []);
+    getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
+  }, [currentTerm]);
 
   const isFAUId = isFauId(userInfo?.userId);
 
@@ -718,6 +728,7 @@ function WelcomeScreen({
               name: resource.name,
               action: action,
               router,
+              currentTerm: currentTerm, // Use the current term from context
             }).then(({ description, timeAgo, timestamp, quizId, colorInfo }) => {
               newDescriptions[`${courseId}-${resource.name}-${action}`] = {
                 description,
@@ -737,10 +748,24 @@ function WelcomeScreen({
     };
 
     fetchDescriptions();
-  }, [groupedResources, router]);
+  }, [groupedResources, router, currentTerm]);
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
+      <SystemAlertBanner />
+      {/*<Typography
+        sx={{
+          bgcolor: 'red',
+          color: 'white',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginBottom: 4,
+        }}
+      >
+        ALeA login system is down for maintenance. It may take several hours to be restored. In the
+        meantime, you can still access course content.
+      </Typography>*/}
       <BannerSection tight={true} />
       <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: '#F5F5F5' }}>
         <Typography
@@ -811,7 +836,7 @@ function WelcomeScreen({
         }}
       >
         {filteredCourses.map((course) => (
-          <CourseCard key={course.courseId} course={course} />
+          <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />
         ))}
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>

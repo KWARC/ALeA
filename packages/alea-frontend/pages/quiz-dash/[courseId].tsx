@@ -1,27 +1,29 @@
-import { FTMLFragment } from '@kwarc/ftml-react';
-import { FTML } from '@kwarc/ftml-viewer';
+import { SafeFTMLFragment } from '@alea/stex-react-renderer';
+import { FTML, injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import {
   QuizStubInfo,
   canAccessResource,
-  getCourseInfo,
+  getAllCourses,
   getCourseQuizList,
   getUserInfo,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, CourseInfo, ResourceName, isFauId } from '@alea/utils';
+import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useState } from 'react';
+import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import QuizPerformanceTable from '../../components/QuizPerformanceTable';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
 
+//DM: uri:undefined should be discouraged
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
   return (
@@ -36,7 +38,10 @@ function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
           }}
         >
           <Box>
-            <FTMLFragment key={title} fragment={{ type: 'HtmlString', html: title }} />
+            <SafeFTMLFragment
+              key={title}
+              fragment={{ type: 'HtmlString', html: title, uri: undefined }}
+            />
           </Box>
           <Box>
             <b>
@@ -137,6 +142,9 @@ const QuizDashPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const { quiz: t, home: tHome } = getLocaleObject(router);
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+
   const [userId, setUserId] = useState<string | null>(null);
 
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);
@@ -160,7 +168,7 @@ const QuizDashPage: NextPage = () => {
   });
 
   useEffect(() => {
-    getCourseInfo().then(setCourses);
+    getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
@@ -168,25 +176,25 @@ const QuizDashPage: NextPage = () => {
     getCourseQuizList(courseId).then((res) => {
       const quizzes = res as QuizStubInfo[];
       for (const quiz of quizzes) {
-        for (const css of quiz.css || []) FTML.injectCss(css);
+        injectCss(quiz.css);
       }
       setQuizList(quizzes);
     });
   }, [courseId]);
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !currentTerm) return;
     const enrolledStudentActions = [{ resource: ResourceName.COURSE_QUIZ, action: Action.TAKE }];
     async function checkAccess() {
       for (const { resource, action } of enrolledStudentActions) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
-          instanceId: CURRENT_TERM,
+          instanceId: currentTerm,
         });
         setIsEnrolled(hasAccess);
       }
     }
     checkAccess();
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
@@ -200,7 +208,7 @@ const QuizDashPage: NextPage = () => {
     if (!userId || !courseId) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, CURRENT_TERM);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 

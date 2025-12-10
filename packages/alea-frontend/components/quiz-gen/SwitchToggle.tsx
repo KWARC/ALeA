@@ -104,6 +104,134 @@ function RenderScaffoldingDetails({
   );
 }
 
+function MinorEditOptions({
+  variantConfig,
+  setVariantConfig,
+  availableMinorEdits = [],
+}: {
+  variantConfig: VariantConfig;
+  setVariantConfig: React.Dispatch<React.SetStateAction<VariantConfig>>;
+  availableMinorEdits?: MinorEditType[];
+}) {
+  return (
+    <Box pl={1} mb={2}>
+      <Typography variant="subtitle2" color="text.secondary" mb={1}>
+        Select Minor Edit Type:
+      </Typography>
+      <RadioGroup
+        value={variantConfig.minorEditSubtypes || ''}
+        onChange={(e) => {
+          const selected = e.target.value as MinorEditType;
+          setVariantConfig((prev) => ({
+            ...prev,
+            minorEditSubtypes: selected,
+          }));
+        }}
+      >
+        {availableMinorEdits.map((opt) => (
+          <FormControlLabel
+            key={opt}
+            value={opt}
+            control={<Radio />}
+            label={MINOR_EDIT_LABELS[opt]}
+          />
+        ))}
+      </RadioGroup>
+    </Box>
+  );
+}
+
+function ModifyChoicesOptions({
+  mode,
+  mcqOptions,
+  selectedOptions,
+  setSelectedOptions,
+  onModeChange,
+}: {
+  mode: 'add' | 'replace';
+  mcqOptions: string[];
+  selectedOptions: string[];
+  setSelectedOptions: React.Dispatch<React.SetStateAction<string[]>>;
+  onModeChange: (newMode: 'add' | 'replace') => void;
+}) {
+  return (
+    <>
+      <Box pl={1} mb={2}>
+        <Typography variant="subtitle2" color="text.secondary" mb={1}>
+          Modify Choices Mode:
+        </Typography>
+        <RadioGroup
+          value={mode || ''}
+          onChange={(e) => onModeChange(e.target.value as 'add' | 'replace')}
+        >
+          <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
+          <FormControlLabel value="replace" control={<Radio />} label="Replace Distractors" />
+        </RadioGroup>
+      </Box>
+
+      {mcqOptions.length > 0 && (
+        <Box sx={{ pl: 1, mb: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary" mb={1}>
+            Select which options to {mode === 'add' ? 'duplicate/modify' : 'replace'}:
+          </Typography>
+          {mcqOptions.map((opt, idx) => (
+            <FormControlLabel
+              key={`${idx}-${opt}`}
+              control={
+                <Checkbox
+                  checked={selectedOptions.includes(opt)}
+                  onChange={(e) =>
+                    setSelectedOptions((prev) =>
+                      e.target.checked ? [...prev, opt] : prev.filter((o) => o !== opt)
+                    )
+                  }
+                />
+              }
+              label={`${idx + 1}. ${opt}`}
+            />
+          ))}
+        </Box>
+      )}
+    </>
+  );
+}
+
+function ThematicReskinOptions({
+  themes,
+  selectedTheme,
+  onSelectTheme,
+}: {
+  themes: string[];
+  selectedTheme: string | null;
+  onSelectTheme: (theme: string) => void;
+}) {
+  return (
+    <Box mb={2}>
+      <Typography variant="subtitle2" mb={1}>
+        Choose a Problem Theme
+      </Typography>
+
+      {themes.length > 0 ? (
+        <Box display="flex" flexWrap="wrap" gap={1}>
+          {themes.map((theme) => (
+            <Chip
+              key={theme}
+              label={theme}
+              clickable
+              color={selectedTheme === theme ? 'primary' : 'default'}
+              onClick={() => onSelectTheme(theme)}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No alternative themes available
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 export const SwitchToggle = ({
   title,
   typeKey,
@@ -235,131 +363,35 @@ export const SwitchToggle = ({
       }
     }
   };
-const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQuestions: number) => {
-  if (!problemData?.problemId) return;
-  onLoadingChange?.(true);
-  try {
-    const result = await generateQuizProblems({
-      mode: 'variant',
-      problemId: problemData.problemId,
-      variantType: 'scaffolding', 
-      scaffoldingType: selectedScaffolding,
-      numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined, 
-    });
+  const handleScaffold = async (
+    selectedScaffolding: 'high' | 'reduced',
+    numSubQuestions: number
+  ) => {
+    if (!problemData?.problemId) return;
+    onLoadingChange?.(true);
+    try {
+      const result = await generateQuizProblems({
+        mode: 'variant',
+        problemId: problemData.problemId,
+        variantType: 'scaffolding',
+        scaffoldingType: selectedScaffolding,
+        numSubQuestions: selectedScaffolding === 'high' ? numSubQuestions : undefined,
+      });
 
-    if (result.length > 0) {
-      const newVariant = result[0];
-      onVariantGenerated?.(newVariant);
+      if (result.length > 0) {
+        const newVariant = result[0];
+        onVariantGenerated?.(newVariant);
+      }
+    } finally {
+      onLoadingChange?.(false);
     }
-  } finally {
-    onLoadingChange?.(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (variantConfig.selectedTheme) {
       setSelectedTheme(variantConfig.selectedTheme);
     }
   }, [variantConfig.selectedTheme]);
-
-  const renderMinorEditSuboptions = () => (
-    <Box pl={1} mb={2}>
-      <Typography variant="subtitle2" color="text.secondary" mb={1}>
-        Select Minor Edit Type:
-      </Typography>
-      <RadioGroup
-        value={variantConfig.minorEditSubtypes || ''}
-        onChange={(e) => {
-          const selected = e.target.value as MinorEditType;
-          setVariantConfig((prev) => ({
-            ...prev,
-            minorEditSubtypes: selected,
-          }));
-        }}
-      >
-        {(availableMinorEdits || []).map((opt) => (
-          <FormControlLabel
-            key={opt}
-            value={opt}
-            control={<Radio />}
-            label={MINOR_EDIT_LABELS[opt]}
-          />
-        ))}
-      </RadioGroup>
-    </Box>
-  );
-
-  const renderModifyChoicesOptions = () => {
-    const mode = variantConfig.modifyChoiceMode;
-
-    return (
-      <>
-        <Box pl={1} mb={2}>
-          <Typography variant="subtitle2" color="text.secondary" mb={1}>
-            Modify Choices Mode:
-          </Typography>
-          <RadioGroup
-            value={mode || ''}
-            onChange={(e) => handleModeChange(e.target.value as 'add' | 'replace')}
-          >
-            <FormControlLabel value="add" control={<Radio />} label="Add Distractors" />
-            <FormControlLabel value="replace" control={<Radio />} label="Replace Distractors" />
-          </RadioGroup>
-        </Box>
-
-        {mcqOptions.length > 0 && (
-          <Box sx={{ pl: 1, mb: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" mb={1}>
-              Select which options to {mode === 'add' ? 'duplicate/modify' : 'replace'}:
-            </Typography>
-            {mcqOptions.map((opt, idx) => (
-              <FormControlLabel
-                key={`${idx}-${opt}`}
-                control={
-                  <Checkbox
-                    checked={selectedOptions.includes(opt)}
-                    onChange={(e) =>
-                      setSelectedOptions?.((prev) =>
-                        e.target.checked ? [...prev, opt] : prev.filter((o) => o !== opt)
-                      )
-                    }
-                  />
-                }
-                label={`${idx + 1}. ${opt}`}
-              />
-            ))}
-          </Box>
-        )}
-      </>
-    );
-  };
-
-  const renderThematicReskinOptions = () => (
-    <Box mb={2}>
-      <Typography variant="subtitle2" mb={1}>
-        Choose a Problem Theme
-      </Typography>
-
-      {themes.length > 0 ? (
-        <Box display="flex" flexWrap="wrap" gap={1}>
-          {themes.map((theme) => (
-            <Chip
-              key={theme}
-              label={theme}
-              clickable
-              color={selectedTheme === theme ? 'primary' : 'default'}
-              onClick={() => handleSelectTheme(theme)}
-            />
-          ))}
-        </Box>
-      ) : (
-        <Typography variant="body2" color="text.secondary">
-          No alternative themes available
-        </Typography>
-      )}
-    </Box>
-  );
 
   return (
     <Box
@@ -398,11 +430,32 @@ const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQue
 
       <Collapse in={isActive}>
         <Box p={2} bgcolor="background.paper" borderTop="1px solid" borderColor="grey.200">
-          {typeKey === 'minorEdit' && renderMinorEditSuboptions()}
+          {typeKey === 'minorEdit' && (
+            <MinorEditOptions
+              variantConfig={variantConfig}
+              setVariantConfig={setVariantConfig}
+              availableMinorEdits={availableMinorEdits}
+            />
+          )}
 
-          {typeKey === 'modifyChoice' && setSelectedOptions && renderModifyChoicesOptions()}
+          {typeKey === 'modifyChoice' && (
+            <ModifyChoicesOptions
+              mode={variantConfig.modifyChoiceMode}
+              mcqOptions={mcqOptions}
+              selectedOptions={selectedOptions}
+              setSelectedOptions={setSelectedOptions}
+              onModeChange={handleModeChange}
+            />
+          )}
 
-          {typeKey === 'thematicReskin' && renderThematicReskinOptions()}
+          {typeKey === 'thematicReskin' && (
+            <ThematicReskinOptions
+              themes={themes}
+              selectedTheme={selectedTheme}
+              onSelectTheme={handleSelectTheme}
+            />
+          )}
+
           {typeKey === 'scaffolding' && (
             <RenderScaffoldingDetails
               selectedScaffolding={selectedScaffolding}
@@ -453,7 +506,7 @@ const handleScaffold = async (selectedScaffolding: 'high' | 'reduced', numSubQue
             {typeKey === 'scaffolding' && (
               <Button
                 variant="contained"
-                onClick={() => handleScaffold(selectedScaffolding,numSubQuestions)}
+                onClick={() => handleScaffold(selectedScaffolding, numSubQuestions)}
               >
                 Generate
               </Button>

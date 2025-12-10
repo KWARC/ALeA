@@ -1,4 +1,4 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import { Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { tooltipClasses, TooltipProps } from '@mui/material/Tooltip';
@@ -31,6 +31,7 @@ import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
 import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@alea/spec';
 
 export const ServerLinksContext = createContext({ gptUrl: '' });
+export const FTMLReadyContext = createContext<boolean>(false);
 
 export function getPoints(problem: FTMLProblemWithSolution, response?: FTML.ProblemResponse) {
   if (!response) return 0;
@@ -145,7 +146,7 @@ const PositionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export {
-  AnswerContext, 
+  AnswerContext,
   CompetencyTable,
   ConfigureLevelSlider,
   ContentDashboard,
@@ -154,7 +155,7 @@ export {
   DocProblemBrowser,
   ExpandableContextMenu,
   FixedPositionMenu,
-  GradingContext, 
+  GradingContext,
   GradingCreator,
   GradingDisplay,
   handleViewSource,
@@ -175,7 +176,6 @@ export {
   TourDisplay,
   TrafficLightIndicator,
   URIListDisplay,
-  UriProblemViewer
+  UriProblemViewer,
 };
 export type { TourAPIEntry };
-

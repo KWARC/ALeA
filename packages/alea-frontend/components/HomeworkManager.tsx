@@ -7,11 +7,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Snackbar
+  Snackbar,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml';
 import {
   createHomework,
   CreateHomeworkRequest,
@@ -25,8 +25,8 @@ import {
   updateHomework,
   UpdateHomeworkRequest,
 } from '@alea/spec';
-import { CURRENT_TERM } from '@alea/utils';
 import dayjs from 'dayjs';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import HomeworkForm from './HomeworkForm';
 import HomeworkList from './HomeworkList';
 import HomeworkStats from './HomeworkState';
@@ -42,6 +42,9 @@ function timestampEOD() {
 }
 
 const HomeworkManager = ({ courseId }) => {
+  const { currentTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  
   const [homeworks, setHomeworks] = useState<HomeworkStub[]>([]);
   const [stats, setStats] = useState<HomeworkStatsInfo | null>(null);
   const [id, setId] = useState<number | null>(null);
@@ -55,7 +58,7 @@ const HomeworkManager = ({ courseId }) => {
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedHomeworkId, setSelectedHomeworkId] = useState<number | null>(null);
-  const [css, setCss] = useState<FTML.CSS[]>([]);
+  const [css, setCss] = useState<FTML.Css[]>([]);
 
   const getHomeworks = async () => {
     try {
@@ -104,7 +107,7 @@ const HomeworkManager = ({ courseId }) => {
         const createRequest: CreateHomeworkRequest = {
           ...body,
           courseId,
-          courseInstance: CURRENT_TERM,
+          courseInstance: currentTerm,
         };
         response = await createHomework(createRequest);
       }

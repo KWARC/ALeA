@@ -306,9 +306,27 @@ CREATE TABLE courseMetadata (
     courseId VARCHAR(50) NOT NULL,
     instanceId VARCHAR(50) NOT NULL,
     lectureSchedule JSON NOT NULL,
+    tutorialSchedule JSON,
+    seriesId VARCHAR(255),
     hasHomework BOOLEAN NOT NULL DEFAULT FALSE,
     hasQuiz BOOLEAN NOT NULL DEFAULT FALSE,
     updaterId VARCHAR(255),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    universityId VARCHAR(255) NOT NULL,
+    courseName VARCHAR(255) NOT NULL,
+    notes VARCHAR(255) NOT NULL,
+    landing VARCHAR(255) NOT NULL,
+    slides VARCHAR(255) NOT NULL,
+    teaser TEXT,
+    instructors JSON NOT NULL,
+    PRIMARY KEY (courseId, instanceId)
+);
+
+CREATE TABLE CrossDomainAuthTokens (
+    otpToken VARCHAR(255) PRIMARY KEY,
+    jwtToken TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
 );
