@@ -162,6 +162,7 @@ export async function getQueryResults(query: string) {
   }
 }
 export async function getConceptDependencies(conceptUri: string) {
+  conceptUri = conceptUri.replace(/ /g, '%20'); // TODO: This is a horrible hack.
   const query = `SELECT DISTINCT ?dependency WHERE {
   ?loname rdf:type ulo:definition .
   ?loname ulo:defines <${conceptUri}> .

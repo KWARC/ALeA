@@ -292,7 +292,7 @@ function getTourItemMap(
       header: entry.title,
       hash: simpleHash(entry.id),
       dependencies: [],
-      successors: entry.successors,
+      successors: entry.successors.filter((s) => s !== entry.id),
       level: 0,
       understood: isConceptUnderstood(smileyVals.get(entry.id)),
     });
@@ -311,8 +311,10 @@ function getDisplayItemList(
   tempShowUri: string[]
 ): TourItem[] {
   const rootItem = Array.from(tourItemMap.values()).find((item) => !item.successors?.length);
-  if (!rootItem) return [];
-
+  if (!rootItem) {
+    console.log('No root item found');
+    return [];
+  }
   if (understoodUri.includes(rootItem.uri)) {
     return [rootItem];
   }
@@ -518,7 +520,8 @@ export function TourDisplay({
   }, [tourId]);
 
   useEffect(() => {
-    setDisplayItemList(getDisplayItemList(allItemsMap, understoodUri, tempShowUri));
+    const allItems = getDisplayItemList(allItemsMap, understoodUri, tempShowUri);
+    setDisplayItemList(allItems);
   }, [allItemsMap, understoodUri, tempShowUri]);
 
   useEffect(() => {
