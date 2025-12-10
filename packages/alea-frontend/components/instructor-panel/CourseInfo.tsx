@@ -441,6 +441,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       <Button
         variant="contained"
         color="primary"
+        onMouseDown={() => setIgnoreBlur(true)}
         onClick={handleSave}
         disabled={saving}
         sx={{ px: 3 }}
