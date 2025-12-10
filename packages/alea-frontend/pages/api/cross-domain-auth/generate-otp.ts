@@ -3,9 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 function isFauHost(req: NextApiRequest) {
-  const host = req.headers.host || '';
-  const fauDomain = process.env.NEXT_PUBLIC_FAU_DOMAIN || 'courses.voll-ki.fau.de';
-  return host === fauDomain || host.endsWith('.' + fauDomain);
+  return req.headers.host === process.env.NEXT_PUBLIC_FAU_DOMAIN;
 }
 
 // Parse cookies from request headers

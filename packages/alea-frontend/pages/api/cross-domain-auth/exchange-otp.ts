@@ -13,9 +13,7 @@ interface OTPRecord {
 }
 
 function isNonFauHost(req: NextApiRequest) {
-  const host = req.headers.host || '';
-  const nonFauDomain = process.env.NEXT_PUBLIC_NON_FAU_DOMAIN || 'alea.education';
-  return host === nonFauDomain || host.endsWith('.' + nonFauDomain);
+  return req.headers.host === process.env.NEXT_PUBLIC_NON_FAU_DOMAIN;
 }
 
 const EXPIRATION_SECONDS = parseInt(process.env.CROSS_DOMAIN_AUTH_EXPIRATION_SECONDS || '30', 10);
