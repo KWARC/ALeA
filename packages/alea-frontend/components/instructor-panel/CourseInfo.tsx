@@ -37,6 +37,7 @@ interface CourseInstructorExt {
   id: string;
   name: string;
   isNamed: boolean;
+  url: string;
 }
 
 export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabProps) {
@@ -137,6 +138,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           id: saved.id,
           name: saved.name,
           isNamed: true,
+          url: (saved as any).url || '',
         }));
 
         for (const [id, { fullName }] of memberMap.entries()) {
@@ -145,6 +147,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               id,
               name: fullName || '',
               isNamed: false,
+              url: '',
             });
           }
         }
@@ -184,7 +187,14 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       return next;
     });
   };
+  const handleUrlChange = (i: number, url: string) => {
+    setInstructors((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], url };
 
+      return next;
+    });
+  };
   const handleSave = async () => {
     if (!courseInfo) return;
 
@@ -195,6 +205,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         .map((ins) => ({
           id: ins.id,
           name: ins.name.trim(),
+          url: ins.url.trim() || '',
         }));
 
       const payload: CourseInfoMetadata = {
@@ -384,6 +395,14 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
                             />
                           }
                           label="Named"
+                        />
+                        <TextField
+                          label="URL"
+                          placeholder=" "
+                          size="small"
+                          value={inst.url || ''}
+                          onChange={(e) => handleUrlChange(i, e.target.value)}
+                          sx={{ minWidth: 250 }}
                         />
                       </Box>
                     )}

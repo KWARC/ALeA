@@ -688,6 +688,7 @@ const CourseHomePage: NextPage = () => {
   const instructorDetails =
     courseMetadata?.instructors?.map((ins) => ({
       name: ins.name,
+      url: ins.url,
     })) ?? [];
 
   const {
