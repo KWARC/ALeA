@@ -37,4 +37,3 @@ export function getCurrentTermForUniversity(universityId: string): string {
   return config.currentTerm;
 }
 
-
