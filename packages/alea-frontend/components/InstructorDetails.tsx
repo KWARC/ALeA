@@ -4,7 +4,7 @@ import { PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 
 function InstructorDetails({ details = [] }) {
-  if (!details.length) return null;
+  if (!details.length) return;
   return (
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Typography variant="h6" sx={{ fontSize: '0.85rem', color: PRIMARY_COL, fontWeight: 800 }}>

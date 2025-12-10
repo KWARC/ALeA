@@ -323,3 +323,10 @@ CREATE TABLE courseMetadata (
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
 );
+
+CREATE TABLE CrossDomainAuthTokens (
+    otpToken VARCHAR(255) PRIMARY KEY,
+    jwtToken TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
+);
