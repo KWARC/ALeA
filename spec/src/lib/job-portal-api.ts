@@ -96,10 +96,10 @@ export async function getOrganizationByDomain(domain: string) {
   });
   return resp.data as OrganizationData;
 }
-export async function inviteRecruiterToOrg(email: string, orgId: number) {
+export async function inviteRecruiterToOrg(email: string,userId:string, orgId: number) {
   const resp = await axios.post(
     '/api/job-portal/create-invite-to-org',
-    { email, orgId },
+    { email,userId, orgId },
     { headers: getAuthHeaders() }
   );
   return resp.status === 201;

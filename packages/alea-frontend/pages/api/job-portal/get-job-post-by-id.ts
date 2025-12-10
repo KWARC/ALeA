@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const jobPostId = req.query.jobPostId as string;
 
   const results: any = await executeDontEndSet500OnError(
-    `SELECT id,jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline
+    `SELECT id,jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,workMode,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline
     FROM jobPost 
     WHERE id = ?`,
     [jobPostId],

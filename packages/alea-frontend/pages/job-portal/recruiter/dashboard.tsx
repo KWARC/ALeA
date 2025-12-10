@@ -41,10 +41,15 @@ export function RecruiterDashboard() {
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
+      let recProfile: RecruiterData;
       try {
-        const recProfile = await getRecruiterProfile();
+        recProfile = await getRecruiterProfile();
+        if (!recProfile?.organizationId) {
+          console.error('Recruiter profile or organization ID missing');
+          router.push('/job-portal');
+          return;
+        }
         setRecruiter(recProfile);
-
         const hasAccess = await canAccessResource(
           ResourceName.JOB_PORTAL_ORG,
           Action.MANAGE_JOB_POSTS,
@@ -56,8 +61,13 @@ export function RecruiterDashboard() {
           router.push('/job-portal');
           return;
         }
-
-        const organizationDetail = await getOrganizationProfile(recProfile?.organizationId);
+      } catch (error) {
+        console.error('Error fetching recruiter profile or checking access:', error);
+        router.push('/job-portal');
+        return;
+      }
+      try {
+        const organizationDetail = await getOrganizationProfile(recProfile.organizationId);
         setOrganization(organizationDetail);
         const orgJobPosts = await getJobPosts(organizationDetail.id);
         const recruiterPosts = orgJobPosts.filter(
@@ -66,8 +76,13 @@ export function RecruiterDashboard() {
         setJobPostsByRecruiter(recruiterPosts);
         const applicationsByJobPost = await Promise.all(
           recruiterPosts.map(async (job) => {
-            const applications = await getJobApplicationsByJobPost(job.id);
-            return { jobId: job.id, applications };
+            try {
+              const applications = await getJobApplicationsByJobPost(job.id);
+              return { jobId: job.id, applications };
+            } catch (err) {
+              console.error(`Error fetching applications for job ${job.id}:`, err);
+              return { jobId: job.id, applications: [] };
+            }
           })
         );
         const applicationsMap = applicationsByJobPost.reduce((acc, { jobId, applications }) => {
@@ -76,7 +91,7 @@ export function RecruiterDashboard() {
         }, {} as Record<number, JobApplicationInfo[]>);
         setStatusState(transformApplicationData(applicationsMap));
       } catch (error) {
-        console.error('Error initializing data:', error);
+        console.error('Error fetching organization/job data:', error);
       } finally {
         setLoading(false);
       }

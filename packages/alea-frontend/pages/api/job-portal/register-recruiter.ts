@@ -13,7 +13,7 @@ import { RecruiterData } from '@alea/spec';
 import { deleteRecruiterProfileOrSetError } from './delete-recruiter-profile';
 import { deleteOrganizationProfileOrSetError } from './delete-organization-profile';
 
-function getOrgAcl(orgId: number) {
+export function getOrgAcl(orgId: number) {
   return `org${orgId}-recruiters`;
 }
 export async function createNewOrganizationAndRecruiterOrSetError(
@@ -49,8 +49,8 @@ export async function createNewOrganizationAndRecruiterOrSetError(
     if (!aclResult) {
       throw new Error('Failed to create ACL');
     }
-    const resourceId = `/instance/${CURRENT_TERM}/orgId/${orgId}`;
-    const actionId = 'CREATE_JOB_POST';
+    const resourceId = `/job-portal-org/${orgId}`;
+    const actionId = 'MANAGE_JOB_POSTS';
     const aclId = getOrgAcl(orgId);
     const resourceAccessResult = await unsafeCreateResourceAccessUnlessForced(
       resourceId,
@@ -80,11 +80,10 @@ export async function createNewOrganizationAndRecruiterOrSetError(
   }
 }
 
-export async function createRecruiterAndAddToAclOrSetError(
+export async function createRecruiterOrSetError(
   recruiterData: { name: string; email: string; position: string },
   orgId: number,
   userId: string,
-  req: NextApiRequest,
   res: NextApiResponse
 ) {
   const recruiter = await createRecruiterProfileOrSet500OnError(
@@ -92,22 +91,6 @@ export async function createRecruiterAndAddToAclOrSetError(
     res
   );
   if (!recruiter) return;
-
-  const success = await addRemoveMemberOrSetError(
-    {
-      memberId: userId,
-      aclId: getOrgAcl(orgId),
-      isAclMember: false,
-      toBeAdded: true,
-    },
-    req,
-    res
-  );
-  if (!success) {
-    //Rollback
-    await deleteRecruiterProfileOrSetError(recruiter.userId, res);
-    return false;
-  }
   return true;
 }
 
@@ -129,11 +112,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!hasInvite) {
       return res.status(200).json({ message: 'No invite found', showInviteDialog: true });
     }
-    const result = await createRecruiterAndAddToAclOrSetError(
+    const result = await createRecruiterOrSetError(
       { name, email, position },
       orgId,
       userId,
-      req,
       res
     );
     if (!result) return;

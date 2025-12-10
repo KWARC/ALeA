@@ -4,9 +4,8 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
-import { JobCategoryInfo } from '@alea/spec';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 
 export async function getJobPostUsingIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: any = await executeDontEndSet500OnError(
@@ -28,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     id,
     jobTitle,
     trainingLocation,
+    workMode,
     jobDescription,
     currency,
     stipend,
@@ -38,33 +38,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     openPositions,
   } = req.body;
   if (!id) return res.status(422).send('Job Post Id is missing');
-  const userId = await getUserIdIfAuthorizedOrSetError(
-    req,
-    res,
-    ResourceName.JOB_PORTAL,
-    Action.MANAGE_JOB_POSTS,
-    { instanceId: CURRENT_TERM }
-  );
-  if (!userId) return;
 
   const currentJobPost = await getJobPostUsingIdOrSet500OnError(id, res);
   if (!currentJobPost) return;
-  const { updatedAt } = currentJobPost;
-
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.JOB_PORTAL_ORG,
+    Action.MANAGE_JOB_POSTS,
+    { orgId: currentJobPost.organizationId }
+  );
+  if (!userId) return;
+  const applicationDeadlineMySQL = applicationDeadline
+    ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
+    : null;
   const result = await executeAndEndSet500OnError(
-    'UPDATE jobPost SET jobTitle = ?, trainingLocation = ?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt=? WHERE id = ?',
+    'UPDATE jobPost SET jobTitle = ?, trainingLocation = ?,workMode=?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt =CURRENT_TIMESTAMP WHERE id = ?',
     [
       jobTitle,
       trainingLocation,
+      workMode,
       jobDescription,
       currency,
       stipend,
       facilities,
       qualification,
       targetYears,
-      applicationDeadline,
+      applicationDeadlineMySQL,
       openPositions,
-      updatedAt,
       id,
     ],
     res

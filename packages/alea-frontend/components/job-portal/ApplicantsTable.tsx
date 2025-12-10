@@ -116,18 +116,46 @@ const SocialLinks = ({ socialLinks }) => {
       </Typography>
     );
 
+  const normalizeUrl = (url) => {
+ if (!url || url.trim() === '' || url === 'N/A') return null;
+     return url.startsWith('http://') || url.startsWith('https://')
+      ? url
+      : `https://${url}`;
+  };
+
   return (
     <Box>
-      {Object.entries(socialLinks).map(([platform, url], index) => (
-        <Tooltip key={index} title={platform.charAt(0).toUpperCase() + platform.slice(1)} arrow>
-          <IconButton component="a" href={url ? String(url) : '#'} target="_blank">
-            {getSocialIcon(platform)}
-          </IconButton>
-        </Tooltip>
-      ))}
+      {Object.entries(socialLinks).map(([platform, rawUrl], index) => {
+        const url = normalizeUrl(String(rawUrl));
+
+        return (
+          <Tooltip
+            key={index}
+            title={platform.charAt(0).toUpperCase() + platform.slice(1)}
+            arrow
+          >
+            <span>
+              <IconButton
+                component="a"
+                href={url || undefined}
+                target={url ? "_blank" : undefined}
+                rel={url ? "noopener noreferrer" : undefined}
+                disabled={!url}
+                sx={{
+                  opacity: url ? 1 : 0.4,
+                  cursor: url ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {getSocialIcon(platform)}
+              </IconButton>
+            </span>
+          </Tooltip>
+        );
+      })}
     </Box>
   );
 };
+
 const ApplicantRow = ({
   applicant,
   index,

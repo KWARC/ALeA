@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
   if (!results) return;
-  if (!results.length) res.status(404).end();
+  if (!results.length)return res.status(404).end();
 
   const recruiter = results[0];
   let parsedSocialLinks: Record<string, string> = {};

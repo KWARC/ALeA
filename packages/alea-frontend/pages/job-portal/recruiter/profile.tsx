@@ -47,62 +47,81 @@ const ProfileForm = () => {
   const [loading, setLoading] = useState(true);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const router = useRouter();
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        setLoading(true);
-        const res = await getRecruiterProfile();
-        const parsedSocialLinks = res?.socialLinks || {};
-        const requiredSocialLinks = {
-          linkedin: parsedSocialLinks.linkedin || 'N/A',
-          github: parsedSocialLinks.github || 'N/A',
-          twitter: parsedSocialLinks.twitter || 'N/A',
-          ...parsedSocialLinks,
-        };
-        setRecruiter(res);
-        const hasAccess = await canAccessResource(
-          ResourceName.JOB_PORTAL_ORG,
-          Action.MANAGE_JOB_POSTS,
-          { orgId: String(res.organizationId) }
-        );
-        if (!hasAccess) {
-          alert('You do not have access to this page.');
-          router.push('/job-portal');
-          return;
-        }
-        const organizationDetail = await getOrganizationProfile(res.organizationId);
-        setProfileData((prevData) => ({
-          ...prevData,
-          name: res?.name || '',
-          userId: res?.userId || '',
-          position: res?.position || '',
-          email: res?.email || '',
-          mobile: res?.mobile || '',
-          altMobile: res?.altMobile || '',
-          about: res.about,
-          socialLinks: requiredSocialLinks,
-          organization: {
-            id: organizationDetail?.id,
-            domain: organizationDetail.domain,
-            companyName: organizationDetail?.companyName || '',
-            isStartup: organizationDetail?.isStartup ?? false,
-            companyType: organizationDetail?.companyType || '',
-            incorporationYear: organizationDetail?.incorporationYear ?? null,
-            website: organizationDetail?.website || '',
-            about: organizationDetail?.about || '',
-            officeAddress: organizationDetail?.officeAddress || '',
-            officePostalCode: organizationDetail?.officePostalCode || '',
-          },
-        }));
-      } catch (error) {
-        console.error('Error initializing recruiter data:', error);
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const initialize = async () => {
+    setLoading(true);
+    let recruiterProfile: RecruiterData | null = null;
+    try {
+      recruiterProfile = await getRecruiterProfile();
+      if (!recruiterProfile) {
+        router.push('/job-portal'); 
+        return;
       }
-    };
+      setRecruiter(recruiterProfile);
+    } catch (error) {
+      console.error('Failed to fetch recruiter profile:', error);
+      router.push('/job-portal'); 
+      return;
+    }
+    try {
+      const hasAccess = await canAccessResource(
+        ResourceName.JOB_PORTAL_ORG,
+        Action.MANAGE_JOB_POSTS,
+        { orgId: String(recruiterProfile.organizationId) }
+      );
+      if (!hasAccess) {
+        alert('You do not have access to this page.');
+        router.push('/job-portal');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      router.push('/job-portal'); 
+      return;
+    }
+    try {
+      const organizationDetail = await getOrganizationProfile(recruiterProfile.organizationId);
+      const parsedSocialLinks = recruiterProfile?.socialLinks || {};
+      const requiredSocialLinks = {
+        linkedin: parsedSocialLinks.linkedin || 'N/A',
+        github: parsedSocialLinks.github || 'N/A',
+        twitter: parsedSocialLinks.twitter || 'N/A',
+        ...parsedSocialLinks,
+      };
 
-    initialize();
-  }, []);
+      setProfileData((prevData) => ({
+        ...prevData,
+        name: recruiterProfile?.name || '',
+        userId: recruiterProfile?.userId || '',
+        position: recruiterProfile?.position || '',
+        email: recruiterProfile?.email || '',
+        mobile: recruiterProfile?.mobile || '',
+        altMobile: recruiterProfile?.altMobile || '',
+        about: recruiterProfile.about,
+        socialLinks: requiredSocialLinks,
+        organization: {
+          id: organizationDetail?.id,
+          domain: organizationDetail?.domain,
+          companyName: organizationDetail?.companyName || '',
+          isStartup: organizationDetail?.isStartup ?? false,
+          companyType: organizationDetail?.companyType || '',
+          incorporationYear: organizationDetail?.incorporationYear ?? null,
+          website: organizationDetail?.website || '',
+          about: organizationDetail?.about || '',
+          officeAddress: organizationDetail?.officeAddress || '',
+          officePostalCode: organizationDetail?.officePostalCode || '',
+        },
+      }));
+    } catch (error) {
+      console.error('Error fetching organization details:', error);
+    }
+
+    setLoading(false); 
+  };
+
+  initialize();
+}, []);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

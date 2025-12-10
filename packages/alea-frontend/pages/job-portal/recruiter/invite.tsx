@@ -21,6 +21,7 @@ import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 const InviteRecruiterPage = () => {
   const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
@@ -30,30 +31,34 @@ const InviteRecruiterPage = () => {
   useEffect(() => {
     const checkAccess = async () => {
       setAccessCheckLoading(true);
-      const recruiter = await getRecruiterProfile();
-      setRecruiter(recruiter);
-      const orgId = recruiter?.organizationId;
-      const hasAccess = await canAccessResource(
-        ResourceName.JOB_PORTAL_ORG,
-        Action.MANAGE_JOB_POSTS,
-        { orgId: String(orgId) }
-      );
-      if (!hasAccess) {
-        alert('You donot have access to this page.');
+      try {
+        const recruiter = await getRecruiterProfile();
+        setRecruiter(recruiter);
+        const orgId = recruiter?.organizationId;
+        const hasAccess = await canAccessResource(
+          ResourceName.JOB_PORTAL_ORG,
+          Action.MANAGE_JOB_POSTS,
+          { orgId: String(orgId) }
+        );
+        if (!hasAccess) {
+          alert('You do not have access to this page.');
+          router.push('/job-portal');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking access:', error);
         router.push('/job-portal');
-        return;
+      } finally {
+        setAccessCheckLoading(false);
       }
-      setAccessCheckLoading(false);
     };
-
     checkAccess();
   }, []);
   const handleInvite = async () => {
     if (!email) return;
-
     try {
       setLoading(true);
-      const isSuccess = await inviteRecruiterToOrg(email, recruiter.organizationId);
+      const isSuccess = await inviteRecruiterToOrg(email, userId, recruiter.organizationId);
       if (isSuccess) {
         setSnackOpen(true);
         setEmail('');
@@ -64,7 +69,8 @@ const InviteRecruiterPage = () => {
       setLoading(false);
     }
   };
-  if (loading) return <CircularProgress />;
+
+  if (accessCheckLoading) return <CircularProgress />;
   return (
     <Box
       sx={{
@@ -97,6 +103,14 @@ const InviteRecruiterPage = () => {
             placeholder="Enter recruiter's email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            variant="outlined"
+            fullWidth
+            placeholder="Enter recruiter's Alea UserId"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
             sx={{ mb: 3 }}
           />
 

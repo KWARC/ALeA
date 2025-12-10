@@ -32,7 +32,10 @@ import {
   OfferDetailsForm,
 } from '../../../components/job-portal/JobList';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-
+export type JobPostFormData = Omit<
+  JobPostInfo,
+  "id" | "organizationId" | "jobCategoryId"
+>;
 const JobPostPage = () => {
   const router = useRouter();
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
@@ -43,11 +46,12 @@ const JobPostPage = () => {
   const [selectedJobCategory, setSelectedJobCategory] = useState<string>('');
   const [selectedJobCategoryId, setSelectedJobCategoryId] = useState<number>(null);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
-  const [jobPostFormData, setJobPostFormData] = useState({
+  const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>({
     session: '',
     jobTitle: '',
     trainingLocation: '',
-    applicationDeadline: null,
+    workMode:'',
+    applicationDeadline: '',
     currency: '',
     stipend: null,
     facilities: '',
@@ -68,7 +72,7 @@ const JobPostPage = () => {
       const hasAccess = await canAccessResource(
         ResourceName.JOB_PORTAL_ORG,
         Action.MANAGE_JOB_POSTS,
-        { orgId: String(recruiterData.organizationId) }
+        { orgId: String(recruiterData?.organizationId) }
       );
 
       if (!hasAccess) {
@@ -78,6 +82,7 @@ const JobPostPage = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      router.push('/job-portal');
     } finally {
       setLoading(false);
     }

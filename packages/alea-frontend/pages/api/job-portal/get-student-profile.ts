@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   const results: any = await executeDontEndSet500OnError(
     `SELECT userId,name, resumeUrl, email, mobile, programme, yearOfAdmission, yearOfGraduation, 
-        courses, grades,gpa,location, about,socialLinks
+        courses,gpa,location, about,socialLinks
     FROM studentProfile 
     WHERE userId = ? 
     `,
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res
   );
   if (!results) return;
-  if (!results.length) res.status(404).end();
+  if (!results.length)return res.status(404).end();
   const student = results[0];
   let parsedSocialLinks: Record<string, string> = {};
 

@@ -1,4 +1,12 @@
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+} from '@mui/material';
 import {
   ApplicantWithProfile,
   canAccessResource,
@@ -7,6 +15,7 @@ import {
   getRecruiterProfile,
   getStudentProfileUsingUserId,
   JobPostInfo,
+  RecruiterData,
 } from '@alea/spec';
 import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -67,51 +76,14 @@ const StatusFilter = ({
 export const JobSelect = ({
   setLoading,
   setApplicants,
+  jobPosts,
 }: {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setApplicants: React.Dispatch<React.SetStateAction<ApplicantWithProfile[]>>;
+  jobPosts:JobPostInfo[];
 }) => {
-  const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
   const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
-  const router = useRouter();
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const recruiterData = await getRecruiterProfile();
-      const hasAccess = await canAccessResource(
-        ResourceName.JOB_PORTAL_ORG,
-        Action.MANAGE_JOB_POSTS,
-        { orgId: String(recruiterData.organizationId) }
-      );
-
-      if (!hasAccess) {
-        alert('You do not have access to this page.');
-        router.push('/job-portal');
-        return;
-      }
-      if (recruiterData?.organizationId) {
-        const jobPosts = await getJobPosts(recruiterData.organizationId);
-        setJobPosts(jobPosts);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (selectedJob) {
-      getApplicants(selectedJob);
-    } else {
-      setApplicants([]);
-    }
-  }, [selectedJob]);
-
+  
   async function getApplicants(job: JobPostInfo) {
     if (!job) return;
     setLoading(true);
@@ -134,6 +106,16 @@ export const JobSelect = ({
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (selectedJob) {
+      getApplicants(selectedJob);
+    } else {
+      setApplicants([]);
+    }
+  }, [selectedJob]);
+
+
   return (
     <FormControl
       sx={{ flex: '1 1 200px', maxWidth: { md: '350px' }, boxShadow: 2, borderRadius: 2 }}
@@ -171,8 +153,46 @@ export const JobSelect = ({
 
 const Applications = () => {
   const [applicants, setApplicants] = useState<ApplicantWithProfile[]>([]);
-  const [loading, setLoading] = useState(false);
   const [filteredApplicants, setFilteredApplicants] = useState(applicants);
+  const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
+  const [accessCheckLoading, setAccessCheckLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+    useEffect(() => {
+    const fetchData = async () => {
+      setAccessCheckLoading(true);
+      let recruiterData: RecruiterData;
+      try {
+        recruiterData = await getRecruiterProfile();
+        if (!recruiterData) {
+          router.push('/job-portal');
+          return;
+        }
+        const hasAccess = await canAccessResource(
+          ResourceName.JOB_PORTAL_ORG,
+          Action.MANAGE_JOB_POSTS,
+          { orgId: String(recruiterData.organizationId) }
+        );
+
+        if (!hasAccess) {
+          alert('You do not have access to this page.');
+          router.push('/job-portal');
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching recruiter profile or checking access:', error);
+        router.push('/job-portal');
+        return;
+      }
+      const jobPosts = await getJobPosts(recruiterData.organizationId);
+      setJobPosts(jobPosts || []);
+      setAccessCheckLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (accessCheckLoading) return <CircularProgress />;
   return (
     <Box sx={{ maxWidth: '1200px', margin: 'auto', p: { xs: '30px 16px', md: '30px' } }}>
       <Box>
@@ -180,7 +200,7 @@ const Applications = () => {
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <JobSelect setLoading={setLoading} setApplicants={setApplicants} />
+          <JobSelect  setLoading={setLoading} setApplicants={setApplicants} jobPosts={jobPosts}/>
           <StatusFilter applicants={applicants} setFilteredApplicants={setFilteredApplicants} />
         </Box>
         <hr />

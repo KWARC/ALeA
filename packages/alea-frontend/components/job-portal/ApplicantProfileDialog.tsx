@@ -104,14 +104,6 @@ export const ApplicantProfileDialog = ({
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  Grades
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {selectedStudentProfile.grades}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                   ResumeURL
                 </Typography>
                 <Typography variant="body2" color="textSecondary">

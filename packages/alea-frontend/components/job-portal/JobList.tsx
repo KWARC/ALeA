@@ -18,10 +18,17 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { createJobPost, getJobPosts, RecruiterData, updateJobPost } from '@alea/spec';
+import { createJobPost, getJobPosts, JobPostInfo, RecruiterData, updateJobPost } from '@alea/spec';
 import { useEffect, useState } from 'react';
+import { JobPostFormData } from 'packages/alea-frontend/pages/job-portal/recruiter/create-job';
 
-export const EligibilityForm = ({ formData, handleChange }) => {
+export const EligibilityForm = ({
+  formData,
+  handleChange,
+}: {
+  formData: JobPostFormData;
+  handleChange: (e: any) => void;
+}) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -59,7 +66,11 @@ export const EligibilityForm = ({ formData, handleChange }) => {
         margin="normal"
         name="applicationDeadline"
         sx={{ bgcolor: 'white' }}
-        value={formData.applicationDeadline}
+        value={
+          formData.applicationDeadline
+            ? formData.applicationDeadline.slice(0, 16).replace(' ', 'T')
+            : ''
+        }
         onChange={(e) => {
           const selectedDate = new Date(e.target.value);
           if (selectedDate < new Date()) {
@@ -83,7 +94,13 @@ export const EligibilityForm = ({ formData, handleChange }) => {
   );
 };
 
-export const OfferDetailsForm = ({ formData, handleChange }) => {
+export const OfferDetailsForm = ({
+  formData,
+  handleChange,
+}: {
+  formData: JobPostFormData;
+  handleChange: (e: any) => void;
+}) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -129,7 +146,13 @@ export const OfferDetailsForm = ({ formData, handleChange }) => {
   );
 };
 
-export const JobDescriptionsForm = ({ formData, handleChange }) => {
+export const JobDescriptionsForm = ({
+  formData,
+  handleChange,
+}: {
+  formData: JobPostFormData;
+  handleChange: (e: any) => void;
+}) => {
   console.log({ formData });
   return (
     <Box>
@@ -170,6 +193,22 @@ export const JobDescriptionsForm = ({ formData, handleChange }) => {
           bgcolor: 'white',
         }}
       />
+      <FormControl fullWidth margin="normal">
+        <InputLabel id="workMode-label">Work Mode</InputLabel>
+        <Select
+          labelId="workMode-label"
+          label="Work Mode"
+          name="workMode"
+          value={formData.workMode}
+          onChange={handleChange}
+          sx={{ bgcolor: 'white' }}
+          MenuProps={{ disablePortal: true }}
+        >
+          <MenuItem value="hybrid">Hybrid</MenuItem>
+          <MenuItem value="onsite">Onsite</MenuItem>
+          <MenuItem value="remote">Remote</MenuItem>
+        </Select>
+      </FormControl>
       <TextField
         label="Job Description"
         fullWidth
@@ -188,15 +227,23 @@ export const JobDescriptionsForm = ({ formData, handleChange }) => {
   );
 };
 
-export const JobPostDialog = ({ open, handleClose, jobData, handleSave }) => {
-  const [formData, setFormData] = useState(jobData || {});
-  console.log('ab', formData);
-  console.log({ jobData });
+export const JobPostDialog = ({
+  open,
+  handleClose,
+  jobData,
+  handleSave,
+}: {
+  open: boolean;
+  handleClose: () => void;
+  jobData: JobPostInfo | null;
+  handleSave: (updatedJob: JobPostInfo) => Promise<void>;
+}) => {
+  const [formData, setFormData] = useState<JobPostInfo>(jobData);
   useEffect(() => {
-    setFormData(jobData || {});
+    if (!jobData) return;
+    setFormData(jobData);
   }, [jobData]);
   const handleChange = (e) => {
-    console.log('eTarget', e.target);
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -205,7 +252,7 @@ export const JobPostDialog = ({ open, handleClose, jobData, handleSave }) => {
     handleSave(formData);
     handleClose();
   };
-
+  if (!jobData) return;
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" sx={{ zIndex: 2004, p: 20 }}>
       <DialogTitle>{'Edit Job Post'}</DialogTitle>
@@ -226,8 +273,8 @@ export const JobPostDialog = ({ open, handleClose, jobData, handleSave }) => {
 
 export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [jobPosts, setJobPosts] = useState([]);
+  const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
+  const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
   useEffect(() => {
     const fetchJobs = async () => {
       const jobs = await getJobPosts(recruiter?.organizationId);
@@ -235,7 +282,7 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
     };
     fetchJobs();
   }, [recruiter]);
-  const handleEdit = (job) => {
+  const handleEdit = (job: JobPostInfo) => {
     setSelectedJob(job);
     setOpenDialog(true);
   };
@@ -271,13 +318,13 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
   return (
     <Box py={4}>
       <Typography variant="h4" mb={4}>
-        Your Job Postings
+        Your Org Job Postings
       </Typography>
 
       {!jobPosts || jobPosts.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" color="text.secondary">
-            You have not created any jobs yet. Start by creating one!
+            No jobs created yet. Start by creating one!
           </Typography>
         </Box>
       ) : (
@@ -306,8 +353,10 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
                       Location: {job.trainingLocation}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Created: {new Date(job.createdAt).toLocaleDateString()}
+                      Created By: {job.createdByUserId} |{' '}
+                      {new Date(job.createdAt).toLocaleDateString()}
                     </Typography>
+
                     <Typography variant="body2" color="error">
                       Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
                     </Typography>

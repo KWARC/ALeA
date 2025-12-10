@@ -28,11 +28,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     facilities,
     applicationDeadline,
   } = req.body;
+  const applicationDeadlineMySQL = applicationDeadline
+  ? new Date(applicationDeadline).toISOString().slice(0, 19).replace("T", " ")
+  : null;
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobPost 
-      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline) 
-     VALUES (?,?,?, ?, ?, ?,?,?,?,?,?,?,?)`,
+      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdByUserId) 
+     VALUES (?,?,?, ?, ?, ?,?,?,?,?,?,?,?,?)`,
     [
       jobCategoryId,
       organizationId,
@@ -46,7 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       currency,
       stipend,
       facilities,
-      applicationDeadline,
+      applicationDeadlineMySQL,
+      userId
     ],
     res
   );

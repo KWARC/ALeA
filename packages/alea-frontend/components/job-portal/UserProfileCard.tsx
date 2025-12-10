@@ -231,19 +231,23 @@ export const UserProfileCard = ({
                     </Avatar>
                   </Tooltip>
                   {url && url !== 'N/A' ? (
-                    <Link href={String(url)} passHref legacyBehavior>
-                      <a
-                        target="_blank"
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 'bold',
-                          color: '#333',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        {String(url)}
-                      </a>
-                    </Link>
+                    <a
+                      href={
+                        url.startsWith('http://') || url.startsWith('https://')
+                          ? url
+                          : `https://${url}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        color: '#333',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      {String(url)}
+                    </a>
                   ) : (
                     <Typography sx={{ fontSize: 16, fontWeight: 'bold', color: '#777' }}>
                       N/A

@@ -223,9 +223,11 @@ export function StudentDashboard() {
       if (applicationStatus === 'REJECTED') {
         statusStats.rejected += 1;
       }
+      if (applicationStatus === 'OFFERED') {
+        statusStats.offerReceived += 1;
+      }
     });
-    statusStats.offerReceived = statusStats.applied - statusStats.rejected;
-    return statusStats;
+        return statusStats;
   };
 
   const stats = [

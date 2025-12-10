@@ -58,14 +58,16 @@ export interface JobPostInfo {
   jobTitle: string;
   jobDescription: string;
   trainingLocation: string;
+  workMode:string;
   qualification: string;
   targetYears: string;
   openPositions: number;
   currency: string;
   stipend: number;
   facilities: string;
-  applicationDeadline: Date;
+  applicationDeadline: string;
   createdByUserId?: string;
+  createdAt?:string;
 }
 
 export type InitialJobData = Partial<JobPostInfo>;

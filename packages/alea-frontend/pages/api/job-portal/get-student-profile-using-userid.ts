@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return res.status(422).send('Missing userId');
   const results: any = await executeDontEndSet500OnError(
     `SELECT name, resumeUrl, email, mobile, programme, yearOfAdmission, yearOfGraduation, 
-        courses, grades,gpa,location, about,socialLinks
+        courses,gpa,location, about,socialLinks
     FROM studentProfile 
     WHERE userId = ? 
     `,
