@@ -18,8 +18,11 @@ import {
   ConceptAndDefinition,
   NumericCognitiveValues,
   SHOW_DIMENSIONS,
+  clearWeightsCache,
   getDefiniedaInSection,
   getUriWeights,
+  getLmpUriWeightsAggBulk,
+  invalidateWeightsCache,
   isLoggedIn,
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
@@ -73,12 +76,13 @@ const SectionReview = ({
     if (!definedConcepts) return;
     const URIs = [...new Set(definedConcepts.flatMap((data) => data.conceptUri))];
     setURIs(URIs);
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }, [definedConcepts]);
 
   function refetchCompetencyData() {
     if (!URIs?.length) return;
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    clearWeightsCache(); // invalidateWeightsCache(URIs); wont be enough?
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }
 
   const averages = SHOW_DIMENSIONS.reduce((acc, competency) => {
