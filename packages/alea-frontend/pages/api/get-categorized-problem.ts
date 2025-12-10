@@ -1,13 +1,14 @@
-import { contentToc } from '@flexiformal/ftml-backend';
-import { FTML } from '@flexiformal/ftml';
 import {
-  getDefiniedaInSection,
+  getDefiniedaInSectionAgg,
   getQueryResults,
-  getSectionDependencies,
+  getDependenciesForSection,
   getSparqlQueryForLoRelationToDimAndConceptPair,
   ProblemData,
+  getDependenciesForSectionAgg,
 } from '@alea/spec';
 import { getParamFromUri, Language, languageUrlMap } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { getProblemsBySection } from './get-course-problem-counts';
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
@@ -40,10 +41,10 @@ async function getAllConceptUrisForCourse(
   const conceptUris = new Set<string>();
 
   for (const sectionUri of sectionUris) {
-    const defidenda = await getDefiniedaInSection(sectionUri);
+    const defidenda = await getDefiniedaInSectionAgg(sectionUri);
     defidenda.forEach((d) => conceptUris.add(d.conceptUri));
 
-    const deps = await getSectionDependencies(sectionUri);
+    const deps = await getDependenciesForSectionAgg(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
   const conceptUrisArray = Array.from(conceptUris).map((uri) => {

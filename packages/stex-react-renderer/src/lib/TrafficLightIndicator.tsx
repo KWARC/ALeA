@@ -2,7 +2,7 @@ import {
   BloomDimension,
   NumericCognitiveValues,
   clearWeightsCache,
-  getSectionDependencies,
+  getDependenciesForSectionAgg,
   getLmpUriWeightsAggBulk,
   isLoggedIn
 } from '@alea/spec';
@@ -65,7 +65,7 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
   useEffect(() => {
     if (!isLoggedIn()) return;
 
-    getSectionDependencies(sectionUri).then((dependencies) => {
+    getDependenciesForSectionAgg(sectionUri).then((dependencies) => {
       setPrereqs(dependencies);
       getLmpUriWeightsAggBulk(dependencies).then((data) => setCompetencyData(data));
     });

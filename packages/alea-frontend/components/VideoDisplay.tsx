@@ -15,7 +15,13 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipDetails, ClipInfo, ClipMetadata, getDefiniedaInSection } from '@alea/spec';
+import {
+  ClipDetails,
+  ClipInfo,
+  ClipMetadata,
+  getDefiniedaInSection,
+  getDefiniedaInSectionAgg,
+} from '@alea/spec';
 import { formatTime, getParamFromUri, languageUrlMap, localStore, PathToTour2 } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -203,7 +209,7 @@ const MediaItem = ({
     }
     setLoadingConcepts(true);
     try {
-      const definedConcepts = await getDefiniedaInSection(sectionUri);
+      const definedConcepts = await getDefiniedaInSectionAgg(sectionUri);
       const result = definedConcepts.map((concept) => concept.conceptUri) ?? [];
       conceptsCache.current[sectionUri] = result;
 
@@ -464,7 +470,7 @@ const MediaItem = ({
         onMouseLeave={handleMouseLeave}
       >
         {Object.entries(subtitles)
-          .filter(([code]) => code !== 'default') 
+          .filter(([code]) => code !== 'default')
           .map(([code, url]) => {
             if (!url) return null;
             const isDefault = subtitles.default === url;

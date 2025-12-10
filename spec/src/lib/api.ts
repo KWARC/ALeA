@@ -1,5 +1,6 @@
 export * from './access-control';
 export * from './access-control-api';
+export * from './aggregated-flams-fetcher';
 export * from './aggregated-weight-fetcher';
 export * from './announcements';
 export * from './comment';
