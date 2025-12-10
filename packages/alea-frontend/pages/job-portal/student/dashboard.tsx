@@ -218,12 +218,12 @@ export function StudentDashboard() {
       rejected: 0,
     };
     applicationData?.forEach((application) => {
-      const { applicationStatus } = application;
+      const { recruiterAction } = application;
       statusStats.applied += 1;
-      if (applicationStatus === 'REJECTED') {
+      if (recruiterAction === 'REJECT') {
         statusStats.rejected += 1;
       }
-      if (applicationStatus === 'OFFERED') {
+      if (recruiterAction === 'SEND_OFFER') {
         statusStats.offerReceived += 1;
       }
     });

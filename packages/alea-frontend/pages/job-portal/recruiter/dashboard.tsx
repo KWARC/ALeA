@@ -1,5 +1,5 @@
 import { Group, HourglassEmpty, HowToReg, TaskAlt } from '@mui/icons-material';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import {
   canAccessResource,
   getJobApplicationsByJobPost,
@@ -153,10 +153,21 @@ export function RecruiterDashboard() {
         colors={colors}
         statusState={statusState}
       />
+      <Typography
+        variant="body2"
+        sx={{
+          mt: 1.5,
+          color: 'text.secondary',
+          textAlign: 'center',
+          fontStyle: 'italic',
+        }}
+      >
+        The statistics above represent aggregated data across your entire organization.
+      </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 5 }}>
         <UserProfileCard type="recruiter" userData={recruiterWithOrg} />
         <DashboardJobSection
-          title="Jobs Posted by you"
+          title="Jobs posted by your organization"
           jobs={jobPostsByRecruiter}
           buttonText="Post More Jobs"
           buttonLink="/job-portal/recruiter/create-job"
