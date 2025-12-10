@@ -8,8 +8,8 @@ import {
   StudentData,
   JobApplicationInfo,
 } from './job-portal';
-
-export async function createStudentProfile(data: StudentData) {
+export type CreateStudentProfileData = Omit<StudentData, 'userId' | 'socialLinks'>;
+export async function createStudentProfile(data: CreateStudentProfileData) {
   await axios.post('/api/job-portal/create-student-profile', data, {
     headers: getAuthHeaders(),
   });
@@ -22,17 +22,9 @@ export async function updateStudentProfile(data: UpdateStudentProfileData) {
     headers: getAuthHeaders(),
   });
 }
-export async function createRecruiterProfile(data: RecruiterData) {
-  await axios.post('/api/job-portal/create-recruiter-profile', data, {
-    headers: getAuthHeaders(),
-  });
-}
-export async function deleteRecruiterProfile(userId: string) {
-  await axios.post(
-    '/api/job-portal/delete-recruiter-profile',
-    { userId },
-    { headers: getAuthHeaders() }
-  );
+
+export async function deleteRecruiterProfile() {
+  await axios.post('/api/job-portal/delete-recruiter-profile', {}, { headers: getAuthHeaders() });
 }
 export type UpdateRecruiterProfileData = Omit<RecruiterData, 'userId' | 'socialLinks'> & {
   socialLinks: string;

@@ -252,7 +252,7 @@ export function StudentDashboard() {
         statusState={statusState}
       />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 5 }}>
-        <UserProfileCard type="student" userData={student} />;
+        <UserProfileCard type="student" userData={student} />
         <DashboardJobSection
           title="Recommended Jobs"
           jobs={allJobPosts}

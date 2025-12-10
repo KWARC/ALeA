@@ -125,88 +125,101 @@ export default function RecruiterRegistration() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
-  return (
-    <MainLayout title="Register-Recruiter | VoLL-KI">
-      <Container maxWidth="sm" sx={{ mt: 5 }}>
-        <Box
-          sx={{
-            textAlign: 'center',
-            border: '1px solid #ccc',
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 4,
-          }}
-        >
-          <Typography variant="h5" gutterBottom>
-            Recruiter Registration
+  return (<MainLayout title="Register-Recruiter | VoLL-KI">
+  <Container maxWidth="sm" sx={{ mt: 6 }}>
+    <Box
+      sx={{
+        textAlign: 'center',
+        borderRadius: 3,
+        p: 5,
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(74,105,225,0.3)',
+        position: 'relative',
+      }}
+    >
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        color="#4A69E1"
+        sx={{ mb: 4 }}
+      >
+        Recruiter Registration
+      </Typography>
+
+      <TextField
+        label="Full Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        fullWidth
+        margin="normal"
+      />
+      <TextField
+        label="Email"
+        name="email"
+        value={formData.email}
+        onChange={handleChange}
+        type="email"
+        fullWidth
+        margin="normal"
+        error={!!errors.email}
+        helperText={errors.email}
+      />
+      <TextField
+        label="Organization Name"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+        fullWidth
+        margin="normal"
+      />
+      <TextField
+        label="Position"
+        name="position"
+        value={formData.position}
+        onChange={handleChange}
+        fullWidth
+        margin="normal"
+      />
+
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{
+          mt: 4,
+          bgcolor: '#4A69E1',
+          textTransform: 'none',
+          fontWeight: 600,
+          py: 1.5,
+          fontSize: '16px',
+          '&:hover': {
+            bgcolor: '#233ba4ff',
+          },
+        }}
+        onClick={handleSubmit}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
+      </Button>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Organization Exists – Invite Not Found</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Your organization is already registered (same email domain organization exists). Please
+            contact the admin or recruiter to get an invite to join the organization.
           </Typography>
-
-          <TextField
-            label="Full Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            type="email"
-            fullWidth
-            margin="normal"
-            error={!!errors.email}
-            helperText={errors.email}
-          />
-          <TextField
-            label="Organization Name"
-            name="companyName"
-            value={formData.companyName}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Position"
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 3 }}
-            onClick={handleSubmit}
-          >
-            Submit
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Close
           </Button>
-        </Box>
-        {isSubmitting && (
-          <Box mt={2} display="flex" justifyContent="center">
-            <CircularProgress color="primary" />
-          </Box>
-        )}
-        <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle>Organization Exists – Invite Not Found</DialogTitle>
-          <DialogContent>
-            <p>
-              Your organization is already registered(same email domain organization exists). Please
-              contact the admin or recruiter to get an invite to join the organization.
-            </p>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
-    </MainLayout>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  </Container>
+</MainLayout>
   );
 }

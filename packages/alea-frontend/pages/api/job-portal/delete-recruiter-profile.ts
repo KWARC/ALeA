@@ -3,6 +3,7 @@ import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
+  getUserIdOrSetError,
 } from '../comment-utils';
 import { RecruiterData } from '@alea/spec';
 
@@ -35,7 +36,8 @@ export async function deleteRecruiterProfileOrSetError(userId: string, res: Next
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const { userId } = req.body;
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
   const result = await deleteRecruiterProfileOrSetError(userId, res);
   if (!result) return;
   res.status(200).end();

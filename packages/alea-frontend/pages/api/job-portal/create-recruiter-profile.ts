@@ -4,9 +4,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
-import { RecruiterData } from '@alea/spec';
+import {  isFauId } from '@alea/utils';
 
 export async function createRecruiterProfileOrSet500OnError(
   {

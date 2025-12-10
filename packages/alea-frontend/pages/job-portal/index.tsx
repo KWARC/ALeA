@@ -161,7 +161,7 @@ const JobPortal: NextPage = () => {
                 bgcolor: 'warning.main',
                 color: 'white',
                 textTransform: 'none',
-                fontSize: '14px',
+                fontSize: '16px',
                 fontWeight: 600,
                 py: 1.4,
                 borderRadius: 2,

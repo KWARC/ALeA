@@ -14,30 +14,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     name,
     email,
     mobile,
+    altMobile,
     programme,
+    gpa,
     yearOfAdmission,
     yearOfGraduation,
     courses,
-    grades,
+    location,
     about,
     resumeUrl,
   } = req.body;
+  const parsedGpa = gpa ? Number(gpa) : null;
   const result = await executeAndEndSet500OnError(
     `INSERT INTO studentProfile 
-      (name,userId, resumeUrl, email, mobile, programme, yearOfAdmission, yearOfGraduation, 
-        courses, grades, about) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
-    [
+      (name,userId, resumeUrl, email,gpa, mobile,altMobile, programme, yearOfAdmission, yearOfGraduation, 
+        courses,location, about) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,     [
       name,
       userId,
       resumeUrl,
       email,
+      parsedGpa,
       mobile,
+      altMobile,
       programme,
       yearOfAdmission,
       yearOfGraduation,
       courses,
-      grades,
+      location,
       about,
     ],
     res
