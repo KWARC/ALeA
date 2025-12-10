@@ -168,8 +168,6 @@ The application maintains a database table (CrossDomainAuthTokens) for contains 
 
 ## Configuration
 
-
-
 ### Environment Variables (production)
 
 ```bash
@@ -225,4 +223,4 @@ CROSS_DOMAIN_AUTH_EXPIRATION_SECONDS=30
 
 - [ ] Add httpOnly cookie support (currently commented out). Need to do this even for `courses/lmp.voll-ki.fau.de`.
 - [ ] Implement token cleanup job for tokens that that were left unused
-
+- [ ] Logging out scenarios 
