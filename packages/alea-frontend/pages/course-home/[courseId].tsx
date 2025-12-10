@@ -537,7 +537,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU');
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');

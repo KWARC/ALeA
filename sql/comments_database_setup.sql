@@ -294,6 +294,7 @@ CREATE TABLE announcement(
     id INT PRIMARY KEY AUTO_INCREMENT,
     courseId VARCHAR(255) NOT NULL,
     instructorId VARCHAR(255) NOT NULL,
+    institutionId VARCHAR(255) NOT NULL,
     instanceId VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,

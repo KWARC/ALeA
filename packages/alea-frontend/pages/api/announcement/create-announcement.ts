@@ -7,7 +7,8 @@ import { CreateAnnouncementRequest } from '@alea/spec';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { courseId, title, content, visibleUntil, instanceId } = req.body as CreateAnnouncementRequest;
+  const { courseId, title, content, visibleUntil, instanceId, institutionId } =
+    req.body as CreateAnnouncementRequest & { institutionId?: string };
 
   if (!courseId || !title || !content || !visibleUntil || !instanceId) {
     res.status(422).send('Missing required fields');
@@ -24,9 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil,instanceId)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [courseId, userId, title, content, visibleUntil, instanceId],
+    `INSERT INTO announcement (courseId, instructorId, title, content, visibleUntil, instanceId, institutionId)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [courseId, userId, title, content, visibleUntil, instanceId, institutionId],
     res
   );
   if (!result) return;
