@@ -1,24 +1,24 @@
-import { SafeFTMLFragment } from './SafeFTMLComponents';
+import {
+  BloomDimension,
+  conceptUriToName,
+  getConceptDependencies,
+  getQueryResults,
+  getSparlQueryForDefinition,
+  getUriSmileys,
+  SmileyCognitiveValues,
+  smileyToLevel,
+} from '@alea/spec';
+import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import {
-  BloomDimension,
-  conceptUriToName,
-  getConceptDependencies,
-  getUriSmileys,
-  SmileyCognitiveValues,
-  smileyToLevel,
-  getQueryResults,
-  getSparlQueryForDefinition,
-} from '@alea/spec';
-import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { SelfAssessmentDialog } from './stex-react-renderer';
 import styles from './styles/tour-display.module.scss';
 import { useOnScreen } from './useOnScreen';
@@ -89,7 +89,7 @@ function ItemBreadcrumbs({
               <a>
                 <SafeFTMLFragment
                   key={item.header}
-                  fragment={{ type: 'HtmlString', html: item.header, uri }}
+                  fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
                 />
               </a>
             </li>
@@ -115,7 +115,7 @@ function ItemBreadcrumbs({
               >
                 <SafeFTMLFragment
                   key={dep.header}
-                  fragment={{ type: 'HtmlString', html: dep.header, uri: depUri }}
+                  fragment={{ type: 'HtmlString', html: dep.header, uri: undefined }}
                 />
               </Button>
             );
@@ -177,7 +177,7 @@ function TourItemDisplay({
         <h3 style={{ margin: 0 }}>
           <SafeFTMLFragment
             key={item.header}
-            fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+            fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
           />
         </h3>
         <Box mx="10px" height="30px" sx={{ whiteSpace: 'nowrap' }}>
@@ -328,7 +328,7 @@ function listItemText(item: TourItem, isIntersecting: boolean) {
       <span style={{ fontWeight }}>
         <SafeFTMLFragment
           key={item.header}
-          fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+          fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
         />
       </span>
     </Box>
