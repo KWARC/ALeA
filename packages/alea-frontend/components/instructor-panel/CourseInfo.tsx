@@ -8,7 +8,6 @@ import {
   updateCourseInfoMetadata,
   updateHasHomework,
   updateHasQuiz,
-  updateSeriesId,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -197,18 +196,8 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
     if (!courseInfo) return;
 
     setSaving(true);
+
     try {
-      if (seriesId.trim() !== '') {
-        const confirmUpdate = confirm(t.confirmUpdateSeriesId);
-        if (!confirmUpdate) {
-          setSaving(false);
-          return;
-        }
-
-        await updateSeriesId({ courseId, instanceId, seriesId });
-        setToast({ type: 'success', text: t.seriesIdUpdated });
-      }
-
       const instructorsToSave: InstructorInfo[] = instructors
         .filter((ins) => ins.isNamed)
         .map((ins) => ({
@@ -216,9 +205,13 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           name: ins.name.trim(),
         }));
 
+      // 🔥 IMPORTANT: Add seriesId here
       const payload: CourseInfoMetadata = {
         ...courseInfo,
         instructors: instructorsToSave,
+        seriesId, // <-- merged into same API
+        courseId,
+        instanceId,
       };
 
       if (isNew) {
@@ -354,16 +347,16 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           sx={{ width: 140 }}
           placeholder="4334"
           onChange={(e) => setSeriesIdState(e.target.value)}
-          onBlur={() => {
-            if (ignoreBlur) {
-              setIgnoreBlur(false);
-              return;
-            }
+          // onBlur={() => {
+          //   if (ignoreBlur) {
+          //     setIgnoreBlur(false);
+          //     return;
+          //   }
 
-            if (seriesId.trim() !== '') {
-              alert('Please click Save Changes to update Series ID.');
-            }
-          }}
+          //   if (seriesId.trim() !== '') {
+          //     alert('Please click Save Changes to update Series ID.');
+          //   }
+          // }}
         />
       </Box>
 
