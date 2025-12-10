@@ -57,8 +57,10 @@ export async function getRecruiterProfile() {
   return resp.data as RecruiterData;
 }
 
-export async function checkIfUserRegisteredOnJP(userId: string) {
-  const response = await axios.post('/api/job-portal/check-user-registered-on-jp', { userId });
+export async function checkIfUserRegisteredOnJP() {
+  const response = await axios.get('/api/job-portal/check-user-registered-on-jp', {
+    headers: getAuthHeaders(),
+  });
   return response.data as { exists: boolean };
 }
 
@@ -96,10 +98,10 @@ export async function getOrganizationByDomain(domain: string) {
   });
   return resp.data as OrganizationData;
 }
-export async function inviteRecruiterToOrg(email: string,userId:string, orgId: number) {
+export async function inviteRecruiterToOrg(email: string, userId: string, orgId: number) {
   const resp = await axios.post(
     '/api/job-portal/create-invite-to-org',
-    { email,userId, orgId },
+    { email, userId, orgId },
     { headers: getAuthHeaders() }
   );
   return resp.status === 201;
