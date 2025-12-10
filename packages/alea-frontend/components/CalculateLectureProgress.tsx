@@ -1,11 +1,11 @@
-import { FTML } from '@kwarc/ftml-viewer';
+import { FTML } from '@flexiformal/ftml'; 
 import { LectureEntry } from '@alea/utils'; 
 import { SecInfo } from '../types';
 import dayjs from 'dayjs';
 
 export function calculateLectureProgress(
   entries: LectureEntry[],
-  secInfo: Record<FTML.DocumentURI, SecInfo>
+  secInfo: Record<FTML.DocumentUri, SecInfo>
 ) {
   let totalLatestMinutes = 0;
   let count = 0;
