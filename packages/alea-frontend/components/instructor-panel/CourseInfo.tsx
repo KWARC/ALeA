@@ -205,11 +205,10 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           name: ins.name.trim(),
         }));
 
-      // 🔥 IMPORTANT: Add seriesId here
       const payload: CourseInfoMetadata = {
         ...courseInfo,
         instructors: instructorsToSave,
-        seriesId, // <-- merged into same API
+        seriesId,
         courseId,
         instanceId,
       };
@@ -347,16 +346,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           sx={{ width: 140 }}
           placeholder="4334"
           onChange={(e) => setSeriesIdState(e.target.value)}
-          // onBlur={() => {
-          //   if (ignoreBlur) {
-          //     setIgnoreBlur(false);
-          //     return;
-          //   }
-
-          //   if (seriesId.trim() !== '') {
-          //     alert('Please click Save Changes to update Series ID.');
-          //   }
-          // }}
         />
       </Box>
 
