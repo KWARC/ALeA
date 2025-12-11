@@ -152,17 +152,6 @@ export async function getCourseHomeworkAndQuizInfo(
   return response.data as CourseQuizAndHomeworkInfo;
 }
 
-// export async function updateSeriesId(data: {
-//   courseId: string;
-//   instanceId: string;
-//   seriesId: string;
-// }) {
-//   const res = await axios.post('/api/course-metadata/update-series-id', data, {
-//     headers: getAuthHeaders(),
-//   });
-//   return res.data;
-// }
-
 export async function getLectureSchedule(
   courseId: string,
   instanceId: string
