@@ -8,6 +8,7 @@ import {
   updateCourseInfoMetadata,
   updateHasHomework,
   updateHasQuiz,
+  getAllAclMembers,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -38,6 +39,7 @@ interface CourseInstructorExt {
   id: string;
   name: string;
   isNamed: boolean;
+  url: string;
 }
 
 export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabProps) {
@@ -115,7 +117,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         const aclMemberLists = await Promise.all(
           instructorAclIds.map(async (aclId) => {
             try {
-              const users = await getAclUserDetails(aclId);
+              const users = await getAllAclMembers(aclId);
               return Array.isArray(users) ? users : [];
             } catch (e) {
               return [];
@@ -142,6 +144,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           id: saved.id,
           name: saved.name,
           isNamed: true,
+          url: (saved as any).url || '',
         }));
 
         for (const [id, { fullName }] of memberMap.entries()) {
@@ -150,6 +153,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               id,
               name: fullName || '',
               isNamed: false,
+              url: '',
             });
           }
         }
@@ -189,9 +193,14 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       return next;
     });
   };
+  const handleUrlChange = (i: number, url: string) => {
+    setInstructors((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], url };
 
-  const [ignoreBlur, setIgnoreBlur] = useState(false);
-
+      return next;
+    });
+  };
   const handleSave = async () => {
     if (!courseInfo) return;
 
@@ -203,6 +212,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         .map((ins) => ({
           id: ins.id,
           name: ins.name.trim(),
+          url: ins.url.trim() || '',
         }));
 
       const payload: CourseInfoMetadata = {
@@ -351,7 +361,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-        {t.instructorsLabel}
+        Instructors
       </Typography>
 
       {instructorsLoading ? (
@@ -405,6 +415,14 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
                             />
                           }
                           label={t.named}
+                        />
+                        <TextField
+                          label="URL"
+                          placeholder=" "
+                          size="small"
+                          value={inst.url || ''}
+                          onChange={(e) => handleUrlChange(i, e.target.value)}
+                          sx={{ minWidth: 250 }}
                         />
                       </Box>
                     )}

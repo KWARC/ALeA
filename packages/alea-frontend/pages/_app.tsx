@@ -54,7 +54,6 @@ const theme = createTheme({
 
 let flamsInitialized = false;
 const initStartTime = Date.now();
-
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');

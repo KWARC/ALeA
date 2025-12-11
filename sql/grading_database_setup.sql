@@ -25,3 +25,6 @@ CREATE TABLE grading (
     postedTimestamp timestamp DEFAULT CURRENT_TIMESTAMP
 );
 SELECT * FROM grading;
+
+-- For optimizing the get-quiz API
+CREATE INDEX idx_grading_optimus ON grading (quizId, userId, problemId, browserTimestamp_ms); 

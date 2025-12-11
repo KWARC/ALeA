@@ -61,6 +61,7 @@ const ExperimentsHome: NextPage = () => {
               <InternalButtonLink href="/positiondata">
                 Concept Position Tracking
               </InternalButtonLink>
+              <InternalButtonLink href="/job-portal">Job Portal</InternalButtonLink>
             </Box>
             <Box>
               <h2>Paper Prototypes (What we are working towards)</h2>
@@ -120,7 +121,8 @@ const ExperimentsHome: NextPage = () => {
             </Box>
             <Box>
               <h2>ALᴇA Servers</h2>
-              <ExternalButtonLink href="https://courses.voll-ki.fau.de" text="Production" />
+              <ExternalButtonLink href="https://alea.education" text="Production (new)" />
+              <ExternalButtonLink href="https://courses.voll-ki.fau.de" text="Production (original)" />
               <ExternalButtonLink href="https://courses-staging.kwarc.info" text="Staging" />
             </Box>
             <Box>

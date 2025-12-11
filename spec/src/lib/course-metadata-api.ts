@@ -26,6 +26,7 @@ export interface CourseMetadata {
 export interface InstructorInfo {
   id: string;
   name: string;
+  url?: string;
 }
 
 export interface CourseInfoMetadata extends CourseMetadata {

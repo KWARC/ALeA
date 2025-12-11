@@ -11,12 +11,18 @@ export enum Action {
   MODERATE = 'MODERATE',
 
   ACCESS_CONTROL = 'ACCESS_CONTROL',
+
+  APPLY = 'APPLY',
+  MANAGE_JOB_POSTS = 'MANAGE_JOB_POSTS',
+  MANAGE_JOB_TYPES = 'MANAGE_JOB_TYPES',
   TAKE = 'TAKE',
 }
 
 export enum ResourceName {
   BLOG = 'BLOG',
   EXPERIMENTAL = 'EXPERIMENTAL',
+  JOB_PORTAL = 'JOB_PORTAL',
+  JOB_PORTAL_ORG = 'JOB_PORTAL_ORG',
 
   // Resources related to specific courses.
   COURSE_SYLLABUS = 'COURSE_SYLLABUS',
@@ -194,6 +200,23 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
     ],
   },
   {
+    name: ResourceName.JOB_PORTAL,
+    possibleActions: [Action.APPLY, Action.MANAGE_JOB_TYPES],
+    components: [
+      { type: ComponentType.FIXED, value: 'instance' },
+      { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
+      { type: ComponentType.FIXED, value: 'job-portal' },
+    ],
+  },
+  {
+    name: ResourceName.JOB_PORTAL_ORG,
+    possibleActions: [Action.MUTATE, Action.MANAGE_JOB_POSTS, Action.ACCESS_CONTROL],
+    components: [
+      { type: ComponentType.FIXED, value: 'job-portal-org' },
+      { name: 'orgId', type: ComponentType.VARIABLE },
+    ],
+  },
+  {
     name: ResourceName.UNIVERSITY_SEMESTER_DATA,
     possibleActions: [Action.MUTATE],
     components: [
@@ -202,7 +225,6 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'university-sem-info' },
     ],
   },
-
   {
     name: ResourceName.COURSE_METADATA,
     possibleActions: [Action.MUTATE],

@@ -688,6 +688,7 @@ const CourseHomePage: NextPage = () => {
   const instructorDetails =
     courseMetadata?.instructors?.map((ins) => ({
       name: ins.name,
+      url: ins.url,
     })) ?? [];
 
   const {
@@ -851,6 +852,7 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
         </Box>
+        <InstructorDetails details={instructorDetails} />
         {enrolled === false && (
           <Box
             sx={{
@@ -860,7 +862,6 @@ const CourseHomePage: NextPage = () => {
               marginTop: '10px',
             }}
           >
-            <InstructorDetails details={instructorDetails} />
             <Button
               onClick={enrollInCourse}
               variant="contained"

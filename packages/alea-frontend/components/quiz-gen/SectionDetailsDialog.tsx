@@ -2,7 +2,7 @@ import {
   conceptUriToName,
   generateQuizProblems,
   getConceptPropertyInSection,
-  getDefiniedaInSection,
+  getDefiniedaInSectionAgg,
   getSectionGoals,
 } from '@alea/spec';
 import {
@@ -222,7 +222,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
           const properties = await getConceptPropertyInSection(sec.uri);
           setConceptProperties((prev) => ({ ...prev, ...properties }));
 
-          const defs = await getDefiniedaInSection(sec.uri);
+          const defs = await getDefiniedaInSectionAgg(sec.uri);
           allUris.push(...defs.map((c) => c.conceptUri));
         }
 
