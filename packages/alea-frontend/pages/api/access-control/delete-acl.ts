@@ -17,16 +17,15 @@ export async function deleteAclOrSetError(
   }
   const check = await checkResourceAssociatedOrSet500OnError(id, res);
   if (!check) return;
-  if (check.used) {
-    return res
-      .status(400)
-      .json({ error: 'Resources are still linked with this ACL.cannot delete.' });
-  }
+
   const result = await executeTxnAndEndSet500OnError(
     res,
-    'DELETE FROM AccessControlList WHERE id=?',
+    'DELETE FROM ResourceAccess WHERE aclId=?',
     [id],
-    'DELETE FROM ACLMembership WHERE parentACLId=?',
+    'DELETE FROM ACLMembership WHERE parentACLId=? OR memberACLId=?',
+    [id, id],
+
+    'DELETE FROM AccessControlList WHERE id=?',
     [id]
   );
   if (!result) return;
