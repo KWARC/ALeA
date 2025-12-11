@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 
 import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../lang/utils';
 import { useEffect, useState } from 'react';
 
 interface CourseInfoTabProps {
@@ -43,11 +44,13 @@ interface CourseInstructorExt {
 
 export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabProps) {
   const router = useRouter();
+  const { courseInfo: t } = getLocaleObject(router);
 
   const [courseInfo, setCourseInfo] = useState<CourseInfoMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [seriesId, setSeriesIdState] = useState('');
 
   const [isNew, setIsNew] = useState(false);
 
@@ -65,6 +68,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       try {
         const info = await getCourseInfoMetadata(courseId, instanceId);
         resolvedInfo = info;
+        setSeriesIdState(info.seriesId || '');
         setCourseInfo(info);
         setIsNew(false);
       } catch (err: any) {
@@ -90,6 +94,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             updaterId: '',
           };
           setCourseInfo(resolvedInfo);
+          setSeriesIdState('');
           setIsNew(true);
         } else {
           console.error('Failed to load course info', err);
@@ -156,7 +161,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         setInstructors(merged);
       } catch (err) {
         console.error(err);
-        setToast({ type: 'error', text: 'Failed to fetch instructors' });
+        setToast({ type: 'error', text: t.instructorsFetchFailed });
       } finally {
         setLoading(false);
         setInstructorsLoading(false);
@@ -200,6 +205,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
     if (!courseInfo) return;
 
     setSaving(true);
+
     try {
       const instructorsToSave: InstructorInfo[] = instructors
         .filter((ins) => ins.isNamed)
@@ -212,21 +218,24 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       const payload: CourseInfoMetadata = {
         ...courseInfo,
         instructors: instructorsToSave,
+        seriesId,
+        courseId,
+        instanceId,
       };
+
       if (isNew) {
         await addCourseMetadata(payload);
-
-        setToast({ type: 'success', text: 'Course info created successfully' });
-
+        setToast({ type: 'success', text: t.courseInfoCreated });
         setIsNew(false);
       } else {
         await updateCourseInfoMetadata(payload);
-        setToast({ type: 'success', text: 'Course info updated successfully' });
+        setToast({ type: 'success', text: t.courseInfoUpdated });
       }
+
       setCourseInfo(payload);
     } catch (err) {
       console.error(err);
-      setToast({ type: 'error', text: 'Failed to save course info' });
+      setToast({ type: 'error', text: t.courseInfoSaveFailed });
     } finally {
       setSaving(false);
     }
@@ -243,13 +252,13 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', mt: 2 }}>
       <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
-        Course Information
+        {t.title}
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
         <TextField
           required
-          label="Course Name"
+          label={t.courseName}
           value={courseInfo.courseName}
           onChange={(e) => setField('courseName', e.target.value)}
           fullWidth
@@ -257,7 +266,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
         <TextField
           required
-          label="University ID"
+          label={t.universityId}
           value={courseInfo.universityId || ''}
           onChange={(e) => setField('universityId', e.target.value)}
           fullWidth
@@ -265,7 +274,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
         <TextField
           required
-          label="Notes URL"
+          label={t.notesUrl}
           value={courseInfo.notes}
           onChange={(e) => setField('notes', e.target.value)}
           fullWidth
@@ -273,7 +282,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
         <TextField
           required
-          label="Landing Page"
+          label={t.landingPage}
           value={courseInfo.landing}
           onChange={(e) => setField('landing', e.target.value)}
           fullWidth
@@ -281,7 +290,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
         <TextField
           required
-          label="Slides URL"
+          label={t.slidesUrl}
           value={courseInfo.slides}
           onChange={(e) => setField('slides', e.target.value)}
           fullWidth
@@ -289,7 +298,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
         <TextField
           required
-          label="Teaser"
+          label={t.teaser}
           value={courseInfo.teaser || ''}
           onChange={(e) => setField('teaser', e.target.value)}
           fullWidth
@@ -298,14 +307,15 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         />
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 5, flexWrap: 'wrap', mt: '7px' }}>
         <FormControlLabel
           control={
             <Checkbox
               checked={courseInfo.hasHomework || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm('Are you sure to update homework availability?')) return;
+                if (!confirm(t.confirmUpdateHomework)) return;
+
                 try {
                   await updateHasHomework({ courseId, instanceId, hasHomework: next });
                   setField('hasHomework', next);
@@ -316,7 +326,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               }}
             />
           }
-          label="Enable homework for this course"
+          label={t.enableHomework}
         />
 
         <FormControlLabel
@@ -325,7 +335,8 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasQuiz || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm('Are you sure to update quiz availability?')) return;
+                if (!confirm(t.confirmUpdateQuiz)) return;
+
                 try {
                   await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
                   setField('hasQuiz', next);
@@ -336,7 +347,15 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               }}
             />
           }
-          label="Enable quiz for this course"
+          label={t.enableQuiz}
+        />
+        <TextField
+          label={t.seriesIdLabel}
+          value={seriesId}
+          size="small"
+          sx={{ width: 140 }}
+          placeholder="4334"
+          onChange={(e) => setSeriesIdState(e.target.value)}
         />
       </Box>
 
@@ -350,7 +369,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           <CircularProgress />
         </Box>
       ) : instructors.length === 0 ? (
-        <Box sx={{ p: 2, color: 'text.secondary' }}>No instructors found.</Box>
+        <Box sx={{ p: 2, color: 'text.secondary' }}>{t.noInstructors}</Box>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="instructors">
@@ -395,7 +414,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
                               onChange={(e) => handleNamedToggle(i, e.target.checked)}
                             />
                           }
-                          label="Named"
+                          label={t.named}
                         />
                         <TextField
                           label="URL"
@@ -426,7 +445,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         disabled={saving}
         sx={{ px: 3 }}
       >
-        {saving ? 'Saving...' : 'Save Changes'}
+        {saving ? t.saving : t.saveChanges}
       </Button>
 
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)}>
