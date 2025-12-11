@@ -29,6 +29,7 @@ import {
   getJobApplicationsByUserIdAndJobPostId,
   getOrganizationProfile,
   getUserInfo,
+  OrganizationData,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -77,7 +78,7 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
                 <strong>Work Mode:</strong> {selectedJob.workMode}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                <strong>Location:</strong> 📍 {selectedJob.trainingLocation}
+                <strong>Location:</strong> 📍 {selectedJob.workLocation}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
@@ -129,7 +130,86 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
     </Modal>
   );
 };
+export const OrganizationModal = ({
+  open,
+  onClose,
+  organization,
+}: {
+  open: boolean;
+  onClose: () => void;
+  organization: OrganizationData | null;
+}) => {
+  return (
+    <Modal open={open} onClose={onClose} closeAfterTransition>
+      <Fade in={open}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 500,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            borderRadius: 2,
+            p: 3,
+          }}
+        >
+          {organization ? (
+            <>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                {organization.companyName}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Incorporation Year: {organization.incorporationYear || 'N/A'}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Startup: {organization.isStartup ? 'Yes' : 'No'}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                About: {organization.about || 'N/A'}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Website:{' '}
+                {organization.website ? (
+                  <a href={organization.website} target="_blank" rel="noopener noreferrer">
+                    {organization.website}
+                  </a>
+                ) : (
+                  'N/A'
+                )}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Company Type: {organization.companyType || 'N/A'}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Address: {organization.officeAddress || 'N/A'}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Postal Code: {organization.officePostalCode || 'N/A'}
+              </Typography>
+
+              <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={onClose}>
+                Close
+              </Button>
+            </>
+          ) : (
+            <Typography>No organization data available.</Typography>
+          )}
+        </Box>
+      </Fade>
+    </Modal>
+  );
+};
 export const JobBox = ({ job, onApply, onReadMore }) => {
+  const [openOrgModal, setOpenOrgModal] = useState(false);
   const getIcon = () => {
     if (job.workMode === 'remote')
       return <HomeWorkOutlined sx={{ color: 'white', fontSize: 18 }} />;
@@ -144,80 +224,89 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
   };
 
   return (
-    <Box
-      sx={{
-        borderRadius: 2,
-        boxShadow: 3,
-        position: 'relative',
-        overflow: 'hidden',
-        p: 2,
-        minHeight: 280,
-        bgcolor: 'white',
-      }}
-    >
-      <img
+    <>
+      <Box
+        sx={{
+          borderRadius: 2,
+          boxShadow: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          p: 2,
+          minHeight: 280,
+          bgcolor: 'white',
+        }}
+      >
+        {/* 
+            //TODO: add logo
+        <img
         src={job.logo}
         alt={job.organization.companyName}
         style={{ width: 50, height: 50, position: 'absolute', top: 10, right: 10 }}
-      />
+      /> */}
 
-      <Typography variant="h6" mb={1}>
-        {job.jobTitle}
-      </Typography>
-
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography
-          variant="body1"
-          color="textSecondary"
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
-          {job.organization.companyName}
-          <IconButton sx={{ ml: 1 }}>
-            <InfoOutlined color="primary" />
-          </IconButton>
+        <Typography variant="h6" mb={1}>
+          {job.jobTitle}
         </Typography>
 
-        <Chip
-          label={job.workMode}
-          icon={getIcon()}
-          sx={{
-            textTransform: 'capitalize',
-            bgcolor: getBgColor(),
-            color: 'white',
-            fontWeight: 'bold',
-            px: 1.5,
-            '& .MuiChip-icon': { color: 'white' },
-          }}
-        />
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography
+            variant="body1"
+            color="textSecondary"
+            sx={{ display: 'flex', alignItems: 'center' }}
+          >
+            {job.organization.companyName}
+            <IconButton sx={{ ml: 1 }} onClick={() => setOpenOrgModal(true)}>
+              <InfoOutlined color="primary" />
+            </IconButton>
+          </Typography>
+
+          <Chip
+            label={job.workMode}
+            icon={getIcon()}
+            sx={{
+              textTransform: 'capitalize',
+              bgcolor: getBgColor(),
+              color: 'white',
+              fontWeight: 'bold',
+              px: 1.5,
+              '& .MuiChip-icon': { color: 'white' },
+            }}
+          />
+        </Box>
+
+        <Typography variant="body2" gutterBottom>
+          💰 {`${job.stipend} ${job.currency}`}
+        </Typography>
+
+        <Typography variant="body2" gutterBottom>
+          📍 {job.workLocation}
+        </Typography>
+
+        <Typography variant="body2">
+          ⏳ Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
+        </Typography>
+
+        <Box mt={2}>
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ mb: 1 }}
+            disabled={job.alreadyApplied}
+            onClick={() => onApply(job.id)}
+          >
+            {job.alreadyApplied ? 'Applied' : 'Apply'}
+          </Button>
+          <Button variant="outlined" fullWidth onClick={() => onReadMore(job)}>
+            Read More
+          </Button>
+        </Box>
       </Box>
-
-      <Typography variant="body2" gutterBottom>
-        💰 {`${job.stipend} ${job.currency}`}
-      </Typography>
-
-      <Typography variant="body2" gutterBottom>
-        📍 {job.trainingLocation}
-      </Typography>
-
-      <Typography variant="body2">
-        ⏳ Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
-      </Typography>
-
-      <Box mt={2}>
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{ mb: 1 }}
-          disabled={job.alreadyApplied}
-          onClick={() => onApply(job.id)}
-        >
-          {job.alreadyApplied ? 'Already Applied' : 'Apply'}
-        </Button>
-        <Button variant="outlined" fullWidth onClick={() => onReadMore(job)}>
-          Read More
-        </Button>
-      </Box>
-    </Box>
+      <OrganizationModal
+        open={openOrgModal}
+        onClose={() => setOpenOrgModal(false)}
+        organization={job.organization}
+      />
+    </>
   );
 };
 

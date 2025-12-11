@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   IconButton,
   InputLabel,
   List,
@@ -15,6 +16,7 @@ import {
   ListItemText,
   MenuItem,
   Select,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -186,8 +188,8 @@ export const JobDescriptionsForm = ({
         label="Location "
         fullWidth
         margin="normal"
-        name="trainingLocation"
-        value={formData.trainingLocation}
+        name="workLocation"
+        value={formData.workLocation}
         onChange={handleChange}
         sx={{
           bgcolor: 'white',
@@ -275,13 +277,21 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
   const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const fetchJobs = async () => {
-      const jobs = await getJobPosts(recruiter?.organizationId);
-      setJobPosts(jobs);
+      setLoading(true);
+      const jobs = await getJobPosts(recruiter?.organizationId).catch(() => []);
+      setJobPosts(jobs || []);
+      setLoading(false);
     };
-    fetchJobs();
+    if (recruiter?.organizationId) {
+      fetchJobs();
+    }
   }, [recruiter]);
+
   const handleEdit = (job: JobPostInfo) => {
     setSelectedJob(job);
     setOpenDialog(true);
@@ -291,8 +301,6 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
     setOpenDialog(false);
     setSelectedJob(null);
   };
-
-  const [loading, setLoading] = useState(false);
 
   const handleSave = async (updatedJob) => {
     setLoading(true);
@@ -312,6 +320,9 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
       setLoading(false);
     }
   };
+  const filteredJobs = showOnlyMine
+    ? jobPosts.filter((job) => job.createdByUserId === recruiter.userId)
+    : jobPosts;
   if (loading) {
     return <CircularProgress sx={{ mt: 10 }} />;
   }
@@ -320,16 +331,39 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
       <Typography variant="h4" mb={4}>
         Your Org Job Postings
       </Typography>
-
-      {!jobPosts || jobPosts.length === 0 ? (
+      <Box sx={{ display: 'flex' }}>
+        <FormControlLabel
+          sx={{
+            ml: 'auto',
+            '& .MuiFormControlLabel-label': {
+              fontSize: '0.85rem',
+              color: 'text.secondary',
+            },
+          }}
+          control={
+            <Switch
+              checked={showOnlyMine}
+              onChange={(e) => setShowOnlyMine(e.target.checked)}
+              color="primary"
+              size="small"
+            />
+          }
+          label="Show only my job posts"
+        />
+      </Box>
+      {loading ? (
+        <CircularProgress sx={{ mt: 10 }} />
+      ) : filteredJobs.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" color="text.secondary">
-            No jobs created yet. Start by creating one!
+            {showOnlyMine
+              ? "You haven't created any jobs yet."
+              : 'No jobs created yet. Start by creating one!'}
           </Typography>
         </Box>
       ) : (
         <List sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-          {jobPosts.map((job) => (
+          {filteredJobs.map((job) => (
             <ListItem
               key={job.id}
               sx={{
@@ -350,7 +384,7 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
                 secondary={
                   <Box>
                     <Typography variant="body2" color="text.secondary">
-                      Location: {job.trainingLocation}
+                      Location: {job.workLocation}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Created By: {job.createdByUserId} |{' '}

@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const results: any = await executeDontEndSet500OnError(
-    `SELECT id,jobCategoryId,organizationId ,createdByUserId,session,jobTitle,jobDescription,trainingLocation,workMode,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdAt
+    `SELECT id,jobCategoryId,organizationId ,createdByUserId,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdAt
     FROM jobPost 
     WHERE organizationId = ?`,
     [organizationId],

@@ -14,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const { jobPostId, applicationStatus } = req.body;
+  if(!jobPostId|| !applicationStatus)return res.status(422).end();
   const results = await executeAndEndSet500OnError(
     'SELECT * FROM jobApplication WHERE jobPostId = ? AND applicantId = ?',
     [jobPostId, userId],

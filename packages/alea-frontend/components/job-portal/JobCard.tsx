@@ -38,7 +38,7 @@ const JobDetails = ({ job }) => {
 
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
         <LocationOn fontSize="small" color="action" />
-        <Typography variant="body2">{job.trainingLocation}</Typography>
+        <Typography variant="body2">{job.workLocation}</Typography>
       </Stack>
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
         <WorkOutline fontSize="small"  color="primary" />
@@ -137,7 +137,7 @@ export const JobCard = ({ job, hideJobRedirect = false }) => {
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>
         <LocationOn color="action" />
-        <Typography variant="body2">{job.trainingLocation}</Typography>
+        <Typography variant="body2">{job.workLocation}</Typography>
       </Box>
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>

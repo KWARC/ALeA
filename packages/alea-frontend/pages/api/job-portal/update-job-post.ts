@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const {
     id,
     jobTitle,
-    trainingLocation,
+    workLocation,
     workMode,
     jobDescription,
     currency,
@@ -53,10 +53,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
     : null;
   const result = await executeAndEndSet500OnError(
-    'UPDATE jobPost SET jobTitle = ?, trainingLocation = ?,workMode=?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt =CURRENT_TIMESTAMP WHERE id = ?',
+    'UPDATE jobPost SET jobTitle = ?, workLocation = ?,workMode=?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt =CURRENT_TIMESTAMP WHERE id = ?',
     [
       jobTitle,
-      trainingLocation,
+      workLocation,
       workMode,
       jobDescription,
       currency,

@@ -49,7 +49,7 @@ const JobPostPage = () => {
   const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>({
     session: '',
     jobTitle: '',
-    trainingLocation: '',
+    workLocation: '',
     workMode:'',
     applicationDeadline: '',
     currency: '',
