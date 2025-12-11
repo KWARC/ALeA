@@ -1,3 +1,6 @@
+import { conceptUriToName, getAllCourses, getDefiniedaInSectionAgg } from '@alea/spec';
+import { CourseInfo } from '@alea/utils';
+import { contentToc } from '@flexiformal/ftml-backend';
 import {
   Autocomplete,
   Box,
@@ -19,12 +22,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { conceptUriToName, getAllCourses, getDefiniedaInSection } from '@alea/spec';
-import { CourseInfo } from '@alea/utils';
-import React, { useEffect, useState } from 'react';
-import { contentToc } from '@flexiformal/ftml-backend';
-import { getSecInfo } from '../coverage-update';
 import { SecInfo } from 'packages/alea-frontend/types';
+import React, { useEffect, useState } from 'react';
+import { getSecInfo } from '../coverage-update';
 
 export const CourseConceptsDialog = ({
   open,
@@ -82,7 +82,7 @@ export const CourseConceptsDialog = ({
     }
     setLoading(true);
     try {
-      const concepts = await getDefiniedaInSection(selectedSection?.uri);
+      const concepts = await getDefiniedaInSectionAgg(selectedSection?.uri);
       const uniqueConceptUris = [...new Set(concepts.map((c) => c.conceptUri))];
       setProcessedOptions(
         uniqueConceptUris.map((uri) => ({

@@ -401,7 +401,6 @@ export function ContentDashboard({
         console.log('No courseId or toc');
         return;
       }
-      console.log('Getting coverage info for courseId', courseId);
       const timeline = await getCoverageTimeline();
       const snaps = timeline?.[courseId];
       const shadowTopLevel: FTML.TocElem = { type: 'SkippedSection', children: toc };

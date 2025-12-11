@@ -211,7 +211,7 @@ const QuizPage: NextPage = () => {
   if (forceFauLogin) {
     return (
       <MainLayout title="Quizzes | ALeA">
-        <ForceFauLogin />
+        <ForceFauLogin content={'quizzes'} />
       </MainLayout>
     );
   }

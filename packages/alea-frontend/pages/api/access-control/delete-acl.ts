@@ -1,15 +1,20 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError, executeTxnAndEndSet500OnError } from '../comment-utils';
-import {
-  checkResourceAssociatedOrSet500OnError,
-  isCurrentUserMemberOfAClupdater,
-} from '../acl-utils/acl-common-utils';
+import { checkResourceAssociatedOrSet500OnError, isCurrentUserMemberOfAClupdater } from '../acl-utils/acl-common-utils';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!checkIfPostOrSetError(req, res)) return;
-  const id = req.body.id as string;
-  if (!id || typeof id !== 'string') return res.status(422).send('Missing id.');
-  if (!(await isCurrentUserMemberOfAClupdater(id, res, req))) return res.status(403).end();
+export async function deleteAclOrSetError(
+  id: string,
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (!id || typeof id !== 'string') {
+    res.status(422).send('Missing id.');
+    return;
+  }
+  if (!(await isCurrentUserMemberOfAClupdater(id,res, req))) {
+    res.status(403).end();
+    return;
+  }
   const check = await checkResourceAssociatedOrSet500OnError(id, res);
   if (!check) return;
 
@@ -23,6 +28,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     'DELETE FROM AccessControlList WHERE id=?',
     [id]
   );
+  if (!result) return;
+  return true;
+}
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!checkIfPostOrSetError(req, res)) return;
+  const id = req.body.id as string;
+  const result = await deleteAclOrSetError(id, req, res);
   if (!result) return;
   res.status(200).end();
 }

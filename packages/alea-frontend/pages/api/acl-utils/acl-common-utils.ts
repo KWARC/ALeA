@@ -1,6 +1,6 @@
 import { AccessControlList } from '@alea/spec';
 import { NextApiResponse } from 'next';
-import { executeAndEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
+import { executeAndEndSet500OnError, executeQuery, getUserIdOrSetError } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';
 
 export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
@@ -22,17 +22,17 @@ export async function isMemberOfAcl(acl: string, userId: string) {
 export async function isCurrentUserMemberOfAClupdater(aclId: string, res, req): Promise<boolean> {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return false;
-  const acl: AccessControlList = (
-    await executeAndEndSet500OnError(
-      'select updaterACLId from AccessControlList where id=?',
-      [aclId],
-      res
-    )
-  )[0];
-  return await isMemberOfAcl(acl.updaterACLId, userId);
+  const queryResult = (
+    await executeQuery('select updaterACLId from AccessControlList where id=?', [aclId])
+  )?.[0];
+  if (!queryResult?.updaterACLId) return false;
+  return await isMemberOfAcl(queryResult.updaterACLId, userId);
 }
 
-export async function validateMemberAndAclIds(res: NextApiResponse, memberUserIds, memberACLIds) {
+export async function validateMemberAndAclIds(
+  memberUserIds: string[],
+  memberACLIds: string[]
+) {
   /* Disable memberUserIds check for now. We may not have their info in the database.
   const memberCount = memberUserIds.length
     ? (
@@ -45,17 +45,12 @@ export async function validateMemberAndAclIds(res: NextApiResponse, memberUserId
     : 0;
   if (memberCount !== memberUserIds.length) return false;*/
 
-  const aclCount = memberACLIds.length
-    ? (
-        await executeAndEndSet500OnError<[]>(
-          'select id from AccessControlList where id in (?)',
-          [memberACLIds],
-          res
-        )
-      ).length
-    : 0;
-  if (aclCount !== memberACLIds.length) return false;
-  return true;
+  if (!memberACLIds?.length) return true;
+  const results = await executeQuery<[]>('select id from AccessControlList where id in (?)', [
+    memberACLIds,
+  ]);
+  if (!results || 'error' in results) return false;
+  return results.length === memberACLIds.length;
 }
 
 export async function getAclMembers(aclId: string) {

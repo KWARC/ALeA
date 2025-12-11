@@ -127,7 +127,6 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
   const currentTerm = currentTermByCourseId[courseId];
-  
   async function checkIfAlreadySetup() {
     const complete = await isCourseSemesterSetupComplete(courseId);
     setIsAlreadySetup(!!complete);
@@ -220,7 +219,10 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
   useEffect(() => {
     async function getAclData() {
       if (!currentTerm) return;
-      const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(courseId, currentTerm);
+      const aclShortIdToResourceActionPair = getAclShortIdToResourceActionPair(
+        courseId,
+        currentTerm
+      );
       const resourceActionPairs = ALL_SHORT_IDS.map((sId) => aclShortIdToResourceActionPair[sId]);
       const aclIds = await getSpecificAclIds(resourceActionPairs);
 

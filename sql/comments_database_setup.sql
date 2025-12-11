@@ -268,6 +268,150 @@ CREATE TABLE homeworkHistory (
     PRIMARY KEY (id, versionNo)
 );
 
+-- Job Portal Tables
+CREATE TABLE studentProfile (
+    userId VARCHAR(50) PRIMARY KEY, 
+    name VARCHAR(255) NOT NULL, 
+    resumeUrl VARCHAR(2083), 
+    email VARCHAR(255) NOT NULL, 
+    mobile VARCHAR(15), 
+    programme VARCHAR(255) NOT NULL, 
+    yearOfAdmission YEAR NOT NULL, 
+    yearOfGraduation YEAR, 
+    courses TEXT, 
+    about TEXT, 
+    gpa FLOAT,
+    location VARCHAR(100),
+    altMobile VARCHAR(15),
+    socialLinks JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, 
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    CONSTRAINT fk_user FOREIGN KEY (userId) REFERENCES userInfo(userId) 
+);
+
+CREATE TABLE organizationProfile (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    companyName VARCHAR(255) , 
+    domain VARCHAR(255) ,
+    incorporationYear YEAR ,
+    isStartup  BOOLEAN,
+    website VARCHAR(255),
+    about TEXT, 
+    companyType VARCHAR(255),
+    officeAddress Text, 
+    officePostalCode VARCHAR(255) 
+);
+
+
+CREATE TABLE recruiterProfile (
+    userId VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    position VARCHAR(255) NOT NULL, 
+    organizationId INT ,
+    mobile VARCHAR(15) ,
+    altMobile VARCHAR (15),
+    socialLinks JSON,
+    about TEXT, 
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, 
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    CONSTRAINT fk_recruiter FOREIGN KEY (userId) REFERENCES userInfo(userId) ,
+    CONSTRAINT fk_organization FOREIGN KEY (organizationId) REFERENCES organizationProfile(id)
+);
+
+CREATE TABLE jobCategories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    jobCategory ENUM('internship', 'full-time') NOT NULL,
+    internshipPeriod VARCHAR(255),
+    startDate DATE,
+    endDate DATE,
+    instanceId VARCHAR(255),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE jobPortalAdmin (
+    id SERIAL PRIMARY KEY,                  
+    name VARCHAR(255) NOT NULL,            
+    email VARCHAR(255) UNIQUE NOT NULL,    
+    universityName VARCHAR(255) NOT NULL,  
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP 
+);
+
+CREATE TABLE jobPost (
+    id INT AUTO_INCREMENT PRIMARY KEY,                          
+    organizationId INT,                                          
+    jobCategoryId INT,                                               
+    session VARCHAR(255),                                         
+    jobTitle VARCHAR(255),                                        
+    jobDescription TEXT,                                          
+    workLocation VARCHAR(255),                                
+    qualification VARCHAR(255),                                   
+    targetYears VARCHAR(255),                                     
+    openPositions INT,                                            
+    currency VARCHAR(50),                                         
+    stipend DECIMAL(10, 2),                                       
+    facilities TEXT,                                              
+    applicationDeadline DATETIME,   
+    workMode VARCHAR(50),
+    createdByUserId VARCHAR(50),                              
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
+    FOREIGN KEY (organizationId) REFERENCES organizationProfile(id),  
+    FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
+    FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
+);
+
+
+CREATE TABLE jobApplication (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    jobPostId INT, 
+    applicantId VARCHAR(50), 
+    applicationStatus ENUM(
+        'APPLIED', 
+        'SHORTLISTED_FOR_INTERVIEW', 
+        'ON_HOLD', 
+        'REJECTED', 
+        'OFFERED', 
+        'OFFER_REVOKED',
+        'APPLICATION_WITHDRAWN', 
+        'OFFER_ACCEPTED', 
+        'OFFER_REJECTED'
+    ) NOT NULL, 
+    applicantAction ENUM(
+        'ACCEPT_OFFER', 
+        'REJECT_OFFER', 
+        'WITHDRAW_APPLICATION',
+        'NONE'
+    ) DEFAULT 'NONE',   
+    recruiterAction ENUM(
+        'SHORTLIST_FOR_INTERVIEW', 
+        'ON_HOLD', 
+        'REJECT', 
+        'SEND_OFFER',
+        'REVOKE_OFFER',
+        'NONE'
+    ) DEFAULT 'NONE',
+    studentMessage VARCHAR(255), 
+    recruiterMessage VARCHAR(255), 
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_jobPost FOREIGN KEY (jobPostId) REFERENCES jobPost(id) ,
+    CONSTRAINT fk_applicant FOREIGN KEY (applicantId) REFERENCES studentProfile(userId) 
+);
+--TODO--
+-- we will need to maintain all the actions made by applicant and recruiter on an application
+
+CREATE TABLE orgInvitations (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    organizationId int NOT NULL,
+    inviteeEmail VARCHAR(255) NOT NULL,
+    inviteruserId CHAR(36) NOT NULL,     
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
+);
+
 CREATE TABLE excused(
     id int PRIMARY KEY AUTO_INCREMENT,
     userId varchar(255) NOT NULL,
@@ -322,4 +466,11 @@ CREATE TABLE courseMetadata (
     teaser TEXT,
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
+);
+
+CREATE TABLE CrossDomainAuthTokens (
+    otpToken VARCHAR(255) PRIMARY KEY,
+    jwtToken TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
 );
