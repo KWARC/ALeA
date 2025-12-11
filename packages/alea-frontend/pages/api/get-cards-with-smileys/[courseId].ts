@@ -1,6 +1,6 @@
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
-import { CardsWithSmileys, getDefiniedaInSection, getUriSmileys } from '@alea/spec';
+import { CardsWithSmileys, getDefiniedaInSection, getDefiniedaInSectionAgg, getUriSmileys } from '@alea/spec';
 import { getAllCoursesFromDb } from '../get-all-courses';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
@@ -46,7 +46,7 @@ export async function getCardsBySection(notesUri: string) {
   const topLevelSections = tocContent.map((toc) => getChapterAndSections(toc)).flat();
   const courseCards: CourseCards = {};
   const cardsBySection = await Promise.all(
-    topLevelSections.map(({ uri }) => getDefiniedaInSection(uri))
+    topLevelSections.map(({ uri }) => getDefiniedaInSectionAgg(uri))
   );
   topLevelSections.forEach((section, index) => {
     const { chapterTitle, uri, sectionTitle } = section;

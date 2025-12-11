@@ -97,6 +97,7 @@ export interface LmpOutputMultipleResponse {
 
 export async function getUriWeights(concepts: string[]): Promise<NumericCognitiveValues[]> {
   if (!concepts?.length) return [];
+  console.log(`Getting weights for ${concepts.length} concepts`);
   const data: LmpOutputMultipleResponse = await lmpRequest(
     'lmp',
     'lmp/output/multiple',
@@ -312,8 +313,10 @@ export function loginUsingRedirect(returnBackUrl?: string) {
   const nonFauDomain = process.env['NEXT_PUBLIC_NON_FAU_DOMAIN'];
   if (currentHost === nonFauDomain) {
     // Redirect to FAU domain for cross-domain auth
-    const fauDomain = process.env.NEXT_PUBLIC_FAU_DOMAIN || 'courses.voll-ki.fau.de';
-    const crossDomainAuthUrl = `https://${fauDomain}/cross-domain-auth/init?target=${encodeURIComponent(returnBackUrl)}`;
+    const fauDomain = process.env['NEXT_PUBLIC_FAU_DOMAIN'];
+    const crossDomainAuthUrl = `https://${fauDomain}/cross-domain-auth/init?target=${encodeURIComponent(
+      returnBackUrl
+    )}`;
     window.location.replace(crossDomainAuthUrl);
     return;
   }

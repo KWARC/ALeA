@@ -1,15 +1,11 @@
-import { COURSES_INFO, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { getParamFromUri, waitForNSeconds } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import {
-  ArchiveIndex,
-  Institution,
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
-  index as flamsIndex,
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
-import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo, getCourseIdsByUniversity } from './course-metadata-api';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -36,30 +32,6 @@ export interface Person {
   name: string;
 }
 
-let CACHED_ARCHIVE_INDEX: ArchiveIndex[] | undefined = undefined;
-let CACHED_INSTITUTION_INDEX: Institution[] | undefined = undefined;
-
-const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
-
-async function getCachedCourseHomeworkAndQuizInfo(
-  courseId: string,
-  instanceId?: string
-): Promise<CourseQuizAndHomeworkInfo> {
-  const cacheKey = courseId;
-  if (courseHomeworkQuizCache.has(cacheKey)) {
-    return courseHomeworkQuizCache.get(cacheKey)!;
-  }
-  const result = await getCourseHomeworkAndQuizInfo(courseId, instanceId);
-  courseHomeworkQuizCache.set(cacheKey, result);
-  return result;
-}
-
-export function clearCourseHomeworkQuizCache(): void {
-  courseHomeworkQuizCache.clear();
-}
-
-
-
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
   return `<span data-ftml-term="OMID" data-ftml-head="${conceptUri}" data-ftml-comp>${name}</span>`;
@@ -81,6 +53,41 @@ export async function getDefiniedaInSection(uri: string): Promise<ConceptAndDefi
       definitionUri: card['q'].value,
     })) || []
   );
+}
+
+// Gets list of concepts and their definitions for multiple sections.
+// Returns a 2D array where each inner array corresponds to the concepts/definitions for one URI.
+export async function getDefiniedaInSections(uris: string[]): Promise<ConceptAndDefinition[][]> {
+  if (uris.length === 0) {
+    return [];
+  }
+
+  // Build VALUES clause for multiple URIs
+  const uriValues = uris.map((uri) => `<${uri}>`).join(' ');
+  const query = `SELECT DISTINCT ?uri ?q ?s WHERE { 
+    VALUES ?uri { ${uriValues} }
+    ?uri (ulo:contains|dc:hasPart)* ?q. 
+    ?q ulo:defines ?s.
+  }`;
+
+  const sparqlResponse = await getQueryResults(query);
+
+  // Group results by URI to create 2D array
+  const resultsByUri = new Map<string, ConceptAndDefinition[]>();
+
+  for (const binding of sparqlResponse?.results?.bindings || []) {
+    const uri = binding['uri'].value;
+    if (!resultsByUri.has(uri)) {
+      resultsByUri.set(uri, []);
+    }
+    resultsByUri.get(uri)!.push({
+      conceptUri: binding['s'].value,
+      definitionUri: binding['q'].value,
+    });
+  }
+
+  // Return results in the same order as input URIs
+  return uris.map((uri) => resultsByUri.get(uri) || []);
 }
 
 export async function getProblemsForConcept(conceptUri: string) {
@@ -155,6 +162,7 @@ export async function getQueryResults(query: string) {
   }
 }
 export async function getConceptDependencies(conceptUri: string) {
+  conceptUri = conceptUri.replace(/ /g, '%20'); // TODO: This is a horrible hack.
   const query = `SELECT DISTINCT ?dependency WHERE {
   ?loname rdf:type ulo:definition .
   ?loname ulo:defines <${conceptUri}> .
@@ -169,7 +177,7 @@ export async function getConceptDependencies(conceptUri: string) {
   return dependencies;
 }
 
-export async function getSectionDependencies(sectionUri: string) {
+export async function getDependenciesForSection(sectionUri: string) {
   const query = `SELECT DISTINCT ?s WHERE {
   <${sectionUri}> (ulo:contains|dc:hasPart)* ?p.
   ?p ulo:crossrefs ?s.
@@ -185,6 +193,41 @@ export async function getSectionDependencies(sectionUri: string) {
     dependencies.push(binding['s'].value);
   }
   return dependencies;
+}
+
+// Gets section dependencies for multiple sections.
+// Returns a 2D array where each inner array corresponds to the dependencies for one URI.
+export async function getDependenciesForSections(sectionUris: string[]): Promise<string[][]> {
+  if (sectionUris.length === 0) {
+    return [];
+  }
+
+  // Build VALUES clause for multiple URIs
+  const uriValues = sectionUris.map((uri) => `<${uri}>`).join(' ');
+  const query = `SELECT DISTINCT ?uri ?s WHERE {
+    VALUES ?uri { ${uriValues} }
+    ?uri (ulo:contains|dc:hasPart)* ?p.
+    ?p ulo:crossrefs ?s.
+    MINUS {
+      ?uri (ulo:contains|dc:hasPart)* ?p.
+      ?p ulo:defines ?s.
+    }
+  }`;
+  const sparqlResponse = await getQueryResults(query);
+
+  // Group results by URI to create 2D array
+  const resultsByUri = new Map<string, string[]>();
+
+  for (const binding of sparqlResponse?.results?.bindings || []) {
+    const uri = binding['uri'].value;
+    if (!resultsByUri.has(uri)) {
+      resultsByUri.set(uri, []);
+    }
+    resultsByUri.get(uri)!.push(binding['s'].value);
+  }
+
+  // Return results in the same order as input URIs
+  return sectionUris.map((uri) => resultsByUri.get(uri) || []);
 }
 
 export const ALL_DIM_CONCEPT_PAIR = ['objective', 'precondition'] as const;
