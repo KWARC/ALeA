@@ -203,7 +203,7 @@ const Jobs = () => {
                     <Box display="flex" alignItems="center" mb={1}>
                       <LocationOn fontSize="small" color="primary" />
                       <Typography variant="body2" ml={1}>
-                        {job.trainingLocation}
+                        {job.workLocation}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" mb={1}>
@@ -293,7 +293,7 @@ const Jobs = () => {
                 Open Positions: {selectedJob.openPositions}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Location: {selectedJob.trainingLocation}
+                Location: {selectedJob.workLocation}
               </Typography>
               <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleCloseModal}>
                 Close

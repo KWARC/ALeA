@@ -346,7 +346,7 @@ CREATE TABLE jobPost (
     session VARCHAR(255),                                         
     jobTitle VARCHAR(255),                                        
     jobDescription TEXT,                                          
-    trainingLocation VARCHAR(255),                                
+    workLocation VARCHAR(255),                                
     qualification VARCHAR(255),                                   
     targetYears VARCHAR(255),                                     
     openPositions INT,                                            

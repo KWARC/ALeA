@@ -77,7 +77,7 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
                 <strong>Work Mode:</strong> {selectedJob.workMode}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                <strong>Location:</strong> 📍 {selectedJob.trainingLocation}
+                <strong>Location:</strong> 📍 {selectedJob.workLocation}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
@@ -196,7 +196,7 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
       </Typography>
 
       <Typography variant="body2" gutterBottom>
-        📍 {job.trainingLocation}
+        📍 {job.workLocation}
       </Typography>
 
       <Typography variant="body2">

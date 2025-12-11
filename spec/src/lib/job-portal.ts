@@ -57,7 +57,7 @@ export interface JobPostInfo {
   session: string;
   jobTitle: string;
   jobDescription: string;
-  trainingLocation: string;
+  workLocation: string;
   workMode:string;
   qualification: string;
   targetYears: string;

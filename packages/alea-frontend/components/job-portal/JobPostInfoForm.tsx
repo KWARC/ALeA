@@ -234,8 +234,8 @@ export const TrainingDetailsForm = ({ formData, handleChange }) => {
         label="Location of Training"
         fullWidth
         margin="normal"
-        name="trainingLocation"
-        value={formData.trainingLocation}
+        name="workLocation"
+        value={formData.workLocation}
         onChange={handleChange}
         sx={{
           bgcolor: 'white',
@@ -274,7 +274,7 @@ const JobPostInfoForm = ({
   const [jobPostFormData, setJobPostFormData] = useState({
     session: '',
     jobTitle: '',
-    trainingLocation: '',
+    workLocation: '',
     workMode:'',
     applicationDeadline: null,
     currency: '',
@@ -292,7 +292,7 @@ const JobPostInfoForm = ({
     const completedJobData = {
       session: jobData.session ?? '',
       jobTitle: jobData.jobTitle ?? '',
-      trainingLocation: jobData.trainingLocation ?? '',
+      workLocation: jobData.workLocation ?? '',
       workMode:jobData.workMode??'',
       applicationDeadline: jobData.applicationDeadline ?? null,
       currency: jobData.currency ?? '',

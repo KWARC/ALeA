@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     session,
     jobTitle,
     jobDescription,
-    trainingLocation,
+    workLocation,
     qualification,
     targetYears,
     openPositions,
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobPost 
-      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,trainingLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdByUserId) 
+      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,workLocation,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdByUserId) 
      VALUES (?,?,?, ?, ?, ?,?,?,?,?,?,?,?,?)`,
     [
       jobCategoryId,
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       session,
       jobTitle,
       jobDescription,
-      trainingLocation,
+      workLocation,
       qualification,
       targetYears,
       openPositions,

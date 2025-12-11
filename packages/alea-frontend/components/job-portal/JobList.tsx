@@ -186,8 +186,8 @@ export const JobDescriptionsForm = ({
         label="Location "
         fullWidth
         margin="normal"
-        name="trainingLocation"
-        value={formData.trainingLocation}
+        name="workLocation"
+        value={formData.workLocation}
         onChange={handleChange}
         sx={{
           bgcolor: 'white',
@@ -350,7 +350,7 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
                 secondary={
                   <Box>
                     <Typography variant="body2" color="text.secondary">
-                      Location: {job.trainingLocation}
+                      Location: {job.workLocation}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Created By: {job.createdByUserId} |{' '}
