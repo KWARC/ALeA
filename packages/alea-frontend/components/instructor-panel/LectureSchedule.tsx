@@ -27,9 +27,6 @@ import {
   updateLectureEntry,
   deleteLectureEntry,
   addLectureSchedule,
-  updateHasHomework,
-  updateHasQuiz,
-  updateSeriesId,
 } from '@alea/spec';
 import { UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
 import { getAllCourses } from '@alea/spec';
