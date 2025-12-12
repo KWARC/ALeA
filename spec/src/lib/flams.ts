@@ -122,6 +122,21 @@ async function getParameterizedQueryResults(
   return await getQueryResults(query);
 }
 
+const TEMPL_SEARCH_URI_USING_SUBSTR = `SELECT DISTINCT ?uri
+WHERE {
+  ?uri ?r ?o.
+  FILTER(CONTAINS(STR(?uri), "_uri_substr")).
+}
+LIMIT 60`;
+
+export async function searchUriUsingSubstr(uriSubstr: string) {
+  if (!uriSubstr) return [];
+  const results = await getParameterizedQueryResults(TEMPL_SEARCH_URI_USING_SUBSTR, {
+    _uri_substr: uriSubstr,
+  });
+  return results?.results?.bindings.map((binding) => binding['uri']?.value) ?? [];
+}
+
 const TEMPL_GET_DEFINITIONS_IN_SECTION = `SELECT DISTINCT ?q ?s 
 WHERE { <_uri_section> (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
 export async function getDefiniedaInSection(sectionUri: string): Promise<ConceptAndDefinition[]> {

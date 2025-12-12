@@ -15,6 +15,7 @@ import { styled } from '@mui/material/styles';
 import { useEffect, useMemo, useState } from 'react';
 import { QueryTemplateSelector } from '../../components/mathhub-query/QueryTemplateSelector';
 import { ResultsDisplay } from '../../components/mathhub-query/ResultsDisplay';
+import { UriAutocompleteInput } from '../../components/mathhub-query/UriAutocompleteInput';
 import { QUERY_TEMPLATES } from '../../components/mathhub-query/query-templates.config';
 
 const QueryEditorContainer = styled(Paper)(({ theme }) => ({
@@ -181,12 +182,12 @@ export default function MathhubQuery() {
                         key={index}
                         sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 0.5 }}
                       >
-                        <TextField
+                        <UriAutocompleteInput
                           size="small"
                           value={uri}
-                          onChange={(e) => {
+                          onChange={(newValue) => {
                             const newArray = [...uriArray];
-                            newArray[index] = e.target.value;
+                            newArray[index] = newValue;
                             setUriValues((prev) => ({
                               ...prev,
                               [paramName]: newArray,
@@ -215,18 +216,18 @@ export default function MathhubQuery() {
               }
 
               return (
-                <TextField
+                <UriAutocompleteInput
                   key={paramName}
                   label={paramName}
-                  size="small"
                   value={typeof value === 'string' ? value : ''}
-                  onChange={(e) => {
+                  onChange={(newValue) => {
                     setUriValues((prev) => ({
                       ...prev,
-                      [paramName]: e.target.value,
+                      [paramName]: newValue,
                     }));
                   }}
                   placeholder={`FTML URI for ${paramName}`}
+                  size="small"
                 />
               );
             })}
