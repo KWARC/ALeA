@@ -2,11 +2,10 @@ import {
   BloomDimension,
   conceptUriToName,
   getConceptDependencies,
-  getQueryResults,
-  getSparlQueryForDefinition,
+  getDefinitionsForConcept,
   getUriSmileys,
   SmileyCognitiveValues,
-  smileyToLevel,
+  smileyToLevel
 } from '@alea/spec';
 import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import CloseIcon from '@mui/icons-material/Close';
@@ -155,18 +154,8 @@ function TourItemDisplay({
 
   useEffect(() => {
     async function fetchDefinition(uri: string) {
-      const query = getSparlQueryForDefinition(uri);
-      const results = await getQueryResults(query);
-
-      const allUris = results?.results?.bindings?.map((b) => b?.loname?.value) ?? [];
-
-      let uris = allUris.filter((u: string) => u.includes(`&l=${lang}`));
-
-      if (uris.length === 0 && allUris.length > 0) {
-        uris = [allUris[0]];
-      }
-
-      setDefinitionUris(uris.slice(0, 1));
+      const defs = await getDefinitionsForConcept(uri, lang);
+      setDefinitionUris(defs[0] ? [defs[0]] : []);
     }
     fetchDefinition(item.uri);
   }, [item.uri, lang]);

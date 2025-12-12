@@ -1,17 +1,21 @@
-import { useState, useMemo } from 'react';
+import { getQueryResults, SparqlResponse } from '@alea/spec';
+import { createSafeFlamsQuery, findAllUriParams } from '@alea/utils';
+import AddIcon from '@mui/icons-material/Add';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Box,
   Button,
   CircularProgress,
-  Paper,
-  Typography,
   IconButton,
+  Paper,
+  TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { getQueryResults, SparqlResponse } from '@alea/spec';
+import { useEffect, useMemo, useState } from 'react';
 
 const QueryEditorContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -43,7 +47,15 @@ const StyledResultDisplayBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
 }));
 
-const transformBindings = (bindings: any[]) => {
+type SparqlBindingValue = {
+  type?: string;
+  value: string;
+  datatype?: string;
+};
+
+type SparqlBinding = Record<string, SparqlBindingValue>;
+
+const transformBindings = (bindings: SparqlBinding[]) => {
   return bindings.map((binding) => {
     const transformed: Record<string, string> = {};
 
@@ -60,7 +72,6 @@ interface ResultsDisplayProps {
   isLoading: boolean;
   error: string;
   results: SparqlResponse | null;
-  transformedResults: Record<string, string>[] | null;
   handleCopyJson: () => void;
   copied: boolean;
 }
@@ -69,7 +80,6 @@ const ResultsDisplay = ({
   isLoading,
   error,
   results,
-  transformedResults,
   handleCopyJson,
   copied,
 }: ResultsDisplayProps) => {
@@ -106,10 +116,10 @@ const ResultsDisplay = ({
         </Typography>
       )}
 
-      {transformedResults && (
+      {results && (
         <StyledResultDisplayBox>
           <pre style={{ margin: 0, color: 'text.primary' }}>
-            {JSON.stringify(transformedResults, null, 2)}
+            {JSON.stringify(results, null, 2)}
           </pre>
         </StyledResultDisplayBox>
       )}
@@ -124,16 +134,44 @@ const ResultsDisplay = ({
 };
 
 export default function MathhubQuery() {
-  const [query, setQuery] = useState('# All Predicates\nSELECT DISTINCT ?y  WHERE { ?x ?y ?z . } LIMIT 100');
+  const [query, setQuery] = useState(`# Definitional dependencies of a concept
+SELECT DISTINCT ?dependency WHERE {
+  ?loname rdf:type ulo:definition .
+  ?loname ulo:defines <_uri_a> .
+  ?loname ulo:crossrefs ?dependency .
+}`);
   const [results, setResults] = useState<SparqlResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [uriValues, setUriValues] = useState<Record<string, string | string[]>>({
+    _uri_a:
+      'http://mathhub.info?a=smglom/computing&p=mod&m=information-processing-system&s=information processing system',
+  });
 
-  const transformedResults = useMemo(() => {
-    if (!results) return null;
-    return transformBindings(results.results?.bindings ?? []);
-  }, [results]);
+  const { singleParamNames, multiParamNames } = useMemo(() => findAllUriParams(query), [query]);
+  const allParamNames = useMemo(
+    () => [...singleParamNames, ...multiParamNames],
+    [singleParamNames, multiParamNames]
+  );
+
+  useEffect(() => {
+    setUriValues((prev) => {
+      const next: Record<string, string | string[]> = {};
+      allParamNames.forEach((paramName) => {
+        next[paramName] = prev[paramName] ?? (multiParamNames.includes(paramName) ? [''] : '');
+      });
+
+      const prevKeys = Object.keys(prev);
+      const hasDiff =
+        prevKeys.length !== allParamNames.length ||
+        allParamNames.some((paramName) => prev[paramName] === undefined);
+
+      return hasDiff ? next : prev;
+    });
+  }, [allParamNames, multiParamNames]);
+
+  const finalQuery = useMemo(() => createSafeFlamsQuery(query, uriValues), [query, uriValues]);
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -141,7 +179,7 @@ export default function MathhubQuery() {
     setResults(null);
 
     try {
-      const data = await getQueryResults(query);
+      const data = await getQueryResults(finalQuery);
       setResults(data);
     } catch (e) {
       setError('Failed to fetch query results. Please check your query.');
@@ -152,9 +190,8 @@ export default function MathhubQuery() {
   };
 
   const handleCopyJson = async () => {
-    if (!transformedResults) return;
     try {
-      await navigator.clipboard.writeText(JSON.stringify(transformedResults, null, 2));
+      await navigator.clipboard.writeText(JSON.stringify(results.results?.bindings ?? [], null, 2));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -177,23 +214,120 @@ export default function MathhubQuery() {
       </Typography>
 
       <QueryEditorContainer elevation={0}>
-        <Box
-          component="textarea"
+        <TextField
+          label="Your Query here"
+          size="small"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          sx={{
-            flexGrow: 1,
-            border: 'none',
-            resize: 'none',
-            p: 1.5,
-            fontFamily: 'monospace',
-            fontSize: 14,
-            outline: 'none',
-            bgcolor: 'grey.100',
-            borderRadius: 1,
-            color: 'text.primary',
-          }}
+          multiline
+          placeholder="Your Query here"
         />
+        {allParamNames.length > 0 && (
+          <Box
+            sx={{
+              mt: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              border: '1px solid #e0e0e0',
+              borderRadius: 1,
+              p: 1,
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold" color="text.primary">
+              FTML URI Parameters
+            </Typography>
+            {allParamNames.map((paramName) => {
+              const isMulti = multiParamNames.includes(paramName);
+              const value = uriValues[paramName];
+
+              if (isMulti) {
+                const uriArray = Array.isArray(value) ? value : [];
+                return (
+                  <Box key={paramName} sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h6" fontSize="1rem" color="text.primary">
+                      {paramName}&nbsp;
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const newArray = [...uriArray, ''];
+                          setUriValues((prev) => ({
+                            ...prev,
+                            [paramName]: newArray,
+                          }));
+                        }}
+                      >
+                        <AddIcon />
+                      </IconButton>
+                    </Typography>
+                    {uriArray.map((uri, index) => (
+                      <Box
+                        key={index}
+                        sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 0.5 }}
+                      >
+                        <TextField
+                          size="small"
+                          value={uri}
+                          onChange={(e) => {
+                            const newArray = [...uriArray];
+                            newArray[index] = e.target.value;
+                            setUriValues((prev) => ({
+                              ...prev,
+                              [paramName]: newArray,
+                            }));
+                          }}
+                          placeholder={`FTML URI for ${paramName} list at idx [${index}]`}
+                          sx={{ flex: 1 }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            const newArray = uriArray.filter((_, i) => i !== index);
+                            setUriValues((prev) => ({
+                              ...prev,
+                              [paramName]: newArray,
+                            }));
+                          }}
+                          color="error"
+                        >
+                          <RemoveIcon />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                );
+              }
+
+              return (
+                <TextField
+                  key={paramName}
+                  label={paramName}
+                  size="small"
+                  value={typeof value === 'string' ? value : ''}
+                  onChange={(e) => {
+                    setUriValues((prev) => ({
+                      ...prev,
+                      [paramName]: e.target.value,
+                    }));
+                  }}
+                  placeholder={`FTML URI for ${paramName}`}
+                />
+              );
+            })}
+          </Box>
+        )}
+        {allParamNames.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
+              Final Query Preview
+            </Typography>
+            <StyledResultDisplayBox sx={{ mt: 1, height: 180 }}>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {finalQuery}
+              </pre>
+            </StyledResultDisplayBox>
+          </Box>
+        )}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
           <Button
             variant="contained"
@@ -210,7 +344,6 @@ export default function MathhubQuery() {
         isLoading={isLoading}
         error={error}
         results={results}
-        transformedResults={transformedResults}
         handleCopyJson={handleCopyJson}
         copied={copied}
       />

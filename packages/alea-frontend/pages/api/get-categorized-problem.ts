@@ -1,10 +1,8 @@
 import {
   getDefiniedaInSectionAgg,
-  getQueryResults,
-  getDependenciesForSection,
-  getSparqlQueryForLoRelationToDimAndConceptPair,
-  ProblemData,
   getDependenciesForSectionAgg,
+  getLoRelationToDimAndConceptPair,
+  ProblemData,
 } from '@alea/spec';
 import { getParamFromUri, Language, languageUrlMap } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
@@ -63,18 +61,16 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   const cached = LO_RELATION_CACHE.get(problemUri);
   if (isCacheValid(cached)) return cached.data;
 
-  const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
-  const result = await getQueryResults(query ?? '');
+  const results = await getLoRelationToDimAndConceptPair(problemUri);
 
   const conceptUris: string[] = [];
-  result?.results?.bindings.forEach((binding) => {
-    const raw = binding.relatedData?.value;
+  results.forEach(({ relatedData }) => {
+    const raw = relatedData;
     if (!raw) return;
     const parts = raw.split('; ').map((p) => p.trim());
     const poSymbolUris = parts
       .filter((data) => data.startsWith('http://mathhub.info/ulo#po-symbol='))
       .map((data) => decodeURIComponent(data.split('#po-symbol=')[1]));
-
     conceptUris.push(...poSymbolUris);
   });
 
