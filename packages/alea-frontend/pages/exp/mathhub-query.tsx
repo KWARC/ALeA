@@ -117,7 +117,6 @@ export default function MathhubQuery() {
     <MainLayout title="MathHub Query Interface">
       <Box
         sx={{
-          height: '100vh',
           display: 'flex',
           flexDirection: 'column',
           bgcolor: 'grey.50',
