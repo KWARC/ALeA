@@ -6,8 +6,8 @@ import {
   ALL_NON_DIM_CONCEPT,
   AllLoRelationTypes,
   getQueryResults,
-  getLoRelationToDimAndConceptPair,
-  getLoRelationToNonDimConcept,
+  getLoRelationsOfTypeConceptAndBloomDimension,
+  getSimpleLoRelations,
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   SparqlResponse,
@@ -118,8 +118,8 @@ const LoRelations = ({
         const updatedData = { ...data };
 
         const [dimConceptResult, nonDimConceptResult] = await Promise.all([
-          getLoRelationToDimAndConceptPair(uri),
-          getLoRelationToNonDimConcept(uri),
+          getLoRelationsOfTypeConceptAndBloomDimension(uri),
+          getSimpleLoRelations(uri),
         ]);
 
         const dimConceptData = processDimAndConceptData(dimConceptResult);

@@ -1,8 +1,6 @@
 import { getQueryResults, SparqlResponse } from '@alea/spec';
 import { createSafeFlamsQuery, findAllUriParams } from '@alea/utils';
 import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Box,
@@ -11,24 +9,15 @@ import {
   IconButton,
   Paper,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useEffect, useMemo, useState } from 'react';
+import { QueryTemplateSelector } from '../../components/mathhub-query/QueryTemplateSelector';
+import { ResultsDisplay } from '../../components/mathhub-query/ResultsDisplay';
+import { QUERY_TEMPLATES } from '../../components/mathhub-query/query-templates.config';
 
 const QueryEditorContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[2],
-}));
-
-const StyledResultsContainer = styled(Paper)(({ theme }) => ({
-  marginTop: theme.spacing(3),
   padding: theme.spacing(2),
   flex: 1,
   display: 'flex',
@@ -47,107 +36,18 @@ const StyledResultDisplayBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
 }));
 
-type SparqlBindingValue = {
-  type?: string;
-  value: string;
-  datatype?: string;
-};
-
-type SparqlBinding = Record<string, SparqlBindingValue>;
-
-const transformBindings = (bindings: SparqlBinding[]) => {
-  return bindings.map((binding) => {
-    const transformed: Record<string, string> = {};
-
-    for (const key in binding) {
-      if (Object.prototype.hasOwnProperty.call(binding, key)) {
-        transformed[key] = binding[key].value;
-      }
-    }
-    return transformed;
-  });
-};
-
-interface ResultsDisplayProps {
-  isLoading: boolean;
-  error: string;
-  results: SparqlResponse | null;
-  handleCopyJson: () => void;
-  copied: boolean;
-}
-
-const ResultsDisplay = ({
-  isLoading,
-  error,
-  results,
-  handleCopyJson,
-  copied,
-}: ResultsDisplayProps) => {
-  return (
-    <StyledResultsContainer elevation={0}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" fontWeight="bold" color="text.primary">
-          Results
-        </Typography>
-        {results && (
-          <Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
-            <IconButton
-              onClick={handleCopyJson}
-              sx={{
-                color: copied ? 'success.main' : 'text.primary',
-                transition: 'color 0.3s ease',
-              }}
-            >
-              {copied ? <CheckCircleIcon /> : <ContentCopyIcon />}
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-
-      {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {error && (
-        <Typography color="error" sx={{ textAlign: 'center', mt: 2 }}>
-          {error}
-        </Typography>
-      )}
-
-      {results && (
-        <StyledResultDisplayBox>
-          <pre style={{ margin: 0, color: 'text.primary' }}>
-            {JSON.stringify(results, null, 2)}
-          </pre>
-        </StyledResultDisplayBox>
-      )}
-
-      {!isLoading && !error && !results && (
-        <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
-          Query results will appear here.
-        </Typography>
-      )}
-    </StyledResultsContainer>
-  );
-};
-
 export default function MathhubQuery() {
-  const [query, setQuery] = useState(`# Definitional dependencies of a concept
-SELECT DISTINCT ?dependency WHERE {
-  ?loname rdf:type ulo:definition .
-  ?loname ulo:defines <_uri_a> .
-  ?loname ulo:crossrefs ?dependency .
-}`);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('Concept Dependencies');
   const [results, setResults] = useState<SparqlResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [uriValues, setUriValues] = useState<Record<string, string | string[]>>({
-    _uri_a:
-      'http://mathhub.info?a=smglom/computing&p=mod&m=information-processing-system&s=information processing system',
-  });
+  const initialTemplate =
+    QUERY_TEMPLATES.find((t) => t.name === 'Concept Dependencies') || QUERY_TEMPLATES[0];
+  const [query, setQuery] = useState(initialTemplate.query);
+  const [uriValues, setUriValues] = useState<Record<string, string | string[]>>(
+    initialTemplate.defaultUriParams
+  );
 
   const { singleParamNames, multiParamNames } = useMemo(() => findAllUriParams(query), [query]);
   const allParamNames = useMemo(
@@ -199,6 +99,15 @@ SELECT DISTINCT ?dependency WHERE {
     }
   };
 
+  const handleTemplateChange = (templateName: string) => {
+    const template = QUERY_TEMPLATES.find((t) => t.name === templateName);
+    if (template) {
+      setSelectedTemplate(templateName);
+      setQuery(template.query);
+      setUriValues(template.defaultUriParams);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -214,11 +123,18 @@ SELECT DISTINCT ?dependency WHERE {
       </Typography>
 
       <QueryEditorContainer elevation={0}>
+        <QueryTemplateSelector
+          selectedTemplate={selectedTemplate}
+          onTemplateChange={handleTemplateChange}
+        />
         <TextField
           label="Your Query here"
           size="small"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedTemplate('');
+          }}
           multiline
           placeholder="Your Query here"
         />

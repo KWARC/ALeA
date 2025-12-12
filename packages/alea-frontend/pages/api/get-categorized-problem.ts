@@ -1,7 +1,7 @@
 import {
   getDefiniedaInSectionAgg,
   getDependenciesForSectionAgg,
-  getLoRelationToDimAndConceptPair,
+  getLoRelationsOfTypeConceptAndBloomDimension,
   ProblemData,
 } from '@alea/spec';
 import { getParamFromUri, Language, languageUrlMap } from '@alea/utils';
@@ -61,7 +61,7 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   const cached = LO_RELATION_CACHE.get(problemUri);
   if (isCacheValid(cached)) return cached.data;
 
-  const results = await getLoRelationToDimAndConceptPair(problemUri);
+  const results = await getLoRelationsOfTypeConceptAndBloomDimension(problemUri);
 
   const conceptUris: string[] = [];
   results.forEach(({ relatedData }) => {
