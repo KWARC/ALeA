@@ -51,7 +51,7 @@ import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
-import { calculateLectureProgress } from './CoverageTable';
+import { calculateLectureProgress } from './CalculateLectureProgress'; 
 import SystemAlertBanner from './SystemAlertBanner';
 
 interface ColorInfo {
