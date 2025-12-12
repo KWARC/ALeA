@@ -77,7 +77,7 @@ export function EditView({
       parentCommentId: parentId,
       courseId,
       courseTerm,
-      institutionId:'FAU',
+      institutionId:'FAU',// TODO(M5)
       statement: inputText,
       isPrivate: isPrivateNote,
       isAnonymous: postAnonymously,

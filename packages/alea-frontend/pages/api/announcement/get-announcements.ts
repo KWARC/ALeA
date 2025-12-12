@@ -6,7 +6,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { courseId, instanceId, institutionId } = req.query;
 
-  if (!courseId || !instanceId) {
+  if (!courseId || !instanceId || !institutionId) {
     res.status(422).end('Missing courseId or instanceId');
     return;
   }

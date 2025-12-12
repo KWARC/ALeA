@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { courseId, title, content, visibleUntil, instanceId, institutionId } =
     req.body as CreateAnnouncementRequest & { institutionId?: string };
 
-  if (!courseId || !title || !content || !visibleUntil || !instanceId) {
+  if (!courseId || !title || !content || !visibleUntil || !instanceId || !institutionId) {
     res.status(422).send('Missing required fields');
     return;
   }

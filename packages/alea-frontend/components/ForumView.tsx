@@ -191,7 +191,7 @@ function ForumViewControls({
               commentId: -1,
               courseId,
               courseTerm: currentTerm,
-              institutionId: 'FAU',
+              institutionId: 'FAU',// TODO(M5)
               isPrivate: false,
               isAnonymous,
               commentType: CommentType.QUESTION,
@@ -250,7 +250,7 @@ export function ForumView() {
 
   useEffect(() => {
     if (!router.isReady || !courseId || !currentTerm) return;
-    getCourseInstanceThreads(courseId, currentTerm, 'FAU').then(setThreadComments);
+    getCourseInstanceThreads(courseId, currentTerm, 'FAU').then(setThreadComments);// TODO(M5)
   }, [courseId, router.isReady, updateCounter, currentTerm]);
 
   if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;

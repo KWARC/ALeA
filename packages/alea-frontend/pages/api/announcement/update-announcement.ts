@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { id, courseId, title, content, visibleUntil, instanceId, institutionId } = req.body;
 
-  if (!id || !courseId || !title || !content || !instanceId) {
+  if (!id || !courseId || !title || !content || !instanceId || !institutionId) {
     res.status(422).end('Missing required fields');
     return;
   }
