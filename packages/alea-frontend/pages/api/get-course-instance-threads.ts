@@ -5,22 +5,22 @@ import { processResults } from './get-comments';
 export interface CourseInstance {
   courseId: string;
   courseTerm: string;
+  institutionId: string;
 }
 
 export default async function handler(req, res) {
   const instance = req.body as CourseInstance;
-  if (!instance?.courseId || !instance?.courseTerm) {
-    return res
-      .status(400)
-      .json({
-        error: `Invalid input: [${instance.courseId}] [${instance.courseTerm}]`,
-      });
+  if (!instance?.courseId || !instance?.courseTerm || !instance?.institutionId) {
+    return res.status(400).json({
+      error: `Invalid input: [${instance.courseId}] [${instance.courseTerm}]`,
+    });
   }
-  const query = `SELECT * FROM comments WHERE (isPrivate != 1 AND isDeleted != 1) AND courseId = ? AND courseTerm = ? AND commentId = threadId ORDER BY postedTimestamp DESC`;
+
+  const query = `SELECT * FROM comments WHERE (isPrivate != 1 AND isDeleted != 1) AND institutionId = ? AND courseId = ? AND courseTerm = ? AND commentId = threadId ORDER BY postedTimestamp DESC`;
 
   const results = await executeAndEndSet500OnError(
     query,
-    [instance.courseId, instance.courseTerm],
+    [instance.institutionId, instance.courseId, instance.courseTerm],
     res
   );
   if (!results) return;
