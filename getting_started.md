@@ -51,15 +51,9 @@ npm run start alea-frontend
 
 This guide provides step-by-step instructions to create and configure an Access Control List (ACL) in the system.
 
-### Step 1: Create a New ACL
+### Step 1: Run Initial SQL Setup
 
-1. Go to the `/acl` endpoint in the application.
-2. Create a new ACL with the following details:
-   - **ACL ID**: `sys-admin`
-   - **Description**: `write-dexription`
-   - **Add Member ID**: Specify the member ID, e.g., `fake_joy`
-   - **Add Member ACL**: Leave empty if no additional ACLs are to be added.
-   - **Updater ACL**: Set this to `sys-admin`.
+Execute the SQL queries from the `intialSqlSetup.sql` file to set up the sys-admin ACL, initial course metadata, and other required data.
 
 ### Step 2: Insert into `ResourceAccess`
 
