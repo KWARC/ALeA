@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 import { useEffect, useMemo, useState } from 'react';
 import { ParameterizationInfoDialog } from '../../components/mathhub-query/ParameterizationInfoDialog';
 import { QueryTemplateSelector } from '../../components/mathhub-query/QueryTemplateSelector';
@@ -113,172 +114,174 @@ export default function MathhubQuery() {
   };
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'grey.50',
-        p: 3,
-      }}
-    >
-      <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
-        MathHub Query Interface
-      </Typography>
+    <MainLayout title="MathHub Query Interface">
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'grey.50',
+          p: 3,
+        }}
+      >
+        <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
+          MathHub Query Interface
+        </Typography>
 
-      <QueryEditorContainer elevation={0}>
-        <QueryTemplateSelector
-          selectedTemplate={selectedTemplate}
-          onTemplateChange={handleTemplateChange}
-        />
-        <TextField
-          label="Your Query here"
-          size="small"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setSelectedTemplate('');
-          }}
-          multiline
-          placeholder="Your Query here"
-        />
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, mb: 1 }}>
-          <IconButton
+        <QueryEditorContainer elevation={0}>
+          <QueryTemplateSelector
+            selectedTemplate={selectedTemplate}
+            onTemplateChange={handleTemplateChange}
+          />
+          <TextField
+            label="Your Query here"
             size="small"
-            sx={{ color: 'info.main' }}
-            onClick={() => setInfoDialogOpen(true)}
-          >
-            <InfoIcon fontSize="small" />
-          </IconButton>
-        </Box>
-        <ParameterizationInfoDialog
-          open={infoDialogOpen}
-          onClose={() => setInfoDialogOpen(false)}
-        />
-        {allParamNames.length > 0 && (
-          <Box
-            sx={{
-              mt: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-              border: '1px solid #e0e0e0',
-              borderRadius: 1,
-              p: 1,
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedTemplate('');
             }}
-          >
-            <Typography variant="h6" fontWeight="bold" color="text.primary">
-              FTML URI Parameters
-            </Typography>
-            {allParamNames.map((paramName) => {
-              const isMulti = multiParamNames.includes(paramName);
-              const value = uriValues[paramName];
+            multiline
+            placeholder="Your Query here"
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, mb: 1 }}>
+            <IconButton
+              size="small"
+              sx={{ color: 'info.main' }}
+              onClick={() => setInfoDialogOpen(true)}
+            >
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <ParameterizationInfoDialog
+            open={infoDialogOpen}
+            onClose={() => setInfoDialogOpen(false)}
+          />
+          {allParamNames.length > 0 && (
+            <Box
+              sx={{
+                mt: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+                border: '1px solid #e0e0e0',
+                borderRadius: 1,
+                p: 1,
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold" color="text.primary">
+                FTML URI Parameters
+              </Typography>
+              {allParamNames.map((paramName) => {
+                const isMulti = multiParamNames.includes(paramName);
+                const value = uriValues[paramName];
 
-              if (isMulti) {
-                const uriArray = Array.isArray(value) ? value : [];
-                return (
-                  <Box key={paramName} sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h6" fontSize="1rem" color="text.primary">
-                      {paramName}&nbsp;
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          const newArray = [...uriArray, ''];
-                          setUriValues((prev) => ({
-                            ...prev,
-                            [paramName]: newArray,
-                          }));
-                        }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </Typography>
-                    {uriArray.map((uri, index) => (
-                      <Box
-                        key={index}
-                        sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 0.5 }}
-                      >
-                        <UriAutocompleteInput
-                          size="small"
-                          value={uri}
-                          onChange={(newValue) => {
-                            const newArray = [...uriArray];
-                            newArray[index] = newValue;
-                            setUriValues((prev) => ({
-                              ...prev,
-                              [paramName]: newArray,
-                            }));
-                          }}
-                          placeholder={`FTML URI for ${paramName} list at idx [${index}]`}
-                          sx={{ flex: 1 }}
-                        />
+                if (isMulti) {
+                  const uriArray = Array.isArray(value) ? value : [];
+                  return (
+                    <Box key={paramName} sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography variant="h6" fontSize="1rem" color="text.primary">
+                        {paramName}&nbsp;
                         <IconButton
                           size="small"
                           onClick={() => {
-                            const newArray = uriArray.filter((_, i) => i !== index);
+                            const newArray = [...uriArray, ''];
                             setUriValues((prev) => ({
                               ...prev,
                               [paramName]: newArray,
                             }));
                           }}
-                          color="error"
                         >
-                          <RemoveIcon />
+                          <AddIcon />
                         </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
+                      </Typography>
+                      {uriArray.map((uri, index) => (
+                        <Box
+                          key={index}
+                          sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 0.5 }}
+                        >
+                          <UriAutocompleteInput
+                            size="small"
+                            value={uri}
+                            onChange={(newValue) => {
+                              const newArray = [...uriArray];
+                              newArray[index] = newValue;
+                              setUriValues((prev) => ({
+                                ...prev,
+                                [paramName]: newArray,
+                              }));
+                            }}
+                            placeholder={`FTML URI for ${paramName} list at idx [${index}]`}
+                            sx={{ flex: 1 }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              const newArray = uriArray.filter((_, i) => i !== index);
+                              setUriValues((prev) => ({
+                                ...prev,
+                                [paramName]: newArray,
+                              }));
+                            }}
+                            color="error"
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                }
+
+                return (
+                  <UriAutocompleteInput
+                    key={paramName}
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(newValue) => {
+                      setUriValues((prev) => ({
+                        ...prev,
+                        [paramName]: newValue,
+                      }));
+                    }}
+                    placeholder={`FTML URI for ${paramName}`}
+                    size="small"
+                  />
                 );
-              }
-
-              return (
-                <UriAutocompleteInput
-                  key={paramName}
-                  value={typeof value === 'string' ? value : ''}
-                  onChange={(newValue) => {
-                    setUriValues((prev) => ({
-                      ...prev,
-                      [paramName]: newValue,
-                    }));
-                  }}
-                  placeholder={`FTML URI for ${paramName}`}
-                  size="small"
-                />
-              );
-            })}
+              })}
+            </Box>
+          )}
+          {allParamNames.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
+                Final Query Preview
+              </Typography>
+              <StyledResultDisplayBox sx={{ mt: 1, height: 180 }}>
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {finalQuery}
+                </pre>
+              </StyledResultDisplayBox>
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleQuery}
+              disabled={isLoading}
+              sx={{ minWidth: 15 }}
+            >
+              {isLoading ? <CircularProgress size={24} /> : 'Run Query'}
+            </Button>
           </Box>
-        )}
-        {allParamNames.length > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
-              Final Query Preview
-            </Typography>
-            <StyledResultDisplayBox sx={{ mt: 1, height: 180 }}>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {finalQuery}
-              </pre>
-            </StyledResultDisplayBox>
-          </Box>
-        )}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button
-            variant="contained"
-            onClick={handleQuery}
-            disabled={isLoading}
-            sx={{ minWidth: 15 }}
-          >
-            {isLoading ? <CircularProgress size={24} /> : 'Run Query'}
-          </Button>
-        </Box>
-      </QueryEditorContainer>
+        </QueryEditorContainer>
 
-      <ResultsDisplay
-        isLoading={isLoading}
-        error={error}
-        results={results}
-        handleCopyJson={handleCopyJson}
-        copied={copied}
-      />
-    </Box>
+        <ResultsDisplay
+          isLoading={isLoading}
+          error={error}
+          results={results}
+          handleCopyJson={handleCopyJson}
+          copied={copied}
+        />
+      </Box>
+    </MainLayout>
   );
 }
