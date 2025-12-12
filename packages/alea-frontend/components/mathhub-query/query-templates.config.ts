@@ -104,7 +104,7 @@ export const QUERY_TEMPLATES: QueryTemplate[] = [
       ''
     ),
     defaultUriParams: {
-      _uri_concept0: CONCEPT_URI0,
+      _uri_param0: CONCEPT_URI0,
       _uri_lo_sub_str: '',
     },
   },
@@ -117,8 +117,8 @@ export const QUERY_TEMPLATES: QueryTemplate[] = [
       ''
     ),
     defaultUriParams: {
-      _uri_concept0: CONCEPT_URI0,
-      _uri_concept1: CONCEPT_URI1,
+      _uri_param0: CONCEPT_URI0,
+      _uri_param1: CONCEPT_URI1,
       _uri_lo_sub_str: '',
     },
   },

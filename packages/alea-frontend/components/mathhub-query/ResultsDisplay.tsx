@@ -57,7 +57,7 @@ export const ResultsDisplay = ({
   handleCopyJson,
   copied,
 }: ResultsDisplayProps) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('json');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   // Extract column names and types from bindings
   const { columns, columnTypes } = useMemo(() => {

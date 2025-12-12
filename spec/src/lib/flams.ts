@@ -122,18 +122,40 @@ async function getParameterizedQueryResults(
   return await getQueryResults(query);
 }
 
-const TEMPL_SEARCH_URI_USING_SUBSTR = `SELECT DISTINCT ?uri
-WHERE {
-  ?uri ?r ?o.
-  FILTER(CONTAINS(STR(?uri), "_uri_substr")).
+const DEFAULT_URI_PARAM_PREFIX = '_uri_param';
+function createUriParamMapping(uris: string[], prefix = DEFAULT_URI_PARAM_PREFIX) {
+  if (!uris?.length) return {};
+  return Array.from({ length: uris.length }, (_, i) => i).reduce(
+    (acc, i) => ({ ...acc, [`${prefix}${i}`]: uris[i] }),
+    {}
+  );
 }
-LIMIT 60`;
 
-export async function searchUriUsingSubstr(uriSubstr: string) {
-  if (!uriSubstr) return [];
-  const results = await getParameterizedQueryResults(TEMPL_SEARCH_URI_USING_SUBSTR, {
-    _uri_substr: uriSubstr,
-  });
+function buildSearchUriQuery(parts: string[]): string {
+  if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
+
+  const filterConditions = parts
+    .map((_part, idx) => `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`)
+    .join('.\n  ');
+
+  return `
+SELECT DISTINCT ?uri WHERE {
+  ?uri ?r ?o. 
+  ${filterConditions} 
+} 
+LIMIT 60`;
+}
+
+export async function searchUriUsingSubstr(input: string) {
+  if (!input) return [];
+  const parts = input
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0);
+  if (!parts.length) return [];
+
+  const query = buildSearchUriQuery(parts);
+  const results = await getParameterizedQueryResults(query, createUriParamMapping(parts));
   return results?.results?.bindings.map((binding) => binding['uri']?.value) ?? [];
 }
 
@@ -437,7 +459,7 @@ export function getNonDimConceptsAsLoRelationTempl(
 ): string {
   const uriConditions = conceptUris?.length
     ? conceptUris
-        .map((uri, idx) => `CONTAINS(STR(?obj1), "${DEFAULT_CONCEPT_PARAM_PREFIX}${idx}")`)
+        .map((uri, idx) => `CONTAINS(STR(?obj1), "${DEFAULT_URI_PARAM_PREFIX}${idx}")`)
         .join(' || ')
     : 'false';
   const relationConditions = relations.map((relation) => `ulo:${relation}`).join(' ');
@@ -473,15 +495,6 @@ export function getNonDimConceptsAsLoRelationTempl(
   `;
 }
 
-const DEFAULT_CONCEPT_PARAM_PREFIX = '_uri_concept';
-function createConceptParamMapping(conceptUris: string[], prefix = DEFAULT_CONCEPT_PARAM_PREFIX) {
-  if (!conceptUris?.length) return {};
-  return Array.from({ length: conceptUris.length }, (_, i) => i).reduce(
-    (acc, i) => ({ ...acc, [`${prefix}${i}`]: conceptUris[i] }),
-    {}
-  );
-}
-
 export async function getNonDimConceptsAsLoRelation(
   conceptUris: string[],
   relations: LoRelationToNonDimConcept[],
@@ -492,7 +505,7 @@ export async function getNonDimConceptsAsLoRelation(
   const query = getNonDimConceptsAsLoRelationTempl(conceptUris, relations, loTypes, loSubStr);
 
   const results = await getParameterizedQueryResults(query, {
-    ...createConceptParamMapping(conceptUris),
+    ...createUriParamMapping(conceptUris),
     _uri_lo_sub_str: loSubStr ?? '',
   });
   return (
@@ -511,7 +524,7 @@ export function getDimConceptsAsLoRelationTempl(
 ): string {
   const uriConditions = conceptUris?.length
     ? conceptUris
-        .map((uri, idx) => `CONTAINS(STR(?obj1),"${DEFAULT_CONCEPT_PARAM_PREFIX}${idx}")`)
+        .map((uri, idx) => `CONTAINS(STR(?obj1),"${DEFAULT_URI_PARAM_PREFIX}${idx}")`)
         .join(' || ')
     : 'false';
   const relationConditions = relations.map((relation) => `ulo:${relation}`).join(' ');
@@ -551,7 +564,7 @@ export async function getDimConceptsAsLoRelation(
   const query = getDimConceptsAsLoRelationTempl(conceptUris, relations, loTypes, loSubStr);
 
   const results = await getParameterizedQueryResults(query, {
-    ...createConceptParamMapping(conceptUris),
+    ...createUriParamMapping(conceptUris),
     _uri_lo_sub_str: loSubStr ?? '',
   });
 

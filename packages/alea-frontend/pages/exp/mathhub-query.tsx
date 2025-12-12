@@ -1,6 +1,7 @@
 import { getQueryResults, SparqlResponse } from '@alea/spec';
 import { createSafeFlamsQuery, findAllUriParams } from '@alea/utils';
 import AddIcon from '@mui/icons-material/Add';
+import InfoIcon from '@mui/icons-material/Info';
 import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Box,
@@ -13,6 +14,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useEffect, useMemo, useState } from 'react';
+import { ParameterizationInfoDialog } from '../../components/mathhub-query/ParameterizationInfoDialog';
 import { QueryTemplateSelector } from '../../components/mathhub-query/QueryTemplateSelector';
 import { ResultsDisplay } from '../../components/mathhub-query/ResultsDisplay';
 import { UriAutocompleteInput } from '../../components/mathhub-query/UriAutocompleteInput';
@@ -43,6 +45,7 @@ export default function MathhubQuery() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
   const initialTemplate =
     QUERY_TEMPLATES.find((t) => t.name === 'Concept Dependencies') || QUERY_TEMPLATES[0];
   const [query, setQuery] = useState(initialTemplate.query);
@@ -139,6 +142,19 @@ export default function MathhubQuery() {
           multiline
           placeholder="Your Query here"
         />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, mb: 1 }}>
+          <IconButton
+            size="small"
+            sx={{ color: 'info.main' }}
+            onClick={() => setInfoDialogOpen(true)}
+          >
+            <InfoIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <ParameterizationInfoDialog
+          open={infoDialogOpen}
+          onClose={() => setInfoDialogOpen(false)}
+        />
         {allParamNames.length > 0 && (
           <Box
             sx={{
@@ -218,7 +234,6 @@ export default function MathhubQuery() {
               return (
                 <UriAutocompleteInput
                   key={paramName}
-                  label={paramName}
                   value={typeof value === 'string' ? value : ''}
                   onChange={(newValue) => {
                     setUriValues((prev) => ({

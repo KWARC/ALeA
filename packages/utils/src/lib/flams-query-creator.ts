@@ -20,9 +20,13 @@ function encodeSpecialChars(value: string) {
 }
 
 // This function creates a FLAMS query from a given query and parameters.
-// Single query parameters expect a string value, and are replaced with their values. `<>` are retained
+// Single query parameters expect a string value, and are replaced with their values. `<>` or `"` are retained
+// Eg. parameterizedQuery: `SELECT ?x WHERE { ?x <_uri_concept> }` and uriParams: { _uri_concept: 'http://example.org/concept' }
+// returns `SELECT ?x WHERE { ?x <http://example.org/concept> }`
+//
 // Multiple query parameters expect an array of strings, and are replaced with their values in the following manner:
-// `<multiuri_param>` is replaced with `<uri1> <uri2> <uri3>`
+// Eg. parameterizedQuery: `VALUES ?uri { <_multiuri_sections> }` and uriParams: { _multiuri_sections: ['uri1', 'uri2', 'uri3'] }
+// returns `VALUES ?uri { <uri1> <uri2> <uri3> }`
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]>

@@ -69,15 +69,10 @@ export const UriAutocompleteInput = ({
       loading={loading}
       size={size}
       sx={sx}
+      filterOptions={(options) => options}
       renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          placeholder={placeholder}
-          size={size}
-        />
+        <TextField {...params} label={label} placeholder={placeholder} size={size} />
       )}
     />
   );
 };
-
