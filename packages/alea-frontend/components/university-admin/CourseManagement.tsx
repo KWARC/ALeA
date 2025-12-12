@@ -34,6 +34,7 @@ import {
   removeCourseFromSemester,
   createNewCourse,
   getInstructorResourceActions,
+  getCourseInfoMetadata,
 } from '@alea/spec';
 import { ResourceName, Action, getResourceId } from '@alea/utils';
 
@@ -168,12 +169,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   const handleRemoveCourse = async (courseId: string, confirmedCourseId?: string) => {
     if (!semester || !universityId) return;
+    
+    if (!confirmedCourseId) {
+      try {
+        const courseMetadata = await getCourseInfoMetadata(courseId, semester);
+        if (courseMetadata?.notes?.trim()) {
+          setNotesConfirmationCourseId(courseId);
+          setConfirmationCourseIdInput('');
+          return;
+        }
+      } catch (error) {
+      }
+    }
+    
     try {
       await removeCourseFromSemester({
         universityId,
         instanceId: semester,
         courseId,
-        ...(confirmedCourseId && { confirmedCourseId }),
       });
       await fetchCoursesAndAcls();
       setSnackbar({ open: true, message: 'Course removed successfully', severity: 'success' });
@@ -183,21 +196,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.response?.data || 'Failed to remove course';
-      const errorMessageLower = String(errorMessage).toLowerCase();
-
-      if (errorMessageLower.includes('notes are present') || errorMessageLower.includes('notes')) {
-        setNotesConfirmationCourseId(courseId);
-        setConfirmationCourseIdInput('');
-      } else {
-        setSnackbar({ open: true, message: String(errorMessage), severity: 'error' });
-      }
+      setSnackbar({ open: true, message: String(errorMessage), severity: 'error' });
     }
   };
 
   const handleConfirmDeleteWithNotes = async () => {
     if (!notesConfirmationCourseId) return;
     
-    if (confirmationCourseIdInput.trim() !== notesConfirmationCourseId.trim()) {
+    if (confirmationCourseIdInput.trim().toLowerCase() !== notesConfirmationCourseId.trim().toLowerCase()) {
       setSnackbar({ 
         open: true, 
         message: 'Course ID does not match. Please type the correct course ID.', 

@@ -232,7 +232,6 @@ export async function removeCourseFromSemester(data: {
   universityId: string;
   instanceId: string;
   courseId: string;
-  confirmedCourseId?: string;
 }) {
   const response = await axios.post(
     '/api/university-admin/semester-courses/remove-course-from-semester',
