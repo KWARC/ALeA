@@ -13,6 +13,7 @@ import {
   LectureScheduleItem,
   UserInfo,
 } from '@alea/spec';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
   Action,
   BG_COLOR,
@@ -22,15 +23,14 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import PersonIcon from '@mui/icons-material/Person';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -42,9 +42,9 @@ import {
   Card,
   CircularProgress,
   IconButton,
-  Tooltip,
   InputAdornment,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
@@ -537,7 +537,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU');// TODO(M5)
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU'); // TODO(M5)
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -556,9 +556,8 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       </Box>
     );
   }
-  if (!announcements || announcements.length === 0) {
-    return null;
-  }
+  if (!announcements?.length) return null;
+
   return (
     <Box
       mt={3}
