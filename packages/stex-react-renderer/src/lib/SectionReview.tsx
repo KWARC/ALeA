@@ -1,3 +1,15 @@
+import { SafeHtml } from '@alea/react-utils';
+import {
+  BloomDimension,
+  ConceptAndDefinition,
+  NumericCognitiveValues,
+  SHOW_DIMENSIONS,
+  clearWeightsCache,
+  getDefiniedaInSectionAgg,
+  getLmpUriWeightsAggBulk,
+  isLoggedIn,
+} from '@alea/spec';
+import { BG_COLOR } from '@alea/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -13,17 +25,6 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import LinearProgress from '@mui/material/LinearProgress';
-import {
-  BloomDimension,
-  ConceptAndDefinition,
-  NumericCognitiveValues,
-  SHOW_DIMENSIONS,
-  getDefiniedaInSection,
-  getUriWeights,
-  isLoggedIn,
-} from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
-import { BG_COLOR } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
@@ -66,19 +67,20 @@ const SectionReview = ({
 
   useEffect(() => {
     if (!isLoggedIn()) return;
-    getDefiniedaInSection(sectionUri).then(setDefinedConcepts);
+    getDefiniedaInSectionAgg(sectionUri).then(setDefinedConcepts);
   }, [sectionUri]);
 
   useEffect(() => {
     if (!definedConcepts) return;
     const URIs = [...new Set(definedConcepts.flatMap((data) => data.conceptUri))];
     setURIs(URIs);
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }, [definedConcepts]);
 
   function refetchCompetencyData() {
     if (!URIs?.length) return;
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    clearWeightsCache(); // invalidateWeightsCache(URIs); wont be enough?
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }
 
   const averages = SHOW_DIMENSIONS.reduce((acc, competency) => {

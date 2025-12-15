@@ -19,9 +19,11 @@ import {
   DialogActions,
   Stack,
   Autocomplete,
+  Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import InfoIcon from '@mui/icons-material/Info';
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../AclDisplay';
@@ -31,7 +33,10 @@ import {
   addCourseToSemester,
   removeCourseFromSemester,
   createNewCourse,
+  getInstructorResourceActions,
+  getCourseInfoMetadata,
 } from '@alea/spec';
+import { ResourceName, Action, getResourceId } from '@alea/utils';
 
 interface CourseManagementProps {
   semester: string;
@@ -48,11 +53,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [availableCourses, setAvailableCourses] = useState<string[]>([]);
   const [aclPresence, setAclPresence] = useState<Record<string, boolean>>({});
   const [aclIds, setAclIds] = useState<Record<string, string>>({});
+  const [courseAccessControl, setCourseAccessControl] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [selectedCourseToAdd, setSelectedCourseToAdd] = useState('');
   const [newCourseDialogOpen, setNewCourseDialogOpen] = useState(false);
   const [newCourseId, setNewCourseId] = useState('');
-  const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
+  const [notesConfirmationCourseId, setNotesConfirmationCourseId] = useState<string | null>(null);
+  const [confirmationCourseIdInput, setConfirmationCourseIdInput] = useState('');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -79,15 +86,30 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       setCourses(semesterCourses);
       const aclChecks: Record<string, boolean> = {};
       const aclIdMap: Record<string, string> = {};
+      const courseAccessControlCheck: Record<string, boolean> = {};
       await Promise.all(
         semesterCourses.map(async (courseId) => {
           const aclId = `${courseId.toLowerCase()}-${semester}-instructors`;
           aclIdMap[courseId] = aclId;
           aclChecks[courseId] = await aclExists(aclId);
+          try {
+            const resourceActions = await getInstructorResourceActions(courseId, semester);
+            const courseAccessResourceId = getResourceId(ResourceName.COURSE_ACCESS, {
+              courseId,
+              instanceId: semester,
+            });
+            courseAccessControlCheck[courseId] = resourceActions.some(
+              (ra) =>
+                ra.resourceId === courseAccessResourceId && ra.actionId === Action.ACCESS_CONTROL
+            );
+          } catch (error) {
+            courseAccessControlCheck[courseId] = true;
+          }
         })
       );
       setAclPresence(aclChecks);
       setAclIds(aclIdMap);
+      setCourseAccessControl(courseAccessControlCheck);
     } catch (error) {
       setSnackbar({ open: true, message: 'Failed to fetch courses', severity: 'error' });
     } finally {
@@ -140,8 +162,26 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     }
   };
 
-  const handleRemoveCourse = async (courseId: string) => {
+  const closeNotesConfirmationDialog = () => {
+    setNotesConfirmationCourseId(null);
+    setConfirmationCourseIdInput('');
+  };
+
+  const handleRemoveCourse = async (courseId: string, confirmedCourseId?: string) => {
     if (!semester || !universityId) return;
+    
+    if (!confirmedCourseId) {
+      try {
+        const courseMetadata = await getCourseInfoMetadata(courseId, semester);
+        if (courseMetadata?.notes?.trim()) {
+          setNotesConfirmationCourseId(courseId);
+          setConfirmationCourseIdInput('');
+          return;
+        }
+      } catch (error) {
+      }
+    }
+    
     try {
       await removeCourseFromSemester({
         universityId,
@@ -150,16 +190,29 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       });
       await fetchCoursesAndAcls();
       setSnackbar({ open: true, message: 'Course removed successfully', severity: 'success' });
+      if (notesConfirmationCourseId) {
+        closeNotesConfirmationDialog();
+      }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.response?.data || 'Failed to remove course';
-
-      if (errorMessage.includes('Notes are present') || errorMessage.includes('notes')) {
-        window.alert('Notes are present. To delete this course, please delete notes first.');
-      } else {
-        setSnackbar({ open: true, message: String(errorMessage), severity: 'error' });
-      }
+      setSnackbar({ open: true, message: String(errorMessage), severity: 'error' });
     }
+  };
+
+  const handleConfirmDeleteWithNotes = async () => {
+    if (!notesConfirmationCourseId) return;
+    
+    if (confirmationCourseIdInput.trim().toLowerCase() !== notesConfirmationCourseId.trim().toLowerCase()) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Course ID does not match. Please type the correct course ID.', 
+        severity: 'error' 
+      });
+      return;
+    }
+
+    await handleRemoveCourse(notesConfirmationCourseId, confirmationCourseIdInput.trim());
   };
 
   const handleCreateAcl = async (aclId: string, courseId: string) => {
@@ -221,23 +274,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 return;
               }
               const value = typeof newValue === 'string' ? newValue.trim() : '';
-              if (value && value !== '__ADD_NEW__') {
-                void handleAddCourse(value);
-              }
-              setSelectedCourseToAdd('');
+              setSelectedCourseToAdd(value);
             }}
             onInputChange={(_, newInputValue) => {
               setSelectedCourseToAdd(newInputValue);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && selectedCourseToAdd?.trim()) {
-                event.preventDefault();
-                const value = selectedCourseToAdd.trim();
-                if (value) {
-                  void handleAddCourse(value);
-                  setSelectedCourseToAdd('');
-                }
-              }
             }}
             sx={{ minWidth: 250 }}
             disabled={disabled}
@@ -290,7 +330,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Add Course To Semester"
+                label="Select Course"
                 placeholder={
                   coursesNotInSemester.length === 0
                     ? 'Type a new or existing courseId'
@@ -300,6 +340,15 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               />
             )}
           />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleAddCourse()}
+            disabled={disabled || !selectedCourseToAdd?.trim()}
+            sx={{ minWidth: 200 }}
+          >
+            Add Course to Semester
+          </Button>
         </Box>
       </Box>
 
@@ -335,7 +384,18 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     transition: 'background 0.2s',
                   }}
                 >
-                  <TableCell>{courseId}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography component="span">{courseId}</Typography>
+                      {courseAccessControl[courseId] === false && (
+                        <Tooltip title={`Approve this course: ${courseId}`} arrow>
+                          <InfoIcon
+                            sx={{ fontSize: 18, color: 'primary.main', cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     {aclPresence[courseId] === undefined ? (
                       'Checking...'
@@ -356,7 +416,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     <IconButton
                       color="error"
                       size="small"
-                      onClick={() => setDeleteCourseId(courseId)}
+                      onClick={() => handleRemoveCourse(courseId)}
                       disabled={disabled}
                     >
                       <DeleteIcon />
@@ -401,30 +461,39 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       </Dialog>
 
       <Dialog
-        open={!!deleteCourseId}
-        onClose={() => setDeleteCourseId(null)}
-        maxWidth="xs"
+        open={!!notesConfirmationCourseId}
+        onClose={closeNotesConfirmationDialog}
+        maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Delete Course</DialogTitle>
+        <DialogTitle>Confirm Deletion - Notes Present</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to delete course <strong>{deleteCourseId}</strong> from this
-            semester?
-          </Typography>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Alert severity="warning">
+              Notes are present for course <strong>{notesConfirmationCourseId}</strong>. If you really want to delete this course, please type the course ID in the box below.
+            </Alert>
+            <TextField
+              label="Course ID"
+              value={confirmationCourseIdInput}
+              onChange={(e) => setConfirmationCourseIdInput(e.target.value)}
+              fullWidth
+              required
+              placeholder={`Type ${notesConfirmationCourseId} to confirm`}
+              helperText="Type the course ID exactly as shown above to confirm deletion"
+            />
+          </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteCourseId(null)}>Cancel</Button>
+          <Button onClick={closeNotesConfirmationDialog}>
+            Cancel
+          </Button>
           <Button
             color="error"
             variant="contained"
-            onClick={() => {
-              if (!deleteCourseId) return;
-              handleRemoveCourse(deleteCourseId);
-              setDeleteCourseId(null);
-            }}
+            onClick={handleConfirmDeleteWithNotes}
+            disabled={!confirmationCourseIdInput.trim()}
           >
-            Delete
+            Delete Course
           </Button>
         </DialogActions>
       </Dialog>

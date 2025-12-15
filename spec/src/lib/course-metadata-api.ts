@@ -26,6 +26,7 @@ export interface CourseMetadata {
 export interface InstructorInfo {
   id: string;
   name: string;
+  url?: string;
 }
 
 export interface CourseInfoMetadata extends CourseMetadata {
@@ -149,17 +150,6 @@ export async function getCourseHomeworkAndQuizInfo(
     params: { courseId, instanceId },
   });
   return response.data as CourseQuizAndHomeworkInfo;
-}
-
-export async function updateSeriesId(data: {
-  courseId: string;
-  instanceId: string;
-  seriesId: string;
-}) {
-  const res = await axios.post('/api/course-metadata/update-series-id', data, {
-    headers: getAuthHeaders(),
-  });
-  return res.data;
 }
 
 export async function getLectureSchedule(

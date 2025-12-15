@@ -9,4 +9,4 @@ else
   echo "Warning: dist/packages/alea-frontend-new not found. Skipping backup and replacement."
 fi
 
-sudo nice -n -20 npx nx serve alea-frontend --prod --port=3300 --hostname=0.0.0.0
+NX_DAEMON=false npx nx serve alea-frontend --prod --port=3300 --hostname=0.0.0.0

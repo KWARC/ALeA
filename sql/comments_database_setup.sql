@@ -15,6 +15,7 @@ CREATE TABLE comments (
     questionStatus ENUM('UNANSWERED', 'ANSWERED', 'ACCEPTED', 'OTHER'),
     courseId varchar(255),
     courseTerm varchar(255),
+    institutionId varchar(255),
     isEdited tinyint,
     isPrivate tinyint,
     isDeleted tinyint,
@@ -438,6 +439,7 @@ CREATE TABLE announcement(
     id INT PRIMARY KEY AUTO_INCREMENT,
     courseId VARCHAR(255) NOT NULL,
     instructorId VARCHAR(255) NOT NULL,
+    institutionId VARCHAR(255) NOT NULL,
     instanceId VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -466,4 +468,11 @@ CREATE TABLE courseMetadata (
     teaser TEXT,
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
+);
+
+CREATE TABLE CrossDomainAuthTokens (
+    otpToken VARCHAR(255) PRIMARY KEY,
+    jwtToken TEXT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
 );

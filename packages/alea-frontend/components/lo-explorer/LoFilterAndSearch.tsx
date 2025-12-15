@@ -1,4 +1,21 @@
 import {
+  ALL_DIM_CONCEPT_PAIR,
+  ALL_LO_RELATION_TYPES,
+  ALL_LO_TYPES,
+  ALL_NON_DIM_CONCEPT,
+  AllLoRelationTypes,
+  conceptUriToName,
+  getDimConcepts,
+  getDimConceptsAsLoRelation,
+  getLearningObjectsWithSubstring,
+  getNonDimConcepts,
+  getNonDimConceptsAsLoRelation,
+  LoRelationToDimAndConceptPair,
+  LoRelationToNonDimConcept,
+  LoType,
+} from '@alea/spec';
+import { capitalizeFirstLetter } from '@alea/utils';
+import {
   Autocomplete,
   Box,
   Button,
@@ -12,24 +29,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  ALL_DIM_CONCEPT_PAIR,
-  ALL_LO_RELATION_TYPES,
-  ALL_LO_TYPES,
-  ALL_NON_DIM_CONCEPT,
-  AllLoRelationTypes,
-  conceptUriToName,
-  getQueryResults,
-  getSparlQueryForDimConcepts,
-  getSparlQueryForNonDimConcepts,
-  getSparqlQueryForDimConceptsAsLoRelation,
-  getSparqlQueryForLoString,
-  getSparqlQueryForNonDimConceptsAsLoRelation,
-  LoRelationToDimAndConceptPair,
-  LoRelationToNonDimConcept,
-  LoType,
-} from '@alea/spec';
-import { capitalizeFirstLetter } from '@alea/utils';
 import React, { useEffect, useState } from 'react';
 import { ArchiveMap } from '.';
 import styles from '../../styles/lo-explorer.module.scss';
@@ -39,16 +38,9 @@ import { CourseConceptsDialog } from './CourseConceptDialog';
 let cachedConceptsList: Record<string, string> | null = null;
 
 async function fetchConceptList(): Promise<Record<string, string>> {
-  const nonDimConceptQuery = getSparlQueryForNonDimConcepts();
-  const dimConceptQuery = getSparlQueryForDimConcepts();
-  const [nonDimBindings, dimBindings] = await Promise.all([
-    getQueryResults(nonDimConceptQuery),
-    getQueryResults(dimConceptQuery),
-  ]);
-  const bindings = [...nonDimBindings.results.bindings, ...dimBindings.results.bindings];
+  const [nonDimConcepts, dimConcepts] = await Promise.all([getNonDimConcepts(), getDimConcepts()]);
   const conceptsList = {};
-  bindings.forEach((binding) => {
-    const uri = binding.x.value;
+  [...nonDimConcepts, ...dimConcepts].forEach((uri) => {
     const key = conceptUriToName(uri);
     conceptsList[key] = uri;
   });
@@ -285,7 +277,9 @@ const RelationWithLOSelect = ({
   );
 };
 
-function constructLearningObjects(bindings: any[]): Record<LoType, string[]> {
+function constructLearningObjects(
+  learningObjects: { uri: string; type: string }[]
+): Record<LoType, string[]> {
   const learningObjectsByType: Record<LoType, string[]> = {
     definition: [],
     problem: [],
@@ -293,14 +287,14 @@ function constructLearningObjects(bindings: any[]): Record<LoType, string[]> {
     para: [],
     statement: [],
   };
-  bindings.forEach(({ lo, type }) => {
-    const lastIndex = type?.value.lastIndexOf('#');
-    const typeKey = type?.value.slice(lastIndex + 1) as LoType;
+  learningObjects.forEach(({ uri, type }) => {
+    const lastIndex = type?.lastIndexOf('#');
+    const typeKey = type?.slice(lastIndex + 1) as LoType;
     if (!ALL_LO_TYPES.includes(typeKey)) {
       console.error(`Unknown learning object type: ${typeKey}`);
       return;
     }
-    const loValue = lo?.value;
+    const loValue = uri;
     const loArray = learningObjectsByType[typeKey];
     if (loValue && !loArray.includes(loValue)) {
       loArray.push(loValue);
@@ -319,12 +313,11 @@ export async function fetchLoFromConceptsAsLoRelations(
   if (loTypes?.length === 0) {
     loTypes = [...ALL_LO_TYPES];
   }
-  let bindings = [];
+  const learningObjects: { uri: string; type: string }[] = [];
   if (concepts?.length === 0) {
-    const query = getSparqlQueryForLoString(loString, loTypes);
-    const response = await getQueryResults(query);
-    bindings = response.results?.bindings;
-    return constructLearningObjects(bindings);
+    const los = await getLearningObjectsWithSubstring(loString, loTypes);
+    learningObjects.push(...los);
+    return constructLearningObjects(learningObjects);
   }
   if (relations.length === 0) {
     relations = [...ALL_LO_RELATION_TYPES];
@@ -336,31 +329,25 @@ export async function fetchLoFromConceptsAsLoRelations(
     ALL_NON_DIM_CONCEPT.includes(relation as LoRelationToNonDimConcept)
   );
   if (dimRelations.length) {
-    const query = getSparqlQueryForDimConceptsAsLoRelation(
+    const los = await getDimConceptsAsLoRelation(
       concepts,
       dimRelations as LoRelationToDimAndConceptPair[],
       loTypes,
       loString
     );
-    const response = await getQueryResults(query);
-    if (response?.results?.bindings) {
-      bindings.push(...response.results.bindings);
-    }
+    learningObjects.push(...los);
   }
 
   if (nonDimRelations.length) {
-    const query = getSparqlQueryForNonDimConceptsAsLoRelation(
+    const los = await getNonDimConceptsAsLoRelation(
       concepts,
       nonDimRelations as LoRelationToNonDimConcept[],
       loTypes,
       loString
     );
-    const response = await getQueryResults(query);
-    if (response?.results?.bindings) {
-      bindings.push(...response.results.bindings);
-    }
+    learningObjects.push(...los);
   }
-  return constructLearningObjects(bindings);
+  return constructLearningObjects(learningObjects);
 }
 
 const LoFilterAndSearch = ({

@@ -1,22 +1,24 @@
 import {
+  CreateACLRequest,
+  createAcl,
+  getAclSuggestions,
+  getUserSuggestions,
+  isValid,
+} from '@alea/spec';
+import {
+  Alert,
   Box,
   Button,
   Checkbox,
-  Chip,
   FormControlLabel,
   TextField,
   Typography,
-  InputAdornment,
-  IconButton,
-  Alert,
 } from '@mui/material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import GroupIcon from '@mui/icons-material/Group';
-import { CreateACLRequest, createAcl, isValid } from '@alea/spec';
 import { NextPage } from 'next';
-import { useState } from 'react';
-import MainLayout from '../../layouts/MainLayout';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
+import AclAutocompleteSelector from '../../components/AclAutocompleteSelector';
+import MainLayout from '../../layouts/MainLayout';
 
 const CreateACl: NextPage = () => {
   const [aclId, setAclId] = useState<string | ''>('');
@@ -25,52 +27,12 @@ const CreateACl: NextPage = () => {
   const [memberACLIds, setMemberACLIds] = useState<string[]>([]);
   const [updaterACLId, setUpdaterACLId] = useState<string | ''>('');
   const [isOpen, setIsOpen] = useState(false);
-  const [tempMemberUserId, setTempMemberUserId] = useState<string>('');
-  const [tempMemberACL, setTempMemberACL] = useState<string>('');
-  const [isInvalid, setIsInvalid] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
+  const [isTypingMemberId, setIsTypingMemberId] = useState(false);
+  const [isTypingMemberACL, setIsTypingMemberACL] = useState(false);
+
   const router = useRouter();
-
-  const handleAddMemberId = (
-    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
-  ) => {
-    if (
-      (event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') ||
-      event.type === 'click'
-    ) {
-      if (tempMemberUserId) {
-        setMemberUserIds([...memberUserIds, tempMemberUserId]);
-        setTempMemberUserId('');
-      }
-    }
-  };
-
-  const handleRemoveMemberId = (idToRemove: string) => {
-    setMemberUserIds(memberUserIds.filter((id) => id !== idToRemove));
-  };
-
-  const handleAddMemberACL = async (
-    event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>
-  ) => {
-    if (
-      (event.type === 'keydown' && (event as React.KeyboardEvent).key === 'Enter') ||
-      event.type === 'click'
-    ) {
-      const res = await isValid(tempMemberACL);
-      if (tempMemberACL && res) {
-        setMemberACLIds([...memberACLIds, tempMemberACL]);
-        setTempMemberACL('');
-        setIsInvalid('');
-      } else {
-        setIsInvalid(`${tempMemberACL} is not a valid ACL.`);
-      }
-    }
-  };
-
-  const handleRemoveMemberACL = (aclToRemove: string) => {
-    setMemberACLIds(memberACLIds.filter((acl) => acl !== aclToRemove));
-  };
 
   const handleSubmit = async () => {
     setError('');
@@ -95,7 +57,6 @@ const CreateACl: NextPage = () => {
     let isValidUpdater = !!updaterACLId;
     if (isValidUpdater) {
       isValidUpdater = updaterACLId === aclId || (await isValid(updaterACLId));
-
     }
     setIsUpdaterACLValid(isValidUpdater);
   };
@@ -132,59 +93,25 @@ const CreateACl: NextPage = () => {
           sx={{ mb: '20px' }}
           fullWidth
         />
-        <Box mb="20px">
-          <TextField
-            label="Add Member ID"
-            variant="outlined"
-            size="small"
-            value={tempMemberUserId}
-            onChange={(e) => setTempMemberUserId(e.target.value)}
-            onKeyDown={handleAddMemberId}
-            sx={{ mb: '10px' }}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleAddMemberId}>
-                    <AccountCircle />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {memberUserIds.map((id, index) => (
-              <Chip key={index} label={id} onDelete={() => handleRemoveMemberId(id)} />
-            ))}
-          </Box>
-        </Box>
-        <Box mb="20px">
-          <TextField
-            label="Add Member ACL"
-            variant="outlined"
-            size="small"
-            value={tempMemberACL}
-            onChange={(e) => setTempMemberACL(e.target.value)}
-            onKeyDown={handleAddMemberACL}
-            sx={{ mb: '10px' }}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconButton onClick={handleAddMemberACL}>
-                    <GroupIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          {isInvalid ? <Typography color="error">{isInvalid}</Typography> : null}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {memberACLIds.map((acl, index) => (
-              <Chip key={index} label={acl} onDelete={() => handleRemoveMemberACL(acl)} />
-            ))}
-          </Box>
-        </Box>
+        <AclAutocompleteSelector
+          label="Add Member ID"
+          fetchSuggestions={getUserSuggestions}
+          values={memberUserIds}
+          setValues={setMemberUserIds}
+          errorMessage="Invalid or duplicate Member ID"
+          onTypingChange={(b) => setIsTypingMemberId(b)}
+        />
+
+        <AclAutocompleteSelector
+          label="Add Member ACL"
+          fetchSuggestions={getAclSuggestions}
+          values={memberACLIds}
+          setValues={setMemberACLIds}
+          chipLabel={(id) => id}
+          errorMessage="Invalid or duplicate Member ACL"
+          onTypingChange={(b) => setIsTypingMemberACL(b)}
+        />
+
         <TextField
           label="Updater ACL"
           variant="outlined"
@@ -215,7 +142,9 @@ const CreateACl: NextPage = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            disabled={!aclId || !updaterACLId || !isUpdaterACLValid}
+            disabled={
+              !aclId || !updaterACLId || !isUpdaterACLValid || isTypingMemberId || isTypingMemberACL
+            }
           >
             Create
           </Button>

@@ -431,7 +431,7 @@ function GradingItemDisplay({
       try {
         // TODO ALEA4-P4
         // const problemIdPrefix = questionId.replace(/\?[^?]*$/, '');
-        // const problemObject = await getProblemObject(problemIdPrefix);
+        // const problemObject = await getProblemObjects(problemIdPrefix);
         // const problemHtml = await getLearningObjectShtml(problemObject);
         // setProblem(getProblem(problemHtml, ''));
       } catch (error) {

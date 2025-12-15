@@ -31,6 +31,7 @@ import GradingIcon from '@mui/icons-material/Grading';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import QuizIcon from '@mui/icons-material/Quiz';
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -69,7 +70,7 @@ interface ResourceDisplayInfo {
   colorInfo?: ColorInfo;
 }
 
-const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY, ResourceName.COURSE_ACCESS];
+const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY];
 
 const getResourceDisplayText = (name: ResourceName, router: NextRouter) => {
   const { resource: r } = getLocaleObject(router);
@@ -122,7 +123,7 @@ const getResourceIcon = (name: ResourceName) => {
 
 async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm);
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');// TODO(M5)
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -550,6 +551,75 @@ function MyCourses({ enrolledCourseIds }) {
   );
 }
 
+function CourseResourceGroup({
+  courseId,
+  resources,
+  descriptions,
+}: {
+  courseId: string;
+  resources: CourseResourceAction[];
+  descriptions: Record<string, ResourceDisplayInfo>;
+}) {
+  const hasOnlyCourseAccess =
+    resources.length === 1 && resources[0].name === ResourceName.COURSE_ACCESS;
+
+  return (
+    <Box sx={{ marginBottom: 4 }}>
+      <Link href={`/course-home/${courseId}`}>
+        <Typography
+          sx={{
+            fontSize: '22px',
+            fontWeight: 'bold',
+            marginBottom: 2,
+            backgroundColor: PRIMARY_COL,
+            color: 'white',
+            padding: '10px',
+            textAlign: 'center',
+            '&:hover': {
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              backgroundColor: 'secondary.main',
+              color: PRIMARY_COL,
+            },
+          }}
+        >
+          {courseId.toUpperCase()}
+        </Typography>
+      </Link>
+      {hasOnlyCourseAccess && (
+        <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
+          All resource setup are not done.{' '}
+          <span style={{ textDecoration: 'underline' }}>
+            <Link href={`/instructor-dash/${courseId}?tab=access-control`}>
+              Move to instructor dash to complete the setup.
+            </Link>
+          </span>
+        </Alert>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
+        {resources
+          .filter((resource) => resource.name !== ResourceName.COURSE_ACCESS)
+          .map((resource, index) => (
+            <ResourceCard
+              resource={resource}
+              key={index}
+              descriptions={descriptions}
+              courseId={courseId}
+            />
+          ))}
+      </Box>
+    </Box>
+  );
+}
+
 function ResourceCard({
   resource,
   descriptions,
@@ -782,47 +852,12 @@ function WelcomeScreen({
         )}
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
         {Object.entries(groupedResources).map(([courseId, resources]) => (
-          <Box key={courseId} sx={{ marginBottom: 4 }}>
-            <Link href={`/course-home/${courseId}`}>
-              <Typography
-                sx={{
-                  fontSize: '22px',
-                  fontWeight: 'bold',
-                  marginBottom: 2,
-                  backgroundColor: PRIMARY_COL,
-                  color: 'white',
-                  padding: '10px',
-                  textAlign: 'center',
-                  '&:hover': {
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    backgroundColor: 'secondary.main',
-                    color: PRIMARY_COL,
-                  },
-                }}
-              >
-                {courseId.toUpperCase()}
-              </Typography>
-            </Link>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 1,
-              }}
-            >
-              {resources.map((resource, index) => (
-                <ResourceCard
-                  resource={resource}
-                  key={index}
-                  descriptions={descriptions}
-                  courseId={courseId}
-                />
-              ))}
-            </Box>
-          </Box>
+          <CourseResourceGroup
+            key={courseId}
+            courseId={courseId}
+            resources={resources}
+            descriptions={descriptions}
+          />
         ))}
       </Box>
       <Box

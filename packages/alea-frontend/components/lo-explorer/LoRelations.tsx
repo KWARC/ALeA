@@ -6,8 +6,8 @@ import {
   ALL_NON_DIM_CONCEPT,
   AllLoRelationTypes,
   getQueryResults,
-  getSparqlQueryForLoRelationToDimAndConceptPair,
-  getSparqlQueryForLoRelationToNonDimConcept,
+  getLoRelationsOfTypeConceptAndBloomDimension,
+  getSimpleLoRelations,
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
   SparqlResponse,
@@ -16,20 +16,20 @@ import { DimAndURIListDisplay, URIListDisplay } from '@alea/stex-react-renderer'
 import { capitalizeFirstLetter, PRIMARY_COL } from '@alea/utils';
 import { useEffect, useState } from 'react';
 
-function processDimAndConceptData(result: SparqlResponse) {
+function processDimAndConceptData(results: { learningObject: string; relation: string; obj1: string; relatedData: string }[]) {
   try {
     const groupedData: Partial<Record<LoRelationToDimAndConceptPair, string[]>> = {};
-    result.results.bindings.map((binding: Record<string, { type: string; value: string }>) => {
-      const relationValue = binding.relation.value.split('#').pop() || binding.relation.value;
-      const relatedData = binding.relatedData.value.split('; ');
-      const cognitiveDimensions = relatedData
+    results.map(({ relation, relatedData }) => {
+      const relationValue = relation.split('#').pop() || relation;
+      const relatedDataParts = relatedData.split('; ');
+      const cognitiveDimensions = relatedDataParts
         .filter((data: string) => data.startsWith('http://mathhub.info/ulo#cognitive-dimension='))
         .map((data: string) => {
           const encodedValue = data.split('=')[1];
           const decoded = decodeURIComponent(encodedValue);
           return decoded.split('cd-').pop();
         });
-      const poSymbols = relatedData
+      const poSymbols = relatedDataParts
         .filter((data: string) => data.startsWith('http://mathhub.info/ulo#po-symbol='))
         .map((data: string) => {
           const encodedValue = data.split('#po-symbol=')[1];
@@ -52,15 +52,15 @@ function processDimAndConceptData(result: SparqlResponse) {
   }
 }
 
-function processNonDimConceptData(result: SparqlResponse) {
+function processNonDimConceptData(results: { learningObject: string; relation: string; obj1: string }[]) {
   try {
-    const groupedData = result.results.bindings.reduce(
+    const groupedData = results.reduce(
       (acc: Partial<Record<LoRelationToNonDimConcept, string[]>>, { relation, obj1 }) => {
-        const relationValue = relation.value.split('#').pop() || relation.value;
-        const obj1Value = obj1.value;
-        if (!acc[relationValue]) {
+        const relationValue = relation.split('#').pop() || relation;
+        const obj1Value = obj1;
+        if (!acc[relationValue]) 
           acc[relationValue] = [];
-        }
+        
         acc[relationValue].push(obj1Value);
         return acc;
       },
@@ -116,12 +116,10 @@ const LoRelations = ({
         if (!uri?.length) return;
 
         const updatedData = { ...data };
-        const dimConceptQuery = getSparqlQueryForLoRelationToDimAndConceptPair(uri);
-        const nonDimConceptQuery = getSparqlQueryForLoRelationToNonDimConcept(uri);
 
         const [dimConceptResult, nonDimConceptResult] = await Promise.all([
-          getQueryResults(dimConceptQuery),
-          getQueryResults(nonDimConceptQuery),
+          getLoRelationsOfTypeConceptAndBloomDimension(uri),
+          getSimpleLoRelations(uri),
         ]);
 
         const dimConceptData = processDimAndConceptData(dimConceptResult);

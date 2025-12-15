@@ -1,13 +1,12 @@
-import { contentToc } from '@flexiformal/ftml-backend';
-import { FTML } from '@flexiformal/ftml';
 import {
-  getDefiniedaInSection,
-  getQueryResults,
-  getSectionDependencies,
-  getSparqlQueryForLoRelationToDimAndConceptPair,
+  getDefiniedaInSectionAgg,
+  getDependenciesForSectionAgg,
+  getLoRelationsOfTypeConceptAndBloomDimension,
   ProblemData,
 } from '@alea/spec';
 import { getParamFromUri, Language, languageUrlMap } from '@alea/utils';
+import { FTML } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
 import { getProblemsBySection } from './get-course-problem-counts';
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
@@ -40,10 +39,10 @@ async function getAllConceptUrisForCourse(
   const conceptUris = new Set<string>();
 
   for (const sectionUri of sectionUris) {
-    const defidenda = await getDefiniedaInSection(sectionUri);
+    const defidenda = await getDefiniedaInSectionAgg(sectionUri);
     defidenda.forEach((d) => conceptUris.add(d.conceptUri));
 
-    const deps = await getSectionDependencies(sectionUri);
+    const deps = await getDependenciesForSectionAgg(sectionUri);
     deps.forEach((uri) => conceptUris.add(uri));
   }
   const conceptUrisArray = Array.from(conceptUris).map((uri) => {
@@ -62,18 +61,16 @@ async function getLoRelationConceptUris(problemUri: string): Promise<string[]> {
   const cached = LO_RELATION_CACHE.get(problemUri);
   if (isCacheValid(cached)) return cached.data;
 
-  const query = getSparqlQueryForLoRelationToDimAndConceptPair(problemUri);
-  const result = await getQueryResults(query ?? '');
+  const results = await getLoRelationsOfTypeConceptAndBloomDimension(problemUri);
 
   const conceptUris: string[] = [];
-  result?.results?.bindings.forEach((binding) => {
-    const raw = binding.relatedData?.value;
+  results.forEach(({ relatedData }) => {
+    const raw = relatedData;
     if (!raw) return;
     const parts = raw.split('; ').map((p) => p.trim());
     const poSymbolUris = parts
       .filter((data) => data.startsWith('http://mathhub.info/ulo#po-symbol='))
       .map((data) => decodeURIComponent(data.split('#po-symbol=')[1]));
-
     conceptUris.push(...poSymbolUris);
   });
 
