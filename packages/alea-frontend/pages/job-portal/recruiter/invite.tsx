@@ -21,7 +21,6 @@ import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 const InviteRecruiterPage = () => {
   const [email, setEmail] = useState('');
-  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
@@ -58,7 +57,7 @@ const InviteRecruiterPage = () => {
     if (!email) return;
     try {
       setLoading(true);
-      const isSuccess = await inviteRecruiterToOrg(email, userId, recruiter.organizationId);
+      const isSuccess = await inviteRecruiterToOrg(email, recruiter.organizationId);
       if (isSuccess) {
         setSnackOpen(true);
         setEmail('');
@@ -104,14 +103,6 @@ const InviteRecruiterPage = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             sx={{ mb: 2 }}
-          />
-          <TextField
-            variant="outlined"
-            fullWidth
-            placeholder="Enter recruiter's Alea UserId"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            sx={{ mb: 3 }}
           />
 
           <Button

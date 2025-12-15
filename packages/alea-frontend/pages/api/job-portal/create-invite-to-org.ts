@@ -7,8 +7,8 @@ import { getOrgAcl } from './register-recruiter';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const { orgId, email, userId } = req.body;
-  if (!email || !orgId || !userId) return res.status(422).send('Email or OrgId missing');
+  const { orgId, email } = req.body;
+  if (!email || !orgId ) return res.status(422).send('Email or OrgId missing');
   const inviterId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 //TODO:acl addition step will be removed in coming iteration
   const success = await addRemoveMemberOrSetError(
     {
-      memberId: userId,
+      memberId: email,
       aclId: getOrgAcl(orgId),
       isAclMember: false,
       toBeAdded: true,
