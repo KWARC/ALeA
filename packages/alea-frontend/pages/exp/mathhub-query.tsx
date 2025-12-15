@@ -1,4 +1,4 @@
-import { getQueryResults, SparqlResponse } from '@alea/spec';
+import { getParameterizedQueryResults, getUseRdfEncodeUri, SparqlResponse } from '@alea/spec';
 import { createSafeFlamsQuery, findAllUriParams } from '@alea/utils';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
@@ -13,13 +13,13 @@ import {
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 import { useEffect, useMemo, useState } from 'react';
 import { ParameterizationInfoDialog } from '../../components/mathhub-query/ParameterizationInfoDialog';
 import { QueryTemplateSelector } from '../../components/mathhub-query/QueryTemplateSelector';
 import { ResultsDisplay } from '../../components/mathhub-query/ResultsDisplay';
 import { UriAutocompleteInput } from '../../components/mathhub-query/UriAutocompleteInput';
 import { QUERY_TEMPLATES } from '../../components/mathhub-query/query-templates.config';
+import MainLayout from '../../layouts/MainLayout';
 
 const QueryEditorContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -53,12 +53,17 @@ export default function MathhubQuery() {
   const [uriValues, setUriValues] = useState<Record<string, string | string[]>>(
     initialTemplate.defaultUriParams
   );
+  const [useRdfEncodeUri, setUseRdfEncodeUri] = useState(false);
 
   const { singleParamNames, multiParamNames } = useMemo(() => findAllUriParams(query), [query]);
   const allParamNames = useMemo(
     () => [...singleParamNames, ...multiParamNames],
     [singleParamNames, multiParamNames]
   );
+
+  useEffect(() => {
+    getUseRdfEncodeUri().then(setUseRdfEncodeUri);
+  }, []);
 
   useEffect(() => {
     setUriValues((prev) => {
@@ -76,7 +81,10 @@ export default function MathhubQuery() {
     });
   }, [allParamNames, multiParamNames]);
 
-  const finalQuery = useMemo(() => createSafeFlamsQuery(query, uriValues), [query, uriValues]);
+  const finalQuery = useMemo(
+    () => createSafeFlamsQuery(query, uriValues, useRdfEncodeUri),
+    [query, uriValues]
+  );
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -84,7 +92,7 @@ export default function MathhubQuery() {
     setResults(null);
 
     try {
-      const data = await getQueryResults(finalQuery);
+      const data = await getParameterizedQueryResults(finalQuery, uriValues);
       setResults(data);
     } catch (e) {
       setError('Failed to fetch query results. Please check your query.');
@@ -125,6 +133,9 @@ export default function MathhubQuery() {
       >
         <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
           MathHub Query Interface
+        </Typography>
+        <Typography variant="body1" gutterBottom color="text.secondary">
+          {useRdfEncodeUri ? 'Using RDF encode URI' : 'Not using RDF encode URI'}
         </Typography>
 
         <QueryEditorContainer elevation={0}>

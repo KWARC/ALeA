@@ -1,3 +1,5 @@
+import { rdfEncodeUri } from "@flexiformal/ftml";
+
 const MULTIPLE_URI_PARAM_REGEX = /[<](_multiuri_[a-zA-Z0-9-_]+)[>]/g;
 const SINGLE_URI_PARAM_REGEX = /[<"](_uri_[a-zA-Z0-9-_]+)[>"]/g;
 
@@ -27,12 +29,17 @@ function encodeSpecialChars(value: string) {
 // Multiple query parameters expect an array of strings, and are replaced with their values in the following manner:
 // Eg. parameterizedQuery: `VALUES ?uri { <_multiuri_sections> }` and uriParams: { _multiuri_sections: ['uri1', 'uri2', 'uri3'] }
 // returns `VALUES ?uri { <uri1> <uri2> <uri3> }`
+//
+// The optional `useRdfEncodeUri` flag controls whether URIs are encoded using `rdfEncodeUri`
+// from `@flexiformal/ftml` (when true) or a minimal space-encoding function (when false / omitted).
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
-  uriParams: Record<string, string | string[]>
+  uriParams: Record<string, string | string[]>,
+  useRdfEncodeUri: boolean
 ) {
   let result = parameterizedQuery;
 
+  const encodeUriFn = useRdfEncodeUri ? rdfEncodeUri : encodeSpecialChars;
   // Replace multiple URI parameters
   result = result.replace(MULTIPLE_URI_PARAM_REGEX, (match, paramName) => {
     const value = uriParams[paramName];
@@ -40,7 +47,7 @@ export function createSafeFlamsQuery(
       console.warn(`Multi URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return value.map((uri) => `${match[0]}${encodeSpecialChars(uri)}${match.at(-1)}`).join(' ');
+    return value.map((uri) => `${match[0]}${encodeUriFn(uri)}${match.at(-1)}`).join(' ');
   });
 
   // Replace single URI parameters
@@ -50,7 +57,7 @@ export function createSafeFlamsQuery(
       console.warn(`Single URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return `${match[0]}${encodeSpecialChars(value)}${match.at(-1)}`;
+    return `${match[0]}${encodeUriFn(value)}${match.at(-1)}`;
   });
 
   return result;

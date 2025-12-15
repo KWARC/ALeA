@@ -1,14 +1,14 @@
+import { MystEditor } from '@alea/myst';
+import { BloomDimension, getUseRdfEncodeUri, setUseRdfEncodeUri } from '@alea/spec';
+import { SelfAssessment2 } from '@alea/stex-react-renderer';
+import { localStore } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton } from '@mui/material';
-import { BloomDimension } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
-import { SelfAssessment2 } from '@alea/stex-react-renderer';
-import { localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SearchBar } from '../../components/SearchBar';
 import MainLayout from '../../layouts/MainLayout';
 
@@ -35,6 +35,12 @@ function InternalButtonLink({ href, children }: any) {
 
 const ExperimentsHome: NextPage = () => {
   const [value, setValue] = useState('# This is a Myst Test\n\n**Math** works: $E=mc^2$.');
+  const [usingRdfEncodeUri, setUsingRdfEncodeUri] = useState(false);
+
+  useEffect(() => {
+    getUseRdfEncodeUri().then(setUsingRdfEncodeUri);
+  }, []);
+
   return (
     <MainLayout title="Experiments | ALeA">
       <IconButton sx={{ float: 'right' }}>
@@ -62,6 +68,17 @@ const ExperimentsHome: NextPage = () => {
                 Concept Position Tracking
               </InternalButtonLink>
               <InternalButtonLink href="/job-portal">Job Portal</InternalButtonLink>
+              <br/>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  await setUseRdfEncodeUri(!usingRdfEncodeUri);
+                  alert('Updated. Reloading...');
+                  window.location.reload();
+                }}
+              >
+                {usingRdfEncodeUri ? 'Disable' : 'Enable'} RDF encode URI
+              </Button>
             </Box>
             <Box>
               <h2>Paper Prototypes (What we are working towards)</h2>
@@ -122,7 +139,10 @@ const ExperimentsHome: NextPage = () => {
             <Box>
               <h2>ALᴇA Servers</h2>
               <ExternalButtonLink href="https://alea.education" text="Production (new)" />
-              <ExternalButtonLink href="https://courses.voll-ki.fau.de" text="Production (original)" />
+              <ExternalButtonLink
+                href="https://courses.voll-ki.fau.de"
+                text="Production (original)"
+              />
               <ExternalButtonLink href="https://courses-staging.kwarc.info" text="Staging" />
             </Box>
             <Box>

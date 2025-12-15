@@ -1,4 +1,4 @@
-import { createSafeFlamsQuery, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { getParamFromUri, waitForNSeconds } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import {
   ProblemFeedbackJson,
@@ -6,6 +6,7 @@ import {
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
+import { getAuthHeaders } from './lmp';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -98,28 +99,43 @@ export interface SparqlResponse {
   };
 }
 
-export async function getQueryResults(query: string) {
+export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
   try {
-    const resp = await axios.post(
-      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
-      { query },
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
+    return axios.post(
+      '/api/set-use-rdf-encode-uri',
+      { useRdfEncodeUri },
+      { headers: getAuthHeaders() }
     );
-    return resp.data as SparqlResponse;
   } catch (error) {
-    console.error('Error executing SPARQL query:', error);
+    console.error('Error setting use RDF encode URI:', error);
     throw error;
   }
 }
 
-async function getParameterizedQueryResults(
+export async function getUseRdfEncodeUri() {
+  try {
+    const response = await axios.get('/api/get-use-rdf-encode-uri');
+    return response.data.useRdfEncodeUri;
+  } catch (error) {
+    console.error('Error getting use RDF encode URI:', error);
+    throw error;
+  }
+}
+
+export async function getParameterizedQueryResults(
   parameterizedQuery: string,
-  uriParams: Record<string, string | string[]>
+  uriParams: Record<string, string | string[]> = {}
 ) {
-  const query = createSafeFlamsQuery(parameterizedQuery, uriParams);
-  return await getQueryResults(query);
+  try {
+    const resp = await axios.post('/api/safe-flams-query', {
+      query: parameterizedQuery,
+      uriParams,
+    });
+    return resp.data as SparqlResponse;
+  } catch (error) {
+    console.error('Error executing parameterized SPARQL query:', error);
+    throw error;
+  }
 }
 
 const DEFAULT_URI_PARAM_PREFIX = '_uri_param';
@@ -135,7 +151,10 @@ function buildSearchUriQuery(parts: string[]): string {
   if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
 
   const filterConditions = parts
-    .map((_part, idx) => `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`)
+    .map(
+      (_part, idx) =>
+        `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`
+    )
     .join('.\n  ');
 
   return `
@@ -393,7 +412,7 @@ WHERE {
 }`;
 
 export async function getNonDimConcepts() {
-  const results = await getQueryResults(TEMPL_GET_NON_DIM_CONCEPTS);
+  const results = await getParameterizedQueryResults(TEMPL_GET_NON_DIM_CONCEPTS);
   return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 
@@ -414,7 +433,7 @@ WHERE {
 }`;
 
 export async function getDimConcepts() {
-  const results = await getQueryResults(TEMPL_GET_DIM_CONCEPTS);
+  const results = await getParameterizedQueryResults(TEMPL_GET_DIM_CONCEPTS);
   return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 
