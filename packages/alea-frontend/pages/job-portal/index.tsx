@@ -1,4 +1,4 @@
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import { canAccessResource, checkIfUserRegisteredOnJP, getUserInfo, isLoggedIn } from '@alea/spec';
 import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
@@ -9,36 +9,34 @@ import MainLayout from '../../layouts/MainLayout';
 
 const JobPortal: NextPage = () => {
   const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
   const [isLogIn, setIsLogIn] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
+  const [showAdminButton, setShowAdminButton] = useState(false);
   const [forceFauLogin, setForceFauLogin] = useState(false);
-  const showStudentButton = !isLogIn || isStudent;
-  const showRecruiterButton = !isLogIn || isRecruiter;
-  const [showAdminButton, setShowAdminButton] = useState(!isLogIn);
-  const checkAccess = async () => {
-    const hasAccess = await canAccessResource(ResourceName.JOB_PORTAL, Action.MANAGE_JOB_TYPES, {
-      instanceId: CURRENT_TERM,
-    });
-    console.log({ hasAccess });
 
-    if (hasAccess) {
-      setShowAdminButton(true);
-    } else {
-      setShowAdminButton(false);
-    }
-  };
   useEffect(() => {
-    const loggedIn = isLoggedIn();
-    setIsLogIn(loggedIn);
-    if (loggedIn) {
-      checkAccess();
-      getUserInfo().then((userInfo) => {
+    const initAuth = async () => {
+      const loggedIn = isLoggedIn();
+      setIsLogIn(loggedIn);
+      if (loggedIn) {
+        const userInfo = await getUserInfo();
         const uid = userInfo?.userId;
-        if (!uid) return;
-        isFauId(uid) ? setIsStudent(true) : setIsRecruiter(true);
-      });
-    }
+        if (uid) {
+          if (isFauId(uid)) setIsStudent(true);
+          else setIsRecruiter(true);
+        }
+        const hasAdminAccess = await canAccessResource(
+          ResourceName.JOB_PORTAL,
+          Action.MANAGE_JOB_TYPES,
+          { instanceId: CURRENT_TERM }
+        );
+        setShowAdminButton(hasAdminAccess);
+      }
+      setAuthChecked(true);
+    };
+    initAuth();
   }, []);
 
   if (forceFauLogin) {
@@ -80,123 +78,134 @@ const JobPortal: NextPage = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             Choose your role to continue
           </Typography>
-          {showStudentButton && (
-            <Button
-              fullWidth
-              size="large"
-              sx={{
-                mb: 2,
-                bgcolor: '#4A69E1',
-                color: 'white',
-                textTransform: 'none',
-                fontSize: '16px',
-                fontWeight: 600,
-                py: 1.4,
-                borderRadius: 2,
-                boxShadow: '0 6px 16px rgba(74,105,225,0.4)',
-                '&:hover': {
-                  bgcolor: '#233ba4',
-                  boxShadow: '0 10px 28px rgba(74,105,225,0.6)',
-                },
-              }}
-              onClick={async () => {
-                if (!isLogIn) {
-                  if (window.location.pathname === '/login') return;
-                  router.push('/login?target=' + encodeURIComponent(window.location.href));
-                } else {
-                  const result = await checkIfUserRegisteredOnJP();
-                  router.push(
-                    result?.exists ? 'job-portal/student/dashboard' : 'job-portal/register/student'
-                  );
-                }
-              }}
-            >
-              Continue as Student
-            </Button>
+          {!authChecked && (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
+            </Box>
           )}
+          {authChecked && (
+            <>
+              {(!isLogIn || isStudent) && (
+                <Button
+                  fullWidth
+                  size="large"
+                  sx={{
+                    mb: 2,
+                    bgcolor: '#4A69E1',
+                    color: 'white',
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    py: 1.4,
+                    borderRadius: 2,
+                    boxShadow: '0 6px 16px rgba(74,105,225,0.4)',
+                    '&:hover': {
+                      bgcolor: '#233ba4',
+                      boxShadow: '0 10px 28px rgba(74,105,225,0.6)',
+                    },
+                  }}
+                  onClick={async () => {
+                    if (!isLogIn) {
+                      if (window.location.pathname === '/login') return;
+                      router.push('/login?target=' + encodeURIComponent(window.location.href));
+                    } else {
+                      const result = await checkIfUserRegisteredOnJP();
+                      router.push(
+                        result?.exists
+                          ? 'job-portal/student/dashboard'
+                          : 'job-portal/register/student'
+                      );
+                    }
+                  }}
+                >
+                  Continue as Student
+                </Button>
+              )}
 
-          {showRecruiterButton && (
-            <Button
-              fullWidth
-              size="large"
-              sx={{
-                mb: 2,
-                bgcolor: '#4A69E1',
-                color: 'white',
-                textTransform: 'none',
-                fontSize: '16px',
-                fontWeight: 600,
-                py: 1.4,
-                borderRadius: 2,
-                boxShadow: '0 6px 16px rgba(74,105,225,0.4)',
-                '&:hover': {
-                  bgcolor: '#233ba4',
-                  boxShadow: '0 10px 28px rgba(74,105,225,0.6)',
-                },
-              }}
-              onClick={async () => {
-                if (!isLogIn) {
-                  if (window.location.pathname === '/login') return;
-                  router.push('/login?target=' + encodeURIComponent(window.location.href));
-                } else {
-                  const result = await checkIfUserRegisteredOnJP();
-                  router.push(
-                    result?.exists
-                      ? 'job-portal/recruiter/dashboard'
-                      : 'job-portal/register/recruiter'
-                  );
-                }
-              }}
-            >
-              Continue as Recruiter
-            </Button>
-          )}
+              {(!isLogIn || isRecruiter) && (
+                <Button
+                  fullWidth
+                  size="large"
+                  sx={{
+                    mb: 2,
+                    bgcolor: '#4A69E1',
+                    color: 'white',
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    py: 1.4,
+                    borderRadius: 2,
+                    boxShadow: '0 6px 16px rgba(74,105,225,0.4)',
+                    '&:hover': {
+                      bgcolor: '#233ba4',
+                      boxShadow: '0 10px 28px rgba(74,105,225,0.6)',
+                    },
+                  }}
+                  onClick={async () => {
+                    if (!isLogIn) {
+                      if (window.location.pathname === '/login') return;
+                      router.push('/login?target=' + encodeURIComponent(window.location.href));
+                    } else {
+                      const result = await checkIfUserRegisteredOnJP();
+                      router.push(
+                        result?.exists
+                          ? 'job-portal/recruiter/dashboard'
+                          : 'job-portal/register/recruiter'
+                      );
+                    }
+                  }}
+                >
+                  Continue as Recruiter
+                </Button>
+              )}
 
-          {showAdminButton && (
-            <Button
-              fullWidth
-              size="large"
-              sx={{
-                mb: 2,
-                bgcolor: 'warning.main',
-                color: 'white',
-                textTransform: 'none',
-                fontSize: '16px',
-                fontWeight: 600,
-                py: 1.4,
-                borderRadius: 2,
-                boxShadow: '0 6px 16px rgba(237,108,2,0.35)',
-                '&:hover': {
-                  bgcolor: 'warning.dark',
-                  boxShadow: '0 10px 28px rgba(237,108,2,0.55)',
-                },
-              }}
-              onClick={() => {
-                if (!isLogIn) {
-                  if (window.location.pathname === '/login') return;
-                  router.push('/login?target=' + encodeURIComponent(window.location.href));
-                } else {
-                  router.push('job-portal/admin-dashboard/');
-                }
-              }}
-            >
-              Admin Panel
-            </Button>
-          )}
+              {showAdminButton && (
+                <Button
+                  fullWidth
+                  size="large"
+                  sx={{
+                    mb: 2,
+                    bgcolor: 'warning.main',
+                    color: 'white',
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    py: 1.4,
+                    borderRadius: 2,
+                    boxShadow: '0 6px 16px rgba(237,108,2,0.35)',
+                    '&:hover': {
+                      bgcolor: 'warning.dark',
+                      boxShadow: '0 10px 28px rgba(237,108,2,0.55)',
+                    },
+                  }}
+                  onClick={() => {
+                    if (!isLogIn) {
+                      if (window.location.pathname === '/login') return;
+                      router.push('/login?target=' + encodeURIComponent(window.location.href));
+                    } else {
+                      router.push('job-portal/admin-dashboard/');
+                    }
+                  }}
+                >
+                  Admin Panel
+                </Button>
+              )}
 
-          {isRecruiter && (
-            <Button
-              variant="text"
-              sx={{
-                mt: 2,
-                textTransform: 'none',
-                fontWeight: 500,
-                color: '#4A69E1',
-              }}
-              onClick={() => setForceFauLogin(true)}
-            >
-              Are you a student? Login with FAU ID
-            </Button>
+              {isRecruiter && (
+                <Button
+                  variant="text"
+                  sx={{
+                    mt: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    color: '#4A69E1',
+                  }}
+                  onClick={() => setForceFauLogin(true)}
+                >
+                  Are you a student? Login with FAU ID
+                </Button>
+              )}
+            </>
           )}
         </Box>
       </Container>
