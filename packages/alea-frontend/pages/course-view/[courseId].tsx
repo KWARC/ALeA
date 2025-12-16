@@ -336,6 +336,7 @@ const CourseViewPage: NextPage = () => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
   };
+
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
       {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
@@ -388,7 +389,7 @@ const CourseViewPage: NextPage = () => {
         drawerAnchor="left"
       >
         <Box display="flex" minHeight="100svh">
-          <Box maxWidth="800px" margin="0 auto" width="100%" pl="4px">
+          <Box maxWidth="1100px" margin="0 auto" width="100%" pl="4px">
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Box display="flex" alignItems="center">
                 <ToggleModeButton
@@ -432,16 +433,20 @@ const CourseViewPage: NextPage = () => {
                 <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
               </Typography>
             </Box>
-            {viewMode === ViewMode.COMBINED_MODE && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: { xs: 'column', md: 'row' },
-                  gap: 2,
-                  alignItems: 'flex-start',
-                  mb: 2,
-                }}
-              >
+            <Box
+              sx={
+                viewMode === ViewMode.COMBINED_MODE
+                  ? {
+                      display: 'flex',
+                      flexDirection: { xs: 'column', md: 'row' },
+                      gap: 2,
+                      alignItems: 'flex-start',
+                      mb: 2,
+                    }
+                  : undefined
+              }
+            >
+              {viewMode === ViewMode.COMBINED_MODE && (
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <VideoDisplay
                     clipId={currentClipId}
@@ -457,78 +462,46 @@ const CourseViewPage: NextPage = () => {
                     onVideoLoad={handleVideoLoad}
                   />
                 </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <SlideDeck
-                    navOnTop
-                    courseId={courseId}
-                    sectionId={sectionId}
-                    onSlideChange={(slide: Slide) => {
-                      setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                      setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                      const slideUri = getSlideUri(slide);
-                      setCurrentSlideUri(slideUri || '');
-                      if (
-                        slidesClipInfo &&
-                        slidesClipInfo[sectionId] &&
-                        slidesClipInfo[sectionId][slideUri]
-                      ) {
-                        const slideClips = slidesClipInfo[sectionId][slideUri];
-                        if (!Array.isArray(slideClips)) {
-                          return;
-                        }
-                        const matchedClip = slideClips.find(
-                          (clip) => clip.video_id === currentClipId
-                        );
-                        setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                      } else setCurrentSlideClipInfo(null);
-                    }}
-                    goToNextSection={goToNextSection}
-                    goToPrevSection={goToPrevSection}
-                    slideNum={slideNum}
-                    slidesClipInfo={slidesClipInfo}
-                    onClipChange={onClipChange}
-                    autoSync={autoSync}
-                    setAutoSync={setAutoSync}
-                    audioOnly={audioOnly}
-                    videoLoaded={videoLoaded}
-                  />
-                </Box>
-              </Box>
-            )}
-            {viewMode === ViewMode.SLIDE_MODE && (
-              <SlideDeck
-                navOnTop={false}
-                courseId={courseId}
-                sectionId={sectionId}
-                onSlideChange={(slide: Slide) => {
-                  setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                  setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                  const slideUri = getSlideUri(slide);
-                  setCurrentSlideUri(slideUri || '');
-                  if (
-                    slidesClipInfo &&
-                    slidesClipInfo[sectionId] &&
-                    slidesClipInfo[sectionId][slideUri]
-                  ) {
-                    const slideClips = slidesClipInfo[sectionId][slideUri];
-                    if (!Array.isArray(slideClips)) {
-                      return;
+              )}
+              <Box sx={viewMode === ViewMode.COMBINED_MODE ? { flex: 1, minWidth: 0 } : undefined}>
+                <SlideDeck
+                  navOnTop={viewMode === ViewMode.COMBINED_MODE}
+                  courseId={courseId}
+                  sectionId={sectionId}
+                  onSlideChange={(slide: Slide) => {
+                    setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+                    setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+                    const slideUri = getSlideUri(slide);
+                    setCurrentSlideUri(slideUri || '');
+                    if (
+                      slidesClipInfo &&
+                      slidesClipInfo[sectionId] &&
+                      slidesClipInfo[sectionId][slideUri]
+                    ) {
+                      const slideClips = slidesClipInfo[sectionId][slideUri];
+                      if (!Array.isArray(slideClips)) {
+                        return;
+                      }
+                      const matchedClip = slideClips.find(
+                        (clip) => clip.video_id === currentClipId
+                      );
+                      setCurrentSlideClipInfo(matchedClip || slideClips[0]);
+                    } else {
+                      setCurrentSlideClipInfo(null);
                     }
-                    const matchedClip = slideClips.find((clip) => clip.video_id === currentClipId);
-                    setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                  } else setCurrentSlideClipInfo(null);
-                }}
-                goToNextSection={goToNextSection}
-                goToPrevSection={goToPrevSection}
-                slideNum={slideNum}
-                slidesClipInfo={slidesClipInfo}
-                onClipChange={onClipChange}
-                autoSync={autoSync}
-                setAutoSync={setAutoSync}
-                audioOnly={audioOnly}
-                videoLoaded={videoLoaded}
-              />
-            )}
+                  }}
+                  goToNextSection={goToNextSection}
+                  goToPrevSection={goToPrevSection}
+                  slideNum={slideNum}
+                  slidesClipInfo={slidesClipInfo}
+                  onClipChange={onClipChange}
+                  autoSync={autoSync}
+                  setAutoSync={setAutoSync}
+                  audioOnly={audioOnly}
+                  videoLoaded={videoLoaded}
+                />
+              </Box>
+            </Box>
             <hr style={{ width: '98%', padding: '1px 0' }} />
             {selectedSectionTOC && (
               <Box sx={{ marginTop: '10px', marginBottom: '10px' }}>

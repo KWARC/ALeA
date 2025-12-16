@@ -1,16 +1,21 @@
 .deck-box {
   display: flex;
   justify-content: space-between;
+  // column-gap: 16px;
 }
 
 .deck-box > :nth-child(2) { /* The 'frame' or 'text-frame' */
   height: 550px !important;
+  max-height: 420px;
+  height: auto;
   overflow-y: auto;
 }
 
 .text-frame {
   padding: 10px;
   height: 550px;
+  // max-height: 420px;
+  // height: auto;
   overflow-y: auto;
   border: 1px solid grey;
   border-radius: 5px;

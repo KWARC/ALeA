@@ -454,7 +454,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
     <Box
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
-      mt={navOnTop ? '-55px' : '0px'}
+      mt={navOnTop ? '0px' : '0px'}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
@@ -478,7 +478,13 @@ export const SlideDeck = memo(function SlidesFromUrl({
           No slides in this section
         </Box>
       )}
-      <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        width="100%"
+        sx={{ mt: navOnTop ? 1 : 0 }}
+      >
         <Box flex={1} />
         {!audioOnly && slides.length > 0 && videoLoaded && (
           <Box>
@@ -488,7 +494,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
                 sx={{
                   backgroundColor: autoSync ? '#dfdfeb' : 'inherit',
                   color: autoSync ? 'success.main' : 'secondary.main',
-                  mt: '-10px',
+                  mt: 0,
                 }}
               >
                 {autoSync ? (
