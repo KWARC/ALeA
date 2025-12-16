@@ -459,191 +459,174 @@ const MediaItem = ({
   //   { code: 'de', name: 'German' },
   // ];
   return (
-    <Box style={{ marginBottom: '7px', position: 'relative' }}>
-      <video
-        key="videoPlayer"
-        poster={thumbnail}
-        ref={playerRef as MutableRefObject<HTMLVideoElement>}
-        className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
-        style={{ border: '0.5px solid black', borderRadius: '8px' }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {Object.entries(subtitles)
-          .filter(([code]) => code !== 'default')
-          .map(([code, url]) => {
-            if (!url) return null;
-            const isDefault = subtitles.default === url;
-            const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
-            return (
-              <track
-                key={code}
-                src={url}
-                label={label}
-                kind="captions"
-                srcLang={code}
-                default={isDefault}
-              />
-            );
-          })}
-      </video>
-
-      {tooltip && (
-        <Box
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            color: '#fff',
-            padding: '5px 10px',
-            borderRadius: '4px',
-            zIndex: '100',
-          }}
+    <>
+      <Box style={{ marginBottom: '7px', position: 'relative' }}>
+        <video
+          key="videoPlayer"
+          poster={thumbnail}
+          ref={playerRef as MutableRefObject<HTMLVideoElement>}
+          className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
+          style={{ border: '0.5px solid black', borderRadius: '8px' }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          {tooltip}
-        </Box>
-      )}
+          {Object.entries(subtitles)
+            .filter(([code]) => code !== 'default')
+            .map(([code, url]) => {
+              if (!url) return null;
+              const isDefault = subtitles.default === url;
+              const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
+              return (
+                <track
+                  key={code}
+                  src={url}
+                  label={label}
+                  kind="captions"
+                  srcLang={code}
+                  default={isDefault}
+                />
+              );
+            })}
+        </video>
+
+        {tooltip && (
+          <Box
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: '#fff',
+              padding: '5px 10px',
+              borderRadius: '4px',
+              zIndex: '100',
+            }}
+          >
+            {tooltip}
+          </Box>
+        )}
+      </Box>
 
       {overlay && (
-        <Box
-          style={{
-            position: 'absolute',
-            top: '47%',
-            left: '0',
-            width: '35%',
-            height: '38%',
-            backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            backdropFilter: 'blur(10px)',
-            color: '#fff',
-            zIndex: '100',
-
-            padding: '10px ',
+        <Paper
+          elevation={4}
+          sx={{
+            mt: 2,
+            p: 2,
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+            color: 'white',
+            maxHeight: 260,
             overflowY: 'auto',
-            overflowX: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
           }}
         >
-          {conceptsUri && conceptsUri.length > 0 ? (
-            <>
-              <Typography
-                variant="h5"
-                sx={{
-                  textAlign: 'center',
-                  fontWeight: '600',
-                  fontSize: '1rem',
-                  color: '#d7e4fa',
-                  marginBottom: '8px',
-                }}
-              >
-                Concepts in this section
-              </Typography>
-              {loadingConcepts ? (
-                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                  <CircularProgress color="primary" />
-                  <Typography variant="body2" color="white" mt={1}>
-                    Loading concepts...
-                  </Typography>
-                </Box>
-              ) : (
-                conceptsUri.map((uri, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      width: '90%',
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      color: '#fff',
-                      padding: '12px',
-                      borderRadius: '10px',
-                      textAlign: 'center',
-                      display: 'flex',
-                      marginBottom: '10px',
-                      transition: 'transform 0.5s ease-in-out',
-                      '&:hover': {
-                        transform: 'rotateY(10deg)',
-                      },
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontSize: '1.2rem',
-                        fontWeight: '600',
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}
+            >
+              Concepts in this section
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setOverlay(null)}
+              sx={{
+                backgroundColor: 'rgba(148, 163, 184, 0.4)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(248, 113, 113, 0.9)',
+                },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
 
-                        whiteSpace: 'normal',
-                        wordWrap: 'break-word',
-                        width: '85%',
-                      }}
-                      title={uri}
-                    >
-                      {getParamFromUri(uri, 's') ?? uri}
-                    </Typography>
-                    <Link
-                      href={PathToTour2(uri)}
-                      target="_blank"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <Tooltip title="Take a guided tour" arrow>
-                        <IconButton
-                          sx={{
-                            backgroundColor: '#fff',
-                            borderRadius: '50%',
-                            padding: '2px',
-                            '&:hover': {
-                              backgroundColor: '#f0f0f0',
-                              transform: 'scale(1.2)',
-                              transition: 'transform 0.2s ease-in-out',
-                            },
-                          }}
-                        >
-                          <Image
-                            src="/guidedTour.png"
-                            alt="Tour Logo"
-                            width={25}
-                            height={25}
-                            priority
-                          />
-                        </IconButton>
-                      </Tooltip>
-                    </Link>
-                  </Box>
-                ))
-              )}
-            </>
+          {loadingConcepts ? (
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <CircularProgress color="primary" />
+              <Typography variant="body2" color="white" mt={1}>
+                Loading concepts...
+              </Typography>
+            </Box>
+          ) : conceptsUri && conceptsUri.length > 0 ? (
+            <Box display="flex" flexDirection="column" gap={1}>
+              {conceptsUri.map((uri, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: 1.5,
+                    py: 1,
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    border: '1px solid rgba(148, 163, 184, 0.5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 20px rgba(15,23,42,0.7)',
+                      borderColor: 'rgba(96, 165, 250, 0.9)',
+                    },
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      whiteSpace: 'normal',
+                      wordWrap: 'break-word',
+                      pr: 1,
+                    }}
+                    title={uri}
+                  >
+                    {getParamFromUri(uri, 's') ?? uri}
+                  </Typography>
+                  <Link href={PathToTour2(uri)} target="_blank" style={{ textDecoration: 'none' }}>
+                    <Tooltip title="Take a guided tour" arrow>
+                      <IconButton
+                        sx={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '50%',
+                          padding: '2px',
+                          '&:hover': {
+                            backgroundColor: '#e5e7eb',
+                            transform: 'scale(1.05)',
+                            transition: 'transform 0.15s ease-in-out',
+                          },
+                        }}
+                      >
+                        <Image
+                          src="/guidedTour.png"
+                          alt="Tour Logo"
+                          width={22}
+                          height={22}
+                          priority
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  </Link>
+                </Box>
+              ))}
+            </Box>
           ) : (
             <Typography
-              variant="h6"
+              variant="body2"
               sx={{
                 textAlign: 'center',
-                fontWeight: 'bold',
-                color: '#ccc',
-                marginTop: '12px',
+                fontWeight: 500,
+                color: '#e5e7eb',
+                mt: 1,
               }}
             >
               No new concepts defined in this section
             </Typography>
           )}
-
-          <IconButton
-            onClick={() => setOverlay(null)}
-            sx={{
-              position: 'absolute',
-              top: '5px',
-              right: '5px',
-              backgroundColor: 'rgba(255, 0, 0, 0.7)',
-              color: '#fff',
-              borderRadius: '50%',
-              padding: '5px',
-              '&:hover': { backgroundColor: 'rgba(255, 0, 0, 0.9)' },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
+        </Paper>
       )}
-    </Box>
+    </>
   );
 };
 
@@ -810,19 +793,14 @@ export function VideoDisplay({
           position: 'relative',
         }}
       >
-        <MediaItem
-          videoId={videoId}
-          clipId={clipId}
-          clipIds={clipIds}
-          timestampSec={timestampSec}
-          audioOnly={audioOnly}
-          subtitles={clipDetails?.subtitles}
-          thumbnail={clipDetails?.thumbnailUrl}
-          markers={markers}
-          slidesUriToIndexMap={slidesUriToIndexMap}
-          autoSync={autoSync}
-        />
-        <Box sx={{ display: 'flex', m: '-4px 0 10px' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            mb: 1,
+          }}
+        >
           <ToggleResolution
             audioOnly={audioOnly}
             setAudioOnly={(v: boolean) => {
@@ -872,6 +850,18 @@ export function VideoDisplay({
             />
           )}
         </Box>
+        <MediaItem
+          videoId={videoId}
+          clipId={clipId}
+          clipIds={clipIds}
+          timestampSec={timestampSec}
+          audioOnly={audioOnly}
+          subtitles={clipDetails?.subtitles}
+          thumbnail={clipDetails?.thumbnailUrl}
+          markers={markers}
+          slidesUriToIndexMap={slidesUriToIndexMap}
+          autoSync={autoSync}
+        />
       </Box>
     </>
   );

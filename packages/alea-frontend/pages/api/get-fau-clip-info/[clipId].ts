@@ -21,19 +21,29 @@ export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
   const { data } = await axios.get(url);
 //TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
 //TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
+  const presenterUrl: string | undefined =
+    (data && (data.presenter_url as string)) || (data && (data.file as string)) || undefined;
+  const presentationUrl: string | undefined =
+    data && (data.presentation_url as string) ? (data.presentation_url as string) : undefined;
+  const compositeUrl: string | undefined =
+    data && (data.composite_url as string) ? (data.composite_url as string) : undefined;
+
   const videoInfo: ClipDetails = {
     // r360: data.alternative_Video_size_small_url || undefined,
     // r720: data.alternative_Video_size_medium_url || undefined,
     // r1080: data.alternative_Video_size_large_url || undefined,
-    r360: data.file|| undefined,
-    r720: data.file || undefined,
-    r1080: data.file || undefined,
+    r360: presenterUrl,
+    r720: presenterUrl,
+    r1080: presenterUrl,
     subtitles: {
       default: data.transcript || undefined,
       en: data.transcript_en || undefined,
       de: data.transcript_de || undefined,
     },
     thumbnailUrl: data.thumbnail_url || undefined,
+    presenterUrl,
+    presentationUrl,
+    compositeUrl,
   };
   return videoInfo;
 }

@@ -433,23 +433,71 @@ const CourseViewPage: NextPage = () => {
               </Typography>
             </Box>
             {viewMode === ViewMode.COMBINED_MODE && (
-              <VideoDisplay
-                clipId={currentClipId}
-                clipIds={clipIds}
-                setCurrentClipId={setCurrentClipId}
-                audioOnly={audioOnly}
-                timestampSec={timestampSec}
-                setTimestampSec={setTimestampSec}
-                currentSlideClipInfo={currentSlideClipInfo}
-                videoExtractedData={videoExtractedData}
-                slidesUriToIndexMap={slidesUriToIndexMap}
-                autoSync={autoSync}
-                onVideoLoad={handleVideoLoad}
-              />
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', md: 'row' },
+                  gap: 2,
+                  alignItems: 'flex-start',
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <VideoDisplay
+                    clipId={currentClipId}
+                    clipIds={clipIds}
+                    setCurrentClipId={setCurrentClipId}
+                    audioOnly={audioOnly}
+                    timestampSec={timestampSec}
+                    setTimestampSec={setTimestampSec}
+                    currentSlideClipInfo={currentSlideClipInfo}
+                    videoExtractedData={videoExtractedData}
+                    slidesUriToIndexMap={slidesUriToIndexMap}
+                    autoSync={autoSync}
+                    onVideoLoad={handleVideoLoad}
+                  />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <SlideDeck
+                    navOnTop
+                    courseId={courseId}
+                    sectionId={sectionId}
+                    onSlideChange={(slide: Slide) => {
+                      setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+                      setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+                      const slideUri = getSlideUri(slide);
+                      setCurrentSlideUri(slideUri || '');
+                      if (
+                        slidesClipInfo &&
+                        slidesClipInfo[sectionId] &&
+                        slidesClipInfo[sectionId][slideUri]
+                      ) {
+                        const slideClips = slidesClipInfo[sectionId][slideUri];
+                        if (!Array.isArray(slideClips)) {
+                          return;
+                        }
+                        const matchedClip = slideClips.find(
+                          (clip) => clip.video_id === currentClipId
+                        );
+                        setCurrentSlideClipInfo(matchedClip || slideClips[0]);
+                      } else setCurrentSlideClipInfo(null);
+                    }}
+                    goToNextSection={goToNextSection}
+                    goToPrevSection={goToPrevSection}
+                    slideNum={slideNum}
+                    slidesClipInfo={slidesClipInfo}
+                    onClipChange={onClipChange}
+                    autoSync={autoSync}
+                    setAutoSync={setAutoSync}
+                    audioOnly={audioOnly}
+                    videoLoaded={videoLoaded}
+                  />
+                </Box>
+              </Box>
             )}
-            {(viewMode === ViewMode.SLIDE_MODE || viewMode === ViewMode.COMBINED_MODE) && (
+            {viewMode === ViewMode.SLIDE_MODE && (
               <SlideDeck
-                navOnTop={viewMode === ViewMode.COMBINED_MODE}
+                navOnTop={false}
                 courseId={courseId}
                 sectionId={sectionId}
                 onSlideChange={(slide: Slide) => {
