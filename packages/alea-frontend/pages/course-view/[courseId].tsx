@@ -503,6 +503,31 @@ const CourseViewPage: NextPage = () => {
               </Box>
             </Box>
             <hr style={{ width: '98%', padding: '1px 0' }} />
+            {/* Instructor notes block – should appear above Generate Quiz */}
+            {(preNotes.length > 0 || postNotes.length > 0) && (
+              <Box
+                sx={{
+                  mt: 2,
+                  mb: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid #ddd',
+                  backgroundColor: '#fafafa',
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  {t.instructorNotes}
+                </Typography>
+                <Box p="5px" sx={{ overflowX: 'auto' }}>
+                  <RenderElements elements={preNotes} />
+                  {preNotes.length > 0 && postNotes.length > 0 && (
+                    <hr style={{ width: '98%' }} />
+                  )}
+                  <RenderElements elements={postNotes} />
+                </Box>
+              </Box>
+            )}
+
             {selectedSectionTOC && (
               <Box sx={{ marginTop: '10px', marginBottom: '10px' }}>
                 <SectionReview
@@ -514,20 +539,37 @@ const CourseViewPage: NextPage = () => {
                 )}
               </Box>
             )}
-            <CommentNoteToggleView
-              uri={currentSlideUri}
-              defaultPrivate={true}
-              extraPanel={{
-                label: t.instructorNotes,
-                panelContent: (
-                  <Box p="5px" sx={{ overflowX: 'auto' }}>
-                    <RenderElements elements={preNotes} />
-                    {preNotes.length > 0 && postNotes.length > 0 && <hr style={{ width: '98%' }} />}
-                    <RenderElements elements={postNotes} />
-                  </Box>
-                ),
+            <Box
+              sx={{
+                mt: 2,
+                mb: 2,
+                borderRadius: 2,
+                border: '1px solid #e0e0e0',
+                backgroundColor: '#fcfcfc',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
               }}
-            />
+            >
+              <Box
+                sx={{
+                  px: 2,
+                  pt: 1.5,
+                  pb: 0.5,
+                  borderBottom: '1px solid #e5e5e5',
+                  background:
+                    'linear-gradient(90deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)',
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#374151' }}>
+                  {'Notes & Comments'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                  {'Your private notes and public comments for this slide.'}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5 }}>
+                <CommentNoteToggleView uri={currentSlideUri} defaultPrivate={true} />
+              </Box>
+            </Box>
           </Box>
         </Box>
       </LayoutWithFixedMenu>

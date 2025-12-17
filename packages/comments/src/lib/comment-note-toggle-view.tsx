@@ -55,6 +55,7 @@ export function CommentNoteToggleView({
         <Tabs
           value={value}
           onChange={handleChange}
+          variant="fullWidth"
           sx={{
             '& .MuiTab-root': {
               fontWeight: 'bold',
