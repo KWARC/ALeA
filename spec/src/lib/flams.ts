@@ -127,7 +127,7 @@ export async function getParameterizedQueryResults(
   uriParams: Record<string, string | string[]> = {}
 ) {
   try {
-    const resp = await axios.post('/api/safe-flams-query', {
+    const resp = await axios.post('https://alea.education/api/safe-flams-query', { // TODO: HACK! please fix
       query: parameterizedQuery,
       uriParams,
     });

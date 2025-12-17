@@ -18,8 +18,9 @@ async function getUserQuizResponseOrSetError(quizId: string, userId: string, res
         FROM grading
         WHERE quizId = ? AND userId = ?
         GROUP BY problemId
-    )`,
-    [quizId, userId],
+    )
+    AND quizId = ? AND userId = ?`,
+    [quizId, userId, quizId, userId],
     res
   );
   if (!results) return undefined;
