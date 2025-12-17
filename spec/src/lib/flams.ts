@@ -3,9 +3,10 @@ import { FTML } from '@flexiformal/ftml';
 import {
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
-  learningObjects as flamsLearningObjects,
+  learningObjects as flamsLearningObjects
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
+import { createSafeFlamsQuery } from './flams-query-creator';
 import { getAuthHeaders } from './lmp';
 
 export async function batchGradeHex(
@@ -126,11 +127,18 @@ export async function getParameterizedQueryResults(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]> = {}
 ) {
+  const query = createSafeFlamsQuery(parameterizedQuery, uriParams);
   try {
-    const resp = await axios.post('https://alea.education/api/safe-flams-query', { // TODO: HACK! please fix
-      query: parameterizedQuery,
-      uriParams,
-    });
+    const resp = await axios.post(
+      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
+      new URLSearchParams({ query }),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        // Allow all status codes so we can forward them as-is instead of throwing on non-2xx.
+        validateStatus: () => true,
+      }
+    );
+
     return resp.data as SparqlResponse;
   } catch (error) {
     console.error('Error executing parameterized SPARQL query:', error);
@@ -193,7 +201,7 @@ export async function getDefiniedaInSection(sectionUri: string): Promise<Concept
   );
 }
 
-const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?q ?s 
+const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?uri ?q ?s 
 WHERE { VALUES ?uri { <_multiuri_section_uris> } ?uri (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
 
 export async function getDefiniedaInSections(
