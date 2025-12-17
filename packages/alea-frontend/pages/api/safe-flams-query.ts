@@ -1,4 +1,4 @@
-import { createSafeFlamsQuery } from '@alea/utils';
+import { createSafeFlamsQuery } from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError } from './comment-utils';

@@ -10,6 +10,10 @@ const DEFINIENDA_IN_SECTION_FETCHER = new RequestAggregator<string, ConceptAndDe
   (uri: string) => uri,
   (uris: string[]) => from(getDefiniedaInSections(uris)),
   (weights: ConceptAndDefinition[][], requests: string[]) => {
+    if(!weights) {
+      console.error('No weights found for requests:', requests);
+      return;
+    }
     for (let i = 0; i < requests.length; i++) {
       DEFINIENDA_IN_SECTION_CACHE.set(requests[i], weights[i]);
     }
