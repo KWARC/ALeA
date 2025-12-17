@@ -69,7 +69,7 @@ async function getQuizAveragesOrSet500Error(
             INNER JOIN (
                 SELECT quizId, userId, problemId, MAX(browserTimestamp_ms) AS max_ts
                 FROM grading
-                WHERE quizId IN ?
+                WHERE quizId IN (?)
                 GROUP BY quizId, userId, problemId
             ) latest 
             ON g.quizId = latest.quizId 
@@ -79,7 +79,7 @@ async function getQuizAveragesOrSet500Error(
             GROUP BY g.userId, g.quizId
         ) final_scores
         GROUP BY final_scores.quizId`,
-        [toRefreshQuizIds],
+        [Array.from(toRefreshQuizIds)],
         res
       );
     if (!quizAverages) return;
