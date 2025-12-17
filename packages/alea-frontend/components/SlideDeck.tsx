@@ -486,27 +486,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
         sx={{ mt: navOnTop ? 1 : 0 }}
       >
         <Box flex={1} />
-        {!audioOnly && slides.length > 0 && videoLoaded && (
-          <Box>
-            <Tooltip title={autoSync ? 'Disable video-slide sync' : 'Sync video to slides'}>
-              <IconButton
-                onClick={() => setAutoSync((prev) => !prev)}
-                sx={{
-                  backgroundColor: autoSync ? '#dfdfeb' : 'inherit',
-                  color: autoSync ? 'success.main' : 'secondary.main',
-                  mt: 0,
-                }}
-              >
-                {autoSync ? (
-                  <InsertLink sx={{ fontSize: '1.5rem', transform: 'rotate(90deg)' }} />
-                ) : (
-                  <LinkOff sx={{ fontSize: '1.5rem', transform: 'rotate(90deg)' }} />
-                )}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-
         <Box display="flex" justifyContent="flex-end" flex={1}>
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />

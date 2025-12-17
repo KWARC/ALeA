@@ -373,7 +373,7 @@ const MediaItem = ({
     const onPause = () => handleCurrentMarkerUpdate({ videoPlayer, markers, handleMarkerClick });
     const onSeeked = () => handleCurrentMarkerUpdate({ videoPlayer, markers, handleMarkerClick });
 
-    player.on('playing', () => setOverlay(null));
+    // player.on('playing', () => setOverlay(null));
     player.on('pause', onPause);
     player.on('seeked', onSeeked);
 
@@ -727,7 +727,11 @@ export function VideoDisplay({
   const [resolution, setResolution] = useState(720);
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
   const availableRes = getAvailableRes(clipDetails);
-  const videoId = getVideoId(clipDetails, resolution, availableRes);
+  const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
+  const compositeVideoId =
+    (clipDetails as any)?.compositeUrl || (clipDetails as any)?.composite_url || undefined;
+  const isSyncedWithSlides = !!currentSlideClipInfo && currentSlideClipInfo.video_id === clipId;
+  const videoId = isSyncedWithSlides || !compositeVideoId ? presenterVideoId : compositeVideoId;
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
@@ -816,13 +820,6 @@ export function VideoDisplay({
             }}
             availableResolutions={availableRes}
           />
-          {!audioOnly && (
-            <SeekVideo
-              currentSlideClipInfo={currentSlideClipInfo}
-              setTimestampSec={setTimestampSec}
-              setCurrentClipId={setCurrentClipId}
-            />
-          )}
           <Box
             onKeyDown={handleKeyPress}
             onKeyUp={handleKeyRelease}
