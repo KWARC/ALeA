@@ -123,11 +123,12 @@ export async function createExcused(
   quizId: string,
   userId: string,
   courseId: string,
-  courseInstance: string
+  courseInstance: string,
+  institutionId: string
 ) {
   return await axios.post(
     '/api/quiz/create-excused',
-    { userId, quizId, courseId, courseInstance },
+    { userId, quizId, courseId, courseInstance, institutionId },
     {
       headers: getAuthHeaders(),
     }

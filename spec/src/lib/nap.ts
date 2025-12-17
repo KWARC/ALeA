@@ -27,6 +27,7 @@ export interface CreateAnswerRequest {
   courseInstance?: string;
   questionTitle: string;
   courseId: string;
+  institutionId: string;
   homeworkId?: number;
 }
 

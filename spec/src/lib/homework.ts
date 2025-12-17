@@ -16,6 +16,7 @@ export interface HomeworkInfo {
   feedbackReleaseTs: string;
   courseId: string;
   courseInstance: string;
+  institutionId: string;
   css: FTML.Css[];
   problems: Record<string, FTMLProblemWithSolution>;
 }
