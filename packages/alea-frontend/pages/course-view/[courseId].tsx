@@ -28,7 +28,7 @@ import { NextPage } from 'next';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import  { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
@@ -186,8 +186,8 @@ const CourseViewPage: NextPage = () => {
   const { courseView: t, home: tHome } = getLocaleObject(router);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [timestampSec, setTimestampSec] = useState(0);
-  const [autoSync, setAutoSync] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [compositeActive, setCompositeActive] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
@@ -377,7 +377,6 @@ const CourseViewPage: NextPage = () => {
               selectedSection={sectionId}
               onClose={() => setShowDashboard(false)}
               onSectionClick={(sectionId: string) => {
-                setAutoSync(false);
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
             />
@@ -447,7 +446,7 @@ const CourseViewPage: NextPage = () => {
               }
             >
               {viewMode === ViewMode.COMBINED_MODE && (
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ flex: compositeActive ? '1 1 100%' : 1, minWidth: 0 }}>
                   <VideoDisplay
                     clipId={currentClipId}
                     clipIds={clipIds}
@@ -458,48 +457,48 @@ const CourseViewPage: NextPage = () => {
                     currentSlideClipInfo={currentSlideClipInfo}
                     videoExtractedData={videoExtractedData}
                     slidesUriToIndexMap={slidesUriToIndexMap}
-                    autoSync={autoSync}
                     onVideoLoad={handleVideoLoad}
+                    onCompositeChange={setCompositeActive}
                   />
                 </Box>
               )}
-              <Box sx={viewMode === ViewMode.COMBINED_MODE ? { flex: 1, minWidth: 0 } : undefined}>
-                <SlideDeck
-                  navOnTop={viewMode === ViewMode.COMBINED_MODE}
-                  courseId={courseId}
-                  sectionId={sectionId}
-                  onSlideChange={(slide: Slide) => {
-                    setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                    setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                    const slideUri = getSlideUri(slide);
-                    setCurrentSlideUri(slideUri || '');
-                    if (
-                      slidesClipInfo &&
-                      slidesClipInfo[sectionId] &&
-                      slidesClipInfo[sectionId][slideUri]
-                    ) {
-                      const slideClips = slidesClipInfo[sectionId][slideUri];
-                      if (!Array.isArray(slideClips)) {
-                        return;
+              <Box sx={compositeActive ? { display: 'none' } : viewMode === ViewMode.COMBINED_MODE ? { flex: 1, minWidth: 0 } : undefined}>
+                {!compositeActive && (
+                  <SlideDeck
+                    navOnTop={viewMode === ViewMode.COMBINED_MODE}
+                    courseId={courseId}
+                    sectionId={sectionId}
+                    onSlideChange={(slide: Slide) => {
+                      setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+                      setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+                      const slideUri = getSlideUri(slide);
+                      setCurrentSlideUri(slideUri || '');
+                      if (
+                        slidesClipInfo &&
+                        slidesClipInfo[sectionId] &&
+                        slidesClipInfo[sectionId][slideUri]
+                      ) {
+                        const slideClips = slidesClipInfo[sectionId][slideUri];
+                        if (!Array.isArray(slideClips)) {
+                          return;
+                        }
+                        const matchedClip = slideClips.find(
+                          (clip) => clip.video_id === currentClipId
+                        );
+                        setCurrentSlideClipInfo(matchedClip || slideClips[0]);
+                      } else {
+                        setCurrentSlideClipInfo(null);
                       }
-                      const matchedClip = slideClips.find(
-                        (clip) => clip.video_id === currentClipId
-                      );
-                      setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                    } else {
-                      setCurrentSlideClipInfo(null);
-                    }
-                  }}
+                    }}
                   goToNextSection={goToNextSection}
                   goToPrevSection={goToPrevSection}
                   slideNum={slideNum}
                   slidesClipInfo={slidesClipInfo}
                   onClipChange={onClipChange}
-                  autoSync={autoSync}
-                  setAutoSync={setAutoSync}
                   audioOnly={audioOnly}
                   videoLoaded={videoLoaded}
                 />
+                  )}
               </Box>
             </Box>
             <hr style={{ width: '98%', padding: '1px 0' }} />

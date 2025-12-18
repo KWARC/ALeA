@@ -169,7 +169,9 @@ const MediaItem = ({
   clipId,
   clipIds,
   slidesUriToIndexMap,
-  autoSync,
+  presenterVideoId,
+  compositeVideoId,
+  onCompositeChange,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -180,14 +182,19 @@ const MediaItem = ({
   timestampSec?: number;
   markers?: Marker[];
   slidesUriToIndexMap?: SlidesUriToIndexMap;
-  autoSync?: boolean;
+  presenterVideoId?: string;
+  compositeVideoId?: string;
+  onCompositeChange?: (active: boolean) => void;
 }) => {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const videoPlayer = useRef<any>(null);
-  const autoSyncRef = useRef(autoSync);
+  const autoSyncEnabled = true;
+  const autoSyncRef = useRef(autoSyncEnabled);
   const lastSyncedMarkerTime = useRef<number | null>(null);
   const [tooltip, setTooltip] = useState<string>('');
   const [overlay, setOverlay] = useState<{ title: string; description: string } | null>(null);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>(videoId);
   const router = useRouter();
   const [conceptsUri, setConceptsUri] = useState<string[]>([]);
   const [loadingConcepts, setLoadingConcepts] = useState(false);
@@ -195,6 +202,29 @@ const MediaItem = ({
   const markersInDescOrder = useMemo(() => {
     return [...markers].sort((a, b) => b.time - a.time);
   }, [markers]);
+
+  // Initialize currentVideoUrl when videoId changes
+  useEffect(() => {
+    setCurrentVideoUrl(videoId);
+  }, [videoId]);
+
+  // Notify parent when current video is composite or presenter
+  useEffect(() => {
+    try {
+      const isComposite = !!(compositeVideoId && currentVideoUrl === compositeVideoId);
+      onCompositeChange?.(isComposite);
+    } catch (err) {
+      // ignore
+    }
+  }, [currentVideoUrl, compositeVideoId, onCompositeChange]);
+
+  // Debug: Log markers and slidesUriToIndexMap
+  useEffect(() => {
+    if (markersInDescOrder.length > 0) {
+      console.log('=== VideoDisplay Ready ===');
+      console.log('Markers:', markersInDescOrder.length);
+    }
+  }, [markersInDescOrder]);
 
   const handleMarkerClick = async (marker: Marker) => {
     const sectionUri = marker?.data?.sectionUri;
@@ -230,6 +260,7 @@ const MediaItem = ({
     markers,
     handleMarkerClick,
   }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     videoPlayer: any;
     markers: Marker[];
     handleMarkerClick: (marker: Marker) => void;
@@ -241,9 +272,6 @@ const MediaItem = ({
     const newMarker = markersInDescOrder[markerIndex];
     handleMarkerClick(newMarker);
   };
-  useEffect(() => {
-    autoSyncRef.current = autoSync;
-  }, [autoSync]);
 
   useEffect(() => {
     if (audioOnly) {
@@ -262,12 +290,13 @@ const MediaItem = ({
         controls: !audioOnly,
         preload: 'auto',
         autoplay: false,
-        sources: [{ src: videoId, type: 'video/mp4' }],
+        sources: [{ src: currentVideoUrl, type: 'video/mp4' }],
       });
       videoPlayer.current = player;
     } else {
+      // Update video source while maintaining playback position
       const currentTime = player.currentTime();
-      player.src({ src: videoId, type: 'video/mp4' });
+      player.src({ src: currentVideoUrl, type: 'video/mp4' });
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
@@ -317,7 +346,7 @@ const MediaItem = ({
         videoPlayer.current = null;
       }
     };
-  }, [videoId, audioOnly]);
+  }, [currentVideoUrl, audioOnly]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -397,18 +426,37 @@ const MediaItem = ({
         marker.style.backgroundColor = currentTime >= markerTime ? 'green' : 'yellow';
       }
 
-      if (!autoSyncRef.current || markersInDescOrder.length === 0) return;
-
+      // Find the latest marker at current position
       const latestMarker = markersInDescOrder.find((marker) => marker.time <= currentTime);
-      if (!latestMarker) return;
 
-      const sectionId = latestMarker.data?.sectionId;
-      const slideUri = latestMarker.data?.slideUri;
-      const slideIndex = slidesUriToIndexMap?.[sectionId]?.[slideUri];
+      // Dynamic URL switching based on marker presence
+      if (latestMarker) {
+        // A marker exists at this position - use presenter video (synced)
+        const sectionId = latestMarker.data?.sectionId;
+        const slideUri = latestMarker.data?.slideUri;
+        const slideIndex = slidesUriToIndexMap?.[sectionId]?.[slideUri];
 
-      if (lastSyncedMarkerTime.current !== latestMarker.time && clipIds?.[sectionId] === clipId) {
-        lastSyncedMarkerTime.current = latestMarker.time;
-        setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
+        // Update slide and section continuously when in synced marker range with autoSync enabled
+        if (autoSyncRef.current && sectionId && slideIndex !== undefined) {
+          // Check if this is a new marker or we're still in a marker range
+          const shouldUpdate = lastSyncedMarkerTime.current !== latestMarker.time;
+          if (shouldUpdate) {
+            lastSyncedMarkerTime.current = latestMarker.time;
+            setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
+          }
+        }
+
+        // Switch to presenter video if not already on it and if we have it
+        if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
+          setCurrentVideoUrl(presenterVideoId);
+        }
+      } else {
+        // No marker at this position - use composite video (not synced)
+        if (compositeVideoId && currentVideoUrl !== compositeVideoId) {
+          setCurrentVideoUrl(compositeVideoId);
+        }
+        // Reset marker tracking when no marker is present
+        lastSyncedMarkerTime.current = null;
       }
     };
 
@@ -416,7 +464,7 @@ const MediaItem = ({
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [markersInDescOrder, clipIds, slidesUriToIndexMap, router, clipId]);
+  }, [markersInDescOrder, slidesUriToIndexMap, router, presenterVideoId, compositeVideoId, currentVideoUrl]);
 
   useEffect(() => {
     if (videoPlayer.current && timestampSec !== undefined) {
@@ -430,7 +478,7 @@ const MediaItem = ({
     const mouseX = e.clientX - rect.left;
     const timeAtCursor = (mouseX / rect.width) * videoPlayer.current?.duration();
 
-    const closestMarker = markers.find((marker) => Math.abs(marker.time - timeAtCursor!) < 1);
+    const closestMarker = markers.find((marker) => timeAtCursor !== undefined && Math.abs(marker.time - timeAtCursor) < 1);
 
     if (closestMarker) {
       setTooltip(`${closestMarker.label} - ${closestMarker.time}s`);
@@ -707,8 +755,8 @@ export function VideoDisplay({
   audioOnly,
   videoExtractedData,
   slidesUriToIndexMap,
-  autoSync,
   onVideoLoad,
+  onCompositeChange,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -721,35 +769,38 @@ export function VideoDisplay({
     [timestampSec: number]: ClipMetadata;
   };
   slidesUriToIndexMap?: SlidesUriToIndexMap;
-  autoSync?: boolean;
   onVideoLoad: (status: boolean) => void;
+  onCompositeChange?: (active: boolean) => void;
 }) {
   const [resolution, setResolution] = useState(720);
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
   const availableRes = getAvailableRes(clipDetails);
   const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
-  const compositeVideoId =
-    (clipDetails as any)?.compositeUrl || (clipDetails as any)?.composite_url || undefined;
-  const isSyncedWithSlides = !!currentSlideClipInfo && currentSlideClipInfo.video_id === clipId;
-  const videoId = isSyncedWithSlides || !compositeVideoId ? presenterVideoId : compositeVideoId;
+  const compositeVideoId = (
+    (clipDetails as Record<string, unknown>)?.compositeUrl || (clipDetails as Record<string, unknown>)?.composite_url
+  ) as string | undefined;
+  // Default to composite if available, otherwise presenter (will switch dynamically based on markers)
+  const defaultVideoId = compositeVideoId || presenterVideoId;
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
   const router = useRouter();
-  const extractedValues = Object.values(videoExtractedData || {});
-  const markers = extractedValues
-    .filter((item: any) => {
-      return (item.sectionId || '').trim() !== '' && (item.slideUri || '').trim() !== '';
+  // Extract markers from videoExtractedData
+  // The keys are timestamps and values are ClipMetadata
+  const markers = Object.entries(videoExtractedData || {})
+    .filter(([, item]: [string, Record<string, unknown>]) => {
+      return (item.sectionId as string || '').trim() !== '' && (item.slideUri as string || '').trim() !== '';
     })
-    .map((item: any) => ({
-      time: Math.floor(item.start_time ?? 0),
-      label: item.sectionTitle || 'Untitled',
+    .map(([timestampKey, item]: [string, Record<string, unknown>]) => ({
+      // Use the timestamp key from the object as the marker time
+      time: Math.floor(Number(timestampKey) || ((item.start_time as number) ?? 0)),
+      label: (item.sectionTitle as string) || 'Untitled',
       data: {
-        thumbnail: item.thumbnail || null,
-        ocr_slide_content: item.ocr_slide_content || null,
-        sectionId: item.sectionId,
-        sectionUri: item.sectionUri,
-        slideUri: item.slideUri,
+        thumbnail: (item.thumbnail as string) || null,
+        ocr_slide_content: (item.ocr_slide_content as string) || null,
+        sectionId: item.sectionId as string,
+        sectionUri: item.sectionUri as string,
+        slideUri: item.slideUri as string,
       },
     }));
 
@@ -777,12 +828,12 @@ export function VideoDisplay({
     if (e.key === 'Shift') setReveal(false);
   };
   useEffect(() => {
-    const isVideoLoaded = !isLoading && !!videoId;
+    const isVideoLoaded = !isLoading && !!defaultVideoId;
     onVideoLoad(isVideoLoaded);
-  }, [isLoading, videoId, onVideoLoad]);
+  }, [isLoading, defaultVideoId, onVideoLoad]);
 
   if (isLoading) return <CircularProgress sx={{ mb: '15px' }} />;
-  if (!videoId)
+  if (!defaultVideoId)
     return (
       <Box sx={{ mb: '25px', position: 'relative' }}>
         <i>Video not available for this section</i>
@@ -848,7 +899,9 @@ export function VideoDisplay({
           )}
         </Box>
         <MediaItem
-          videoId={videoId}
+          videoId={defaultVideoId}
+          presenterVideoId={presenterVideoId}
+          compositeVideoId={compositeVideoId}
           clipId={clipId}
           clipIds={clipIds}
           timestampSec={timestampSec}
@@ -857,7 +910,7 @@ export function VideoDisplay({
           thumbnail={clipDetails?.thumbnailUrl}
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
-          autoSync={autoSync}
+          onCompositeChange={onCompositeChange}
         />
       </Box>
     </>

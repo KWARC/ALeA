@@ -96,14 +96,12 @@ export function SlideNavBar({
   numSlides,
   goToNextSection = undefined,
   goToPrevSection = undefined,
-  setAutoSync,
 }: {
   slides: Slide[];
   slideNum: number;
   numSlides: number;
   goToNextSection?: () => void;
   goToPrevSection?: () => void;
-  setAutoSync?: Dispatch<SetStateAction<boolean>>;
 }) {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -127,7 +125,6 @@ export function SlideNavBar({
       <IconButton
         size="small"
         onClick={() => {
-          setAutoSync(false);
           slideNum > 1 ? setSlideNumAndSectionId(router, slideNum - 1) : goToPrevSection();
         }}
         sx={{
@@ -168,7 +165,6 @@ export function SlideNavBar({
       <IconButton
         size="small"
         onClick={() => {
-          setAutoSync(false);
           slideNum < numSlides ? setSlideNumAndSectionId(router, slideNum + 1) : goToNextSection();
         }}
         sx={{
@@ -326,8 +322,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
   goToNextSection = undefined,
   goToPrevSection = undefined,
   onClipChange,
-  autoSync,
-  setAutoSync,
   audioOnly,
   videoLoaded,
 }: {
@@ -345,8 +339,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
   goToNextSection?: () => void;
   goToPrevSection?: () => void;
   onClipChange?: (clip: any) => void;
-  autoSync?: boolean;
-  setAutoSync?: Dispatch<SetStateAction<boolean>>;
   audioOnly?: boolean;
   videoLoaded?: boolean;
 }) {
@@ -496,7 +488,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
             numSlides={slides.length}
             goToNextSection={goToNextSection}
             goToPrevSection={goToPrevSection}
-            setAutoSync={setAutoSync}
           />
         </Box>
       </Box>
