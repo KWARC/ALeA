@@ -1,16 +1,10 @@
-import {InfoOutlined, MusicNote } from '@mui/icons-material';
-import CheckIcon from '@mui/icons-material/Check';
+import {InfoOutlined } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import SettingsIcon from '@mui/icons-material/Settings';
-import VideocamIcon from '@mui/icons-material/Videocam';
 import {
   Box,
   Button,
   CircularProgress,
-  Divider,
   IconButton,
-  Menu,
-  MenuItem,
   Paper,
   Tooltip,
   Typography,
@@ -40,74 +34,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 
-
-function ToggleResolution({
-  audioOnly,
-  setAudioOnly,
-  resolution,
-  setResolution,
-  availableResolutions,
-}: {
-  audioOnly: boolean;
-  setAudioOnly: Dispatch<SetStateAction<boolean>>;
-  resolution: number;
-  setResolution: Dispatch<SetStateAction<number>>;
-  availableResolutions: number[];
-}) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  return (
-    <Box display="flex" alignItems="center" gap={1} zIndex="1" sx={{ mb: 1 }}>
-      <Tooltip title={audioOnly ? 'Show Video' : 'Audio Only'}>
-        <IconButton
-          onClick={() => setAudioOnly(!audioOnly)}
-          sx={{
-            border: '2px solid',
-            borderColor: audioOnly ? '#1976d2' : '#9e9e9e',
-            borderRadius: 2,
-            bgcolor: audioOnly ? '#e3f2fd' : 'white',
-            color: audioOnly ? '#1976d2' : '#616161',
-            '&:hover': {
-              bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
-            }
-          }}
-        >
-          {audioOnly ? <VideocamIcon /> : <MusicNote />}
-        </IconButton>
-      </Tooltip>
-      {!audioOnly && (
-        <>
-          <Tooltip title="Video Quality">
-            <IconButton
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                border: '2px solid #9e9e9e',
-                borderRadius: 2,
-                bgcolor: 'white',
-                color: '#616161',
-                '&:hover': {
-                  bgcolor: '#f5f5f5',
-                }
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-            {availableResolutions.map((res) => (
-              <MenuItem key={res} onClick={() => setResolution(res)}>
-                <CheckIcon
-                  fontSize="small"
-                  sx={{ color: res === resolution ? undefined : '#00000000' }}
-                />
-                &nbsp;{res}p
-              </MenuItem>
-            ))}
-          </Menu>
-        </>
-      )}
-    </Box>
-  );
-}
 
 function getAvailableRes(info?: ClipDetails) {
   if (!info) return [];
@@ -809,21 +735,6 @@ export function VideoDisplay({
             mb: 1,
           }}
         >
-          <ToggleResolution
-            audioOnly={audioOnly}
-            setAudioOnly={(v: boolean) => {
-              const audioOnlyStr = v.toString();
-              localStore?.setItem('audioOnly', audioOnlyStr);
-              router.query.audioOnly = audioOnlyStr;
-              router.replace(router);
-            }}
-            resolution={resolution}
-            setResolution={(res: number) => {
-              setResolution(res);
-              localStore?.setItem('defaultResolution', res.toString());
-            }}
-            availableResolutions={availableRes}
-          />
           <Box
             onKeyDown={handleKeyPress}
             onKeyUp={handleKeyRelease}

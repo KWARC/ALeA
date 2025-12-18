@@ -3,8 +3,12 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
+import CheckIcon from '@mui/icons-material/Check';
+import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Chip } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Menu, MenuItem } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -190,6 +194,9 @@ const CourseViewPage: NextPage = () => {
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
+  const [resolution, setResolution] = useState(720);
+  const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
+  const availableResolutions = [360, 720, 1080];
 
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
@@ -382,7 +389,71 @@ const CourseViewPage: NextPage = () => {
                       router.query.viewMode = modeStr;
                       router.replace(router);
                     }}
-                  />                                   
+                  />
+                  <Tooltip title={audioOnly ? 'Show Video' : 'Audio Only'} placement="bottom">
+                    <IconButton
+                      onClick={() => {
+                        const newAudioOnly = !audioOnly;
+                        localStore?.setItem('audioOnly', String(newAudioOnly));
+                        router.query.audioOnly = String(newAudioOnly);
+                        router.replace(router);
+                      }}
+                      sx={{
+                        border: '2px solid',
+                        borderColor: audioOnly ? '#1976d2' : '#9e9e9e',
+                        borderRadius: 2,
+                        bgcolor: audioOnly ? '#e3f2fd' : 'white',
+                        color: audioOnly ? '#1976d2' : '#616161',
+                        '&:hover': {
+                          bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
+                        }
+                      }}
+                    >
+                      {audioOnly ? <VideocamIcon /> : <MusicNote />}
+                    </IconButton>
+                  </Tooltip>
+                  {!audioOnly && (
+                    <>
+                      <Tooltip title="Video Quality" placement="bottom">
+                        <IconButton
+                          onClick={(e) => setResolutionAnchorEl(e.currentTarget)}
+                          sx={{
+                            border: '2px solid #9e9e9e',
+                            borderRadius: 2,
+                            bgcolor: 'white',
+                            color: '#616161',
+                            '&:hover': {
+                              bgcolor: '#f5f5f5',
+                            }
+                          }}
+                        >
+                          <SettingsIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Menu
+                        anchorEl={resolutionAnchorEl}
+                        open={Boolean(resolutionAnchorEl)}
+                        onClose={() => setResolutionAnchorEl(null)}
+                      >
+                        {availableResolutions.map((res) => (
+                          <MenuItem
+                            key={res}
+                            onClick={() => {
+                              setResolution(res);
+                              localStore?.setItem('defaultResolution', res.toString());
+                              setResolutionAnchorEl(null);
+                            }}
+                          >
+                            <CheckIcon
+                              fontSize="small"
+                              sx={{ color: res === resolution ? undefined : '#00000000' }}
+                            />
+                            &nbsp;{res}p
+                          </MenuItem>
+                        ))}
+                      </Menu>
+                    </>
+                  )}
                   {courses?.[courseId]?.slides && (
                     <Tooltip title="Download slides PDF" placement="bottom">
                       <IconButton
