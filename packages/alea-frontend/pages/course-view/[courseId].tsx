@@ -685,32 +685,12 @@ const CourseViewPage: NextPage = () => {
             )}
             {selectedSectionTOC && (
               <Stack spacing={{ xs: 2, sm: 3 }}>
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: { xs: 2, sm: 3 },
-                    borderRadius: 2,
-                    bgcolor: 'white',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  }}
-                >
-                  <SectionReview
-                    sectionUri={selectedSectionTOC.uri}
-                    sectionTitle={selectedSectionTOC.title}
-                  />
-                </Paper>
+                <SectionReview
+                  sectionUri={selectedSectionTOC.uri}
+                  sectionTitle={selectedSectionTOC.title}
+                />
                 {isQuizMaker && (
-                  <Paper
-                    elevation={1}
-                    sx={{
-                      p: { xs: 2, sm: 3 },
-                      borderRadius: 2,
-                      bgcolor: 'white',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    }}
-                  >
                     <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
-                  </Paper>
                 )}
               </Stack>
             )}
