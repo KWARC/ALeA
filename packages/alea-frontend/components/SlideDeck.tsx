@@ -1,11 +1,4 @@
-import {
-  FirstPage,
-  InsertLink,
-  LastPage,
-  LinkOff,
-  NavigateBefore,
-  NavigateNext,
-} from '@mui/icons-material';
+import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -454,7 +447,10 @@ export const SlideDeck = memo(function SlidesFromUrl({
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
         <Box id="slide-renderer-container" sx={{ '& *': { boxSizing: 'border-box' } }}>
-          <SafeFTMLSetup key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'} allowFullscreen={false}>
+          <SafeFTMLSetup
+            key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'}
+            allowFullscreen={false}
+          >
             <SlideRenderer key={slideNum} slide={currentSlide} />
           </SafeFTMLSetup>
         </Box>

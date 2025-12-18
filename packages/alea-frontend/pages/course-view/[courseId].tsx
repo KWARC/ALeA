@@ -5,7 +5,7 @@ import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Chip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -28,7 +28,7 @@ import { NextPage } from 'next';
 import Link from 'next/link';
 import { NextRouter, useRouter } from 'next/router';
 import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
-import  { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
@@ -36,14 +36,13 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { SearchDialog } from '../course-notes/[courseId]';
 
-// DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
     <>
       {elements.map((e, idx) => (
         <Fragment key={idx}>
           <SafeFTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
-          {idx < elements.length - 1 && <br />}
+          {idx < elements.length - 1 && <Box sx={{ my: 1 }} />}
         </Fragment>
       ))}
     </>
@@ -54,6 +53,7 @@ export enum ViewMode {
   SLIDE_MODE = 'SLIDE_MODE',
   COMBINED_MODE = 'COMBINED_MODE',
 }
+
 function ToggleModeButton({
   viewMode,
   updateViewMode,
@@ -69,21 +69,24 @@ function ToggleModeButton({
 
   return (
     <Button
-      variant="outlined"
+      variant={isCombinedMode ? 'contained' : 'outlined'}
       onClick={() => {
         const newMode = isCombinedMode ? ViewMode.SLIDE_MODE : ViewMode.COMBINED_MODE;
         updateViewMode(newMode);
       }}
+      startIcon={<VideoCameraBack />}
       sx={{
-        m: '5px 0',
-        '&:hover': {
-          backgroundColor: 'primary.main',
-          color: 'white',
-        },
+        borderRadius: 2,
+        textTransform: 'none',
+        fontWeight: 500,
+        px: { xs: 2, sm: 3 },
+        py: 1,
+        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+        whiteSpace: 'nowrap',
+        minWidth: { xs: 'auto', sm: '140px' },
       }}
     >
       {buttonLabel}
-      <VideoCameraBack sx={{ ml: '5px' }} />
     </Button>
   );
 }
@@ -170,7 +173,6 @@ const CourseViewPage: NextPage = () => {
     [sectionId: string]: number;
   }>({});
   const [slidesUriToIndexMap, setSlidesUriToIndexMap] = useState<SlidesUriToIndexMap>({});
-
   const [clipIds, setClipIds] = useState<{ [sectionId: string]: string }>({});
   const [slidesClipInfo, setSlidesClipInfo] = useState<{
     [sectionId: string]: {
@@ -181,7 +183,6 @@ const CourseViewPage: NextPage = () => {
   const [videoExtractedData, setVideoExtractedData] = useState<{
     [timestampSec: number]: ClipMetadata;
   }>({});
-
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
   const { courseView: t, home: tHome } = getLocaleObject(router);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
@@ -193,6 +194,7 @@ const CourseViewPage: NextPage = () => {
   const [isQuizMaker, setIsQUizMaker] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+
   const handleSearchClick = () => setDialogOpen(true);
   const handleDialogClose = () => setDialogOpen(false);
 
@@ -327,11 +329,19 @@ const CourseViewPage: NextPage = () => {
     setSlideNumAndSectionId(router, 1, secId);
   }
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (!router.isReady || !courses) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   if (!courses[courseId]) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+
   const onClipChange = (clip: any) => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
@@ -339,34 +349,6 @@ const CourseViewPage: NextPage = () => {
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
-        <IconButton
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 64,
-            right: 24,
-            zIndex: 2002,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
-            boxShadow: 3,
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
-            },
-          }}
-          onClick={handleSearchClick}
-          size="large"
-          aria-label="Open search dialog"
-        >
-          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
-        </IconButton>
-      </Tooltip>
-      <SearchDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        courseId={courseId}
-        hasResults={hasResults}
-        setHasResults={setHasResults}
-      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
@@ -387,83 +369,246 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box display="flex" minHeight="100svh">
-          <Box maxWidth="1100px" margin="0 auto" width="100%" pl="4px">
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Box display="flex" alignItems="center">
-                <ToggleModeButton
-                  viewMode={viewMode}
-                  updateViewMode={(mode) => {
-                    const modeStr = mode.toString();
-                    localStore?.setItem('defaultMode', modeStr);
-                    router.query.viewMode = modeStr;
-                    router.replace(router);
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+          <Container 
+            maxWidth="xl" 
+            sx={{ 
+              py: { xs: 2, sm: 3, md: 4 },
+              px: { xs: 2, sm: 3 }
+            }}
+          >
+            {/* Header Actions */}
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: { xs: 1.5, sm: 2 },
+                mb: { xs: 2, sm: 3 },
+                borderRadius: 2,
+                bgcolor: 'white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }} 
+                spacing={{ xs: 1.5, sm: 2 }}
+                justifyContent="space-between"
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+              >
+                <Stack 
+                  direction="row" 
+                  spacing={1} 
+                  alignItems="center"
+                  sx={{ 
+                    flexWrap: 'wrap',
+                    gap: 1
                   }}
-                />
-                {courses?.[courseId]?.slides && (
-                  <Tooltip title="Download slides PDF" placement="bottom">
-                    <IconButton
-                      color="primary"
+                >
+                  <ToggleModeButton
+                    viewMode={viewMode}
+                    updateViewMode={(mode) => {
+                      const modeStr = mode.toString();
+                      localStore?.setItem('defaultMode', modeStr);
+                      router.query.viewMode = modeStr;
+                      router.replace(router);
+                    }}
+                  />
+                  
+                  {/* Audio Toggle Button */}
+                  <Tooltip title={audioOnly ? "Switch to Video" : "Audio Only Mode"} placement="bottom">
+                    <Button
+                      variant={audioOnly ? 'contained' : 'outlined'}
                       onClick={() => {
-                        const slides = courses?.[courseId]?.slides;
-                        const notes = courses?.[courseId]?.notes;
-                        const sourceUri = slides || notes;
-                        if (!sourceUri) return;
-                        const pdfUrl = getCoursePdfUrl(sourceUri);
-                        window.open(pdfUrl, '_blank');
+                        const newAudioOnly = !audioOnly;
+                        localStore?.setItem('audioOnly', String(newAudioOnly));
+                        router.query.audioOnly = String(newAudioOnly);
+                        router.replace(router);
                       }}
-                      size="medium"
-                      aria-label="Download slides PDF"
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 500,
+                        px: { xs: 2, sm: 3 },
+                        py: 1,
+                        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                        whiteSpace: 'nowrap',
+                        minWidth: { xs: 'auto', sm: '120px' },
+                        bgcolor: audioOnly ? 'primary.main' : 'white',
+                        color: audioOnly ? 'white' : 'primary.main',
+                        borderColor: 'primary.main',
+                        '&:hover': {
+                          bgcolor: audioOnly ? 'primary.dark' : 'rgba(25, 118, 210, 0.04)',
+                          borderColor: 'primary.dark',
+                        }
+                      }}
                     >
-                      <PictureAsPdfIcon fontSize="medium" />
+                      🔊 {audioOnly ? 'Audio' : 'Video'}
+                    </Button>
+                  </Tooltip>
+
+                  {courses?.[courseId]?.slides && (
+                    <Tooltip title="Download slides PDF" placement="bottom">
+                      <IconButton
+                        onClick={() => {
+                          const slides = courses?.[courseId]?.slides;
+                          const notes = courses?.[courseId]?.notes;
+                          const sourceUri = slides || notes;
+                          if (!sourceUri) return;
+                          const pdfUrl = getCoursePdfUrl(sourceUri);
+                          window.open(pdfUrl, '_blank');
+                        }}
+                        sx={{
+                          border: '2px solid',
+                          borderColor: '#1976d2',
+                          borderRadius: 2,
+                          bgcolor: 'white',
+                          color: '#1976d2',
+                          '&:hover': {
+                            bgcolor: '#e3f2fd',
+                            borderColor: '#1565c0',
+                          }
+                        }}
+                      >
+                        <PictureAsPdfIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {/* Search Button */}
+                  <Tooltip title="Search (Ctrl+Shift+F)" placement="bottom">
+                    <IconButton
+                      onClick={handleSearchClick}
+                      sx={{
+                        border: '2px solid',
+                        borderColor: '#1976d2',
+                        borderRadius: 2,
+                        bgcolor: 'white',
+                        color: '#1976d2',
+                        '&:hover': {
+                          bgcolor: '#e3f2fd',
+                          borderColor: '#1565c0',
+                        }
+                      }}
+                    >
+                      <SearchIcon />
                     </IconButton>
                   </Tooltip>
-                )}
-              </Box>
-              <Link href={courses[courseId]?.notesLink ?? ''} passHref>
-                <Button size="small" variant="contained" sx={{ mr: '10px' }}>
-                  {t.notes}&nbsp;
-                  <ArticleIcon />
-                </Button>
-              </Link>
-            </Box>
-            <Box sx={{ marginBottom: '10px', marginTop: '10px' }}>
-              <Typography variant="h6" sx={{ color: '#333' }}>
-                <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
-              </Typography>
-            </Box>
-            <Box
-              sx={
-                viewMode === ViewMode.COMBINED_MODE
-                  ? {
-                      display: 'flex',
-                      flexDirection: { xs: 'column', md: 'row' },
-                      gap: 2,
-                      alignItems: 'flex-start',
-                      mb: 2,
-                    }
-                  : undefined
-              }
+                </Stack>
+                
+                <Link href={courses[courseId]?.notesLink ?? ''} passHref>
+                  <Button 
+                    variant="contained" 
+                    startIcon={<ArticleIcon />}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      px: 3,
+                      whiteSpace: 'nowrap',
+                      bgcolor: '#1976d2',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: '#1565c0',
+                      }
+                    }}
+                  >
+                    {t.notes}
+                  </Button>
+                </Link>
+              </Stack>
+            </Paper>
+            
+            {/* Search Dialog */}
+            <SearchDialog
+              open={dialogOpen}
+              onClose={handleDialogClose}
+              courseId={courseId}
+              hasResults={hasResults}
+              setHasResults={setHasResults}
+            />
+
+            {/* Section Title */}
+            {selectedSectionTOC && (
+              <Paper 
+                elevation={1}
+                sx={{ 
+                  p: { xs: 2, sm: 2.5 },
+                  mb: { xs: 2, sm: 3 },
+                  borderRadius: 2,
+                  bgcolor: 'white',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                }}
+              >
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 600,
+                    color: '#1a1a1a',
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    lineHeight: 1.3
+                  }}
+                >
+                  <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
+                </Typography>
+              </Paper>
+            )}
+
+            {/* Main Content Area */}
+            <Stack
+              direction={{ xs: 'column', lg: viewMode === ViewMode.COMBINED_MODE ? 'row' : 'column' }}
+              spacing={{ xs: 2, sm: 3 }}
+              sx={{ mb: { xs: 2, sm: 3 } }}
             >
+              {/* Video Player */}
               {viewMode === ViewMode.COMBINED_MODE && (
-                <Box sx={{ flex: compositeActive ? '1 1 100%' : 1, minWidth: 0 }}>
-                  <VideoDisplay
-                    clipId={currentClipId}
-                    clipIds={clipIds}
-                    setCurrentClipId={setCurrentClipId}
-                    audioOnly={audioOnly}
-                    timestampSec={timestampSec}
-                    setTimestampSec={setTimestampSec}
-                    currentSlideClipInfo={currentSlideClipInfo}
-                    videoExtractedData={videoExtractedData}
-                    slidesUriToIndexMap={slidesUriToIndexMap}
-                    onVideoLoad={handleVideoLoad}
-                    onCompositeChange={setCompositeActive}
-                  />
+                <Box 
+                  sx={{ 
+                    flex: compositeActive ? '1 1 100%' : { xs: '1', lg: '1 1 50%' },
+                    minWidth: 0
+                  }}
+                >
+                  <Paper 
+                    elevation={2}
+                    sx={{ 
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      bgcolor: '#f5f5f5',
+                      border: '1px solid #e0e0e0'
+                    }}
+                  >
+                    <VideoDisplay
+                      clipId={currentClipId}
+                      clipIds={clipIds}
+                      setCurrentClipId={setCurrentClipId}
+                      audioOnly={audioOnly}
+                      timestampSec={timestampSec}
+                      setTimestampSec={setTimestampSec}
+                      currentSlideClipInfo={currentSlideClipInfo}
+                      videoExtractedData={videoExtractedData}
+                      slidesUriToIndexMap={slidesUriToIndexMap}
+                      onVideoLoad={handleVideoLoad}
+                      onCompositeChange={setCompositeActive}
+                    />
+                  </Paper>
                 </Box>
               )}
-              <Box sx={compositeActive ? { display: 'none' } : viewMode === ViewMode.COMBINED_MODE ? { flex: 1, minWidth: 0 } : undefined}>
-                {!compositeActive && (
+
+              {/* Slide Deck */}
+              <Box 
+                sx={{ 
+                  flex: compositeActive ? '0' : { xs: '1', lg: '1 1 50%' },
+                  minWidth: 0,
+                  display: compositeActive ? 'none' : 'block'
+                }}
+              >
+                <Paper 
+                  elevation={2}
+                  sx={{ 
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0'
+                  }}
+                >
                   <SlideDeck
                     navOnTop={viewMode === ViewMode.COMBINED_MODE}
                     courseId={courseId}
@@ -490,86 +635,149 @@ const CourseViewPage: NextPage = () => {
                         setCurrentSlideClipInfo(null);
                       }
                     }}
-                  goToNextSection={goToNextSection}
-                  goToPrevSection={goToPrevSection}
-                  slideNum={slideNum}
-                  slidesClipInfo={slidesClipInfo}
-                  onClipChange={onClipChange}
-                  audioOnly={audioOnly}
-                  videoLoaded={videoLoaded}
-                />
-                  )}
+                    goToNextSection={goToNextSection}
+                    goToPrevSection={goToPrevSection}
+                    slideNum={slideNum}
+                    slidesClipInfo={slidesClipInfo}
+                    onClipChange={onClipChange}
+                    audioOnly={audioOnly}
+                    videoLoaded={videoLoaded}
+                  />
+                </Paper>
               </Box>
-            </Box>
-            <hr style={{ width: '98%', padding: '1px 0' }} />
-            {/* Instructor notes block – should appear above Generate Quiz */}
+            </Stack>
+
+            {/* Instructor Notes */}
             {(preNotes.length > 0 || postNotes.length > 0) && (
-              <Box
+              <Paper 
+                elevation={1}
                 sx={{
-                  mt: 2,
-                  mb: 2,
-                  p: 2,
+                  p: { xs: 2, sm: 3 },
+                  mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
-                  border: '1px solid #ddd',
-                  backgroundColor: '#fafafa',
+                  bgcolor: '#fff9e6',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  border: '1px solid #ffeaa7'
                 }}
               >
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                  {t.instructorNotes}
-                </Typography>
-                <Box p="5px" sx={{ overflowX: 'auto' }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: '#1a1a1a',
+                      fontSize: { xs: '1rem', sm: '1.125rem' }
+                    }}
+                  >
+                    {t.instructorNotes}
+                  </Typography>
+                  <Chip 
+                    label="Instructor" 
+                    size="small" 
+                    sx={{ 
+                      height: 20,
+                      fontSize: '0.75rem',
+                      bgcolor: '#ffd93d',
+                      color: '#1a1a1a',
+                      fontWeight: 600
+                    }} 
+                  />
+                </Stack>
+                <Box sx={{ 
+                  overflowX: 'auto',
+                  '& > *': { mb: 1.5 }
+                }}>
                   <RenderElements elements={preNotes} />
                   {preNotes.length > 0 && postNotes.length > 0 && (
-                    <hr style={{ width: '98%' }} />
+                    <Box sx={{ 
+                      my: 2, 
+                      borderTop: '2px dashed #fdcb6e' 
+                    }} />
                   )}
                   <RenderElements elements={postNotes} />
                 </Box>
-              </Box>
+              </Paper>
             )}
 
+            {/* Section Review & Quiz */}
             {selectedSectionTOC && (
-              <Box sx={{ marginTop: '10px', marginBottom: '10px' }}>
-                <SectionReview
-                  sectionUri={selectedSectionTOC.uri}
-                  sectionTitle={selectedSectionTOC.title}
-                />
+              <Stack spacing={{ xs: 2, sm: 3 }}>
+                <Paper 
+                  elevation={1}
+                  sx={{ 
+                    p: { xs: 2, sm: 3 },
+                    borderRadius: 2,
+                    bgcolor: 'white',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <SectionReview
+                    sectionUri={selectedSectionTOC.uri}
+                    sectionTitle={selectedSectionTOC.title}
+                  />
+                </Paper>
                 {isQuizMaker && (
-                  <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
+                  <Paper 
+                    elevation={1}
+                    sx={{ 
+                      p: { xs: 2, sm: 3 },
+                      borderRadius: 2,
+                      bgcolor: 'white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                    }}
+                  >
+                    <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
+                  </Paper>
                 )}
-              </Box>
+              </Stack>
             )}
-            <Box
+
+            {/* Notes & Comments */}
+            <Paper 
+              elevation={1}
               sx={{
-                mt: 2,
-                mb: 2,
+                mt: { xs: 2, sm: 3 },
                 borderRadius: 2,
-                border: '1px solid #e0e0e0',
-                backgroundColor: '#fcfcfc',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                bgcolor: 'white',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
               }}
             >
               <Box
                 sx={{
-                  px: 2,
-                  pt: 1.5,
-                  pb: 0.5,
+                  px: { xs: 2, sm: 3 },
+                  py: 2,
                   borderBottom: '1px solid #e5e5e5',
-                  background:
-                    'linear-gradient(90deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)',
+                  background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
                 }}
               >
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#374151' }}>
-                  {'Notes & Comments'}
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#1a1a1a',
+                    fontSize: { xs: '1rem', sm: '1.125rem' },
+                    mb: 0.5
+                  }}
+                >
+                  Notes & Comments
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
-                  {'Your private notes and public comments for this slide.'}
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#1976d2',
+                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                    fontWeight: 500
+                  }}
+                >
+                  Your private notes and public comments for this slide.
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5 }}>
+              <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
                 <CommentNoteToggleView uri={currentSlideUri} defaultPrivate={true} />
               </Box>
-            </Box>
-          </Box>
+            </Paper>
+          </Container>
         </Box>
       </LayoutWithFixedMenu>
     </MainLayout>

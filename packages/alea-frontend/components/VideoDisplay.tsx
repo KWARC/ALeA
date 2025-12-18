@@ -1,4 +1,4 @@
-import { FastForward, InfoOutlined, MusicNote } from '@mui/icons-material';
+import {InfoOutlined, MusicNote } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -40,46 +40,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 
-export default function SeekVideo({
-  currentSlideClipInfo,
-  setTimestampSec,
-  setCurrentClipId,
-}: {
-  currentSlideClipInfo: ClipInfo;
-  setTimestampSec: React.Dispatch<React.SetStateAction<number>>;
-  setCurrentClipId: Dispatch<SetStateAction<string>>;
-}) {
-  const handleSeek = () => {
-    if (currentSlideClipInfo) {
-      const { start_time, video_id } = currentSlideClipInfo;
-      setCurrentClipId(video_id);
-      if (start_time) {
-        setTimestampSec((prev) => (prev === start_time ? prev + 0.001 : start_time));
-      } else setTimestampSec(0);
-    }
-  };
-  if (!currentSlideClipInfo) return null;
-  return (
-    <Box display="inline-block" zIndex="1">
-      <Tooltip title={`Seek Video to current slide`} arrow>
-        <IconButton
-          onClick={handleSeek}
-          sx={{
-            padding: '5px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            margin: '5px',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-            },
-          }}
-        >
-          <FastForward />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
-}
 
 function ToggleResolution({
   audioOnly,
@@ -202,13 +162,10 @@ const MediaItem = ({
   const markersInDescOrder = useMemo(() => {
     return [...markers].sort((a, b) => b.time - a.time);
   }, [markers]);
-
-  // Initialize currentVideoUrl when videoId changes
   useEffect(() => {
     setCurrentVideoUrl(videoId);
   }, [videoId]);
 
-  // Notify parent when current video is composite or presenter
   useEffect(() => {
     try {
       const isComposite = !!(compositeVideoId && currentVideoUrl === compositeVideoId);
@@ -218,7 +175,6 @@ const MediaItem = ({
     }
   }, [currentVideoUrl, compositeVideoId, onCompositeChange]);
 
-  // Debug: Log markers and slidesUriToIndexMap
   useEffect(() => {
     if (markersInDescOrder.length > 0) {
       console.log('=== VideoDisplay Ready ===');
@@ -260,7 +216,6 @@ const MediaItem = ({
     markers,
     handleMarkerClick,
   }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     videoPlayer: any;
     markers: Marker[];
     handleMarkerClick: (marker: Marker) => void;
@@ -294,7 +249,6 @@ const MediaItem = ({
       });
       videoPlayer.current = player;
     } else {
-      // Update video source while maintaining playback position
       const currentTime = player.currentTime();
       player.src({ src: currentVideoUrl, type: 'video/mp4' });
       player.ready(() => {
@@ -425,37 +379,25 @@ const MediaItem = ({
         const markerTime = parseInt(marker.dataset.time, 10);
         marker.style.backgroundColor = currentTime >= markerTime ? 'green' : 'yellow';
       }
-
-      // Find the latest marker at current position
       const latestMarker = markersInDescOrder.find((marker) => marker.time <= currentTime);
-
-      // Dynamic URL switching based on marker presence
       if (latestMarker) {
-        // A marker exists at this position - use presenter video (synced)
         const sectionId = latestMarker.data?.sectionId;
         const slideUri = latestMarker.data?.slideUri;
         const slideIndex = slidesUriToIndexMap?.[sectionId]?.[slideUri];
-
-        // Update slide and section continuously when in synced marker range with autoSync enabled
         if (autoSyncRef.current && sectionId && slideIndex !== undefined) {
-          // Check if this is a new marker or we're still in a marker range
           const shouldUpdate = lastSyncedMarkerTime.current !== latestMarker.time;
           if (shouldUpdate) {
             lastSyncedMarkerTime.current = latestMarker.time;
             setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
           }
         }
-
-        // Switch to presenter video if not already on it and if we have it
         if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
           setCurrentVideoUrl(presenterVideoId);
         }
       } else {
-        // No marker at this position - use composite video (not synced)
         if (compositeVideoId && currentVideoUrl !== compositeVideoId) {
           setCurrentVideoUrl(compositeVideoId);
         }
-        // Reset marker tracking when no marker is present
         lastSyncedMarkerTime.current = null;
       }
     };
@@ -779,20 +721,16 @@ export function VideoDisplay({
   const compositeVideoId = (
     (clipDetails as Record<string, unknown>)?.compositeUrl || (clipDetails as Record<string, unknown>)?.composite_url
   ) as string | undefined;
-  // Default to composite if available, otherwise presenter (will switch dynamically based on markers)
   const defaultVideoId = compositeVideoId || presenterVideoId;
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
   const router = useRouter();
-  // Extract markers from videoExtractedData
-  // The keys are timestamps and values are ClipMetadata
   const markers = Object.entries(videoExtractedData || {})
     .filter(([, item]: [string, Record<string, unknown>]) => {
       return (item.sectionId as string || '').trim() !== '' && (item.slideUri as string || '').trim() !== '';
     })
     .map(([timestampKey, item]: [string, Record<string, unknown>]) => ({
-      // Use the timestamp key from the object as the marker time
       time: Math.floor(Number(timestampKey) || ((item.start_time as number) ?? 0)),
       label: (item.sectionTitle as string) || 'Untitled',
       data: {
