@@ -4,7 +4,6 @@ import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Chip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -34,7 +33,6 @@ import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { SearchDialog } from '../course-notes/[courseId]';
 
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -192,32 +190,6 @@ const CourseViewPage: NextPage = () => {
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [hasResults, setHasResults] = useState(false);
-
-  const handleSearchClick = () => setDialogOpen(true);
-  const handleDialogClose = () => setDialogOpen(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isEditableTarget =
-        !!target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          (target as HTMLElement).isContentEditable);
-      if (isEditableTarget) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        setDialogOpen(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
@@ -377,7 +349,6 @@ const CourseViewPage: NextPage = () => {
               px: { xs: 2, sm: 3 }
             }}
           >
-            {/* Header Actions */}
             <Paper 
               elevation={1} 
               sx={{ 
@@ -473,25 +444,6 @@ const CourseViewPage: NextPage = () => {
                     </Tooltip>
                   )}
 
-                  {/* Search Button */}
-                  <Tooltip title="Search (Ctrl+Shift+F)" placement="bottom">
-                    <IconButton
-                      onClick={handleSearchClick}
-                      sx={{
-                        border: '2px solid',
-                        borderColor: '#1976d2',
-                        borderRadius: 2,
-                        bgcolor: 'white',
-                        color: '#1976d2',
-                        '&:hover': {
-                          bgcolor: '#e3f2fd',
-                          borderColor: '#1565c0',
-                        }
-                      }}
-                    >
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
                 </Stack>
                 
                 <Link href={courses[courseId]?.notesLink ?? ''} passHref>
@@ -516,17 +468,6 @@ const CourseViewPage: NextPage = () => {
                 </Link>
               </Stack>
             </Paper>
-            
-            {/* Search Dialog */}
-            <SearchDialog
-              open={dialogOpen}
-              onClose={handleDialogClose}
-              courseId={courseId}
-              hasResults={hasResults}
-              setHasResults={setHasResults}
-            />
-
-            {/* Section Title */}
             {selectedSectionTOC && (
               <Paper 
                 elevation={1}
@@ -551,14 +492,11 @@ const CourseViewPage: NextPage = () => {
                 </Typography>
               </Paper>
             )}
-
-            {/* Main Content Area */}
             <Stack
               direction={{ xs: 'column', lg: viewMode === ViewMode.COMBINED_MODE ? 'row' : 'column' }}
               spacing={{ xs: 2, sm: 3 }}
               sx={{ mb: { xs: 2, sm: 3 } }}
             >
-              {/* Video Player */}
               {viewMode === ViewMode.COMBINED_MODE && (
                 <Box 
                   sx={{ 
@@ -592,7 +530,6 @@ const CourseViewPage: NextPage = () => {
                 </Box>
               )}
 
-              {/* Slide Deck */}
               <Box 
                 sx={{ 
                   flex: compositeActive ? '0' : { xs: '1', lg: '1 1 50%' },
@@ -646,8 +583,6 @@ const CourseViewPage: NextPage = () => {
                 </Paper>
               </Box>
             </Stack>
-
-            {/* Instructor Notes */}
             {(preNotes.length > 0 || postNotes.length > 0) && (
               <Paper 
                 elevation={1}
@@ -671,17 +606,6 @@ const CourseViewPage: NextPage = () => {
                   >
                     {t.instructorNotes}
                   </Typography>
-                  <Chip 
-                    label="Instructor" 
-                    size="small" 
-                    sx={{ 
-                      height: 20,
-                      fontSize: '0.75rem',
-                      bgcolor: '#ffd93d',
-                      color: '#1a1a1a',
-                      fontWeight: 600
-                    }} 
-                  />
                 </Stack>
                 <Box sx={{ 
                   overflowX: 'auto',
@@ -698,8 +622,6 @@ const CourseViewPage: NextPage = () => {
                 </Box>
               </Paper>
             )}
-
-            {/* Section Review & Quiz */}
             {selectedSectionTOC && (
               <Stack spacing={{ xs: 2, sm: 3 }}>
                 <Paper 
@@ -731,8 +653,6 @@ const CourseViewPage: NextPage = () => {
                 )}
               </Stack>
             )}
-
-            {/* Notes & Comments */}
             <Paper 
               elevation={1}
               sx={{

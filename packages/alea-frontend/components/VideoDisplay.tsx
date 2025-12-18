@@ -147,7 +147,6 @@ const MediaItem = ({
   onCompositeChange?: (active: boolean) => void;
 }) => {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const videoPlayer = useRef<any>(null);
   const autoSyncEnabled = true;
   const autoSyncRef = useRef(autoSyncEnabled);
@@ -174,14 +173,6 @@ const MediaItem = ({
       // ignore
     }
   }, [currentVideoUrl, compositeVideoId, onCompositeChange]);
-
-  useEffect(() => {
-    if (markersInDescOrder.length > 0) {
-      console.log('=== VideoDisplay Ready ===');
-      console.log('Markers:', markersInDescOrder.length);
-    }
-  }, [markersInDescOrder]);
-
   const handleMarkerClick = async (marker: Marker) => {
     const sectionUri = marker?.data?.sectionUri;
     if (!sectionUri) return;
