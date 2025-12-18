@@ -382,40 +382,7 @@ const CourseViewPage: NextPage = () => {
                       router.query.viewMode = modeStr;
                       router.replace(router);
                     }}
-                  />
-                  
-                  {/* Audio Toggle Button */}
-                  <Tooltip title={audioOnly ? "Switch to Video" : "Audio Only Mode"} placement="bottom">
-                    <Button
-                      variant={audioOnly ? 'contained' : 'outlined'}
-                      onClick={() => {
-                        const newAudioOnly = !audioOnly;
-                        localStore?.setItem('audioOnly', String(newAudioOnly));
-                        router.query.audioOnly = String(newAudioOnly);
-                        router.replace(router);
-                      }}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 500,
-                        px: { xs: 2, sm: 3 },
-                        py: 1,
-                        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                        whiteSpace: 'nowrap',
-                        minWidth: { xs: 'auto', sm: '120px' },
-                        bgcolor: audioOnly ? 'primary.main' : 'white',
-                        color: audioOnly ? 'white' : 'primary.main',
-                        borderColor: 'primary.main',
-                        '&:hover': {
-                          bgcolor: audioOnly ? 'primary.dark' : 'rgba(25, 118, 210, 0.04)',
-                          borderColor: 'primary.dark',
-                        }
-                      }}
-                    >
-                      🔊 {audioOnly ? 'Audio' : 'Video'}
-                    </Button>
-                  </Tooltip>
-
+                  />                                   
                   {courses?.[courseId]?.slides && (
                     <Tooltip title="Download slides PDF" placement="bottom">
                       <IconButton

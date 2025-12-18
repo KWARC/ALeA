@@ -56,18 +56,42 @@ function ToggleResolution({
 }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   return (
-    <Box display="flex" alignItems="center" border={'1px solid #CCC'} zIndex="1" sx={{ mb: 1 }}>
-      <IconButton onClick={() => setAudioOnly(!audioOnly)}>
-        <Tooltip title={audioOnly ? 'Show Video' : 'Audio Only'}>
+    <Box display="flex" alignItems="center" gap={1} zIndex="1" sx={{ mb: 1 }}>
+      <Tooltip title={audioOnly ? 'Show Video' : 'Audio Only'}>
+        <IconButton
+          onClick={() => setAudioOnly(!audioOnly)}
+          sx={{
+            border: '2px solid',
+            borderColor: audioOnly ? '#1976d2' : '#9e9e9e',
+            borderRadius: 2,
+            bgcolor: audioOnly ? '#e3f2fd' : 'white',
+            color: audioOnly ? '#1976d2' : '#616161',
+            '&:hover': {
+              bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
+            }
+          }}
+        >
           {audioOnly ? <VideocamIcon /> : <MusicNote />}
-        </Tooltip>
-      </IconButton>
+        </IconButton>
+      </Tooltip>
       {!audioOnly && (
         <>
-          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <SettingsIcon />
-          </IconButton>
+          <Tooltip title="Video Quality">
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              sx={{
+                border: '2px solid #9e9e9e',
+                borderRadius: 2,
+                bgcolor: 'white',
+                color: '#616161',
+                '&:hover': {
+                  bgcolor: '#f5f5f5',
+                }
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
             {availableResolutions.map((res) => (
               <MenuItem key={res} onClick={() => setResolution(res)}>
