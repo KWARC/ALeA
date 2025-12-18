@@ -1,7 +1,6 @@
 .deck-box {
   display: flex;
   justify-content: space-between;
-  // column-gap: 16px;
 }
 
 .deck-box > :nth-child(2) { /* The 'frame' or 'text-frame' */
