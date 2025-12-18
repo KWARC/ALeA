@@ -8,7 +8,17 @@ import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Menu, MenuItem } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+  Container,
+  Paper,
+  Stack,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -25,7 +35,14 @@ import {
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import {
+  Action,
+  CourseInfo,
+  getCoursePdfUrl,
+  localStore,
+  ResourceName,
+  shouldUseDrawer,
+} from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -349,36 +366,36 @@ const CourseViewPage: NextPage = () => {
         drawerAnchor="left"
       >
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
-          <Container 
-            maxWidth="xl" 
-            sx={{ 
+          <Container
+            maxWidth="xl"
+            sx={{
               py: { xs: 2, sm: 3, md: 4 },
-              px: { xs: 2, sm: 3 }
+              px: { xs: 2, sm: 3 },
             }}
           >
-            <Paper 
-              elevation={1} 
-              sx={{ 
+            <Paper
+              elevation={1}
+              sx={{
                 p: { xs: 1.5, sm: 2 },
                 mb: { xs: 2, sm: 3 },
                 borderRadius: 2,
                 bgcolor: 'white',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               }}
             >
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
                 spacing={{ xs: 1.5, sm: 2 }}
                 justifyContent="space-between"
                 alignItems={{ xs: 'stretch', sm: 'center' }}
               >
-                <Stack 
-                  direction="row" 
-                  spacing={1} 
+                <Stack
+                  direction="row"
+                  spacing={1}
                   alignItems="center"
-                  sx={{ 
+                  sx={{
                     flexWrap: 'wrap',
-                    gap: 1
+                    gap: 1,
                   }}
                 >
                   <ToggleModeButton
@@ -406,7 +423,7 @@ const CourseViewPage: NextPage = () => {
                         color: audioOnly ? '#1976d2' : '#616161',
                         '&:hover': {
                           bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
-                        }
+                        },
                       }}
                     >
                       {audioOnly ? <VideocamIcon /> : <MusicNote />}
@@ -424,7 +441,7 @@ const CourseViewPage: NextPage = () => {
                             color: '#616161',
                             '&:hover': {
                               bgcolor: '#f5f5f5',
-                            }
+                            },
                           }}
                         >
                           <SettingsIcon />
@@ -474,19 +491,18 @@ const CourseViewPage: NextPage = () => {
                           '&:hover': {
                             bgcolor: '#e3f2fd',
                             borderColor: '#1565c0',
-                          }
+                          },
                         }}
                       >
                         <PictureAsPdfIcon />
                       </IconButton>
                     </Tooltip>
                   )}
-
                 </Stack>
-                
+
                 <Link href={courses[courseId]?.notesLink ?? ''} passHref>
-                  <Button 
-                    variant="contained" 
+                  <Button
+                    variant="contained"
                     startIcon={<ArticleIcon />}
                     sx={{
                       borderRadius: 2,
@@ -498,7 +514,7 @@ const CourseViewPage: NextPage = () => {
                       color: 'white',
                       '&:hover': {
                         bgcolor: '#1565c0',
-                      }
+                      },
                     }}
                   >
                     {t.notes}
@@ -507,23 +523,23 @@ const CourseViewPage: NextPage = () => {
               </Stack>
             </Paper>
             {selectedSectionTOC && (
-              <Paper 
+              <Paper
                 elevation={1}
-                sx={{ 
+                sx={{
                   p: { xs: 2, sm: 2.5 },
                   mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
                   bgcolor: 'white',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 }}
               >
-                <Typography 
-                  variant="h5" 
-                  sx={{ 
+                <Typography
+                  variant="h5"
+                  sx={{
                     fontWeight: 600,
                     color: '#1a1a1a',
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                    lineHeight: 1.3
+                    lineHeight: 1.3,
                   }}
                 >
                   <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
@@ -531,24 +547,27 @@ const CourseViewPage: NextPage = () => {
               </Paper>
             )}
             <Stack
-              direction={{ xs: 'column', lg: viewMode === ViewMode.COMBINED_MODE ? 'row' : 'column' }}
+              direction={{
+                xs: 'column',
+                lg: viewMode === ViewMode.COMBINED_MODE ? 'row' : 'column',
+              }}
               spacing={{ xs: 2, sm: 3 }}
               sx={{ mb: { xs: 2, sm: 3 } }}
             >
               {viewMode === ViewMode.COMBINED_MODE && (
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     flex: compositeActive ? '1 1 100%' : { xs: '1', lg: '1 1 50%' },
-                    minWidth: 0
+                    minWidth: 0,
                   }}
                 >
-                  <Paper 
+                  <Paper
                     elevation={2}
-                    sx={{ 
+                    sx={{
                       borderRadius: 2,
                       overflow: 'hidden',
                       bgcolor: '#f5f5f5',
-                      border: '1px solid #e0e0e0'
+                      border: '1px solid #e0e0e0',
                     }}
                   >
                     <VideoDisplay
@@ -568,20 +587,20 @@ const CourseViewPage: NextPage = () => {
                 </Box>
               )}
 
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   flex: compositeActive ? '0' : { xs: '1', lg: '1 1 50%' },
                   minWidth: 0,
-                  display: compositeActive ? 'none' : 'block'
+                  display: compositeActive ? 'none' : 'block',
                 }}
               >
-                <Paper 
+                <Paper
                   elevation={2}
-                  sx={{ 
+                  sx={{
                     borderRadius: 2,
                     overflow: 'hidden',
                     bgcolor: 'white',
-                    border: '1px solid #e0e0e0'
+                    border: '1px solid #e0e0e0',
                   }}
                 >
                   <SlideDeck
@@ -622,7 +641,7 @@ const CourseViewPage: NextPage = () => {
               </Box>
             </Stack>
             {(preNotes.length > 0 || postNotes.length > 0) && (
-              <Paper 
+              <Paper
                 elevation={1}
                 sx={{
                   p: { xs: 2, sm: 3 },
@@ -630,31 +649,35 @@ const CourseViewPage: NextPage = () => {
                   borderRadius: 2,
                   bgcolor: '#fff9e6',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  border: '1px solid #ffeaa7'
+                  border: '1px solid #ffeaa7',
                 }}
               >
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
+                  <Typography
+                    variant="h6"
+                    sx={{
                       fontWeight: 600,
                       color: '#1a1a1a',
-                      fontSize: { xs: '1rem', sm: '1.125rem' }
+                      fontSize: { xs: '1rem', sm: '1.125rem' },
                     }}
                   >
                     {t.instructorNotes}
                   </Typography>
                 </Stack>
-                <Box sx={{ 
-                  overflowX: 'auto',
-                  '& > *': { mb: 1.5 }
-                }}>
+                <Box
+                  sx={{
+                    overflowX: 'auto',
+                    '& > *': { mb: 1.5 },
+                  }}
+                >
                   <RenderElements elements={preNotes} />
                   {preNotes.length > 0 && postNotes.length > 0 && (
-                    <Box sx={{ 
-                      my: 2, 
-                      borderTop: '2px dashed #fdcb6e' 
-                    }} />
+                    <Box
+                      sx={{
+                        my: 2,
+                        borderTop: '2px dashed #fdcb6e',
+                      }}
+                    />
                   )}
                   <RenderElements elements={postNotes} />
                 </Box>
@@ -662,13 +685,13 @@ const CourseViewPage: NextPage = () => {
             )}
             {selectedSectionTOC && (
               <Stack spacing={{ xs: 2, sm: 3 }}>
-                <Paper 
+                <Paper
                   elevation={1}
-                  sx={{ 
+                  sx={{
                     p: { xs: 2, sm: 3 },
                     borderRadius: 2,
                     bgcolor: 'white',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                   }}
                 >
                   <SectionReview
@@ -677,13 +700,13 @@ const CourseViewPage: NextPage = () => {
                   />
                 </Paper>
                 {isQuizMaker && (
-                  <Paper 
+                  <Paper
                     elevation={1}
-                    sx={{ 
+                    sx={{
                       p: { xs: 2, sm: 3 },
                       borderRadius: 2,
                       bgcolor: 'white',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     }}
                   >
                     <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
@@ -691,14 +714,14 @@ const CourseViewPage: NextPage = () => {
                 )}
               </Stack>
             )}
-            <Paper 
+            <Paper
               elevation={1}
               sx={{
                 mt: { xs: 2, sm: 3 },
                 borderRadius: 2,
                 bgcolor: 'white',
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               }}
             >
               <Box
@@ -709,23 +732,23 @@ const CourseViewPage: NextPage = () => {
                   background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
                 }}
               >
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 600, 
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
                     color: '#1a1a1a',
                     fontSize: { xs: '1rem', sm: '1.125rem' },
-                    mb: 0.5
+                    mb: 0.5,
                   }}
                 >
                   Notes & Comments
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     color: '#1976d2',
                     fontSize: { xs: '0.813rem', sm: '0.875rem' },
-                    fontWeight: 500
+                    fontWeight: 500,
                   }}
                 >
                   Your private notes and public comments for this slide.

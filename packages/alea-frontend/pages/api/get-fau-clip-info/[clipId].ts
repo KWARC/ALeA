@@ -7,8 +7,8 @@ interface CachedObject {
 }
 
 const CACHED_CLIP_INFO = new Map<string, CachedObject>();
-const FAU_TV_OEMBED_BASE_URL="https://api.video.uni-erlangen.de/services/oembed";
-const FAU_TV_BASE_URL = "https://www.fau.tv";
+const FAU_TV_OEMBED_BASE_URL = 'https://api.video.uni-erlangen.de/services/oembed';
+const FAU_TV_BASE_URL = 'https://www.fau.tv';
 
 function isFresh(cachedObject: CachedObject) {
   if (!cachedObject) return false;
@@ -19,8 +19,8 @@ function isFresh(cachedObject: CachedObject) {
 export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
   const url = `${FAU_TV_OEMBED_BASE_URL}?url=${FAU_TV_BASE_URL}/clip/id/${clipId}&format=json`;
   const { data } = await axios.get(url);
-//TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
-//TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
+  //TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
+  //TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
   const presenterUrl: string | undefined =
     (data && (data.presenter_url as string)) || (data && (data.file as string)) || undefined;
   const presentationUrl: string | undefined =

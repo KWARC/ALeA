@@ -1,4 +1,4 @@
-import {InfoOutlined } from '@mui/icons-material';
+import { InfoOutlined } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
@@ -33,7 +33,6 @@ import 'video.js/dist/video-js.css';
 import Image from 'next/image';
 import Link from 'next/link';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
-
 
 function getAvailableRes(info?: ClipDetails) {
   if (!info) return [];
@@ -347,7 +346,14 @@ const MediaItem = ({
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [markersInDescOrder, slidesUriToIndexMap, router, presenterVideoId, compositeVideoId, currentVideoUrl]);
+  }, [
+    markersInDescOrder,
+    slidesUriToIndexMap,
+    router,
+    presenterVideoId,
+    compositeVideoId,
+    currentVideoUrl,
+  ]);
 
   useEffect(() => {
     if (videoPlayer.current && timestampSec !== undefined) {
@@ -361,7 +367,9 @@ const MediaItem = ({
     const mouseX = e.clientX - rect.left;
     const timeAtCursor = (mouseX / rect.width) * videoPlayer.current?.duration();
 
-    const closestMarker = markers.find((marker) => timeAtCursor !== undefined && Math.abs(marker.time - timeAtCursor) < 1);
+    const closestMarker = markers.find(
+      (marker) => timeAtCursor !== undefined && Math.abs(marker.time - timeAtCursor) < 1
+    );
 
     if (closestMarker) {
       setTooltip(`${closestMarker.label} - ${closestMarker.time}s`);
@@ -659,9 +667,8 @@ export function VideoDisplay({
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
   const availableRes = getAvailableRes(clipDetails);
   const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
-  const compositeVideoId = (
-    (clipDetails as Record<string, unknown>)?.compositeUrl || (clipDetails as Record<string, unknown>)?.composite_url
-  ) as string | undefined;
+  const compositeVideoId = ((clipDetails as Record<string, unknown>)?.compositeUrl ||
+    (clipDetails as Record<string, unknown>)?.composite_url) as string | undefined;
   const defaultVideoId = compositeVideoId || presenterVideoId;
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -669,7 +676,10 @@ export function VideoDisplay({
   const router = useRouter();
   const markers = Object.entries(videoExtractedData || {})
     .filter(([, item]: [string, Record<string, unknown>]) => {
-      return (item.sectionId as string || '').trim() !== '' && (item.slideUri as string || '').trim() !== '';
+      return (
+        ((item.sectionId as string) || '').trim() !== '' &&
+        ((item.slideUri as string) || '').trim() !== ''
+      );
     })
     .map(([timestampKey, item]: [string, Record<string, unknown>]) => ({
       time: Math.floor(Number(timestampKey) || ((item.start_time as number) ?? 0)),
