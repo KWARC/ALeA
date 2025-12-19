@@ -1,22 +1,22 @@
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import {
   ALL_DIM_CONCEPT_PAIR,
   ALL_LO_RELATION_TYPES,
   ALL_NON_DIM_CONCEPT,
   AllLoRelationTypes,
-  getQueryResults,
   getLoRelationsOfTypeConceptAndBloomDimension,
   getSimpleLoRelations,
   LoRelationToDimAndConceptPair,
   LoRelationToNonDimConcept,
-  SparqlResponse,
 } from '@alea/spec';
 import { DimAndURIListDisplay, URIListDisplay } from '@alea/stex-react-renderer';
 import { capitalizeFirstLetter, PRIMARY_COL } from '@alea/utils';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-function processDimAndConceptData(results: { learningObject: string; relation: string; obj1: string; relatedData: string }[]) {
+function processDimAndConceptData(
+  results: { learningObject: string; relation: string; obj1: string; relatedData: string }[]
+) {
   try {
     const groupedData: Partial<Record<LoRelationToDimAndConceptPair, string[]>> = {};
     results.map(({ relation, relatedData }) => {
@@ -52,15 +52,16 @@ function processDimAndConceptData(results: { learningObject: string; relation: s
   }
 }
 
-function processNonDimConceptData(results: { learningObject: string; relation: string; obj1: string }[]) {
+function processNonDimConceptData(
+  results: { learningObject: string; relation: string; obj1: string }[]
+) {
   try {
     const groupedData = results.reduce(
       (acc: Partial<Record<LoRelationToNonDimConcept, string[]>>, { relation, obj1 }) => {
         const relationValue = relation.split('#').pop() || relation;
         const obj1Value = obj1;
-        if (!acc[relationValue]) 
-          acc[relationValue] = [];
-        
+        if (!acc[relationValue]) acc[relationValue] = [];
+
         acc[relationValue].push(obj1Value);
         return acc;
       },

@@ -91,18 +91,18 @@ export async function getCategorizedProblems(
   userLanguages: Language[]
 ): Promise<ProblemData[]> {
   const sectionLangCode = getParamFromUri(sectionUri, 'l') ?? 'en';
-  const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
+  //const conceptUrisFromCourse = await getAllConceptUrisForCourse(courseId, courseNotesUri);
+  //console.log({conceptUrisFromCourse});
   const allProblems: string[] = await getProblemsBySection(sectionUri);
-
   const categorized: ProblemData[] = await Promise.all(
     allProblems.map(async (problemUri) => {
       const labels = await getLoRelationConceptUris(problemUri);
-      const outOfSyllabusConcepts = labels.filter(
-        (label) => !conceptUrisFromCourse.includes(label)
-      );
+      //const outOfSyllabusConcepts = labels.filter(
+      //  (label) => !conceptUrisFromCourse.includes(label)
+      //);
 
-      let category: 'syllabus' | 'adventurous' =
-        outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
+      let category: 'syllabus' | 'adventurous' = 'syllabus';
+      //outOfSyllabusConcepts.length === 0 ? 'syllabus' : 'adventurous';
       let showForeignLanguageNotice = false;
       let matchedLanguage: string | undefined;
 
@@ -124,7 +124,7 @@ export async function getCategorizedProblems(
         labels,
         showForeignLanguageNotice,
         matchedLanguage,
-        outOfSyllabusConcepts: outOfSyllabusConcepts.length > 0 ? outOfSyllabusConcepts : undefined,
+        outOfSyllabusConcepts: undefined,
       } as ProblemData;
     })
   );

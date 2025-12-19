@@ -11,4 +11,5 @@ WHERE (quizId, problemId, userId, browserTimestamp_ms) IN (
     WHERE quizId = 'quiz-d579e22g'
     GROUP BY problemId, userId
 )
+AND quizId = 'quiz-d579e22g'
 ```

@@ -1,11 +1,13 @@
-import { createSafeFlamsQuery, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { getParamFromUri, waitForNSeconds } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import {
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
-  learningObjects as flamsLearningObjects,
+  learningObjects as flamsLearningObjects
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
+import { createSafeFlamsQuery } from './flams-query-creator';
+import { getAuthHeaders } from './lmp';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -98,28 +100,50 @@ export interface SparqlResponse {
   };
 }
 
-export async function getQueryResults(query: string) {
+export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
   try {
-    const resp = await axios.post(
-      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
-      { query },
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
+    return axios.post(
+      '/api/set-use-rdf-encode-uri',
+      { useRdfEncodeUri },
+      { headers: getAuthHeaders() }
     );
-    return resp.data as SparqlResponse;
   } catch (error) {
-    console.error('Error executing SPARQL query:', error);
+    console.error('Error setting use RDF encode URI:', error);
     throw error;
   }
 }
 
-async function getParameterizedQueryResults(
+export async function getUseRdfEncodeUri() {
+  try {
+    const response = await axios.get('/api/get-use-rdf-encode-uri');
+    return response.data.useRdfEncodeUri;
+  } catch (error) {
+    console.error('Error getting use RDF encode URI:', error);
+    throw error;
+  }
+}
+
+export async function getParameterizedQueryResults(
   parameterizedQuery: string,
-  uriParams: Record<string, string | string[]>
+  uriParams: Record<string, string | string[]> = {}
 ) {
   const query = createSafeFlamsQuery(parameterizedQuery, uriParams);
-  return await getQueryResults(query);
+  try {
+    const resp = await axios.post(
+      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
+      new URLSearchParams({ query }),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        // Allow all status codes so we can forward them as-is instead of throwing on non-2xx.
+        validateStatus: () => true,
+      }
+    );
+
+    return resp.data as SparqlResponse;
+  } catch (error) {
+    console.error('Error executing parameterized SPARQL query:', error);
+    throw error;
+  }
 }
 
 const DEFAULT_URI_PARAM_PREFIX = '_uri_param';
@@ -135,7 +159,10 @@ function buildSearchUriQuery(parts: string[]): string {
   if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
 
   const filterConditions = parts
-    .map((_part, idx) => `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`)
+    .map(
+      (_part, idx) =>
+        `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`
+    )
     .join('.\n  ');
 
   return `
@@ -174,7 +201,7 @@ export async function getDefiniedaInSection(sectionUri: string): Promise<Concept
   );
 }
 
-const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?q ?s 
+const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?uri ?q ?s 
 WHERE { VALUES ?uri { <_multiuri_section_uris> } ?uri (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
 
 export async function getDefiniedaInSections(
@@ -393,7 +420,7 @@ WHERE {
 }`;
 
 export async function getNonDimConcepts() {
-  const results = await getQueryResults(TEMPL_GET_NON_DIM_CONCEPTS);
+  const results = await getParameterizedQueryResults(TEMPL_GET_NON_DIM_CONCEPTS);
   return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 
@@ -414,7 +441,7 @@ WHERE {
 }`;
 
 export async function getDimConcepts() {
-  const results = await getQueryResults(TEMPL_GET_DIM_CONCEPTS);
+  const results = await getParameterizedQueryResults(TEMPL_GET_DIM_CONCEPTS);
   return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 

@@ -18,8 +18,9 @@ async function getUserQuizResponseOrSetError(quizId: string, userId: string, res
         FROM grading
         WHERE quizId = ? AND userId = ?
         GROUP BY problemId
-    )`,
-    [quizId, userId],
+    )
+    AND quizId = ? AND userId = ?`,
+    [quizId, userId, quizId, userId],
     res
   );
   if (!results) return undefined;
@@ -162,10 +163,15 @@ export default async function handler(
     return;
   }
   const isModerator = await isQuizModerator(userId, courseId, courseTerm);
+  let targetUserId = userId;
+  if (isModerator) {
+    const inputTargetUserId = req.query.targetUserId as string;
+    if (inputTargetUserId) targetUserId = inputTargetUserId;
+  }
   const phase = getQuizPhase(quizInfo);
   const quizTimes = getQuizTimes(quizInfo);
   const problems = getPhaseAppropriateProblems(quizInfo.problems, isModerator, phase);
-  const responses = await getResponsesOrSetError(quizId, isModerator, phase, userId, res);
+  const responses = await getResponsesOrSetError(quizId, isModerator, phase, targetUserId, res);
   if (!responses) return;
 
   res.status(200).json({
@@ -175,7 +181,7 @@ export default async function handler(
     ...quizTimes,
     phase,
     css: quizInfo.css,
-    problems: reorderBasedOnUserId(isModerator, problems, userId),
+    problems: reorderBasedOnUserId(isModerator, problems, targetUserId),
     responses,
   } as GetQuizResponse);
 

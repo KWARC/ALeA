@@ -1,6 +1,5 @@
 export * from './lib/courseInfo';
 export * from './lib/datetime';
-export * from './lib/flams-query-creator';
 export * from './lib/resource-action-utils';
 export * from './lib/semester-dates';
 export * from './lib/universities';
