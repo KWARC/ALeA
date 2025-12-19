@@ -51,8 +51,7 @@ import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { VideoDisplay } from '../../components/VideoDisplay';
-import { SlidesUriToIndexMap } from '../../components/MediaItem';
+import { VideoDisplay,SlidesUriToIndexMap } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 
