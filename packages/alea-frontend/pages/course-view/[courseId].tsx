@@ -1,7 +1,7 @@
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
-import { VideoCameraBack } from '@mui/icons-material';
+import { VideoCameraBack, Person, Slideshow } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CheckIcon from '@mui/icons-material/Check';
 import { MusicNote } from '@mui/icons-material';
@@ -51,7 +51,8 @@ import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
+import { VideoDisplay } from '../../components/VideoDisplay';
+import { SlidesUriToIndexMap } from '../../components/MediaItem';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 
@@ -214,6 +215,12 @@ const CourseViewPage: NextPage = () => {
   const [resolution, setResolution] = useState(720);
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const availableResolutions = [360, 720, 1080];
+  const [videoMode, setVideoMode] = useState<'presenter' | 'presentation' | null>(() => {
+    const saved = localStore?.getItem('videoMode');
+    if (saved === 'presenter' || saved === 'presentation') return saved;
+    return null;
+  });
+  const [videoModeAnchorEl, setVideoModeAnchorEl] = useState<null | HTMLElement>(null);
 
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
@@ -265,6 +272,15 @@ const CourseViewPage: NextPage = () => {
     });
   }, [courseId, router.isReady]);
 
+  // Initialize currentClipId from sectionId when page loads
+  useEffect(() => {
+    if (!router.isReady || !sectionId || !clipIds || Object.keys(clipIds).length === 0) return;
+    // Only initialize if currentClipId is empty (not set by user selection)
+    if (!currentClipId && clipIds[sectionId]) {
+      setCurrentClipId(clipIds[sectionId]);
+    }
+  }, [router.isReady, sectionId, clipIds, currentClipId]);
+
   useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
     getSlideDetails(courseId, currentClipId)
@@ -305,11 +321,9 @@ const CourseViewPage: NextPage = () => {
     if (someParamMissing) router.replace({ pathname, query });
   }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
 
-  useEffect(() => {
-    if (!sectionId) return;
-    const newClipId = clipIds?.[sectionId];
-    setCurrentClipId(newClipId);
-  }, [slidesClipInfo, clipIds, sectionId]);
+  // NOTE: We intentionally do NOT auto-change clipId when section changes.
+  // - clipId is controlled by the user (clip selector) or initial load
+  // - auto-sync from video updates section/slide, but must not switch clipId
 
   function goToPrevSection() {
     const secIdx = courseSections.indexOf(sectionId);
@@ -355,6 +369,13 @@ const CourseViewPage: NextPage = () => {
               selectedSection={sectionId}
               onClose={() => setShowDashboard(false)}
               onSectionClick={(sectionId: string) => {
+                // When user explicitly selects a section from TOC:
+                // 1. Switch clipId to that section's clip (if available)
+                // 2. Navigate slides to that section
+                const newClipId = clipIds?.[sectionId];
+                if (newClipId) {
+                  setCurrentClipId(newClipId);
+                }
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
             />
@@ -469,6 +490,67 @@ const CourseViewPage: NextPage = () => {
                           </MenuItem>
                         ))}
                       </Menu>
+                      <Tooltip title="Video View Mode" placement="bottom">
+                        <IconButton
+                          onClick={(e) => setVideoModeAnchorEl(e.currentTarget)}
+                          sx={{
+                            border: '2px solid #9e9e9e',
+                            borderRadius: 2,
+                            bgcolor: videoMode ? '#e3f2fd' : 'white',
+                            color: videoMode ? '#1976d2' : '#616161',
+                            '&:hover': {
+                              bgcolor: videoMode ? '#bbdefb' : '#f5f5f5',
+                            },
+                          }}
+                        >
+                          {videoMode === 'presenter' ? <Person /> : videoMode === 'presentation' ? <Slideshow /> : <VideocamIcon />}
+                        </IconButton>
+                      </Tooltip>
+                      <Menu
+                        anchorEl={videoModeAnchorEl}
+                        open={Boolean(videoModeAnchorEl)}
+                        onClose={() => setVideoModeAnchorEl(null)}
+                      >
+                        <MenuItem
+                          onClick={() => {
+                            setVideoMode(null);
+                            localStore?.setItem('videoMode', '');
+                            setVideoModeAnchorEl(null);
+                          }}
+                        >
+                          <CheckIcon
+                            fontSize="small"
+                            sx={{ color: videoMode === null ? undefined : '#00000000' }}
+                          />
+                          &nbsp;Auto
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            setVideoMode('presenter');
+                            localStore?.setItem('videoMode', 'presenter');
+                            setVideoModeAnchorEl(null);
+                          }}
+                        >
+                          <CheckIcon
+                            fontSize="small"
+                            sx={{ color: videoMode === 'presenter' ? undefined : '#00000000' }}
+                          />
+                          &nbsp;Presenter
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            setVideoMode('presentation');
+                            localStore?.setItem('videoMode', 'presentation');
+                            setVideoModeAnchorEl(null);
+                          }}
+                        >
+                          <CheckIcon
+                            fontSize="small"
+                            sx={{ color: videoMode === 'presentation' ? undefined : '#00000000' }}
+                          />
+                          &nbsp;Presentation
+                        </MenuItem>
+                      </Menu>
                     </>
                   )}
                   {courses?.[courseId]?.slides && (
@@ -582,6 +664,9 @@ const CourseViewPage: NextPage = () => {
                       slidesUriToIndexMap={slidesUriToIndexMap}
                       onVideoLoad={handleVideoLoad}
                       onVideoTypeChange={setHasPresentationOrComposite}
+                      videoMode={videoMode}
+                      currentSectionId={sectionId}
+                      currentSlideUri={currentSlideUri}
                     />
                   </Paper>
                 </Box>

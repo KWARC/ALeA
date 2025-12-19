@@ -82,6 +82,9 @@ const MediaItem = ({
   compositeVideoId,
   presentationVideoId,
   onVideoTypeChange,
+  videoMode,
+  currentSectionId,
+  currentSlideUri,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -96,6 +99,9 @@ const MediaItem = ({
   compositeVideoId?: string;
   presentationVideoId?: string;
   onVideoTypeChange?: (isPlayingCompositeOrPresentation: boolean) => void;
+  videoMode?: 'presenter' | 'presentation' | null;
+  currentSectionId?: string;
+  currentSlideUri?: string;
 }) => {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const videoPlayer = useRef<any>(null);
@@ -115,6 +121,21 @@ const MediaItem = ({
   useEffect(() => {
     setCurrentVideoUrl(videoId);
   }, [videoId]);
+
+  // Update video URL when videoMode changes
+  useEffect(() => {
+    if (videoMode === 'presenter' && presenterVideoId) {
+      setCurrentVideoUrl(presenterVideoId);
+    } else if (videoMode === 'presentation') {
+      const targetVideoId = presentationVideoId || compositeVideoId;
+      if (targetVideoId) {
+        setCurrentVideoUrl(targetVideoId);
+      }
+    } else if (videoMode === null) {
+      // Auto mode: use the default videoId passed as prop
+      setCurrentVideoUrl(videoId);
+    }
+  }, [videoMode, presenterVideoId, presentationVideoId, compositeVideoId, videoId]);
 
   // Track when composite or presentation video is actively playing
   useEffect(() => {
@@ -331,13 +352,35 @@ const MediaItem = ({
             setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
           }
         }
-        if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
+        // Only auto-switch videos if videoMode is null (Auto mode)
+        // If user has manually selected presenter or presentation, respect that choice
+        if (videoMode === null) {
+          if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
+            setCurrentVideoUrl(presenterVideoId);
+          }
+        } else if (videoMode === 'presenter' && presenterVideoId && currentVideoUrl !== presenterVideoId) {
           setCurrentVideoUrl(presenterVideoId);
+        } else if (videoMode === 'presentation') {
+          const targetVideoId = presentationVideoId || compositeVideoId;
+          if (targetVideoId && currentVideoUrl !== targetVideoId) {
+            setCurrentVideoUrl(targetVideoId);
+          }
         }
       } else {
-        const fallbackVideoId = presentationVideoId || compositeVideoId;
-        if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
-          setCurrentVideoUrl(fallbackVideoId);
+        // When no marker is found, use fallback logic based on videoMode
+        if (videoMode === null) {
+          // Auto mode: prefer presentation/composite
+          const fallbackVideoId = presentationVideoId || compositeVideoId;
+          if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
+            setCurrentVideoUrl(fallbackVideoId);
+          }
+        } else if (videoMode === 'presenter' && presenterVideoId && currentVideoUrl !== presenterVideoId) {
+          setCurrentVideoUrl(presenterVideoId);
+        } else if (videoMode === 'presentation') {
+          const targetVideoId = presentationVideoId || compositeVideoId;
+          if (targetVideoId && currentVideoUrl !== targetVideoId) {
+            setCurrentVideoUrl(targetVideoId);
+          }
         }
         lastSyncedMarkerTime.current = null;
       }
@@ -355,6 +398,7 @@ const MediaItem = ({
     compositeVideoId,
     presentationVideoId,
     currentVideoUrl,
+    videoMode,
   ]);
 
   useEffect(() => {
@@ -650,6 +694,9 @@ export function VideoDisplay({
   slidesUriToIndexMap,
   onVideoLoad,
   onVideoTypeChange,
+  videoMode,
+  currentSectionId,
+  currentSlideUri,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -664,6 +711,9 @@ export function VideoDisplay({
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   onVideoLoad: (status: boolean) => void;
   onVideoTypeChange?: (hasPresentationOrComposite: boolean) => void;
+  videoMode?: 'presenter' | 'presentation' | null;
+  currentSectionId?: string;
+  currentSlideUri?: string;
 }) {
   const [resolution, setResolution] = useState(720);
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
@@ -673,8 +723,19 @@ export function VideoDisplay({
     (clipDetails as Record<string, unknown>)?.composite_url) as string | undefined;
   const presentationVideoId = ((clipDetails as Record<string, unknown>)?.presentationUrl ||
     (clipDetails as Record<string, unknown>)?.presentation_url) as string | undefined;
-  // Prefer presentationVideoId, then compositeVideoId, then presenterVideoId
-  const defaultVideoId = presentationVideoId || compositeVideoId || presenterVideoId;
+  
+  // Determine initial video ID based on videoMode
+  // If videoMode is set, use that; otherwise use auto logic (prefer presentation/composite)
+  const defaultVideoId = useMemo(() => {
+    if (videoMode === 'presenter') {
+      return presenterVideoId || compositeVideoId || presentationVideoId;
+    } else if (videoMode === 'presentation') {
+      return presentationVideoId || compositeVideoId || presenterVideoId;
+    } else {
+      // Auto mode: prefer presentationVideoId, then compositeVideoId, then presenterVideoId
+      return presentationVideoId || compositeVideoId || presenterVideoId;
+    }
+  }, [videoMode, presenterVideoId, compositeVideoId, presentationVideoId]);
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
@@ -793,6 +854,9 @@ export function VideoDisplay({
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
           onVideoTypeChange={onVideoTypeChange}
+          videoMode={videoMode}
+          currentSectionId={currentSectionId}
+          currentSlideUri={currentSlideUri}
         />
       </Box>
     </>
