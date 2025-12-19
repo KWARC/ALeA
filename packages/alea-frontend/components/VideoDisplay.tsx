@@ -80,7 +80,8 @@ const MediaItem = ({
   slidesUriToIndexMap,
   presenterVideoId,
   compositeVideoId,
-  onCompositeChange,
+  presentationVideoId,
+  onVideoTypeChange,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -93,7 +94,8 @@ const MediaItem = ({
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   presenterVideoId?: string;
   compositeVideoId?: string;
-  onCompositeChange?: (active: boolean) => void;
+  presentationVideoId?: string;
+  onVideoTypeChange?: (isPlayingCompositeOrPresentation: boolean) => void;
 }) => {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const videoPlayer = useRef<any>(null);
@@ -114,14 +116,12 @@ const MediaItem = ({
     setCurrentVideoUrl(videoId);
   }, [videoId]);
 
+  // Track when composite or presentation video is actively playing
   useEffect(() => {
-    try {
-      const isComposite = !!(compositeVideoId && currentVideoUrl === compositeVideoId);
-      onCompositeChange?.(isComposite);
-    } catch (err) {
-      // ignore
-    }
-  }, [currentVideoUrl, compositeVideoId, onCompositeChange]);
+    const isPlayingCompositeOrPresentation = 
+      currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
+    onVideoTypeChange?.(isPlayingCompositeOrPresentation);
+  }, [currentVideoUrl, compositeVideoId, presentationVideoId, onVideoTypeChange]);
   const handleMarkerClick = async (marker: Marker) => {
     const sectionUri = marker?.data?.sectionUri;
     if (!sectionUri) return;
@@ -335,8 +335,9 @@ const MediaItem = ({
           setCurrentVideoUrl(presenterVideoId);
         }
       } else {
-        if (compositeVideoId && currentVideoUrl !== compositeVideoId) {
-          setCurrentVideoUrl(compositeVideoId);
+        const fallbackVideoId = presentationVideoId || compositeVideoId;
+        if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
+          setCurrentVideoUrl(fallbackVideoId);
         }
         lastSyncedMarkerTime.current = null;
       }
@@ -352,6 +353,7 @@ const MediaItem = ({
     router,
     presenterVideoId,
     compositeVideoId,
+    presentationVideoId,
     currentVideoUrl,
   ]);
 
@@ -647,7 +649,7 @@ export function VideoDisplay({
   videoExtractedData,
   slidesUriToIndexMap,
   onVideoLoad,
-  onCompositeChange,
+  onVideoTypeChange,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -661,7 +663,7 @@ export function VideoDisplay({
   };
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   onVideoLoad: (status: boolean) => void;
-  onCompositeChange?: (active: boolean) => void;
+  onVideoTypeChange?: (hasPresentationOrComposite: boolean) => void;
 }) {
   const [resolution, setResolution] = useState(720);
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
@@ -669,7 +671,10 @@ export function VideoDisplay({
   const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
   const compositeVideoId = ((clipDetails as Record<string, unknown>)?.compositeUrl ||
     (clipDetails as Record<string, unknown>)?.composite_url) as string | undefined;
-  const defaultVideoId = compositeVideoId || presenterVideoId;
+  const presentationVideoId = ((clipDetails as Record<string, unknown>)?.presentationUrl ||
+    (clipDetails as Record<string, unknown>)?.presentation_url) as string | undefined;
+  // Prefer presentationVideoId, then compositeVideoId, then presenterVideoId
+  const defaultVideoId = presentationVideoId || compositeVideoId || presenterVideoId;
   const [isLoading, setIsLoading] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
@@ -709,6 +714,8 @@ export function VideoDisplay({
   useEffect(() => {
     setResolution(+(localStore?.getItem('defaultResolution') || '720'));
   }, []);
+
+  // Track when composite or presentation video is actively playing (handled in MediaItem)
   const handleKeyPress = (e) => {
     if (e.key === 'Shift') setReveal(true);
   };
@@ -776,6 +783,7 @@ export function VideoDisplay({
           videoId={defaultVideoId}
           presenterVideoId={presenterVideoId}
           compositeVideoId={compositeVideoId}
+          presentationVideoId={presentationVideoId}
           clipId={clipId}
           clipIds={clipIds}
           timestampSec={timestampSec}
@@ -784,7 +792,7 @@ export function VideoDisplay({
           thumbnail={clipDetails?.thumbnailUrl}
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
-          onCompositeChange={onCompositeChange}
+          onVideoTypeChange={onVideoTypeChange}
         />
       </Box>
     </>

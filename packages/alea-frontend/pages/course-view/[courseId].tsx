@@ -207,7 +207,7 @@ const CourseViewPage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [timestampSec, setTimestampSec] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [compositeActive, setCompositeActive] = useState(false);
+  const [hasPresentationOrComposite, setHasPresentationOrComposite] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
@@ -557,7 +557,7 @@ const CourseViewPage: NextPage = () => {
               {viewMode === ViewMode.COMBINED_MODE && (
                 <Box
                   sx={{
-                    flex: compositeActive ? '1 1 100%' : { xs: '1', lg: '1 1 50%' },
+                    flex: hasPresentationOrComposite ? '1 1 100%' : { xs: '1', lg: '1 1 50%' },
                     minWidth: 0,
                   }}
                 >
@@ -581,7 +581,7 @@ const CourseViewPage: NextPage = () => {
                       videoExtractedData={videoExtractedData}
                       slidesUriToIndexMap={slidesUriToIndexMap}
                       onVideoLoad={handleVideoLoad}
-                      onCompositeChange={setCompositeActive}
+                      onVideoTypeChange={setHasPresentationOrComposite}
                     />
                   </Paper>
                 </Box>
@@ -589,9 +589,9 @@ const CourseViewPage: NextPage = () => {
 
               <Box
                 sx={{
-                  flex: compositeActive ? '0' : { xs: '1', lg: '1 1 50%' },
+                  flex: hasPresentationOrComposite ? '0' : { xs: '1', lg: '1 1 50%' },
                   minWidth: 0,
-                  display: compositeActive ? 'none' : 'block',
+                  display: hasPresentationOrComposite ? 'none' : 'block',
                 }}
               >
                 <Paper
