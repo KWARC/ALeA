@@ -148,9 +148,6 @@ const MediaItem = ({
   const markersInDescOrder = useMemo(() => {
     return [...markers].sort((a, b) => b.time - a.time);
   }, [markers]);
-  useEffect(() => {
-    setCurrentVideoUrl(videoId);
-  }, [videoId]);
 
   useEffect(() => {
     if (videoMode === 'presenter' && presenterVideoId) {
@@ -769,7 +766,7 @@ export function VideoDisplay({
   currentSectionId?: string;
   currentSlideUri?: string;
 }) {
-  const [resolution, setResolution] = useState(720);
+  const [resolution] = useState(+(localStore?.getItem('defaultResolution') || '720'));
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
   const availableRes = getAvailableRes(clipDetails);
   const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
@@ -821,10 +818,6 @@ export function VideoDisplay({
       setClipDetails(resp.data);
     });
   }, [clipId]);
-
-  useEffect(() => {
-    setResolution(+(localStore?.getItem('defaultResolution') || '720'));
-  }, []);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Shift') setReveal(true);
