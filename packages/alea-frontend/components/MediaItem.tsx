@@ -1,19 +1,9 @@
 import { formatTime, getParamFromUri, languageUrlMap, PathToTour2 } from '@alea/utils';
-import {
-  ClipInfo,
-  ClipMetadata,
-  getDefiniedaInSectionAgg,
-} from '@alea/spec';
+import { ClipInfo, ClipMetadata, getDefiniedaInSectionAgg } from '@alea/spec';
 import { Box, CircularProgress, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from 'next/router';
-import {
-  MutableRefObject,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import Image from 'next/image';
@@ -34,7 +24,6 @@ export interface Marker {
     ocr_slide_content?: string;
   };
 }
-
 
 export function MediaItem({
   audioOnly,
@@ -629,4 +618,3 @@ export function MediaItem({
     </>
   );
 }
-
