@@ -51,7 +51,7 @@ import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { VideoDisplay,SlidesUriToIndexMap } from '../../components/VideoDisplay';
+import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 
@@ -271,14 +271,26 @@ const CourseViewPage: NextPage = () => {
     });
   }, [courseId, router.isReady]);
 
-  // Initialize currentClipId from sectionId when page loads
   useEffect(() => {
     if (!router.isReady || !sectionId || !clipIds || Object.keys(clipIds).length === 0) return;
-    // Only initialize if currentClipId is empty (not set by user selection)
-    if (!currentClipId && clipIds[sectionId]) {
-      setCurrentClipId(clipIds[sectionId]);
+    const newClipId = clipIds[sectionId];
+    if (!newClipId) return;
+    if (!currentClipId) {
+      setCurrentClipId(newClipId);
+      return;
     }
-  }, [router.isReady, sectionId, clipIds, currentClipId]);
+
+    const sectionExistsInCurrentClip =
+      slidesClipInfo?.[sectionId] &&
+      Object.values(slidesClipInfo[sectionId] || {}).some(
+        (clips: ClipInfo[]) =>
+          Array.isArray(clips) && clips.some((clip) => clip.video_id === currentClipId)
+      );
+
+    if (newClipId !== currentClipId && !sectionExistsInCurrentClip) {
+      setCurrentClipId(newClipId);
+    }
+  }, [router.isReady, sectionId, clipIds, currentClipId, slidesClipInfo]);
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
@@ -319,10 +331,6 @@ const CourseViewPage: NextPage = () => {
     }
     if (someParamMissing) router.replace({ pathname, query });
   }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
-
-  // NOTE: We intentionally do NOT auto-change clipId when section changes.
-  // - clipId is controlled by the user (clip selector) or initial load
-  // - auto-sync from video updates section/slide, but must not switch clipId
 
   function goToPrevSection() {
     const secIdx = courseSections.indexOf(sectionId);
@@ -368,9 +376,6 @@ const CourseViewPage: NextPage = () => {
               selectedSection={sectionId}
               onClose={() => setShowDashboard(false)}
               onSectionClick={(sectionId: string) => {
-                // When user explicitly selects a section from TOC:
-                // 1. Switch clipId to that section's clip (if available)
-                // 2. Navigate slides to that section
                 const newClipId = clipIds?.[sectionId];
                 if (newClipId) {
                   setCurrentClipId(newClipId);
@@ -502,7 +507,13 @@ const CourseViewPage: NextPage = () => {
                             },
                           }}
                         >
-                          {videoMode === 'presenter' ? <Person /> : videoMode === 'presentation' ? <Slideshow /> : <VideocamIcon />}
+                          {videoMode === 'presenter' ? (
+                            <Person />
+                          ) : videoMode === 'presentation' ? (
+                            <Slideshow />
+                          ) : (
+                            <VideocamIcon />
+                          )}
                         </IconButton>
                       </Tooltip>
                       <Menu
@@ -774,7 +785,7 @@ const CourseViewPage: NextPage = () => {
                   sectionTitle={selectedSectionTOC.title}
                 />
                 {isQuizMaker && (
-                    <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
+                  <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
                 )}
               </Stack>
             )}

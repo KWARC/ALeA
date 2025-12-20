@@ -152,7 +152,6 @@ const MediaItem = ({
     setCurrentVideoUrl(videoId);
   }, [videoId]);
 
-  // Update video URL when videoMode changes
   useEffect(() => {
     if (videoMode === 'presenter' && presenterVideoId) {
       setCurrentVideoUrl(presenterVideoId);
@@ -162,12 +161,9 @@ const MediaItem = ({
         setCurrentVideoUrl(targetVideoId);
       }
     } else if (videoMode === null) {
-      // Auto mode: use the default videoId passed as prop
       setCurrentVideoUrl(videoId);
     }
   }, [videoMode, presenterVideoId, presentationVideoId, compositeVideoId, videoId]);
-
-  // Track when composite or presentation video is actively playing
   useEffect(() => {
     const isPlayingCompositeOrPresentation =
       currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
@@ -382,8 +378,6 @@ const MediaItem = ({
             setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
           }
         }
-        // Only auto-switch videos if videoMode is null (Auto mode)
-        // If user has manually selected presenter or presentation, respect that choice
         if (videoMode === null) {
           if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
             setCurrentVideoUrl(presenterVideoId);
@@ -401,9 +395,7 @@ const MediaItem = ({
           }
         }
       } else {
-        // When no marker is found, use fallback logic based on videoMode
         if (videoMode === null) {
-          // Auto mode: prefer presentation/composite
           const fallbackVideoId = presentationVideoId || compositeVideoId;
           if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
             setCurrentVideoUrl(fallbackVideoId);
@@ -447,10 +439,10 @@ const MediaItem = ({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const progressBar = videoPlayer.current?.controlBar.progressControl.seekBar.el() as HTMLElement;
+    if (!progressBar) return;
     const rect = progressBar.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const timeAtCursor = (mouseX / rect.width) * videoPlayer.current?.duration();
-
     const closestMarker = markers.find(
       (marker) => timeAtCursor !== undefined && Math.abs(marker.time - timeAtCursor) < 1
     );
@@ -785,16 +777,12 @@ export function VideoDisplay({
     (clipDetails as Record<string, unknown>)?.composite_url) as string | undefined;
   const presentationVideoId = ((clipDetails as Record<string, unknown>)?.presentationUrl ||
     (clipDetails as Record<string, unknown>)?.presentation_url) as string | undefined;
-
-  // Determine initial video ID based on videoMode
-  // If videoMode is set, use that; otherwise use auto logic (prefer presentation/composite)
   const defaultVideoId = useMemo(() => {
     if (videoMode === 'presenter') {
       return presenterVideoId || compositeVideoId || presentationVideoId;
     } else if (videoMode === 'presentation') {
       return presentationVideoId || compositeVideoId || presenterVideoId;
     } else {
-      // Auto mode: prefer presentationVideoId, then compositeVideoId, then presenterVideoId
       return presentationVideoId || compositeVideoId || presenterVideoId;
     }
   }, [videoMode, presenterVideoId, compositeVideoId, presentationVideoId]);
@@ -838,7 +826,6 @@ export function VideoDisplay({
     setResolution(+(localStore?.getItem('defaultResolution') || '720'));
   }, []);
 
-  // Track when composite or presentation video is actively playing (handled in MediaItem)
   const handleKeyPress = (e) => {
     if (e.key === 'Shift') setReveal(true);
   };
