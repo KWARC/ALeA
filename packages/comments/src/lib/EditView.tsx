@@ -1,5 +1,9 @@
 import { FTML } from '@flexiformal/ftml';
-import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Button, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
   Comment,
   CommentType,
@@ -114,8 +118,46 @@ export function EditView({
   };
 
   return (
-    <fieldset hidden={hidden} disabled={isLoading} style={{ border: 0, margin: 0, padding: 0 }}>
-      <div style={{ marginBottom: '5px' }}>
+    <Box
+      sx={{
+        display: hidden ? 'none' : 'block',
+        opacity: isLoading ? 0.6 : 1,
+        pointerEvents: isLoading ? 'none' : 'auto',
+        transition: 'opacity 0.2s ease',
+      }}
+    >
+      <Box
+        sx={{
+          mb: 2,
+          '& .myst-editor': {
+            borderRadius: 2,
+            border: '1.5px solid',
+            borderColor: 'divider',
+            transition: 'all 0.2s ease',
+            backgroundColor: 'background.paper',
+            '&:hover': {
+              borderColor: 'rgba(102, 126, 234, 0.3)',
+            },
+            '&:focus-within': {
+              borderColor: '#667eea',
+              borderWidth: '2px',
+              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+            },
+          },
+          '& .myst-editor textarea, & .myst-editor [contenteditable]': {
+            fontSize: '15px',
+            lineHeight: 1.6,
+            color: 'text.primary',
+            padding: '14px 16px',
+            minHeight: '100px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '&::placeholder': {
+              color: 'text.secondary',
+              opacity: 0.6,
+            },
+          },
+        }}
+      >
         <MystEditor
           name="comment-edit"
           placeholder={placeholder}
@@ -125,41 +167,105 @@ export function EditView({
             saveDraft(uri ?? '', parentId, v);
           }}
         />
-        {!existingComment && !parentId && !isPrivateNote ? (
+      </Box>
+      {!existingComment && !parentId && !isPrivateNote && (
+        <Box sx={{ mb: 2 }}>
           <FormControlLabel
             control={
               <Checkbox
                 checked={needsResponse}
                 onChange={(e) => setNeedsResponse(e.target.checked)}
+                sx={{
+                  color: 'primary.main',
+                  '&.Mui-checked': {
+                    color: 'primary.main',
+                  },
+                }}
               />
             }
-            label={t.requestResponse}
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <HelpOutlineIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{t.requestResponse}</span>
+              </Box>
+            }
           />
-        ) : null}
-      </div>
-
-      <Box textAlign="right" mb="10px">
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1.5,
+          alignItems: 'center',
+        }}
+      >
         {onCancel && (
           <Button
-            variant="contained"
+            variant="outlined"
             disabled={isLoading}
-            hidden={hidden}
             onClick={(_) => onCancel && onCancel()}
-            sx={{ mr: '10px' }}
+            startIcon={<CloseIcon />}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: 14,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              borderColor: 'divider',
+              color: 'text.secondary',
+              '&:hover': {
+                borderColor: 'text.secondary',
+                backgroundColor: 'action.hover',
+              },
+            }}
           >
             {t.cancel}
           </Button>
         )}
+
         <Button
           variant="contained"
           type="submit"
           disabled={!inputText || isLoading}
-          hidden={hidden}
           onClick={(_) => addUpdateComment()}
+          startIcon={
+            isLoading ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : existingComment ? (
+              <SaveIcon />
+            ) : isPrivateNote ? (
+              <SaveIcon />
+            ) : (
+              <SendIcon />
+            )
+          }
+          sx={{
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: 14,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+              transform: 'translateY(-1px)',
+            },
+            '&:disabled': {
+              background: 'rgba(0, 0, 0, 0.12)',
+              color: 'rgba(0, 0, 0, 0.26)',
+              boxShadow: 'none',
+            },
+            transition: 'all 0.2s ease',
+          }}
         >
           {existingComment ? t.update : isPrivateNote ? t.save : t.post}
         </Button>
       </Box>
-    </fieldset>
+    </Box>
   );
 }
