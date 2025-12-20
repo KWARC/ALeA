@@ -55,6 +55,7 @@ import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 
+// DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
     <>
