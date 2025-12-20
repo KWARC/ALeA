@@ -115,6 +115,36 @@ const MediaItem = ({
   const [conceptsUri, setConceptsUri] = useState<string[]>([]);
   const [loadingConcepts, setLoadingConcepts] = useState(false);
   const conceptsCache = useRef<Record<string, string[]>>({});
+  const [isAwayFromSection, setIsAwayFromSection] = useState(false);
+  const currentSectionRange = useMemo(() => {
+    if (!markers || !currentSectionId) return null;
+    const sectionMarkers = markers
+      .filter((m) => m.data.sectionId === currentSectionId)
+      .sort((a, b) => a.time - b.time);
+
+    if (sectionMarkers.length === 0) return null;
+
+    const start = sectionMarkers[0].time;
+    const end = sectionMarkers[sectionMarkers.length - 1].time + 1;
+
+    return { start, end };
+  }, [markers, currentSectionId]);
+
+  useEffect(() => {
+    const player = videoPlayer.current;
+    if (!player || !currentSectionRange) return;
+
+    const onTimeUpdate = () => {
+      const t = player.currentTime();
+      setIsAwayFromSection(t < currentSectionRange.start || t > currentSectionRange.end);
+    };
+
+    player.on('timeupdate', onTimeUpdate);
+    return () => {
+      player.off('timeupdate', onTimeUpdate);
+    };
+  }, [currentSectionRange]);
+
   const markersInDescOrder = useMemo(() => {
     return [...markers].sort((a, b) => b.time - a.time);
   }, [markers]);
@@ -139,7 +169,7 @@ const MediaItem = ({
 
   // Track when composite or presentation video is actively playing
   useEffect(() => {
-    const isPlayingCompositeOrPresentation = 
+    const isPlayingCompositeOrPresentation =
       currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
     onVideoTypeChange?.(isPlayingCompositeOrPresentation);
   }, [currentVideoUrl, compositeVideoId, presentationVideoId, onVideoTypeChange]);
@@ -358,7 +388,11 @@ const MediaItem = ({
           if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
             setCurrentVideoUrl(presenterVideoId);
           }
-        } else if (videoMode === 'presenter' && presenterVideoId && currentVideoUrl !== presenterVideoId) {
+        } else if (
+          videoMode === 'presenter' &&
+          presenterVideoId &&
+          currentVideoUrl !== presenterVideoId
+        ) {
           setCurrentVideoUrl(presenterVideoId);
         } else if (videoMode === 'presentation') {
           const targetVideoId = presentationVideoId || compositeVideoId;
@@ -374,7 +408,11 @@ const MediaItem = ({
           if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
             setCurrentVideoUrl(fallbackVideoId);
           }
-        } else if (videoMode === 'presenter' && presenterVideoId && currentVideoUrl !== presenterVideoId) {
+        } else if (
+          videoMode === 'presenter' &&
+          presenterVideoId &&
+          currentVideoUrl !== presenterVideoId
+        ) {
           setCurrentVideoUrl(presenterVideoId);
         } else if (videoMode === 'presentation') {
           const targetVideoId = presentationVideoId || compositeVideoId;
@@ -492,6 +530,30 @@ const MediaItem = ({
           </Box>
         )}
       </Box>
+      {currentSectionRange && isAwayFromSection && (
+        <Tooltip title={`Section starts at ${formatTime(currentSectionRange.start)}`} arrow>
+          <IconButton
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              bgcolor: '#fff3cd',
+              color: '#856404',
+              border: '1px solid #ffeeba',
+              zIndex: 20,
+              '&:hover': {
+                bgcolor: '#ffecb5',
+              },
+            }}
+            onClick={() => {
+              videoPlayer.current?.currentTime(currentSectionRange.start);
+            }}
+          >
+            ⚠️
+          </IconButton>
+        </Tooltip>
+      )}
 
       {overlay && (
         <Paper
@@ -723,7 +785,7 @@ export function VideoDisplay({
     (clipDetails as Record<string, unknown>)?.composite_url) as string | undefined;
   const presentationVideoId = ((clipDetails as Record<string, unknown>)?.presentationUrl ||
     (clipDetails as Record<string, unknown>)?.presentation_url) as string | undefined;
-  
+
   // Determine initial video ID based on videoMode
   // If videoMode is set, use that; otherwise use auto logic (prefer presentation/composite)
   const defaultVideoId = useMemo(() => {
