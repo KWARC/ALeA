@@ -190,10 +190,11 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
-  const [quizSwitching, setQuizSwitching] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  // const [localQuizId, setLocalQuizId] = useState<string | undefined>(quizId);
-  // const selectedQuizId = localQuizId || NEW_QUIZ_ID;
+  const justCreatedQuizIdRef = useRef<string | null>(null);
+  const quizzesRef = useRef<QuizWithStatus[]>([]);
+
+
   const selectedQuizId = quizId ?? NEW_QUIZ_ID;
 
   const [title, setTitle] = useState<string>('');
@@ -241,14 +242,23 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [recorrectionDialogOpen, setRecorrectionDialogOpen] = useState(false);
   const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
 
-  const [pendingNewQuizId, setPendingNewQuizId] = useState<string | null>(null);
+  useEffect(() => {
+  quizzesRef.current = quizzes;
+}, [quizzes]);
 
-   useEffect(() => {
-    if (pendingNewQuizId && quizzes.some((q) => q.id === pendingNewQuizId)) {
-      onQuizIdChange?.(pendingNewQuizId);
-      setPendingNewQuizId(null);
+
+  useEffect(() => {
+    if (!justCreatedQuizIdRef.current) return;
+
+    const id = justCreatedQuizIdRef.current;
+    const exists = quizzes.some((q) => q.id === id);
+
+    if (exists) {
+      justCreatedQuizIdRef.current = null;
+      onQuizIdChange?.(id);
     }
-  }, [pendingNewQuizId, quizzes, onQuizIdChange]);
+  }, [quizzes, onQuizIdChange]);
+
 
   useEffect(() => {
     if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID) return;
@@ -290,54 +300,31 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     if (currentTerm) loadLectureSchedule();
   }, [courseId, currentTerm]);
 
-  // useEffect(() => {
-  //   async function fetchQuizzes() {
-  //     if (!currentTerm) return;
-  //     const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
-  //     allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
-  //     for (const q of allQuizzes ?? []) {
-  //       injectCss(q.css);
-  //     }
-  //     setQuizzes(allQuizzes);
 
-  //     if (justCreatedQuizIdRef.current) {
-  //       const createdId = justCreatedQuizIdRef.current;
-  //       const exists = allQuizzes.some((q) => q.id === createdId);
+  const fetchQuizzes = async (): Promise<QuizWithStatus[]> => {
+    if (!currentTerm) return [];
 
-  //       if (exists) {
-  //         justCreatedQuizIdRef.current = null;
-  //         setQuizSwitching(false);
-  //         onQuizIdChange?.(createdId);
-  //         return;
-  //       }
-  //     }
-
-  //     const validQuiz = allQuizzes.find((q) => q.id === quizId);
-
-  //     if (quizId !== NEW_QUIZ_ID && (!quizId || !validQuiz) && allQuizzes.length > 0) {
-  //       onQuizIdChange?.(allQuizzes[0].id);
-  //     }
-
-  //     //   if (!quizId && allQuizzes.length > 0) {
-  //     //   onQuizIdChange?.(allQuizzes[0].id);
-  //     // }
-  //   }
-  //   fetchQuizzes().catch((err) => console.error('Failed to fetch Quiz', err));
-  // }, [courseId, currentTerm, onQuizIdChange, quizId]);
-
-  const fetchQuizzes = async (afterSet?: () => void) => {
-    if (!currentTerm) return;
     const allQuizzes = await getAllQuizzes(courseId, currentTerm);
     allQuizzes.sort((a, b) => b.quizStartTs - a.quizStartTs);
-    for (const q of allQuizzes) injectCss(q.css);
+
+    for (const q of allQuizzes) {
+      injectCss(q.css);
+    }
+
     setQuizzes(allQuizzes);
+
     setFormLoading(false);
-    if (afterSet) afterSet();
+
+    return allQuizzes;
   };
 
   useEffect(() => {
-    fetchQuizzes().catch(console.error);
-  }, [courseId, currentTerm, quizId]);
+    fetchQuizzes();
+  }, [courseId, currentTerm]);
+
+  useEffect(() => {
+    console.log('Quizzes updated:', quizzes);
+  }, [quizzes]);
 
   useEffect(() => {
     if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID || !currentTerm) return;
@@ -360,8 +347,16 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
           setStats(data);
           setStatsLoading(false);
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
+          console.warn('Stats not ready yet for quiz', selectedQuizId);
+          setStats({
+            attemptedHistogram: {},
+            scoreHistogram: {},
+            requestsPerSec: {},
+            perProblemStats: {},
+            totalStudents: 0,
+          });
           setStatsLoading(false);
         }
       }
@@ -527,11 +522,16 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setProblems(selected.problems);
     setCss(selected.css || []);
     setCourseTerm(selected.courseTerm);
-    // setQuizSwitching(false);
     setFormLoading(false);
   }, [selectedQuizId, quizzes]);
 
-  if (!selectedQuiz && !isNew) return <>Error</>;
+  if (!selectedQuiz && !isNew) {
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   async function handleDelete(quizId: string) {
     const confirmed = window.confirm(
@@ -544,8 +544,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     const fallbackQuizId = remainingQuizzes[0]?.id || 'New';
     onQuizIdChange?.(fallbackQuizId);
   }
-
-
 
   if (loadingTermByCourseId || !currentTerm) return <CircularProgress />;
   if (!canAccess) return <>Unauthorized</>;
@@ -571,11 +569,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         <Select
           value={selectedQuizId}
           onChange={(e) => {
-            const newQuizId = e.target.value;
-            if (newQuizId !== selectedQuizId) {
-              setFormLoading(true);
-              onQuizIdChange?.(newQuizId);
-            }
+            onQuizIdChange?.(e.target.value);
           }}
         >
           {accessType == 'MUTATE' ? (
@@ -745,7 +739,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
                 alert(e);
                 setIsUpdating(false);
                 return;
-                // location.reload();
               }
               if (![200, 204].includes(resp.status)) {
                 alert(`Error: ${resp.status} ${resp.statusText}`);
@@ -753,24 +746,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
                 return;
               }
               alert(`Quiz ${isNew ? 'created' : 'updated'} successfully.`);
-              // location.reload();
-
-              // if (isNew) {
-              //   const newQuizId = resp.data?.id;
-              //   if (newQuizId) {
-              //     justCreatedQuizIdRef.current = newQuizId;
-              //     setLocalQuizId(newQuizId);
-              //     onQuizIdChange?.(newQuizId);
-              //   }
-              // }
 
               if (isNew) {
-                const newQuizId = resp.data?.id;
-                if (newQuizId) {
-                  setFormLoading(true);
-                  setPendingNewQuizId(newQuizId); // <-- set pending
-                  await fetchQuizzes();
-                  // Do NOT call onQuizIdChange here!
+                 const refreshedQuizzes = await fetchQuizzes();
+
+                const latest = refreshedQuizzes[0];
+                if (latest) {
+                  onQuizIdChange?.(latest.id);
                 }
               }
 
