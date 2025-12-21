@@ -4,6 +4,7 @@ import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack, Person, Slideshow } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CheckIcon from '@mui/icons-material/Check';
+import SearchIcon from '@mui/icons-material/Search';
 import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -212,6 +213,10 @@ const CourseViewPage: NextPage = () => {
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [hasResults, setHasResults] = useState(false);
+  const handleSearchClick = () => setDialogOpen(true);
+  const handleDialogClose = () => setDialogOpen(false);
   const [resolution, setResolution] = useState(720);
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const availableResolutions = [360, 720, 1080];
@@ -229,6 +234,27 @@ const CourseViewPage: NextPage = () => {
   const handleVideoLoad = (status) => {
     setVideoLoaded(status);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget =
+        !!target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          (target as HTMLElement).isContentEditable);
+      if (isEditableTarget) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setDialogOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -367,6 +393,34 @@ const CourseViewPage: NextPage = () => {
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
+      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+        <IconButton
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 64,
+            right: 24,
+            zIndex: 2002,
+            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            boxShadow: 3,
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.3)',
+            },
+          }}
+          onClick={handleSearchClick}
+          size="large"
+          aria-label="Open search dialog"
+        >
+          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
+        </IconButton>
+      </Tooltip>
+      <SearchDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        courseId={courseId}
+        hasResults={hasResults}
+        setHasResults={setHasResults}
+      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
