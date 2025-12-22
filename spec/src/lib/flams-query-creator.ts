@@ -35,7 +35,7 @@ function encodeSpecialChars(value: string) {
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]>,
-  useRdfEncodeUri: boolean
+  useRdfEncodeUri=false
 ) {
   let result = parameterizedQuery;
 

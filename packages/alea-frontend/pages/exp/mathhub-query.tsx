@@ -1,5 +1,10 @@
-import { getParameterizedQueryResults, getUseRdfEncodeUri, SparqlResponse } from '@alea/spec';
-import { createSafeFlamsQuery, findAllUriParams } from '@alea/utils';
+import {
+  createSafeFlamsQuery,
+  findAllUriParams,
+  getParameterizedQueryResults,
+  getUseRdfEncodeUri,
+  SparqlResponse,
+} from '@alea/spec';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import RemoveIcon from '@mui/icons-material/Remove';
