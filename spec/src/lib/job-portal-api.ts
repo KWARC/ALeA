@@ -193,9 +193,8 @@ export async function deleteJobPost(id: number) {
   await axios.post('/api/job-portal/delete-job-post', { id }, { headers: getAuthHeaders() });
 }
 
-export type CreateJobApplicationRequest = Omit<JobApplicationInfo, 'id' | 'applicantId'>;
-export async function createJobApplication(data: CreateJobApplicationRequest) {
-  await axios.post('/api/job-portal/create-job-application', data, {
+export async function createJobApplication(jobPostId: number) {
+  await axios.post('/api/job-portal/create-job-application', {jobPostId}, {
     headers: getAuthHeaders(),
   });
 }

@@ -13,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     { instanceId: CURRENT_TERM }
   );
   if (!userId) return;
-  const { jobPostId, applicationStatus } = req.body;
-  if(!jobPostId|| !applicationStatus)return res.status(422).end();
+  const { jobPostId } = req.body;
+  if (!jobPostId) return res.status(422).end();
   const results = await executeAndEndSet500OnError(
     'SELECT * FROM jobApplication WHERE jobPostId = ? AND applicantId = ?',
     [jobPostId, userId],
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `INSERT INTO jobApplication 
       (jobPostId,applicantId,applicationStatus) 
      VALUES (?,?,?)`,
-    [jobPostId, userId, applicationStatus],
+    [jobPostId, userId, 'APPLIED'],
     res
   );
   if (!result) return;

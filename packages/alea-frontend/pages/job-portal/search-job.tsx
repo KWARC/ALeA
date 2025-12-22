@@ -423,13 +423,7 @@ export function SearchJob() {
     try {
       const userInfo = await getUserInfo();
       if (!userInfo) return;
-      const applicantId = userInfo.userId;
-      const JobApplicationInfo = {
-        jobPostId,
-        applicantId,
-        applicationStatus: 'applied',
-      };
-      await createJobApplication(JobApplicationInfo);
+      await createJobApplication(jobPostId);
       setJobPosts((prevJobs) =>
         prevJobs.map((job) => (job.id === jobPostId ? { ...job, alreadyApplied: true } : job))
       );

@@ -73,7 +73,7 @@ export default function StudentRegistration() {
         }
         setIsRegistered(true);
       } catch (error) {
-        console.error('Error fetching recruiter data:', error);
+        console.error('Error fetching student data:', error);
       } finally {
         setLoading(false);
       }
