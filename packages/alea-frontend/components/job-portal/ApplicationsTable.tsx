@@ -271,9 +271,7 @@ const ApplicationRow = ({
     </TableRow>
   );
 };
-export const 
-
-ApplicationTable = ({
+export const ApplicationTable = ({
   loading,
   filteredApplications,
   setFilteredApplications,

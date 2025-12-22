@@ -69,7 +69,10 @@ export interface JobPostInfo {
   createdByUserId?: string;
   createdAt?: string;
 }
-
+export type JobPostFormData = Omit<
+  JobPostInfo,
+  "id" | "organizationId" | "jobCategoryId"
+>;
 export type InitialJobData = Partial<JobPostInfo>;
 export interface JobApplicationInfo {
   id: number;
