@@ -51,9 +51,11 @@ export function QuizFileReader({
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log(e.target?.result);
       const contents = e.target?.result as string;
       try {
         const parsedJson = JSON.parse(contents) as FTML.Quiz;
+        console.log(parsedJson);
         // Check if the parsed content is a valid JSON object before updating the state
         if (typeof parsedJson === 'object' && parsedJson !== null) {
           setProblems(getProblemsFromQuiz(parsedJson));
