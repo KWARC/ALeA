@@ -274,6 +274,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box fragment-uri={slide.slide?.uri} fragment-kind="Slide">
         <SafeFTMLFragment
           key={slide.slide?.uri}
+          allowFullscreen={false}
           fragment={{ type: 'HtmlString', html: slide.slide?.html, uri: slide.slide.uri }}
         />
       </Box>
