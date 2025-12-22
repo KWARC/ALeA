@@ -80,7 +80,7 @@ export interface JobApplicationInfo {
   updatedAt?: string;
 }
 
-export type ApplicantWithProfile = JobApplicationInfo & {
+export type ApplicationWithProfile = JobApplicationInfo & {
   jobPostTitle?: string;
   studentProfile: StudentData;
 };

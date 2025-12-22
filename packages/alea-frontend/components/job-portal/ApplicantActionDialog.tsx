@@ -1,6 +1,6 @@
 import { Cancel, CheckCircle, Send, Visibility } from "@mui/icons-material";
 import { Dialog, DialogContent, DialogTitle, IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
-import { ApplicantWithProfile, JobPostInfo, StudentData } from "@alea/spec";
+import { ApplicationWithProfile, JobPostInfo, StudentData } from "@alea/spec";
 
 export const ApplicantActionDialog=({
     openDialog,
@@ -14,12 +14,12 @@ export const ApplicantActionDialog=({
   }:{
     openDialog: boolean;
     selectedJob: JobPostInfo;
-    applicants: ApplicantWithProfile[];
+    applicants: ApplicationWithProfile[];
     handleCloseDialog: () => void;
     handleViewProfile: (profile: StudentData) => void;
-    handleAcceptApplication: (applicant: ApplicantWithProfile) =>Promise<void>;
-    handleRejectApplication: (applicant: ApplicantWithProfile)=>Promise<void>;
-    handleMakeOffer: (applicant: ApplicantWithProfile) => Promise<void>;
+    handleAcceptApplication: (applicant: ApplicationWithProfile) =>Promise<void>;
+    handleRejectApplication: (applicant: ApplicationWithProfile)=>Promise<void>;
+    handleMakeOffer: (applicant: ApplicationWithProfile) => Promise<void>;
   
   }) => {
     return (
