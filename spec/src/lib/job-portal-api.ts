@@ -7,6 +7,7 @@ import {
   RecruiterData,
   StudentData,
   JobApplicationInfo,
+  UpdateJobApplicationRequest,
 } from './job-portal';
 export type CreateStudentProfileData = Omit<StudentData, 'userId' | 'socialLinks'>;
 export async function createStudentProfile(data: CreateStudentProfileData) {
@@ -223,7 +224,7 @@ export async function getJobApplicationsByUserIdAndJobPostId(jobPostId: number) 
   return resp.data as JobApplicationInfo[];
 }
 
-export async function updateJobApplication(data: JobApplicationInfo) {
+export async function updateJobApplication(data: UpdateJobApplicationRequest) {
   await axios.post('/api/job-portal/update-job-application', data, {
     headers: getAuthHeaders(),
   });

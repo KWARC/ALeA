@@ -58,7 +58,7 @@ export interface JobPostInfo {
   jobTitle: string;
   jobDescription: string;
   workLocation: string;
-  workMode:string;
+  workMode: string;
   qualification: string;
   targetYears: string;
   openPositions: number;
@@ -67,7 +67,7 @@ export interface JobPostInfo {
   facilities: string;
   applicationDeadline: string;
   createdByUserId?: string;
-  createdAt?:string;
+  createdAt?: string;
 }
 
 export type InitialJobData = Partial<JobPostInfo>;
@@ -76,10 +76,6 @@ export interface JobApplicationInfo {
   jobPostId: number;
   applicantId: string;
   applicationStatus: string;
-  applicantAction?: string;
-  recruiterAction?: string;
-  studentMessage?: string;
-  recruiterMessage?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -88,3 +84,53 @@ export type ApplicantWithProfile = JobApplicationInfo & {
   jobPostTitle?: string;
   studentProfile: StudentData;
 };
+
+export const APPLICATION_STATUS = {
+  APPLIED: 'APPLIED',
+  APPLICATION_WITHDRAWN: 'APPLICATION_WITHDRAWN',
+  OFFER_ACCEPTED: 'OFFER_ACCEPTED',
+  OFFER_REJECTED: 'OFFER_REJECTED',
+
+  SHORTLISTED_FOR_INTERVIEW: 'SHORTLISTED_FOR_INTERVIEW',
+  ON_HOLD: 'ON_HOLD',
+  REJECTED: 'REJECTED',
+  OFFERED: 'OFFERED',
+  OFFER_REVOKED: 'OFFER_REVOKED',
+} as const;
+
+export type ApplicationStatus = (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
+
+export const APPLICATION_ACTION = {
+  WITHDRAW_APPLICATION: 'WITHDRAW_APPLICATION',
+  ACCEPT_OFFER: 'ACCEPT_OFFER',
+  REJECT_OFFER: 'REJECT_OFFER',
+
+  SHORTLIST_FOR_INTERVIEW: 'SHORTLIST_FOR_INTERVIEW',
+  ON_HOLD: 'ON_HOLD',
+  REJECT: 'REJECT',
+  SEND_OFFER: 'SEND_OFFER',
+  REVOKE_OFFER: 'REVOKE_OFFER',
+} as const;
+
+export type ApplicationAction = (typeof APPLICATION_ACTION)[keyof typeof APPLICATION_ACTION];
+
+export const APPLICANT_ACTIONS = new Set<ApplicationAction>([
+  APPLICATION_ACTION.WITHDRAW_APPLICATION,
+  APPLICATION_ACTION.ACCEPT_OFFER,
+  APPLICATION_ACTION.REJECT_OFFER,
+]);
+
+export const RECRUITER_ACTIONS = new Set<ApplicationAction>([
+  APPLICATION_ACTION.SHORTLIST_FOR_INTERVIEW,
+  APPLICATION_ACTION.ON_HOLD,
+  APPLICATION_ACTION.REJECT,
+  APPLICATION_ACTION.SEND_OFFER,
+  APPLICATION_ACTION.REVOKE_OFFER,
+]);
+
+
+export interface UpdateJobApplicationRequest {
+  id: number;
+  action: ApplicationAction;
+  message?: string;
+}
