@@ -92,7 +92,7 @@ export const JobSelect = ({
       const applications = await getJobApplicationsByJobPost(job?.id);
       const applicationsWithJobTitle = applications.map((application) => ({
         ...application,
-        jobPostTitle: job?.jobTitle,
+        jobTitle: job?.jobTitle,
       }));
       const applicationsWithProfile = await Promise.all(
         applicationsWithJobTitle.map(async (application) => {

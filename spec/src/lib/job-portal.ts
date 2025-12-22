@@ -84,9 +84,14 @@ export interface JobApplicationInfo {
 }
 
 export type ApplicationWithProfile = JobApplicationInfo & {
-  jobPostTitle?: string;
+  jobTitle?: string;
   studentProfile: StudentData;
 };
+
+export type ApplicationWithJobAndOrgTitle = JobApplicationInfo & {
+  jobTitle?: string;
+  companyName?: string;
+}
 
 export const APPLICATION_STATUS = {
   APPLIED: 'APPLIED',
