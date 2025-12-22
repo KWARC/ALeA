@@ -194,7 +194,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const justCreatedQuizIdRef = useRef<string | null>(null);
   const quizzesRef = useRef<QuizWithStatus[]>([]);
 
-
   const selectedQuizId = quizId ?? NEW_QUIZ_ID;
 
   const [title, setTitle] = useState<string>('');
@@ -243,22 +242,18 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
 
   useEffect(() => {
-  quizzesRef.current = quizzes;
-}, [quizzes]);
-
+    quizzesRef.current = quizzes;
+  }, [quizzes]);
 
   useEffect(() => {
     if (!justCreatedQuizIdRef.current) return;
 
     const id = justCreatedQuizIdRef.current;
-    const exists = quizzes.some((q) => q.id === id);
+    if (!quizzes.find(q => q.id === id)) return;
 
-    if (exists) {
       justCreatedQuizIdRef.current = null;
       onQuizIdChange?.(id);
-    }
   }, [quizzes, onQuizIdChange]);
-
 
   useEffect(() => {
     if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID) return;
@@ -299,7 +294,6 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     }
     if (currentTerm) loadLectureSchedule();
   }, [courseId, currentTerm]);
-
 
   const fetchQuizzes = async (): Promise<QuizWithStatus[]> => {
     if (!currentTerm) return [];
@@ -748,7 +742,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
               alert(`Quiz ${isNew ? 'created' : 'updated'} successfully.`);
 
               if (isNew) {
-                 const refreshedQuizzes = await fetchQuizzes();
+                const refreshedQuizzes = await fetchQuizzes();
 
                 const latest = refreshedQuizzes[0];
                 if (latest) {
