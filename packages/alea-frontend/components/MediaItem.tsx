@@ -51,7 +51,9 @@ export function MediaItem({
   goToPrevSection,
   onClipChange,
   videoLoaded,
-  showPresentationVideo
+  showPresentationVideo,
+  hasSlidesForSection,
+  onHasSlideAtCurrentTimeChange,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -82,6 +84,8 @@ export function MediaItem({
   goToPrevSection?: () => void;
   onClipChange?: (clip: ClipInfo) => void;
   videoLoaded?: boolean;
+  hasSlidesForSection?: boolean;
+  onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
 }) {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const videoPlayer = useRef<any>(null);
@@ -99,6 +103,8 @@ export function MediaItem({
   const conceptsCache = useRef<Record<string, string[]>>({});
   const [isAwayFromSection, setIsAwayFromSection] = useState(false);
   const [showConcepts, setShowConcepts] = useState(true);
+  const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(false);
+  const lastHasSlideAtCurrentTime = useRef<boolean | null>(null);
 
   // Initialise concepts visibility from localStorage
   useEffect(() => {
@@ -115,31 +121,10 @@ export function MediaItem({
     window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
   }, [showConcepts]);
 
-  // Check if slides are available for the current section
-  // Check both slidesUriToIndexMap and markers (markers indicate slides exist)
   const hasSlides = useMemo(() => {
-    if (!currentSectionId) return false;
-
-    // Check if slides exist in the slidesUriToIndexMap
-    if (slidesUriToIndexMap) {
-      const sectionSlides = slidesUriToIndexMap[currentSectionId];
-      if (sectionSlides && Object.keys(sectionSlides).length > 0) {
-        return true;
-      }
-    }
-
-    // Check if there are markers with slideUri for the current section
-    if (markers && markers.length > 0) {
-      const sectionMarkers = markers.filter(
-        (m) => m.data.sectionId === currentSectionId && m.data.slideUri
-      );
-      if (sectionMarkers.length > 0) {
-        return true;
-      }
-    }
-
+    if (typeof hasSlidesForSection === 'boolean') return hasSlidesForSection;
     return false;
-  }, [currentSectionId, slidesUriToIndexMap, markers]);
+  }, [hasSlidesForSection]);
 
   // Always use presenter video for the left (master) player
   const masterVideoUrl = presenterVideoId || videoId;
@@ -173,7 +158,7 @@ export function MediaItem({
   }, [currentSectionRange]);
 
   const markersInDescOrder = useMemo(() => {
-    return [...markers].sort((a, b) => b.time - a.time);
+    return (markers ?? []).slice().sort((a, b) => b.time - a.time);
   }, [markers]);
 
   // Always use presenter video for master player (left side)
@@ -369,7 +354,7 @@ export function MediaItem({
   // Setup presentation video player (right side - only if no slides)
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
   useEffect(() => {
-    if (audioOnly || (!showPresentationVideo && hasSlides) || !presentationVideoUrl) {
+    if (audioOnly || !presentationVideoUrl) {
       if (presentationVideoPlayer.current) {
         presentationVideoPlayer.current.dispose();
         presentationVideoPlayer.current = null;
@@ -378,6 +363,15 @@ export function MediaItem({
     }
 
     if (!presentationPlayerRef.current) return;
+    if (!presentationVideoPlayer.current) {
+      presentationVideoPlayer.current = videojs(presentationPlayerRef.current, {
+        controls: false,
+        preload: 'auto',
+        autoplay: false,
+        muted: true,
+        sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
+      });
+    }
     let player = presentationVideoPlayer.current;
 
     if (!player) {
@@ -526,6 +520,16 @@ export function MediaItem({
         marker.style.backgroundColor = currentTime >= markerTime ? 'green' : 'yellow';
       }
       const latestMarker = markersInDescOrder.find((marker) => marker.time <= currentTime);
+      const hasSlide = !!latestMarker;
+
+      if (hasSlideAtCurrentTime !== hasSlide) {
+        setHasSlideAtCurrentTime(hasSlide);
+      }
+      if (lastHasSlideAtCurrentTime.current !== hasSlide) {
+        lastHasSlideAtCurrentTime.current = hasSlide;
+        onHasSlideAtCurrentTimeChange?.(hasSlide);
+      }
+
       if (latestMarker) {
         const sectionId = latestMarker.data?.sectionId;
         const slideUri = latestMarker.data?.slideUri;
@@ -653,17 +657,22 @@ export function MediaItem({
           )}
         </Box>
 
-        {/* Right side: Presentation video (only if no slides, since slides are shown separately in the layout) */}
-        {presentationVideoUrl && (!hasSlides || showPresentationVideo) && (
-          <Box sx={{ flex: '1 1 50%', position: 'relative' }}>
-            <video
-              ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
-              className="video-js vjs-fluid vjs-styles=defaults"
-              style={{ border: '0.5px solid black', borderRadius: '8px' }}
-              muted
-            />
-          </Box>
-        )}
+        {/* Right side: Presentation video
+            - Always show when the section has no slides at all
+            - Or when at the current time there is no slide mapped
+            - Or when the user explicitly toggled "showPresentationVideo"
+         */}
+        {presentationVideoUrl &&
+          (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo) && (
+            <Box sx={{ flex: '1 1 50%', position: 'relative' }}>
+              <video
+                ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
+                className="video-js vjs-fluid vjs-styles=defaults"
+                style={{ border: '0.5px solid black', borderRadius: '8px' }}
+                muted
+              />
+            </Box>
+          )}
       </Box>
       {currentSectionRange && isAwayFromSection && (
         <Tooltip title={`Section starts at ${formatTime(currentSectionRange.start)}`} arrow>

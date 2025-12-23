@@ -226,6 +226,7 @@ const CourseViewPage: NextPage = () => {
     return null;
   });
   const [showPresentationVideo, setShowPresentationVideo] = useState(false);
+  const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
   }, [toc, sectionId]);
@@ -300,7 +301,18 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     if (!router.isReady || !sectionId || !clipIds || Object.keys(clipIds).length === 0) return;
     const newClipId = clipIds[sectionId];
-    if (!newClipId) return;
+    
+    // If no video for this section, clear the current clip and video state
+    if (!newClipId) {
+      if (currentClipId) {
+        setCurrentClipId('');
+        setVideoLoaded(false);
+        setVideoExtractedData({});
+        setTimestampSec(0);
+      }
+      return;
+    }
+    
     if (!currentClipId) {
       setCurrentClipId(newClipId);
       return;
@@ -315,6 +327,9 @@ const CourseViewPage: NextPage = () => {
 
     if (newClipId !== currentClipId && !sectionExistsInCurrentClip) {
       setCurrentClipId(newClipId);
+      // Reset video loaded state when changing to a different video
+      setVideoLoaded(false);
+      setTimestampSec(0);
     }
   }, [router.isReady, sectionId, clipIds, currentClipId, slidesClipInfo]);
 
@@ -390,6 +405,21 @@ const CourseViewPage: NextPage = () => {
     setTimestampSec(clip.start_time);
   };
 
+  // Does this section actually have slides available (either via mapping or markers)?
+  const sectionSlides = slidesUriToIndexMap[sectionId];
+  let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
+  if (!hasSlidesForSection && videoExtractedData && sectionId) {
+    const sectionMarkers = Object.entries(videoExtractedData).filter(
+      ([, item]: [string, Record<string, unknown>]) => {
+        return (
+          ((item.sectionId as string) || '').trim() === sectionId &&
+          ((item.slideUri as string) || '').trim() !== ''
+        );
+      }
+    );
+    hasSlidesForSection = sectionMarkers.length > 0;
+  }
+
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
       {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
@@ -433,6 +463,12 @@ const CourseViewPage: NextPage = () => {
                 const newClipId = clipIds?.[sectionId];
                 if (newClipId) {
                   setCurrentClipId(newClipId);
+                } else {
+                  // Clear video state when navigating to a section with no video
+                  setCurrentClipId('');
+                  setVideoLoaded(false);
+                  setVideoExtractedData({});
+                  setTimestampSec(0);
                 }
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
@@ -693,6 +729,8 @@ const CourseViewPage: NextPage = () => {
                       slidesClipInfo={slidesClipInfo}
                       showPresentationVideo={showPresentationVideo}
                       slideNum={slideNum}
+                       hasSlidesForSection={hasSlidesForSection}
+                      onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
                       onSlideChange={(slide: Slide) => {
                         setPreNotes(slide?.preNotes.map((p) => p.html) || []);
                         setPostNotes(slide?.postNotes.map((p) => p.html) || []);
@@ -725,8 +763,9 @@ const CourseViewPage: NextPage = () => {
               )}
               {(() => {
                 const sectionSlides = slidesUriToIndexMap[sectionId];
-                let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
-                if (!hasSlidesForSection && videoExtractedData && sectionId) {
+                let hasSlidesForSectionLocal =
+                  sectionSlides && Object.keys(sectionSlides).length > 0;
+                if (!hasSlidesForSectionLocal && videoExtractedData && sectionId) {
                   const sectionMarkers = Object.entries(videoExtractedData).filter(
                     ([, item]: [string, Record<string, unknown>]) => {
                       return (
@@ -735,11 +774,15 @@ const CourseViewPage: NextPage = () => {
                       );
                     }
                   );
-                  hasSlidesForSection = sectionMarkers.length > 0;
+                  hasSlidesForSectionLocal = sectionMarkers.length > 0;
                 }
 
-                // In combined mode, only show slides side‑by‑side when we actually have a video.
-                const showSideBySideSlides = hasSlidesForSection && videoLoaded;
+                // In combined mode, only show slides side‑by‑side when:
+                // - this section actually has slides
+                // - the video for this section is loaded
+                // - and at the current time there is a slide mapped
+                const showSideBySideSlides =
+                  hasSlidesForSectionLocal && videoLoaded && hasSlideAtCurrentTime;
 
                 return showSideBySideSlides ? (
                   <Box
@@ -818,7 +861,13 @@ const CourseViewPage: NextPage = () => {
                 hasSlidesForSection = sectionMarkers.length > 0;
               }
 
-              if (!hasSlidesForSection || videoLoaded) return null;
+              // Check if there's a video available for this section
+              const hasVideoForSection = currentClipId && clipIds[sectionId];
+              
+              // Show slides if:
+              // 1. There are slides for the section AND
+              // 2. (Video is not loaded OR there's no video available for this section)
+              if (!hasSlidesForSection || (videoLoaded && hasVideoForSection)) return null;
 
               return (
                 <Box sx={{ mt: { xs: 2, sm: 3 } }}>

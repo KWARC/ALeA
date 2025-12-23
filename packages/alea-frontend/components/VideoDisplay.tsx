@@ -138,7 +138,9 @@ export function VideoDisplay({
   goToPrevSection,
   onClipChange,
   videoLoaded,
-  showPresentationVideo
+  showPresentationVideo,
+  hasSlidesForSection,
+  onHasSlideAtCurrentTimeChange,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -148,6 +150,8 @@ export function VideoDisplay({
   currentSlideClipInfo?: ClipInfo;
   audioOnly: boolean;
   showPresentationVideo?: boolean;
+  hasSlidesForSection?: boolean;
+  onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
   videoExtractedData?: {
     [timestampSec: number]: ClipMetadata;
   };
@@ -312,6 +316,8 @@ export function VideoDisplay({
           goToPrevSection={goToPrevSection}
           onClipChange={onClipChange}
           videoLoaded={videoLoaded}
+          hasSlidesForSection={hasSlidesForSection}
+          onHasSlideAtCurrentTimeChange={onHasSlideAtCurrentTimeChange}
         />
       </Box>
     </>
