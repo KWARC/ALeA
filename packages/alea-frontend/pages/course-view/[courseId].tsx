@@ -185,7 +185,6 @@ const CourseViewPage: NextPage = () => {
   const audioOnly = audioOnlyStr === 'true';
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
   const [postNotes, setPostNotes] = useState([] as string[]);
@@ -301,8 +300,6 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     if (!router.isReady || !sectionId || !clipIds || Object.keys(clipIds).length === 0) return;
     const newClipId = clipIds[sectionId];
-    
-    // If no video for this section, clear the current clip and video state
     if (!newClipId) {
       if (currentClipId) {
         setCurrentClipId('');
@@ -312,7 +309,7 @@ const CourseViewPage: NextPage = () => {
       }
       return;
     }
-    
+
     if (!currentClipId) {
       setCurrentClipId(newClipId);
       return;
@@ -324,10 +321,8 @@ const CourseViewPage: NextPage = () => {
         (clips: ClipInfo[]) =>
           Array.isArray(clips) && clips.some((clip) => clip.video_id === currentClipId)
       );
-
     if (newClipId !== currentClipId && !sectionExistsInCurrentClip) {
       setCurrentClipId(newClipId);
-      // Reset video loaded state when changing to a different video
       setVideoLoaded(false);
       setTimestampSec(0);
     }
@@ -405,7 +400,6 @@ const CourseViewPage: NextPage = () => {
     setTimestampSec(clip.start_time);
   };
 
-  // Does this section actually have slides available (either via mapping or markers)?
   const sectionSlides = slidesUriToIndexMap[sectionId];
   let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
   if (!hasSlidesForSection && videoExtractedData && sectionId) {
@@ -464,7 +458,6 @@ const CourseViewPage: NextPage = () => {
                 if (newClipId) {
                   setCurrentClipId(newClipId);
                 } else {
-                  // Clear video state when navigating to a section with no video
                   setCurrentClipId('');
                   setVideoLoaded(false);
                   setVideoExtractedData({});
@@ -692,10 +685,8 @@ const CourseViewPage: NextPage = () => {
               {viewMode === ViewMode.COMBINED_MODE && (
                 <Box
                   sx={{
-                    // When a separate presentation video is shown, give the video area full width
-                    // and shrink when we're showing slides side‑by‑side.
                     flex:
-                     showPresentationVideo || hasPresentationOrComposite  
+                      showPresentationVideo || hasPresentationOrComposite
                         ? '1 1 100%'
                         : { xs: '1', lg: '1 1 50%' },
                     minWidth: 0,
@@ -729,7 +720,7 @@ const CourseViewPage: NextPage = () => {
                       slidesClipInfo={slidesClipInfo}
                       showPresentationVideo={showPresentationVideo}
                       slideNum={slideNum}
-                       hasSlidesForSection={hasSlidesForSection}
+                      hasSlidesForSection={hasSlidesForSection}
                       onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
                       onSlideChange={(slide: Slide) => {
                         setPreNotes(slide?.preNotes.map((p) => p.html) || []);
@@ -776,11 +767,6 @@ const CourseViewPage: NextPage = () => {
                   );
                   hasSlidesForSectionLocal = sectionMarkers.length > 0;
                 }
-
-                // In combined mode, only show slides side‑by‑side when:
-                // - this section actually has slides
-                // - the video for this section is loaded
-                // - and at the current time there is a slide mapped
                 const showSideBySideSlides =
                   hasSlidesForSectionLocal && videoLoaded && hasSlideAtCurrentTime;
 
@@ -860,13 +846,7 @@ const CourseViewPage: NextPage = () => {
                 );
                 hasSlidesForSection = sectionMarkers.length > 0;
               }
-
-              // Check if there's a video available for this section
               const hasVideoForSection = currentClipId && clipIds[sectionId];
-              
-              // Show slides if:
-              // 1. There are slides for the section AND
-              // 2. (Video is not loaded OR there's no video available for this section)
               if (!hasSlidesForSection || (videoLoaded && hasVideoForSection)) return null;
 
               return (
