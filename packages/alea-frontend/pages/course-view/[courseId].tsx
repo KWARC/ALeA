@@ -738,16 +738,19 @@ const CourseViewPage: NextPage = () => {
                   hasSlidesForSection = sectionMarkers.length > 0;
                 }
 
-                return hasSlidesForSection ? (
+                // In combined mode, only show slides side‑by‑side when we actually have a video.
+                const showSideBySideSlides = hasSlidesForSection && videoLoaded;
+
+                return showSideBySideSlides ? (
                   <Box
                     sx={{
                       flex:
-                      showPresentationVideo || hasPresentationOrComposite 
+                        showPresentationVideo || hasPresentationOrComposite
                           ? '0'
                           : { xs: '1', lg: '1 1 50%' },
                       minWidth: 0,
                       display:
-                       showPresentationVideo || hasPresentationOrComposite ?'none' : 'block',
+                        showPresentationVideo || hasPresentationOrComposite ? 'none' : 'block',
                     }}
                   >
                     <Paper
@@ -798,6 +801,74 @@ const CourseViewPage: NextPage = () => {
                 ) : null;
               })()}
             </Stack>
+            {/* When no video is available for this section, still show the slides below
+                the "Video not available" message, using the full width. */}
+            {(() => {
+              const sectionSlides = slidesUriToIndexMap[sectionId];
+              let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
+              if (!hasSlidesForSection && videoExtractedData && sectionId) {
+                const sectionMarkers = Object.entries(videoExtractedData).filter(
+                  ([, item]: [string, Record<string, unknown>]) => {
+                    return (
+                      ((item.sectionId as string) || '').trim() === sectionId &&
+                      ((item.slideUri as string) || '').trim() !== ''
+                    );
+                  }
+                );
+                hasSlidesForSection = sectionMarkers.length > 0;
+              }
+
+              if (!hasSlidesForSection || videoLoaded) return null;
+
+              return (
+                <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                  <Paper
+                    elevation={2}
+                    sx={{
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                    }}
+                  >
+                    <SlideDeck
+                      navOnTop
+                      courseId={courseId}
+                      sectionId={sectionId}
+                      onSlideChange={(slide: Slide) => {
+                        setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+                        setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+                        const slideUri = getSlideUri(slide);
+                        setCurrentSlideUri(slideUri || '');
+                        if (
+                          slidesClipInfo &&
+                          slidesClipInfo[sectionId] &&
+                          slidesClipInfo[sectionId][slideUri]
+                        ) {
+                          const slideClips = slidesClipInfo[sectionId][slideUri];
+                          if (!Array.isArray(slideClips)) {
+                            return;
+                          }
+                          const matchedClip = slideClips.find(
+                            (clip) => clip.video_id === currentClipId
+                          );
+                          setCurrentSlideClipInfo(matchedClip || slideClips[0]);
+                        } else {
+                          setCurrentSlideClipInfo(null);
+                        }
+                      }}
+                      goToNextSection={goToNextSection}
+                      goToPrevSection={goToPrevSection}
+                      slideNum={slideNum}
+                      slidesClipInfo={slidesClipInfo}
+                      onClipChange={onClipChange}
+                      audioOnly={audioOnly}
+                      videoLoaded={videoLoaded}
+                    />
+                  </Paper>
+                </Box>
+              );
+            })()}
             {(preNotes.length > 0 || postNotes.length > 0) && (
               <Paper
                 elevation={1}
