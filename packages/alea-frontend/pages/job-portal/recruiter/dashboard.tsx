@@ -37,7 +37,7 @@ export function RecruiterDashboard() {
     shortlistedCandidates: 0,
     offeredCandidates: 0,
   });
-  const [jobPostsByRecruiter, setJobPostsByRecruiter] = useState<JobPostInfo[]>([]);
+  const [jobPostsByOrg, setJobPostsByOrg] = useState<JobPostInfo[]>([]);
   const router = useRouter();
   useEffect(() => {
     const initialize = async () => {
@@ -71,12 +71,9 @@ export function RecruiterDashboard() {
         const organizationDetail = await getOrganizationProfile(recProfile.organizationId);
         setOrganization(organizationDetail);
         const orgJobPosts = await getJobPosts(organizationDetail.id);
-        const recruiterPosts = orgJobPosts.filter(
-          (post) => post.createdByUserId === recProfile.userId
-        );
-        setJobPostsByRecruiter(recruiterPosts);
+        setJobPostsByOrg(orgJobPosts);
         const applicationsByJobPost = await Promise.all(
-          recruiterPosts.map(async (job) => {
+          orgJobPosts.map(async (job) => {
             try {
               const applications = await getJobApplicationsByJobPost(job.id);
               return { jobId: job.id, applications };
@@ -169,7 +166,7 @@ export function RecruiterDashboard() {
         <UserProfileCard type="recruiter" userData={recruiterWithOrg} />
         <DashboardJobSection
           title="Jobs posted by your organization"
-          jobs={jobPostsByRecruiter}
+          jobs={jobPostsByOrg}
           buttonText="Post More Jobs"
           buttonLink="/job-portal/recruiter/create-job"
           hideJobRedirect={true}

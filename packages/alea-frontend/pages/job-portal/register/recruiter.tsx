@@ -87,7 +87,7 @@ export default function RecruiterRegistration() {
     if (name in errors) {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: value,
+        [name]: '',
       }));
     }
 
@@ -218,6 +218,8 @@ export default function RecruiterRegistration() {
         onChange={handleChange}
         fullWidth
         margin="normal"
+        error={!!errors.position}
+        helperText={errors.position}   
       />
 
       <Button
