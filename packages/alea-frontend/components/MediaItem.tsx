@@ -101,7 +101,7 @@ export function MediaItem({
   const [conceptsUri, setConceptsUri] = useState<string[]>([]);
   const [loadingConcepts, setLoadingConcepts] = useState(false);
   const conceptsCache = useRef<Record<string, string[]>>({});
-  const [isAwayFromSection, setIsAwayFromSection] = useState(false);
+  const [isAwayFromSlide, setIsAwayFromSlide] = useState(false);
   const [showConcepts, setShowConcepts] = useState(true);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(false);
   const lastHasSlideAtCurrentTime = useRef<boolean | null>(null);
@@ -128,34 +128,40 @@ export function MediaItem({
 
   // Always use presenter video for the left (master) player
   const masterVideoUrl = presenterVideoId || videoId;
-  const currentSectionRange = useMemo(() => {
-    if (!markers || !currentSectionId) return null;
-    const sectionMarkers = markers
-      .filter((m) => m.data.sectionId === currentSectionId)
-      .sort((a, b) => a.time - b.time);
-
-    if (sectionMarkers.length === 0) return null;
-
-    const start = sectionMarkers[0].time;
-    const end = sectionMarkers[sectionMarkers.length - 1].time + 1;
-
-    return { start, end };
-  }, [markers, currentSectionId]);
+  
+  // Compute the current slide's clip range based on the slide's clip info
+  const currentSlideClipRange = useMemo(() => {
+    if (!currentSlideUri || !currentSectionId || !slidesClipInfo || !clipId) return null;
+    
+    const slideClips = slidesClipInfo[currentSectionId]?.[currentSlideUri];
+    if (!slideClips || !Array.isArray(slideClips) || slideClips.length === 0) return null;
+    
+    // Find the clip that matches the current video (clipId)
+    const matchingClip = slideClips.find((clip: ClipInfo) => clip.video_id === clipId);
+    if (!matchingClip || matchingClip.start_time === undefined || matchingClip.end_time === undefined) {
+      return null;
+    }
+    
+    return {
+      start: matchingClip.start_time,
+      end: matchingClip.end_time,
+    };
+  }, [currentSlideUri, currentSectionId, slidesClipInfo, clipId]);
 
   useEffect(() => {
     const player = videoPlayer.current;
-    if (!player || !currentSectionRange) return;
+    if (!player || !currentSlideClipRange) return;
 
     const onTimeUpdate = () => {
       const t = player.currentTime();
-      setIsAwayFromSection(t < currentSectionRange.start || t > currentSectionRange.end);
+      setIsAwayFromSlide(t < currentSlideClipRange.start || t > currentSlideClipRange.end);
     };
 
     player.on('timeupdate', onTimeUpdate);
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [currentSectionRange]);
+  }, [currentSlideClipRange]);
 
   const markersInDescOrder = useMemo(() => {
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
@@ -674,8 +680,8 @@ export function MediaItem({
             </Box>
           )}
       </Box>
-      {currentSectionRange && isAwayFromSection && (
-        <Tooltip title={`Section starts at ${formatTime(currentSectionRange.start)}`} arrow>
+      {currentSlideClipRange && isAwayFromSlide && (
+        <Tooltip title={`Slide starts at ${formatTime(currentSlideClipRange.start)}`} arrow>
           <IconButton
             size="small"
             sx={{
@@ -691,7 +697,7 @@ export function MediaItem({
               },
             }}
             onClick={() => {
-              videoPlayer.current?.currentTime(currentSectionRange.start);
+              videoPlayer.current?.currentTime(currentSlideClipRange.start);
             }}
           >
             ⚠️
