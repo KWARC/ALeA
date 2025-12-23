@@ -1,7 +1,7 @@
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
-import { VideoCameraBack, Person, Slideshow } from '@mui/icons-material';
+import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CheckIcon from '@mui/icons-material/Check';
 import SearchIcon from '@mui/icons-material/Search';
@@ -9,17 +9,7 @@ import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  Container,
-  Paper,
-  Stack,
-  Menu,
-  MenuItem,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Menu, MenuItem } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -225,8 +215,6 @@ const CourseViewPage: NextPage = () => {
     if (saved === 'presenter' || saved === 'presentation') return saved;
     return null;
   });
-  const [videoModeAnchorEl, setVideoModeAnchorEl] = useState<null | HTMLElement>(null);
-
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
   }, [toc, sectionId]);
@@ -549,73 +537,8 @@ const CourseViewPage: NextPage = () => {
                           </MenuItem>
                         ))}
                       </Menu>
-                      <Tooltip title="Video View Mode" placement="bottom">
-                        <IconButton
-                          onClick={(e) => setVideoModeAnchorEl(e.currentTarget)}
-                          sx={{
-                            border: '2px solid #9e9e9e',
-                            borderRadius: 2,
-                            bgcolor: videoMode ? '#e3f2fd' : 'white',
-                            color: videoMode ? '#1976d2' : '#616161',
-                            '&:hover': {
-                              bgcolor: videoMode ? '#bbdefb' : '#f5f5f5',
-                            },
-                          }}
-                        >
-                          {videoMode === 'presenter' ? (
-                            <Person />
-                          ) : videoMode === 'presentation' ? (
-                            <Slideshow />
-                          ) : (
-                            <VideocamIcon />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                      <Menu
-                        anchorEl={videoModeAnchorEl}
-                        open={Boolean(videoModeAnchorEl)}
-                        onClose={() => setVideoModeAnchorEl(null)}
-                      >
-                        <MenuItem
-                          onClick={() => {
-                            setVideoMode(null);
-                            localStore?.setItem('videoMode', '');
-                            setVideoModeAnchorEl(null);
-                          }}
-                        >
-                          <CheckIcon
-                            fontSize="small"
-                            sx={{ color: videoMode === null ? undefined : '#00000000' }}
-                          />
-                          &nbsp;Auto
-                        </MenuItem>
-                        <MenuItem
-                          onClick={() => {
-                            setVideoMode('presenter');
-                            localStore?.setItem('videoMode', 'presenter');
-                            setVideoModeAnchorEl(null);
-                          }}
-                        >
-                          <CheckIcon
-                            fontSize="small"
-                            sx={{ color: videoMode === 'presenter' ? undefined : '#00000000' }}
-                          />
-                          &nbsp;Presenter
-                        </MenuItem>
-                        <MenuItem
-                          onClick={() => {
-                            setVideoMode('presentation');
-                            localStore?.setItem('videoMode', 'presentation');
-                            setVideoModeAnchorEl(null);
-                          }}
-                        >
-                          <CheckIcon
-                            fontSize="small"
-                            sx={{ color: videoMode === 'presentation' ? undefined : '#00000000' }}
-                          />
-                          &nbsp;Presentation
-                        </MenuItem>
-                      </Menu>
+                      {/* Video view mode toggle (Auto / Presenter / Presentation) removed as it's no longer needed */}
+                      {/* Video view mode toggle (Auto / Presenter / Presentation) removed as it's no longer needed */}
                     </>
                   )}
                   {courses?.[courseId]?.slides && (
