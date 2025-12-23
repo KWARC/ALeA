@@ -138,6 +138,7 @@ export function VideoDisplay({
   goToPrevSection,
   onClipChange,
   videoLoaded,
+  showPresentationVideo
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -146,6 +147,7 @@ export function VideoDisplay({
   setTimestampSec?: Dispatch<SetStateAction<number>>;
   currentSlideClipInfo?: ClipInfo;
   audioOnly: boolean;
+  showPresentationVideo?: boolean;
   videoExtractedData?: {
     [timestampSec: number]: ClipMetadata;
   };
@@ -292,6 +294,7 @@ export function VideoDisplay({
           clipId={clipId}
           clipIds={clipIds}
           timestampSec={timestampSec}
+          showPresentationVideo={showPresentationVideo}
           audioOnly={audioOnly}
           subtitles={clipDetails?.subtitles}
           thumbnail={clipDetails?.thumbnailUrl}

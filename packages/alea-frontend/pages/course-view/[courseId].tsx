@@ -9,7 +9,17 @@ import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import { Box, Button, CircularProgress, Typography, Container, Paper, Stack, Menu, MenuItem } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+  Container,
+  Paper,
+  Stack,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -45,7 +55,7 @@ import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
 import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-
+import SlideshowIcon from '@mui/icons-material/Slideshow';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -215,6 +225,7 @@ const CourseViewPage: NextPage = () => {
     if (saved === 'presenter' || saved === 'presentation') return saved;
     return null;
   });
+  const [showPresentationVideo, setShowPresentationVideo] = useState(false);
   const selectedSectionTOC = useMemo(() => {
     return findSection(toc, sectionId);
   }, [toc, sectionId]);
@@ -537,8 +548,26 @@ const CourseViewPage: NextPage = () => {
                           </MenuItem>
                         ))}
                       </Menu>
-                      {/* Video view mode toggle (Auto / Presenter / Presentation) removed as it's no longer needed */}
-                      {/* Video view mode toggle (Auto / Presenter / Presentation) removed as it's no longer needed */}
+                      <Tooltip
+                        title={showPresentationVideo ? 'Show slides' : 'Show presentation video'}
+                        placement="bottom"
+                      >
+                        <IconButton
+                          onClick={() => setShowPresentationVideo((prev) => !prev)}
+                          sx={{
+                            border: '2px solid',
+                            borderColor: showPresentationVideo ? '#1976d2' : '#9e9e9e',
+                            borderRadius: 2,
+                            bgcolor: showPresentationVideo ? '#e3f2fd' : 'white',
+                            color: showPresentationVideo ? '#1976d2' : '#616161',
+                            '&:hover': {
+                              bgcolor: showPresentationVideo ? '#bbdefb' : '#f5f5f5',
+                            },
+                          }}
+                        >
+                          <SlideshowIcon />
+                        </IconButton>
+                      </Tooltip>
                     </>
                   )}
                   {courses?.[courseId]?.slides && (
@@ -627,7 +656,12 @@ const CourseViewPage: NextPage = () => {
               {viewMode === ViewMode.COMBINED_MODE && (
                 <Box
                   sx={{
-                    flex: hasPresentationOrComposite ? '1 1 100%' : { xs: '1', lg: '1 1 50%' },
+                    // When a separate presentation video is shown, give the video area full width
+                    // and shrink when we're showing slides side‑by‑side.
+                    flex:
+                     showPresentationVideo || hasPresentationOrComposite  
+                        ? '1 1 100%'
+                        : { xs: '1', lg: '1 1 50%' },
                     minWidth: 0,
                   }}
                 >
@@ -657,6 +691,7 @@ const CourseViewPage: NextPage = () => {
                       currentSlideUri={currentSlideUri}
                       courseId={courseId}
                       slidesClipInfo={slidesClipInfo}
+                      showPresentationVideo={showPresentationVideo}
                       slideNum={slideNum}
                       onSlideChange={(slide: Slide) => {
                         setPreNotes(slide?.preNotes.map((p) => p.html) || []);
@@ -688,31 +723,31 @@ const CourseViewPage: NextPage = () => {
                   </Paper>
                 </Box>
               )}
-
-              {/* Check if slides are available for current section */}
               {(() => {
-                // Check if slides exist in the slidesUriToIndexMap
                 const sectionSlides = slidesUriToIndexMap[sectionId];
                 let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
-                
-                // Also check if there are markers with slideUri for the current section
                 if (!hasSlidesForSection && videoExtractedData && sectionId) {
-                  const sectionMarkers = Object.entries(videoExtractedData)
-                    .filter(([, item]: [string, Record<string, unknown>]) => {
+                  const sectionMarkers = Object.entries(videoExtractedData).filter(
+                    ([, item]: [string, Record<string, unknown>]) => {
                       return (
                         ((item.sectionId as string) || '').trim() === sectionId &&
                         ((item.slideUri as string) || '').trim() !== ''
                       );
-                    });
+                    }
+                  );
                   hasSlidesForSection = sectionMarkers.length > 0;
                 }
-                
+
                 return hasSlidesForSection ? (
                   <Box
                     sx={{
-                      flex: hasPresentationOrComposite ? '0' : { xs: '1', lg: '1 1 50%' },
+                      flex:
+                      showPresentationVideo || hasPresentationOrComposite 
+                          ? '0'
+                          : { xs: '1', lg: '1 1 50%' },
                       minWidth: 0,
-                      display: hasPresentationOrComposite ? 'none' : 'block',
+                      display:
+                       showPresentationVideo || hasPresentationOrComposite ?'none' : 'block',
                     }}
                   >
                     <Paper
@@ -725,39 +760,39 @@ const CourseViewPage: NextPage = () => {
                       }}
                     >
                       <SlideDeck
-                    navOnTop={viewMode === ViewMode.COMBINED_MODE}
-                    courseId={courseId}
-                    sectionId={sectionId}
-                    onSlideChange={(slide: Slide) => {
-                      setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                      setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                      const slideUri = getSlideUri(slide);
-                      setCurrentSlideUri(slideUri || '');
-                      if (
-                        slidesClipInfo &&
-                        slidesClipInfo[sectionId] &&
-                        slidesClipInfo[sectionId][slideUri]
-                      ) {
-                        const slideClips = slidesClipInfo[sectionId][slideUri];
-                        if (!Array.isArray(slideClips)) {
-                          return;
-                        }
-                        const matchedClip = slideClips.find(
-                          (clip) => clip.video_id === currentClipId
-                        );
-                        setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                      } else {
-                        setCurrentSlideClipInfo(null);
-                      }
-                    }}
-                    goToNextSection={goToNextSection}
-                    goToPrevSection={goToPrevSection}
-                    slideNum={slideNum}
-                    slidesClipInfo={slidesClipInfo}
-                    onClipChange={onClipChange}
-                    audioOnly={audioOnly}
-                    videoLoaded={videoLoaded}
-                  />
+                        navOnTop={viewMode === ViewMode.COMBINED_MODE}
+                        courseId={courseId}
+                        sectionId={sectionId}
+                        onSlideChange={(slide: Slide) => {
+                          setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+                          setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+                          const slideUri = getSlideUri(slide);
+                          setCurrentSlideUri(slideUri || '');
+                          if (
+                            slidesClipInfo &&
+                            slidesClipInfo[sectionId] &&
+                            slidesClipInfo[sectionId][slideUri]
+                          ) {
+                            const slideClips = slidesClipInfo[sectionId][slideUri];
+                            if (!Array.isArray(slideClips)) {
+                              return;
+                            }
+                            const matchedClip = slideClips.find(
+                              (clip) => clip.video_id === currentClipId
+                            );
+                            setCurrentSlideClipInfo(matchedClip || slideClips[0]);
+                          } else {
+                            setCurrentSlideClipInfo(null);
+                          }
+                        }}
+                        goToNextSection={goToNextSection}
+                        goToPrevSection={goToPrevSection}
+                        slideNum={slideNum}
+                        slidesClipInfo={slidesClipInfo}
+                        onClipChange={onClipChange}
+                        audioOnly={audioOnly}
+                        videoLoaded={videoLoaded}
+                      />
                     </Paper>
                   </Box>
                 ) : null;

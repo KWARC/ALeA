@@ -51,6 +51,7 @@ export function MediaItem({
   goToPrevSection,
   onClipChange,
   videoLoaded,
+  showPresentationVideo
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -63,6 +64,7 @@ export function MediaItem({
   slidesUriToIndexMap?: SlidesUriToIndexMap;
   presenterVideoId?: string;
   compositeVideoId?: string;
+  showPresentationVideo?: boolean;
   presentationVideoId?: string;
   onVideoTypeChange?: (isPlayingCompositeOrPresentation: boolean) => void;
   videoMode?: 'presenter' | 'presentation' | null;
@@ -112,12 +114,12 @@ export function MediaItem({
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
   }, [showConcepts]);
-  
+
   // Check if slides are available for the current section
   // Check both slidesUriToIndexMap and markers (markers indicate slides exist)
   const hasSlides = useMemo(() => {
     if (!currentSectionId) return false;
-    
+
     // Check if slides exist in the slidesUriToIndexMap
     if (slidesUriToIndexMap) {
       const sectionSlides = slidesUriToIndexMap[currentSectionId];
@@ -125,7 +127,7 @@ export function MediaItem({
         return true;
       }
     }
-    
+
     // Check if there are markers with slideUri for the current section
     if (markers && markers.length > 0) {
       const sectionMarkers = markers.filter(
@@ -135,10 +137,10 @@ export function MediaItem({
         return true;
       }
     }
-    
+
     return false;
   }, [currentSectionId, slidesUriToIndexMap, markers]);
-  
+
   // Always use presenter video for the left (master) player
   const masterVideoUrl = presenterVideoId || videoId;
   const currentSectionRange = useMemo(() => {
@@ -254,7 +256,7 @@ export function MediaItem({
         sources: [{ src: masterVideoUrl, type: 'video/mp4' }],
       });
       videoPlayer.current = player;
-      
+
       // Wait for player to be ready before applying styles
       player.ready(() => {
         const controlBar = playerRef.current.parentNode?.querySelector(
@@ -277,7 +279,7 @@ export function MediaItem({
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
-        
+
         // Apply control bar styles after ready
         const controlBar = playerRef.current.parentNode?.querySelector(
           '.vjs-control-bar'
@@ -312,7 +314,7 @@ export function MediaItem({
         controlBar.style.visibility = 'visible';
         controlBar.style.opacity = '1';
         controlBar.style.display = 'flex';
-        
+
         // Ensure play/pause button is visible
         const playPauseButton = controlBar.querySelector('.vjs-play-control') as HTMLElement;
         if (playPauseButton) {
@@ -322,13 +324,13 @@ export function MediaItem({
         }
       }
     };
-    
+
     // Apply styles immediately if control bar exists
     applyControlBarStyles();
-    
+
     // Also apply after a short delay to catch control bar if it's created later
     const timeoutId = setTimeout(applyControlBarStyles, 100);
-    
+
     return () => {
       clearTimeout(timeoutId);
     };
@@ -367,11 +369,11 @@ export function MediaItem({
       }
     };
   }, [masterVideoUrl, audioOnly]);
-  
+
   // Setup presentation video player (right side - only if no slides)
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
   useEffect(() => {
-    if (audioOnly || hasSlides || !presentationVideoUrl) {
+    if (audioOnly || (!showPresentationVideo && hasSlides) || !presentationVideoUrl) {
       if (presentationVideoPlayer.current) {
         presentationVideoPlayer.current.dispose();
         presentationVideoPlayer.current = null;
@@ -409,24 +411,26 @@ export function MediaItem({
         presentationVideoPlayer.current = null;
       }
     };
-  }, [presentationVideoUrl, hasSlides, audioOnly]);
-  
+  }, [presentationVideoUrl, hasSlides, audioOnly, showPresentationVideo]);
+
   // Synchronize presentation video with master video
   useEffect(() => {
     const masterPlayer = videoPlayer.current;
     const presentationPlayer = presentationVideoPlayer.current;
-    
-    if (!masterPlayer || !presentationPlayer || hasSlides) return;
-    
+
+    // When slides exist but the user explicitly chose to see the presentation video,
+    // we still want the two players to stay in sync.
+    if (!masterPlayer || !presentationPlayer || (hasSlides && !showPresentationVideo)) return;
+
     const syncPlayers = () => {
       if (masterPlayer && presentationPlayer) {
         const masterTime = masterPlayer.currentTime();
         const masterPaused = masterPlayer.paused();
-        
+
         if (Math.abs(presentationPlayer.currentTime() - masterTime) > 0.5) {
           presentationPlayer.currentTime(masterTime);
         }
-        
+
         if (masterPaused && !presentationPlayer.paused()) {
           presentationPlayer.pause();
         } else if (!masterPaused && presentationPlayer.paused()) {
@@ -434,19 +438,19 @@ export function MediaItem({
         }
       }
     };
-    
+
     masterPlayer.on('play', () => presentationPlayer?.play());
     masterPlayer.on('pause', () => presentationPlayer?.pause());
     masterPlayer.on('seeked', syncPlayers);
     masterPlayer.on('timeupdate', syncPlayers);
-    
+
     return () => {
       masterPlayer.off('play');
       masterPlayer.off('pause');
       masterPlayer.off('seeked', syncPlayers);
       masterPlayer.off('timeupdate', syncPlayers);
     };
-  }, [hasSlides]);
+  }, [hasSlides, showPresentationVideo]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -546,11 +550,7 @@ export function MediaItem({
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [
-    markersInDescOrder,
-    slidesUriToIndexMap,
-    router,
-  ]);
+  }, [markersInDescOrder, slidesUriToIndexMap, router]);
 
   useEffect(() => {
     if (videoPlayer.current && timestampSec !== undefined) {
@@ -658,22 +658,16 @@ export function MediaItem({
         </Box>
 
         {/* Right side: Presentation video (only if no slides, since slides are shown separately in the layout) */}
-        {!hasSlides && presentationVideoUrl ? (
-          <Box
-            sx={{
-              flex: '1 1 50%',
-              position: 'relative',
-            }}
-          >
+        {presentationVideoUrl && (!hasSlides || showPresentationVideo) && (
+          <Box sx={{ flex: '1 1 50%', position: 'relative' }}>
             <video
-              key="presentationVideoPlayer"
               ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
               className="video-js vjs-fluid vjs-styles=defaults"
               style={{ border: '0.5px solid black', borderRadius: '8px' }}
               muted
             />
           </Box>
-        ) : null}
+        )}
       </Box>
       {currentSectionRange && isAwayFromSection && (
         <Tooltip title={`Section starts at ${formatTime(currentSectionRange.start)}`} arrow>
