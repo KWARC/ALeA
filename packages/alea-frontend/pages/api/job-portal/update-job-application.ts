@@ -85,7 +85,7 @@ async function getUserIdAndRoleIfAuthorizedOrSetError(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const { id, action, message } = req.body;
-  if (!id || action) return res.status(422).send('Job Application Id or Action is missing');
+  if (!id || !action) return res.status(422).send('Job Application Id or Action is missing');
   const userIdAndRole = await getUserIdAndRoleIfAuthorizedOrSetError(req, res, id, action);
   if (!userIdAndRole) return;
   const { userId, role } = userIdAndRole;

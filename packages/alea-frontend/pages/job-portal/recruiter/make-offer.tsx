@@ -20,14 +20,16 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { Cancel, Visibility } from '@mui/icons-material';
+import { Cancel, History, Visibility } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
 import { JobSelect } from './applications';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
+import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 export const UserProfileModal = ({
@@ -94,6 +96,7 @@ export const OfferMakingTable = ({
   loading: boolean;
 }) => {
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const handleViewApplicant = (application: ApplicationWithProfile) => {
     const profile = { ...application.studentProfile };
@@ -150,8 +153,12 @@ export const OfferMakingTable = ({
   const handleCloseProfile = () => {
     setSelectedProfile(null);
   };
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
   const renderCandidateResponse = (applicationStatus) => {
-    if (!['OFFER_ACCEPTED', 'OFFERED', 'OFFER_REJECTED'].includes(applicationStatus)) {
+    if (
+      !['OFFER_ACCEPTED', 'OFFERED', 'OFFER_REJECTED', 'OFFER_REVOKED'].includes(applicationStatus)
+    ) {
       return (
         <Typography variant="body2" color="text.secondary">
           No offer sent
@@ -166,6 +173,9 @@ export const OfferMakingTable = ({
     }
     if (applicationStatus === 'OFFER_REJECTED') {
       return <Chip label="Offer rejected" size="small" color="error" />;
+    }
+    if (applicationStatus === 'OFFER_REVOKED') {
+      return <Chip label="Offer revoked" size="small" color="error" />;
     }
     return null;
   };
@@ -189,7 +199,7 @@ export const OfferMakingTable = ({
       return (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Chip label="Offer Made" size="small" color="success" />
-          {applicationStatus === 'OFFERED' && (
+          {(applicationStatus === 'OFFERED' || applicationStatus === 'OFFER_ACCEPTED') && (
             <Button
               size="small"
               color="error"
@@ -252,14 +262,28 @@ export const OfferMakingTable = ({
             applications.map((application) => (
               <TableRow key={application.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
                 <TableCell sx={{ textAlign: 'center' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 1 }}
+                  >
                     <Typography fontWeight={500}>
                       {application.studentProfile?.name || '—'}
                     </Typography>
                     <IconButton color="primary" onClick={() => handleViewApplicant(application)}>
                       <Visibility />
                     </IconButton>
+
+                    <Tooltip title="View Application Timeline" arrow>
+                      <IconButton color="info" size="small" onClick={handleOpenTimeline}>
+                        <History fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
+
+                  <JobApplicationTimelineModal
+                    open={showTimeline}
+                    applicationId={application.id}
+                    onClose={handleCloseTimeline}
+                  />
                   <UserProfileModal
                     open={Boolean(selectedProfile)}
                     profile={selectedProfile}

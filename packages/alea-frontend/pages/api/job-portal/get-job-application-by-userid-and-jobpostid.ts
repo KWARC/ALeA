@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserId(req);
   if (!userId || !jobPostId) return res.status(422).send('Missing required fields');
   const results: any = await executeDontEndSet500OnError(
-    `SELECT id,jobPostId,applicantId,applicationStatus,applicantAction,recruiterAction,studentMessage,recruiterMessage
+    `SELECT id,jobPostId,applicantId,applicationStatus
     FROM jobApplication 
     WHERE jobPostId = ? AND applicantId=?`,
     [jobPostId, userId],

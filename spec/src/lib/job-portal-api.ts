@@ -8,6 +8,7 @@ import {
   StudentData,
   JobApplicationInfo,
   UpdateJobApplicationRequest,
+  JobApplicationTimelineEntry,
 } from './job-portal';
 export type CreateStudentProfileData = Omit<StudentData, 'userId' | 'socialLinks'>;
 export async function createStudentProfile(data: CreateStudentProfileData) {
@@ -207,12 +208,22 @@ export async function getJobApplicationsByJobPost(jobPostId: number) {
   });
   return resp.data as JobApplicationInfo[];
 }
+
 export async function getJobApplicationsByUserId() {
   const resp = await axios.get('/api/job-portal/get-job-applications-by-userid', {
     headers: getAuthHeaders(),
   });
   return resp.data as JobApplicationInfo[];
 }
+
+export async function getJobApplicationTimeline(applicationId:number) {
+  const resp = await axios.get('/api/job-portal/get-job-application-timeline', {
+    headers: getAuthHeaders(),
+    params: { applicationId },
+  });
+  return resp.data as JobApplicationTimelineEntry[];
+}
+
 export async function getJobApplicationsByUserIdAndJobPostId(jobPostId: number) {
   //TODO
   // Add acl check to know if this api is being called by ADMIN ,

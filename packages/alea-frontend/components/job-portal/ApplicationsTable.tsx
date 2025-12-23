@@ -23,12 +23,44 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { getSocialIcon } from './UserProfileCard';
-import { ApplicationWithProfile, updateJobApplication } from '@alea/spec';
+import { ApplicationStatus, ApplicationWithProfile, updateJobApplication } from '@alea/spec';
 import { UserProfileModal } from '../../pages/job-portal/recruiter/make-offer';
+import JobApplicationTimelineModal from './ApplicationTimelineModal';
+const RECRUITER_ACTIONS_BY_STATUS = {
+  SHORTLIST_FOR_INTERVIEW: {
+    allowedFrom: ['APPLIED', 'ON_HOLD'] as ApplicationStatus[],
+    tooltip: {
+      default: 'Shortlist for interview',
+      disabled: 'Cannot shortlist at this stage',
+      done: 'Already shortlisted',
+    },
+  },
+
+  ON_HOLD: {
+    allowedFrom: ['APPLIED', 'SHORTLISTED_FOR_INTERVIEW'] as ApplicationStatus[],
+    tooltip: {
+      default: 'Keep on hold',
+      done: 'Already on hold',
+    },
+  },
+
+  REJECT: {
+    allowedFrom: [
+      'APPLIED',
+      'SHORTLISTED_FOR_INTERVIEW',
+      'ON_HOLD',
+      'OFFERED',
+    ] as ApplicationStatus[],
+    tooltip: {
+      default: 'Reject applicant',
+      done: 'Already rejected',
+    },
+  },
+};
 
 const ActionButtons = ({
-   application,
-   updateApplication,
+  application,
+  updateApplication,
 }: {
   application: ApplicationWithProfile;
   updateApplication: (updatedApplication: ApplicationWithProfile) => void;
@@ -82,44 +114,75 @@ const ActionButtons = ({
       console.error(err);
     }
   }
+  function canPerformAction(status: ApplicationStatus, allowedFrom: ApplicationStatus[]) {
+    return allowedFrom.includes(status);
+  }
+
+  function getTooltip(
+    status: ApplicationStatus,
+    actionKey: keyof typeof RECRUITER_ACTIONS_BY_STATUS
+  ) {
+    const { allowedFrom, tooltip } = RECRUITER_ACTIONS_BY_STATUS[actionKey];
+
+    if (allowedFrom.includes(status)) return tooltip.default;
+
+    if (actionKey === 'SHORTLIST_FOR_INTERVIEW' && status === 'SHORTLISTED_FOR_INTERVIEW')
+      return tooltip.done;
+
+    if (actionKey === 'ON_HOLD' && status === 'ON_HOLD') return tooltip.done;
+
+    if (actionKey === 'REJECT' && status === 'REJECTED') return tooltip.done;
+
+    return ('disabled' in tooltip && tooltip.disabled) || 'Action not allowed';
+  }
+
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-      <Tooltip
-        title={
-          application.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'
-            ? 'Shortlisted'
-            : 'Shortlist for Interview'
-        }
-      >
+    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+      <Tooltip title={getTooltip(application.applicationStatus, 'SHORTLIST_FOR_INTERVIEW')}>
         <span>
           <IconButton
             color="primary"
+            disabled={
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.SHORTLIST_FOR_INTERVIEW.allowedFrom
+              )
+            }
             onClick={() => handleShortlistApplication(application)}
-            disabled={application.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'}
           >
             <PersonAdd />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip title={application.applicationStatus === 'ON_HOLD' ? 'On Hold' : 'Keep on Hold'}>
+      <Tooltip title={getTooltip(application.applicationStatus, 'ON_HOLD')}>
         <span>
           <IconButton
             color="warning"
+            disabled={
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.ON_HOLD.allowedFrom
+              )
+            }
             onClick={() => handleKeepOnHoldApplication(application)}
-            disabled={application.applicationStatus === 'ON_HOLD'}
           >
             <PauseCircle />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip title={application.applicationStatus === 'REJECTED' ? 'Rejected' : 'Reject Applicant'}>
+      <Tooltip title={getTooltip(application.applicationStatus, 'REJECT')}>
         <span>
           <IconButton
             color="error"
+            disabled={
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.REJECT.allowedFrom
+              )
+            }
             onClick={() => handleRejectApplication(application)}
-            disabled={application.applicationStatus === 'REJECTED'}
           >
             <Cancel />
           </IconButton>
@@ -172,7 +235,7 @@ const SocialLinks = ({ socialLinks }) => {
 };
 
 const ApplicationRow = ({
-   application,
+  application,
   index,
   updateApplication,
 }: {
@@ -181,6 +244,7 @@ const ApplicationRow = ({
   updateApplication: (updatedApplication: ApplicationWithProfile) => void;
 }) => {
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [showTimeline, setShowTimeline] = useState(false);
   const handleViewApplicant = (application: ApplicationWithProfile) => {
     const profile = { ...application.studentProfile };
     const socialLinks = profile?.socialLinks || {};
@@ -196,6 +260,8 @@ const ApplicationRow = ({
   const handleCloseProfile = () => {
     setSelectedProfile(null);
   };
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
   const handleDownloadResume = (applicant: ApplicationWithProfile) => {
     alert('Download Functionality not active as of now');
   };
@@ -221,14 +287,30 @@ const ApplicationRow = ({
               {application.applicationStatus || 'Pending'}
             </Typography>
           </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleOpenTimeline}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.75rem',
+            }}
+          >
+            View timeline
+          </Button>
         </Box>
+        <JobApplicationTimelineModal
+          open={showTimeline}
+          applicationId={application.id}
+          onClose={handleCloseTimeline}
+        />
         <UserProfileModal
           open={Boolean(selectedProfile)}
           profile={selectedProfile}
           onClose={handleCloseProfile}
         />
       </TableCell>
-      <TableCell sx={{ textAlign: 'center' }}>{application?.jobPostTitle}</TableCell>
+      <TableCell sx={{ textAlign: 'center' }}>{application?.jobTitle}</TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <SocialLinks socialLinks={application.studentProfile.socialLinks} />
       </TableCell>
@@ -295,7 +377,9 @@ export const ApplicationTable = ({
   };
   const updateApplication = (updatedApplication: ApplicationWithProfile) => {
     setFilteredApplications((prev: ApplicationWithProfile[]) =>
-      prev.map((application) => (application.id === updatedApplication.id ? updatedApplication : application))
+      prev.map((application) =>
+        application.id === updatedApplication.id ? updatedApplication : application
+      )
     );
   };
   return (

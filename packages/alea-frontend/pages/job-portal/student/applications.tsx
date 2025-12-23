@@ -4,6 +4,7 @@ import {
   CheckCircle,
   ExpandLess,
   ExpandMore,
+  History,
   MailOutline,
   Pause,
   PendingActions,
@@ -21,8 +22,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import {
   ApplicationWithJobAndOrgTitle,
   canAccessResource,
@@ -31,15 +36,14 @@ import {
   getOrganizationProfile,
   updateJobApplication,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 const Applications = () => {
   const [companySortOrder, setCompanySortOrder] = useState('asc');
   const [applications, setApplications] = useState<ApplicationWithJobAndOrgTitle[]>([]);
   const [filter, setFilter] = useState('ALL');
+  const [showTimeline, setShowTimeline] = useState(false);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -137,9 +141,9 @@ const Applications = () => {
     } catch (err) {
       console.error(err);
     }
-
   };
-
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
   const filteredApplications = applications.filter((application) => {
     switch (filter) {
       case 'ALL':
@@ -235,9 +239,21 @@ const Applications = () => {
                 {filteredApplications.length > 0 ? (
                   filteredApplications.map((jobApplication,idx) => (
                     <TableRow key={jobApplication.id} hover>
-                      <TableCell align="center">{idx}</TableCell>
+                      <TableCell align="center">{idx + 1}</TableCell>
                       <TableCell align="center">
-                        {new Date(jobApplication.createdAt).toLocaleDateString()}
+                        <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
+                          {new Date(jobApplication.createdAt).toLocaleDateString()}
+                          <Tooltip title="View Application Timeline" arrow>
+                            <IconButton color="info" size="small" onClick={handleOpenTimeline}>
+                              <History fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        <JobApplicationTimelineModal
+                          open={showTimeline}
+                          applicationId={jobApplication.id}
+                          onClose={handleCloseTimeline}
+                        />
                       </TableCell>
                       <TableCell align="center">{jobApplication.companyName}</TableCell>
                       <TableCell align="center">{jobApplication.jobTitle}</TableCell>
@@ -290,8 +306,9 @@ const Applications = () => {
                               size="small"
                               onClick={() => handleAcceptOffer(jobApplication)}
                               disabled={
-                                (jobApplication.applicationStatus !== 'OFFERED' &&
-                                  jobApplication.applicationStatus !== 'OFFER_REJECTED')                               }
+                                jobApplication.applicationStatus !== 'OFFERED' &&
+                                jobApplication.applicationStatus !== 'OFFER_REJECTED'
+                              }
                             >
                               {jobApplication.applicationStatus === 'OFFER_ACCEPTED'
                                 ? 'Offer Accepted'
@@ -306,8 +323,8 @@ const Applications = () => {
                               size="small"
                               onClick={() => handleRejectOffer(jobApplication)}
                               disabled={
-                                (jobApplication.applicationStatus !== 'OFFERED' &&
-                                  jobApplication.applicationStatus !== 'OFFER_ACCEPTED') 
+                                jobApplication.applicationStatus !== 'OFFERED' &&
+                                jobApplication.applicationStatus !== 'OFFER_ACCEPTED'
                               }
                             >
                               {jobApplication.applicationStatus === 'OFFER_REJECTED'

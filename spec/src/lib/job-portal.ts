@@ -69,16 +69,13 @@ export interface JobPostInfo {
   createdByUserId?: string;
   createdAt?: string;
 }
-export type JobPostFormData = Omit<
-  JobPostInfo,
-  "id" | "organizationId" | "jobCategoryId"
->;
+export type JobPostFormData = Omit<JobPostInfo, 'id' | 'organizationId' | 'jobCategoryId'>;
 export type InitialJobData = Partial<JobPostInfo>;
 export interface JobApplicationInfo {
   id: number;
   jobPostId: number;
   applicantId: string;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -91,6 +88,16 @@ export type ApplicationWithProfile = JobApplicationInfo & {
 export type ApplicationWithJobAndOrgTitle = JobApplicationInfo & {
   jobTitle?: string;
   companyName?: string;
+};
+
+export interface JobApplicationTimelineEntry {
+  id: number;
+  jobApplicationId: number;
+  actionByRole: 'APPLICANT' | 'RECRUITER' | 'ADMIN';
+  userId: string;
+  actionType: ApplicationAction;
+  message?: string;
+  createdAt: string;
 }
 
 export const APPLICATION_STATUS = {
@@ -135,7 +142,6 @@ export const RECRUITER_ACTIONS = new Set<ApplicationAction>([
   APPLICATION_ACTION.SEND_OFFER,
   APPLICATION_ACTION.REVOKE_OFFER,
 ]);
-
 
 export interface UpdateJobApplicationRequest {
   id: number;
