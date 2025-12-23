@@ -23,7 +23,6 @@ import {
   SectionInfo,
   Slide,
 } from '@alea/spec';
-import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
 import {
@@ -45,6 +44,7 @@ import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
+import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -841,50 +841,7 @@ const CourseViewPage: NextPage = () => {
                 )}
               </Stack>
             )}
-            <Paper
-              elevation={1}
-              sx={{
-                mt: { xs: 2, sm: 3 },
-                borderRadius: 2,
-                bgcolor: 'white',
-                overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              <Box
-                sx={{
-                  px: { xs: 2, sm: 3 },
-                  py: 2,
-                  borderBottom: '1px solid #e5e5e5',
-                  background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#1a1a1a',
-                    fontSize: { xs: '1rem', sm: '1.125rem' },
-                    mb: 0.5,
-                  }}
-                >
-                  Notes & Comments
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: '#1976d2',
-                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
-                    fontWeight: 500,
-                  }}
-                >
-                  Your private notes and public comments for this slide.
-                </Typography>
-              </Box>
-              <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
-                <CommentNoteToggleView uri={currentSlideUri} defaultPrivate={true} />
-              </Box>
-            </Paper>
+            <NotesAndCommentsSection currentSlideUri={currentSlideUri} />
           </Container>
         </Box>
       </LayoutWithFixedMenu>
