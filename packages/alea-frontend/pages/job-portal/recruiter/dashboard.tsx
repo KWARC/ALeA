@@ -1,6 +1,7 @@
 import { Group, HourglassEmpty, HowToReg, TaskAlt } from '@mui/icons-material';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import {
+  APPLICATION_STATUS,
   canAccessResource,
   getJobApplicationsByJobPost,
   getJobPosts,
@@ -19,7 +20,7 @@ import {
   UserProfileCard,
 } from '../../../components/job-portal/UserProfileCard';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-import { DashboardJobSection, StatsSection } from '../student/dashboard';
+import { DashboardJobSection, OFFER_STATUSES, StatsSection } from '../student/dashboard';
 
 export function RecruiterDashboard() {
   const [loading, setLoading] = useState(true);
@@ -117,14 +118,14 @@ export function RecruiterDashboard() {
       offeredCandidates: 0,
     };
     Object.values(applicationData).forEach((applications) => {
-      applications.forEach(({ recruiterAction }) => {
+      applications.forEach(({ applicationStatus }) => {
         stats.totalApplications += 1;
 
-        if (recruiterAction === 'NONE') {
+        if (applicationStatus === APPLICATION_STATUS.APPLIED) {
           stats.pendingApplications += 1;
-        } else if (recruiterAction === 'SHORTLIST_FOR_INTERVIEW') {
+        } else if (applicationStatus === APPLICATION_STATUS.SHORTLISTED_FOR_INTERVIEW) {
           stats.shortlistedCandidates += 1;
-        } else if (recruiterAction === 'SEND_OFFER') {
+        } else if (OFFER_STATUSES.includes(applicationStatus)) {
           stats.offeredCandidates += 1;
         }
       });

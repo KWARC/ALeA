@@ -54,6 +54,7 @@ export const UserProfileModal = ({
           backgroundColor: '#e0e0e0',
           maxWidth: '600px',
           maxHeight: '80vh',
+          minWidth: { xs: '90vw', sm: 400 },
           p: 2,
           borderRadius: 2,
           display: 'flex',

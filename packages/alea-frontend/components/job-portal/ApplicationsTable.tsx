@@ -193,7 +193,7 @@ const ActionButtons = ({
 };
 
 const SocialLinks = ({ socialLinks }) => {
-  if (!socialLinks)
+  if (!socialLinks  || Object.keys(socialLinks).length === 0)
     return (
       <Typography variant="body2" color="textSecondary">
         No links available

@@ -43,7 +43,6 @@ async function getUserIdAndRoleIfAuthorizedOrSetError(
     return;
   }
   const { applicantId, organizationId } = application[0];
-
   if (APPLICANT_ACTIONS.has(action)) {
     const userId = await getUserIdIfAuthorizedOrSetError(
       req,
@@ -53,11 +52,9 @@ async function getUserIdAndRoleIfAuthorizedOrSetError(
       { instanceId: CURRENT_TERM }
     );
     if (!userId) return;
-
     if (userId !== applicantId) {
       return res.status(403).send('Cannot modify another applicant’s application');
     }
-
     return {
       userId,
       role: 'APPLICANT',
@@ -72,13 +69,11 @@ async function getUserIdAndRoleIfAuthorizedOrSetError(
       { orgId: organizationId }
     );
     if (!userId) return;
-
     return {
       userId,
       role: 'RECRUITER',
     };
   }
-
   return res.status(400).send('Invalid application action');
 }
 
