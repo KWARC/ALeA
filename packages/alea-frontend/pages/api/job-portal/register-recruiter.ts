@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   const { name, email, position, companyName } = req.body;
 
-  if (!email || !name || !position || !userId) {
+  if (!email || !name || !position || !companyName) {
     return res.status(422).send('Missing required fields');
   }
   const domain = email.split('@')[1];

@@ -4,6 +4,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
+import { isBusinessDomain } from '@alea/utils';
 
 export async function createOrganizationProfileOrSet500OnError(
   {
@@ -59,12 +60,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     incorporationYear,
     isStartup,
     website,
-    domain,
     about,
     companyType,
     officeAddress,
     officePostalCode,
   } = req.body;
+  const domain = userId.split('@')[1] ?? '';
+  if (!isBusinessDomain(domain)) return res.status(400).send('Domain issue, use organization email');
 
   const result = await createOrganizationProfileOrSet500OnError(
     {
