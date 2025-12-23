@@ -297,11 +297,11 @@ export function MediaItem({
       });
     }
 
-    // Also apply styles immediately if control bar already exists
     const applyControlBarStyles = () => {
-      const controlBar = playerRef.current?.parentNode?.querySelector(
-        '.vjs-control-bar'
-      ) as HTMLElement;
+      const root = playerRef.current?.parentNode as HTMLElement | null;
+      if (!root) return;
+
+      const controlBar = root.querySelector('.vjs-control-bar') as HTMLElement | null;
       if (controlBar) {
         controlBar.style.paddingBottom = '30px';
         controlBar.style.paddingTop = '10px';
@@ -315,16 +315,42 @@ export function MediaItem({
         controlBar.style.opacity = '1';
         controlBar.style.display = 'flex';
 
-        // Ensure play/pause button is visible
-        const playPauseButton = controlBar.querySelector('.vjs-play-control') as HTMLElement;
+        const playPauseButton = controlBar.querySelector('.vjs-play-control') as HTMLElement | null;
         if (playPauseButton) {
           playPauseButton.style.visibility = 'visible';
           playPauseButton.style.opacity = '1';
           playPauseButton.style.display = 'block';
         }
       }
+
+      const progressBar = root.querySelector('.vjs-progress-holder') as HTMLElement | null;
+      if (progressBar) {
+        progressBar.style.marginTop = '20px';
+      }
+
+      const bigPlayButton = root.querySelector('.vjs-big-play-button') as HTMLElement | null;
+      const playIcon = bigPlayButton?.querySelector('.vjs-icon-placeholder') as HTMLElement | null;
+      if (playIcon) {
+        playIcon.style.bottom = '5px';
+        playIcon.style.paddingRight = '25px';
+      }
+
+      const textTrackDisplay = root.querySelector('.vjs-text-track-display') as HTMLElement | null;
+      if (textTrackDisplay) {
+        Object.assign(textTrackDisplay.style, {
+          insetBlock: '0px',
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          margin: '0',
+          padding: '0',
+        });
+      }
     };
 
+    // Apply styles immediately if control bar exists
     // Apply styles immediately if control bar exists
     applyControlBarStyles();
 
@@ -333,36 +359,6 @@ export function MediaItem({
 
     return () => {
       clearTimeout(timeoutId);
-    };
-    const progressBar = playerRef.current.parentNode?.querySelector(
-      '.vjs-progress-holder'
-    ) as HTMLElement;
-    if (progressBar) {
-      progressBar.style.marginTop = '20px';
-    }
-    const bigPlayButton = playerRef.current.parentNode?.querySelector('.vjs-big-play-button');
-    const playIcon = bigPlayButton?.querySelector('.vjs-icon-placeholder') as HTMLElement;
-    if (playIcon) {
-      playIcon.style.bottom = '5px';
-      playIcon.style.paddingRight = '25px';
-    }
-    const textTrackDisplay = playerRef.current.parentNode?.querySelector(
-      '.vjs-text-track-display'
-    ) as HTMLElement;
-    if (textTrackDisplay) {
-      Object.assign(textTrackDisplay.style, {
-        insetBlock: '0px',
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        margin: '0',
-        padding: '0',
-      });
-    }
-
-    return () => {
       if (audioOnly && player) {
         player.dispose();
         videoPlayer.current = null;
