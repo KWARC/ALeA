@@ -13,7 +13,7 @@ import {
   ReviewType,
   SubProblemData,
 } from '@alea/spec';
-import { MystEditor, MystViewer } from '@alea/myst';
+import { MdEditor, MdViewer } from '@alea/markdown';
 import { localStore, PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -73,7 +73,7 @@ export function GradingDisplay({
       {/* /gradingInfo.maxPoints*/}
       {gradingInfo.customFeedback && (
         <Box sx={{ bgcolor: '#CCC', px: '3px', borderRadius: '3px', fontSize: 'medium' }}>
-          <MystViewer content={'**Feedback:**\n\n ' + gradingInfo.customFeedback} />
+          <MdViewer content={'**Feedback:**\n\n ' + gradingInfo.customFeedback} />
         </Box>
       )}
       <Box sx={{ border: '1px solid #333', borderRadius: 1, p: 1 }}>
@@ -252,18 +252,19 @@ export function SubProblemAnswer({
               borderRadius: '5px',
             }}
           >
-            <MystViewer content={answer || '*Unanswered*'} />
+            <MdViewer content={answer || '*Unanswered*'} />
           </Box>
         ) : (
           <Box display="flex" alignItems="flex-start">
             <Box flexGrow={1}>
-              <MystEditor
-                editorProps={{ border: canSaveAnswer ? '2px solid red' : undefined }}
-                name={`answer-${questionId}-${subProblemId}`}
-                placeholder={'...'}
-                value={answer}
-                onValueChange={onAnswerChanged}
-              />
+              <Box sx={{ border: canSaveAnswer ? '2px solid red' : undefined }}>
+                <MdEditor
+                  name={`answer-${questionId}-${subProblemId}`}
+                  placeholder={'...'}
+                  value={answer}
+                  onValueChange={onAnswerChanged}
+                />
+              </Box>
             </Box>
             <IconButton
               disabled={!canSaveAnswer}

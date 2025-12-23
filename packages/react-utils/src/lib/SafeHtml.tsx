@@ -4,7 +4,7 @@ import React from 'react';
 interface SafeHtmlProps {
   html: string;
   className?: string;
-  component?: keyof JSX.IntrinsicElements;
+  component?: keyof React.JSX.IntrinsicElements;
 }
 
 export const SafeHtml: React.FC<SafeHtmlProps> = ({
