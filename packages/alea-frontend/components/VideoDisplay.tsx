@@ -12,6 +12,7 @@ import {
   ClipDetails,
   ClipInfo,
   ClipMetadata,
+  Slide,
 } from '@alea/spec';
 import { formatTime, localStore } from '@alea/utils';
 import axios from 'axios';
@@ -129,6 +130,14 @@ export function VideoDisplay({
   videoMode,
   currentSectionId,
   currentSlideUri,
+  courseId,
+  slidesClipInfo,
+  slideNum,
+  onSlideChange,
+  goToNextSection,
+  goToPrevSection,
+  onClipChange,
+  videoLoaded,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -146,6 +155,18 @@ export function VideoDisplay({
   videoMode?: 'presenter' | 'presentation' | null;
   currentSectionId?: string;
   currentSlideUri?: string;
+  courseId?: string;
+  slidesClipInfo?: {
+    [sectionId: string]: {
+      [slideUri: string]: ClipInfo[];
+    };
+  };
+  slideNum?: number;
+  onSlideChange?: (slide: Slide) => void;
+  goToNextSection?: () => void;
+  goToPrevSection?: () => void;
+  onClipChange?: (clip: ClipInfo) => void;
+  videoLoaded?: boolean;
 }) {
   const [resolution] = useState(+(localStore?.getItem('defaultResolution') || '720'));
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
@@ -280,6 +301,14 @@ export function VideoDisplay({
           videoMode={videoMode}
           currentSectionId={currentSectionId}
           currentSlideUri={currentSlideUri}
+          courseId={courseId}
+          slidesClipInfo={slidesClipInfo}
+          slideNum={slideNum}
+          onSlideChange={onSlideChange}
+          goToNextSection={goToNextSection}
+          goToPrevSection={goToPrevSection}
+          onClipChange={onClipChange}
+          videoLoaded={videoLoaded}
         />
       </Box>
     </>

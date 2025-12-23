@@ -1,5 +1,5 @@
 import { formatTime, getParamFromUri, languageUrlMap, PathToTour2 } from '@alea/utils';
-import { ClipInfo, ClipMetadata, getDefiniedaInSectionAgg } from '@alea/spec';
+import { ClipInfo, getDefiniedaInSectionAgg, Slide } from '@alea/spec';
 import { Box, CircularProgress, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from 'next/router';
@@ -42,6 +42,14 @@ export function MediaItem({
   videoMode,
   currentSectionId,
   currentSlideUri,
+  courseId,
+  slidesClipInfo,
+  slideNum,
+  onSlideChange,
+  goToNextSection,
+  goToPrevSection,
+  onClipChange,
+  videoLoaded,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -59,9 +67,23 @@ export function MediaItem({
   videoMode?: 'presenter' | 'presentation' | null;
   currentSectionId?: string;
   currentSlideUri?: string;
+  courseId?: string;
+  slidesClipInfo?: {
+    [sectionId: string]: {
+      [slideUri: string]: ClipInfo[];
+    };
+  };
+  slideNum?: number;
+  onSlideChange?: (slide: Slide) => void;
+  goToNextSection?: () => void;
+  goToPrevSection?: () => void;
+  onClipChange?: (clip: ClipInfo) => void;
+  videoLoaded?: boolean;
 }) {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const videoPlayer = useRef<any>(null);
+  const presentationPlayerRef = useRef<HTMLVideoElement | null>(null);
+  const presentationVideoPlayer = useRef<any>(null);
   const autoSyncEnabled = true;
   const autoSyncRef = useRef(autoSyncEnabled);
   const lastSyncedMarkerTime = useRef<number | null>(null);
@@ -73,6 +95,35 @@ export function MediaItem({
   const [loadingConcepts, setLoadingConcepts] = useState(false);
   const conceptsCache = useRef<Record<string, string[]>>({});
   const [isAwayFromSection, setIsAwayFromSection] = useState(false);
+  
+  // Check if slides are available for the current section
+  // Check both slidesUriToIndexMap and markers (markers indicate slides exist)
+  const hasSlides = useMemo(() => {
+    if (!currentSectionId) return false;
+    
+    // Check if slides exist in the slidesUriToIndexMap
+    if (slidesUriToIndexMap) {
+      const sectionSlides = slidesUriToIndexMap[currentSectionId];
+      if (sectionSlides && Object.keys(sectionSlides).length > 0) {
+        return true;
+      }
+    }
+    
+    // Check if there are markers with slideUri for the current section
+    if (markers && markers.length > 0) {
+      const sectionMarkers = markers.filter(
+        (m) => m.data.sectionId === currentSectionId && m.data.slideUri
+      );
+      if (sectionMarkers.length > 0) {
+        return true;
+      }
+    }
+    
+    return false;
+  }, [currentSectionId, slidesUriToIndexMap, markers]);
+  
+  // Always use presenter video for the left (master) player
+  const masterVideoUrl = presenterVideoId || videoId;
   const currentSectionRange = useMemo(() => {
     if (!markers || !currentSectionId) return null;
     const sectionMarkers = markers
@@ -106,18 +157,14 @@ export function MediaItem({
     return [...markers].sort((a, b) => b.time - a.time);
   }, [markers]);
 
+  // Always use presenter video for master player (left side)
   useEffect(() => {
-    if (videoMode === 'presenter' && presenterVideoId) {
+    if (presenterVideoId) {
       setCurrentVideoUrl(presenterVideoId);
-    } else if (videoMode === 'presentation') {
-      const targetVideoId = presentationVideoId || compositeVideoId;
-      if (targetVideoId) {
-        setCurrentVideoUrl(targetVideoId);
-      }
-    } else if (videoMode === null) {
+    } else {
       setCurrentVideoUrl(videoId);
     }
-  }, [videoMode, presenterVideoId, presentationVideoId, compositeVideoId, videoId]);
+  }, [presenterVideoId, videoId]);
   useEffect(() => {
     const isPlayingCompositeOrPresentation =
       currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
@@ -169,6 +216,7 @@ export function MediaItem({
     handleMarkerClick(newMarker);
   };
 
+  // Setup master video player (left side - presenter video with controls)
   useEffect(() => {
     if (audioOnly) {
       if (videoPlayer.current) {
@@ -186,27 +234,87 @@ export function MediaItem({
         controls: !audioOnly,
         preload: 'auto',
         autoplay: false,
-        sources: [{ src: currentVideoUrl, type: 'video/mp4' }],
+        sources: [{ src: masterVideoUrl, type: 'video/mp4' }],
       });
       videoPlayer.current = player;
+      
+      // Wait for player to be ready before applying styles
+      player.ready(() => {
+        const controlBar = playerRef.current.parentNode?.querySelector(
+          '.vjs-control-bar'
+        ) as HTMLElement;
+        if (controlBar) {
+          controlBar.style.paddingBottom = '30px';
+          controlBar.style.paddingTop = '10px';
+          controlBar.style.position = 'absolute';
+          controlBar.style.bottom = '0';
+          controlBar.style.left = '0';
+          controlBar.style.right = '0';
+          controlBar.style.width = '100%';
+          controlBar.style.zIndex = '1000';
+        }
+      });
     } else {
       const currentTime = player.currentTime();
-      player.src({ src: currentVideoUrl, type: 'video/mp4' });
+      player.src({ src: masterVideoUrl, type: 'video/mp4' });
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
+        
+        // Apply control bar styles after ready
+        const controlBar = playerRef.current.parentNode?.querySelector(
+          '.vjs-control-bar'
+        ) as HTMLElement;
+        if (controlBar) {
+          controlBar.style.paddingBottom = '30px';
+          controlBar.style.paddingTop = '10px';
+          controlBar.style.position = 'absolute';
+          controlBar.style.bottom = '0';
+          controlBar.style.left = '0';
+          controlBar.style.right = '0';
+          controlBar.style.width = '100%';
+          controlBar.style.zIndex = '1000';
+        }
       });
     }
 
-    const controlBar = playerRef.current.parentNode?.querySelector(
-      '.vjs-control-bar'
-    ) as HTMLElement;
-    if (controlBar) {
-      controlBar.style.paddingBottom = '30px';
-      controlBar.style.paddingTop = '10px';
-      controlBar.style.position = 'absolute';
-      controlBar.style.zIndex = '1000';
-    }
+    // Also apply styles immediately if control bar already exists
+    const applyControlBarStyles = () => {
+      const controlBar = playerRef.current?.parentNode?.querySelector(
+        '.vjs-control-bar'
+      ) as HTMLElement;
+      if (controlBar) {
+        controlBar.style.paddingBottom = '30px';
+        controlBar.style.paddingTop = '10px';
+        controlBar.style.position = 'absolute';
+        controlBar.style.bottom = '0';
+        controlBar.style.left = '0';
+        controlBar.style.right = '0';
+        controlBar.style.width = '100%';
+        controlBar.style.zIndex = '1000';
+        controlBar.style.visibility = 'visible';
+        controlBar.style.opacity = '1';
+        controlBar.style.display = 'flex';
+        
+        // Ensure play/pause button is visible
+        const playPauseButton = controlBar.querySelector('.vjs-play-control') as HTMLElement;
+        if (playPauseButton) {
+          playPauseButton.style.visibility = 'visible';
+          playPauseButton.style.opacity = '1';
+          playPauseButton.style.display = 'block';
+        }
+      }
+    };
+    
+    // Apply styles immediately if control bar exists
+    applyControlBarStyles();
+    
+    // Also apply after a short delay to catch control bar if it's created later
+    const timeoutId = setTimeout(applyControlBarStyles, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
     const progressBar = playerRef.current.parentNode?.querySelector(
       '.vjs-progress-holder'
     ) as HTMLElement;
@@ -241,7 +349,87 @@ export function MediaItem({
         videoPlayer.current = null;
       }
     };
-  }, [currentVideoUrl, audioOnly]);
+  }, [masterVideoUrl, audioOnly]);
+  
+  // Setup presentation video player (right side - only if no slides)
+  const presentationVideoUrl = presentationVideoId || compositeVideoId;
+  useEffect(() => {
+    if (audioOnly || hasSlides || !presentationVideoUrl) {
+      if (presentationVideoPlayer.current) {
+        presentationVideoPlayer.current.dispose();
+        presentationVideoPlayer.current = null;
+      }
+      return;
+    }
+
+    if (!presentationPlayerRef.current) return;
+    let player = presentationVideoPlayer.current;
+
+    if (!player) {
+      player = videojs(presentationPlayerRef.current, {
+        controls: false,
+        preload: 'auto',
+        autoplay: false,
+        muted: true,
+        sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
+      });
+      presentationVideoPlayer.current = player;
+      // Ensure it's muted
+      player.muted(true);
+    } else {
+      const currentTime = player.currentTime();
+      player.src({ src: presentationVideoUrl, type: 'video/mp4' });
+      player.ready(() => {
+        player.currentTime(currentTime);
+        player.muted(true);
+        player.play();
+      });
+    }
+
+    return () => {
+      if (player) {
+        player.dispose();
+        presentationVideoPlayer.current = null;
+      }
+    };
+  }, [presentationVideoUrl, hasSlides, audioOnly]);
+  
+  // Synchronize presentation video with master video
+  useEffect(() => {
+    const masterPlayer = videoPlayer.current;
+    const presentationPlayer = presentationVideoPlayer.current;
+    
+    if (!masterPlayer || !presentationPlayer || hasSlides) return;
+    
+    const syncPlayers = () => {
+      if (masterPlayer && presentationPlayer) {
+        const masterTime = masterPlayer.currentTime();
+        const masterPaused = masterPlayer.paused();
+        
+        if (Math.abs(presentationPlayer.currentTime() - masterTime) > 0.5) {
+          presentationPlayer.currentTime(masterTime);
+        }
+        
+        if (masterPaused && !presentationPlayer.paused()) {
+          presentationPlayer.pause();
+        } else if (!masterPaused && presentationPlayer.paused()) {
+          presentationPlayer.play();
+        }
+      }
+    };
+    
+    masterPlayer.on('play', () => presentationPlayer?.play());
+    masterPlayer.on('pause', () => presentationPlayer?.pause());
+    masterPlayer.on('seeked', syncPlayers);
+    masterPlayer.on('timeupdate', syncPlayers);
+    
+    return () => {
+      masterPlayer.off('play');
+      masterPlayer.off('pause');
+      masterPlayer.off('seeked', syncPlayers);
+      masterPlayer.off('timeupdate', syncPlayers);
+    };
+  }, [hasSlides]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -332,40 +520,7 @@ export function MediaItem({
             setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
           }
         }
-        if (videoMode === null) {
-          if (presenterVideoId && currentVideoUrl !== presenterVideoId) {
-            setCurrentVideoUrl(presenterVideoId);
-          }
-        } else if (
-          videoMode === 'presenter' &&
-          presenterVideoId &&
-          currentVideoUrl !== presenterVideoId
-        ) {
-          setCurrentVideoUrl(presenterVideoId);
-        } else if (videoMode === 'presentation') {
-          const targetVideoId = presentationVideoId || compositeVideoId;
-          if (targetVideoId && currentVideoUrl !== targetVideoId) {
-            setCurrentVideoUrl(targetVideoId);
-          }
-        }
       } else {
-        if (videoMode === null) {
-          const fallbackVideoId = presentationVideoId || compositeVideoId;
-          if (fallbackVideoId && currentVideoUrl !== fallbackVideoId) {
-            setCurrentVideoUrl(fallbackVideoId);
-          }
-        } else if (
-          videoMode === 'presenter' &&
-          presenterVideoId &&
-          currentVideoUrl !== presenterVideoId
-        ) {
-          setCurrentVideoUrl(presenterVideoId);
-        } else if (videoMode === 'presentation') {
-          const targetVideoId = presentationVideoId || compositeVideoId;
-          if (targetVideoId && currentVideoUrl !== targetVideoId) {
-            setCurrentVideoUrl(targetVideoId);
-          }
-        }
         lastSyncedMarkerTime.current = null;
       }
     };
@@ -378,11 +533,6 @@ export function MediaItem({
     markersInDescOrder,
     slidesUriToIndexMap,
     router,
-    presenterVideoId,
-    compositeVideoId,
-    presentationVideoId,
-    currentVideoUrl,
-    videoMode,
   ]);
 
   useEffect(() => {
@@ -423,54 +573,91 @@ export function MediaItem({
       ></audio>
     );
   }
+  
   return (
     <>
-      <Box style={{ marginBottom: '7px', position: 'relative' }}>
-        <video
-          key="videoPlayer"
-          poster={thumbnail}
-          ref={playerRef as MutableRefObject<HTMLVideoElement>}
-          className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
-          style={{ border: '0.5px solid black', borderRadius: '8px' }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 2,
+          marginBottom: '7px',
+        }}
+      >
+        {/* Left side: Presenter video with master controls */}
+        <Box
+          sx={{
+            flex: '1 1 50%',
+            position: 'relative',
+            '& .video-js': {
+              position: 'relative',
+            },
+          }}
         >
-          {Object.entries(subtitles)
-            .filter(([code]) => code !== 'default')
-            .map(([code, url]) => {
-              if (!url) return null;
-              const isDefault = subtitles.default === url;
-              const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
-              return (
-                <track
-                  key={code}
-                  src={url}
-                  label={label}
-                  kind="captions"
-                  srcLang={code}
-                  default={isDefault}
-                />
-              );
-            })}
-        </video>
+          <video
+            key="videoPlayer"
+            poster={thumbnail}
+            ref={playerRef as MutableRefObject<HTMLVideoElement>}
+            className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
+            style={{ border: '0.5px solid black', borderRadius: '8px' }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {Object.entries(subtitles || {})
+              .filter(([code]) => code !== 'default')
+              .map(([code, url]) => {
+                if (!url) return null;
+                const isDefault = subtitles?.default === url;
+                const label = `${languageUrlMap[code] || code}${isDefault ? ' ★' : ''}`;
+                return (
+                  <track
+                    key={code}
+                    src={url}
+                    label={label}
+                    kind="captions"
+                    srcLang={code}
+                    default={isDefault}
+                  />
+                );
+              })}
+          </video>
 
-        {tooltip && (
+          {tooltip && (
+            <Box
+              style={{
+                position: 'absolute',
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                color: '#fff',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                zIndex: '100',
+              }}
+            >
+              {tooltip}
+            </Box>
+          )}
+        </Box>
+
+        {/* Right side: Presentation video (only if no slides, since slides are shown separately in the layout) */}
+        {!hasSlides && presentationVideoUrl ? (
           <Box
-            style={{
-              position: 'absolute',
-              top: '10px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: '#fff',
-              padding: '5px 10px',
-              borderRadius: '4px',
-              zIndex: '100',
+            sx={{
+              flex: '1 1 50%',
+              position: 'relative',
             }}
           >
-            {tooltip}
+            <video
+              key="presentationVideoPlayer"
+              ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
+              className="video-js vjs-fluid vjs-styles=defaults"
+              style={{ border: '0.5px solid black', borderRadius: '8px' }}
+              muted
+            />
           </Box>
-        )}
+        ) : null}
       </Box>
       {currentSectionRange && isAwayFromSection && (
         <Tooltip title={`Section starts at ${formatTime(currentSectionRange.start)}`} arrow>
