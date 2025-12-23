@@ -2,6 +2,7 @@ import { formatTime, getParamFromUri, languageUrlMap, PathToTour2 } from '@alea/
 import { ClipInfo, getDefiniedaInSectionAgg, Slide } from '@alea/spec';
 import { Box, CircularProgress, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useRouter } from 'next/router';
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import videojs from 'video.js';
@@ -95,6 +96,22 @@ export function MediaItem({
   const [loadingConcepts, setLoadingConcepts] = useState(false);
   const conceptsCache = useRef<Record<string, string[]>>({});
   const [isAwayFromSection, setIsAwayFromSection] = useState(false);
+  const [showConcepts, setShowConcepts] = useState(true);
+
+  // Initialise concepts visibility from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem('alea_show_concepts_overlay');
+    if (stored !== null) {
+      setShowConcepts(stored === 'true');
+    }
+  }, []);
+
+  // Persist concepts visibility to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
+  }, [showConcepts]);
   
   // Check if slides are available for the current section
   // Check both slidesUriToIndexMap and markers (markers indicate slides exist)
@@ -573,9 +590,8 @@ export function MediaItem({
       ></audio>
     );
   }
-  
   return (
-    <>
+    <Box sx={{ position: 'relative' }}>
       <Box
         sx={{
           display: 'flex',
@@ -684,7 +700,27 @@ export function MediaItem({
         </Tooltip>
       )}
 
-      {overlay && (
+      {/* Toggle button to show/hide concepts, placed outside the video area */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+        <Tooltip title={showConcepts ? 'Hide concepts' : 'Show concepts'} arrow>
+          <IconButton
+            size="small"
+            onClick={() => setShowConcepts((prev) => !prev)}
+            sx={{
+              bgcolor: showConcepts ? '#1d4ed8' : '#e5e7eb',
+              color: showConcepts ? '#ffffff' : '#111827',
+              border: '1px solid rgba(148, 163, 184, 0.7)',
+              '&:hover': {
+                bgcolor: showConcepts ? '#1e40af' : '#d1d5db',
+              },
+            }}
+          >
+            <MenuBookIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {showConcepts && overlay && (
         <Paper
           elevation={4}
           sx={{
@@ -706,7 +742,7 @@ export function MediaItem({
             </Typography>
             <IconButton
               size="small"
-              onClick={() => setOverlay(null)}
+              onClick={() => setShowConcepts(false)}
               sx={{
                 backgroundColor: 'rgba(148, 163, 184, 0.4)',
                 color: 'white',
@@ -802,6 +838,6 @@ export function MediaItem({
           )}
         </Paper>
       )}
-    </>
+    </Box>
   );
 }
