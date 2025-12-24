@@ -12,7 +12,7 @@ import {
   getVideoContainerWrapperStyles,
   shouldMakeControlBarFullWidth as shouldMakeFullWidth,
   isPresentationVideoShowing as checkIsPresentationVideoShowing,
-} from './video-controller-styles/videoControllerStyles';
+} from './video-controller-styles/VideoControllerStyles';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { usePresentationVideoPlayer } from '../hooks/usePresentationVideoPlayer';
 import { useVideoMarkers } from '../hooks/useVideoMarkers';
@@ -372,7 +372,15 @@ export function MediaItem({
           }
         }}
       />
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mt: shouldMakeControlBarFullWidth ? 0 : 6,
+          position: 'relative',
+          zIndex: 1001,
+        }}
+      >
         <Tooltip title={showConcepts ? 'Hide concepts' : 'Show concepts'} arrow>
           <IconButton
             size="small"

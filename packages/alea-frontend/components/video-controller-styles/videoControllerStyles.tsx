@@ -48,7 +48,6 @@ export const getVideoContainerWrapperStyles = (
   };
 };
 
-
 export const getFullWidthControlBarStyles = (): SxProps<Theme> => ({
   '& > div:first-of-type': {
     position: 'relative',
@@ -59,24 +58,22 @@ export const getFullWidthControlBarStyles = (): SxProps<Theme> => ({
       position: 'relative',
     },
     '& .vjs-control-bar': {
-      position: 'absolute !important' as any,
-      bottom: 'auto !important' as any,
-      top: '100% !important' as any,
-      left: '0 !important' as any,
-      width: 'calc(200% + 16px) !important' as any,
-      marginTop: '8px !important' as any,
-      zIndex: '1000 !important' as any,
-      borderRadius: '8px !important' as any,
-      transform: 'translateX(0) !important' as any,
+      display: 'flex !important' as any,
+      flexDirection: 'row !important' as any,
+      flexWrap: 'nowrap !important' as any,
+      alignItems: 'center !important' as any,
+      justifyContent: 'space-between !important' as any,
+      height: '44px !important' as any,
+      padding: '0 12px !important' as any,
     },
   },
   '& > div:nth-of-type(2) .vjs-control-bar': {
     display: 'none !important' as any,
   },
-  paddingBottom: { xs: '56px', md: '56px' }, 
+  paddingBottom: { xs: '56px', md: '56px' },
   '@media (min-width: 960px)': {
     '& > div:first-of-type .vjs-control-bar': {
-      width: 'calc(200% + 16px) !important' as any, 
+      width: 'calc(200% + 16px) !important' as any,
       left: '0 !important' as any,
     },
   },
@@ -96,7 +93,6 @@ export const getFullWidthControlBarStyles = (): SxProps<Theme> => ({
     },
   },
 });
-
 
 export const shouldMakeControlBarFullWidth = (
   hasPresenterVideo: boolean,
@@ -118,6 +114,3 @@ export const isPresentationVideoShowing = (
     !audioOnly
   );
 };
-
-
-
