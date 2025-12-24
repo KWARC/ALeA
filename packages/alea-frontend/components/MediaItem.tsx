@@ -143,20 +143,58 @@ export function MediaItem({
     };
   }, [currentSlideUri, currentSectionId, slidesClipInfo, clipId]);
 
+  // Calculate first slide's start time for the selected section (for warning when video doesn't match)
+  const selectedSectionFirstSlideTime = useMemo(() => {
+    if (!currentSectionId || !slidesClipInfo || !slidesUriToIndexMap) return null;
+    
+    const sectionSlides = slidesUriToIndexMap[currentSectionId];
+    if (!sectionSlides || Object.keys(sectionSlides).length === 0) return null;
+    
+    // Find the first slide (index 0)
+    const firstSlideUri =
+      Object.keys(sectionSlides).find((slideUri) => sectionSlides[slideUri] === 0) ||
+      Object.keys(sectionSlides)[0];
+    
+    if (!firstSlideUri || !slidesClipInfo[currentSectionId]?.[firstSlideUri]) return null;
+    
+    const slideClips = slidesClipInfo[currentSectionId][firstSlideUri];
+    if (!Array.isArray(slideClips) || slideClips.length === 0) return null;
+    
+    // Find clip that matches the current clipId, or use the first one
+    const matchingClip = clipId
+      ? slideClips.find((clip: ClipInfo) => clip.video_id === clipId)
+      : null;
+    const clipToUse = matchingClip || slideClips[0];
+    
+    return clipToUse.start_time !== undefined ? clipToUse.start_time : null;
+  }, [currentSectionId, slidesClipInfo, slidesUriToIndexMap, clipId]);
+
   useEffect(() => {
     const player = videoPlayer.current;
-    if (!player || !currentSlideClipRange) return;
+    if (!player) return;
 
     const onTimeUpdate = () => {
       const t = player.currentTime();
-      setIsAwayFromSlide(t < currentSlideClipRange.start || t > currentSlideClipRange.end);
+      
+      if (currentSlideClipRange) {
+        // Check if away from current slide
+        setIsAwayFromSlide(t < currentSlideClipRange.start || t > currentSlideClipRange.end);
+      } else if (selectedSectionFirstSlideTime !== null && videoLoaded) {
+        // If no current slide clip range but we have a selected section's first slide time,
+        // check if video is not at that time (within a small threshold)
+        const threshold = 2; // 2 seconds threshold
+        const isAtFirstSlide = Math.abs(t - selectedSectionFirstSlideTime) <= threshold;
+        setIsAwayFromSlide(!isAtFirstSlide);
+      } else {
+        setIsAwayFromSlide(false);
+      }
     };
 
     player.on('timeupdate', onTimeUpdate);
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [currentSlideClipRange]);
+  }, [currentSlideClipRange, selectedSectionFirstSlideTime, videoLoaded]);
 
   const markersInDescOrder = useMemo(() => {
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
@@ -740,8 +778,17 @@ export function MediaItem({
             </Box>
           )}
       </Box>
-      {currentSlideClipRange && isAwayFromSlide && (
-        <Tooltip title={`Slide starts at ${formatTime(currentSlideClipRange.start)}`} arrow>
+      {isAwayFromSlide && (currentSlideClipRange || selectedSectionFirstSlideTime !== null) && (
+        <Tooltip
+          title={
+            currentSlideClipRange
+              ? `Slide starts at ${formatTime(currentSlideClipRange.start)}`
+              : selectedSectionFirstSlideTime !== null
+              ? `Section's first slide starts at ${formatTime(selectedSectionFirstSlideTime)}`
+              : ''
+          }
+          arrow
+        >
           <IconButton
             size="small"
             sx={{
@@ -757,7 +804,12 @@ export function MediaItem({
               },
             }}
             onClick={() => {
-              videoPlayer.current?.currentTime(currentSlideClipRange.start);
+              const targetTime = currentSlideClipRange
+                ? currentSlideClipRange.start
+                : selectedSectionFirstSlideTime;
+              if (targetTime !== null && targetTime !== undefined) {
+                videoPlayer.current?.currentTime(targetTime);
+              }
             }}
           >
             ⚠️
