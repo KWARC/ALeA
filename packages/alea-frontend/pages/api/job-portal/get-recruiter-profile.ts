@@ -27,17 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfGetOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  const results: RecruiterData[] = await executeDontEndSet500OnError(
-    `SELECT name,userId,email,position,mobile,altMobile,organizationId,socialLinks,about
-    FROM recruiterProfile 
-    WHERE userId = ? 
-    `,
-    [userId],
-    res
-  );
-  if (!results) return;
-  if (!results.length)return res.status(404).end();
-
   const recruiter = await getRecruiterProfileByUserIdOrSet500OnError(userId,res);
   if(!recruiter) return;
   let parsedSocialLinks: Record<string, string> = {};
