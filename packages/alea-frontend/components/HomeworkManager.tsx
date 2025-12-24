@@ -41,7 +41,7 @@ function timestampEOD() {
   return date;
 }
 
-const HomeworkManager = ({ courseId }) => {
+const HomeworkManager = ({ courseId, institutionId }) => {
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
   
@@ -108,6 +108,7 @@ const HomeworkManager = ({ courseId }) => {
           ...body,
           courseId,
           courseInstance: currentTerm,
+          institutionId,
         };
         response = await createHomework(createRequest);
       }

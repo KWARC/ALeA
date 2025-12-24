@@ -9,7 +9,7 @@ import UnfoldMoreDoubleIcon from '@mui/icons-material/UnfoldMoreDouble';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu } from './LayoutWithFixedMenu';
 import styles from './stex-react-renderer.module.scss';
@@ -140,7 +140,7 @@ function RenderTree({
   defaultOpen: boolean;
   selectedSection: string;
   perSectionLectureInfo: Record<FTML.Uri, SectionLectureInfo>;
-  preAdornment?: (sectionId: string) => JSX.Element;
+  preAdornment?: (sectionId: string) => React.ReactElement;
   onSectionClick?: (sectionId: string, sectionUri: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -384,7 +384,7 @@ export function ContentDashboard({
   toc: FTML.TocElem[];
   selectedSection: string;
   courseId?: string;
-  preAdornment?: (sectionId: string) => JSX.Element;
+  preAdornment?: (sectionId: string) => React.ReactElement;
   onClose: () => void;
   onSectionClick?: (sectionId: string, sectionUri: string) => void;
 }) {

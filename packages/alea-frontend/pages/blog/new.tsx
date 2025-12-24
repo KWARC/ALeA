@@ -8,7 +8,7 @@ import {
   updateBlogPost,
   uploadCdnImage,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import { Action, localStore, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -150,7 +150,7 @@ export function EditPostComponent({ existingPost }: { existingPost?: BlogPost })
             sx={{ mb: '20px' }}
           />
           <Box mb="20px">
-            <MystEditor
+            <MdEditor
               value={title}
               onValueChange={(v) => {
                 setTitle(v);
@@ -215,7 +215,7 @@ export function EditPostComponent({ existingPost }: { existingPost?: BlogPost })
               )}
             </Box>
           </Box>
-          <MystEditor
+          <MdEditor
             value={body}
             onValueChange={(v) => {
               setBody(v);

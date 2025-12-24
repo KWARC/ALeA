@@ -186,6 +186,7 @@ CREATE TABLE Answer  (
   questionTitle TEXT NULL,
   courseId varchar(255) NULL,
   courseInstance varchar(255) NULL,
+  institutionId VARCHAR(255),
   homeworkId INT NULL,
 
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -244,6 +245,7 @@ CREATE TABLE homework (
     feedbackReleaseTs TIMESTAMP,
     courseId VARCHAR(255),
     courseInstance VARCHAR(255),
+    institutionId VARCHAR(255),
     problems JSON,
     css JSON,
     updaterId VARCHAR(255),
@@ -261,6 +263,7 @@ CREATE TABLE homeworkHistory (
     feedbackReleaseTs TIMESTAMP,
     courseId VARCHAR(255),
     courseInstance VARCHAR(255),
+    institutionId VARCHAR(255),
     problems JSON,
     updaterId VARCHAR(255),
 
@@ -428,7 +431,8 @@ CREATE TABLE excused(
     userId varchar(255) NOT NULL,
     quizId varchar(255) NOT NULL,
     courseId VARCHAR(255) NOT NULL,
-    courseInstance VARCHAR(255) NOT NULL
+    courseInstance VARCHAR(255) NOT NULL,
+    institutionId VARCHAR(255) NOT NULL,
 );
 
 CREATE TABLE semesterInfo (

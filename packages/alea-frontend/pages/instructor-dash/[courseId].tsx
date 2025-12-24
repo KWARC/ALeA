@@ -51,12 +51,14 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
 function ChosenTab({
   tabName,
   courseId,
+  institutionId,
   instanceId,
   quizId,
   onQuizIdChange,
 }: {
   tabName: TabName;
   courseId: string;
+  institutionId: string;
   instanceId: string;
   quizId?: string;
   onQuizIdChange?: (id: string) => void;
@@ -65,11 +67,11 @@ function ChosenTab({
     case 'access-control':
       return <CourseAccessControlDashboard courseId={courseId} />;
     case 'homework-manager':
-      return <HomeworkManager courseId={courseId} />;
+      return <HomeworkManager courseId={courseId} institutionId={institutionId} />;
     case 'homework-grading':
       return <GradingInterface isPeerGrading={false} courseId={courseId} />;
     case 'quiz-dashboard':
-      return <QuizDashboard courseId={courseId} quizId={quizId} onQuizIdChange={onQuizIdChange} />;
+      return <QuizDashboard courseId={courseId} institutionId={institutionId} quizId={quizId} onQuizIdChange={onQuizIdChange} />;
     case 'study-buddy':
       return <StudyBuddyModeratorStats courseId={courseId} />;
     case 'peer-review':
@@ -118,6 +120,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 const InstructorDash: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  const institutionId = 'FAU';// TODO(M5)
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
 
@@ -132,8 +135,9 @@ const InstructorDash: NextPage = () => {
   const [quizId, setQuizId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (router.isReady) {
-      setQuizId(router.query.quizId as string);
+    if (!router.isReady) return;
+    if (typeof router.query.quizId === 'string')  {
+      setQuizId(router.query.quizId);
     }
   }, [router.isReady, router.query.quizId]);
 
@@ -251,6 +255,7 @@ const InstructorDash: NextPage = () => {
             <ChosenTab
               tabName={tabName}
               courseId={courseId}
+              institutionId={institutionId}
               instanceId={instanceId}
               quizId={quizId}
               onQuizIdChange={handleQuizIdChange}
