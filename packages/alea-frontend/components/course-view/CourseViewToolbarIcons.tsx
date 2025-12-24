@@ -4,7 +4,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import CheckIcon from '@mui/icons-material/Check';
-import { IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import { IconButton, Menu, MenuItem, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { CourseInfo, getCoursePdfUrl, localStore } from '@alea/utils';
 import { useState } from 'react';
 import { ViewMode } from '../../pages/course-view/[courseId]';
@@ -36,6 +36,8 @@ export default function CourseViewToolbarIcons({
 }: CourseViewToolbarIconsProps) {
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const isVideoHidden = viewMode === ViewMode.SLIDE_MODE;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <>
@@ -43,13 +45,15 @@ export default function CourseViewToolbarIcons({
         <IconButton
           onClick={onAudioOnlyToggle}
           disabled={isVideoHidden}
+          size={isMobile ? 'small' : 'medium'}
           sx={{
-            border: '2px solid',
+            border: { xs: '1.5px solid', sm: '2px solid' },
             borderColor: audioOnly ? '#1976d2' : '#9e9e9e',
-            borderRadius: 2,
+            borderRadius: { xs: 1.5, sm: 2 },
             bgcolor: audioOnly ? '#e3f2fd' : 'white',
             color: audioOnly ? '#1976d2' : '#616161',
             opacity: isVideoHidden ? 0.5 : 1,
+            padding: { xs: '6px', sm: '8px' },
             '&:hover': {
               bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
             },
@@ -60,7 +64,7 @@ export default function CourseViewToolbarIcons({
             },
           }}
         >
-          {audioOnly ? <VideocamIcon /> : <MusicNote />}
+          {audioOnly ? <VideocamIcon fontSize={isMobile ? 'small' : 'medium'} /> : <MusicNote fontSize={isMobile ? 'small' : 'medium'} />}
         </IconButton>
       </Tooltip>
 
@@ -69,17 +73,19 @@ export default function CourseViewToolbarIcons({
           <Tooltip title="Video Quality" placement="bottom">
             <IconButton
               onClick={(e) => setResolutionAnchorEl(e.currentTarget)}
+              size={isMobile ? 'small' : 'medium'}
               sx={{
-                border: '2px solid #9e9e9e',
-                borderRadius: 2,
+                border: { xs: '1.5px solid #9e9e9e', sm: '2px solid #9e9e9e' },
+                borderRadius: { xs: 1.5, sm: 2 },
                 bgcolor: 'white',
                 color: '#616161',
+                padding: { xs: '6px', sm: '8px' },
                 '&:hover': {
                   bgcolor: '#f5f5f5',
                 },
               }}
             >
-              <SettingsIcon />
+              <SettingsIcon fontSize={isMobile ? 'small' : 'medium'} />
             </IconButton>
           </Tooltip>
           <Menu
@@ -110,18 +116,20 @@ export default function CourseViewToolbarIcons({
           >
             <IconButton
               onClick={onPresentationVideoToggle}
+              size={isMobile ? 'small' : 'medium'}
               sx={{
-                border: '2px solid',
+                border: { xs: '1.5px solid', sm: '2px solid' },
                 borderColor: showPresentationVideo ? '#1976d2' : '#9e9e9e',
-                borderRadius: 2,
+                borderRadius: { xs: 1.5, sm: 2 },
                 bgcolor: showPresentationVideo ? '#e3f2fd' : 'white',
                 color: showPresentationVideo ? '#1976d2' : '#616161',
+                padding: { xs: '6px', sm: '8px' },
                 '&:hover': {
                   bgcolor: showPresentationVideo ? '#bbdefb' : '#f5f5f5',
                 },
               }}
             >
-              <SlideshowIcon />
+              <SlideshowIcon fontSize={isMobile ? 'small' : 'medium'} />
             </IconButton>
           </Tooltip>
         </>
@@ -138,19 +146,21 @@ export default function CourseViewToolbarIcons({
               const pdfUrl = getCoursePdfUrl(sourceUri);
               window.open(pdfUrl, '_blank');
             }}
+            size={isMobile ? 'small' : 'medium'}
             sx={{
-              border: '2px solid',
+              border: { xs: '1.5px solid', sm: '2px solid' },
               borderColor: '#1976d2',
-              borderRadius: 2,
+              borderRadius: { xs: 1.5, sm: 2 },
               bgcolor: 'white',
               color: '#1976d2',
+              padding: { xs: '6px', sm: '8px' },
               '&:hover': {
                 bgcolor: '#e3f2fd',
                 borderColor: '#1565c0',
               },
             }}
           >
-            <PictureAsPdfIcon />
+            <PictureAsPdfIcon fontSize={isMobile ? 'small' : 'medium'} />
           </IconButton>
         </Tooltip>
       )}

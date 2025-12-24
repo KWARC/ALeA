@@ -175,14 +175,10 @@ export function MediaItem({
 
     const onTimeUpdate = () => {
       const t = player.currentTime();
-      
-      if (currentSlideClipRange) {
-        // Check if away from current slide
+            if (currentSlideClipRange) {
         setIsAwayFromSlide(t < currentSlideClipRange.start || t > currentSlideClipRange.end);
       } else if (selectedSectionFirstSlideTime !== null && videoLoaded) {
-        // If no current slide clip range but we have a selected section's first slide time,
-        // check if video is not at that time (within a small threshold)
-        const threshold = 2; // 2 seconds threshold
+        const threshold = 2; 
         const isAtFirstSlide = Math.abs(t - selectedSectionFirstSlideTime) <= threshold;
         setIsAwayFromSlide(!isAtFirstSlide);
       } else {
@@ -258,6 +254,57 @@ export function MediaItem({
     handleMarkerClick(newMarker);
   };
 
+  const applyVideoPlayerStyles = (root: HTMLElement) => {
+  const controlBar = root.querySelector('.vjs-control-bar') as HTMLElement | null;
+  if (controlBar) {
+    Object.assign(controlBar.style, {
+      padding: '8px 12px',
+      position: 'absolute',
+      bottom: '0',
+      left: '0',
+      right: '0',
+      width: '100%',
+      zIndex: '1000',
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      borderRadius: '0 0 8px 8px',
+      boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.2)',
+      visibility: 'visible',
+      opacity: '1',
+      display: 'flex',
+      alignItems: 'center',
+      flexWrap: 'nowrap',
+      height: 'auto',
+      minHeight: '40px',
+    });
+  }
+
+  const controlButtons = root.querySelectorAll('.vjs-control');
+  controlButtons.forEach((button) => {
+    if (button instanceof HTMLElement) {
+      button.style.flexShrink = '0';
+    }
+  });
+
+  const progressBar = root.querySelector('.vjs-progress-holder') as HTMLElement | null;
+  if (progressBar) {
+    progressBar.style.marginTop = '0';
+  }
+
+  const textTrackDisplay = root.querySelector('.vjs-text-track-display') as HTMLElement | null;
+  if (textTrackDisplay) {
+    Object.assign(textTrackDisplay.style, {
+      insetBlock: '0px',
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '50px', // Add space for control bar
+      margin: '0',
+      padding: '0 0 50px 0', // Prevent overlap with controls
+    });
+  }
+};
+
   useEffect(() => {
     if (audioOnly) {
       if (videoPlayer.current) {
@@ -280,19 +327,8 @@ export function MediaItem({
       videoPlayer.current = player;
       player.load();
       player.ready(() => {
-        const controlBar = playerRef.current.parentNode?.querySelector(
-          '.vjs-control-bar'
-        ) as HTMLElement;
-        if (controlBar) {
-          controlBar.style.paddingBottom = '30px';
-          controlBar.style.paddingTop = '10px';
-          controlBar.style.position = 'absolute';
-          controlBar.style.bottom = '0';
-          controlBar.style.left = '0';
-          controlBar.style.right = '0';
-          controlBar.style.width = '100%';
-          controlBar.style.zIndex = '1000';
-        }
+        const root = playerRef.current?.parentNode as HTMLElement;
+        if (root) applyVideoPlayerStyles(root);
       });
     } else {
       const currentTime = player.currentTime();
@@ -301,78 +337,12 @@ export function MediaItem({
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
-        const controlBar = playerRef.current.parentNode?.querySelector(
-          '.vjs-control-bar'
-        ) as HTMLElement;
-        if (controlBar) {
-          controlBar.style.paddingBottom = '30px';
-          controlBar.style.paddingTop = '10px';
-          controlBar.style.position = 'absolute';
-          controlBar.style.bottom = '0';
-          controlBar.style.left = '0';
-          controlBar.style.right = '0';
-          controlBar.style.width = '100%';
-          controlBar.style.zIndex = '1000';
-        }
+        const root = playerRef.current?.parentNode as HTMLElement;
+        if (root) applyVideoPlayerStyles(root);
       });
     }
 
-    const applyControlBarStyles = () => {
-      const root = playerRef.current?.parentNode as HTMLElement | null;
-      if (!root) return;
-
-      const controlBar = root.querySelector('.vjs-control-bar') as HTMLElement | null;
-      if (controlBar) {
-        controlBar.style.paddingBottom = '30px';
-        controlBar.style.paddingTop = '10px';
-        controlBar.style.position = 'absolute';
-        controlBar.style.bottom = '0';
-        controlBar.style.left = '0';
-        controlBar.style.right = '0';
-        controlBar.style.width = '100%';
-        controlBar.style.zIndex = '1000';
-        controlBar.style.visibility = 'visible';
-        controlBar.style.opacity = '1';
-        controlBar.style.display = 'flex';
-
-        const playPauseButton = controlBar.querySelector('.vjs-play-control') as HTMLElement | null;
-        if (playPauseButton) {
-          playPauseButton.style.visibility = 'visible';
-          playPauseButton.style.opacity = '1';
-          playPauseButton.style.display = 'block';
-        }
-      }
-
-      const progressBar = root.querySelector('.vjs-progress-holder') as HTMLElement | null;
-      if (progressBar) {
-        progressBar.style.marginTop = '20px';
-      }
-
-      const bigPlayButton = root.querySelector('.vjs-big-play-button') as HTMLElement | null;
-      const playIcon = bigPlayButton?.querySelector('.vjs-icon-placeholder') as HTMLElement | null;
-      if (playIcon) {
-        playIcon.style.bottom = '5px';
-        playIcon.style.paddingRight = '25px';
-      }
-
-      const textTrackDisplay = root.querySelector('.vjs-text-track-display') as HTMLElement | null;
-      if (textTrackDisplay) {
-        Object.assign(textTrackDisplay.style, {
-          insetBlock: '0px',
-          position: 'absolute',
-          top: '0',
-          left: '0',
-          right: '0',
-          bottom: '0',
-          margin: '0',
-          padding: '0',
-        });
-      }
-    };
-    applyControlBarStyles();
-    const timeoutId = setTimeout(applyControlBarStyles, 100);
     return () => {
-      clearTimeout(timeoutId);
       if (audioOnly && player) {
         player.dispose();
         videoPlayer.current = null;
@@ -696,36 +666,120 @@ export function MediaItem({
         onLoadedMetadata={() => {
           if (timestampSec) playerRef.current.currentTime = timestampSec;
         }}
-        style={{ width: '100%', background: '#f1f3f4' }}
+        style={{ width: '100%', backgroundColor: '#f1f3f4' }}
         ref={playerRef}
       ></audio>
     );
   }
+  // Check if presenter video is available and presentation video is showing
+  const hasPresenterVideo = !!presenterVideoId;
+  const isPresentationVideoShowing = !!(
+    presentationVideoUrl &&
+    (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo) &&
+    !audioOnly
+  );
+  const shouldMakeControlBarFullWidth = hasPresenterVideo && isPresentationVideoShowing;
+
+  const videoContainerStyles = {
+    flex: { xs: '1 1 auto', md: '1 1 50%' },
+    position: 'relative',
+    width: '100%',
+    maxWidth: '100%',
+    '& .video-js': {
+      position: 'relative',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    '& video': {
+      width: '100%',
+      height: 'auto',
+    },
+    '& .vjs-control-bar': {
+      position: 'relative !important' as any,
+      bottom: 'auto !important' as any,
+    },
+  };
+
+  const videoStyles = {
+    border: '0.5px solid black',
+    borderRadius: '8px',
+    width: '100%',
+    maxWidth: '100%',
+  };
+
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative' , width: '100%'}}>
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'row',
-          gap: 2,
-          marginBottom: '7px',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: { xs: 1.5, md: 2 },
+          position: 'relative',
+          ...(shouldMakeControlBarFullWidth && {
+            '& > div:first-of-type': {
+              position: 'relative',
+              overflow: 'visible',
+              '& .video-js': {
+                display: 'flex !important' as any,
+                flexDirection: 'column !important' as any,
+                position: 'relative',
+              },
+              '& .vjs-control-bar': {
+                position: 'absolute !important' as any,
+                bottom: 'auto !important' as any,
+                top: '100% !important' as any, // Position below the first video container
+                left: '0 !important' as any,
+                width: 'calc(200% + 16px) !important' as any, // Span both containers + gap on desktop
+                marginTop: '8px !important' as any,
+                zIndex: '1000 !important' as any,
+                borderRadius: '8px !important' as any,
+                // Ensure it appears below both videos by aligning to parent container
+                transform: 'translateX(0) !important' as any,
+              },
+            },
+            '& > div:nth-of-type(2) .vjs-control-bar': {
+              display: 'none !important' as any, // Hide control bar on second video when full-width is active
+            },
+            paddingBottom: { xs: '56px', md: '56px' }, // Add space for the control bar below
+            '@media (min-width: 960px)': {
+              '& > div:first-of-type .vjs-control-bar': {
+                // On desktop, position it to span both videos
+                // The first video is 50% width, so we need to span 200% of that + gap
+                width: 'calc(200% + 16px) !important' as any, // Both containers (50% each) + gap (2 * 8px)
+                left: '0 !important' as any,
+              },
+            },
+            '@media (max-width: 959px)': {
+              // In mobile mode, videos stack vertically: [First Video] -> [Gap] -> [Second Video]
+              // Control bar should be at the bottom of parent container (after both videos)
+              '& > div:first-of-type': {
+                // Override the base position: relative to allow control bar to position relative to parent
+                position: 'static !important' as any,
+                overflow: 'visible',
+              },
+              '& > div:first-of-type .vjs-control-bar': {
+                // Position relative to parent container (which has position: relative)
+                // This places it at the bottom of the parent, after both videos
+                position: 'absolute !important' as any,
+                top: 'auto !important' as any,
+                bottom: '0 !important' as any,
+                left: '0 !important' as any,
+                right: '0 !important' as any,
+                width: '100% !important' as any,
+                marginTop: '0 !important' as any,
+              },
+            },
+          }),
         }}
       >
-        <Box
-          sx={{
-            flex: '1 1 50%',
-            position: 'relative',
-            '& .video-js': {
-              position: 'relative',
-            },
-          }}
-        >
+        <Box sx={videoContainerStyles}>
           <video
             key="videoPlayer"
             poster={thumbnail}
             ref={playerRef as MutableRefObject<HTMLVideoElement>}
             className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
-            style={{ border: '0.5px solid black', borderRadius: '8px' }}
+            style={videoStyles}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -750,16 +804,18 @@ export function MediaItem({
 
           {tooltip && (
             <Box
-              style={{
+              sx={{
                 position: 'absolute',
-                top: '10px',
+                top: { xs: 1, md: 1.25 },
                 left: '50%',
                 transform: 'translateX(-50%)',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                color: '#fff',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                zIndex: '100',
+                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                px: { xs: 1, md: 1.25 },
+                py: 0.5,
+                borderRadius: 0.5,
+                zIndex: 100,
+                fontSize: { xs: '0.75rem', md: '0.875rem' },
               }}
             >
               {tooltip}
@@ -768,11 +824,11 @@ export function MediaItem({
         </Box>
         {presentationVideoUrl &&
           (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo) && (
-            <Box sx={{ flex: '1 1 50%', position: 'relative' }}>
+            <Box sx={videoContainerStyles}>
               <video
                 ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
                 className="video-js vjs-fluid vjs-styles=defaults"
-                style={{ border: '0.5px solid black', borderRadius: '8px' }}
+                style={videoStyles}
                 muted
               />
             </Box>
@@ -793,8 +849,8 @@ export function MediaItem({
             size="small"
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
+              top: 1,
+              right: 1,
               bgcolor: '#fff3cd',
               color: '#856404',
               border: '1px solid #ffeeba',
