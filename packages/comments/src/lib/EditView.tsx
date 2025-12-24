@@ -158,7 +158,7 @@ export function EditView({
           },
         }}
       >
-        <MystEditor
+        <MdEditor
           name="comment-edit"
           placeholder={placeholder}
           value={inputText}
