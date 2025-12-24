@@ -12,7 +12,7 @@ import {
   Tabs,
 } from '@mui/material';
 import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@alea/spec';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
@@ -157,7 +157,7 @@ function SyllabusTable({
                 {dayjs(timestamp_ms).format(showYear ? 'DD-MMM-YY' : 'DD-MMM')}
               </TableCell>
               <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'unset' }}>
-                {topics ? <MystViewer content={topics} /> : 'Topics unexpectedly empty'}
+                {topics ? <MdViewer content={topics} /> : 'Topics unexpectedly empty'}
               </TableCell>
               {hasAnyVideoClip && (
                 <TableCell>

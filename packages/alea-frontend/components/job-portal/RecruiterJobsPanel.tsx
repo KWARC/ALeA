@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { ApplicantWithProfile, deleteJobPost, getJobApplicationsByJobPost, getStudentProfileUsingUserId, JobPostInfo, StudentData, updateJobApplication } from '@alea/spec';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import JobPostInfoForm from './JobPostInfoForm';
 import { ApplicantActionDialog } from './ApplicantActionDialog';
 import { ApplicantProfileDialog } from './ApplicantProfileDialog';
@@ -53,7 +53,7 @@ const JobTable = ({
   renderActions,
 }: {
   totalJobPosts: JobPostInfo[];
-  renderActions: (job: JobPostInfo) => JSX.Element;
+  renderActions: (job: JobPostInfo) => React.ReactElement;
 }) => {
   return (
     <TableContainer component={Paper}>

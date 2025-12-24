@@ -36,7 +36,7 @@ export async function updateHomeworkHistoryOrSetError(
   res: NextApiResponse
 ) {
   const insertHistoryResult = await executeDontEndSet500OnError(
-    'INSERT INTO homeworkHistory (id, versionNo, title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, problems, updaterId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO homeworkHistory (id, versionNo, title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, institutionId, problems, updaterId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       currentHomework.id,
       currentHomework.versionNo,
@@ -46,6 +46,7 @@ export async function updateHomeworkHistoryOrSetError(
       currentHomework.feedbackReleaseTs,
       currentHomework.courseId,
       currentHomework.courseInstance,
+      currentHomework.institutionId,
       currentHomework.problems,
       currentHomework.updaterId,
       currentHomework.createdAt,

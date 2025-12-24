@@ -50,7 +50,7 @@ export async function createHomework(data: CreateHomeworkRequest) {
   });
 }
 
-export type UpdateHomeworkRequest = Omit<HomeworkInfo, 'courseId' | 'courseInstance' | 'updaterId'>;
+export type UpdateHomeworkRequest = Omit<HomeworkInfo, 'courseId' | 'courseInstance' | 'institutionId' | 'updaterId'>;
 export async function updateHomework(data: UpdateHomeworkRequest) {
   return axios.post('/api/homework/update-homework', data, {
     headers: getAuthHeaders(),

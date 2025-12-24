@@ -1,4 +1,4 @@
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
@@ -172,6 +172,7 @@ function AnswerAccepter({
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
+        institutionId: 'FAU', // TODO(M5)
         homeworkId: +(router.query.id ?? 0),
       });
       console.log('All answers saved successfully!');
@@ -190,7 +191,7 @@ function AnswerAccepter({
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        <MystEditor
+        <MdEditor
           name={name}
           editingEnabled={!isFrozen}
           placeholder={'...'}

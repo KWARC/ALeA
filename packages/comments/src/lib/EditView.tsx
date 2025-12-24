@@ -12,7 +12,7 @@ import {
   editComment,
   getUserInfo,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';

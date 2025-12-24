@@ -24,7 +24,8 @@
       "@alea/react-utils": ["packages/react-utils/src/index.ts"],
       "@alea/report-a-problem": ["packages/report-a-problem/src/index.ts"],
       "@alea/stex-react-renderer": ["packages/stex-react-renderer/src/index.ts"],
-      "@alea/utils": ["packages/utils/src/index.ts"]
+      "@alea/utils": ["packages/utils/src/index.ts"],
+      "@alea/markdown": ["packages/markdown/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
