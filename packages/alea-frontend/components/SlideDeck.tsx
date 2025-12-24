@@ -428,7 +428,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
         id: (index + 1).toString(),
         video_id: item.video_id,
         title: `Clip no. ${index + 1}  || VideoId : ${item.video_id}`,
-        thumbnail: 'https://courses.voll-ki.fau.de/fau_kwarc.png',
+        thumbnail: `${window.location.origin}/fau_kwarc.png`,
         start_time: item.start_time,
         end_time: item.end_time,
         duration: `${formatDuration(

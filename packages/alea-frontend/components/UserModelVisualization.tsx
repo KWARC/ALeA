@@ -1,20 +1,12 @@
+import { getLmpUriWeightsAggBulk } from '@alea/spec';
+import { TourAPIEntry } from '@alea/stex-react-renderer';
+import { simpleHash } from '@alea/utils';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { Box, IconButton } from '@mui/material';
-import {
-  ServerLinksContext,
-  TourAPIEntry,
-} from '@alea/stex-react-renderer';
-import { simpleHash } from '@alea/utils';
 import axios from 'axios';
 import * as d3 from 'd3';
-import {
-  Dag,
-  dagStratify,
-  decrossOpt /*DagNode, zherebko, grid*/,
-  sugiyama,
-} from 'd3-dag';
-import { useContext, useEffect, useReducer, useState } from 'react';
-import { getUriWeights } from '@alea/spec';
+import { Dag, dagStratify, decrossOpt /*DagNode, zherebko, grid*/, sugiyama } from 'd3-dag';
+import { useEffect, useReducer, useState } from 'react';
 
 const nodeRadius = 20;
 
@@ -51,14 +43,11 @@ interface D3DagInfo {
   height: number;
 }
 
-async function fetchDataForDag(
-  tourId: string,
-  language: string,
-): Promise<D3DagInfo> {
+async function fetchDataForDag(tourId: string, language: string): Promise<D3DagInfo> {
   const tourInfoUrl = `TODO ALEA4-M2/:vollki/tour?path=${tourId}&user=nulluser&lang=${language}`;
   const apiEntries: TourAPIEntry[] = (await axios.get(tourInfoUrl)).data;
   const tourUris = apiEntries.map((e) => e.id);
-  const weights = await getUriWeights(tourUris);
+  const weights = await getLmpUriWeightsAggBulk(tourUris);
   const d3DagEntries = getD3DagEntries(
     apiEntries,
     weights.map((d) => d.Remember)
@@ -122,14 +111,8 @@ function renderD3Dag(d3DagInfo: D3DagInfo) {
         .attr('x2', target.x)
         .attr('y1', source.y)
         .attr('y2', target.y);
-      grad
-        .append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', colorMap.get(source.data.id));
-      grad
-        .append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', colorMap.get(target.data.id));
+      grad.append('stop').attr('offset', '0%').attr('stop-color', colorMap.get(source.data.id));
+      grad.append('stop').attr('offset', '100%').attr('stop-color', colorMap.get(target.data.id));
       return `url(#${gradId})`;
     });
 

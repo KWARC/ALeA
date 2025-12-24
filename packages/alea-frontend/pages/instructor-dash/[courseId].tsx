@@ -135,8 +135,9 @@ const InstructorDash: NextPage = () => {
   const [quizId, setQuizId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (router.isReady) {
-      setQuizId(router.query.quizId as string);
+    if (!router.isReady) return;
+    if (typeof router.query.quizId === 'string')  {
+      setQuizId(router.query.quizId);
     }
   }, [router.isReady, router.query.quizId]);
 

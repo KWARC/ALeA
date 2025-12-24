@@ -1,3 +1,11 @@
+import {
+  BloomDimension,
+  NumericCognitiveValues,
+  clearWeightsCache,
+  getDependenciesForSectionAgg,
+  getLmpUriWeightsAggBulk,
+  isLoggedIn
+} from '@alea/spec';
 import { DialogContentText, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -5,13 +13,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import {
-  BloomDimension,
-  NumericCognitiveValues,
-  getSectionDependencies,
-  getUriWeights,
-  isLoggedIn,
-} from '@alea/spec';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
 
@@ -64,9 +65,9 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
   useEffect(() => {
     if (!isLoggedIn()) return;
 
-    getSectionDependencies(sectionUri).then((dependencies) => {
+    getDependenciesForSectionAgg(sectionUri).then((dependencies) => {
       setPrereqs(dependencies);
-      getUriWeights(dependencies).then((data) => setCompetencyData(data));
+      getLmpUriWeightsAggBulk(dependencies).then((data) => setCompetencyData(data));
     });
   }, [sectionUri]);
 
@@ -82,7 +83,8 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
       setCompetencyData([]);
       return;
     }
-    getUriWeights(prereqs).then((data) => setCompetencyData(data));
+    clearWeightsCache(); // invalidateWeightsCache(prereqs); wont be enough?
+    getLmpUriWeightsAggBulk(prereqs).then((data) => setCompetencyData(data));
   }
 
   const averageUnderstand = competencyData?.length

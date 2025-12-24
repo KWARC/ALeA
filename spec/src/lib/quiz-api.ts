@@ -46,9 +46,10 @@ export async function insertQuizResponse(
   }
 }
 
-export async function getQuiz(quizId: string) {
+export async function getQuiz(quizId: string, targetUserId?: string) {
   const resp = await axios.get(`/api/quiz/get-quiz/${quizId}`, {
     headers: getAuthHeaders(),
+    params: { targetUserId },
   });
   return resp.data as GetQuizResponse;
 }

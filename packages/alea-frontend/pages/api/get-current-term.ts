@@ -14,7 +14,6 @@ export async function getCurrentTermByCourseId(): Promise<Record<string, string>
 }
 
 export async function getCurrentTermForCourseId(courseId: string): Promise<string | null> {
-  console.log('Getting current term for courseId:', courseId);
   const key = courseId.toLowerCase();
   const courseInfo = await getAllCoursesFromDb();
   const info = courseInfo[key];

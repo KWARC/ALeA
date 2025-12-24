@@ -1,15 +1,13 @@
-import { COURSES_INFO, getParamFromUri, waitForNSeconds } from '@alea/utils';
+import { getParamFromUri, waitForNSeconds } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import {
-  ArchiveIndex,
-  Institution,
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
-  index as flamsIndex,
-  learningObjects as flamsLearningObjects,
+  learningObjects as flamsLearningObjects
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
-import { CourseQuizAndHomeworkInfo, getCourseHomeworkAndQuizInfo, getCourseIdsByUniversity } from './course-metadata-api';
+import { createSafeFlamsQuery } from './flams-query-creator';
+import { getAuthHeaders } from './lmp';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -36,30 +34,6 @@ export interface Person {
   name: string;
 }
 
-let CACHED_ARCHIVE_INDEX: ArchiveIndex[] | undefined = undefined;
-let CACHED_INSTITUTION_INDEX: Institution[] | undefined = undefined;
-
-const courseHomeworkQuizCache = new Map<string, CourseQuizAndHomeworkInfo>();
-
-async function getCachedCourseHomeworkAndQuizInfo(
-  courseId: string,
-  instanceId?: string
-): Promise<CourseQuizAndHomeworkInfo> {
-  const cacheKey = courseId;
-  if (courseHomeworkQuizCache.has(cacheKey)) {
-    return courseHomeworkQuizCache.get(cacheKey)!;
-  }
-  const result = await getCourseHomeworkAndQuizInfo(courseId, instanceId);
-  courseHomeworkQuizCache.set(cacheKey, result);
-  return result;
-}
-
-export function clearCourseHomeworkQuizCache(): void {
-  courseHomeworkQuizCache.clear();
-}
-
-
-
 export function getFTMLForConceptView(conceptUri: string) {
   const name = getParamFromUri(conceptUri, 's') ?? conceptUri;
   return `<span data-ftml-term="OMID" data-ftml-head="${conceptUri}" data-ftml-comp>${name}</span>`;
@@ -68,19 +42,6 @@ export function getFTMLForConceptView(conceptUri: string) {
 export interface ConceptAndDefinition {
   conceptUri: string;
   definitionUri: string;
-}
-
-// Gets list of concepts and their definition in a section.
-export async function getDefiniedaInSection(uri: string): Promise<ConceptAndDefinition[]> {
-  const query = `SELECT DISTINCT ?q ?s WHERE { <${uri}> (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
-
-  const sparqlResponse = await getQueryResults(query);
-  return (
-    sparqlResponse?.results?.bindings.map((card) => ({
-      conceptUri: card['s'].value,
-      definitionUri: card['q'].value,
-    })) || []
-  );
 }
 
 export async function getProblemsForConcept(conceptUri: string) {
@@ -139,28 +100,149 @@ export interface SparqlResponse {
   };
 }
 
-export async function getQueryResults(query: string) {
+export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
   try {
-    const resp = await axios.post(
-      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
-      { query },
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
+    return axios.post(
+      '/api/set-use-rdf-encode-uri',
+      { useRdfEncodeUri },
+      { headers: getAuthHeaders() }
     );
-    return resp.data as SparqlResponse;
   } catch (error) {
-    console.error('Error executing SPARQL query:', error);
+    console.error('Error setting use RDF encode URI:', error);
     throw error;
   }
 }
-export async function getConceptDependencies(conceptUri: string) {
-  const query = `SELECT DISTINCT ?dependency WHERE {
+
+export async function getUseRdfEncodeUri() {
+  try {
+    const response = await axios.get('/api/get-use-rdf-encode-uri');
+    return response.data.useRdfEncodeUri;
+  } catch (error) {
+    console.error('Error getting use RDF encode URI:', error);
+    throw error;
+  }
+}
+
+export async function getParameterizedQueryResults(
+  parameterizedQuery: string,
+  uriParams: Record<string, string | string[]> = {}
+) {
+  const query = createSafeFlamsQuery(parameterizedQuery, uriParams);
+  try {
+    const resp = await axios.post(
+      `${process.env['NEXT_PUBLIC_FLAMS_URL']}/api/backend/query`,
+      new URLSearchParams({ query }),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        // Allow all status codes so we can forward them as-is instead of throwing on non-2xx.
+        validateStatus: () => true,
+      }
+    );
+
+    return resp.data as SparqlResponse;
+  } catch (error) {
+    console.error('Error executing parameterized SPARQL query:', error);
+    throw error;
+  }
+}
+
+const DEFAULT_URI_PARAM_PREFIX = '_uri_param';
+function createUriParamMapping(uris: string[], prefix = DEFAULT_URI_PARAM_PREFIX) {
+  if (!uris?.length) return {};
+  return Array.from({ length: uris.length }, (_, i) => i).reduce(
+    (acc, i) => ({ ...acc, [`${prefix}${i}`]: uris[i] }),
+    {}
+  );
+}
+
+function buildSearchUriQuery(parts: string[]): string {
+  if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
+
+  const filterConditions = parts
+    .map(
+      (_part, idx) =>
+        `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`
+    )
+    .join('.\n  ');
+
+  return `
+SELECT DISTINCT ?uri WHERE {
+  ?uri ?r ?o. 
+  ${filterConditions} 
+} 
+LIMIT 60`;
+}
+
+export async function searchUriUsingSubstr(input: string) {
+  if (!input) return [];
+  const parts = input
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0);
+  if (!parts.length) return [];
+
+  const query = buildSearchUriQuery(parts);
+  const results = await getParameterizedQueryResults(query, createUriParamMapping(parts));
+  return results?.results?.bindings.map((binding) => binding['uri']?.value) ?? [];
+}
+
+const TEMPL_GET_DEFINITIONS_IN_SECTION = `SELECT DISTINCT ?q ?s 
+WHERE { <_uri_section> (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
+export async function getDefiniedaInSection(sectionUri: string): Promise<ConceptAndDefinition[]> {
+  if (!sectionUri) return [];
+  const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_DEFINITIONS_IN_SECTION, {
+    _uri_section: sectionUri,
+  });
+  return (
+    sparqlResponse?.results?.bindings.map((card) => ({
+      conceptUri: card['s'].value,
+      definitionUri: card['q'].value,
+    })) || []
+  );
+}
+
+const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?uri ?q ?s 
+WHERE { VALUES ?uri { <_multiuri_section_uris> } ?uri (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
+
+export async function getDefiniedaInSections(
+  sectionUris: string[]
+): Promise<ConceptAndDefinition[][]> {
+  if (sectionUris.length === 0) {
+    return [];
+  }
+
+  const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_DEFINITIONS_IN_SECTIONS, {
+    _multiuri_section_uris: sectionUris,
+  });
+
+  // Group results by URI to create 2D array
+  const resultsByUri = new Map<string, ConceptAndDefinition[]>();
+
+  for (const binding of sparqlResponse?.results?.bindings || []) {
+    const uri = binding['uri'].value;
+    if (!resultsByUri.has(uri)) {
+      resultsByUri.set(uri, []);
+    }
+    resultsByUri.get(uri)!.push({
+      conceptUri: binding['s'].value,
+      definitionUri: binding['q'].value,
+    });
+  }
+
+  // Return results in the same order as input URIs
+  return sectionUris.map((uri) => resultsByUri.get(uri) || []);
+}
+
+export const TEMPL_GET_CONCEPT_DEPENDENCIES = `SELECT DISTINCT ?dependency WHERE {
   ?loname rdf:type ulo:definition .
-  ?loname ulo:defines <${conceptUri}> .
+  ?loname ulo:defines <_uri_concept> .
   ?loname ulo:crossrefs ?dependency .
 }`;
-  const sparqlResponse = await getQueryResults(query);
+
+export async function getConceptDependencies(conceptUri: string) {
+  const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_CONCEPT_DEPENDENCIES, {
+    _uri_concept: conceptUri,
+  });
 
   const dependencies: string[] = [];
   for (const binding of sparqlResponse.results?.bindings || []) {
@@ -169,22 +251,59 @@ export async function getConceptDependencies(conceptUri: string) {
   return dependencies;
 }
 
-export async function getSectionDependencies(sectionUri: string) {
-  const query = `SELECT DISTINCT ?s WHERE {
-  <${sectionUri}> (ulo:contains|dc:hasPart)* ?p.
+export const TEMPL_GET_DEPENDENCIES_FOR_SECTION = `SELECT DISTINCT ?s WHERE {
+  <_uri_section> (ulo:contains|dc:hasPart)* ?p.
   ?p ulo:crossrefs ?s.
   MINUS {
-    <${sectionUri}> (ulo:contains|dc:hasPart)* ?p.
+    <_uri_section> (ulo:contains|dc:hasPart)* ?p.
     ?p ulo:defines ?s.
   }
 }`;
-  const sparqlResponse = await getQueryResults(query);
+
+export async function getDependenciesForSection(sectionUri: string) {
+  const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_DEPENDENCIES_FOR_SECTION, {
+    _uri_section: sectionUri,
+  });
 
   const dependencies: string[] = [];
   for (const binding of sparqlResponse.results?.bindings || []) {
     dependencies.push(binding['s'].value);
   }
   return dependencies;
+}
+
+// Gets section dependencies for multiple sections.
+// Returns a 2D array where each inner array corresponds to the dependencies for one URI.
+export const TEMPL_GET_DEPENDENCIES_FOR_SECTIONS = `SELECT DISTINCT ?uri ?s WHERE {
+    VALUES ?uri { <_multiuri_section_uris> }
+    ?uri (ulo:contains|dc:hasPart)* ?p.
+    ?p ulo:crossrefs ?s.
+    MINUS {
+      ?uri (ulo:contains|dc:hasPart)* ?p.
+      ?p ulo:defines ?s.
+    }
+  }`;
+
+export async function getDependenciesForSections(sectionUris: string[]): Promise<string[][]> {
+  if (sectionUris.length === 0) return [];
+
+  const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_DEPENDENCIES_FOR_SECTIONS, {
+    _multiuri_section_uris: sectionUris,
+  });
+
+  // Group results by URI to create 2D array
+  const resultsByUri = new Map<string, string[]>();
+
+  for (const binding of sparqlResponse?.results?.bindings || []) {
+    const uri = binding['uri'].value;
+    if (!resultsByUri.has(uri)) {
+      resultsByUri.set(uri, []);
+    }
+    resultsByUri.get(uri)!.push(binding['s'].value);
+  }
+
+  // Return results in the same order as input URIs
+  return sectionUris.map((uri) => resultsByUri.get(uri) || []);
 }
 
 export const ALL_DIM_CONCEPT_PAIR = ['objective', 'precondition'] as const;
@@ -195,72 +314,98 @@ export type LoRelationToDimAndConceptPair = (typeof ALL_DIM_CONCEPT_PAIR)[number
 export type LoRelationToNonDimConcept = (typeof ALL_NON_DIM_CONCEPT)[number];
 export type AllLoRelationTypes = (typeof ALL_LO_RELATION_TYPES)[number];
 
-export const getSparqlQueryForLoRelationToDimAndConceptPair = (uri: string) => {
-  if (!uri) {
-    console.error('URI is absent');
-    return;
-  }
-  const query = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                PREFIX ulo: <http://mathhub.info/ulo#>
+export const TEMPL_GET_LO_RELATIONS_OF_TYPE_CONCEPT_AND_BLOOM_DIM = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
 
-                SELECT ?learningObject ?relation ?obj1 (GROUP_CONCAT(CONCAT(STR(?relType), "=", STR(?obj2)); SEPARATOR="; ") AS ?relatedData)
-                WHERE {
-                        ?learningObject ?relation ?obj1 .
-                        ?obj1 ?relType ?obj2 .
-                        FILTER(!CONTAINS(STR(?obj2), "?term")).
-                        FILTER(!CONTAINS(STR(?obj2), "?REF")).
-                        FILTER(CONTAINS(STR(?learningObject), "${encodeURI(uri)}")).
-                        VALUES ?relation {
-                                ulo:precondition
-                                ulo:objective
-                                }
-                      }
-                GROUP BY ?learningObject ?relation ?obj1 `;
-  return query;
-};
+SELECT ?learningObject ?relation ?obj1 (GROUP_CONCAT(CONCAT(STR(?relType), "=", STR(?obj2)); SEPARATOR="; ") AS ?relatedData)
+WHERE {
+        ?learningObject ?relation ?obj1 .
+        ?obj1 ?relType ?obj2 .
+        FILTER(!CONTAINS(STR(?obj2), "?term")).
+        FILTER(!CONTAINS(STR(?obj2), "?REF")).
+        FILTER(CONTAINS(STR(?learningObject), "_uri_learning_object")).
+        VALUES ?relation {
+                ulo:precondition
+                ulo:objective
+                }
+      }
+GROUP BY ?learningObject ?relation ?obj1 `;
 
-export const getSparqlQueryForLoRelationToNonDimConcept = (uri: string) => {
-  if (!uri) {
-    console.error('URI is absent');
-    return;
-  }
-  const query = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                PREFIX ulo: <http://mathhub.info/ulo#>
+export async function getLoRelationsOfTypeConceptAndBloomDimension(loUri: string) {
+  if (!loUri) return [];
+  const results = await getParameterizedQueryResults(
+    TEMPL_GET_LO_RELATIONS_OF_TYPE_CONCEPT_AND_BLOOM_DIM,
+    {
+      _uri_learning_object: loUri,
+    }
+  );
+  return (
+    results?.results?.bindings.map((binding) => ({
+      learningObject: binding['learningObject']?.value,
+      relation: binding['relation']?.value,
+      obj1: binding['obj1']?.value,
+      relatedData: binding['relatedData']?.value,
+    })) ?? []
+  );
+}
 
-                SELECT ?learningObject ?relation ?obj1
-                WHERE {
-                        ?learningObject ?relation ?obj1 .
-                        FILTER(!CONTAINS(STR(?obj1), "?term")).
-                        FILTER(!CONTAINS(STR(?obj1), "?REF")).
-                         FILTER(CONTAINS(STR(?learningObject), "${encodeURI(uri)}")).
-                         VALUES ?relation {
-                                   ulo:crossrefs
-                                   ulo:specifies
-                                   ulo:defines
-                                   ulo:example-for
-                                   }
-                              }`;
-  return query;
-};
-export const getProblemObject = async (problemIdPrefix: string) => {
-  if (!problemIdPrefix) {
-    console.error('Problem ID prefix is required');
-    return null;
-  }
-  return `
+export const TEMPL_GET_SIMPLE_LO_RELATIONS = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT ?learningObject ?relation ?obj1
+WHERE {
+        ?learningObject ?relation ?obj1 .
+        FILTER(!CONTAINS(STR(?obj1), "?term")).
+        FILTER(!CONTAINS(STR(?obj1), "?REF")).
+          FILTER(CONTAINS(STR(?learningObject), "_uri_learning_object")).
+          VALUES ?relation {
+                    ulo:crossrefs
+                    ulo:specifies
+                    ulo:defines
+                    ulo:example-for
+                    }
+              }`;
+
+export async function getSimpleLoRelations(loUri: string) {
+  if (!loUri) return [];
+  const results = await getParameterizedQueryResults(TEMPL_GET_SIMPLE_LO_RELATIONS, {
+    _uri_learning_object: loUri,
+  });
+  return (
+    results?.results?.bindings.map((binding) => ({
+      learningObject: binding['learningObject']?.value,
+      relation: binding['relation']?.value,
+      obj1: binding['obj1']?.value,
+    })) ?? []
+  );
+}
+
+export const TEMPL_GET_PROBLEM_OBJECTS_BY_SUBSTR = `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
 
     SELECT DISTINCT ?learningObject
     WHERE {
       ?learningObject rdf:type ulo:problem .
-      FILTER(CONTAINS(STR(?learningObject), "${encodeURI(problemIdPrefix)}"))
+      FILTER(CONTAINS(STR(?learningObject), "_uri_problem_id_substr"))
     }
   `;
-};
 
-export function getSparlQueryForNonDimConcepts() {
-  return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+export async function getProblemObjects(problemIdSubstr: string) {
+  if (!problemIdSubstr) return [];
+  const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEM_OBJECTS_BY_SUBSTR, {
+    _uri_problem_id_substr: problemIdSubstr,
+  });
+  return (
+    results?.results?.bindings.map((binding) => ({
+      learningObject: binding['learningObject']?.value,
+    })) ?? []
+  );
+}
+
+export const TEMPL_GET_NON_DIM_CONCEPTS = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
 SELECT DISTINCT ?x
@@ -272,12 +417,14 @@ WHERE {
   FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:crossrefs, ulo:defines, ulo:example-for, ulo:specifies)).
   FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
-}
-`;
+}`;
+
+export async function getNonDimConcepts() {
+  const results = await getParameterizedQueryResults(TEMPL_GET_NON_DIM_CONCEPTS);
+  return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 
-export function getSparlQueryForDimConcepts() {
-  return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+export const TEMPL_GET_DIM_CONCEPTS = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX fn: <http://www.w3.org/2005/xpath-functions#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
@@ -291,17 +438,19 @@ WHERE {
  FILTER(!CONTAINS(STR(?x), "?REF")).
   FILTER(?type IN (ulo:objective ,ulo:precondition )).
   FILTER(?loType IN (ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition)).
-}
-`;
+}`;
+
+export async function getDimConcepts() {
+  const results = await getParameterizedQueryResults(TEMPL_GET_DIM_CONCEPTS);
+  return results?.results?.bindings.map((binding) => binding['x']?.value) ?? [];
 }
 
-export function getSparqlQueryForLoString(loString: string, loTypes?: LoType[]) {
-  if (!loString || !loString.trim()) return;
+export function getLearningObjectsWithSubstringTempl(loTypes?: LoType[]): string {
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
       : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
-  const query = `
+  return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
     PREFIX fn: <http://www.w3.org/2005/xpath-functions#>
@@ -309,35 +458,45 @@ export function getSparqlQueryForLoString(loString: string, loTypes?: LoType[]) 
     WHERE {
       ?lo rdf:type ?type .
       FILTER(?type IN (${loTypesConditions})).
-      FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).
+      FILTER(CONTAINS(LCASE(STR(?lo)), "_uri_lo_sub_str")).
       FILTER(!CONTAINS(STR(?lo), "?term")).
       FILTER(!CONTAINS(STR(?lo), "?REF")).
     }
     ORDER BY ?hash
     LIMIT 300`;
-  return query;
 }
 
-export function getSparqlQueryForNonDimConceptsAsLoRelation(
+export async function getLearningObjectsWithSubstring(loSubStr: string, loTypes?: LoType[]) {
+  if (!loSubStr || !loSubStr.trim()) return [];
+  const query = getLearningObjectsWithSubstringTempl(loTypes);
+  const results = await getParameterizedQueryResults(query, { _uri_lo_sub_str: loSubStr });
+  return (
+    results?.results?.bindings.map((binding) => ({
+      uri: binding['lo']?.value,
+      type: binding['type']?.value,
+    })) ?? []
+  );
+}
+
+export function getNonDimConceptsAsLoRelationTempl(
   conceptUris: string[],
   relations: LoRelationToNonDimConcept[],
   loTypes?: LoType[],
-  loString?: string
-) {
-  if (!conceptUris?.length && (!loString || !loString.trim())) return;
+  loSubStr?: string
+): string {
   const uriConditions = conceptUris?.length
-    ? conceptUris.map((uri) => `CONTAINS(STR(?obj1), "${encodeURI(uri)}")`).join(' || ')
+    ? conceptUris
+        .map((uri, idx) => `CONTAINS(STR(?obj1), "${DEFAULT_URI_PARAM_PREFIX}${idx}")`)
+        .join(' || ')
     : 'false';
   const relationConditions = relations.map((relation) => `ulo:${relation}`).join(' ');
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
       : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
-  const loStringFilter = loString
-    ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
-    : '';
+  const loStringFilter = loSubStr ? `FILTER(CONTAINS(LCASE(STR(?lo)), "_uri_lo_sub_str")).` : '';
 
-  const query = `
+  return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX ulo: <http://mathhub.info/ulo#>
 
@@ -361,29 +520,47 @@ export function getSparqlQueryForNonDimConceptsAsLoRelation(
 
     }LIMIT 300
   `;
-
-  return query;
 }
 
-export function getSparqlQueryForDimConceptsAsLoRelation(
+export async function getNonDimConceptsAsLoRelation(
+  conceptUris: string[],
+  relations: LoRelationToNonDimConcept[],
+  loTypes?: LoType[],
+  loSubStr?: string
+) {
+  if (!conceptUris?.length && !loSubStr?.trim()) return [];
+  const query = getNonDimConceptsAsLoRelationTempl(conceptUris, relations, loTypes, loSubStr);
+
+  const results = await getParameterizedQueryResults(query, {
+    ...createUriParamMapping(conceptUris),
+    _uri_lo_sub_str: loSubStr ?? '',
+  });
+  return (
+    results?.results?.bindings.map((binding) => ({
+      uri: binding['lo']?.value,
+      type: binding['type']?.value,
+    })) ?? []
+  );
+}
+
+export function getDimConceptsAsLoRelationTempl(
   conceptUris: string[],
   relations: LoRelationToDimAndConceptPair[],
   loTypes?: LoType[],
-  loString?: string
-) {
-  if (!conceptUris?.length && (!loString || !loString.trim())) return;
+  loSubStr?: string
+): string {
   const uriConditions = conceptUris?.length
-    ? conceptUris.map((uri) => `CONTAINS(STR(?obj1),"${encodeURI(uri)}")`).join(' || ')
+    ? conceptUris
+        .map((uri, idx) => `CONTAINS(STR(?obj1),"${DEFAULT_URI_PARAM_PREFIX}${idx}")`)
+        .join(' || ')
     : 'false';
   const relationConditions = relations.map((relation) => `ulo:${relation}`).join(' ');
   const loTypesConditions =
     loTypes && loTypes.length > 0
       ? loTypes.map((loType) => `ulo:${loType}`).join(', ')
       : 'ulo:definition, ulo:problem, ulo:example, ulo:para, ulo:proposition';
-  const loStringFilter = loString
-    ? `FILTER(CONTAINS(LCASE(STR(?lo)), "${encodeURI(loString)}")).`
-    : '';
-  const query = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  const loStringFilter = loSubStr ? `FILTER(CONTAINS(LCASE(STR(?lo)), "_uri_lo_sub_str")).` : '';
+  return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
 SELECT ?lo ?type
@@ -402,17 +579,41 @@ WHERE {
   FILTER(!CONTAINS(STR(?lo), "?REF")).
 }LIMIT 300
 `;
-
-  return query;
 }
 
-export function getSparlQueryForDefinition(uri: string) {
-  return `
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+export async function getDimConceptsAsLoRelation(
+  conceptUris: string[],
+  relations: LoRelationToDimAndConceptPair[],
+  loTypes?: LoType[],
+  loSubStr?: string
+) {
+  if (!conceptUris?.length && !loSubStr?.trim()) return [];
+  const query = getDimConceptsAsLoRelationTempl(conceptUris, relations, loTypes, loSubStr);
+
+  const results = await getParameterizedQueryResults(query, {
+    ...createUriParamMapping(conceptUris),
+    _uri_lo_sub_str: loSubStr ?? '',
+  });
+
+  return (
+    results?.results?.bindings.map((binding) => ({
+      uri: binding['lo']?.value,
+      type: binding['type']?.value,
+    })) ?? []
+  );
+}
+
+export const TEMPL_GET_DEFINITIONS_FOR_CONCEPT = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX ulo: <http://mathhub.info/ulo#>
         SELECT DISTINCT ?loname WHERE {
   ?loname rdf:type ulo:definition .
-  ?loname ulo:defines <${uri}> .
-}
-  `;
+  ?loname ulo:defines <_uri_concept> .
+}`;
+
+export async function getDefinitionsForConcept(conceptUri: string, lang: string) {
+  const results = await getParameterizedQueryResults(TEMPL_GET_DEFINITIONS_FOR_CONCEPT, {
+    _uri_concept: conceptUri,
+  });
+  const allUris = results?.results?.bindings?.map((b) => b?.['loname']?.value) ?? [];
+  return allUris.filter((u: string) => u.includes(`&l=${lang}`));
 }

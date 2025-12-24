@@ -60,8 +60,12 @@ const HomeworkPage: NextPage = () => {
 
   if (forceFauLogin) {
     return (
-      <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}>
-        <ForceFauLogin />
+
+      <MainLayout
+        title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}
+      >
+        <ForceFauLogin content={"homework"} />
+
       </MainLayout>
     );
   }

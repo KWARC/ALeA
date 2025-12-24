@@ -1,24 +1,23 @@
-import { SafeFTMLFragment } from './SafeFTMLComponents';
+import {
+  BloomDimension,
+  conceptUriToName,
+  getConceptDependencies,
+  getDefinitionsForConcept,
+  getUriSmileys,
+  SmileyCognitiveValues,
+  smileyToLevel
+} from '@alea/spec';
+import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, CircularProgress, Divider, IconButton } from '@mui/material';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import {
-  BloomDimension,
-  conceptUriToName,
-  getConceptDependencies,
-  getUriSmileys,
-  SmileyCognitiveValues,
-  smileyToLevel,
-  getQueryResults,
-  getSparlQueryForDefinition,
-} from '@alea/spec';
-import { shouldUseDrawer, simpleHash } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { SelfAssessmentDialog } from './stex-react-renderer';
 import styles from './styles/tour-display.module.scss';
 import { useOnScreen } from './useOnScreen';
@@ -89,7 +88,7 @@ function ItemBreadcrumbs({
               <a>
                 <SafeFTMLFragment
                   key={item.header}
-                  fragment={{ type: 'HtmlString', html: item.header, uri }}
+                  fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
                 />
               </a>
             </li>
@@ -115,7 +114,7 @@ function ItemBreadcrumbs({
               >
                 <SafeFTMLFragment
                   key={dep.header}
-                  fragment={{ type: 'HtmlString', html: dep.header, uri: depUri }}
+                  fragment={{ type: 'HtmlString', html: dep.header, uri: undefined }}
                 />
               </Button>
             );
@@ -155,18 +154,8 @@ function TourItemDisplay({
 
   useEffect(() => {
     async function fetchDefinition(uri: string) {
-      const query = getSparlQueryForDefinition(uri);
-      const results = await getQueryResults(query);
-
-      const allUris = results?.results?.bindings?.map((b) => b?.loname?.value) ?? [];
-
-      let uris = allUris.filter((u: string) => u.includes(`&l=${lang}`));
-
-      if (uris.length === 0 && allUris.length > 0) {
-        uris = [allUris[0]];
-      }
-
-      setDefinitionUris(uris.slice(0, 1));
+      const defs = await getDefinitionsForConcept(uri, lang);
+      setDefinitionUris(defs[0] ? [defs[0]] : []);
     }
     fetchDefinition(item.uri);
   }, [item.uri, lang]);
@@ -177,7 +166,7 @@ function TourItemDisplay({
         <h3 style={{ margin: 0 }}>
           <SafeFTMLFragment
             key={item.header}
-            fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+            fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
           />
         </h3>
         <Box mx="10px" height="30px" sx={{ whiteSpace: 'nowrap' }}>
@@ -292,7 +281,7 @@ function getTourItemMap(
       header: entry.title,
       hash: simpleHash(entry.id),
       dependencies: [],
-      successors: entry.successors,
+      successors: entry.successors.filter((s) => s !== entry.id),
       level: 0,
       understood: isConceptUnderstood(smileyVals.get(entry.id)),
     });
@@ -311,8 +300,10 @@ function getDisplayItemList(
   tempShowUri: string[]
 ): TourItem[] {
   const rootItem = Array.from(tourItemMap.values()).find((item) => !item.successors?.length);
-  if (!rootItem) return [];
-
+  if (!rootItem) {
+    console.log('No root item found');
+    return [];
+  }
   if (understoodUri.includes(rootItem.uri)) {
     return [rootItem];
   }
@@ -328,7 +319,7 @@ function listItemText(item: TourItem, isIntersecting: boolean) {
       <span style={{ fontWeight }}>
         <SafeFTMLFragment
           key={item.header}
-          fragment={{ type: 'HtmlString', html: item.header, uri: item.uri }}
+          fragment={{ type: 'HtmlString', html: item.header, uri: undefined }}
         />
       </span>
     </Box>
@@ -518,7 +509,8 @@ export function TourDisplay({
   }, [tourId]);
 
   useEffect(() => {
-    setDisplayItemList(getDisplayItemList(allItemsMap, understoodUri, tempShowUri));
+    const allItems = getDisplayItemList(allItemsMap, understoodUri, tempShowUri);
+    setDisplayItemList(allItems);
   }, [allItemsMap, understoodUri, tempShowUri]);
 
   useEffect(() => {

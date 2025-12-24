@@ -497,9 +497,71 @@ export const en = {
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
   },
 
+  courseInfo: {
+    title: 'Course Information',
+
+    confirmUpdateHomework: 'Are you sure you want to update homework availability?',
+    confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
+
+    courseName: 'Course Name',
+    universityId: 'University ID',
+    notesUrl: 'Notes URL',
+    landingPage: 'Landing Page',
+    slidesUrl: 'Slides URL',
+    teaser: 'Teaser',
+
+    seriesIdLabel: 'Series ID',
+    confirmUpdateSeriesId: 'Are you sure you want to update the Series ID?',
+    seriesIdUpdated: 'Series ID updated successfully!',
+    seriesIdUpdateFailed: 'Failed to update Series ID. Please try again.',
+
+    enableHomework: 'Enable homework for this course',
+    enableQuiz: 'Enable quiz for this course',
+
+    instructorsLabel: 'Instructors',
+    noInstructors: 'No instructors found.',
+    named: 'Named',
+
+    saveChanges: 'Save Changes',
+
+    saving: 'Saving...',
+    courseInfoCreated: 'Course info created successfully',
+    courseInfoUpdated: 'Course info updated successfully',
+    courseInfoSaveFailed: 'Failed to save course info',
+    instructorsFetchFailed: 'Failed to fetch instructors',
+
+    failedToLoad: 'Failed to load course info',
+    failedToFetchInstructors: 'Failed to fetch instructors',
+    createdSuccess: 'Course info created successfully',
+    updatedSuccess: 'Course info updated successfully',
+    failedToSave: 'Failed to save course info',
+    failedHomeworkUpdate: 'Failed to update homework setting',
+    failedQuizUpdate: 'Failed to update quiz setting',
+  },
+
   courseMetadata: {
     title: 'Lecture Schedule for Course ID: {{courseId}}',
     addLectureButton: 'Add Lecture',
+    addTutorialButton: 'Add Tutorial',
+
+    beforeAfter: 'Before / After',
+
+    pageTitle: 'Course Metadata',
+
+    generatingLectureEntries: 'Generating lecture entries...',
+    lectureEntriesAlreadyExist:
+      'Lecture entries already exist for courseId {{courseId}} ({{count}} entries)',
+    lectureEntrySuccess:
+      'Lecture entry generation successful for courseId {{courseId}} ({{count}} entries)',
+    lectureEntryFailed: 'Lecture entry generation failed: {{error}}',
+
+    generateLectureEntry: 'Generate Lecture Entry',
+
+    lectureScheduleTab: 'Lecture Schedule',
+    tutorialScheduleTab: 'Tutorial Schedule',
+
+    startTimeBerlin: 'Start Time (Europe/Berlin)',
+    endTimeBerlin: 'End Time (Europe/Berlin)',
 
     day: 'Day',
     venue: 'Venue',
@@ -519,6 +581,16 @@ export const en = {
     editTutorial: 'Edit Tutorial',
     save: 'Save',
     cancel: 'Cancel',
+
+    quizSettings: 'Quiz Settings',
+    offsetMinutes: 'Offset (min)',
+    before: 'Before',
+    after: 'After',
+    from: 'From',
+    startOfLecture: 'Start of Lecture',
+    endOfLecture: 'End of Lecture',
+    quizDuration: 'Quiz Duration (min)',
+    feedbackDelay: 'Feedback Delay (min)',
 
     confirmDeleteLecture: 'Are you sure you want to delete this lecture?',
     confirmDeleteTutorial: 'Are you sure you want to delete this tutorial?',
@@ -545,6 +617,9 @@ export const en = {
     saveChanges: 'Save Changes',
     create: 'Create',
 
+    seriesIdLabel: 'Series ID',
+    isQuizAvailable: 'Enable quiz for this course',
+
     confirmDeleteAnnouncementTitle: 'Confirm Deletion',
     confirmDeleteAnnouncementMessage:
       'Are you sure you want to delete this announcement? This action cannot be undone.',
@@ -555,5 +630,14 @@ export const en = {
     snackbarAnnouncementDeleteFailed: 'Failed to delete announcement. Check console for details.',
     snackbarAnnouncementsFetchFailed: 'Failed to fetch announcements. Check console for details.',
     isHomeworkAvailable: 'Enable homework for this course',
+
+    confirmUpdateSeriesId: 'Are you sure you want to update the Series ID?',
+    seriesIdUpdated: 'Series ID updated successfully!',
+    seriesIdUpdateFailed: 'Failed to update Series ID. Please try again.',
+
+    selectScheduleTypeAlert: 'Please first select Lecture Schedule or Tutorial Schedule',
+
+    lecture: 'Lecture',
+    tutorial: 'Tutorial',
   },
 };

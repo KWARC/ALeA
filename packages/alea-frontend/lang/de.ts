@@ -462,9 +462,72 @@ export const de = {
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
   },
 
+  courseInfo: {
+    title: 'Kursinformationen',
+
+    confirmUpdateHomework:
+      'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
+
+    courseName: 'Kursname',
+    universityId: 'Universitäts-ID',
+    notesUrl: 'Skript-URL',
+    landingPage: 'Landingpage',
+    slidesUrl: 'Folien-URL',
+    teaser: 'Teaser',
+
+    seriesIdLabel: 'Serien-ID',
+    confirmUpdateSeriesId: 'Sind Sie sicher, dass Sie die Serien-ID aktualisieren möchten?',
+    seriesIdUpdated: 'Serien-ID wurde erfolgreich aktualisiert!',
+    seriesIdUpdateFailed:
+      'Aktualisierung der Serien-ID ist fehlgeschlagen. Bitte versuchen Sie es erneut.',
+
+    enableHomework: 'Hausaufgaben für diesen Kurs aktivieren',
+    enableQuiz: 'Quiz für diesen Kurs aktivieren',
+
+    instructorsLabel: 'Lehrende',
+    noInstructors: 'Keine Dozenten gefunden.',
+    named: 'Benannt',
+
+    saveChanges: 'Änderungen speichern',
+    saving: 'Speichern...',
+    courseInfoCreated: 'Kursinformationen erfolgreich erstellt',
+    courseInfoUpdated: 'Kursinformationen erfolgreich aktualisiert',
+    courseInfoSaveFailed: 'Speichern der Kursinformationen fehlgeschlagen',
+    instructorsFetchFailed: 'Fehler beim Abrufen der Dozenten',
+
+    failedToLoad: 'Kursinformationen konnten nicht geladen werden',
+    failedToFetchInstructors: 'Dozenten konnten nicht abgerufen werden',
+    createdSuccess: 'Kursinformationen erfolgreich erstellt',
+    updatedSuccess: 'Kursinformationen erfolgreich aktualisiert',
+    failedToSave: 'Kursinformationen konnten nicht gespeichert werden',
+    failedHomeworkUpdate: 'Hausaufgaben-Einstellung konnte nicht aktualisiert werden',
+    failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
+  },
+
   courseMetadata: {
     title: 'Vorlesungsplan für Kurs-ID: {{courseId}}',
     addLectureButton: 'Vorlesung hinzufügen',
+    addTutorialButton: 'Tutorium hinzufügen',
+
+    beforeAfter: 'Vorher / Nachher',
+
+    pageTitle: 'Kurs-Metadaten',
+
+    generatingLectureEntries: 'Vortragseinträge werden erzeugt...',
+    lectureEntriesAlreadyExist:
+      'Vortragseinträge existieren bereits für Kurs-ID {{courseId}} ({{count}} Einträge)',
+    lectureEntrySuccess:
+      'Vortragseinträge erfolgreich erzeugt für Kurs-ID {{courseId}} ({{count}} Einträge)',
+    lectureEntryFailed: 'Erzeugung der Vortragseinträge fehlgeschlagen: {{error}}',
+
+    generateLectureEntry: 'Vortragseintrag erstellen',
+
+    lectureScheduleTab: 'Vorlesungsplan',
+    tutorialScheduleTab: 'Tutorienplan',
+
+    startTimeBerlin: 'Startzeit (Europa/Berlin)',
+    endTimeBerlin: 'Endzeit (Europa/Berlin)',
 
     day: 'Tag',
     venue: 'Veranstaltungsort',
@@ -484,6 +547,16 @@ export const de = {
     editTutorial: 'Tutorium bearbeiten',
     save: 'Speichern',
     cancel: 'Abbrechen',
+
+    quizSettings: 'Quiz-Einstellungen',
+    offsetMinutes: 'Versatz (min)',
+    before: 'Vorher',
+    after: 'Nachher',
+    from: 'Von',
+    startOfLecture: 'Beginn der Vorlesung',
+    endOfLecture: 'Ende der Vorlesung',
+    quizDuration: 'Quizdauer (min)',
+    feedbackDelay: 'Feedback-Verzögerung (min)',
 
     // confirmDelete: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
     confirmDeleteLecture: 'Sind Sie sicher, dass Sie diese Vorlesung löschen möchten?',
@@ -512,6 +585,9 @@ export const de = {
     saveChanges: 'Änderungen speichern',
     create: 'Erstellen',
 
+    seriesIdLabel: 'Serien-ID',
+    isQuizAvailable: 'Quiz für diesen Kurs aktivieren',
+
     confirmDeleteAnnouncementTitle: 'Löschen bestätigen',
     confirmDeleteAnnouncementMessage:
       'Sind Sie sicher, dass Sie diese Ankündigung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
@@ -525,5 +601,20 @@ export const de = {
     snackbarAnnouncementsFetchFailed:
       'Abrufen der Ankündigungen fehlgeschlagen. Details in der Konsole.',
     isHomeworkAvailable: 'Hausaufgaben für diesen Kurs aktivieren',
+
+    confirmUpdateSeriesId: 'Sind Sie sicher, dass Sie die Serien-ID aktualisieren möchten?',
+    seriesIdUpdated: 'Serien-ID erfolgreich aktualisiert!',
+    seriesIdUpdateFailed:
+      'Aktualisierung der Serien-ID fehlgeschlagen. Bitte versuchen Sie es erneut.',
+
+    selectScheduleTypeAlert: 'Bitte wählen Sie zuerst Vorlesungsplan oder Tutorienplan aus',
+
+    lecture: 'Vorlesung',
+    tutorial: 'Tutorium',
+
+    confirmUpdateHomework:
+      'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',
+    confirmUpdateQuiz:
+      'Sind Sie sicher, dass Sie die Verfügbarkeit des Quiz aktualisieren möchten?',
   },
 };
