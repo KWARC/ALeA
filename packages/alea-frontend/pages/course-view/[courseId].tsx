@@ -436,11 +436,8 @@ const CourseViewPage: NextPage = () => {
                   setVideoExtractedData({});
                   setTimestampSec(0);
                 }
-
-                // Find the first slide's clip info for this section to set timestamp and currentSlideClipInfo
                 const sectionSlides = slidesUriToIndexMap?.[sectionId];
                 if (sectionSlides && Object.keys(sectionSlides).length > 0) {
-                  // Find the first slide (index 0)
                   const firstSlideUri =
                     Object.keys(sectionSlides).find((slideUri) => sectionSlides[slideUri] === 0) ||
                     Object.keys(sectionSlides)[0];
@@ -448,18 +445,13 @@ const CourseViewPage: NextPage = () => {
                   if (firstSlideUri && slidesClipInfo?.[sectionId]?.[firstSlideUri]) {
                     const slideClips = slidesClipInfo[sectionId][firstSlideUri];
                     if (Array.isArray(slideClips) && slideClips.length > 0) {
-                      // Find clip that matches the new clipId, or use the first one
                       const matchedClip = newClipId
                         ? slideClips.find((clip) => clip.video_id === newClipId)
                         : null;
                       const clipToUse = matchedClip || slideClips[0];
-
-                      // Set timestamp to the start time of the first slide
                       if (clipToUse.start_time !== undefined) {
                         setTimestampSec(clipToUse.start_time);
                       }
-
-                      // Set current slide clip info
                       setCurrentSlideClipInfo(clipToUse);
                     }
                   }

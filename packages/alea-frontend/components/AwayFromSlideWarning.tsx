@@ -52,7 +52,3 @@ export function AwayFromSlideWarning({
     </Tooltip>
   );
 }
-
-
-
-

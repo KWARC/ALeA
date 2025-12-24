@@ -40,7 +40,6 @@ export function useVideoMarkers({
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
   }, [markers]);
 
-  // Create markers on progress bar
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -90,7 +89,6 @@ export function useVideoMarkers({
     };
   }, [markers, timestampSec, videoPlayer, setTooltip, handleMarkerClick]);
 
-  // Handle marker updates on pause/seek
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -116,7 +114,6 @@ export function useVideoMarkers({
     };
   }, [markers, videoPlayer, handleMarkerClick]);
 
-  // Update marker colors and sync slides
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -162,6 +159,13 @@ export function useVideoMarkers({
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-  }, [markersInDescOrder, slidesUriToIndexMap, router, videoPlayer, hasSlideAtCurrentTime, setHasSlideAtCurrentTime, onHasSlideAtCurrentTimeChange]);
+  }, [
+    markersInDescOrder,
+    slidesUriToIndexMap,
+    router,
+    videoPlayer,
+    hasSlideAtCurrentTime,
+    setHasSlideAtCurrentTime,
+    onHasSlideAtCurrentTimeChange,
+  ]);
 }
-

@@ -130,14 +130,20 @@ export function MediaItem({
     return false;
   }, [hasSlidesForSection]);
   const masterVideoUrl = presenterVideoId || videoId;
-  
+
   const currentSlideClipRange = useMemo(
     () => calculateCurrentSlideClipRange(currentSlideUri, currentSectionId, slidesClipInfo, clipId),
     [currentSlideUri, currentSectionId, slidesClipInfo, clipId]
   );
 
   const selectedSectionFirstSlideTime = useMemo(
-    () => calculateSelectedSectionFirstSlideTime(currentSectionId, slidesClipInfo, slidesUriToIndexMap, clipId),
+    () =>
+      calculateSelectedSectionFirstSlideTime(
+        currentSectionId,
+        slidesClipInfo,
+        slidesUriToIndexMap,
+        clipId
+      ),
     [currentSectionId, slidesClipInfo, slidesUriToIndexMap, clipId]
   );
 
@@ -150,7 +156,7 @@ export function MediaItem({
       if (currentSlideClipRange) {
         setIsAwayFromSlide(t < currentSlideClipRange.start || t > currentSlideClipRange.end);
       } else if (selectedSectionFirstSlideTime !== null && videoLoaded) {
-        const threshold = 2; 
+        const threshold = 2;
         const isAtFirstSlide = Math.abs(t - selectedSectionFirstSlideTime) <= threshold;
         setIsAwayFromSlide(!isAtFirstSlide);
       } else {
@@ -162,9 +168,7 @@ export function MediaItem({
     return () => {
       player.off('timeupdate', onTimeUpdate);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSlideClipRange, selectedSectionFirstSlideTime, videoLoaded]);
-
 
   useEffect(() => {
     if (presenterVideoId) {
@@ -273,7 +277,6 @@ export function MediaItem({
       ></audio>
     );
   }
-  // Check if presenter video is available and presentation video is showing
   const hasPresenterVideo = !!presenterVideoId;
   const isPresentationVideoShowing = checkIsPresentationVideoShowing(
     presentationVideoUrl,
@@ -296,7 +299,7 @@ export function MediaItem({
   });
 
   return (
-    <Box sx={{ position: 'relative' , width: '100%'}}>
+    <Box sx={{ position: 'relative', width: '100%' }}>
       <Box sx={videoContainerWrapperStyles}>
         <Box sx={videoContainerStyles}>
           <video
@@ -372,10 +375,10 @@ export function MediaItem({
           }
         }}
       />
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
           mt: shouldMakeControlBarFullWidth ? 0 : 6,
           position: 'relative',
           zIndex: 1001,

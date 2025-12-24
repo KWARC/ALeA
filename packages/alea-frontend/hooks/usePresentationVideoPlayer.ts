@@ -47,8 +47,9 @@ export function usePresentationVideoPlayer({
     }
 
     let player = presentationVideoPlayer.current;
-    const isDisposed = player && typeof (player as any).isDisposed === 'function' && (player as any).isDisposed();
-    
+    const isDisposed =
+      player && typeof (player as any).isDisposed === 'function' && (player as any).isDisposed();
+
     if (!player || isDisposed) {
       try {
         player = videojs(presentationPlayerRef.current, {
@@ -105,8 +106,8 @@ export function usePresentationVideoPlayer({
 
     if (currentSrc !== presentationVideoUrl) {
       const master = masterVideoPlayer.current;
-      const syncTime = master ? master.currentTime() : (player.currentTime() || 0);
-      
+      const syncTime = master ? master.currentTime() : player.currentTime() || 0;
+
       player.src({ src: presentationVideoUrl, type: 'video/mp4' });
       player.load();
       player.ready(() => {
@@ -147,15 +148,25 @@ export function usePresentationVideoPlayer({
         player.load();
       }
     }
-  }, [presentationVideoUrl, hasSlides, hasSlideAtCurrentTime, showPresentationVideo, audioOnly, presentationPlayerRef, masterVideoPlayer]);
+  }, [
+    presentationVideoUrl,
+    hasSlides,
+    hasSlideAtCurrentTime,
+    showPresentationVideo,
+    audioOnly,
+    presentationPlayerRef,
+    masterVideoPlayer,
+  ]);
 
-  // Sync players
   useEffect(() => {
     const masterPlayer = masterVideoPlayer.current;
     const presentationPlayer = presentationVideoPlayer.current;
     const shouldSync = !hasSlides || !hasSlideAtCurrentTime || showPresentationVideo;
     if (!masterPlayer || !presentationPlayer || !shouldSync || audioOnly) return;
-    if (typeof (presentationPlayer as any).isDisposed === 'function' && (presentationPlayer as any).isDisposed()) {
+    if (
+      typeof (presentationPlayer as any).isDisposed === 'function' &&
+      (presentationPlayer as any).isDisposed()
+    ) {
       return;
     }
     const syncPlayers = () => {
@@ -197,4 +208,3 @@ export function usePresentationVideoPlayer({
 
   return presentationVideoPlayer;
 }
-

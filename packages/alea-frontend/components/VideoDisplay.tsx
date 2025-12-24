@@ -273,8 +273,8 @@ export function VideoDisplay({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            mb: reveal || showOverlay ? 0.5 : 0, 
-            height: reveal || showOverlay ? 'auto' : 0, 
+            mb: reveal || showOverlay ? 0.5 : 0,
+            height: reveal || showOverlay ? 'auto' : 0,
             overflow: 'hidden',
           }}
         >

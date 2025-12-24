@@ -5,9 +5,7 @@ interface NotesAndCommentsSectionProps {
   currentSlideUri: string;
 }
 
-export default function NotesAndCommentsSection({
-  currentSlideUri,
-}: NotesAndCommentsSectionProps) {
+export default function NotesAndCommentsSection({ currentSlideUri }: NotesAndCommentsSectionProps) {
   return (
     <Paper
       elevation={1}
@@ -55,4 +53,3 @@ export default function NotesAndCommentsSection({
     </Paper>
   );
 }
-

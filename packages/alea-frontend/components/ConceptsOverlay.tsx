@@ -111,13 +111,7 @@ export function ConceptsOverlay({
                       },
                     }}
                   >
-                    <Image
-                      src="/guidedTour.png"
-                      alt="Tour Logo"
-                      width={22}
-                      height={22}
-                      priority
-                    />
+                    <Image src="/guidedTour.png" alt="Tour Logo" width={22} height={22} priority />
                   </IconButton>
                 </Tooltip>
               </Link>
@@ -140,7 +134,3 @@ export function ConceptsOverlay({
     </Paper>
   );
 }
-
-
-
-

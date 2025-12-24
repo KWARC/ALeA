@@ -71,4 +71,3 @@ export function useVideoPlayer({
 
   return videoPlayer;
 }
-

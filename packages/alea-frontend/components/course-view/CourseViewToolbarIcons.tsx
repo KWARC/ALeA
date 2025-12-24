@@ -64,7 +64,11 @@ export default function CourseViewToolbarIcons({
             },
           }}
         >
-          {audioOnly ? <VideocamIcon fontSize={isMobile ? 'small' : 'medium'} /> : <MusicNote fontSize={isMobile ? 'small' : 'medium'} />}
+          {audioOnly ? (
+            <VideocamIcon fontSize={isMobile ? 'small' : 'medium'} />
+          ) : (
+            <MusicNote fontSize={isMobile ? 'small' : 'medium'} />
+          )}
         </IconButton>
       </Tooltip>
 
