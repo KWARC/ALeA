@@ -172,6 +172,7 @@ function AnswerAccepter({
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
+        institutionId: 'FAU', // TODO(M5)
         homeworkId: +(router.query.id ?? 0),
       });
       console.log('All answers saved successfully!');

@@ -182,11 +182,12 @@ export function getUpcomingQuizSyllabus(
 
 interface QuizDashboardProps {
   courseId: string;
+  institutionId: string;
   quizId?: string;
   onQuizIdChange?: (quizId: string) => void;
 }
 
-const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizIdChange }) => {
+const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, quizId, onQuizIdChange }) => {
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
@@ -269,10 +270,8 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getAllCourses();
-        const universityId = courses?.[courseId]?.universityId;
-        if (universityId && UniversityDetail[universityId]) {
-          setTimezone(UniversityDetail[universityId].defaultTimezone);
+        if (institutionId && UniversityDetail[institutionId]) {
+          setTimezone(UniversityDetail[institutionId].defaultTimezone);
         } else {
           setTimezone(undefined);
         }
@@ -801,6 +800,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
             quizId={selectedQuizId}
             courseId={courseId}
             courseInstance={courseTerm}
+            institutionId={institutionId}
           />
         </Box>
       )}
