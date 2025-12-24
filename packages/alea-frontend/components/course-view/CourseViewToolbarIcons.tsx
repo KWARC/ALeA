@@ -7,6 +7,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import { CourseInfo, getCoursePdfUrl, localStore } from '@alea/utils';
 import { useState } from 'react';
+import { ViewMode } from '../../pages/course-view/[courseId]';
 
 interface CourseViewToolbarIconsProps {
   audioOnly: boolean;
@@ -14,6 +15,7 @@ interface CourseViewToolbarIconsProps {
   showPresentationVideo: boolean;
   courseId: string;
   courses: { [id: string]: CourseInfo } | undefined;
+  viewMode: ViewMode;
   onAudioOnlyToggle: () => void;
   onResolutionChange: (resolution: number) => void;
   onPresentationVideoToggle: () => void;
@@ -27,25 +29,34 @@ export default function CourseViewToolbarIcons({
   showPresentationVideo,
   courseId,
   courses,
+  viewMode,
   onAudioOnlyToggle,
   onResolutionChange,
   onPresentationVideoToggle,
 }: CourseViewToolbarIconsProps) {
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
+  const isVideoHidden = viewMode === ViewMode.SLIDE_MODE;
 
   return (
     <>
       <Tooltip title={audioOnly ? 'Show Video' : 'Audio Only'} placement="bottom">
         <IconButton
           onClick={onAudioOnlyToggle}
+          disabled={isVideoHidden}
           sx={{
             border: '2px solid',
             borderColor: audioOnly ? '#1976d2' : '#9e9e9e',
             borderRadius: 2,
             bgcolor: audioOnly ? '#e3f2fd' : 'white',
             color: audioOnly ? '#1976d2' : '#616161',
+            opacity: isVideoHidden ? 0.5 : 1,
             '&:hover': {
               bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
+            },
+            '&.Mui-disabled': {
+              borderColor: '#9e9e9e',
+              bgcolor: 'white',
+              color: '#9e9e9e',
             },
           }}
         >
@@ -53,7 +64,7 @@ export default function CourseViewToolbarIcons({
         </IconButton>
       </Tooltip>
 
-      {!audioOnly && (
+      {!audioOnly && !isVideoHidden && (
         <>
           <Tooltip title="Video Quality" placement="bottom">
             <IconButton

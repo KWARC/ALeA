@@ -523,6 +523,7 @@ const CourseViewPage: NextPage = () => {
                     showPresentationVideo={showPresentationVideo}
                     courseId={courseId}
                     courses={courses}
+                    viewMode={viewMode}
                     onAudioOnlyToggle={() => {
                       const newAudioOnly = !audioOnly;
                       localStore?.setItem('audioOnly', String(newAudioOnly));
