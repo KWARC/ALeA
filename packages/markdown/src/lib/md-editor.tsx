@@ -19,6 +19,8 @@ interface MdEditorProps {
   defaultPreview?: boolean;
 
   onValueChange: (v: string) => void;
+
+  editorProps?: any;
 }
 
 const PREVIEW_TRIGGER_SET = /[#$()_+[\]{}|~*<>=]/;
@@ -31,6 +33,7 @@ export function MdEditor({
   value,
   onValueChange,
   defaultPreview = false,
+  editorProps,
 }: MdEditorProps) {
   const t = getLocaleObject(useRouter());
   const [autoPreview, setAutoPreview] = useState(defaultPreview);
@@ -59,6 +62,7 @@ export function MdEditor({
             name={name}
             className={styles['textarea']}
             value={value}
+            style={editorProps ?? {}}
             onChange={(e) => {
               const v = e.target.value;
               checkAutoPreview(v);

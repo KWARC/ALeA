@@ -257,14 +257,13 @@ export function SubProblemAnswer({
         ) : (
           <Box display="flex" alignItems="flex-start">
             <Box flexGrow={1}>
-              <Box sx={{ border: canSaveAnswer ? '2px solid red' : undefined }}>
-                <MdEditor
-                  name={`answer-${questionId}-${subProblemId}`}
-                  placeholder={'...'}
-                  value={answer}
-                  onValueChange={onAnswerChanged}
-                />
-              </Box>
+              <MdEditor
+                name={`answer-${questionId}-${subProblemId}`}
+                placeholder={'...'}
+                value={answer}
+                onValueChange={onAnswerChanged}
+                editorProps={canSaveAnswer ? { border: '2px solid red' } : undefined}
+              />
             </Box>
             <IconButton
               disabled={!canSaveAnswer}
