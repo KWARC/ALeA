@@ -365,54 +365,106 @@ export function MediaItem({
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
   // Setup presentation video player (right side - only if no slides)
   useEffect(() => {
+    // When there are no slides, always show presentation video regardless of showPresentationVideo toggle
+    // When there are slides, only show if showPresentationVideo is true or no slide at current time
     const shouldShowPresentation =
       !!presentationVideoUrl && (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo);
 
     if (!shouldShowPresentation || audioOnly) {
       if (presentationVideoPlayer.current) {
-        presentationVideoPlayer.current.dispose();
+        try {
+          presentationVideoPlayer.current.dispose();
+        } catch (e) {
+          // Ignore disposal errors
+        }
         presentationVideoPlayer.current = null;
       }
       return;
     }
 
-    if (!presentationPlayerRef.current) return;
+    // Wait for video element to be available (might not be rendered yet after audioOnly toggle)
+    if (!presentationPlayerRef.current) {
+      // Retry after a short delay to allow React to render the element
+      const timeoutId = setTimeout(() => {
+        if (presentationPlayerRef.current && !presentationVideoPlayer.current) {
+          // Element is now available, will be handled in next effect run
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
 
     let player = presentationVideoPlayer.current;
 
-    if (!player) {
-      player = videojs(presentationPlayerRef.current, {
-        controls: false,
-        preload: 'auto',
-        autoplay: false,
-        muted: true,
-        sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
-      });
+    // Check if player is disposed or doesn't exist
+    const isDisposed = player && typeof (player as any).isDisposed === 'function' && (player as any).isDisposed();
+    
+    if (!player || isDisposed) {
+      try {
+        player = videojs(presentationPlayerRef.current, {
+          controls: false,
+          preload: 'auto',
+          autoplay: false,
+          muted: true,
+          sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
+        });
 
-      presentationVideoPlayer.current = player;
-      player.muted(true);
+        presentationVideoPlayer.current = player;
+        player.muted(true);
 
-      player.ready(() => {
-        const master = videoPlayer.current;
-        if (!master) return;
+        // Load the video immediately
+        player.load();
 
-        player.currentTime(master.currentTime());
-        if (!master.paused()) {
-          player.play().catch(() => {
-            // autoplay may fail due to browser policy
-          });
-        }
-      });
+        player.ready(() => {
+          const master = videoPlayer.current;
+          if (!master) {
+            // Master not ready yet, wait a bit
+            setTimeout(() => {
+              const masterRetry = videoPlayer.current;
+              if (masterRetry && player && !player.isDisposed?.()) {
+                player.currentTime(masterRetry.currentTime());
+                if (!masterRetry.paused()) {
+                  player.play().catch(() => {
+                    // autoplay may fail due to browser policy
+                  });
+                }
+              }
+            }, 200);
+            return;
+          }
 
-      return;
+          player.currentTime(master.currentTime());
+          if (!master.paused()) {
+            player.play().catch(() => {
+              // autoplay may fail due to browser policy
+            });
+          }
+        });
+
+        return;
+      } catch (e) {
+        console.error('Error initializing presentation video player:', e);
+        return;
+      }
     }
 
-    if (player.currentSrc() !== presentationVideoUrl) {
-      const t = player.currentTime();
+    // Player exists, check if source needs updating
+    let currentSrc = '';
+    try {
+      currentSrc = player.currentSrc() || '';
+    } catch (e) {
+      // If currentSrc() fails, assume we need to update
+      currentSrc = '';
+    }
+
+    if (currentSrc !== presentationVideoUrl) {
+      const master = videoPlayer.current;
+      const syncTime = master ? master.currentTime() : (player.currentTime() || 0);
+      
       player.src({ src: presentationVideoUrl, type: 'video/mp4' });
+      player.load(); // Force load
 
       player.ready(() => {
-        player.currentTime(t);
+        player.currentTime(syncTime);
         const master = videoPlayer.current;
         if (master && !master.paused()) {
           player.play().catch(() => {
@@ -420,18 +472,56 @@ export function MediaItem({
           });
         }
       });
+    } else if (!hasSlides) {
+      // Same source but no slides - ensure it's loaded and synced (especially after audioOnly toggle)
+      const master = videoPlayer.current;
+      if (master) {
+        // Force reload to ensure video is ready after coming back from audioOnly
+        player.load();
+        
+        // Sync after load
+        const syncAfterLoad = () => {
+          if (player && !player.isDisposed?.() && master) {
+            const masterTime = master.currentTime();
+            player.currentTime(masterTime);
+            if (!master.paused() && player.paused()) {
+              player.play().catch(() => {
+                // autoplay may fail due to browser policy
+              });
+            } else if (master.paused() && !player.paused()) {
+              player.pause();
+            }
+          }
+        };
+
+        if (player.readyState() >= 2) {
+          syncAfterLoad();
+        } else {
+          player.ready(() => {
+            syncAfterLoad();
+          });
+        }
+      } else {
+        player.load();
+      }
     }
   }, [presentationVideoUrl, hasSlides, hasSlideAtCurrentTime, showPresentationVideo, audioOnly]);
 
-  // Synchronize presentation video with master video
   useEffect(() => {
     const masterPlayer = videoPlayer.current;
     const presentationPlayer = presentationVideoPlayer.current;
 
     // Determine if presentation video should be visible and synced
+    // When there are no slides, always sync (presentation video should always work)
+    // When there are slides, only sync if showPresentationVideo is true or no slide at current time
     const shouldSync = !hasSlides || !hasSlideAtCurrentTime || showPresentationVideo;
 
-    if (!masterPlayer || !presentationPlayer || !shouldSync) return;
+    if (!masterPlayer || !presentationPlayer || !shouldSync || audioOnly) return;
+    
+    // Check if player is disposed
+    if (typeof (presentationPlayer as any).isDisposed === 'function' && (presentationPlayer as any).isDisposed()) {
+      return;
+    }
 
     const syncPlayers = () => {
       if (masterPlayer && presentationPlayer) {
@@ -468,7 +558,7 @@ export function MediaItem({
       masterPlayer.off('seeked', syncPlayers);
       masterPlayer.off('timeupdate', syncPlayers);
     };
-  }, [hasSlides, showPresentationVideo, hasSlideAtCurrentTime]);
+  }, [hasSlides, showPresentationVideo, hasSlideAtCurrentTime, audioOnly]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
