@@ -252,6 +252,9 @@ export function MediaItem({
       });
       videoPlayer.current = player;
 
+      // Start loading immediately
+      player.load();
+
       // Wait for player to be ready before applying styles
       player.ready(() => {
         const controlBar = playerRef.current.parentNode?.querySelector(
@@ -271,6 +274,8 @@ export function MediaItem({
     } else {
       const currentTime = player.currentTime();
       player.src({ src: masterVideoUrl, type: 'video/mp4' });
+      // Start loading immediately
+      player.load();
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
