@@ -31,7 +31,17 @@ const nextConfig = {
       ...config.experiments,
       asyncWebAssembly: true,
     };
-    module.exports = nextConfig;
+    
+    // Fix for markdown-it v14 module resolution
+    // markdown-it v14 uses ES modules but Next.js SSR needs CommonJS
+    if (!config.resolve) {
+      config.resolve = {};
+    }
+    if (!config.resolve.alias) {
+      config.resolve.alias = {};
+    }
+    config.resolve.alias['markdown-it'] = require.resolve('markdown-it/dist/index.cjs.js');
+    
     return config;
   },
 };

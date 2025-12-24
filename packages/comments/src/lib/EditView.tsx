@@ -8,7 +8,7 @@ import {
   editComment,
   getUserInfo,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
@@ -116,7 +116,7 @@ export function EditView({
   return (
     <fieldset hidden={hidden} disabled={isLoading} style={{ border: 0, margin: 0, padding: 0 }}>
       <div style={{ marginBottom: '5px' }}>
-        <MystEditor
+        <MdEditor
           name="comment-edit"
           placeholder={placeholder}
           value={inputText}
