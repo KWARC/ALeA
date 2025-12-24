@@ -6,22 +6,29 @@ import {
 } from '../comment-utils';
 import { RecruiterData } from '@alea/spec';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!checkIfGetOrSetError(req, res)) return;
-  const userId = await getUserIdOrSetError(req, res);
-  if (!userId) return;
+export async function getRecruiterProfileByUserIdOrSet500OnError(userId: string, res: NextApiResponse){
   const results: RecruiterData[] = await executeDontEndSet500OnError(
     `SELECT name,userId,email,position,mobile,altMobile,organizationId,socialLinks,about
-    FROM recruiterProfile 
-    WHERE userId = ? 
-    `,
+     FROM recruiterProfile 
+     WHERE userId = ? 
+     `,
     [userId],
     res
   );
   if (!results) return;
-  if (!results.length)return res.status(404).end();
+  if (!results.length){
+     res.status(404).end();
+     return;
+  }
+  return results[0];
+}
 
-  const recruiter = results[0];
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!checkIfGetOrSetError(req, res)) return;
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
+  const recruiter = await getRecruiterProfileByUserIdOrSet500OnError(userId,res);
+  if(!recruiter) return;
   let parsedSocialLinks: Record<string, string> = {};
 
   if (typeof recruiter.socialLinks === 'string') {

@@ -370,42 +370,52 @@ CREATE TABLE jobPost (
 
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY, 
-    jobPostId INT, 
-    applicantId VARCHAR(50), 
+    jobPostId INT NOT NULL, 
+    applicantId VARCHAR(50) NOT NULL, 
     applicationStatus ENUM(
         'APPLIED', 
+        'APPLICATION_WITHDRAWN', 
         'SHORTLISTED_FOR_INTERVIEW', 
         'ON_HOLD', 
         'REJECTED', 
         'OFFERED', 
         'OFFER_REVOKED',
-        'APPLICATION_WITHDRAWN', 
         'OFFER_ACCEPTED', 
         'OFFER_REJECTED'
-    ) NOT NULL, 
-    applicantAction ENUM(
-        'ACCEPT_OFFER', 
-        'REJECT_OFFER', 
-        'WITHDRAW_APPLICATION',
-        'NONE'
-    ) DEFAULT 'NONE',   
-    recruiterAction ENUM(
-        'SHORTLIST_FOR_INTERVIEW', 
-        'ON_HOLD', 
-        'REJECT', 
-        'SEND_OFFER',
-        'REVOKE_OFFER',
-        'NONE'
-    ) DEFAULT 'NONE',
-    studentMessage VARCHAR(255), 
-    recruiterMessage VARCHAR(255), 
+    ) NOT NULL DEFAULT 'APPLIED', 
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_jobPost FOREIGN KEY (jobPostId) REFERENCES jobPost(id) ,
     CONSTRAINT fk_applicant FOREIGN KEY (applicantId) REFERENCES studentProfile(userId) 
 );
---TODO--
--- we will need to maintain all the actions made by applicant and recruiter on an application
+
+CREATE TABLE jobApplicationAction (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    jobApplicationId INT NOT NULL,
+    actionByRole ENUM(
+        'APPLICANT',
+        'RECRUITER',
+        'ADMIN'
+    ) NOT NULL,
+    userId VARCHAR(50) NOT NULL,
+    actionType ENUM(
+        'CREATE_APPLICATION',
+        'WITHDRAW_APPLICATION',
+        'ACCEPT_OFFER',
+        'REJECT_OFFER',
+        'SHORTLIST_FOR_INTERVIEW',
+        'ON_HOLD',
+        'REJECT',
+        'SEND_OFFER',
+        'REVOKE_OFFER'
+    ) NOT NULL,
+    message VARCHAR(255),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_action_application
+        FOREIGN KEY (jobApplicationId)
+        REFERENCES jobApplication(id)
+        ON DELETE CASCADE
+); 
 
 CREATE TABLE orgInvitations (
     id INT AUTO_INCREMENT PRIMARY KEY, 

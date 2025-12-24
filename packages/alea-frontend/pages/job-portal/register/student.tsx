@@ -12,6 +12,7 @@ import {
   createStudentProfile,
   CreateStudentProfileData,
   getStudentProfile,
+  getUserProfile,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -37,6 +38,7 @@ export default function StudentRegistration() {
     about: '',
   });
   const [errors, setErrors] = useState({
+    name: '',
     email: '',
     mobile: '',
     altMobile: '',
@@ -62,6 +64,23 @@ export default function StudentRegistration() {
   }, []);
 
   useEffect(() => {
+    const fetchProfileAndPrefill = async () => {
+      try {
+        const data = await getUserProfile();
+        setFormData((prev) => ({
+          ...prev,
+          name: `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim(),
+          email: data?.email ?? '',
+          progamme:data?.studyProgram??''
+        }));
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+      }
+    };
+    fetchProfileAndPrefill();
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
     if (accessCheckLoading) return;
     const fetchStudentData = async () => {
@@ -73,7 +92,7 @@ export default function StudentRegistration() {
         }
         setIsRegistered(true);
       } catch (error) {
-        console.error('Error fetching recruiter data:', error);
+        console.error('Error fetching student data:', error);
       } finally {
         setLoading(false);
       }
@@ -90,11 +109,12 @@ export default function StudentRegistration() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: '',
-    }));
-
+    if (name in errors) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: '',
+      }));
+    }
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -102,18 +122,21 @@ export default function StudentRegistration() {
   };
 
   const validateFields = () => {
-    const newErrors = { email: '', mobile: '', altMobile: '' };
-
+    const newErrors = { name: '', email: '', mobile: '', altMobile: '' };
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required.';
+    }
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address.';
     }
-
-    if (!formData.mobile || !/^\d{10,15}$/.test(formData.mobile)) {
+    if (formData.mobile && !/^\d{10,15}$/.test(formData.mobile)) {
       newErrors.mobile = 'Please enter a valid contact number (10-15 digits).';
     }
-
+    if (formData.altMobile && !/^\d{10,15}$/.test(formData.altMobile)) {
+      newErrors.altMobile = 'Please enter a valid contact number (10-15 digits).';
+    }
     setErrors(newErrors);
-    return !newErrors.email && !newErrors.mobile;
+    return !newErrors.email && !newErrors.name;
   };
 
   const handleSubmit = async () => {
@@ -175,6 +198,8 @@ export default function StudentRegistration() {
               name="name"
               value={formData.name}
               onChange={handleChange}
+              error={!!errors.name}
+              helperText={errors.name}
             />
             <TextField
               label="Email"

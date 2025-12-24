@@ -20,121 +20,169 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ApplicantWithProfile, updateJobApplication } from '@alea/spec';
 import Link from 'next/link';
 import { useState } from 'react';
 import { getSocialIcon } from './UserProfileCard';
-import { UserProfileModal } from 'packages/alea-frontend/pages/job-portal/recruiter/make-offer';
+import { ApplicationStatus, ApplicationWithProfile, updateJobApplication } from '@alea/spec';
+import { UserProfileModal } from '../../pages/job-portal/recruiter/make-offer';
+import JobApplicationTimelineModal from './ApplicationTimelineModal';
+const RECRUITER_ACTIONS_BY_STATUS = {
+  SHORTLIST_FOR_INTERVIEW: {
+    allowedFrom: ['APPLIED', 'ON_HOLD'] as ApplicationStatus[],
+    tooltip: {
+      default: 'Shortlist for interview',
+      disabled: 'Cannot shortlist at this stage',
+      done: 'Already shortlisted',
+    },
+  },
+
+  ON_HOLD: {
+    allowedFrom: ['APPLIED', 'SHORTLISTED_FOR_INTERVIEW'] as ApplicationStatus[],
+    tooltip: {
+      default: 'Keep on hold',
+      done: 'Already on hold',
+    },
+  },
+
+  REJECT: {
+    allowedFrom: [
+      'APPLIED',
+      'SHORTLISTED_FOR_INTERVIEW',
+      'ON_HOLD',
+      'OFFERED',
+    ] as ApplicationStatus[],
+    tooltip: {
+      default: 'Reject applicant',
+      done: 'Already rejected',
+    },
+  },
+};
 
 const ActionButtons = ({
-  applicant,
-  updateApplicant,
+  application,
+  updateApplication,
 }: {
-  applicant: ApplicantWithProfile;
-  updateApplicant: (updatedApplicant: ApplicantWithProfile) => void;
+  application: ApplicationWithProfile;
+  updateApplication: (updatedApplication: ApplicationWithProfile) => void;
 }) => {
-  async function handleShortlistApplication(applicant: ApplicantWithProfile) {
-    const application = {
-      ...applicant,
-      applicationStatus: 'SHORTLISTED_FOR_INTERVIEW',
-      recruiterAction: 'SHORTLIST_FOR_INTERVIEW',
-      applicantAction: 'NONE',
-    };
-    const res = await updateJobApplication(application);
-    updateApplicant(application);
+  async function handleShortlistApplication(application: ApplicationWithProfile) {
+    try {
+      await updateJobApplication({
+        id: application.id,
+        action: 'SHORTLIST_FOR_INTERVIEW',
+        // message:''//TODO
+      });
+
+      updateApplication({
+        ...application,
+        applicationStatus: 'SHORTLISTED_FOR_INTERVIEW',
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  async function handleRejectApplication(applicant: ApplicantWithProfile) {
-    const application = {
-      ...applicant,
-      applicationStatus: 'REJECTED',
-      recruiterAction: 'REJECT',
-      applicantAction: 'NONE',
-    };
-    const res = await updateJobApplication(application);
-    updateApplicant(application);
+  async function handleRejectApplication(application: ApplicationWithProfile) {
+    try {
+      await updateJobApplication({
+        id: application.id,
+        action: 'REJECT',
+        // message:''//TODO
+      });
+
+      updateApplication({
+        ...application,
+        applicationStatus: 'REJECTED',
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
-  async function handleKeepOnHoldApplication(applicant: ApplicantWithProfile) {
-    const application = {
-      ...applicant,
-      applicationStatus: 'ON_HOLD',
-      recruiterAction: 'ON_HOLD',
-      applicantAction: 'NONE',
-    };
-    const res = await updateJobApplication(application);
-    updateApplicant(application);
+  async function handleKeepOnHoldApplication(application: ApplicationWithProfile) {
+    try {
+      await updateJobApplication({
+        id: application.id,
+        action: 'ON_HOLD',
+        // message:''//TODO
+      });
+
+      updateApplication({
+        ...application,
+        applicationStatus: 'ON_HOLD',
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
+  function canPerformAction(status: ApplicationStatus, allowedFrom: ApplicationStatus[]) {
+    return allowedFrom.includes(status);
+  }
+
+  function getTooltip(
+    status: ApplicationStatus,
+    actionKey: keyof typeof RECRUITER_ACTIONS_BY_STATUS
+  ) {
+    const { allowedFrom, tooltip } = RECRUITER_ACTIONS_BY_STATUS[actionKey];
+
+    if (allowedFrom.includes(status)) return tooltip.default;
+
+    if (actionKey === 'SHORTLIST_FOR_INTERVIEW' && status === 'SHORTLISTED_FOR_INTERVIEW')
+      return tooltip.done;
+
+    if (actionKey === 'ON_HOLD' && status === 'ON_HOLD') return tooltip.done;
+
+    if (actionKey === 'REJECT' && status === 'REJECTED') return tooltip.done;
+
+    return ('disabled' in tooltip && tooltip.disabled) || 'Action not allowed';
+  }
+
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-      <Tooltip
-        title={
-          applicant.recruiterAction === 'SEND_OFFER'
-            ? 'Offer already made'
-            : applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW'
-            ? 'Shortlisted'
-            : 'Shortlist for Interview'
-        }
-      >
+    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+      <Tooltip title={getTooltip(application.applicationStatus, 'SHORTLIST_FOR_INTERVIEW')}>
         <span>
           <IconButton
             color="primary"
-            onClick={() => handleShortlistApplication(applicant)}
             disabled={
-              applicant.applicationStatus === 'SHORTLISTED_FOR_INTERVIEW' ||
-              applicant.recruiterAction === 'SEND_OFFER' ||
-              applicant.applicantAction === 'ACCEPT_OFFER' ||
-              applicant.applicantAction === 'REJECT_OFFER'
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.SHORTLIST_FOR_INTERVIEW.allowedFrom
+              )
             }
+            onClick={() => handleShortlistApplication(application)}
           >
             <PersonAdd />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip
-        title={
-          applicant.applicantAction === 'ACCEPT_OFFER' ||
-          applicant.applicantAction === 'REJECT_OFFER'
-            ? 'Offer already made'
-            : applicant.applicationStatus === 'ON_HOLD'
-            ? 'On Hold'
-            : 'Keep on Hold'
-        }
-      >
+      <Tooltip title={getTooltip(application.applicationStatus, 'ON_HOLD')}>
         <span>
           <IconButton
             color="warning"
-            onClick={() => handleKeepOnHoldApplication(applicant)}
             disabled={
-              applicant.applicationStatus === 'ON_HOLD' ||
-              applicant.applicantAction === 'ACCEPT_OFFER' ||
-              applicant.applicantAction === 'REJECT_OFFER'
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.ON_HOLD.allowedFrom
+              )
             }
+            onClick={() => handleKeepOnHoldApplication(application)}
           >
             <PauseCircle />
           </IconButton>
         </span>
       </Tooltip>
 
-      <Tooltip
-        title={
-          applicant.applicantAction === 'ACCEPT_OFFER' ||
-          applicant.applicantAction === 'REJECT_OFFER'
-            ? 'Offer already made'
-            : applicant.applicationStatus === 'REJECTED'
-            ? 'Rejected'
-            : 'Reject Applicant'
-        }
-      >
+      <Tooltip title={getTooltip(application.applicationStatus, 'REJECT')}>
         <span>
           <IconButton
             color="error"
-            onClick={() => handleRejectApplication(applicant)}
             disabled={
-              applicant.applicationStatus === 'REJECTED' ||
-              applicant.applicantAction === 'ACCEPT_OFFER' ||
-              applicant.applicantAction === 'REJECT_OFFER'
+              !canPerformAction(
+                application.applicationStatus,
+                RECRUITER_ACTIONS_BY_STATUS.REJECT.allowedFrom
+              )
             }
+            onClick={() => handleRejectApplication(application)}
           >
             <Cancel />
           </IconButton>
@@ -145,7 +193,7 @@ const ActionButtons = ({
 };
 
 const SocialLinks = ({ socialLinks }) => {
-  if (!socialLinks)
+  if (!socialLinks  || Object.keys(socialLinks).length === 0)
     return (
       <Typography variant="body2" color="textSecondary">
         No links available
@@ -186,20 +234,19 @@ const SocialLinks = ({ socialLinks }) => {
   );
 };
 
-const ApplicantRow = ({
-  applicant,
+const ApplicationRow = ({
+  application,
   index,
-  updateApplicant,
+  updateApplication,
 }: {
-  applicant: ApplicantWithProfile;
+  application: ApplicationWithProfile;
   index: number;
-  updateApplicant: (updatedApplicant: ApplicantWithProfile) => void;
+  updateApplication: (updatedApplication: ApplicationWithProfile) => void;
 }) => {
-  console.log({ applicant });
   const [selectedProfile, setSelectedProfile] = useState(null);
-
-  const handleViewApplicant = (applicant: ApplicantWithProfile) => {
-    const profile = { ...applicant.studentProfile };
+  const [showTimeline, setShowTimeline] = useState(false);
+  const handleViewApplicant = (application: ApplicationWithProfile) => {
+    const profile = { ...application.studentProfile };
     const socialLinks = profile?.socialLinks || {};
     profile.socialLinks = {
       linkedin: socialLinks.linkedin || 'N/A',
@@ -213,7 +260,9 @@ const ApplicantRow = ({
   const handleCloseProfile = () => {
     setSelectedProfile(null);
   };
-  const handleDownloadResume = (applicant: ApplicantWithProfile) => {
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
+  const handleDownloadResume = (applicant: ApplicationWithProfile) => {
     alert('Download Functionality not active as of now');
   };
   return (
@@ -223,9 +272,9 @@ const ApplicantRow = ({
         <Box sx={{ textAlign: 'left' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body1" fontWeight="bold">
-              {applicant.studentProfile.name}
+              {application.studentProfile.name}
             </Typography>
-            <IconButton color="primary" onClick={() => handleViewApplicant(applicant)}>
+            <IconButton color="primary" onClick={() => handleViewApplicant(application)}>
               <Visibility />
             </IconButton>
           </Box>
@@ -235,25 +284,41 @@ const ApplicantRow = ({
               Status:
             </Typography>
             <Typography variant="body2" fontWeight="bold" color="textSecondary">
-              {applicant.applicationStatus || 'Pending'}
+              {application.applicationStatus || 'Pending'}
             </Typography>
           </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleOpenTimeline}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.75rem',
+            }}
+          >
+            View timeline
+          </Button>
         </Box>
+        <JobApplicationTimelineModal
+          open={showTimeline}
+          applicationId={application.id}
+          onClose={handleCloseTimeline}
+        />
         <UserProfileModal
           open={Boolean(selectedProfile)}
           profile={selectedProfile}
           onClose={handleCloseProfile}
         />
       </TableCell>
-      <TableCell sx={{ textAlign: 'center' }}>{applicant?.jobPostTitle}</TableCell>
+      <TableCell sx={{ textAlign: 'center' }}>{application?.jobTitle}</TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
-        <SocialLinks socialLinks={applicant.studentProfile.socialLinks} />
+        <SocialLinks socialLinks={application.studentProfile.socialLinks} />
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
-        <ActionButtons applicant={applicant} updateApplicant={updateApplicant} />
+        <ActionButtons application={application} updateApplication={updateApplication} />
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
-        {new Date(applicant.createdAt).toLocaleString()}
+        {new Date(application.createdAt).toLocaleString()}
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Box
@@ -265,7 +330,7 @@ const ApplicantRow = ({
           }}
         >
           <Tooltip title="View Resume" arrow>
-            <Link href={applicant?.studentProfile?.resumeUrl || '#'} passHref legacyBehavior>
+            <Link href={application?.studentProfile?.resumeUrl || '#'} passHref legacyBehavior>
               <a target="_blank" rel="noopener noreferrer">
                 <IconButton color="primary">
                   <FileOpen />
@@ -279,7 +344,7 @@ const ApplicantRow = ({
           </Typography>
 
           <Tooltip title="Download Resume" arrow>
-            <IconButton color="secondary" onClick={() => handleDownloadResume(applicant)}>
+            <IconButton color="secondary" onClick={() => handleDownloadResume(application)}>
               <Download />
             </IconButton>
           </Tooltip>
@@ -288,38 +353,40 @@ const ApplicantRow = ({
     </TableRow>
   );
 };
-export const ApplicantTable = ({
+export const ApplicationTable = ({
   loading,
-  filteredApplicants,
-  setFilteredApplicants,
+  filteredApplications,
+  setFilteredApplications,
 }: {
   loading: boolean;
-  filteredApplicants: ApplicantWithProfile[];
-  setFilteredApplicants: React.Dispatch<React.SetStateAction<ApplicantWithProfile[]>>;
+  filteredApplications: ApplicationWithProfile[];
+  setFilteredApplications: React.Dispatch<React.SetStateAction<ApplicationWithProfile[]>>;
 }) => {
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
   const handleSort = (criteria: 'date' | 'name') => {
-    const sortedApplicants = [...filteredApplicants];
+    const sortedApplications = [...filteredApplications];
     if (criteria === 'date') {
-      sortedApplicants.sort(
+      sortedApplications.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     } else if (criteria === 'name') {
-      sortedApplicants.sort((a, b) => a.studentProfile.name.localeCompare(b.studentProfile.name));
+      sortedApplications.sort((a, b) => a.studentProfile.name.localeCompare(b.studentProfile.name));
     }
-    setFilteredApplicants(sortedApplicants);
+    setFilteredApplications(sortedApplications);
     setSortBy(criteria);
   };
-  const updateApplicant = (updatedApplicant: ApplicantWithProfile) => {
-    setFilteredApplicants((prev: ApplicantWithProfile[]) =>
-      prev.map((applicant) => (applicant.id === updatedApplicant.id ? updatedApplicant : applicant))
+  const updateApplication = (updatedApplication: ApplicationWithProfile) => {
+    setFilteredApplications((prev: ApplicationWithProfile[]) =>
+      prev.map((application) =>
+        application.id === updatedApplication.id ? updatedApplication : application
+      )
     );
   };
   return (
     <Box>
       {loading ? (
         <CircularProgress />
-      ) : filteredApplicants.length > 0 ? (
+      ) : filteredApplications.length > 0 ? (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
@@ -376,12 +443,12 @@ export const ApplicantTable = ({
               </TableHead>
 
               <TableBody>
-                {filteredApplicants.map((applicant, index) => (
-                  <ApplicantRow
-                    key={applicant.id}
-                    applicant={applicant}
+                {filteredApplications.map((application, index) => (
+                  <ApplicationRow
+                    key={application.id}
+                    application={application}
                     index={index}
-                    updateApplicant={updateApplicant}
+                    updateApplication={updateApplication}
                   />
                 ))}
               </TableBody>

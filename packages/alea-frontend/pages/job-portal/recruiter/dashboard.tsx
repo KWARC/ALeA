@@ -1,6 +1,16 @@
 import { Group, HourglassEmpty, HowToReg, TaskAlt } from '@mui/icons-material';
-import { Box, CircularProgress, Typography } from '@mui/material';
 import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+} from '@mui/material';
+import {
+  APPLICATION_STATUS,
   canAccessResource,
   getJobApplicationsByJobPost,
   getJobPosts,
@@ -19,7 +29,44 @@ import {
   UserProfileCard,
 } from '../../../components/job-portal/UserProfileCard';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-import { DashboardJobSection, StatsSection } from '../student/dashboard';
+import { DashboardJobSection, OFFER_STATUSES, StatsSection } from '../student/dashboard';
+
+export const ProfileCompletionDialog = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const router = useRouter();
+  const handleGoToProfile = () => {
+    onClose();
+    router.push('/job-portal/recruiter/profile');
+  };
+  const handleStay = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleStay} maxWidth="sm" fullWidth>
+      <DialogTitle>Complete your profile</DialogTitle>
+      <DialogContent>
+        <Typography variant="body1">
+          To get the best experience and start posting jobs smoothly, please complete your recruiter
+          profile.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleStay} color="secondary">
+          Do it later
+        </Button>
+        <Button onClick={handleGoToProfile} variant="contained" color="primary">
+          Go to Profile
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export function RecruiterDashboard() {
   const [loading, setLoading] = useState(true);
@@ -36,8 +83,20 @@ export function RecruiterDashboard() {
     shortlistedCandidates: 0,
     offeredCandidates: 0,
   });
-  const [jobPostsByRecruiter, setJobPostsByRecruiter] = useState<JobPostInfo[]>([]);
+  const [jobPostsByOrg, setJobPostsByOrg] = useState<JobPostInfo[]>([]);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.showProfilePopup === 'true') {
+      setShowProfileDialog(true);
+      router.replace('/job-portal/recruiter/dashboard', undefined, {
+        shallow: true,
+      });
+    }
+  }, [router.isReady, router.query.showProfilePopup]);
+
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
@@ -70,12 +129,9 @@ export function RecruiterDashboard() {
         const organizationDetail = await getOrganizationProfile(recProfile.organizationId);
         setOrganization(organizationDetail);
         const orgJobPosts = await getJobPosts(organizationDetail.id);
-        const recruiterPosts = orgJobPosts.filter(
-          (post) => post.createdByUserId === recProfile.userId
-        );
-        setJobPostsByRecruiter(recruiterPosts);
+        setJobPostsByOrg(orgJobPosts);
         const applicationsByJobPost = await Promise.all(
-          recruiterPosts.map(async (job) => {
+          orgJobPosts.map(async (job) => {
             try {
               const applications = await getJobApplicationsByJobPost(job.id);
               return { jobId: job.id, applications };
@@ -117,14 +173,14 @@ export function RecruiterDashboard() {
       offeredCandidates: 0,
     };
     Object.values(applicationData).forEach((applications) => {
-      applications.forEach(({ recruiterAction }) => {
+      applications.forEach(({ applicationStatus }) => {
         stats.totalApplications += 1;
 
-        if (recruiterAction === 'NONE') {
+        if (applicationStatus === APPLICATION_STATUS.APPLIED) {
           stats.pendingApplications += 1;
-        } else if (recruiterAction === 'SHORTLIST_FOR_INTERVIEW') {
+        } else if (applicationStatus === APPLICATION_STATUS.SHORTLISTED_FOR_INTERVIEW) {
           stats.shortlistedCandidates += 1;
-        } else if (recruiterAction === 'SEND_OFFER') {
+        } else if (OFFER_STATUSES.includes(applicationStatus)) {
           stats.offeredCandidates += 1;
         }
       });
@@ -147,6 +203,7 @@ export function RecruiterDashboard() {
   }
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: '30px 16px', md: '30px' } }}>
+      <ProfileCompletionDialog open={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
       <StatsSection
         stats={stats}
         iconComponents={iconComponents}
@@ -168,7 +225,7 @@ export function RecruiterDashboard() {
         <UserProfileCard type="recruiter" userData={recruiterWithOrg} />
         <DashboardJobSection
           title="Jobs posted by your organization"
-          jobs={jobPostsByRecruiter}
+          jobs={jobPostsByOrg}
           buttonText="Post More Jobs"
           buttonLink="/job-portal/recruiter/create-job"
           hideJobRedirect={true}
