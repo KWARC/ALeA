@@ -106,7 +106,6 @@ export function MediaItem({
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(false);
   const lastHasSlideAtCurrentTime = useRef<boolean | null>(null);
 
-  // Initialise concepts visibility from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const stored = window.localStorage.getItem('alea_show_concepts_overlay');
@@ -115,7 +114,6 @@ export function MediaItem({
     }
   }, []);
 
-  // Persist concepts visibility to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
@@ -125,18 +123,11 @@ export function MediaItem({
     if (typeof hasSlidesForSection === 'boolean') return hasSlidesForSection;
     return false;
   }, [hasSlidesForSection]);
-
-  // Always use presenter video for the left (master) player
   const masterVideoUrl = presenterVideoId || videoId;
-
-  // Compute the current slide's clip range based on the slide's clip info
   const currentSlideClipRange = useMemo(() => {
-    if (!currentSlideUri || !currentSectionId || !slidesClipInfo || !clipId) return null;
-
+    if (!currentSlideUri || !currentSectionId || !slidesClipInfo || !clipId) return null;  
     const slideClips = slidesClipInfo[currentSectionId]?.[currentSlideUri];
     if (!slideClips || !Array.isArray(slideClips) || slideClips.length === 0) return null;
-
-    // Find the clip that matches the current video (clipId)
     const matchingClip = slideClips.find((clip: ClipInfo) => clip.video_id === clipId);
     if (
       !matchingClip ||
@@ -145,7 +136,7 @@ export function MediaItem({
     ) {
       return null;
     }
-
+    
     return {
       start: matchingClip.start_time,
       end: matchingClip.end_time,
@@ -171,7 +162,6 @@ export function MediaItem({
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
   }, [markers]);
 
-  // Always use presenter video for master player (left side)
   useEffect(() => {
     if (presenterVideoId) {
       setCurrentVideoUrl(presenterVideoId);
@@ -230,7 +220,6 @@ export function MediaItem({
     handleMarkerClick(newMarker);
   };
 
-  // Setup master video player (left side - presenter video with controls)
   useEffect(() => {
     if (audioOnly) {
       if (videoPlayer.current) {
@@ -251,11 +240,7 @@ export function MediaItem({
         sources: [{ src: masterVideoUrl, type: 'video/mp4' }],
       });
       videoPlayer.current = player;
-
-      // Start loading immediately
       player.load();
-
-      // Wait for player to be ready before applying styles
       player.ready(() => {
         const controlBar = playerRef.current.parentNode?.querySelector(
           '.vjs-control-bar'
@@ -274,13 +259,10 @@ export function MediaItem({
     } else {
       const currentTime = player.currentTime();
       player.src({ src: masterVideoUrl, type: 'video/mp4' });
-      // Start loading immediately
       player.load();
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
-
-        // Apply control bar styles after ready
         const controlBar = playerRef.current.parentNode?.querySelector(
           '.vjs-control-bar'
         ) as HTMLElement;
@@ -349,14 +331,8 @@ export function MediaItem({
         });
       }
     };
-
-    // Apply styles immediately if control bar exists
-    // Apply styles immediately if control bar exists
     applyControlBarStyles();
-
-    // Also apply after a short delay to catch control bar if it's created later
     const timeoutId = setTimeout(applyControlBarStyles, 100);
-
     return () => {
       clearTimeout(timeoutId);
       if (audioOnly && player) {
@@ -366,19 +342,15 @@ export function MediaItem({
     };
   }, [masterVideoUrl, audioOnly]);
 
-  // Setup presentation video player (right side - only if no slides)
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
-  // Setup presentation video player (right side - only if no slides)
   useEffect(() => {
-    // When there are no slides, always show presentation video regardless of showPresentationVideo toggle
-    // When there are slides, only show if showPresentationVideo is true or no slide at current time
     const shouldShowPresentation =
       !!presentationVideoUrl && (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo);
 
     if (!shouldShowPresentation || audioOnly) {
       if (presentationVideoPlayer.current) {
         try {
-          presentationVideoPlayer.current.dispose();
+        presentationVideoPlayer.current.dispose();
         } catch (e) {
           // Ignore disposal errors
         }
@@ -386,10 +358,7 @@ export function MediaItem({
       }
       return;
     }
-
-    // Wait for video element to be available (might not be rendered yet after audioOnly toggle)
     if (!presentationPlayerRef.current) {
-      // Retry after a short delay to allow React to render the element
       const timeoutId = setTimeout(() => {
         if (presentationPlayerRef.current && !presentationVideoPlayer.current) {
           // Element is now available, will be handled in next effect run
@@ -399,30 +368,25 @@ export function MediaItem({
     }
 
     let player = presentationVideoPlayer.current;
-
-    // Check if player is disposed or doesn't exist
     const isDisposed = player && typeof (player as any).isDisposed === 'function' && (player as any).isDisposed();
     
     if (!player || isDisposed) {
       try {
-        player = videojs(presentationPlayerRef.current, {
-          controls: false,
-          preload: 'auto',
-          autoplay: false,
-          muted: true,
-          sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
-        });
+      player = videojs(presentationPlayerRef.current, {
+        controls: false,
+        preload: 'auto',
+        autoplay: false,
+        muted: true,
+        sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
+      });
 
-        presentationVideoPlayer.current = player;
-        player.muted(true);
-
-        // Load the video immediately
+      presentationVideoPlayer.current = player;
+      player.muted(true);
         player.load();
 
         player.ready(() => {
           const master = videoPlayer.current;
           if (!master) {
-            // Master not ready yet, wait a bit
             setTimeout(() => {
               const masterRetry = videoPlayer.current;
               if (masterRetry && player && !player.isDisposed?.()) {
@@ -452,7 +416,6 @@ export function MediaItem({
       }
     }
 
-    // Player exists, check if source needs updating
     let currentSrc = '';
     try {
       currentSrc = player.currentSrc() || '';
@@ -466,25 +429,20 @@ export function MediaItem({
       const syncTime = master ? master.currentTime() : (player.currentTime() || 0);
       
       player.src({ src: presentationVideoUrl, type: 'video/mp4' });
-      player.load(); // Force load
-
+      player.load();
       player.ready(() => {
         player.currentTime(syncTime);
         const master = videoPlayer.current;
         if (master && !master.paused()) {
           player.play().catch(() => {
             // autoplay may fail due to browser policy
-          });
-        }
+      });
+    }
       });
     } else if (!hasSlides) {
-      // Same source but no slides - ensure it's loaded and synced (especially after audioOnly toggle)
       const master = videoPlayer.current;
       if (master) {
-        // Force reload to ensure video is ready after coming back from audioOnly
         player.load();
-        
-        // Sync after load
         const syncAfterLoad = () => {
           if (player && !player.isDisposed?.() && master) {
             const masterTime = master.currentTime();
@@ -515,19 +473,11 @@ export function MediaItem({
   useEffect(() => {
     const masterPlayer = videoPlayer.current;
     const presentationPlayer = presentationVideoPlayer.current;
-
-    // Determine if presentation video should be visible and synced
-    // When there are no slides, always sync (presentation video should always work)
-    // When there are slides, only sync if showPresentationVideo is true or no slide at current time
     const shouldSync = !hasSlides || !hasSlideAtCurrentTime || showPresentationVideo;
-
     if (!masterPlayer || !presentationPlayer || !shouldSync || audioOnly) return;
-    
-    // Check if player is disposed
     if (typeof (presentationPlayer as any).isDisposed === 'function' && (presentationPlayer as any).isDisposed()) {
       return;
     }
-
     const syncPlayers = () => {
       if (masterPlayer && presentationPlayer) {
         const masterTime = masterPlayer.currentTime();
@@ -723,7 +673,6 @@ export function MediaItem({
           marginBottom: '7px',
         }}
       >
-        {/* Left side: Presenter video with master controls */}
         <Box
           sx={{
             flex: '1 1 50%',
@@ -779,12 +728,6 @@ export function MediaItem({
             </Box>
           )}
         </Box>
-
-        {/* Right side: Presentation video
-            - Always show when the section has no slides at all
-            - Or when at the current time there is no slide mapped
-            - Or when the user explicitly toggled "showPresentationVideo"
-         */}
         {presentationVideoUrl &&
           (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo) && (
             <Box sx={{ flex: '1 1 50%', position: 'relative' }}>
@@ -821,8 +764,6 @@ export function MediaItem({
           </IconButton>
         </Tooltip>
       )}
-
-      {/* Toggle button to show/hide concepts, placed outside the video area */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
         <Tooltip title={showConcepts ? 'Hide concepts' : 'Show concepts'} arrow>
           <IconButton

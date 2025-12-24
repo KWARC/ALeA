@@ -3,15 +3,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  Container,
-  Paper,
-  Stack,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Typography, Container, Paper, Stack } from '@mui/material';
 import {
   canAccessResource,
   ClipInfo,
@@ -25,13 +17,7 @@ import {
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import {
-  Action,
-  CourseInfo,
-  localStore,
-  ResourceName,
-  shouldUseDrawer,
-} from '@alea/utils';
+import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -450,15 +436,15 @@ const CourseViewPage: NextPage = () => {
                   setVideoExtractedData({});
                   setTimestampSec(0);
                 }
-                
+
                 // Find the first slide's clip info for this section to set timestamp and currentSlideClipInfo
                 const sectionSlides = slidesUriToIndexMap?.[sectionId];
                 if (sectionSlides && Object.keys(sectionSlides).length > 0) {
                   // Find the first slide (index 0)
-                  const firstSlideUri = Object.keys(sectionSlides).find(
-                    (slideUri) => sectionSlides[slideUri] === 0
-                  ) || Object.keys(sectionSlides)[0];
-                  
+                  const firstSlideUri =
+                    Object.keys(sectionSlides).find((slideUri) => sectionSlides[slideUri] === 0) ||
+                    Object.keys(sectionSlides)[0];
+
                   if (firstSlideUri && slidesClipInfo?.[sectionId]?.[firstSlideUri]) {
                     const slideClips = slidesClipInfo[sectionId][firstSlideUri];
                     if (Array.isArray(slideClips) && slideClips.length > 0) {
@@ -467,18 +453,18 @@ const CourseViewPage: NextPage = () => {
                         ? slideClips.find((clip) => clip.video_id === newClipId)
                         : null;
                       const clipToUse = matchedClip || slideClips[0];
-                      
+
                       // Set timestamp to the start time of the first slide
                       if (clipToUse.start_time !== undefined) {
                         setTimestampSec(clipToUse.start_time);
                       }
-                      
+
                       // Set current slide clip info
                       setCurrentSlideClipInfo(clipToUse);
                     }
                   }
                 }
-                
+
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
             />

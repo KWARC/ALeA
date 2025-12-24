@@ -1,30 +1,11 @@
 import { InfoOutlined } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  Paper,
-  Typography,
-} from '@mui/material';
-import {
-  ClipDetails,
-  ClipInfo,
-  ClipMetadata,
-  Slide,
-} from '@alea/spec';
+import { Box, Button, CircularProgress, IconButton, Paper, Typography } from '@mui/material';
+import { ClipDetails, ClipInfo, ClipMetadata, Slide } from '@alea/spec';
 import { formatTime, localStore } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 import { MediaItem, Marker } from './MediaItem';
 
 export interface SlidesUriToIndexMap {
@@ -255,41 +236,6 @@ export function VideoDisplay({
           position: 'relative',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            mb: 1,
-          }}
-        >
-          <Box
-            onKeyDown={handleKeyPress}
-            onKeyUp={handleKeyRelease}
-            tabIndex={0}
-            sx={{
-              display: 'inline-block',
-            }}
-          >
-            <Button
-              onDoubleClick={() => setShowOverlay((prev) => !prev)}
-              style={{
-                cursor: 'pointer',
-                opacity: reveal ? 1 : 0,
-                pointerEvents: reveal ? 'auto' : 'none',
-              }}
-            >
-              <InfoOutlined />
-            </Button>
-          </Box>
-          {showOverlay && (
-            <DraggableOverlay
-              showOverlay={showOverlay}
-              setShowOverlay={setShowOverlay}
-              data={{ parentClipId: clipId, currentSlideClipInfo: currentSlideClipInfo }}
-            />
-          )}
-        </Box>
         <MediaItem
           videoId={defaultVideoId}
           presenterVideoId={presenterVideoId}
@@ -319,6 +265,39 @@ export function VideoDisplay({
           hasSlidesForSection={hasSlidesForSection}
           onHasSlideAtCurrentTimeChange={onHasSlideAtCurrentTimeChange}
         />
+        <Box
+          onKeyDown={handleKeyPress}
+          onKeyUp={handleKeyRelease}
+          tabIndex={0}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            mb: reveal || showOverlay ? 0.5 : 0, 
+            height: reveal || showOverlay ? 'auto' : 0, 
+            overflow: 'hidden',
+          }}
+        >
+          {(reveal || showOverlay) && (
+            <Button
+              onDoubleClick={() => setShowOverlay((prev) => !prev)}
+              sx={{
+                minWidth: 0,
+                p: 0.5,
+              }}
+            >
+              <InfoOutlined />
+            </Button>
+          )}
+
+          {showOverlay && (
+            <DraggableOverlay
+              showOverlay={showOverlay}
+              setShowOverlay={setShowOverlay}
+              data={{ parentClipId: clipId, currentSlideClipInfo }}
+            />
+          )}
+        </Box>
       </Box>
     </>
   );
