@@ -128,20 +128,24 @@ export function MediaItem({
 
   // Always use presenter video for the left (master) player
   const masterVideoUrl = presenterVideoId || videoId;
-  
+
   // Compute the current slide's clip range based on the slide's clip info
   const currentSlideClipRange = useMemo(() => {
     if (!currentSlideUri || !currentSectionId || !slidesClipInfo || !clipId) return null;
-    
+
     const slideClips = slidesClipInfo[currentSectionId]?.[currentSlideUri];
     if (!slideClips || !Array.isArray(slideClips) || slideClips.length === 0) return null;
-    
+
     // Find the clip that matches the current video (clipId)
     const matchingClip = slideClips.find((clip: ClipInfo) => clip.video_id === clipId);
-    if (!matchingClip || matchingClip.start_time === undefined || matchingClip.end_time === undefined) {
+    if (
+      !matchingClip ||
+      matchingClip.start_time === undefined ||
+      matchingClip.end_time === undefined
+    ) {
       return null;
     }
-    
+
     return {
       start: matchingClip.start_time,
       end: matchingClip.end_time,
@@ -359,8 +363,12 @@ export function MediaItem({
 
   // Setup presentation video player (right side - only if no slides)
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
+  // Setup presentation video player (right side - only if no slides)
   useEffect(() => {
-    if (audioOnly || !presentationVideoUrl) {
+    const shouldShowPresentation =
+      !!presentationVideoUrl && (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo);
+
+    if (!shouldShowPresentation || audioOnly) {
       if (presentationVideoPlayer.current) {
         presentationVideoPlayer.current.dispose();
         presentationVideoPlayer.current = null;
@@ -369,15 +377,7 @@ export function MediaItem({
     }
 
     if (!presentationPlayerRef.current) return;
-    if (!presentationVideoPlayer.current) {
-      presentationVideoPlayer.current = videojs(presentationPlayerRef.current, {
-        controls: false,
-        preload: 'auto',
-        autoplay: false,
-        muted: true,
-        sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
-      });
-    }
+
     let player = presentationVideoPlayer.current;
 
     if (!player) {
@@ -388,35 +388,50 @@ export function MediaItem({
         muted: true,
         sources: [{ src: presentationVideoUrl, type: 'video/mp4' }],
       });
+
       presentationVideoPlayer.current = player;
-      // Ensure it's muted
       player.muted(true);
-    } else {
-      const currentTime = player.currentTime();
-      player.src({ src: presentationVideoUrl, type: 'video/mp4' });
+
       player.ready(() => {
-        player.currentTime(currentTime);
-        player.muted(true);
-        player.play();
+        const master = videoPlayer.current;
+        if (!master) return;
+
+        player.currentTime(master.currentTime());
+        if (!master.paused()) {
+          player.play().catch(() => {
+            // autoplay may fail due to browser policy
+          });
+        }
       });
+
+      return;
     }
 
-    return () => {
-      if (player) {
-        player.dispose();
-        presentationVideoPlayer.current = null;
-      }
-    };
-  }, [presentationVideoUrl, hasSlides, audioOnly, showPresentationVideo]);
+    if (player.currentSrc() !== presentationVideoUrl) {
+      const t = player.currentTime();
+      player.src({ src: presentationVideoUrl, type: 'video/mp4' });
+
+      player.ready(() => {
+        player.currentTime(t);
+        const master = videoPlayer.current;
+        if (master && !master.paused()) {
+          player.play().catch(() => {
+            // autoplay may fail due to browser policy
+          });
+        }
+      });
+    }
+  }, [presentationVideoUrl, hasSlides, hasSlideAtCurrentTime, showPresentationVideo, audioOnly]);
 
   // Synchronize presentation video with master video
   useEffect(() => {
     const masterPlayer = videoPlayer.current;
     const presentationPlayer = presentationVideoPlayer.current;
 
-    // When slides exist but the user explicitly chose to see the presentation video,
-    // we still want the two players to stay in sync.
-    if (!masterPlayer || !presentationPlayer || (hasSlides && !showPresentationVideo)) return;
+    // Determine if presentation video should be visible and synced
+    const shouldSync = !hasSlides || !hasSlideAtCurrentTime || showPresentationVideo;
+
+    if (!masterPlayer || !presentationPlayer || !shouldSync) return;
 
     const syncPlayers = () => {
       if (masterPlayer && presentationPlayer) {
@@ -430,23 +445,30 @@ export function MediaItem({
         if (masterPaused && !presentationPlayer.paused()) {
           presentationPlayer.pause();
         } else if (!masterPaused && presentationPlayer.paused()) {
-          presentationPlayer.play();
+          presentationPlayer.play().catch((err) => {
+            console.log('Play failed:', err);
+          });
         }
       }
     };
+    syncPlayers();
 
-    masterPlayer.on('play', () => presentationPlayer?.play());
-    masterPlayer.on('pause', () => presentationPlayer?.pause());
+    const handlePlay = () =>
+      presentationPlayer?.play().catch((err) => console.log('Play failed:', err));
+    const handlePause = () => presentationPlayer?.pause();
+
+    masterPlayer.on('play', handlePlay);
+    masterPlayer.on('pause', handlePause);
     masterPlayer.on('seeked', syncPlayers);
     masterPlayer.on('timeupdate', syncPlayers);
 
     return () => {
-      masterPlayer.off('play');
-      masterPlayer.off('pause');
+      masterPlayer.off('play', handlePlay);
+      masterPlayer.off('pause', handlePause);
       masterPlayer.off('seeked', syncPlayers);
       masterPlayer.off('timeupdate', syncPlayers);
     };
-  }, [hasSlides, showPresentationVideo]);
+  }, [hasSlides, showPresentationVideo, hasSlideAtCurrentTime]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
