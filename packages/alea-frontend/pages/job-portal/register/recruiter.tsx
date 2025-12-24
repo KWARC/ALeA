@@ -16,7 +16,7 @@ import {
   getUserProfile,
   registerRecruiter,
 } from '@alea/spec';
-import { isBusinessDomain } from '@alea/utils';
+import { getDomainFromEmail, isBusinessDomain } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';
@@ -119,7 +119,7 @@ export default function RecruiterRegistration() {
       setErrors((prevErrors) => ({ ...prevErrors, position: 'Position is required.' }));
       return false;
     }
-    const domain = email.split('@')[1]?.toLowerCase();
+    const domain = getDomainFromEmail(email).toLowerCase();
     if (!isBusinessDomain(domain)) {
       setErrors((prevErrors) => ({
         ...prevErrors,

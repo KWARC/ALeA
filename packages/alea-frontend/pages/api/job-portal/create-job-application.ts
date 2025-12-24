@@ -23,6 +23,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!results) return;
   if (results.length) return res.status(200).send('Already applied');
 
+  const deadlineCheck = await executeAndEndSet500OnError(
+    `SELECT 1 FROM jobPost WHERE id = ?
+      AND applicationDeadline >= NOW() LIMIT 1`,
+    [jobPostId],
+    res
+  );
+  if (!deadlineCheck) return;
+  if (!deadlineCheck.length) {
+    return res.status(400).send('Application deadline has passed');
+  }
+
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobApplication 
       (jobPostId,applicantId,applicationStatus) 

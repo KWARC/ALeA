@@ -1,5 +1,14 @@
 import { Group, HourglassEmpty, HowToReg, TaskAlt } from '@mui/icons-material';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+} from '@mui/material';
 import {
   APPLICATION_STATUS,
   canAccessResource,
@@ -22,6 +31,43 @@ import {
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 import { DashboardJobSection, OFFER_STATUSES, StatsSection } from '../student/dashboard';
 
+export const ProfileCompletionDialog = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const router = useRouter();
+  const handleGoToProfile = () => {
+    onClose();
+    router.push('/job-portal/recruiter/profile');
+  };
+  const handleStay = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleStay} maxWidth="sm" fullWidth>
+      <DialogTitle>Complete your profile</DialogTitle>
+      <DialogContent>
+        <Typography variant="body1">
+          To get the best experience and start posting jobs smoothly, please complete your recruiter
+          profile.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleStay} color="secondary">
+          Do it later
+        </Button>
+        <Button onClick={handleGoToProfile} variant="contained" color="primary">
+          Go to Profile
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export function RecruiterDashboard() {
   const [loading, setLoading] = useState(true);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
@@ -38,7 +84,19 @@ export function RecruiterDashboard() {
     offeredCandidates: 0,
   });
   const [jobPostsByOrg, setJobPostsByOrg] = useState<JobPostInfo[]>([]);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.showProfilePopup === 'true') {
+      setShowProfileDialog(true);
+      router.replace('/job-portal/recruiter/dashboard', undefined, {
+        shallow: true,
+      });
+    }
+  }, [router.isReady, router.query.showProfilePopup]);
+
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
@@ -145,6 +203,7 @@ export function RecruiterDashboard() {
   }
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: '30px 16px', md: '30px' } }}>
+      <ProfileCompletionDialog open={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
       <StatsSection
         stats={stats}
         iconComponents={iconComponents}
