@@ -12,13 +12,13 @@ import { ViewMode } from '../../pages/course-view/[courseId]';
 interface CourseViewToolbarIconsProps {
   audioOnly: boolean;
   resolution: number;
-  showPresentationVideo: boolean;
+  // showPresentationVideo: boolean;
   courseId: string;
   courses: { [id: string]: CourseInfo } | undefined;
   viewMode: ViewMode;
   onAudioOnlyToggle: () => void;
   onResolutionChange: (resolution: number) => void;
-  onPresentationVideoToggle: () => void;
+  // onPresentationVideoToggle: () => void;
 }
 
 const availableResolutions = [360, 720, 1080];
@@ -26,13 +26,13 @@ const availableResolutions = [360, 720, 1080];
 export default function CourseViewToolbarIcons({
   audioOnly,
   resolution,
-  showPresentationVideo,
+  // showPresentationVideo,
   courseId,
   courses,
   viewMode,
   onAudioOnlyToggle,
   onResolutionChange,
-  onPresentationVideoToggle,
+  // onPresentationVideoToggle,
 }: CourseViewToolbarIconsProps) {
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const isVideoHidden = viewMode === ViewMode.SLIDE_MODE;
@@ -114,7 +114,7 @@ export default function CourseViewToolbarIcons({
               </MenuItem>
             ))}
           </Menu>
-          <Tooltip
+          {/* <Tooltip
             title={showPresentationVideo ? 'Show slides' : 'Show presentation video'}
             placement="bottom"
           >
@@ -135,7 +135,7 @@ export default function CourseViewToolbarIcons({
             >
               <SlideshowIcon fontSize={isMobile ? 'small' : 'medium'} />
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </>
       )}
 

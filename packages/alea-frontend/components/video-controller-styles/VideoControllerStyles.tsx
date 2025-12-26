@@ -42,7 +42,7 @@ export const getVideoContainerWrapperStyles = (
   return {
     display: 'flex',
     flexDirection: { xs: 'column', md: 'row' },
-    gap: { xs: 1.5, md: 2 },
+    gap: { xs: 1, md: 1 },
     position: 'relative',
     ...(shouldMakeControlBarFullWidth && getFullWidthControlBarStyles()),
   };

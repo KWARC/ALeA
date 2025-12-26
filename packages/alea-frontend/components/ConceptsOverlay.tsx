@@ -3,6 +3,7 @@ import { Box, CircularProgress, IconButton, Paper, Tooltip, Typography } from '@
 import CloseIcon from '@mui/icons-material/Close';
 import Image from 'next/image';
 import Link from 'next/link';
+import { SafeHtml } from '@alea/react-utils';
 
 interface ConceptsOverlayProps {
   showConcepts: boolean;
@@ -41,7 +42,7 @@ export function ConceptsOverlay({
           variant="subtitle1"
           sx={{ fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}
         >
-          Concepts in {sectionTitle}
+          Concepts in <SafeHtml html={sectionTitle || '<i>this section</i>'} />
         </Typography>
         <IconButton
           size="small"
@@ -136,3 +137,4 @@ export function ConceptsOverlay({
     </Paper>
   );
 }
+

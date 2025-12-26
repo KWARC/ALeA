@@ -15,7 +15,6 @@ import {
   SectionInfo,
   Slide,
 } from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
@@ -31,6 +30,7 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
 import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
+import { PresentationToggleButton } from '../../components/PresentationToggleButton';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -472,7 +472,7 @@ const CourseViewPage: NextPage = () => {
             maxWidth="xl"
             sx={{
               py: { xs: 2, sm: 3, md: 4 },
-              px: { xs: 2, sm: 3 },
+              px: { xs: 0.5, sm: 1 },
             }}
           >
             <Paper
@@ -512,7 +512,7 @@ const CourseViewPage: NextPage = () => {
                   <CourseViewToolbarIcons
                     audioOnly={audioOnly}
                     resolution={resolution}
-                    showPresentationVideo={showPresentationVideo}
+                    // showPresentationVideo={showPresentationVideo}
                     courseId={courseId}
                     courses={courses}
                     viewMode={viewMode}
@@ -523,7 +523,7 @@ const CourseViewPage: NextPage = () => {
                       router.replace(router);
                     }}
                     onResolutionChange={(res) => setResolution(res)}
-                    onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
+                    // onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
                   />
                 </Stack>
 
@@ -594,6 +594,7 @@ const CourseViewPage: NextPage = () => {
                       courseId={courseId}
                       slidesClipInfo={slidesClipInfo}
                       showPresentationVideo={showPresentationVideo}
+                      onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
                       slideNum={slideNum}
                       sectionTitle={selectedSectionTOC?.title || ''}
                       hasSlidesForSection={hasSlidesForSection}
@@ -649,6 +650,7 @@ const CourseViewPage: NextPage = () => {
                 return showSideBySideSlides ? (
                   <Box
                     sx={{
+                      position: 'relative',
                       flex:
                         showPresentationVideo || hasPresentationOrComposite
                           ? '0'
@@ -700,6 +702,9 @@ const CourseViewPage: NextPage = () => {
                         onClipChange={onClipChange}
                         audioOnly={audioOnly}
                         videoLoaded={videoLoaded}
+                        showPresentationVideo={showPresentationVideo}
+                        hasSlideAtCurrentTime={hasSlideAtCurrentTime} 
+                        onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)} 
                       />
                     </Paper>
                   </Box>

@@ -115,14 +115,15 @@ export function VideoDisplay({
   slidesClipInfo,
   slideNum,
   onSlideChange,
-  goToNextSection,
+  goToNextSection, 
   goToPrevSection,
   onClipChange,
   videoLoaded,
   showPresentationVideo,
   hasSlidesForSection,
   onHasSlideAtCurrentTimeChange,
-  sectionTitle
+  sectionTitle,
+  onPresentationVideoToggle,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -156,6 +157,7 @@ export function VideoDisplay({
   onClipChange?: (clip: ClipInfo) => void;
   videoLoaded?: boolean;
   sectionTitle?: string;
+  onPresentationVideoToggle?: () => void;
 }) {
   const [resolution] = useState(+(localStore?.getItem('defaultResolution') || '720'));
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
@@ -248,6 +250,7 @@ export function VideoDisplay({
           sectionTitle={sectionTitle}
           timestampSec={timestampSec}
           showPresentationVideo={showPresentationVideo}
+          onPresentationVideoToggle={onPresentationVideoToggle}
           audioOnly={audioOnly}
           subtitles={clipDetails?.subtitles}
           thumbnail={clipDetails?.thumbnailUrl}

@@ -1,4 +1,5 @@
 import { formatTime } from '@alea/utils';
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import { IconButton, Tooltip } from '@mui/material';
 
 interface SlideClipRange {
@@ -47,8 +48,9 @@ export function AwayFromSlideWarning({
           },
         }}
       >
-        ⚠️
+        <FastForwardIcon/>
       </IconButton>
     </Tooltip>
   );
 }
+

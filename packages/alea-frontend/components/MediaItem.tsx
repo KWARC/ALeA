@@ -23,6 +23,8 @@ import {
 } from '../utils/slideTimeCalculations';
 import { ConceptsOverlay } from './ConceptsOverlay';
 import { AwayFromSlideWarning } from './AwayFromSlideWarning';
+import { SafeHtml } from '@alea/react-utils';
+import { PresentationToggleButton } from './PresentationToggleButton';
 
 export interface Marker {
   time: number;
@@ -67,6 +69,7 @@ export function MediaItem({
   hasSlidesForSection,
   onHasSlideAtCurrentTimeChange,
   sectionTitle,
+  onPresentationVideoToggle,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -100,6 +103,7 @@ export function MediaItem({
   hasSlidesForSection?: boolean;
   onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
   sectionTitle?: string;
+  onPresentationVideoToggle?: () => void;
 }) {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const presentationPlayerRef = useRef<HTMLVideoElement | null>(null);
@@ -351,6 +355,19 @@ export function MediaItem({
               {tooltip}
             </Box>
           )}
+          <AwayFromSlideWarning
+            isAwayFromSlide={isAwayFromSlide}
+            currentSlideClipRange={currentSlideClipRange}
+            selectedSectionFirstSlideTime={selectedSectionFirstSlideTime}
+            onJumpToSlide={() => {
+              const targetTime = currentSlideClipRange
+                ? currentSlideClipRange.start
+                : selectedSectionFirstSlideTime;
+              if (targetTime !== null && targetTime !== undefined) {
+                videoPlayer.current?.currentTime(targetTime);
+              }
+            }}
+          />
         </Box>
         {presentationVideoUrl &&
           (!hasSlides || !hasSlideAtCurrentTime || showPresentationVideo) && (
@@ -361,22 +378,14 @@ export function MediaItem({
                 style={videoStyles}
                 muted
               />
+              <PresentationToggleButton
+                showPresentationVideo={showPresentationVideo}
+                hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+                onToggle={onPresentationVideoToggle}
+              />
             </Box>
           )}
       </Box>
-      <AwayFromSlideWarning
-        isAwayFromSlide={isAwayFromSlide}
-        currentSlideClipRange={currentSlideClipRange}
-        selectedSectionFirstSlideTime={selectedSectionFirstSlideTime}
-        onJumpToSlide={() => {
-          const targetTime = currentSlideClipRange
-            ? currentSlideClipRange.start
-            : selectedSectionFirstSlideTime;
-          if (targetTime !== null && targetTime !== undefined) {
-            videoPlayer.current?.currentTime(targetTime);
-          }
-        }}
-      />
       <Box
         sx={{
           display: 'flex',
@@ -402,7 +411,7 @@ export function MediaItem({
                   maxWidth: '70%',
                 }}
               >
-                {sectionTitle}
+                <SafeHtml html={sectionTitle} />
               </Typography>
             )}
             <Tooltip title="Show concepts" arrow>

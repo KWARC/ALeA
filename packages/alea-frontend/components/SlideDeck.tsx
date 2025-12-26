@@ -18,8 +18,8 @@ import { ExpandableContextMenu } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
-
 import styles from '../styles/slide-deck.module.scss';
+import { PresentationToggleButton } from './PresentationToggleButton';
 
 export function SlidePopover({
   slides,
@@ -318,6 +318,9 @@ export const SlideDeck = memo(function SlidesFromUrl({
   onClipChange,
   audioOnly,
   videoLoaded,
+  showPresentationVideo, // ADD THIS
+  hasSlideAtCurrentTime, // ADD THIS
+  onPresentationVideoToggle, // ADD THIS
 }: {
   courseId: string;
   sectionId: string;
@@ -335,6 +338,9 @@ export const SlideDeck = memo(function SlidesFromUrl({
   onClipChange?: (clip: any) => void;
   audioOnly?: boolean;
   videoLoaded?: boolean;
+  showPresentationVideo?: boolean;
+  hasSlideAtCurrentTime?: boolean;
+  onPresentationVideoToggle?: () => void;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [css, setCss] = useState<FTML.Css[]>([]);
@@ -441,6 +447,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
       mt={navOnTop ? '0px' : '0px'}
+      sx={{ position: 'relative' }}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
@@ -475,7 +482,14 @@ export const SlideDeck = memo(function SlidesFromUrl({
         sx={{ mt: navOnTop ? 1 : 0 }}
       >
         <Box flex={1} />
-        <Box display="flex" justifyContent="flex-end" flex={1}>
+        <Box display="flex" justifyContent="flex-end" alignItems="center" flex={1} gap={0.5}>
+          {onPresentationVideoToggle && (
+            <PresentationToggleButton
+              showPresentationVideo={showPresentationVideo}
+              hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+              onToggle={onPresentationVideoToggle}
+            />
+          )}
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />
           )}
