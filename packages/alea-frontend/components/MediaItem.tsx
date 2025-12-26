@@ -1,6 +1,6 @@
 import { languageUrlMap } from '@alea/utils';
 import { ClipInfo, getDefiniedaInSectionAgg, Slide } from '@alea/spec';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useRouter } from 'next/router';
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
@@ -66,6 +66,7 @@ export function MediaItem({
   showPresentationVideo,
   hasSlidesForSection,
   onHasSlideAtCurrentTimeChange,
+  sectionTitle,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -98,6 +99,7 @@ export function MediaItem({
   videoLoaded?: boolean;
   hasSlidesForSection?: boolean;
   onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
+  sectionTitle?: string;
 }) {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const presentationPlayerRef = useRef<HTMLVideoElement | null>(null);
@@ -378,28 +380,47 @@ export function MediaItem({
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           mt: shouldMakeControlBarFullWidth ? 0 : 6,
+          px: 1,
           position: 'relative',
           zIndex: 1001,
         }}
       >
-        <Tooltip title={showConcepts ? 'Hide concepts' : 'Show concepts'} arrow>
-          <IconButton
-            size="small"
-            onClick={() => setShowConcepts((prev) => !prev)}
-            sx={{
-              bgcolor: showConcepts ? '#1d4ed8' : '#e5e7eb',
-              color: showConcepts ? '#ffffff' : '#111827',
-              border: '1px solid rgba(148, 163, 184, 0.7)',
-              '&:hover': {
-                bgcolor: showConcepts ? '#1e40af' : '#d1d5db',
-              },
-            }}
-          >
-            <MenuBookIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        {!showConcepts && (
+          <>
+            {sectionTitle && (
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  color: '#111827',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '70%',
+                }}
+              >
+                {sectionTitle}
+              </Typography>
+            )}
+            <Tooltip title="Show concepts" arrow>
+              <IconButton
+                size="small"
+                onClick={() => setShowConcepts(true)}
+                sx={{
+                  bgcolor: '#e5e7eb',
+                  color: '#111827',
+                  border: '1px solid rgba(148, 163, 184, 0.7)',
+                  '&:hover': { bgcolor: '#d1d5db' },
+                }}
+              >
+                <MenuBookIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        )}
       </Box>
 
       <ConceptsOverlay
@@ -408,6 +429,7 @@ export function MediaItem({
         conceptsUri={conceptsUri}
         overlay={overlay}
         onClose={() => setShowConcepts(false)}
+        sectionTitle={sectionTitle}
       />
     </Box>
   );

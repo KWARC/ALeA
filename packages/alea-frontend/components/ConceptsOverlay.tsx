@@ -10,6 +10,7 @@ interface ConceptsOverlayProps {
   conceptsUri: string[];
   overlay: { title: string; description: string } | null;
   onClose: () => void;
+  sectionTitle?: string;
 }
 
 export function ConceptsOverlay({
@@ -18,6 +19,7 @@ export function ConceptsOverlay({
   conceptsUri,
   overlay,
   onClose,
+  sectionTitle
 }: ConceptsOverlayProps) {
   if (!showConcepts || !overlay) return null;
 
@@ -39,7 +41,7 @@ export function ConceptsOverlay({
           variant="subtitle1"
           sx={{ fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}
         >
-          Concepts in this section
+          Concepts in {sectionTitle}
         </Typography>
         <IconButton
           size="small"

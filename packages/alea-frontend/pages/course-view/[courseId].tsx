@@ -549,30 +549,6 @@ const CourseViewPage: NextPage = () => {
                 </Link>
               </Stack>
             </Paper>
-            {selectedSectionTOC && (
-              <Paper
-                elevation={1}
-                sx={{
-                  p: { xs: 2, sm: 2.5 },
-                  mb: { xs: 2, sm: 3 },
-                  borderRadius: 2,
-                  bgcolor: 'white',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                }}
-              >
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#1a1a1a',
-                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                    lineHeight: 1.3,
-                  }}
-                >
-                  <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
-                </Typography>
-              </Paper>
-            )}
             <Stack
               direction={{
                 xs: 'column',
@@ -619,6 +595,7 @@ const CourseViewPage: NextPage = () => {
                       slidesClipInfo={slidesClipInfo}
                       showPresentationVideo={showPresentationVideo}
                       slideNum={slideNum}
+                      sectionTitle={selectedSectionTOC?.title || ''}
                       hasSlidesForSection={hasSlidesForSection}
                       onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
                       onSlideChange={(slide: Slide) => {
