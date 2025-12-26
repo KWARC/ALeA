@@ -43,7 +43,10 @@ export interface ClipDetails {
   r720?: string;
   r1080?: string;
   subtitles?: Record<string, string>;
-  thumbnailUrl?:string;
+  thumbnailUrl?: string;
+  presenterUrl?: string;
+  presentationUrl?: string;
+  compositeUrl?: string;
 }
 export interface ClipInfo {
   video_id: string;
