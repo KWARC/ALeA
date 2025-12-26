@@ -79,17 +79,24 @@ export const getFullWidthControlBarStyles = (): SxProps<Theme> => ({
   },
   '@media (max-width: 959px)': {
     '& > div:first-of-type': {
-      position: 'static !important' as any,
       overflow: 'visible',
+    },
+    '& > div:first-of-type .video-js': {
+      overflow: 'visible !important' as any,
+      position: 'relative !important' as any,
     },
     '& > div:first-of-type .vjs-control-bar': {
       position: 'absolute !important' as any,
-      top: 'auto !important' as any,
-      bottom: '0 !important' as any,
+      top: 'calc(200% + 12px) !important' as any,
+      bottom: 'auto !important' as any,
       left: '0 !important' as any,
       right: '0 !important' as any,
       width: '100% !important' as any,
       marginTop: '0 !important' as any,
+      zIndex: 10,
+      pointerEvents: 'auto !important' as any,
+      visibility: 'visible !important' as any,
+      opacity: '1 !important' as any,
     },
   },
 });
