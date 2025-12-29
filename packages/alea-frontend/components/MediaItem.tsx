@@ -54,16 +54,10 @@ export function MediaItem({
   compositeVideoId,
   presentationVideoId,
   onVideoTypeChange,
-  videoMode,
   currentSectionId,
   currentSlideUri,
   courseId,
   slidesClipInfo,
-  slideNum,
-  onSlideChange,
-  goToNextSection,
-  goToPrevSection,
-  onClipChange,
   videoLoaded,
   showPresentationVideo,
   hasSlidesForSection,
@@ -85,7 +79,6 @@ export function MediaItem({
   showPresentationVideo?: boolean;
   presentationVideoId?: string;
   onVideoTypeChange?: (isPlayingCompositeOrPresentation: boolean) => void;
-  videoMode?: 'presenter' | 'presentation' | null;
   currentSectionId?: string;
   currentSlideUri?: string;
   courseId?: string;
@@ -94,11 +87,6 @@ export function MediaItem({
       [slideUri: string]: ClipInfo[];
     };
   };
-  slideNum?: number;
-  onSlideChange?: (slide: Slide) => void;
-  goToNextSection?: () => void;
-  goToPrevSection?: () => void;
-  onClipChange?: (clip: ClipInfo) => void;
   videoLoaded?: boolean;
   hasSlidesForSection?: boolean;
   onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;

@@ -319,8 +319,8 @@ export const SlideDeck = memo(function SlidesFromUrl({
   audioOnly,
   videoLoaded,
   showPresentationVideo,
-  hasSlideAtCurrentTime, 
-  onPresentationVideoToggle, 
+  hasSlideAtCurrentTime,
+  onPresentationVideoToggle,
 }: {
   courseId: string;
   sectionId: string;
@@ -486,7 +486,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />
           )}
-          {onPresentationVideoToggle && (
+          {!showPresentationVideo && onPresentationVideoToggle && (
             <PresentationToggleButton
               showPresentationVideo={showPresentationVideo}
               hasSlideAtCurrentTime={hasSlideAtCurrentTime}

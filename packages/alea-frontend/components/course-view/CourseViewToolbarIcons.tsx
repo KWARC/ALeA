@@ -2,7 +2,6 @@ import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import SlideshowIcon from '@mui/icons-material/Slideshow';
 import CheckIcon from '@mui/icons-material/Check';
 import { IconButton, Menu, MenuItem, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { CourseInfo, getCoursePdfUrl, localStore } from '@alea/utils';
@@ -12,13 +11,11 @@ import { ViewMode } from '../../pages/course-view/[courseId]';
 interface CourseViewToolbarIconsProps {
   audioOnly: boolean;
   resolution: number;
-  // showPresentationVideo: boolean;
   courseId: string;
   courses: { [id: string]: CourseInfo } | undefined;
   viewMode: ViewMode;
   onAudioOnlyToggle: () => void;
   onResolutionChange: (resolution: number) => void;
-  // onPresentationVideoToggle: () => void;
 }
 
 const availableResolutions = [360, 720, 1080];
@@ -26,13 +23,11 @@ const availableResolutions = [360, 720, 1080];
 export default function CourseViewToolbarIcons({
   audioOnly,
   resolution,
-  // showPresentationVideo,
   courseId,
   courses,
   viewMode,
   onAudioOnlyToggle,
   onResolutionChange,
-  // onPresentationVideoToggle,
 }: CourseViewToolbarIconsProps) {
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const isVideoHidden = viewMode === ViewMode.SLIDE_MODE;

@@ -113,11 +113,6 @@ export function VideoDisplay({
   currentSlideUri,
   courseId,
   slidesClipInfo,
-  slideNum,
-  onSlideChange,
-  goToNextSection, 
-  goToPrevSection,
-  onClipChange,
   videoLoaded,
   showPresentationVideo,
   hasSlidesForSection,
@@ -150,11 +145,6 @@ export function VideoDisplay({
       [slideUri: string]: ClipInfo[];
     };
   };
-  slideNum?: number;
-  onSlideChange?: (slide: Slide) => void;
-  goToNextSection?: () => void;
-  goToPrevSection?: () => void;
-  onClipChange?: (clip: ClipInfo) => void;
   videoLoaded?: boolean;
   sectionTitle?: string;
   onPresentationVideoToggle?: () => void;
@@ -257,16 +247,10 @@ export function VideoDisplay({
           markers={markers}
           slidesUriToIndexMap={slidesUriToIndexMap}
           onVideoTypeChange={onVideoTypeChange}
-          videoMode={videoMode}
           currentSectionId={currentSectionId}
           currentSlideUri={currentSlideUri}
           courseId={courseId}
           slidesClipInfo={slidesClipInfo}
-          slideNum={slideNum}
-          onSlideChange={onSlideChange}
-          goToNextSection={goToNextSection}
-          goToPrevSection={goToPrevSection}
-          onClipChange={onClipChange}
           videoLoaded={videoLoaded}
           hasSlidesForSection={hasSlidesForSection}
           onHasSlideAtCurrentTimeChange={onHasSlideAtCurrentTimeChange}

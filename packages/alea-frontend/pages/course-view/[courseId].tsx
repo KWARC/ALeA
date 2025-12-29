@@ -30,7 +30,6 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
 import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
-import { PresentationToggleButton } from '../../components/PresentationToggleButton';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -512,7 +511,6 @@ const CourseViewPage: NextPage = () => {
                   <CourseViewToolbarIcons
                     audioOnly={audioOnly}
                     resolution={resolution}
-                    // showPresentationVideo={showPresentationVideo}
                     courseId={courseId}
                     courses={courses}
                     viewMode={viewMode}
@@ -523,7 +521,6 @@ const CourseViewPage: NextPage = () => {
                       router.replace(router);
                     }}
                     onResolutionChange={(res) => setResolution(res)}
-                    // onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
                   />
                 </Stack>
 
@@ -595,35 +592,9 @@ const CourseViewPage: NextPage = () => {
                       slidesClipInfo={slidesClipInfo}
                       showPresentationVideo={showPresentationVideo}
                       onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
-                      slideNum={slideNum}
                       sectionTitle={selectedSectionTOC?.title || ''}
                       hasSlidesForSection={hasSlidesForSection}
                       onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
-                      onSlideChange={(slide: Slide) => {
-                        setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                        setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                        const slideUri = getSlideUri(slide);
-                        setCurrentSlideUri(slideUri || '');
-                        if (
-                          slidesClipInfo &&
-                          slidesClipInfo[sectionId] &&
-                          slidesClipInfo[sectionId][slideUri]
-                        ) {
-                          const slideClips = slidesClipInfo[sectionId][slideUri];
-                          if (!Array.isArray(slideClips)) {
-                            return;
-                          }
-                          const matchedClip = slideClips.find(
-                            (clip) => clip.video_id === currentClipId
-                          );
-                          setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                        } else {
-                          setCurrentSlideClipInfo(null);
-                        }
-                      }}
-                      goToNextSection={goToNextSection}
-                      goToPrevSection={goToPrevSection}
-                      onClipChange={onClipChange}
                       videoLoaded={videoLoaded}
                     />
                   </Paper>
