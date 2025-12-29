@@ -5,7 +5,7 @@ interface Props {
   showPresentationVideo: boolean;
   hasSlideAtCurrentTime: boolean;
   onToggle: () => void;
-  inline?: boolean; // If true, renders inline (for SlideDeck), otherwise absolute positioned (for MediaItem)
+  inline?: boolean;
 }
 
 export function PresentationToggleButton({
