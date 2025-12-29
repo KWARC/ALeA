@@ -20,7 +20,7 @@ export function ConceptsOverlay({
   conceptsUri,
   overlay,
   onClose,
-  sectionTitle
+  sectionTitle,
 }: ConceptsOverlayProps) {
   if (!showConcepts || !overlay) return null;
 
@@ -137,4 +137,3 @@ export function ConceptsOverlay({
     </Paper>
   );
 }
-

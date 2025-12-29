@@ -60,7 +60,7 @@ export function PresentationToggleButton({
       <SlideshowIcon fontSize="medium" />
     </IconButton>
   );
-  
+
   if (inline) {
     return (
       <Tooltip title={tooltipTitle} arrow placement="top">

@@ -109,28 +109,6 @@ export default function CourseViewToolbarIcons({
               </MenuItem>
             ))}
           </Menu>
-          {/* <Tooltip
-            title={showPresentationVideo ? 'Show slides' : 'Show presentation video'}
-            placement="bottom"
-          >
-            <IconButton
-              onClick={onPresentationVideoToggle}
-              size={isMobile ? 'small' : 'medium'}
-              sx={{
-                border: { xs: '1.5px solid', sm: '2px solid' },
-                borderColor: showPresentationVideo ? '#1976d2' : '#9e9e9e',
-                borderRadius: { xs: 1.5, sm: 2 },
-                bgcolor: showPresentationVideo ? '#e3f2fd' : 'white',
-                color: showPresentationVideo ? '#1976d2' : '#616161',
-                padding: { xs: '6px', sm: '8px' },
-                '&:hover': {
-                  bgcolor: showPresentationVideo ? '#bbdefb' : '#f5f5f5',
-                },
-              }}
-            >
-              <SlideshowIcon fontSize={isMobile ? 'small' : 'medium'} />
-            </IconButton>
-          </Tooltip> */}
         </>
       )}
 

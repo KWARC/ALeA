@@ -674,8 +674,8 @@ const CourseViewPage: NextPage = () => {
                         audioOnly={audioOnly}
                         videoLoaded={videoLoaded}
                         showPresentationVideo={showPresentationVideo}
-                        hasSlideAtCurrentTime={hasSlideAtCurrentTime} 
-                        onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)} 
+                        hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+                        onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
                       />
                     </Paper>
                   </Box>

@@ -48,9 +48,8 @@ export function AwayFromSlideWarning({
           },
         }}
       >
-        <FastForwardIcon/>
+        <FastForwardIcon />
       </IconButton>
     </Tooltip>
   );
 }
-
