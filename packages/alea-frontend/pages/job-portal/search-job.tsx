@@ -26,7 +26,7 @@ import {
   canAccessResource,
   createJobApplication,
   getAllJobPosts,
-  getJobApplicationsByUserIdAndJobPostId,
+  getJobApplicationsByUserId,
   getOrganizationProfile,
   getUserInfo,
   OrganizationData,
@@ -342,17 +342,18 @@ export function SearchJob() {
     const fetchJobPosts = async () => {
       setLoading(true);
       try {
-        const data = await getAllJobPosts();
+        const [jobs, applications] = await Promise.all([
+          getAllJobPosts(),
+          getJobApplicationsByUserId(),
+        ]);
+        const appliedJobIds = new Set(applications.map((app) => app.jobPostId));
         const enrichedJobPosts = await Promise.all(
-          data.map(async (job) => {
-            let alreadyApplied = false;
-            const organizationDetail = await getOrganizationProfile(job.organizationId);
-            const application = await getJobApplicationsByUserIdAndJobPostId(job.id);
-            alreadyApplied = application.length > 0;
+          jobs.map(async (job) => {
+            const organization = await getOrganizationProfile(job.organizationId);
             return {
               ...job,
-              organization: organizationDetail,
-              alreadyApplied,
+              organization,
+              alreadyApplied: appliedJobIds.has(job.id),
             };
           })
         );
@@ -423,13 +424,7 @@ export function SearchJob() {
     try {
       const userInfo = await getUserInfo();
       if (!userInfo) return;
-      const applicantId = userInfo.userId;
-      const JobApplicationInfo = {
-        jobPostId,
-        applicantId,
-        applicationStatus: 'applied',
-      };
-      await createJobApplication(JobApplicationInfo);
+      await createJobApplication(jobPostId);
       setJobPosts((prevJobs) =>
         prevJobs.map((job) => (job.id === jobPostId ? { ...job, alreadyApplied: true } : job))
       );

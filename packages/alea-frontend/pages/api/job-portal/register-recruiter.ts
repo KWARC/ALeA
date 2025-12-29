@@ -1,20 +1,156 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
-import { CURRENT_TERM } from '@alea/utils';
+import { checkIfPostOrSetError, executeAndEndSet500OnError, executeDontEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
-import { checkInviteToOrgOrSet500OnError } from './check-org-invitations';
-import { getOrganizationByDomainOrSet500OnError } from './get-org-by-domain';
-import { createOrganizationProfileOrSet500OnError } from './create-organization-profile';
-import { createRecruiterProfileOrSet500OnError } from './create-recruiter-profile';
 import { createAclOrSetError } from '../access-control/create-acl';
-import { addRemoveMemberOrSetError } from '../access-control/add-remove-member';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
-import { RecruiterData } from '@alea/spec';
-import { deleteRecruiterProfileOrSetError } from './delete-recruiter-profile';
-import { deleteOrganizationProfileOrSetError } from './delete-organization-profile';
+import { OrganizationData, RecruiterData } from '@alea/spec';
+import { getDomainFromEmail, isFauId } from '@alea/utils';
+import { getRecruiterProfileByUserIdOrSet500OnError } from './get-recruiter-profile';
 
 export function getOrgAcl(orgId: number) {
   return `org${orgId}-recruiters`;
+}
+
+export async function checkInviteToOrgOrSet500OnError(
+  organizationId: string,
+  email: string,
+  res: NextApiResponse
+) {
+  if (!organizationId || !email) {
+    res.status(422).send('Missing organizationId or email.');
+    return;
+  }
+
+  const result: any = await executeDontEndSet500OnError(
+    `SELECT COUNT(*) AS count FROM orgInvitations WHERE organizationId = ? AND inviteeEmail = ?`,
+    [organizationId, email],
+    res
+  );
+  if (!result) return;
+  const count = result[0]?.count ?? 0;
+  return { hasInvites: count > 0 };
+}
+
+export async function getOrganizationByDomainOrSet500OnError(domain: string, res: NextApiResponse) {
+  const results: any = await executeDontEndSet500OnError(
+    `SELECT id, companyName, domain FROM organizationProfile WHERE domain = ? LIMIT 1`,
+    [domain],
+    res
+  );
+  if (!results) return;
+  return results;
+}
+
+export async function createRecruiterProfileOrSet500OnError(
+  {
+    name,
+    userId,
+    email,
+    position,
+    organizationId,
+  }: { name: string; userId: string; email: string; position: string; organizationId: number },
+  res: NextApiResponse
+) {
+  if (!userId || isFauId(userId)) {
+    res.status(403).send('Invalid or unauthorized user');
+    return;
+  }
+  if (!name || !email || !position || !organizationId)
+    return res.status(422).send('Missing required fields');
+  const result = await executeAndEndSet500OnError(
+    `INSERT INTO recruiterProfile 
+      (name, userId, email, position, organizationId) 
+     VALUES (?, ?, ?, ?, ?)`,
+    [name, userId, email, position, organizationId],
+    res
+  );
+  return result;
+}
+
+//risky , donot use unless necessary.
+async function deleteRecruiterProfileOrSetError(userId: string, res: NextApiResponse) {
+  if (!userId) return res.status(422).send('Recruiter userId is missing');
+  const recruiter = await getRecruiterProfileByUserIdOrSet500OnError(userId, res);
+  if (!recruiter) return;
+  const result = await executeAndEndSet500OnError(
+    'DELETE FROM recruiterProfile WHERE userId = ?',
+    [userId],
+    res
+  );
+  if (!result) return;
+  return true;
+}
+
+async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextApiResponse) {
+  const results: OrganizationData[] = await executeDontEndSet500OnError(
+    `SELECT id,companyName,incorporationYear,isStartup, about, companyType,officeAddress,officePostalCode,website,domain
+      FROM organizationProfile 
+      WHERE id = ? 
+      `,
+    [id],
+    res
+  );
+  if (!results) return;
+  if (!results.length) return res.status(404).end();
+  return results[0];
+}
+
+export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {
+  if (!id) return res.status(422).send('Organization id is missing');
+  const orgProfile = await getOrganizationProfileByIdOrSet500OnError(id, res);
+  if (!orgProfile) return;
+  const result = await executeAndEndSet500OnError(
+    'DELETE FROM organizationProfile WHERE id = ?',
+    [id],
+    res
+  );
+  if (!result) return;
+  return true;
+}
+
+async function createOrganizationProfileOrSet500OnError(
+  {
+    companyName,
+    domain,
+    incorporationYear = null,
+    isStartup = null,
+    website = null,
+    about = null,
+    companyType = null,
+    officeAddress = null,
+    officePostalCode = null,
+  }: {
+    companyName: string;
+    domain: string;
+    incorporationYear?: string | null;
+    isStartup?: boolean | null;
+    website?: string | null;
+    about?: string | null;
+    companyType?: string | null;
+    officeAddress?: string | null;
+    officePostalCode?: string | null;
+  },
+  res: NextApiResponse
+) {
+  if (!companyName || !domain) return res.status(422).send('Missing required params');
+  const result = await executeAndEndSet500OnError(
+    `INSERT INTO organizationProfile 
+      (companyName, incorporationYear, isStartup, website, domain, about, companyType, officeAddress, officePostalCode) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      companyName,
+      incorporationYear,
+      isStartup,
+      website,
+      domain,
+      about,
+      companyType,
+      officeAddress,
+      officePostalCode,
+    ],
+    res
+  );
+  return result;
 }
 export async function createNewOrganizationAndRecruiterOrSetError(
   companyName: string,
@@ -100,10 +236,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   const { name, email, position, companyName } = req.body;
 
-  if (!email || !name || !position || !userId) {
+  if (!email || !name || !position || !companyName) {
     return res.status(422).send('Missing required fields');
   }
-  const domain = email.split('@')[1];
+  const domain = getDomainFromEmail(email);
   const existingOrg = await getOrganizationByDomainOrSet500OnError(domain, res);
   if (existingOrg.length > 0) {
     const orgId = existingOrg[0].id;

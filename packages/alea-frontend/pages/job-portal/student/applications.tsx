@@ -4,6 +4,7 @@ import {
   CheckCircle,
   ExpandLess,
   ExpandMore,
+  History,
   MailOutline,
   Pause,
   PendingActions,
@@ -21,24 +22,28 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import {
+  ApplicationWithJobAndOrgTitle,
   canAccessResource,
   getJobApplicationsByUserId,
   getJobPostById,
   getOrganizationProfile,
   updateJobApplication,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 const Applications = () => {
   const [companySortOrder, setCompanySortOrder] = useState('asc');
-  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [applications, setApplications] = useState<ApplicationWithJobAndOrgTitle[]>([]);
   const [filter, setFilter] = useState('ALL');
+  const [showTimeline, setShowTimeline] = useState(false);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -63,26 +68,25 @@ const Applications = () => {
     const fetchAppliedJobs = async () => {
       setLoading(true);
       try {
-        const appliedJobsList = await getJobApplicationsByUserId();
+        const applications = await getJobApplicationsByUserId();
         const jobPosts = await Promise.all(
-          appliedJobsList.map((job) => getJobPostById(job?.jobPostId))
+          applications.map((job) => getJobPostById(job?.jobPostId))
         );
         const organizationIds = [...new Set(jobPosts.map((post) => post.organizationId))];
         const organizations = await Promise.all(
           organizationIds.map((id) => getOrganizationProfile(id))
         );
-        const enrichedJobs = appliedJobsList.map((job, index) => {
-          const jobPost = jobPosts.find((post) => post.id === job.jobPostId);
+        const enrichedApplications = applications.map((application) => {
+          const jobPost = jobPosts.find((post) => post.id === application.jobPostId);
           const organization = organizations.find((org) => org.id === jobPost?.organizationId);
           return {
-            ...job,
+            ...application,
             jobTitle: jobPost?.jobTitle,
             companyName: organization?.companyName || 'Unknown Organization',
-            index: index + 1,
           };
         });
 
-        setAppliedJobs(enrichedJobs);
+        setApplications(enrichedApplications);
       } catch (error) {
         console.error('Error fetching applied jobs:', error);
       } finally {
@@ -94,7 +98,7 @@ const Applications = () => {
   }, [accessCheckLoading]);
 
   const handleCompanySort = () => {
-    const sortedJobs = [...appliedJobs].sort((a, b) => {
+    const sortedApplications = [...applications].sort((a, b) => {
       if (companySortOrder === 'asc') {
         return a.companyName.localeCompare(b.companyName);
       } else {
@@ -102,56 +106,61 @@ const Applications = () => {
       }
     });
     setCompanySortOrder(companySortOrder === 'asc' ? 'desc' : 'asc');
-    setAppliedJobs(sortedJobs);
+    setApplications(sortedApplications);
   };
 
-  const handleAcceptOffer = async (job) => {
-    await updateJobApplication({
-      ...job,
-      applicantAction: 'ACCEPT_OFFER',
-      applicationStatus: 'OFFER_ACCEPTED',
-    });
-    setAppliedJobs((prevJobs) =>
-      prevJobs.map((j) =>
-        j.id === job.id
-          ? { ...j, applicantAction: 'ACCEPT_OFFER', applicationStatus: 'OFFER_ACCEPTED' }
-          : j
-      )
-    );
+  const handleAcceptOffer = async (application: ApplicationWithJobAndOrgTitle) => {
+    try {
+      await updateJobApplication({
+        id: application.id,
+        action: 'ACCEPT_OFFER',
+        // message:''//TODO
+      });
+      setApplications((prevApplications) =>
+        prevApplications.map((prev) =>
+          prev.id === application.id ? { ...prev, applicationStatus: 'OFFER_ACCEPTED' } : prev
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleRejectOffer = async (job) => {
-    await updateJobApplication({
-      ...job,
-      applicantAction: 'REJECT_OFFER',
-      applicationStatus: 'OFFER_REJECTED',
-    });
-    setAppliedJobs((prevJobs) =>
-      prevJobs.map((j) =>
-        j.id === job.id
-          ? { ...j, applicantAction: 'REJECT_OFFER', applicationStatus: 'OFFER_REJECTED' }
-          : j
-      )
-    );
+  const handleRejectOffer = async (application: ApplicationWithJobAndOrgTitle) => {
+    try {
+      await updateJobApplication({
+        id: application.id,
+        action: 'REJECT_OFFER',
+        // message:''//TODO
+      });
+      setApplications((prevApplications) =>
+        prevApplications.map((prev) =>
+          prev.id === application.id ? { ...prev, applicationStatus: 'OFFER_REJECTED' } : prev
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  const filteredJobs = appliedJobs.filter((job) => {
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
+  const filteredApplications = applications.filter((application) => {
     switch (filter) {
       case 'ALL':
         return true;
       case 'PENDING':
-        return job.applicationStatus?.toUpperCase() === 'APPLIED';
+        return application.applicationStatus?.toUpperCase() === 'APPLIED';
       case 'ON HOLD':
-        return job.applicationStatus?.toUpperCase() === 'ON_HOLD';
+        return application.applicationStatus?.toUpperCase() === 'ON_HOLD';
       case 'SHORTLISTED FOR INTERVIEW':
-        return job.applicationStatus?.toUpperCase() === 'SHORTLISTED_FOR_INTERVIEW';
+        return application.applicationStatus?.toUpperCase() === 'SHORTLISTED_FOR_INTERVIEW';
       case 'REJECTED':
-        return job.applicationStatus?.toUpperCase() === 'REJECTED';
+        return application.applicationStatus?.toUpperCase() === 'REJECTED';
       case 'OFFERED':
         return (
-          job.applicationStatus?.toUpperCase() === 'OFFERED' ||
-          job.applicationStatus?.toUpperCase() === 'OFFER_ACCEPTED' ||
-          job.applicationStatus?.toUpperCase() === 'OFFER_REJECTED'
+          application.applicationStatus?.toUpperCase() === 'OFFERED' ||
+          application.applicationStatus?.toUpperCase() === 'OFFER_ACCEPTED' ||
+          application.applicationStatus?.toUpperCase() === 'OFFER_REJECTED'
         );
 
       default:
@@ -227,12 +236,24 @@ const Applications = () => {
               </Box>
             ) : (
               <TableBody>
-                {filteredJobs.length > 0 ? (
-                  filteredJobs.map((jobApplication) => (
+                {filteredApplications.length > 0 ? (
+                  filteredApplications.map((jobApplication,idx) => (
                     <TableRow key={jobApplication.id} hover>
-                      <TableCell align="center">{jobApplication.index}</TableCell>
+                      <TableCell align="center">{idx + 1}</TableCell>
                       <TableCell align="center">
-                        {new Date(jobApplication.createdAt).toLocaleDateString()}
+                        <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
+                          {new Date(jobApplication.createdAt).toLocaleDateString()}
+                          <Tooltip title="View Application Timeline" arrow>
+                            <IconButton color="info" size="small" onClick={handleOpenTimeline}>
+                              <History fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        <JobApplicationTimelineModal
+                          open={showTimeline}
+                          applicationId={jobApplication.id}
+                          onClose={handleCloseTimeline}
+                        />
                       </TableCell>
                       <TableCell align="center">{jobApplication.companyName}</TableCell>
                       <TableCell align="center">{jobApplication.jobTitle}</TableCell>
@@ -254,7 +275,8 @@ const Applications = () => {
                             icon={<Cancel />}
                             variant="filled"
                           />
-                        ) :( jobApplication.applicationStatus === 'REJECTED'||jobApplication.applicationStatus === 'OFFER_REVOKED') ? (
+                        ) : jobApplication.applicationStatus === 'REJECTED' ||
+                          jobApplication.applicationStatus === 'OFFER_REVOKED' ? (
                           <Chip
                             label="Application Rejected"
                             color="error"
@@ -284,12 +306,11 @@ const Applications = () => {
                               size="small"
                               onClick={() => handleAcceptOffer(jobApplication)}
                               disabled={
-                                (jobApplication.applicationStatus !== 'OFFERED' &&
-                                  jobApplication.applicationStatus !== 'OFFER_REJECTED') ||
-                                jobApplication.applicantAction === 'ACCEPT_OFFER'
+                                jobApplication.applicationStatus !== 'OFFERED' &&
+                                jobApplication.applicationStatus !== 'OFFER_REJECTED'
                               }
                             >
-                              {jobApplication.applicantAction === 'ACCEPT_OFFER'
+                              {jobApplication.applicationStatus === 'OFFER_ACCEPTED'
                                 ? 'Offer Accepted'
                                 : 'Accept Offer'}
                             </Button>
@@ -302,12 +323,11 @@ const Applications = () => {
                               size="small"
                               onClick={() => handleRejectOffer(jobApplication)}
                               disabled={
-                                (jobApplication.applicationStatus !== 'OFFERED' &&
-                                  jobApplication.applicationStatus !== 'OFFER_ACCEPTED') ||
-                                jobApplication.applicantAction === 'REJECT_OFFER'
+                                jobApplication.applicationStatus !== 'OFFERED' &&
+                                jobApplication.applicationStatus !== 'OFFER_ACCEPTED'
                               }
                             >
-                              {jobApplication.applicantAction === 'REJECT_OFFER'
+                              {jobApplication.applicationStatus === 'OFFER_REJECTED'
                                 ? 'Offer Rejected'
                                 : 'Reject Offer'}
                             </Button>

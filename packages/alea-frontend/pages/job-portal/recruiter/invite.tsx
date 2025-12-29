@@ -54,7 +54,7 @@ const InviteRecruiterPage = () => {
     checkAccess();
   }, []);
   const handleInvite = async () => {
-    if (!email) return;
+    if (!email||!recruiter.organizationId) return;
     try {
       setLoading(true);
       const isSuccess = await inviteRecruiterToOrg(email, recruiter.organizationId);
