@@ -95,7 +95,7 @@ export async function getJobCategories(instanceId: string) {
 
 export type CreateJobPostRequest = Omit<JobPostInfo, 'id'>;
 export async function createJobPost(data: CreateJobPostRequest) {
-  await axios.post('/api/job-portal/create-job-post', data, {});
+  await axios.post('/api/job-portal/create-job-post', data);
 }
 
 export async function getJobPosts(organizationId: number) {
@@ -113,12 +113,12 @@ export async function getJobPostById(jobPostId: number) {
 }
 
 export async function getAllJobPosts() {
-  const resp = await axios.get('/api/job-portal/get-all-job-posts', {});
+  const resp = await axios.get('/api/job-portal/get-all-job-posts');
   return resp.data as JobPostInfo[];
 }
 
 export async function updateJobPost(data: JobPostInfo) {
-  await axios.post('/api/job-portal/update-job-post', data, {});
+  await axios.post('/api/job-portal/update-job-post', data);
 }
 
 export async function deleteJobPost(id: number) {
@@ -126,18 +126,18 @@ export async function deleteJobPost(id: number) {
 }
 
 export async function createJobApplication(jobPostId: number) {
-  await axios.post('/api/job-portal/create-job-application', { jobPostId }, {});
+  await axios.post('/api/job-portal/create-job-application', { jobPostId });
 }
 
 export async function getJobApplicationsByJobPost(jobPostId: number) {
   const resp = await axios.get('/api/job-portal/get-job-applications-by-jobpost', {
     params: { jobPostId },
   });
-  return resp.data as JobApplicationInfo[];
+  return resp.data as JobApplicationTimelineEntry[];
 }
 
 export async function getJobApplicationsByUserId() {
-  const resp = await axios.get('/api/job-portal/get-job-applications-by-userid', {});
+  const resp = await axios.get('/api/job-portal/get-job-applications-by-userid');
   return resp.data as JobApplicationInfo[];
 }
 
@@ -149,7 +149,7 @@ export async function getJobApplicationTimeline(applicationId: number) {
 }
 
 export async function updateJobApplication(data: UpdateJobApplicationRequest) {
-  await axios.post('/api/job-portal/update-job-application', data, {});
+  await axios.post('/api/job-portal/update-job-application', data);
 }
 export async function getStudentProfileUsingUserId(userId: string) {
   const resp = await axios.get('/api/job-portal/get-student-profile-using-userid', {
