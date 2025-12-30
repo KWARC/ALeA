@@ -1,6 +1,4 @@
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
-
 export interface EndpointStatus {
   last_success_time?: number;
   last_failure_time?: number;
@@ -22,25 +20,19 @@ export interface SystemAlert {
 }
 
 export async function getMonitorStatus(): Promise<MonitorResponse> {
-  const res = await axios.get('/api/sys-admin/monitor-message', {
-    headers: getAuthHeaders(),
-  });
+  const res = await axios.get('/api/sys-admin/monitor-message');
 
   return res.data as MonitorResponse;
 }
 
 export async function getSystemAlert(): Promise<SystemAlert> {
-  const res = await axios.get('/api/system-alert/get-system-alert', {
-    headers: getAuthHeaders(),
-  });
+  const res = await axios.get('/api/system-alert/get-system-alert');
 
   return res.data as SystemAlert;
 }
 
 export async function updateSystemAlert(data: SystemAlert) {
-  const res = await axios.post('/api/system-alert/update-system-alert', data, {
-    headers: getAuthHeaders(),
-  });
+  const res = await axios.post('/api/system-alert/update-system-alert', data);
 
   return res.data;
 }

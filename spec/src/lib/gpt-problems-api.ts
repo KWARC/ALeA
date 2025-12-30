@@ -8,54 +8,39 @@ import {
   PossibleVariantsResult,
   Template,
 } from './gpt-problems';
-import { getAuthHeaders } from './lmp';
 
 export async function createGptQuestions(request: CreateGptProblemsRequest) {
-  const resp = await axios.post(`/api/gpt-redirect?apiname=create-problems`, request, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.post(`/api/gpt-redirect?apiname=create-problems`, request);
   return resp.data as CreateGptProblemsResponse;
 }
 
 export async function getTemplates() {
-  const resp = await axios.get(`/api/gpt-redirect?apiname=get-templates`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/gpt-redirect?apiname=get-templates`);
   return resp.data as Template[];
 }
 
 export async function getTemplateVersions(templateName: string) {
-  const resp = await axios.get(`/api/gpt-redirect?apiname=get-template-versions/${templateName}`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/gpt-redirect?apiname=get-template-versions/${templateName}`);
   return resp.data as Template[];
 }
 
 export async function saveTemplate(template: Template) {
-  const resp = await axios.post(`/api/gpt-redirect?apiname=save-template`, template, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.post(`/api/gpt-redirect?apiname=save-template`, template);
   return resp.data as Template;
 }
 
 export async function getGptRuns() {
-  const resp = await axios.get(`/api/gpt-redirect?apiname=get-runs`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/gpt-redirect?apiname=get-runs`);
   return resp.data as GptRun[];
 }
 
 export async function saveEval(evaluation: CompletionEval) {
-  const resp = await axios.post(`/api/gpt-redirect?apiname=save-eval`, evaluation, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.post(`/api/gpt-redirect?apiname=save-eval`, evaluation);
   return resp.data as GptRun;
 }
 
 export async function getEval(runId: string, completionIdx: number) {
-  const resp = await axios.get(`/api/gpt-redirect?apiname=get-eval/${runId}/${completionIdx}`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/gpt-redirect?apiname=get-eval/${runId}/${completionIdx}`);
   return resp.data as CompletionEval;
 }
 
@@ -75,7 +60,6 @@ export async function searchCourseNotes(query: string, courseId: string) {
       apiname: 'query_metadata',
       projectName: 'search',
     },
-    headers: getAuthHeaders(),
   });
   return resp.data as { sources: GptSearchResult[] };
 }
@@ -124,7 +108,6 @@ export async function fetchGeneratedProblems(
       startSectionUri,
       endSectionUri,
     },
-    headers: getAuthHeaders(),
   });
   return resp.data as QuizProblem[];
 }
@@ -143,7 +126,6 @@ export async function getLatestProblemDraft(draftParams: ByProblemId | ByProblem
       projectName: 'quiz-gen',
       ...draftParams,
     },
-    headers: getAuthHeaders(),
   });
 
   return resp.data as QuizProblem;
@@ -158,7 +140,6 @@ export async function generateQuizProblems(generationParams: GenerationParams) {
         apiname: 'generate',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
   return resp.data as QuizProblem[];
@@ -173,7 +154,6 @@ export async function saveProblemDraft(problemId: number, stex: string) {
         apiname: 'save-problem-draft',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
 }
@@ -187,7 +167,6 @@ export async function finalizeProblem(problemId: number) {
         apiname: 'finalize-problem',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
 }
@@ -201,7 +180,6 @@ export async function checkPossibleVariants(problemId: number) {
         apiname: 'check-possible-variants',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
   return resp.data as PossibleVariantsResult;
@@ -218,7 +196,6 @@ export async function postFeedback(data: {
       apiname: 'post-feedback',
       projectName: 'quiz-gen',
     },
-    headers: getAuthHeaders(),
   });
   return resp.data;
 }
@@ -229,7 +206,6 @@ export async function getFeedback(problemId: number) {
       projectName: 'quiz-gen',
       problemId,
     },
-    headers: getAuthHeaders(),
   });
   return resp.data;
 }
@@ -241,7 +217,6 @@ export async function getCourseGeneratedProblemsCountBySection(courseId: string)
       apiname: 'generated-problems-count-by-section',
       projectName: 'quiz-gen',
     },
-    headers: getAuthHeaders(),
   });
   return resp.data as Record<string, number>;
 }
@@ -253,7 +228,6 @@ export async function getProblemVersionHistory(problemId: number) {
       apiname: 'get-problem-version-history',
       projectName: 'quiz-gen',
     },
-    headers: getAuthHeaders(),
   });
   return resp.data as QuizProblem[];
 }
@@ -265,19 +239,20 @@ export async function getFinalizedVariants(params: ByProblemId | ByProblemUri) {
       apiname: 'get-finalized-variants',
       projectName: 'quiz-gen',
     },
-    headers: getAuthHeaders(),
   });
   return resp.data as QuizProblem[];
 }
 
 export async function getProblemsByGoal(goal: string) {
-  const resp = await axios.post(`/api/gpt-redirect`, { goal }, 
+  const resp = await axios.post(
+    `/api/gpt-redirect`,
+    { goal },
     {
-    params: {
-      apiname: 'get-problems-by-goal',
-      projectName: 'quiz-gen',
-    },
-    headers: getAuthHeaders(),
-  });
+      params: {
+        apiname: 'get-problems-by-goal',
+        projectName: 'quiz-gen',
+      },
+    }
+  );
   return resp.data;
 }

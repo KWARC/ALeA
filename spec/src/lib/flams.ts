@@ -7,7 +7,6 @@ import {
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
 import { createSafeFlamsQuery } from './flams-query-creator';
-import { getAuthHeaders } from './lmp';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -104,8 +103,7 @@ export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
   try {
     return axios.post(
       '/api/set-use-rdf-encode-uri',
-      { useRdfEncodeUri },
-      { headers: getAuthHeaders() }
+      { useRdfEncodeUri }
     );
   } catch (error) {
     console.error('Error setting use RDF encode URI:', error);
