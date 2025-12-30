@@ -115,10 +115,21 @@ export async function getUriWeights(concepts: string[]): Promise<NumericCognitiv
   });
   return concepts.map((concept) => compMap.get(concept) || cleanupNumericCognitiveValues({}));
 }
+export async function getUriSmileyInternal(data: LmpOutputMultipleResponse, concepts: string[]) {
+  const compMap = new Map<string, SmileyCognitiveValues>();
+  if (!data?.model) return compMap;
+  data.model.forEach((c) => {
+    compMap.set(c.concept, cleanupSmileyCognitiveValues(c.competences as SmileyCognitiveValues));
+  });
+
+  concepts.map((concept) => {
+    if (!compMap.has(concept)) compMap.set(concept, cleanupSmileyCognitiveValues({}));
+  });
+  return compMap;
+}
 
 export async function getUriSmileys(
-  concepts: string[],
-  inputHeaders?: any
+  concepts: string[]
 ): Promise<Map<string, SmileyCognitiveValues>> {
   if (!concepts?.length) return new Map();
   const data: LmpOutputMultipleResponse = await lmpRequest(
@@ -130,19 +141,9 @@ export async function getUriSmileys(
       concepts,
       'special-output': '5StepLikertSmileys',
       'include-confidence': false,
-    },
-    inputHeaders
+    }
   );
-  const compMap = new Map<string, SmileyCognitiveValues>();
-  if (!data?.model) return compMap;
-  data.model.forEach((c) => {
-    compMap.set(c.concept, cleanupSmileyCognitiveValues(c.competences as SmileyCognitiveValues));
-  });
-
-  concepts.map((concept) => {
-    if (!compMap.has(concept)) compMap.set(concept, cleanupSmileyCognitiveValues({}));
-  });
-  return compMap;
+  return getUriSmileyInternal(data, concepts);
 }
 
 export async function getAllMyData(): Promise<{
@@ -182,7 +183,7 @@ export async function reportEvent(event: LMPEvent) {
   return await lmpRequest('lmp', 'lmp/input/events', 'POST', {}, event);
 }
 
-const SERVER_TO_ADDRESS = {
+export const SERVER_TO_ADDRESS = {
   lmp: process.env['NEXT_PUBLIC_LMP_URL'],
   auth: process.env['NEXT_PUBLIC_AUTH_SERVER_URL'],
 };
@@ -341,24 +342,20 @@ export async function lmpRequest(
   apiUrl: string,
   requestType: string,
   defaultVal: any,
-  data?: any,
-  inputHeaders?: any
+  data?: any
 ) {
-  // const headers = inputHeaders ? inputHeaders : getAuthHeaders();
-  const headers = inputHeaders;
-  if (!headers) {
-    return Promise.resolve(defaultVal);
-  }
   try {
-    const serverAddress = SERVER_TO_ADDRESS[server];
-    const fullUrl = `${serverAddress}/${apiUrl}`;
-    const resp =
-      requestType === 'POST'
-        ? await axios.post(fullUrl, data, { headers })
-        : await axios.get(fullUrl, { headers });
+    const resp = await axios.post(`/api/lmp-redirect`, {
+      server,
+      apiUrl,
+      requestType,
+      defaultVal,
+      data,
+    });
     return resp.data;
   } catch (err) {
     const error = err as Error | AxiosError;
+    console.error('LMP Request Unauthorized:', error);
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         logoutAndGetToLoginPage();
