@@ -1,7 +1,11 @@
 import axios, { AxiosError } from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError } from './comment-utils';
-import { SERVER_TO_ADDRESS } from '@alea/spec';
+
+const SERVER_TO_ADDRESS = {
+  lmp: process.env['NEXT_PUBLIC_LMP_URL'],
+  auth: process.env['NEXT_PUBLIC_AUTH_SERVER_URL'],
+};
 
 export async function lmpRedirect(
   server: 'lmp' | 'auth',

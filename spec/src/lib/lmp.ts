@@ -183,11 +183,6 @@ export async function reportEvent(event: LMPEvent) {
   return await lmpRequest('lmp', 'lmp/input/events', 'POST', {}, event);
 }
 
-export const SERVER_TO_ADDRESS = {
-  lmp: process.env['NEXT_PUBLIC_LMP_URL'],
-  auth: process.env['NEXT_PUBLIC_AUTH_SERVER_URL'],
-};
-
 export type SmileyType = 'smiley-2' | 'smiley-1' | 'smiley0' | 'smiley1' | 'smiley2';
 
 export type SmileyLevel = -2 | -1 | 0 | 1 | 2;
@@ -302,7 +297,7 @@ export function loginUsingRedirect(returnBackUrl?: string) {
     return;
   }
 
-  const redirectUrl = `${SERVER_TO_ADDRESS.auth}/login?target=${encodeURIComponent(returnBackUrl)}`;
+  const redirectUrl = `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/login?target=${encodeURIComponent(returnBackUrl)}`;
 
   window.location.replace(redirectUrl);
 }
@@ -331,7 +326,7 @@ export function fakeLoginUsingRedirect(
   const n = name || fakeId;
 
   const redirectUrl =
-    `${SERVER_TO_ADDRESS.auth}/fake-login?fake-id=${fakeId}&target=${target}` +
+    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${fakeId}&target=${target}` +
     (name ? `&name=${n}` : '');
 
   window.location.replace(redirectUrl);
