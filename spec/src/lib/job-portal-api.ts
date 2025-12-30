@@ -133,7 +133,7 @@ export async function getJobApplicationsByJobPost(jobPostId: number) {
   const resp = await axios.get('/api/job-portal/get-job-applications-by-jobpost', {
     params: { jobPostId },
   });
-  return resp.data as JobApplicationTimelineEntry[];
+  return resp.data as JobApplicationInfo[];
 }
 
 export async function getJobApplicationsByUserId() {
