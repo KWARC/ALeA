@@ -1,4 +1,3 @@
-import { deleteCookie, getCookie, setCookie } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { LoType } from './flams';
 
@@ -263,10 +262,6 @@ export interface UserInfo {
   fullName: string;
 }
 
-export function getAccessToken() {
-  return getCookie('access_token');
-}
-
 const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
   blank: [],
   abc: ['http://mathhub.info/smglom/sets/mod?set'],
@@ -279,30 +274,15 @@ const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
   anushka: ['http://mathhub.info/smglom/mv/mod?structure?mathematical-structure'],
 };
 
-export function isLoggedIn() {
-  return !!getAccessToken();
-}
-
-export function logout() {
-  deleteCookie('access_token');
+export async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
   location.reload();
 }
 
-export function logoutAndGetToLoginPage() {
-  deleteCookie('access_token');
+export async function logoutAndGetToLoginPage() {
+  await fetch('/api/logout', { method: 'POST' });
   const redirectUrl = `/login?target=${encodeURIComponent(window.location.href)}`;
   window.location.replace(redirectUrl);
-}
-
-export function login() {
-  deleteCookie('access_token');
-  location.reload();
-}
-
-export function getAuthHeaders() {
-  const token = getAccessToken();
-  if (!token) return undefined;
-  return { Authorization: 'JWT ' + token };
 }
 
 export function loginUsingRedirect(returnBackUrl?: string) {
@@ -333,10 +313,7 @@ export function fakeLoginUsingRedirect(
   persona?: string
 ) {
   if (!name && !persona) {
-    axios.get(`/api/fake-login/${fakeId}`).then((resp) => {
-      // For developers.
-      const access_token = resp.data.access_token;
-      setCookie('access_token', access_token);
+    axios.get(`/api/fake-login/${fakeId}`).then(() => {
       window.location.replace(returnBackUrl || '/');
     });
     return;
@@ -367,7 +344,8 @@ export async function lmpRequest(
   data?: any,
   inputHeaders?: any
 ) {
-  const headers = inputHeaders ? inputHeaders : getAuthHeaders();
+  // const headers = inputHeaders ? inputHeaders : getAuthHeaders();
+  const headers = inputHeaders;
   if (!headers) {
     return Promise.resolve(defaultVal);
   }

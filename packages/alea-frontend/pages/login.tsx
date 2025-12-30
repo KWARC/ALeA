@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import {
   fakeLoginUsingRedirect,
-  isLoggedIn,
   logInUser,
   loginUsingRedirect,
   logout,
@@ -22,6 +21,7 @@ import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useIsLoggedIn } from '@alea/react-utils';
 import { useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
@@ -91,8 +91,7 @@ export function PersonaChooser({
 const LoginPage: NextPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const loggedIn = isLoggedIn();
+  const loggedIn = useIsLoggedIn();
   const router = useRouter();
   const [fakeId, setFakeId] = useState('');
   const returnBackUrl = router.query.target as string;

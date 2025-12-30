@@ -5,7 +5,7 @@ import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
-import { CommentRefreshProvider } from '@alea/react-utils';
+import { CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
 import { useEffect, useState } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import './styles.scss';
@@ -109,6 +109,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
             <MathJaxContext>
               <FTMLReadyContext.Provider value={readyToRender}>
                 <PositionProvider>
+                  <IsLoggedInProvider>
                   <CurrentTermProvider>
                     <div
                       style={{
@@ -121,6 +122,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
                       <Component {...pageProps} />
                     </div>
                   </CurrentTermProvider>
+                  </IsLoggedInProvider>
                 </PositionProvider>
               </FTMLReadyContext.Provider>
             </MathJaxContext>

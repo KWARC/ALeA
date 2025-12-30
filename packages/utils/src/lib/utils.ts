@@ -185,6 +185,11 @@ export function getCookie(name: string) {
   return (parts.pop() as string).split(';').shift();
 }
 
+export function isLoggedInViaCookie() {
+  const cookie = getCookie('is_logged_in');
+  return cookie === 'true';
+}
+
 export function setCookie(name: string, value: string) {
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1); // Set expiry date to one year from now

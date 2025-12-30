@@ -4,7 +4,6 @@ import TextField from '@mui/material/TextField';
 import {
   UserSignUpDetail,
   signUpUser,
-  isLoggedIn,
   loginUsingRedirect,
 } from '@alea/spec';
 import { NextPage } from 'next';
@@ -15,13 +14,14 @@ import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BG_COLOR, IS_SERVER } from '@alea/utils';
 import { LoginInfoBox } from './login';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 export const passwordRegex =
   /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
 
 const SignUpPage: NextPage = () => {
   const router = useRouter();
-  const loggedIn = isLoggedIn();
+  const loggedIn = useIsLoggedIn();
   const { login: t, logInSystem: l } = getLocaleObject(router);
   const [formData, setFormData] = useState<UserSignUpDetail>({
     firstName: '',
