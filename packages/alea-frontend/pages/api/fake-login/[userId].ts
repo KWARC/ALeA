@@ -19,9 +19,10 @@ export default async function handler(
   access_token = access_token?.split(';')[0];
   if (access_token.startsWith(ACCESS_TOKEN_PREFIX))
     access_token = access_token.substring(ACCESS_TOKEN_PREFIX.length);
+  //TODO: add secure as well once we are on https
   res.setHeader('Set-Cookie', [
-    `access_token=${access_token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=15552000;`,
-    `is_logged_in=true; Path=/; SameSite=Lax; Max-Age=15552000;`,
+    `access_token=${access_token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=15552000;`,
+    `is_logged_in=true; Path=/; SameSite=Strict; Max-Age=15552000;`,
   ]);
 
   res.status(200).end();

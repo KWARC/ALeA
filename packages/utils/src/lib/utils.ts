@@ -198,21 +198,6 @@ export function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}${expiry}${path}`;
 }
 
-export function deleteCookie(name: string) {
-  const EXPIRY_STRING = '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-  document.cookie = name + EXPIRY_STRING;
-  // HACK: In prod, the cookie can comes from 'lms.voll-ki.fau.de'. This server
-  // sets the cookie to the parent domain (voll-ki.fau.de) so that any of its
-  // subdomains can access it.
-  document.cookie = name + `${EXPIRY_STRING} domain=voll-ki.fau.de;`;
-
-  // For a short while cookie domain was set to 'fau.de'. This would allow those users to logout.
-  document.cookie = name + `${EXPIRY_STRING} domain=fau.de;`;
-
-  // For staging server.
-  document.cookie = name + `${EXPIRY_STRING} domain=kwarc.info;`;
-}
-
 export function downloadFile(data: any, fileName: string, fileType: string) {
   // Create a blob with the data we want to download as a file
   const blob = new Blob([data], { type: fileType });

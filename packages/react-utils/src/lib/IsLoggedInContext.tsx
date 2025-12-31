@@ -1,4 +1,4 @@
-import { deleteCookie, getCookie } from '@alea/utils';
+import { getCookie } from '@alea/utils';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -19,7 +19,6 @@ export const IsLoggedInProvider = ({ children }: { children: React.ReactNode }) 
     axios.get('/api/is-logged-in').then((response) => {
       const isLoggedIn = response.data?.isLoggedIn ?? false;
       setIsLoggedIn(isLoggedIn);
-      if (!isLoggedIn) deleteCookie('is_logged_in');
     }).catch((err) => {
       console.error('Error checking login status:', err);
       setIsLoggedIn(false);

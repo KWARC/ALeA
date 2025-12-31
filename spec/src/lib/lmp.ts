@@ -250,12 +250,12 @@ export const ALL_DIMENSIONS = [
 ];
 
 export const SHOW_DIMENSIONS = ALL_DIMENSIONS.slice(0, 3);
-
 export interface UserInfo {
   userId: string;
   givenName: string;
   sn: string;
   fullName: string;
+  issued: number;
 }
 
 const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
@@ -381,13 +381,20 @@ export function cleanupSmileyCognitiveValues(dim: SmileyCognitiveValues): Smiley
     Create: dim.Create || defaultSmiley,
   };
 }
-export function lmpResponseToUserInfo(lmpRespData: any): UserInfo | undefined {
+interface UserInfoLms {
+  user_id: string;
+  given_name: string;
+  sn: string;
+  issued: number;
+}
+export function lmpResponseToUserInfo(lmpRespData: UserInfoLms): UserInfo | undefined {
   if (!lmpRespData) return undefined;
   return {
-    userId: lmpRespData['user_id'],
-    givenName: lmpRespData['given_name'],
-    sn: lmpRespData['sn'],
-    fullName: `${lmpRespData['given_name'] ?? ''} ${lmpRespData['sn'] ?? ''}`,
+    userId: lmpRespData.user_id,
+    givenName: lmpRespData.given_name,
+    sn: lmpRespData.sn,
+    fullName: `${lmpRespData.given_name ?? ''} ${lmpRespData.sn ?? ''}`,
+    issued: lmpRespData.issued,
   };
 }
 
