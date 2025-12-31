@@ -9,6 +9,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   let instanceId = req.query.instanceId as string;
   if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
+  const institutionId = req.query.institutionId as string;
+
+  if (!institutionId) {
+    res.status(422).end('Missing required field: institutionId');
+    return;
+  }
   /*
     This query counts a user multiple times if the user registered in multiple courses.
     The reasons of this action 
@@ -23,24 +29,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as ActiveUsers,
       SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as InactiveUsers 
     FROM StudyBuddyUsers
-    WHERE sbCourseId LIKE '%${instanceId}'`,
-    [],
+    WHERE instanceId = ? AND institutionId = ?`,
+    [instanceId, institutionId],
     res
   );
   const result2: any[] = await executeAndEndSet500OnError(
     `
     SELECT ROUND(COUNT(*) / 2) AS NumberOfConnections
     FROM StudyBuddyConnections as t1
-    WHERE EXISTS (
-      SELECT 1 FROM StudyBuddyConnections as t2 WHERE t1.senderId = t2.receiverId
-      AND t1.receiverId = t2.senderId
-    ) AND sbCourseId LIKE '%${instanceId}'`,
-    [],
+    WHERE t1.instanceId = ? AND t1.institutionId = ?
+    AND EXISTS (
+      SELECT 1 FROM StudyBuddyConnections as t2 
+      WHERE t2.instanceId = ? AND t2.institutionId = ?
+      AND t1.senderId = t2.receiverId AND t1.receiverId = t2.senderId
+    )`,
+    [instanceId, institutionId, instanceId, institutionId],
     res
   );
   const result3: any[] = await executeAndEndSet500OnError(
-    `SELECT COUNT(*) as TotalRequests FROM StudyBuddyConnections WHERE sbCourseId LIKE '%${instanceId}'`,
-    [instanceId],
+    `SELECT COUNT(*) as TotalRequests FROM StudyBuddyConnections WHERE instanceId = ? AND institutionId = ?`,
+    [instanceId, institutionId],
     res
   );
 

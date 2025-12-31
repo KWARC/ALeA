@@ -4,7 +4,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../../comment-utils';
-import { getSbCourseId } from '../study-buddy-utils';
+import { getCurrentTermForCourseId } from '../../get-current-term';
 
 const SENT_STATUS = 'sent';
 const RECEIVED_STATUS = 'received';
@@ -18,18 +18,26 @@ export default async function handler(
   if (!userId) return;
 
   const courseId = req.query.courseId as string;
-  const sbCourseId = getSbCourseId(courseId);
+  let instanceId = req.query.instanceId as string;
+  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
+  const institutionId = req.query.institutionId as string;
+
+  if (!institutionId) {
+    res.status(422).end('Missing required field: institutionId');
+    return;
+  }
+  
   const receivedRequests: any[] = await executeAndEndSet500OnError(
-    'SELECT senderId FROM StudyBuddyConnections WHERE receiverId=? AND sbCourseId=?',
-    [userId, sbCourseId],
+    'SELECT senderId FROM StudyBuddyConnections WHERE receiverId=? AND courseId=? AND instanceId=? AND institutionId=?',
+    [userId, courseId, instanceId, institutionId],
     res
   );
 
   if (!receivedRequests) return;
 
   const sentRequests: any[] = await executeAndEndSet500OnError(
-    'SELECT receiverId FROM StudyBuddyConnections WHERE senderId=? AND sbCourseId=?',
-    [userId, sbCourseId],
+    'SELECT receiverId FROM StudyBuddyConnections WHERE senderId=? AND courseId=? AND instanceId=? AND institutionId=?',
+    [userId, courseId, instanceId, institutionId],
     res
   );
 
@@ -37,8 +45,8 @@ export default async function handler(
 
   // TODO: should not select *
   const allStudybuddies: StudyBuddy[] = await executeAndEndSet500OnError(
-    'SELECT * FROM StudyBuddyUsers WHERE NOT userId=? AND sbCourseId=? AND active=?',
-    [userId, sbCourseId, true],
+    'SELECT * FROM StudyBuddyUsers WHERE NOT userId=? AND courseId=? AND instanceId=? AND institutionId=? AND active=?',
+    [userId, courseId, instanceId, institutionId, true],
     res
   );
 

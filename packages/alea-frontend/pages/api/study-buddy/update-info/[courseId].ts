@@ -5,7 +5,6 @@ import {
   executeAndEndSet500OnError,
   getUserInfo,
 } from '../../comment-utils';
-import { getSbCourseId } from '../study-buddy-utils';
 import { getCurrentTermForCourseId } from '../../get-current-term';
 
 export default async function handler(
@@ -20,7 +19,12 @@ export default async function handler(
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
   if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
-  const sbCourseId = await getSbCourseId(courseId, instanceId);
+  const institutionId = req.query.institutionId as string;
+
+  if (!institutionId) {
+    res.status(422).end('Missing required field: institutionId');
+    return;
+  }
 
   const {
     intro,
@@ -37,7 +41,7 @@ export default async function handler(
   let results = undefined;
 
   results = await executeAndEndSet500OnError(
-    'REPLACE INTO StudyBuddyUsers (userName, intro, studyProgram, email, semester, meetType, languages, dayPreference, active, userId, sbCourseId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'REPLACE INTO StudyBuddyUsers (userName, intro, studyProgram, email, semester, meetType, languages, dayPreference, active, userId, courseId, instanceId, institutionId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       user.fullName,
       intro,
@@ -49,7 +53,9 @@ export default async function handler(
       dayPreference,
       active,
       userId,
-      sbCourseId,
+      courseId,
+      instanceId,
+      institutionId,
     ],
     res
   );

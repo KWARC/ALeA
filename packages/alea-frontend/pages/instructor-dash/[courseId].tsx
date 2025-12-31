@@ -73,7 +73,7 @@ function ChosenTab({
     case 'quiz-dashboard':
       return <QuizDashboard courseId={courseId} institutionId={institutionId} quizId={quizId} onQuizIdChange={onQuizIdChange} />;
     case 'study-buddy':
-      return <StudyBuddyModeratorStats courseId={courseId} />;
+      return <StudyBuddyModeratorStats courseId={courseId} institutionId={institutionId} />;
     case 'peer-review':
       return <InstructorPeerReviewViewing courseId={courseId}></InstructorPeerReviewViewing>;
     case 'syllabus':
