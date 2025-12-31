@@ -3,9 +3,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useRouter } from 'next/router';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-type SearchResult = any;
+type SearchResult = { Document: string } | { Paragraph: { uri: string } };
 
 const SearchCourseNotes = ({
   courseId,
@@ -26,8 +26,6 @@ const SearchCourseNotes = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const autoSearchedRef = useRef(false);
-
   useEffect(() => {
     if (query) {
       setSearchQuery(query);
@@ -35,11 +33,7 @@ const SearchCourseNotes = ({
   }, [query]);
 
   useEffect(() => {
-    if (!searchQuery?.trim()) return;
-    if (!notesUri) return;
-    if (autoSearchedRef.current) return;
-
-    autoSearchedRef.current = true;
+    if (!searchQuery.trim() || !notesUri) return;
     handleSearch();
   }, [searchQuery, notesUri]);
 
@@ -73,6 +67,10 @@ const SearchCourseNotes = ({
       handleSearch();
     }
   };
+
+  if (isLoading) {
+    return <LinearProgress />;
+  }
 
   return (
     <Box>
@@ -116,21 +114,19 @@ const SearchCourseNotes = ({
         />
       </Box>
 
-      {isLoading && <LinearProgress />}
-
-      {!isLoading && hasSearched && results.length === 0 && (
+      {hasSearched && results.length === 0 && (
         <Box textAlign="center" mt={4} color="text.secondary">
           No results found
         </Box>
       )}
 
-      {!isLoading && results.length > 0 && (
+      {results.length > 0 && (
         <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
           <Box maxWidth="800px" m="0 auto" p="10px">
             {results.map((res, idx) => {
               if (!res || typeof res !== 'object') return null;
 
-              if ((res as any).Document) {
+              if ('Document' in res) {
                 return (
                   <Box key={idx} mb={2}>
                     <SafeFTMLDocument

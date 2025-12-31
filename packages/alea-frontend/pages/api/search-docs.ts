@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const results = await searchDocs(
       query as string,
       docs,
-      15
+      50
     );
 
     res.status(200).json(results ?? []);
