@@ -64,6 +64,7 @@ export function MediaItem({
   onHasSlideAtCurrentTimeChange,
   sectionTitle,
   onPresentationVideoToggle,
+  isChangingResolution,
 }: {
   audioOnly: boolean;
   videoId: string;
@@ -92,6 +93,7 @@ export function MediaItem({
   onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
   sectionTitle?: string;
   onPresentationVideoToggle?: () => void;
+  isChangingResolution?: boolean;
 }) {
   const playerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const presentationPlayerRef = useRef<HTMLVideoElement | null>(null);
@@ -236,7 +238,7 @@ export function MediaItem({
     hasSlideAtCurrentTime,
     setHasSlideAtCurrentTime,
     onHasSlideAtCurrentTimeChange,
-    autoSyncEnabled: true,
+    autoSyncEnabled: !isChangingResolution
   });
 
   const handleMouseMove = (e: React.MouseEvent) => {

@@ -111,111 +111,28 @@ export function CommentReply({
     <Fade in timeout={400}>
       <Paper
         elevation={0}
-        sx={{
-          display: hidden ? 'none' : 'block',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 3,
-          p: 3,
-          bgcolor: 'background.paper',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-          },
-          '&:hover': {
-            borderColor: 'rgba(102, 126, 234, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-          },
-          '&:focus-within': {
-            borderColor: '#667eea',
-            boxShadow: '0 4px 20px rgba(102, 126, 234, 0.12)',
-          },
-        }}
+        className={styles.replyPaper}
+        style={{ display: hidden ? 'none' : 'block' }}
       >
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 48,
-              height: 48,
-              borderRadius: 2.5,
-              flexShrink: 0,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)',
-              transition: 'transform 0.2s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
-              },
-            }}
-          >
+        <Box className={styles.replyContainer}>
+          <Box className={styles.replyIconBox}>
             {isPrivateNote ? (
-              <TextSnippetIcon sx={{ fontSize: 26 }} />
+              <TextSnippetIcon className={styles.replyIcon} />
             ) : (
-              <TextsmsIcon sx={{ fontSize: 26 }} />
+              <TextsmsIcon className={styles.replyIcon} />
             )}
           </Box>
 
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box className={styles.replyContent}>
             {commentHeader}
+
             {selectedText && (
-              <Box sx={{ mb: 2 }}>
+              <Box className={styles.selectedTextBox}>
                 <SelectedInfo text={selectedText} />
               </Box>
             )}
 
-            <Box
-              sx={{
-                '& .MuiTextField-root': {
-                  '& .MuiOutlinedInput-root': {
-                    fontSize: 15,
-                    lineHeight: 1.6,
-                    '& fieldset': {
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(102, 126, 234, 0.4)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#667eea',
-                      borderWidth: 2,
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    fontSize: 15,
-                    lineHeight: 1.6,
-                    color: 'text.primary',
-                    '&::placeholder': {
-                      color: 'text.secondary',
-                      opacity: 0.7,
-                    },
-                  },
-                },
-                '& .MuiButton-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  px: 3,
-                  py: 1,
-                  borderRadius: 2,
-                  boxShadow: 'none',
-                  '&:hover': {
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  },
-                },
-              }}
-            >
+            <Box className={styles.replyEditorWrapper}>
               <EditView
                 parentId={parentId}
                 uri={uri}

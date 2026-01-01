@@ -155,6 +155,7 @@ const CourseViewPage: NextPage = () => {
   const slideNum = +((router.query.slideNum as string) || 0);
   const viewModeStr = router.query.viewMode as string;
   const viewMode = ViewMode[viewModeStr as keyof typeof ViewMode];
+  const isVideoVisible = viewMode === ViewMode.COMBINED_MODE;
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
   const { currentTermByCourseId } = useCurrentTermContext();
@@ -596,6 +597,7 @@ const CourseViewPage: NextPage = () => {
                       hasSlidesForSection={hasSlidesForSection}
                       onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
                       videoLoaded={videoLoaded}
+                      resolution={resolution}
                     />
                   </Paper>
                 </Box>
@@ -616,7 +618,10 @@ const CourseViewPage: NextPage = () => {
                   hasSlidesForSectionLocal = sectionMarkers.length > 0;
                 }
                 const showSideBySideSlides =
-                  hasSlidesForSectionLocal && videoLoaded && hasSlideAtCurrentTime;
+                  isVideoVisible &&
+                  hasSlidesForSectionLocal &&
+                  videoLoaded &&
+                  hasSlideAtCurrentTime;
 
                 return showSideBySideSlides ? (
                   <Box
@@ -697,8 +702,10 @@ const CourseViewPage: NextPage = () => {
                 hasSlidesForSection = sectionMarkers.length > 0;
               }
               const hasVideoForSection = currentClipId && clipIds[sectionId];
-              if (!hasSlidesForSection || (videoLoaded && hasVideoForSection)) return null;
-
+              if (!hasSlidesForSection) return null;
+              if (isVideoVisible && videoLoaded && hasVideoForSection) {
+                return null;
+              }
               return (
                 <Box sx={{ mt: { xs: 2, sm: 3 } }}>
                   <Paper

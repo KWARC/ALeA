@@ -119,6 +119,7 @@ export function VideoDisplay({
   onHasSlideAtCurrentTimeChange,
   sectionTitle,
   onPresentationVideoToggle,
+  resolution = 720,
 }: {
   clipId: string;
   clipIds: { [sectionId: string]: string };
@@ -148,8 +149,9 @@ export function VideoDisplay({
   videoLoaded?: boolean;
   sectionTitle?: string;
   onPresentationVideoToggle?: () => void;
+  resolution?: number;
 }) {
-  const [resolution] = useState(+(localStore?.getItem('defaultResolution') || '720'));
+  const [isChangingResolution, setIsChangingResolution] = useState(false);
   const [clipDetails, setClipDetails] = useState(undefined as ClipDetails);
   const availableRes = getAvailableRes(clipDetails);
   const presenterVideoId = getVideoId(clipDetails, resolution, availableRes);
@@ -188,6 +190,9 @@ export function VideoDisplay({
         slideUri: item.slideUri as string,
       },
     }));
+  useEffect(() => {
+    setIsChangingResolution(true);
+  }, [resolution]);
 
   useEffect(() => {
     if (!clipId) {
@@ -212,6 +217,9 @@ export function VideoDisplay({
   useEffect(() => {
     const isVideoLoaded = !isLoading && !!defaultVideoId;
     onVideoLoad(isVideoLoaded);
+    if (isVideoLoaded) {
+      setIsChangingResolution(false);
+    }
   }, [isLoading, defaultVideoId, onVideoLoad]);
 
   if (isLoading) return <CircularProgress sx={{ mb: '15px' }} />;
@@ -254,6 +262,7 @@ export function VideoDisplay({
           videoLoaded={videoLoaded}
           hasSlidesForSection={hasSlidesForSection}
           onHasSlideAtCurrentTimeChange={onHasSlideAtCurrentTimeChange}
+          isChangingResolution={isChangingResolution}
         />
         <Box
           onKeyDown={handleKeyPress}

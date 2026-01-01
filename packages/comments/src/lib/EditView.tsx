@@ -1,5 +1,5 @@
 import { FTML } from '@flexiformal/ftml';
-import { Box, Button, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
+import { Box, Button, Checkbox, FormControlLabel, CircularProgress, Tooltip } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
@@ -126,48 +126,15 @@ export function EditView({
         transition: 'opacity 0.2s ease',
       }}
     >
-      <Box
-        sx={{
-          mb: 2,
-          '& .myst-editor': {
-            borderRadius: 2,
-            border: '1.5px solid',
-            borderColor: 'divider',
-            transition: 'all 0.2s ease',
-            backgroundColor: 'background.paper',
-            '&:hover': {
-              borderColor: 'rgba(102, 126, 234, 0.3)',
-            },
-            '&:focus-within': {
-              borderColor: '#667eea',
-              borderWidth: '2px',
-              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
-            },
-          },
-          '& .myst-editor textarea, & .myst-editor [contenteditable]': {
-            fontSize: '15px',
-            lineHeight: 1.6,
-            color: 'text.primary',
-            padding: '14px 16px',
-            minHeight: '100px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            '&::placeholder': {
-              color: 'text.secondary',
-              opacity: 0.6,
-            },
-          },
+      <MdEditor
+        name="comment-edit"
+        placeholder={placeholder}
+        value={inputText}
+        onValueChange={(v) => {
+          setInputText(v);
+          saveDraft(uri ?? '', parentId, v);
         }}
-      >
-        <MdEditor
-          name="comment-edit"
-          placeholder={placeholder}
-          value={inputText}
-          onValueChange={(v) => {
-            setInputText(v);
-            saveDraft(uri ?? '', parentId, v);
-          }}
-        />
-      </Box>
+      />
       {!existingComment && !parentId && !isPrivateNote && (
         <Box sx={{ mb: 2 }}>
           <FormControlLabel
@@ -185,7 +152,9 @@ export function EditView({
             }
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <HelpOutlineIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                <Tooltip title="This will add your comment to the course forum" arrow>
+                  <HelpOutlineIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                </Tooltip>
                 <span style={{ fontSize: 14, fontWeight: 500 }}>{t.requestResponse}</span>
               </Box>
             }
