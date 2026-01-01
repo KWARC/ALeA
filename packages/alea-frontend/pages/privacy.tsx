@@ -36,21 +36,28 @@ const StudentHomePage: NextPage = () => {
           </p>
           <h2>Data Protection Officer</h2>
           <p>
-            As part of the VoLL-KI project, we are in close contact with the FAU
-            data protection officer. He will be happy to provide you with
-            information and suggestions on the subject of data protection:
+            As part of the VoLL-KI project, we are in contact with Klaus
+            Hoogestraat, the FAU data protection officer. He will be happy
+            to provide you with information and suggestions on the subject
+            of data protection, either via post...
             <br />
             <br />
-            Norbert Gärtner, RD
+            Datenschutzbeauftragter FAU
             <br />
-            Phone: +49 9131 85-25860
+            c/o ITM Gesellschaft für IT-Management mbH
             <br />
-            E-Mail: norbert.gaertner@fau.de
+            Bürgerstraße 81
             <br />
-            Schloßplatz 4<br />
-            91054 Erlangen
+            01127 Dresden
             <br />
             Germany
+            <br />
+            <br />
+            ... or via phone and email:
+            <br />
+            <br />
+            Phone: +49 9131 85 25860
+            Email: datenschutzbeauftragter@fau.de
           </p>
           <h2>Storing of IP Addresses</h2>
           <p>
