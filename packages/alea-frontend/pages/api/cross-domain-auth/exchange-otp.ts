@@ -49,12 +49,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const cookieOptions = [
     `access_token=${record.jwtToken}`,
-    /* TODO: Uncomment this when we can handle httpOnly cookies.
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',*/
+    'SameSite=Strict',
     'Path=/',
-    `Max-Age=${365 * 24 * 60 * 60}`, // 1 year
+    `Max-Age=${180 * 24 * 60 * 60}`, // 6 months
   ].join('; ');
 
   res.setHeader('Set-Cookie', cookieOptions).send('Authentication successful');

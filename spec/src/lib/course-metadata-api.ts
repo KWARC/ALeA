@@ -1,6 +1,4 @@
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
-
 export interface LectureSchedule {
   lectureDay: string;
   venue?: string;
@@ -72,16 +70,13 @@ const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
 export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'instanceId'>) {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-lecture`, {
-    headers: getAuthHeaders(),
     params: data,
   });
   return response.data;
 }
 
 export async function addLectureSchedule(data: AddLectureScheduleRequest) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-lecture-entry`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-lecture-entry`, data);
   return response.data;
 }
 
@@ -94,9 +89,7 @@ export async function updateLectureEntry(
     scheduleType: ScheduleType;
   }
 ) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-lecture-entry`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-lecture-entry`, data);
   return response.data;
 }
 
@@ -106,27 +99,21 @@ export async function deleteLectureEntry(
     scheduleType: ScheduleType;
   }
 ) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/delete-lecture-entry`, data);
   return response.data;
 }
 
 export async function updateHasHomework(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasHomework: boolean }
 ) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-homework`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-homework`, data);
   return response.data;
 }
 
 export async function updateHasQuiz(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasQuiz: boolean }
 ) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-quiz`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-quiz`, data);
   return response.data;
 }
 
@@ -134,11 +121,10 @@ export async function generateLectureEntry(
   courseId: string,
   instanceId: string
 ): Promise<GenerateLectureEntryResponse> {
-  const response = await axios.post(
-    `${COURSE_METADATA_BASE_URL}/generate-lecture-entry`,
-    { courseId, instanceId },
-    { headers: getAuthHeaders() }
-  );
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/generate-lecture-entry`, {
+    courseId,
+    instanceId,
+  });
   return response.data;
 }
 
@@ -157,26 +143,20 @@ export async function getLectureSchedule(
   instanceId: string
 ): Promise<LectureScheduleItem[]> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-lecture-schedule`, {
-    headers: getAuthHeaders(),
     params: { courseId, instanceId },
   });
   return (response.data?.schedule ?? []) as LectureScheduleItem[];
 }
 
 export async function addCourseMetadata(data: CourseInfoMetadata) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-course-metadata`, data, {
-    headers: getAuthHeaders(),
-  });
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/add-course-metadata`, data, {});
   return response.data;
 }
 
 export async function updateCourseInfoMetadata(data: Partial<CourseInfoMetadata>) {
   const response = await axios.post(
     `${COURSE_METADATA_BASE_URL}/update-course-info-metadata`,
-    data,
-    {
-      headers: getAuthHeaders(),
-    }
+    data
   );
   return response.data;
 }
@@ -186,7 +166,6 @@ export async function getCourseInfoMetadata(
   instanceId: string
 ): Promise<CourseInfoMetadata | null> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-info-metadata`, {
-    headers: getAuthHeaders(),
     params: { courseId, instanceId },
   });
   return response.data;
@@ -197,7 +176,6 @@ export async function getCourseIdsByUniversity(
   instanceId?: string
 ): Promise<string[]> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-course-ids-by-university`, {
-    headers: getAuthHeaders(),
     params: { universityId, ...(instanceId && { instanceId }) },
   });
   return response.data?.courseIds || [];
@@ -210,10 +188,7 @@ export async function addCourseToSemester(data: {
 }) {
   const response = await axios.post(
     '/api/university-admin/semester-courses/add-course-to-semester',
-    data,
-    {
-      headers: getAuthHeaders(),
-    }
+    data
   );
   return response.data;
 }
@@ -225,10 +200,7 @@ export async function removeCourseFromSemester(data: {
 }) {
   const response = await axios.post(
     '/api/university-admin/semester-courses/remove-course-from-semester',
-    data,
-    {
-      headers: getAuthHeaders(),
-    }
+    data
   );
   return response.data;
 }
@@ -240,10 +212,7 @@ export async function createNewCourse(data: {
 }) {
   const response = await axios.post(
     '/api/university-admin/semester-courses/create-new-course',
-    data,
-    {
-      headers: getAuthHeaders(),
-    }
+    data
   );
   return response.data;
 }

@@ -1,6 +1,4 @@
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
-
 export interface Announcement {
   id: number;
   courseId: string;
@@ -32,12 +30,14 @@ export type UpdateAnnouncementRequest = Omit<
 >;
 
 export async function createAnnouncement(details: CreateAnnouncementRequest) {
-  await axios.post('/api/announcement/create-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/create-announcement', details);
 }
 
-export async function getAnnouncements(courseId: string, instanceId: string, institutionId: string) {
+export async function getAnnouncements(
+  courseId: string,
+  instanceId: string,
+  institutionId: string
+) {
   const resp = await axios.get('/api/announcement/get-announcements', {
     params: { courseId, instanceId, institutionId },
   });
@@ -57,13 +57,9 @@ export async function getActiveAnnouncements(
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
-  await axios.post('/api/announcement/delete-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/delete-announcement', details);
 }
 
 export async function updateAnnouncement(details: UpdateAnnouncementRequest) {
-  await axios.post('/api/announcement/update-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/update-announcement', details);
 }

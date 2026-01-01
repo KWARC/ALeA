@@ -1,9 +1,4 @@
-import {
-  Comment,
-  NotificationType,
-  PointsGrant,
-  lmpResponseToUserInfo
-} from '@alea/spec';
+import { Comment, NotificationType, PointsGrant, lmpResponseToUserInfo } from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import mysql from 'serverless-mysql';
@@ -103,8 +98,11 @@ export async function executeTxnAndEndSet500OnError(
 }
 
 export async function getUserInfo(req: NextApiRequest) {
-  if (!req.headers.authorization) return undefined;
-  const headers = { Authorization: req.headers.authorization };
+  const token = req.cookies?.access_token;
+  if (!token) return undefined;
+  const headers = {
+    Authorization: `JWT ${token}`,
+  };
   const lmpServerAddress = process.env.NEXT_PUBLIC_AUTH_SERVER_URL;
   const resp = await axios.get(`${lmpServerAddress}/getuserinfo`, { headers });
   return lmpResponseToUserInfo(resp.data);

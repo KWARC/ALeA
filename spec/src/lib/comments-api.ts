@@ -1,4 +1,4 @@
-import { CourseResourceAction } from '@alea/utils';
+import { CourseResourceAction, isLoggedInViaCookie } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import {
   BlogPost,
@@ -15,15 +15,14 @@ import {
   UserInformation,
   UserSignUpDetail,
 } from './comment';
-import { getAuthHeaders, isLoggedIn, logoutAndGetToLoginPage } from './lmp';
+import {  logoutAndGetToLoginPage } from './lmp';
 
 async function commentRequest(apiUrl: string, requestType: string, data?: any) {
-  const headers = getAuthHeaders();
   try {
     const resp =
       requestType === 'POST'
-        ? await axios.post(apiUrl, data, { headers })
-        : await axios.get(apiUrl, { headers });
+        ? await axios.post(apiUrl, data)
+        : await axios.get(apiUrl);
     return resp.data;
   } catch (err) {
     const error = err as Error | AxiosError;
@@ -135,7 +134,7 @@ let cachedUserInformation: UserInformation | undefined = undefined;
 export async function getUserInformation() {
   if (!cachedUserInformation) {
     const url = '/api/get-user-information';
-    const resp = await axios.get(url, { headers: getAuthHeaders() });
+    const resp = await axios.get(url);
     cachedUserInformation = resp.data;
   }
   return cachedUserInformation;
@@ -152,7 +151,7 @@ export interface UserProfile {
 
 export async function getUserProfile() {
   try {
-    const response = await axios.get('/api/get-user-profile', { headers: getAuthHeaders() });
+    const response = await axios.get('/api/get-user-profile');
     return response.data as UserProfile;
   } catch (err) {
     const error = err as AxiosError;
@@ -174,8 +173,7 @@ export async function updateUserProfile(
 ) {
   return await axios.post(
     '/api/update-user-profile',
-    { userId, firstName, lastName, email, studyProgram, semester, languages },
-    { headers: getAuthHeaders() }
+    { userId, firstName, lastName, email, studyProgram, semester, languages }
   );
 }
 
@@ -183,10 +181,7 @@ export async function updateTrafficLightStatus(trafficStatus: boolean) {
   cachedUserInformation = undefined;
   return await axios.post(
     '/api/update-trafficlight-status',
-    { trafficStatus },
-    {
-      headers: getAuthHeaders(),
-    }
+    { trafficStatus }
   );
 }
 
@@ -194,10 +189,7 @@ export async function updateSectionReviewStatus(showSectionReview: boolean) {
   cachedUserInformation = undefined;
   return await axios.post(
     '/api/update-section-review-status',
-    { showSectionReview },
-    {
-      headers: getAuthHeaders(),
-    }
+    { showSectionReview }
   );
 }
 
@@ -254,8 +246,7 @@ export async function createBlogPost(
       heroImageId,
       heroImageUrl,
       heroImagePosition,
-    },
-    { headers: getAuthHeaders() }
+    }
   );
 }
 
@@ -286,13 +277,12 @@ export async function updateBlogPost(
 ) {
   return await axios.post(
     '/api/blog/update-post',
-    { title, body, heroImageId, heroImageUrl, postId, heroImagePosition },
-    { headers: getAuthHeaders() }
+    { title, body, heroImageId, heroImageUrl, postId, heroImagePosition }
   );
 }
 
 export async function deleteBlogPost(postId: string) {
-  return await axios.post('/api/blog/delete-post', { postId }, { headers: getAuthHeaders() });
+  return await axios.post('/api/blog/delete-post', { postId });
 }
 
 export async function uploadCdnImage(imageBase64: string): Promise<object> {
@@ -328,18 +318,16 @@ export async function generateApfelToken(userId: string, time: number) {
 export async function updateUserInfoFromToken() {
   const response = await axios.post(
     '/api/update-user-info-from-token',
-    {},
-    { headers: getAuthHeaders() }
+    {}
   );
   return response.data;
 }
 
 export async function getResourcesForUser() {
-  if (!isLoggedIn()) return [];
+  if (!isLoggedInViaCookie()) return [];
   const response = await axios.post(
     '/api/get-resources-for-user',
-    {},
-    { headers: getAuthHeaders() }
+    {}
   );
   return response.data as CourseResourceAction[];
 }
@@ -369,8 +357,7 @@ export async function getCourseIdsForEnrolledUser(instanceId?: string) {
     '/api/get-courseids-for-enrolled-user',
     {
       instanceId,
-    },
-    { headers: getAuthHeaders() }
+    }
   );
   return response.data;
 }

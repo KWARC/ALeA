@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
 import { SparqlResponse } from './flams';
 
 export async function runGraphDbSelectQuery(query: string) {
@@ -11,14 +10,13 @@ export async function runGraphDbSelectQuery(query: string) {
         apiname: 'graphdb-sparql-select',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
   return res.data as SparqlResponse;
 }
 
 export async function runGraphDbUpdateQuery(query: string) {
-   await axios.post(
+  await axios.post(
     '/api/gpt-redirect',
     { query },
     {
@@ -26,7 +24,6 @@ export async function runGraphDbUpdateQuery(query: string) {
         apiname: 'graphdb-sparql-update',
         projectName: 'quiz-gen',
       },
-      headers: getAuthHeaders(),
     }
   );
 }

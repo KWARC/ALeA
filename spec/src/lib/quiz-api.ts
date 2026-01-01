@@ -1,7 +1,6 @@
 import { FTML } from '@flexiformal/ftml';
 import axios, { AxiosError } from 'axios';
 
-import { getAuthHeaders } from './lmp';
 import {
   Excused,
   GetPreviousQuizInfoResponse,
@@ -25,7 +24,6 @@ export async function insertQuizResponse(
   };
   try {
     await axios.post('/api/quiz/insert-quiz-response', req, {
-      headers: getAuthHeaders(),
       timeout: 30000, // 30 seconds
     });
     return true;
@@ -48,7 +46,6 @@ export async function insertQuizResponse(
 
 export async function getQuiz(quizId: string, targetUserId?: string) {
   const resp = await axios.get(`/api/quiz/get-quiz/${quizId}`, {
-    headers: getAuthHeaders(),
     params: { targetUserId },
   });
   return resp.data as GetQuizResponse;
@@ -56,31 +53,23 @@ export async function getQuiz(quizId: string, targetUserId?: string) {
 
 export async function getQuizStats(quizId: string, courseId: string, courseTerm: string) {
   const resp = await axios.get(
-    `/api/quiz/get-quiz-stats/${quizId}?courseId=${courseId}&courseTerm=${courseTerm}`,
-    { headers: getAuthHeaders() }
+    `/api/quiz/get-quiz-stats/${quizId}?courseId=${courseId}&courseTerm=${courseTerm}`
   );
   return resp.data as QuizStatsResponse;
 }
 
 export async function createQuiz(quiz: QuizWithStatus) {
-  return await axios.post('/api/quiz/create-quiz', quiz, {
-    headers: getAuthHeaders(),
-  });
+  return await axios.post('/api/quiz/create-quiz', quiz);
 }
 
 export async function updateQuiz(quiz: QuizWithStatus) {
-  return await axios.post('/api/quiz/update-quiz', quiz, {
-    headers: getAuthHeaders(),
-  });
+  return await axios.post('/api/quiz/update-quiz', quiz);
 }
 
 export async function deleteQuiz(quizId: string, courseId: string, courseTerm: string) {
   return await axios.post(
     '/api/quiz/delete-quiz',
-    { quizId, courseId, courseTerm },
-    {
-      headers: getAuthHeaders(),
-    }
+    { quizId, courseId, courseTerm }
   );
 }
 
@@ -89,11 +78,7 @@ export async function getCourseQuizList(courseId: string): Promise<QuizStubInfo[
 }
 
 export async function getPreviousQuizInfo(courseId: string) {
-  const headers = getAuthHeaders();
-  if (!headers) return { quizInfo: {} } as GetPreviousQuizInfoResponse;
-  const resp = await axios.get(`/api/quiz/get-previous-quiz-info/${courseId}`, {
-    headers,
-  });
+  const resp = await axios.get(`/api/quiz/get-previous-quiz-info/${courseId}`);
   return resp.data as GetPreviousQuizInfoResponse;
 }
 
@@ -112,9 +97,6 @@ export async function recorrectQuiz(
       courseTerm,
       dryRun,
       reasons,
-    },
-    {
-      headers: getAuthHeaders(),
     }
   );
   return response.data;
@@ -129,25 +111,20 @@ export async function createExcused(
 ) {
   return await axios.post(
     '/api/quiz/create-excused',
-    { userId, quizId, courseId, courseInstance, institutionId },
-    {
-      headers: getAuthHeaders(),
-    }
+    { userId, quizId, courseId, courseInstance, institutionId }
   );
 }
 
 export async function getExcused(quizId: string, courseId: string, courseInstance: string) {
   const resp = await axios.get(
     `/api/quiz/get-excused-students?quizId=${quizId}&courseId=${courseId}&courseInstance=${courseInstance}`,
-    { headers: getAuthHeaders() }
+   
   );
   return resp.data as string[];
 }
 
 export async function deleteExcused(quiz: Excused) {
-  return await axios.post('/api/quiz/delete-excused', quiz, {
-    headers: getAuthHeaders(),
-  });
+  return await axios.post('/api/quiz/delete-excused', quiz);
 }
 
 export async function generateEndSemesterSummary(
@@ -163,9 +140,6 @@ export async function generateEndSemesterSummary(
       courseTerm,
       excludeQuizzes,
       topN,
-    },
-    {
-      headers: getAuthHeaders(),
     }
   );
   return response.data;
@@ -174,10 +148,7 @@ export async function generateEndSemesterSummary(
 export async function checkPendingRecorrections() {
   const response = await axios.post(
     '/api/quiz/recorrect-all',
-    {},
-    {
-      headers: getAuthHeaders(),
-    }
+    {}
   );
 
   return response.data;
@@ -185,8 +156,7 @@ export async function checkPendingRecorrections() {
 
 export async function getAllQuizzes(courseId: string, courseTerm: string) {
   const resp = await axios.get(
-    `/api/quiz/get-all-quizzes?courseId=${courseId}&courseTerm=${courseTerm}`,
-    { headers: getAuthHeaders() }
+    `/api/quiz/get-all-quizzes?courseId=${courseId}&courseTerm=${courseTerm}`
   );
   return resp.data;
 }
