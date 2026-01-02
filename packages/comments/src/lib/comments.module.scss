@@ -130,3 +130,120 @@
   @extend .comment_status;
   background: goldenrod;
 }
+
+.replyPaper {
+  border: 1px solid var(--mui-palette-divider);
+  border-radius: 12px;
+  padding: 24px;
+  background: var(--mui-palette-background-paper);
+  position: relative;
+  overflow: hidden;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,#667eea 0%,#764ba2 100%);
+  }
+
+  &:hover {
+    border-color: rgba(102,126,234,.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  }
+
+  &:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 4px 20px rgba(102,126,234,.12);
+  }
+}
+
+
+.replyContainer {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.replyIconBox {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color: white;
+
+  box-shadow: 0 4px 16px rgba(102,126,234,.25);
+  transition: transform .2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.replyIcon {
+  font-size: 26px;
+}
+
+.replyContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.selectedTextBox {
+  margin-bottom: 16px;
+}
+
+.replyEditorWrapper {
+  :global {
+    .MuiTextField-root .MuiOutlinedInput-root {
+      font-size: 15px;
+      line-height: 1.6;
+
+      fieldset {
+        border-color: var(--mui-palette-divider);
+        border-radius: 8px;
+      }
+
+      &:hover fieldset {
+        border-color: rgba(102,126,234,.4);
+      }
+
+      &.Mui-focused fieldset {
+        border-color: #667eea;
+        border-width: 2px;
+      }
+    }
+
+    .MuiInputBase-input {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--mui-palette-text-primary);
+
+      &::placeholder {
+        color: var(--mui-palette-text-secondary);
+        opacity: .7;
+      }
+    }
+
+    .MuiButton-root {
+      text-transform: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+
+      &:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,.15);
+      }
+    }
+  }
+}
+
