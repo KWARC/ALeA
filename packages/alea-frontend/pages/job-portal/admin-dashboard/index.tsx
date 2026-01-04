@@ -40,6 +40,32 @@ import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';
+export const getExactDuration = (
+  startDate?: string,
+  endDate?: string
+): string => {
+  if (!startDate || !endDate) return '';
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (start > end) return '';
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  let days = end.getDate() - start.getDate();
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+  if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  return parts.join(', ') || '0 days';
+};
 
 export function JobCategoryDetails({
   jobCategories,
@@ -97,11 +123,6 @@ export function JobCategoryDetails({
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [jobCategory, setJobCategory] = useState<'Full-Time' | 'Internship'>(null);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(null);
-
-  const [internshipPeriod, setInternshipPeriod] = useState<string>(null);
   const [jobCategories, setJobs] = useState<JobCategoryInfo[]>([]);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -126,6 +147,7 @@ const AdminDashboard = () => {
 
     checkAccess();
   }, []);
+
   const fetchJobCategoryData: () => Promise<void> = async () => {
     try {
       setLoading(true);
@@ -137,9 +159,9 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (accessCheckLoading) return;
-
     fetchJobCategoryData();
   }, [accessCheckLoading]);
 
@@ -155,9 +177,6 @@ const AdminDashboard = () => {
   );
 
   const handleTabChange = (event, newValue) => setActiveTab(newValue);
-  const handleJobCategoryChange = (event) => {
-    setJobCategory(event.target.value);
-  };
   const handleUpdationoJobCategoryChange = (
     event: SelectChangeEvent<'Full-Time' | 'Internship'>
   ) => {
@@ -167,59 +186,16 @@ const AdminDashboard = () => {
     }));
   };
 
-  const handleDateChange = (type, value) => {
-    let updatedStartDate = startDate;
-    let updatedEndDate = endDate;
-    console.log({ updatedStartDate });
-    console.log({ value });
-    if (type === 'start') {
-      updatedStartDate = value;
-      console.log({ updatedStartDate });
-      setStartDate(value);
-    } else if (type === 'end') {
-      updatedEndDate = value;
-      setEndDate(value);
-    }
-
-    if (updatedStartDate && updatedEndDate) {
-      const start = new Date(updatedStartDate);
-      const end = new Date(updatedEndDate);
-      console.log({ end });
-      if (start <= end) {
-        const diffMonths =
-          (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-        setInternshipPeriod(`${diffMonths + 1} month${diffMonths + 1 > 1 ? 's' : ''}`);
-      } else {
-        setInternshipPeriod('');
-      }
-    }
-  };
-  const handleUpdationDateChange = (type: string, value: string) => {
+  const handleUpdationDateChange = (type: 'start' | 'end', value: string) => {
     setEditJob((prev) => {
       const updatedStartDate = type === 'start' ? value : prev.startDate;
       const updatedEndDate = type === 'end' ? value : prev.endDate;
-      console.log({ updatedStartDate });
-      console.log({ updatedEndDate });
-      const updatedJob = {
+      return {
         ...prev,
         startDate: updatedStartDate,
         endDate: updatedEndDate,
+        internshipPeriod: getExactDuration(updatedStartDate, updatedEndDate),
       };
-      if (updatedStartDate && updatedEndDate) {
-        const start = new Date(updatedStartDate);
-        const end = new Date(updatedEndDate);
-
-        if (start <= end) {
-          const diffMonths =
-            (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-
-          updatedJob.internshipPeriod = `${diffMonths + 1} month${diffMonths + 1 > 1 ? 's' : ''}`;
-        } else {
-          updatedJob.internshipPeriod = '';
-        }
-      }
-
-      return updatedJob;
     });
   };
 
@@ -320,94 +296,6 @@ const AdminDashboard = () => {
           </>
         )}
       </Box>
-
-      {/* <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Box
-          sx={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            p: 4,
-            zIndex: 2,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            Edit Job
-          </Typography>
-          <FormControl fullWidth>
-            <InputLabel>Job Category</InputLabel>
-            <Select
-              value={
-                editJob?.jobCategory === 'full-time' || editJob?.jobCategory === 'Full-Time'
-                  ? 'Full-Time'
-                  : 'Internship'
-              }
-              onChange={handleUpdationoJobCategoryChange}
-              variant="outlined"
-              label="Job Category"
-            >
-              <MenuItem value="Internship">Internship</MenuItem>
-              <MenuItem value="Full-Time">Full-Time</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Start Date"
-            name="startDate"
-            type="date"
-            value={editJob?.startDate}
-            onChange={(e) => handleUpdationDateChange('start', e.target.value)}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          {!(editJob?.jobCategory === 'full-time' || editJob?.jobCategory === 'Full-Time') && (
-            <TextField
-              label="End Date"
-              name="endDate"
-              type="date"
-              value={editJob?.endDate}
-              onChange={(e) => handleUpdationDateChange('end', e.target.value)}
-              fullWidth
-              margin="normal"
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          )}
-          {!(editJob?.jobCategory === 'full-time' || editJob?.jobCategory === 'Full-Time') && (
-            <TextField
-              fullWidth
-              label="Internship Period"
-              name="internshipPeriod"
-              value={editJob?.internshipPeriod || ''}
-              InputProps={{
-                readOnly: true,
-              }}
-              variant="outlined"
-              margin="normal"
-            />
-          )}
-          <Box sx={{ display: 'flex', gap: 3, mt: 3 }}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setModalOpen(false)}
-              fullWidth
-            >
-              Cancel
-            </Button>
-            <Button onClick={updateJob} variant="contained" color="primary" fullWidth>
-              Save Changes
-            </Button>
-          </Box>
-        </Box>
-      </Modal> */}
       <JobEditModal
         modalOpen={modalOpen}
         setModalOpen={setModalOpen}
@@ -438,52 +326,20 @@ const JobCategoryForm = ({ onSave }: { onSave: () => Promise<void> }) => {
     setJobCategory(event.target.value);
   };
 
-  // const handleDateChange = (type, value) => {
-  //   if (type === 'start') {
-  //     setStartDate(value);
-  //   } else if (type === 'end') {
-  //     setEndDate(value);
-  //   }
-
-  //   if (startDate && endDate) {
-  //     const start = new Date(startDate);
-  //     const end = new Date(endDate);
-  //     if (start <= end) {
-  //       const diffMonths =
-  //         (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-  //       setInternshipPeriod(`${diffMonths + 1} month${diffMonths + 1 > 1 ? 's' : ''}`);
-  //     } else {
-  //       setInternshipPeriod('');
-  //     }
-  //   }
-  // };
-  const handleDateChange = (type, value) => {
+  const handleDateChange = (type: 'start' | 'end', value: string) => {
     let updatedStartDate = startDate;
     let updatedEndDate = endDate;
-    console.log({ updatedStartDate });
-    console.log({ value });
     if (type === 'start') {
       updatedStartDate = value;
-      console.log({ updatedStartDate });
       setStartDate(value);
-    } else if (type === 'end') {
+    } else {
       updatedEndDate = value;
       setEndDate(value);
     }
-
-    if (updatedStartDate && updatedEndDate) {
-      const start = new Date(updatedStartDate);
-      const end = new Date(updatedEndDate);
-      console.log({ end });
-      if (start <= end) {
-        const diffMonths =
-          (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-        setInternshipPeriod(`${diffMonths + 1} month${diffMonths + 1 > 1 ? 's' : ''}`);
-      } else {
-        setInternshipPeriod('');
-      }
-    }
+    const duration = getExactDuration(updatedStartDate, updatedEndDate);
+    setInternshipPeriod(duration);
   };
+  
   const handleSubmit = async () => {
     const newJobCategory = {
       jobCategory,

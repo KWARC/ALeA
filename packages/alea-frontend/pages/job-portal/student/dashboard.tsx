@@ -1,5 +1,7 @@
 import { Box, Button, CircularProgress, Icon, Typography } from '@mui/material';
 import {
+  APPLICATION_STATUS,
+  ApplicationStatus,
   canAccessResource,
   getAllJobPosts,
   getJobApplicationsByUserId,
@@ -7,6 +9,7 @@ import {
   JobApplicationInfo,
   JobPostInfo,
   StudentData,
+  
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -15,7 +18,11 @@ import { useEffect, useState } from 'react';
 import { Add, Assignment, Cancel, Chat, EmojiPeople, SvgIconComponent } from '@mui/icons-material';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import { JobCard } from '../../../components/job-portal/JobCard';
-
+export const OFFER_STATUSES:ApplicationStatus[] = [
+  APPLICATION_STATUS.OFFERED,
+  APPLICATION_STATUS.OFFER_ACCEPTED,
+  APPLICATION_STATUS.OFFER_REJECTED,
+]; 
 export const DashboardJobSection = ({
   title,
   jobs,
@@ -218,14 +225,14 @@ export function StudentDashboard() {
       rejected: 0,
     };
     applicationData?.forEach((application) => {
-      const { recruiterAction } = application;
+      const { applicationStatus } = application;
       statusStats.applied += 1;
-      if (recruiterAction === 'REJECT') {
+      if (applicationStatus === APPLICATION_STATUS.REJECTED) {
         statusStats.rejected += 1;
       }
-      if (recruiterAction === 'SEND_OFFER') {
+      if (OFFER_STATUSES.includes(applicationStatus)) {
         statusStats.offerReceived += 1;
-      }
+      }  
     });
         return statusStats;
   };

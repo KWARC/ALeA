@@ -31,7 +31,7 @@ import {
   getCourseInstanceThreads,
   getUserInfo,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import { DateView } from '@alea/react-utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -69,7 +69,7 @@ export function AskAQuestionDialog({
     <>
       <DialogTitle>{t.askAQuestion}</DialogTitle>
       <DialogContent>
-        <MystEditor
+        <MdEditor
           name="question-input"
           minRows={5}
           placeholder={t.enterQuestion}

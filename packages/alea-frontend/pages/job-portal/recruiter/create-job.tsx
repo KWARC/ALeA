@@ -18,6 +18,7 @@ import {
   getJobCategories,
   getRecruiterProfile,
   JobCategoryInfo,
+  JobPostFormData,
   JobPostInfo,
   RecruiterData,
   updateJobPost,
@@ -32,10 +33,7 @@ import {
   OfferDetailsForm,
 } from '../../../components/job-portal/JobList';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-export type JobPostFormData = Omit<
-  JobPostInfo,
-  "id" | "organizationId" | "jobCategoryId"
->;
+
 const JobPostPage = () => {
   const router = useRouter();
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);

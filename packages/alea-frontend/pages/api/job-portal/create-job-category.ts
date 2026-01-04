@@ -14,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const { jobCategory, internshipPeriod, startDate, endDate } = req.body;
+  if(!jobCategory) return res.status(422).send("Missing job category"); 
   let instanceId = req.body.instanceId as string;
   if (!instanceId) instanceId = CURRENT_TERM;
 

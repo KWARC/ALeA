@@ -20,9 +20,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { createJobPost, getJobPosts, JobPostInfo, RecruiterData, updateJobPost } from '@alea/spec';
 import { useEffect, useState } from 'react';
-import { JobPostFormData } from 'packages/alea-frontend/pages/job-portal/recruiter/create-job';
+import { createJobPost, getJobPosts, JobPostFormData, JobPostInfo, RecruiterData, updateJobPost } from '@alea/spec';
 
 export const EligibilityForm = ({
   formData,
