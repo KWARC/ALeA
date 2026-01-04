@@ -75,10 +75,9 @@ function removeRecentCourse(courseCode: string) {
     localStore?.setItem(RECENT_COURSE_KEY, chosenCourses.filter((c) => c !== courseCode).join(','));
   }
 }
-function StudyBuddyOverviewGraph({ instanceId: propInstanceId }: { instanceId?: string }) {
+function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: string }) {
   // TODO(M5)
   const institutionId = 'FAU';
-  const instanceId = propInstanceId || 'WS25-26';
   const [sortedCourses, setSortedCourses] = useState<GetSortedCoursesByConnectionsResponse[]>();
   const [selectedCourseIndex, setSelectedCourseIndex] = useState<string>(null);
   const [connections, setConnections] = useState<UserStats['connections']>([]);
