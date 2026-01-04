@@ -76,7 +76,7 @@ function removeRecentCourse(courseCode: string) {
   }
 }
 function StudyBuddyOverviewGraph({ instanceId: propInstanceId }: { instanceId?: string }) {
-  // TODO(M5) : Make instanceId dynamic
+  // TODO(M5)
   const institutionId = 'FAU';
   const instanceId = propInstanceId || 'WS25-26';
   const [sortedCourses, setSortedCourses] = useState<GetSortedCoursesByConnectionsResponse[]>();
@@ -280,7 +280,8 @@ const Courses: NextPage = () => {
   const [isUserAModerator, setIsUserAModerator] = useState(false);
 
   useEffect(() => {
-    getEnrolledCourseIds(institutionId).then(setEnrolledCourseIds);
+    const instanceId = 'WS25-26';
+    getEnrolledCourseIds(institutionId, instanceId).then(setEnrolledCourseIds);
     getUserInfo().then(setUserInfo);
     canModerateStudyBuddy().then(setIsUserAModerator);
   }, [institutionId]);

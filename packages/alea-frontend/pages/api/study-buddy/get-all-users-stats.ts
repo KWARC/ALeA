@@ -7,8 +7,7 @@ import { getCurrentTermForCourseId } from '../get-current-term';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdIfCanModerateStudyBuddyOrSetError(req, res);
   if (!userId) return;
-  let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
+  const instanceId = req.query.instanceId as string;
   const institutionId = req.query.institutionId as string;
 
   if (!institutionId) {

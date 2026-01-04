@@ -18,8 +18,7 @@ export default async function handler(
   if (!userId) return;
 
   const courseId = req.query.courseId as string;
-  let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
+  const instanceId = req.query.instanceId as string;
   const institutionId = req.query.institutionId as string;
 
   if (!institutionId) {
