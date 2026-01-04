@@ -1,4 +1,4 @@
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
@@ -191,7 +191,7 @@ function AnswerAccepter({
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        <MystEditor
+        <MdEditor
           name={name}
           editingEnabled={!isFrozen}
           placeholder={'...'}

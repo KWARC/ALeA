@@ -11,8 +11,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { getRecruiterProfile, registerRecruiter } from '@alea/spec';
-import { isBusinessDomain } from '@alea/utils';
+import {
+  getRecruiterProfile,
+  getUserProfile,
+  registerRecruiter,
+} from '@alea/spec';
+import { getDomainFromEmail, isBusinessDomain } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';
@@ -30,12 +34,28 @@ export default function RecruiterRegistration() {
     companyName: '',
     position: '',
   });
-  const [errors, setErrors] = useState({ email: '' });
+  const [errors, setErrors] = useState<RecruiterRegistrationData>({ name: '', email: '', companyName: '', position: '' });
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchProfileAndPrefill = async () => {
+      try {
+        const data = await getUserProfile();
+        setFormData((prev) => ({
+          ...prev,
+          name: `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim(),
+          email: data?.email ?? '',
+        }));
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+      }
+    };
+    fetchProfileAndPrefill();
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -64,10 +84,10 @@ export default function RecruiterRegistration() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    if (name === 'email') {
+    if (name in errors) {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        email: '',
+        [name]: '',
       }));
     }
 
@@ -77,9 +97,13 @@ export default function RecruiterRegistration() {
     }));
   };
 
-  const validateEmail = (email: string): boolean => {
+  const validateFields = (formData:RecruiterRegistrationData): boolean => {
+    const {name,email,companyName,position}=formData;
     const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
-
+    if (!name) {
+      setErrors((prevErrors) => ({ ...prevErrors, name: 'Name is required.' }));
+      return false;
+    }
     if (!email) {
       setErrors((prevErrors) => ({ ...prevErrors, email: 'Email is required.' }));
       return false;
@@ -87,8 +111,15 @@ export default function RecruiterRegistration() {
       setErrors((prevErrors) => ({ ...prevErrors, email: 'Invalid email address.' }));
       return false;
     }
-
-    const domain = email.split('@')[1]?.toLowerCase();
+    if (!companyName) {
+      setErrors((prevErrors) => ({ ...prevErrors, companyName: 'Organization Name is required.' }));
+      return false;
+    }
+    if (!position) {
+      setErrors((prevErrors) => ({ ...prevErrors, position: 'Position is required.' }));
+      return false;
+    }
+    const domain = getDomainFromEmail(email).toLowerCase();
     if (!isBusinessDomain(domain)) {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -100,7 +131,7 @@ export default function RecruiterRegistration() {
   };
 
   const handleSubmit = async () => {
-    if (!validateEmail(formData.email)) return;
+    if (!validateFields(formData)) return;
     setIsSubmitting(true);
     try {
       const { name, email, position, companyName } = formData;
@@ -156,6 +187,8 @@ export default function RecruiterRegistration() {
         onChange={handleChange}
         fullWidth
         margin="normal"
+        error={!!errors.name}
+        helperText={errors.name}
       />
       <TextField
         label="Email"
@@ -175,6 +208,8 @@ export default function RecruiterRegistration() {
         onChange={handleChange}
         fullWidth
         margin="normal"
+        error={!!errors.companyName}
+        helperText={errors.companyName}
       />
       <TextField
         label="Position"
@@ -183,6 +218,8 @@ export default function RecruiterRegistration() {
         onChange={handleChange}
         fullWidth
         margin="normal"
+        error={!!errors.position}
+        helperText={errors.position}   
       />
 
       <Button

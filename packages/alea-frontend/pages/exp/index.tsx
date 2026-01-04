@@ -1,4 +1,4 @@
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import { BloomDimension, getUseRdfEncodeUri, setUseRdfEncodeUri } from '@alea/spec';
 import { SelfAssessment2 } from '@alea/stex-react-renderer';
 import { localStore } from '@alea/utils';
@@ -169,7 +169,7 @@ const ExperimentsHome: NextPage = () => {
               />
             </Box>
           </Box>
-          <MystEditor
+          <MdEditor
             name="sample-edit"
             value={value}
             onValueChange={setValue}

@@ -2,10 +2,10 @@ import { Box, TextareaAutosize } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { getLocaleObject } from './lang/utils';
-import { MystViewer } from './myst-viewer';
-import styles from './myst.module.scss';
+import styles from './markdown.module.scss';
+import { MdViewer } from './md-viewer';
 
-interface MystEditorProps {
+interface MdEditorProps {
   name: string;
 
   minRows?: number;
@@ -25,7 +25,7 @@ interface MystEditorProps {
 
 const PREVIEW_TRIGGER_SET = /[#$()_+[\]{}|~*<>=]/;
 
-export function MystEditor({
+export function MdEditor({
   name,
   minRows = 2,
   placeholder = '',
@@ -34,7 +34,7 @@ export function MystEditor({
   onValueChange,
   defaultPreview = false,
   editorProps,
-}: MystEditorProps) {
+}: MdEditorProps) {
   const t = getLocaleObject(useRouter());
   const [autoPreview, setAutoPreview] = useState(defaultPreview);
   const [manualAction, setManualAction] = useState<boolean | undefined>(undefined);
@@ -82,7 +82,7 @@ export function MystEditor({
         )}
         {(showPreview || !editingEnabled) && (
           <Box className={editingEnabled ? styles['edit_preview'] : ''}>
-            <MystViewer content={value} />
+            <MdViewer content={value} />
           </Box>
         )}
       </Box>

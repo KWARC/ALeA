@@ -7,6 +7,8 @@ import {
   RecruiterData,
   StudentData,
   JobApplicationInfo,
+  UpdateJobApplicationRequest,
+  JobApplicationTimelineEntry,
 } from './job-portal';
 export type CreateStudentProfileData = Omit<StudentData, 'userId' | 'socialLinks'>;
 export async function createStudentProfile(data: CreateStudentProfileData) {
@@ -23,9 +25,6 @@ export async function updateStudentProfile(data: UpdateStudentProfileData) {
   });
 }
 
-export async function deleteRecruiterProfile() {
-  await axios.post('/api/job-portal/delete-recruiter-profile', {}, { headers: getAuthHeaders() });
-}
 export type UpdateRecruiterProfileData = Omit<RecruiterData, 'userId' | 'socialLinks'> & {
   socialLinks: string;
 };
@@ -56,19 +55,6 @@ export async function checkIfUserRegisteredOnJP() {
   return response.data as { exists: boolean };
 }
 
-export async function createOrganizationProfile(data: OrganizationData) {
-  await axios.post('/api/job-portal/create-organization-profile', data, {
-    headers: getAuthHeaders(),
-  });
-}
-export async function deleteOrganizationProfile(id: string) {
-  await axios.post(
-    '/api/job-portal/delete-organization-profile',
-    { id },
-    { headers: getAuthHeaders() }
-  );
-}
-
 export async function updateOrganizationProfile(data: OrganizationData, id: number) {
   await axios.post(
     '/api/job-portal/update-organization-profile',
@@ -84,12 +70,7 @@ export async function getOrganizationProfile(id: number) {
   });
   return resp.data as OrganizationData;
 }
-export async function getOrganizationByDomain(domain: string) {
-  const resp = await axios.get('/api/job-portal/get-org-by-domain', {
-    params: { domain },
-  });
-  return resp.data as OrganizationData;
-}
+
 export async function inviteRecruiterToOrg(email: string, orgId: number) {
   const resp = await axios.post(
     '/api/job-portal/create-invite-to-org',
@@ -99,12 +80,6 @@ export async function inviteRecruiterToOrg(email: string, orgId: number) {
   return resp.status === 201;
 }
 
-export async function checkInviteToOrg(organizationId: string, email: string) {
-  const resp = await axios.get('/api/job-portal/check-org-invitations', {
-    params: { organizationId, email },
-  });
-  return resp.data as { hasInvites: boolean };
-}
 export async function registerRecruiter(
   name: string,
   email: string,
@@ -193,9 +168,8 @@ export async function deleteJobPost(id: number) {
   await axios.post('/api/job-portal/delete-job-post', { id }, { headers: getAuthHeaders() });
 }
 
-export type CreateJobApplicationRequest = Omit<JobApplicationInfo, 'id' | 'applicantId'>;
-export async function createJobApplication(data: CreateJobApplicationRequest) {
-  await axios.post('/api/job-portal/create-job-application', data, {
+export async function createJobApplication(jobPostId: number) {
+  await axios.post('/api/job-portal/create-job-application', {jobPostId}, {
     headers: getAuthHeaders(),
   });
 }
@@ -207,24 +181,23 @@ export async function getJobApplicationsByJobPost(jobPostId: number) {
   });
   return resp.data as JobApplicationInfo[];
 }
+
 export async function getJobApplicationsByUserId() {
   const resp = await axios.get('/api/job-portal/get-job-applications-by-userid', {
     headers: getAuthHeaders(),
   });
   return resp.data as JobApplicationInfo[];
 }
-export async function getJobApplicationsByUserIdAndJobPostId(jobPostId: number) {
-  //TODO
-  // Add acl check to know if this api is being called by ADMIN ,
-  //  then userID can be received as query as well
-  const resp = await axios.get('/api/job-portal/get-job-application-by-userid-and-jobpostid', {
+
+export async function getJobApplicationTimeline(applicationId:number) {
+  const resp = await axios.get('/api/job-portal/get-job-application-timeline', {
     headers: getAuthHeaders(),
-    params: { jobPostId },
+    params: { applicationId },
   });
-  return resp.data as JobApplicationInfo[];
+  return resp.data as JobApplicationTimelineEntry[];
 }
 
-export async function updateJobApplication(data: JobApplicationInfo) {
+export async function updateJobApplication(data: UpdateJobApplicationRequest) {
   await axios.post('/api/job-portal/update-job-application', data, {
     headers: getAuthHeaders(),
   });

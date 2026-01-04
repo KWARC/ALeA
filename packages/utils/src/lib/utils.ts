@@ -310,6 +310,11 @@ export function isBusinessDomain(domain?: string) {
     'yopmail.com',
   ].includes(domain);
 }
+export function getDomainFromEmail(email: string): string | undefined {
+  if (!email) return undefined;
+  const parts = email.split("@");
+  return parts.length === 2 ? parts[1] : undefined;
+}
 export function truncateText(text: string, maxLength: number) {
   if (text.length > maxLength) {
     text = text.substring(0, maxLength) + '...';

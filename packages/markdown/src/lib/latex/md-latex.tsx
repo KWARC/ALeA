@@ -1,7 +1,4 @@
-import {
-  MathJaxBaseContext,
-  MathJaxSubscriberProps,
-} from '@alea/mathjax';
+import { MathJaxBaseContext, MathJaxSubscriberProps } from '@alea/mathjax';
 import { useContext, useEffect, useState } from 'react';
 
 interface MdLatexProps {
@@ -47,14 +44,9 @@ async function getRendered(
   }
 }
 
-export function MdLatex({
-  displayMode = false,
-  latex,
-  equationInput,
-}: MdLatexProps) {
+export function MdLatex({ displayMode = false, latex, equationInput }: MdLatexProps) {
   const mjPromise = useContext(MathJaxBaseContext);
-  const [{ renderedHtml: rendered, error }, setRenderedOrError] =
-    useState<RenderedOrError>({});
+  const [{ renderedHtml: rendered, error }, setRenderedOrError] = useState<RenderedOrError>({});
   useEffect(() => {
     if (!mjPromise) return;
     getRendered(mjPromise, latex, displayMode).then(async (v) => {

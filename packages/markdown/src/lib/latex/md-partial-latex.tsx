@@ -1,9 +1,7 @@
 import { MdLatex } from './md-latex';
 import { Fragment } from 'react';
 
-export function getPartialLatexSections(
-  query: string
-): { text: string; isLatex: boolean }[] {
+export function getPartialLatexSections(query: string): { text: string; isLatex: boolean }[] {
   if (!query) return [];
   const sections = [];
   let opened = false;

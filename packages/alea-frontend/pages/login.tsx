@@ -26,7 +26,7 @@ import { useReducer, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import styles from '../styles/utils.module.scss';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 
 const PresetPersonas = [
   { label: 'sabrina', info: 'FAU CS student' },
@@ -39,19 +39,19 @@ export function LoginInfoBox() {
   const { login: t, logInSystem: l } = getLocaleObject(useRouter());
   return (
     <Box className={styles['descriptive-box']}>
-      <MystViewer content={t.notesHeader} />
+      <MdViewer content={t.notesHeader} />
       <ul>
         <li>
-          <MystViewer content={t.notesPoint1} />
+          <MdViewer content={t.notesPoint1} />
         </li>
         <li>
-          <MystViewer content={t.notesPoint2} />
+          <MdViewer content={t.notesPoint2} />
         </li>
         <li>
-          <MystViewer content={t.notesPoint3} />
+          <MdViewer content={t.notesPoint3} />
         </li>
         <li>
-          <MystViewer content={t.notesPoint4} />
+          <MdViewer content={t.notesPoint4} />
         </li>
       </ul>
     </Box>

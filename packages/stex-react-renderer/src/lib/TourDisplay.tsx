@@ -146,7 +146,7 @@ function TourItemDisplay({
 }) {
   const [definitionUris, setDefinitionUris] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
-  const ref = useRef();
+  const ref = useRef<HTMLDivElement>(null);
   const isVisible = useOnScreen(ref);
   useEffect(() => {
     visibilityUpdate(isVisible);

@@ -1,5 +1,5 @@
 import {
-  ApplicantWithProfile,
+  ApplicationWithProfile,
   canAccessResource,
   getJobPosts,
   getRecruiterProfile,
@@ -20,15 +20,17 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import JpLayoutWithSidebar from 'packages/alea-frontend/layouts/JpLayoutWithSidebar';
+import { Cancel, History, Visibility } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
-import { JobSelect } from './applications';
 import { useRouter } from 'next/router';
 import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
-import { Cancel, Visibility } from '@mui/icons-material';
-import { UserProfileCard } from 'packages/alea-frontend/components/job-portal/UserProfileCard';
+import { JobSelect } from './applications';
+import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
+import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
+import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
 export const UserProfileModal = ({
   open,
@@ -52,6 +54,7 @@ export const UserProfileModal = ({
           backgroundColor: '#e0e0e0',
           maxWidth: '600px',
           maxHeight: '80vh',
+          minWidth: { xs: '90vw', sm: 400 },
           p: 2,
           borderRadius: 2,
           display: 'flex',
@@ -84,19 +87,20 @@ export const UserProfileModal = ({
   );
 };
 
-export const OfferApplicantsTable = ({
-  applicants,
-  updateApplicant,
+export const OfferMakingTable = ({
+  applications,
+  updateApplication,
   loading,
 }: {
-  applicants: ApplicantWithProfile[];
-  updateApplicant: (updatedApplicant: ApplicantWithProfile) => void;
+  applications: ApplicationWithProfile[];
+  updateApplication: (updatedApplication: ApplicationWithProfile) => void;
   loading: boolean;
 }) => {
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [showTimeline, setShowTimeline] = useState(false);
 
-  const handleViewApplicant = (applicant: ApplicantWithProfile) => {
-    const profile = { ...applicant.studentProfile };
+  const handleViewApplicant = (application: ApplicationWithProfile) => {
+    const profile = { ...application.studentProfile };
     const socialLinks = profile?.socialLinks || {};
     profile.socialLinks = {
       linkedin: socialLinks.linkedin || 'N/A',
@@ -108,43 +112,54 @@ export const OfferApplicantsTable = ({
   };
 
   const handleMakeOffer = async (
-    applicant: ApplicantWithProfile,
-    updateApplicant: (updatedApplicant: ApplicantWithProfile) => void
+    application: ApplicationWithProfile,
+    updateApplication: (updatedApplication: ApplicationWithProfile) => void
   ) => {
     try {
-      const application = {
-        ...applicant,
+      await updateJobApplication({
+        id: application.id,
+        action: 'SEND_OFFER',
+        // message:''//TODO
+      });
+
+      updateApplication({
+        ...application,
         applicationStatus: 'OFFERED',
-        recruiterAction: 'SEND_OFFER',
-      };
-      const res = await updateJobApplication(application);
-      updateApplicant(application);
-    } catch (error) {
-      console.error('Failed to make offer', error);
+      });
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const handleWithdrawOffer = async (
-    applicant: ApplicantWithProfile,
-    updateApplicant: (updatedApplicant: ApplicantWithProfile) => void
+    application: ApplicationWithProfile,
+    updateApplication: (updatedApplication: ApplicationWithProfile) => void
   ) => {
     try {
-      const application = {
-        ...applicant,
+      await updateJobApplication({
+        id: application.id,
+        action: 'REVOKE_OFFER',
+        // message:''//TODO
+      });
+
+      updateApplication({
+        ...application,
         applicationStatus: 'OFFER_REVOKED',
-        recruiterAction: 'REVOKE_OFFER',
-      };
-      const res = await updateJobApplication(application);
-      updateApplicant(application);
-    } catch (error) {
-      console.error('Failed to withdraw offer', error);
+      });
+    } catch (err) {
+      console.error(err);
     }
   };
+
   const handleCloseProfile = () => {
     setSelectedProfile(null);
   };
+  const handleOpenTimeline = () => setShowTimeline(true);
+  const handleCloseTimeline = () => setShowTimeline(false);
   const renderCandidateResponse = (applicationStatus) => {
-    if (!['OFFER_ACCEPTED', 'OFFERED', 'OFFER_REJECTED'].includes(applicationStatus)) {
+    if (
+      !['OFFER_ACCEPTED', 'OFFERED', 'OFFER_REJECTED', 'OFFER_REVOKED'].includes(applicationStatus)
+    ) {
       return (
         <Typography variant="body2" color="text.secondary">
           No offer sent
@@ -160,18 +175,21 @@ export const OfferApplicantsTable = ({
     if (applicationStatus === 'OFFER_REJECTED') {
       return <Chip label="Offer rejected" size="small" color="error" />;
     }
+    if (applicationStatus === 'OFFER_REVOKED') {
+      return <Chip label="Offer revoked" size="small" color="error" />;
+    }
     return null;
   };
 
-  const renderAction = (applicant: ApplicantWithProfile) => {
-    const applicationStatus = applicant.applicationStatus;
+  const renderAction = (application: ApplicationWithProfile) => {
+    const applicationStatus = application.applicationStatus;
 
     if (!['OFFER_ACCEPTED', 'OFFERED', 'OFFER_REJECTED'].includes(applicationStatus)) {
       return (
         <Button
           variant="contained"
           size="small"
-          onClick={() => handleMakeOffer(applicant, updateApplicant)}
+          onClick={() => handleMakeOffer(application, updateApplication)}
         >
           Make Offer
         </Button>
@@ -182,12 +200,12 @@ export const OfferApplicantsTable = ({
       return (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Chip label="Offer Made" size="small" color="success" />
-          {applicationStatus === 'OFFERED' && (
+          {(applicationStatus === 'OFFERED' || applicationStatus === 'OFFER_ACCEPTED') && (
             <Button
               size="small"
               color="error"
               variant="outlined"
-              onClick={() => handleWithdrawOffer(applicant, updateApplicant)}
+              onClick={() => handleWithdrawOffer(application, updateApplication)}
             >
               Revoke
             </Button>
@@ -235,24 +253,38 @@ export const OfferApplicantsTable = ({
                 <CircularProgress />
               </TableCell>
             </TableRow>
-          ) : applicants.length === 0 ? (
+          ) : applications.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                 <Typography color="text.secondary">No shortlisted candidates found</Typography>
               </TableCell>
             </TableRow>
           ) : (
-            applicants.map((applicant) => (
-              <TableRow key={applicant.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+            applications.map((application) => (
+              <TableRow key={application.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
                 <TableCell sx={{ textAlign: 'center' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 1 }}
+                  >
                     <Typography fontWeight={500}>
-                      {applicant.studentProfile?.name || '—'}
+                      {application.studentProfile?.name || '—'}
                     </Typography>
-                    <IconButton color="primary" onClick={() => handleViewApplicant(applicant)}>
+                    <IconButton color="primary" onClick={() => handleViewApplicant(application)}>
                       <Visibility />
                     </IconButton>
+
+                    <Tooltip title="View Application Timeline" arrow>
+                      <IconButton color="info" size="small" onClick={handleOpenTimeline}>
+                        <History fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
+
+                  <JobApplicationTimelineModal
+                    open={showTimeline}
+                    applicationId={application.id}
+                    onClose={handleCloseTimeline}
+                  />
                   <UserProfileModal
                     open={Boolean(selectedProfile)}
                     profile={selectedProfile}
@@ -262,15 +294,15 @@ export const OfferApplicantsTable = ({
 
                 <TableCell sx={{ textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    {applicant.studentProfile?.email || '—'}
+                    {application.studentProfile?.email || '—'}
                   </Typography>
                 </TableCell>
 
                 <TableCell sx={{ textAlign: 'center' }}>
-                  {renderCandidateResponse(applicant.applicationStatus)}
+                  {renderCandidateResponse(application.applicationStatus)}
                 </TableCell>
 
-                <TableCell sx={{ textAlign: 'center' }}>{renderAction(applicant)}</TableCell>
+                <TableCell sx={{ textAlign: 'center' }}>{renderAction(application)}</TableCell>
               </TableRow>
             ))
           )}
@@ -282,7 +314,7 @@ export const OfferApplicantsTable = ({
 
 const MakeOffer = () => {
   const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
-  const [applicants, setApplicants] = useState<ApplicantWithProfile[]>([]);
+  const [applications, setApplications] = useState<ApplicationWithProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [accessCheckLoading, setAccessCheckLoading] = useState(false);
   const router = useRouter();
@@ -327,12 +359,14 @@ const MakeOffer = () => {
     'OFFER_REJECTED',
   ];
 
-  const shortlistedApplicants = applicants.filter((applicant) =>
-    shortlistedStatuses.includes(applicant.applicationStatus)
+  const shortlistedApplications = applications.filter((application) =>
+    shortlistedStatuses.includes(application.applicationStatus)
   );
-  const updateApplicant = (updatedApplicant: ApplicantWithProfile) => {
-    setApplicants((prev: ApplicantWithProfile[]) =>
-      prev.map((applicant) => (applicant.id === updatedApplicant.id ? updatedApplicant : applicant))
+  const updateApplication = (updatedApplication: ApplicationWithProfile) => {
+    setApplications((prev: ApplicationWithProfile[]) =>
+      prev.map((application) =>
+        application.id === updatedApplication.id ? updatedApplication : application
+      )
     );
   };
   if (accessCheckLoading) return <CircularProgress />;
@@ -344,11 +378,11 @@ const MakeOffer = () => {
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 2, my: 2 }}>
-        <JobSelect jobPosts={jobPosts} setApplicants={setApplicants} setLoading={setLoading} />
+        <JobSelect jobPosts={jobPosts} setApplications={setApplications} setLoading={setLoading} />
       </Box>
-      <OfferApplicantsTable
-        applicants={shortlistedApplicants}
-        updateApplicant={updateApplicant}
+      <OfferMakingTable
+        applications={shortlistedApplications}
+        updateApplication={updateApplication}
         loading={loading}
       />
     </Box>

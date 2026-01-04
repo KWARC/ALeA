@@ -7,8 +7,10 @@ import {
   Select,
   Typography,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import {
-  ApplicantWithProfile,
+  ApplicationWithProfile,
   canAccessResource,
   getJobApplicationsByJobPost,
   getJobPosts,
@@ -18,29 +20,27 @@ import {
   RecruiterData,
 } from '@alea/spec';
 import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
-import { useRouter } from 'next/router';
-import { ApplicantTable } from '../../../components/job-portal/ApplicantsTable';
+import { ApplicationTable } from '../../../components/job-portal/ApplicationsTable';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-import { useEffect, useState } from 'react';
 
 const StatusFilter = ({
-  applicants,
-  setFilteredApplicants,
+  applications,
+  setFilteredApplications,
 }: {
-  applicants: ApplicantWithProfile[];
-  setFilteredApplicants: React.Dispatch<React.SetStateAction<ApplicantWithProfile[]>>;
+  applications: ApplicationWithProfile[];
+  setFilteredApplications: React.Dispatch<React.SetStateAction<ApplicationWithProfile[]>>;
 }) => {
   const [filterStatus, setFilterStatus] = useState('');
 
   useEffect(() => {
     if (filterStatus) {
-      setFilteredApplicants(
-        applicants.filter((applicant) => applicant.applicationStatus === filterStatus)
+      setFilteredApplications(
+        applications.filter((application) => application.applicationStatus === filterStatus)
       );
     } else {
-      setFilteredApplicants(applicants);
+      setFilteredApplications(applications);
     }
-  }, [applicants, filterStatus]);
+  }, [applications, filterStatus]);
 
   return (
     <FormControl
@@ -75,34 +75,34 @@ const StatusFilter = ({
 
 export const JobSelect = ({
   setLoading,
-  setApplicants,
+   setApplications,
   jobPosts,
 }: {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setApplicants: React.Dispatch<React.SetStateAction<ApplicantWithProfile[]>>;
+  setApplications: React.Dispatch<React.SetStateAction<ApplicationWithProfile[]>>;
   jobPosts: JobPostInfo[];
 }) => {
   const [selectedJob, setSelectedJob] = useState<JobPostInfo | null>(
     jobPosts.length > 0 ? jobPosts[0] : null
   );
-  async function getApplicants(job: JobPostInfo) {
+  async function getApplications(job: JobPostInfo) {
     if (!job) return;
     setLoading(true);
     try {
       const applications = await getJobApplicationsByJobPost(job?.id);
       const applicationsWithJobTitle = applications.map((application) => ({
         ...application,
-        jobPostTitle: job?.jobTitle,
+        jobTitle: job?.jobTitle,
       }));
-      const applicantDetails = await Promise.all(
+      const applicationsWithProfile = await Promise.all(
         applicationsWithJobTitle.map(async (application) => {
           const studentProfile = await getStudentProfileUsingUserId(application.applicantId);
           return { ...application, studentProfile };
         })
       );
-      setApplicants(applicantDetails);
+      setApplications(applicationsWithProfile);
     } catch (error) {
-      console.error('Error fetching applicants:', error);
+      console.error('Error fetching applications:', error);
     } finally {
       setLoading(false);
     }
@@ -110,9 +110,9 @@ export const JobSelect = ({
 
   useEffect(() => {
     if (selectedJob) {
-      getApplicants(selectedJob);
+      getApplications(selectedJob);
     } else {
-      setApplicants([]);
+      setApplications([]);
     }
   }, [selectedJob]);
 
@@ -152,8 +152,8 @@ export const JobSelect = ({
 };
 
 const Applications = () => {
-  const [applicants, setApplicants] = useState<ApplicantWithProfile[]>([]);
-  const [filteredApplicants, setFilteredApplicants] = useState(applicants);
+  const [applications, setApplications] = useState<ApplicationWithProfile[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState(applications);
   const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
   const [accessCheckLoading, setAccessCheckLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -200,14 +200,14 @@ const Applications = () => {
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <JobSelect setLoading={setLoading} setApplicants={setApplicants} jobPosts={jobPosts} />
-          <StatusFilter applicants={applicants} setFilteredApplicants={setFilteredApplicants} />
+          <JobSelect setLoading={setLoading} setApplications={setApplications} jobPosts={jobPosts} />
+          <StatusFilter applications={applications} setFilteredApplications={setFilteredApplications} />
         </Box>
         <hr />
-        <ApplicantTable
+        <ApplicationTable
           loading={loading}
-          filteredApplicants={filteredApplicants}
-          setFilteredApplicants={setFilteredApplicants}
+          filteredApplications={filteredApplications}
+          setFilteredApplications={setFilteredApplications}
         />
       </Box>
     </Box>
