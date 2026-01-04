@@ -21,8 +21,8 @@ export default async function handler(
   const instanceId = req.query.instanceId as string;
   const institutionId = req.query.institutionId as string;
 
-  if (!institutionId) {
-    res.status(422).end('Missing required field: institutionId');
+  if (!institutionId || !courseId || !instanceId) {
+    res.status(422).end('Missing required field: institutionId or courseId or instanceId');
     return;
   }
   
