@@ -1,14 +1,14 @@
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import { getUserInfo } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { EditView } from './EditView';
 import styles from './comments.module.scss';
 import { getLocaleObject } from './lang/utils';
 import { SelectedInfo } from './selected-info';
+import { useCurrentUser } from '@alea/react-utils';
 
 interface CommentReplyProps {
   uri?: FTML.Uri;
@@ -34,13 +34,8 @@ export function CommentReply({
   onUpdate,
 }: CommentReplyProps) {
   const t = getLocaleObject(useRouter());
-  const [name, setName] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    getUserInfo().then((userInfo) => {
-      setName(userInfo?.fullName);
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const name = user?.fullName || '';
 
   const [postAnonymously, setPostAnonymously] = useState(false);
 

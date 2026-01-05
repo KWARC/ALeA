@@ -1,20 +1,13 @@
 import { FTML } from '@flexiformal/ftml';
 import { Box, Button, Checkbox, FormControlLabel } from '@mui/material';
-import {
-  Comment,
-  CommentType,
-  QuestionStatus,
-  addComment,
-  editComment,
-  getUserInfo,
-} from '@alea/spec';
+import { Comment, CommentType, QuestionStatus, addComment, editComment } from '@alea/spec';
 import { MdEditor } from '@alea/markdown';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../../alea-frontend/contexts/CurrentTermContext';
 import { discardDraft, retrieveDraft, saveDraft } from './comment-helpers';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/react-utils';
+import { useCommentRefresh, useCurrentUser } from '@alea/react-utils';
 import { clearCommentStore } from './comment-store-manager';
 
 interface EditViewProps {
@@ -50,16 +43,11 @@ export function EditView({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(undefined);
   const [inputText, setInputText] = useState(existingComment?.statement || '');
-  const [userName, setUserName] = useState<string | undefined>(undefined);
   const [needsResponse, setNeedsResponse] = useState(true);
   const t = getLocaleObject(router);
   const { triggerRefresh } = useCommentRefresh();
-
-  useEffect(() => {
-    getUserInfo().then((userInfo) => {
-      setUserName(userInfo?.fullName);
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const userName = user?.fullName || '';
 
   useEffect(() => {
     if (existingComment) return;

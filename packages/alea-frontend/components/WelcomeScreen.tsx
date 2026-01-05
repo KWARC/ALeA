@@ -7,10 +7,8 @@ import {
   getCourseQuizList,
   getCoverageTimeline,
   getHomeworkList,
-  getUserInfo,
   QuestionStatus,
   QuizStubInfo,
-  UserInfo,
 } from '@alea/spec';
 import {
   Action,
@@ -54,6 +52,7 @@ import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
 import SystemAlertBanner from './SystemAlertBanner';
+import { useCurrentUser } from '@alea/react-utils';
 
 interface ColorInfo {
   color: string;
@@ -761,12 +760,12 @@ function WelcomeScreen({
   resourcesForInstructor: CourseResourceAction[];
   filteredCourses: CourseInfo[];
 }) {
-  const [userInfo, setUserInfo] = useState<UserInfo>(null);
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];
+  const { user } = useCurrentUser();
 
   const {
     resource: r,
@@ -776,15 +775,12 @@ function WelcomeScreen({
     () => groupByCourseId(resourcesForInstructor),
     [resourcesForInstructor]
   );
-  useEffect(() => {
-    getUserInfo().then((user) => setUserInfo(user));
-  }, []);
 
   useEffect(() => {
     getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
   }, [currentTerm]);
 
-  const isFAUId = isFauId(userInfo?.userId);
+  const isFAUId = isFauId(user?.userId);
 
   useEffect(() => {
     const fetchDescriptions = async () => {
@@ -841,7 +837,7 @@ function WelcomeScreen({
         <Typography
           sx={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}
         >
-          {r.welcome}, {userInfo?.fullName}
+          {r.welcome}, {user?.fullName}
         </Typography>
         {isFAUId && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2 }}>

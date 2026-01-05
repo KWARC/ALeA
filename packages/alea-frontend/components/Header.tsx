@@ -3,8 +3,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
-import { getUserInfo, isLoggedIn, logout } from '@alea/spec';
-import { CountryFlag, useScrollDirection } from '@alea/react-utils';
+import { logout } from '@alea/spec';
+import { CountryFlag, useCurrentUser, useIsLoggedIn } from '@alea/react-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -30,17 +30,14 @@ function UserButton() {
     setAnchorEl(null);
   };
   // Menu crap End
-
-  const [userName, setUserName] = useState('User');
   const { pushInstruction } = useMatomo();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
-    getUserInfo().then((userInfo) => {
-      if (!userInfo) return;
-      setUserName(userInfo.givenName);
-      pushInstruction('setUserId', userInfo.userId);
-    });
-  }, []);
+    if (!user) return;
+    pushInstruction('setUserId', user.userId);
+  }, [user]);
+  const displayName = user?.givenName ?? 'User';
 
   return (
     <Box whiteSpace="nowrap">
@@ -52,7 +49,7 @@ function UserButton() {
         }}
         onClick={handleClick}
       >
-        {userName}
+        {displayName}
       </Button>
       <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem
@@ -129,7 +126,7 @@ function LanguageButton() {
 }
 
 export function Header({ headerBgColor }: { headerBgColor?: string }) {
-  const loggedIn = isLoggedIn();
+  const loggedIn = useIsLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
   const background = headerBgColor
@@ -139,7 +136,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
     : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
     ? 'crimson !important'
     : 'blue !important';
- 
+
   return (
     <AppBar
       position="sticky"

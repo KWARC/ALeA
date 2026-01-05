@@ -23,11 +23,12 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { getSectionGoals, getUserInfo, Goal, runGraphDbUpdateQuery, UserInfo } from '@alea/spec';
+import { getSectionGoals, Goal, runGraphDbUpdateQuery } from '@alea/spec';
 import { GoalQuizDialog } from './GoalQuizDialog';
 import { RightSidebar } from './RightSidebar';
 import { CreateNodeDialog, EditNodeDialog } from './NodeDialogs';
 import { GOAL_NODE_COLORS, GoalEdge, GoalNode, GoalNodeComponent } from './GoalNode';
+import { useCurrentUser } from '@alea/react-utils';
 
 function InstanceSetter({ setInstance }: { setInstance: (instance: ReactFlowInstance) => void }) {
   const instance = useReactFlow();
@@ -124,14 +125,7 @@ export default function GoalHierarchyDialog({
   const pendingConnectionRef = useRef<any>(null);
   const [quizDialogOpen, setQuizDialogOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
-
-  useEffect(() => {
-    getUserInfo().then((info) => {
-      if (!info) return;
-      setUserInfo(info);
-    });
-  }, []);
+  const { user } = useCurrentUser();
 
   const fetchGoals = useCallback(async () => {
     setLoading(true);
@@ -188,10 +182,7 @@ export default function GoalHierarchyDialog({
       ]);
     }
 
-    return nodes.filter(
-      (n) =>
-         (!visibleNodeIds || visibleNodeIds.has(n.id))
-    );
+    return nodes.filter((n) => !visibleNodeIds || visibleNodeIds.has(n.id));
   }, [nodes, edges, selectedLevels, focusedNodeId]);
 
   const filteredEdges = useMemo(() => {
@@ -301,11 +292,7 @@ WHERE {
 
     try {
       setNodes((prev) =>
-        prev.map((n) =>
-          n.id === oldUri
-            ? { ...n, data: { ...n.data, label: newLabel} }
-            : n
-        )
+        prev.map((n) => (n.id === oldUri ? { ...n, data: { ...n.data, label: newLabel } } : n))
       );
       await runGraphDbUpdateQuery(sparqlUpdate);
       setEditDialogOpen(false);
@@ -329,8 +316,8 @@ WHERE {
             <Box flex={1.2} border="1px solid #ddd" borderRadius={2} overflow="hidden">
               <ReactFlow
                 defaultEdgeOptions={{
-                style: { stroke: '#000'},  
-               }}
+                  style: { stroke: '#000' },
+                }}
                 nodes={filteredNodes}
                 edges={filteredEdges}
                 nodeTypes={nodeTypes}
@@ -383,7 +370,7 @@ WHERE {
                 onClose={() => setQuizDialogOpen(false)}
                 goalText={selectedGoal}
                 courseId={courseId}
-                userInfo={userInfo}
+                userInfo={user}
               />
               {focusedNodeId && (
                 <Button onClick={() => setFocusedNodeId(null)} variant="outlined" size="small">

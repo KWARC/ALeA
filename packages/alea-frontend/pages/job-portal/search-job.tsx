@@ -28,13 +28,13 @@ import {
   getAllJobPosts,
   getJobApplicationsByUserId,
   getOrganizationProfile,
-  getUserInfo,
   OrganizationData,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import JpLayoutWithSidebar from '../../layouts/JpLayoutWithSidebar';
+import { useCurrentUser } from '@alea/react-utils';
 
 const JobDetailsModal = ({ open, onClose, selectedJob }) => {
   return (
@@ -320,6 +320,7 @@ export function SearchJob() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [openJobModal, setOpenJobModal] = useState(false);
   const router = useRouter();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -422,8 +423,7 @@ export function SearchJob() {
   };
   const handleApply = async (jobPostId: number) => {
     try {
-      const userInfo = await getUserInfo();
-      if (!userInfo) return;
+      if (!user) return;
       await createJobApplication(jobPostId);
       setJobPosts((prevJobs) =>
         prevJobs.map((job) => (job.id === jobPostId ? { ...job, alreadyApplied: true } : job))

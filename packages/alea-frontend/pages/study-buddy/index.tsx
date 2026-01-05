@@ -30,14 +30,12 @@ import {
 import {
   AllCoursesStats,
   GetSortedCoursesByConnectionsResponse,
-  UserInfo,
   UserStats,
   canModerateStudyBuddy,
   getAllUsersStats,
   getEnrolledCourseIds,
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
-  getUserInfo,
 } from '@alea/spec';
 import { MaAI_COURSES, PRIMARY_COL, localStore } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -268,12 +266,10 @@ const Courses: NextPage = () => {
   const { studyBuddy: t } = getLocaleObject(useRouter());
   const [, forceRerender] = useReducer((x) => x + 1, 0);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(null);
   const [isUserAModerator, setIsUserAModerator] = useState(false);
 
   useEffect(() => {
     getEnrolledCourseIds().then(setEnrolledCourseIds);
-    getUserInfo().then(setUserInfo);
     canModerateStudyBuddy().then(setIsUserAModerator);
   }, []);
   const courseIds = enrolledCourseIds.map((item) => item?.courseId);
