@@ -4,8 +4,7 @@ import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } f
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
-
-type SearchResult = { Document: string } | { Paragraph: { uri: string } };
+import type { SearchResult } from '@flexiformal/ftml-backend';
 
 const SearchCourseNotes = ({
   courseId,
@@ -139,6 +138,7 @@ const SearchCourseNotes = ({
                   </Box>
                 );
               }
+
 
               return null;
             })}
