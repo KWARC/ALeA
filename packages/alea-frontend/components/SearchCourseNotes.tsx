@@ -1,10 +1,10 @@
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
+import { SafeFTMLDocument, SafeFTMLFragment } from '@alea/stex-react-renderer';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
-import type { SearchResult } from '@flexiformal/ftml-backend';
+import { searchDocs, type SearchResult } from '@flexiformal/ftml-backend';
 
 const SearchCourseNotes = ({
   courseId,
@@ -42,16 +42,10 @@ const SearchCourseNotes = ({
     setIsLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(
-        `/api/search-docs?query=${encodeURIComponent(searchQuery)}&notesUri=${encodeURIComponent(
-          notesUri
-        )}`
-      );
+      const res: [number, SearchResult][] = await searchDocs(searchQuery, [notesUri], 15);
+      console.log({ res });
 
-      const data = await res.json();
-
-      const normalized = Array.isArray(data) ? data.map(([, r]: any) => r).filter(Boolean) : [];
-
+      const normalized = (res ?? []).map(([, r]) => r);
       setResults(normalized);
     } catch (e) {
       console.error(e);
@@ -139,6 +133,13 @@ const SearchCourseNotes = ({
                 );
               }
 
+              if ('Paragraph' in res) {
+                return (
+                  <Box key={idx} mb={2}>
+                    <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: res.Paragraph.uri }} />
+                  </Box>
+                );
+              }
 
               return null;
             })}
