@@ -1,11 +1,7 @@
 import { Box, Paper, Typography } from '@mui/material';
 import { CommentNoteToggleView } from '@alea/comments';
 
-interface NotesAndCommentsSectionProps {
-  currentSlideUri: string;
-}
-
-export default function NotesAndCommentsSection({ currentSlideUri }: NotesAndCommentsSectionProps) {
+export default function NotesAndCommentsSection({ currentSlideUri }: { currentSlideUri: string }) {
   return (
     <Paper
       elevation={1}

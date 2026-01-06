@@ -446,7 +446,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
     <Box
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
-      mt={navOnTop ? '0px' : '0px'}
       sx={{ position: 'relative' }}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>

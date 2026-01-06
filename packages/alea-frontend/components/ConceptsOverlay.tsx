@@ -66,7 +66,7 @@ export function ConceptsOverlay({
             Loading concepts...
           </Typography>
         </Box>
-      ) : conceptsUri && conceptsUri.length > 0 ? (
+     ) : conceptsUri?.length ?  (
         <Box display="flex" flexDirection="column" gap={1}>
           {conceptsUri.map((uri, index) => (
             <Box
