@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
-import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -210,13 +209,6 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
               {sections.map(({ id, uri, sectionTitle }, index) => {
                 const problemCount = problemCounts?.[uri || ''] || 0;
                 const isEnabled = problemCount > 0;
-
-                const statusText =
-                  problemCounts === null
-                    ? 'Loading...'
-                    : problemCount > 0
-                    ? `${problemCount} problems`
-                    : 'No problems found';
 
                 return (
                   <ListItem

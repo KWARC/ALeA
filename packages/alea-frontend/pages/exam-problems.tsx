@@ -40,7 +40,6 @@ const ExamProblemsPage = () => {
         }
       } catch (err) {
         if (isMounted) {
-          console.error('Error fetching problem list:', err);
           setError('Failed to load the problem list from the backend.');
         }
       } finally {

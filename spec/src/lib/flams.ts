@@ -425,14 +425,11 @@ PREFIX ulo: <http://mathhub.info/ulo#>
 export async function getProblemsForExam(examUri: string): Promise<string[]> {
   if (!examUri) return [];
 
-  console.log('Final Clean URI for DB:', examUri);
-
   const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_EXAM, {
     _uri_exam: examUri,
   });
 
   const problems = results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
-  console.log('Problems found:', problems.length);
 
   return problems;
 }
