@@ -118,10 +118,7 @@ export function MediaItem({
     window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
   }, [showConcepts]);
 
-  const hasSlides = useMemo(() => {
-    if (typeof hasSlidesForSection === 'boolean') return hasSlidesForSection;
-    return false;
-  }, [hasSlidesForSection]);
+  const hasSlides = !!hasSlidesForSection; 
   const masterVideoUrl = presenterVideoId || videoId;
 
   const currentSlideClipRange = useMemo(

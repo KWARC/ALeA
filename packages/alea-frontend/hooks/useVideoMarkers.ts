@@ -39,7 +39,9 @@ export function useVideoMarkers({
   const markersInDescOrder = useMemo(() => {
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
   }, [markers]);
-
+  useEffect(() => {
+    autoSyncRef.current = autoSyncEnabled;
+  }, [autoSyncEnabled]);
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;

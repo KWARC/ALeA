@@ -94,10 +94,7 @@ function populateClipIds(sections: SectionInfo[], clipIds: { [sectionId: string]
   }
 }
 
-function populateSlidesClipInfos(
-  sections: SectionInfo[],
-  slidesClipInfo: SlidesClipInfo
-) {
+function populateSlidesClipInfos(sections: SectionInfo[], slidesClipInfo: SlidesClipInfo) {
   for (const section of sections) {
     slidesClipInfo[section.id] = section.clipInfo;
     populateSlidesClipInfos(section.children, slidesClipInfo);
@@ -203,6 +200,17 @@ const CourseViewPage: NextPage = () => {
   const handleVideoLoad = (status) => {
     setVideoLoaded(status);
   };
+  const hasSlidesBySection = useMemo(() => {
+    if (!videoExtractedData) return {};
+    const result: Record<string, boolean> = {};
+    for (const [, item] of Object.entries(videoExtractedData)) {
+      const secId = (item.sectionId as string) || '';
+      const slideUri = (item.slideUri as string) || '';
+      if (!secId || !slideUri.trim()) continue;
+      result[secId] = true;
+    }
+    return result;
+  }, [videoExtractedData]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -371,18 +379,8 @@ const CourseViewPage: NextPage = () => {
   };
 
   const sectionSlides = slidesUriToIndexMap[sectionId];
-  let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
-  if (!hasSlidesForSection && videoExtractedData && sectionId) {
-    const sectionMarkers = Object.entries(videoExtractedData).filter(
-      ([, item]: [string, Record<string, unknown>]) => {
-        return (
-          ((item.sectionId as string) || '').trim() === sectionId &&
-          ((item.slideUri as string) || '').trim() !== ''
-        );
-      }
-    );
-    hasSlidesForSection = sectionMarkers.length > 0;
-  }
+  const hasSlidesForSection =
+    (sectionSlides && Object.keys(sectionSlides).length > 0) || !!hasSlidesBySection[sectionId];
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>

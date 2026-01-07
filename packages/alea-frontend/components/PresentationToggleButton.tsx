@@ -37,15 +37,10 @@ export function PresentationToggleButton({
     },
   };
 
-  const inlineStyles = inline
-    ? {
-        position: 'relative' as const,
-        zIndex: 1,
-      }
-    : {
-        position: 'relative' as const,
-        zIndex: 1,
-      };
+  const inlineStyles = {
+    position: 'relative' as const,
+    zIndex: 1,
+  };
 
   const button = (
     <IconButton

@@ -169,24 +169,24 @@ export function VideoDisplay({
   const [showOverlay, setShowOverlay] = useState(false);
   const [reveal, setReveal] = useState(false);
   const router = useRouter();
-  const markers = Object.entries(videoExtractedData || {})
-    .filter(([, item]: [string, Record<string, unknown>]) => {
-      return (
-        ((item.sectionId as string) || '').trim() !== '' &&
-        ((item.slideUri as string) || '').trim() !== ''
-      );
-    })
-    .map(([timestampKey, item]: [string, Record<string, unknown>]) => ({
-      time: Math.floor(Number(timestampKey) || ((item.start_time as number) ?? 0)),
-      label: (item.sectionTitle as string) || 'Untitled',
-      data: {
-        thumbnail: (item.thumbnail as string) || null,
-        ocr_slide_content: (item.ocr_slide_content as string) || null,
-        sectionId: item.sectionId as string,
-        sectionUri: item.sectionUri as string,
-        slideUri: item.slideUri as string,
-      },
-    }));
+  const markers: Marker[] = useMemo(() => {
+    if (!videoExtractedData) return [];
+    return Object.entries(videoExtractedData)
+      .filter(([, item]) => {
+        return (item.sectionId || '').trim() !== '' && (item.slideUri || '').trim() !== '';
+      })
+      .map(([timestampKey, item]) => ({
+        time: Math.floor(Number(timestampKey) || (item.start_time ?? 0)),
+        label: item.sectionTitle || 'Untitled',
+        data: {
+          sectionId: item.sectionId,
+          sectionUri: item.sectionUri,
+          thumbnail: null,
+          slideUri: item.slideUri,
+          ocr_slide_content: item.ocr_slide_content ?? null,
+        },
+      }));
+  }, [videoExtractedData]);
   useEffect(() => {
     setIsChangingResolution(true);
   }, [resolution]);

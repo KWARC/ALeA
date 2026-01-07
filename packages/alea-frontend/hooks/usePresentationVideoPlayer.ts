@@ -38,12 +38,7 @@ export function usePresentationVideoPlayer({
       return;
     }
     if (!presentationPlayerRef.current) {
-      const timeoutId = setTimeout(() => {
-        if (presentationPlayerRef.current && !presentationVideoPlayer.current) {
-          // Element is now available, will be handled in next effect run
-        }
-      }, 100);
-      return () => clearTimeout(timeoutId);
+      return;  
     }
 
     let player = presentationVideoPlayer.current;

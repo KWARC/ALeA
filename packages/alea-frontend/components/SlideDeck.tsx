@@ -21,6 +21,7 @@ import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
 import { SlidesClipInfo } from '../types/slideClipInfo';
+import { relative } from 'path';
 
 export function SlidePopover({
   slides,
@@ -474,7 +475,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
         sx={{ mt: navOnTop ? 1 : 0 }}
       >
         <Box flex={1} />
-        <Box display="flex" justifyContent="flex-end" alignItems="center" flex={1} gap={0.5}>
+        <Box display="flex" justifyContent="flex-end" alignItems="center" flex={1} gap={0.5} position="relative">
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />
           )}
