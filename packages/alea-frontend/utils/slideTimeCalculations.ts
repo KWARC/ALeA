@@ -1,6 +1,6 @@
 import { ClipInfo, Slide } from '@alea/spec';
 import { SlidesUriToIndexMap } from '../components/VideoDisplay';
-import { SlidesClipInfo } from '../types/slideClipInfo';
+import { SlidesClipInfo } from '@alea/spec';
 
 export interface SlideClipRange {
   start: number;

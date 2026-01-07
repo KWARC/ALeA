@@ -25,7 +25,7 @@ import { ConceptsOverlay } from './ConceptsOverlay';
 import { AwayFromSlideWarning } from './AwayFromSlideWarning';
 import { SafeHtml } from '@alea/react-utils';
 import { PresentationToggleButton } from './PresentationToggleButton';
-import { SlidesClipInfo } from '../types/slideClipInfo';
+import { SlidesClipInfo } from '@alea/spec';
 
 export interface Marker {
   time: number;

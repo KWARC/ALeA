@@ -20,8 +20,7 @@ import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
-import { SlidesClipInfo } from '../types/slideClipInfo';
-import { relative } from 'path';
+import { SlidesClipInfo } from '@alea/spec';
 
 export function SlidePopover({
   slides,

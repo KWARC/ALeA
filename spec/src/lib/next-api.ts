@@ -53,6 +53,11 @@ export interface ClipInfo {
   start_time?: number;
   end_time?: number;
 }
+export type SlidesClipInfo = {
+  [sectionId: string]: {
+    [slideUri: string]: ClipInfo[];
+  };
+};
 export interface ClipMetadata {
   start_time?: number;
   end_time?: number;

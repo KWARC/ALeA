@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 import { MediaItem, Marker } from './MediaItem';
-import { SlidesClipInfo } from '../types/slideClipInfo';
+import { SlidesClipInfo } from '@alea/spec';
 
 export interface SlidesUriToIndexMap {
   [sectionId: string]: {

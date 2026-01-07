@@ -30,7 +30,7 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
 import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
-import { SlidesClipInfo } from '../../types/slideClipInfo';
+import { SlidesClipInfo } from '@alea/spec';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -200,7 +200,7 @@ const CourseViewPage: NextPage = () => {
   const handleVideoLoad = (status) => {
     setVideoLoaded(status);
   };
-  const hasSlidesBySection = useMemo(() => {
+  const sectionSlidesMap = useMemo(() => {
     if (!videoExtractedData) return {};
     const result: Record<string, boolean> = {};
     for (const [, item] of Object.entries(videoExtractedData)) {
@@ -211,13 +211,9 @@ const CourseViewPage: NextPage = () => {
     }
     return result;
   }, [videoExtractedData]);
-  const sectionSlides = useMemo(() => {
-    return slidesUriToIndexMap?.[sectionId] ?? {};
-  }, [slidesUriToIndexMap, sectionId]);
+  const sectionSlides = slidesUriToIndexMap?.[sectionId] ?? {};
 
-  const hasSlidesFromMapping = useMemo(() => {
-    return sectionSlides && Object.keys(sectionSlides).length > 0;
-  }, [sectionSlides]);
+  const hasSlidesFromMapping = Object.keys(sectionSlides ?? {}).length > 0;
 
   const hasSlidesFromVideoMarkers = useMemo(() => {
     if (!videoExtractedData || !sectionId) return false;
@@ -228,22 +224,15 @@ const CourseViewPage: NextPage = () => {
     );
   }, [videoExtractedData, sectionId]);
 
-  const hasSlidesForSectionMemo = useMemo(() => {
-    return hasSlidesFromMapping || hasSlidesFromVideoMarkers;
-  }, [hasSlidesFromMapping, hasSlidesFromVideoMarkers]);
+  const sectionContainSlides = hasSlidesFromMapping || hasSlidesFromVideoMarkers;
 
-  const hasVideoForSection = useMemo(() => {
-    return Boolean(currentClipId && clipIds?.[sectionId]);
-  }, [currentClipId, clipIds, sectionId]);
+  const hasVideoForSection = !!currentClipId && !!clipIds?.[sectionId];
 
-  const showSideBySideSlides = useMemo(() => {
-    return (
-      viewMode === ViewMode.COMBINED_MODE &&
-      hasSlidesForSectionMemo &&
-      videoLoaded &&
-      hasSlideAtCurrentTime
-    );
-  }, [viewMode, hasSlidesForSectionMemo, videoLoaded, hasSlideAtCurrentTime]);
+  const showSideBySideSlides =
+    viewMode === ViewMode.COMBINED_MODE &&
+    sectionContainSlides &&
+    videoLoaded &&
+    hasSlideAtCurrentTime;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -412,7 +401,7 @@ const CourseViewPage: NextPage = () => {
   };
 
   const hasSlidesForSection =
-    (sectionSlides && Object.keys(sectionSlides).length > 0) || !!hasSlidesBySection[sectionId];
+    (sectionSlides && Object.keys(sectionSlides).length > 0) || !!sectionSlidesMap[sectionId];
   const onSlideChange = (slide: Slide) => {
     setPreNotes(slide?.preNotes.map((p) => p.html) || []);
     setPostNotes(slide?.postNotes.map((p) => p.html) || []);
@@ -684,7 +673,7 @@ const CourseViewPage: NextPage = () => {
                 </Box>
               )}
             </Stack>
-            {hasSlidesForSectionMemo && !(isVideoVisible && videoLoaded && hasVideoForSection) && (
+            {sectionContainSlides && !(isVideoVisible && videoLoaded && hasVideoForSection) && (
               <Box sx={{ mt: { xs: 2, sm: 3 } }}>
                 <Paper
                   elevation={2}
