@@ -211,6 +211,39 @@ const CourseViewPage: NextPage = () => {
     }
     return result;
   }, [videoExtractedData]);
+  const sectionSlides = useMemo(() => {
+    return slidesUriToIndexMap?.[sectionId] ?? {};
+  }, [slidesUriToIndexMap, sectionId]);
+
+  const hasSlidesFromMapping = useMemo(() => {
+    return sectionSlides && Object.keys(sectionSlides).length > 0;
+  }, [sectionSlides]);
+
+  const hasSlidesFromVideoMarkers = useMemo(() => {
+    if (!videoExtractedData || !sectionId) return false;
+
+    return Object.values(videoExtractedData).some(
+      (item: any) =>
+        (item.sectionId || '').trim() === sectionId && (item.slideUri || '').trim() !== ''
+    );
+  }, [videoExtractedData, sectionId]);
+
+  const hasSlidesForSectionMemo = useMemo(() => {
+    return hasSlidesFromMapping || hasSlidesFromVideoMarkers;
+  }, [hasSlidesFromMapping, hasSlidesFromVideoMarkers]);
+
+  const hasVideoForSection = useMemo(() => {
+    return Boolean(currentClipId && clipIds?.[sectionId]);
+  }, [currentClipId, clipIds, sectionId]);
+
+  const showSideBySideSlides = useMemo(() => {
+    return (
+      viewMode === ViewMode.COMBINED_MODE &&
+      hasSlidesForSectionMemo &&
+      videoLoaded &&
+      hasSlideAtCurrentTime
+    );
+  }, [viewMode, hasSlidesForSectionMemo, videoLoaded, hasSlideAtCurrentTime]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -378,10 +411,23 @@ const CourseViewPage: NextPage = () => {
     setTimestampSec(clip.start_time);
   };
 
-  const sectionSlides = slidesUriToIndexMap[sectionId];
   const hasSlidesForSection =
     (sectionSlides && Object.keys(sectionSlides).length > 0) || !!hasSlidesBySection[sectionId];
+  const onSlideChange = (slide: Slide) => {
+    setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+    setPostNotes(slide?.postNotes.map((p) => p.html) || []);
 
+    const slideUri = getSlideUri(slide);
+    setCurrentSlideUri(slideUri || '');
+
+    if (slidesClipInfo?.[sectionId]?.[slideUri]) {
+      const slideClips = slidesClipInfo[sectionId][slideUri];
+      const matchedClip = slideClips.find((c) => c.video_id === currentClipId) || slideClips[0];
+      setCurrentSlideClipInfo(matchedClip);
+    } else {
+      setCurrentSlideClipInfo(null);
+    }
+  };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
       {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
@@ -597,112 +643,18 @@ const CourseViewPage: NextPage = () => {
                   </Paper>
                 </Box>
               )}
-              {(() => {
-                const sectionSlides = slidesUriToIndexMap[sectionId];
-                let hasSlidesForSectionLocal =
-                  sectionSlides && Object.keys(sectionSlides).length > 0;
-                if (!hasSlidesForSectionLocal && videoExtractedData && sectionId) {
-                  const sectionMarkers = Object.entries(videoExtractedData).filter(
-                    ([, item]: [string, Record<string, unknown>]) => {
-                      return (
-                        ((item.sectionId as string) || '').trim() === sectionId &&
-                        ((item.slideUri as string) || '').trim() !== ''
-                      );
-                    }
-                  );
-                  hasSlidesForSectionLocal = sectionMarkers.length > 0;
-                }
-                const showSideBySideSlides =
-                  isVideoVisible &&
-                  hasSlidesForSectionLocal &&
-                  videoLoaded &&
-                  hasSlideAtCurrentTime;
-
-                return showSideBySideSlides ? (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      flex:
-                        showPresentationVideo || hasPresentationOrComposite
-                          ? '0'
-                          : { xs: '1', lg: '1 1 50%' },
-                      minWidth: 0,
-                      display:
-                        showPresentationVideo || hasPresentationOrComposite ? 'none' : 'block',
-                    }}
-                  >
-                    <Paper
-                      elevation={2}
-                      sx={{
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                      }}
-                    >
-                      <SlideDeck
-                        navOnTop={viewMode === ViewMode.COMBINED_MODE}
-                        courseId={courseId}
-                        sectionId={sectionId}
-                        onSlideChange={(slide: Slide) => {
-                          setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                          setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                          const slideUri = getSlideUri(slide);
-                          setCurrentSlideUri(slideUri || '');
-                          if (
-                            slidesClipInfo &&
-                            slidesClipInfo[sectionId] &&
-                            slidesClipInfo[sectionId][slideUri]
-                          ) {
-                            const slideClips = slidesClipInfo[sectionId][slideUri];
-                            if (!Array.isArray(slideClips)) {
-                              return;
-                            }
-                            const matchedClip = slideClips.find(
-                              (clip) => clip.video_id === currentClipId
-                            );
-                            setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                          } else {
-                            setCurrentSlideClipInfo(null);
-                          }
-                        }}
-                        goToNextSection={goToNextSection}
-                        goToPrevSection={goToPrevSection}
-                        slideNum={slideNum}
-                        slidesClipInfo={slidesClipInfo}
-                        onClipChange={onClipChange}
-                        audioOnly={audioOnly}
-                        videoLoaded={videoLoaded}
-                        showPresentationVideo={showPresentationVideo}
-                        hasSlideAtCurrentTime={hasSlideAtCurrentTime}
-                        onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
-                      />
-                    </Paper>
-                  </Box>
-                ) : null;
-              })()}
-            </Stack>
-            {(() => {
-              const sectionSlides = slidesUriToIndexMap[sectionId];
-              let hasSlidesForSection = sectionSlides && Object.keys(sectionSlides).length > 0;
-              if (!hasSlidesForSection && videoExtractedData && sectionId) {
-                const sectionMarkers = Object.entries(videoExtractedData).filter(
-                  ([, item]: [string, Record<string, unknown>]) => {
-                    return (
-                      ((item.sectionId as string) || '').trim() === sectionId &&
-                      ((item.slideUri as string) || '').trim() !== ''
-                    );
-                  }
-                );
-                hasSlidesForSection = sectionMarkers.length > 0;
-              }
-              const hasVideoForSection = currentClipId && clipIds[sectionId];
-              if (!hasSlidesForSection) return null;
-              if (isVideoVisible && videoLoaded && hasVideoForSection) {
-                return null;
-              }
-              return (
-                <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+              {showSideBySideSlides && (
+                <Box
+                  sx={{
+                    position: 'relative',
+                    flex:
+                      showPresentationVideo || hasPresentationOrComposite
+                        ? '0'
+                        : { xs: '1', lg: '1 1 50%' },
+                    minWidth: 0,
+                    display: showPresentationVideo || hasPresentationOrComposite ? 'none' : 'block',
+                  }}
+                >
                   <Paper
                     elevation={2}
                     sx={{
@@ -713,31 +665,10 @@ const CourseViewPage: NextPage = () => {
                     }}
                   >
                     <SlideDeck
-                      navOnTop
+                      navOnTop={viewMode === ViewMode.COMBINED_MODE}
                       courseId={courseId}
                       sectionId={sectionId}
-                      onSlideChange={(slide: Slide) => {
-                        setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                        setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                        const slideUri = getSlideUri(slide);
-                        setCurrentSlideUri(slideUri || '');
-                        if (
-                          slidesClipInfo &&
-                          slidesClipInfo[sectionId] &&
-                          slidesClipInfo[sectionId][slideUri]
-                        ) {
-                          const slideClips = slidesClipInfo[sectionId][slideUri];
-                          if (!Array.isArray(slideClips)) {
-                            return;
-                          }
-                          const matchedClip = slideClips.find(
-                            (clip) => clip.video_id === currentClipId
-                          );
-                          setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                        } else {
-                          setCurrentSlideClipInfo(null);
-                        }
-                      }}
+                      onSlideChange={onSlideChange}
                       goToNextSection={goToNextSection}
                       goToPrevSection={goToPrevSection}
                       slideNum={slideNum}
@@ -745,11 +676,42 @@ const CourseViewPage: NextPage = () => {
                       onClipChange={onClipChange}
                       audioOnly={audioOnly}
                       videoLoaded={videoLoaded}
+                      showPresentationVideo={showPresentationVideo}
+                      hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+                      onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
                     />
                   </Paper>
                 </Box>
-              );
-            })()}
+              )}
+            </Stack>
+            {hasSlidesForSectionMemo && !(isVideoVisible && videoLoaded && hasVideoForSection) && (
+              <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <SlideDeck
+                    navOnTop
+                    courseId={courseId}
+                    sectionId={sectionId}
+                    onSlideChange={onSlideChange}
+                    goToNextSection={goToNextSection}
+                    goToPrevSection={goToPrevSection}
+                    slideNum={slideNum}
+                    slidesClipInfo={slidesClipInfo}
+                    onClipChange={onClipChange}
+                    audioOnly={audioOnly}
+                    videoLoaded={videoLoaded}
+                  />
+                </Paper>
+              </Box>
+            )}
+
             {(preNotes.length > 0 || postNotes.length > 0) && (
               <Paper
                 elevation={1}
