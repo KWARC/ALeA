@@ -20,6 +20,7 @@ import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
+import { SlidesClipInfo } from '../types/slideClipInfo';
 
 export function SlidePopover({
   slides,
@@ -326,11 +327,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
   sectionId: string;
   navOnTop?: boolean;
   slideNum?: number;
-  slidesClipInfo?: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  };
+  slidesClipInfo?: SlidesClipInfo;
   topLevelDocUrl?: string;
   onSlideChange?: (slide: Slide) => void;
   goToNextSection?: () => void;
@@ -404,11 +401,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
     }
   }
   function getClipsFromVideoData(
-    slidesClipInfo: {
-      [sectionId: string]: {
-        [slideUri: string]: ClipInfo[];
-      };
-    },
+    slidesClipInfo: SlidesClipInfo | undefined,
     sectionId: string,
     slideUri: string
   ) {

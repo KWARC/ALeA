@@ -1,5 +1,6 @@
-import { ClipInfo } from '@alea/spec';
+import { ClipInfo, Slide } from '@alea/spec';
 import { SlidesUriToIndexMap } from '../components/VideoDisplay';
+import { SlidesClipInfo } from '../types/slideClipInfo';
 
 export interface SlideClipRange {
   start: number;
@@ -9,13 +10,7 @@ export interface SlideClipRange {
 export const calculateCurrentSlideClipRange = (
   currentSlideUri: string | undefined,
   currentSectionId: string | undefined,
-  slidesClipInfo:
-    | {
-        [sectionId: string]: {
-          [slideUri: string]: ClipInfo[];
-        };
-      }
-    | undefined,
+  slidesClipInfo: SlidesClipInfo | undefined,
   clipId: string | undefined
 ): SlideClipRange | null => {
   if (!currentSlideUri || !currentSectionId || !slidesClipInfo || !clipId) return null;
@@ -40,13 +35,7 @@ export const calculateCurrentSlideClipRange = (
 
 export const calculateSelectedSectionFirstSlideTime = (
   currentSectionId: string | undefined,
-  slidesClipInfo:
-    | {
-        [sectionId: string]: {
-          [slideUri: string]: ClipInfo[];
-        };
-      }
-    | undefined,
+  slidesClipInfo: SlidesClipInfo | undefined,
   slidesUriToIndexMap: SlidesUriToIndexMap | undefined,
   clipId: string | undefined
 ): number | null => {

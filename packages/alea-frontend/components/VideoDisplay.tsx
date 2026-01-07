@@ -7,6 +7,7 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 import { MediaItem, Marker } from './MediaItem';
+import { SlidesClipInfo } from '../types/slideClipInfo';
 
 export interface SlidesUriToIndexMap {
   [sectionId: string]: {
@@ -141,11 +142,7 @@ export function VideoDisplay({
   currentSectionId?: string;
   currentSlideUri?: string;
   courseId?: string;
-  slidesClipInfo?: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  };
+  slidesClipInfo?: SlidesClipInfo;
   videoLoaded?: boolean;
   sectionTitle?: string;
   onPresentationVideoToggle?: () => void;

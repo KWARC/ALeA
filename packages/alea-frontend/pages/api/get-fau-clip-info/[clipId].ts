@@ -60,7 +60,6 @@ export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
       de: data.transcript_de || undefined,
     },
     thumbnailUrl: data.thumbnail_url || undefined,
-    presenterUrl,
     presentationUrl,
     compositeUrl,
   };

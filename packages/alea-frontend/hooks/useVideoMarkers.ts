@@ -87,7 +87,7 @@ export function useVideoMarkers({
     return () => {
       player.off('loadedmetadata', onLoadedMetadata);
     };
-  }, [markers, timestampSec, videoPlayer, setTooltip, handleMarkerClick]);
+  }, [markers, timestampSec, videoPlayer, handleMarkerClick]);
 
   useEffect(() => {
     const player = videoPlayer.current;

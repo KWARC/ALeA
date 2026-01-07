@@ -30,6 +30,7 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
 import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
+import { SlidesClipInfo } from '../../types/slideClipInfo';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -95,11 +96,7 @@ function populateClipIds(sections: SectionInfo[], clipIds: { [sectionId: string]
 
 function populateSlidesClipInfos(
   sections: SectionInfo[],
-  slidesClipInfo: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  }
+  slidesClipInfo: SlidesClipInfo
 ) {
   for (const section of sections) {
     slidesClipInfo[section.id] = section.clipInfo;

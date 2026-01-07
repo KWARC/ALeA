@@ -3,7 +3,7 @@ import { ClipInfo, getDefiniedaInSectionAgg, Slide } from '@alea/spec';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useRouter } from 'next/router';
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import 'video.js/dist/video-js.css';
 import { SlidesUriToIndexMap } from './VideoDisplay';
 import {
@@ -25,6 +25,7 @@ import { ConceptsOverlay } from './ConceptsOverlay';
 import { AwayFromSlideWarning } from './AwayFromSlideWarning';
 import { SafeHtml } from '@alea/react-utils';
 import { PresentationToggleButton } from './PresentationToggleButton';
+import { SlidesClipInfo } from '../types/slideClipInfo';
 
 export interface Marker {
   time: number;
@@ -83,11 +84,7 @@ export function MediaItem({
   currentSectionId?: string;
   currentSlideUri?: string;
   courseId?: string;
-  slidesClipInfo?: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  };
+  slidesClipInfo?: SlidesClipInfo;
   videoLoaded?: boolean;
   hasSlidesForSection?: boolean;
   onHasSlideAtCurrentTimeChange?: (hasSlide: boolean) => void;
@@ -178,7 +175,7 @@ export function MediaItem({
       currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
     onVideoTypeChange?.(isPlayingCompositeOrPresentation);
   }, [currentVideoUrl, compositeVideoId, presentationVideoId, onVideoTypeChange]);
-  const handleMarkerClick = async (marker: Marker) => {
+  const handleMarkerClick = useCallback(async (marker: Marker) => {
     const sectionUri = marker?.data?.sectionUri;
     if (!sectionUri) return;
     if (conceptsCache.current[sectionUri]) {
@@ -206,7 +203,7 @@ export function MediaItem({
       title: marker.label ?? 'Untitled',
       description: marker.data.description ?? 'No Description Available',
     });
-  };
+  }, []);
 
   const videoPlayer = useVideoPlayer({
     playerRef,
