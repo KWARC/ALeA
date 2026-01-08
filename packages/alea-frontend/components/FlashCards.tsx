@@ -72,7 +72,7 @@ export function FlashCardFooter({
   needUpdateMarker: any;
   onFlip: () => void;
 }) {
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const { locale } = useRouter();
   const { flashCards: t } = getLocaleObject({ locale });
   return (

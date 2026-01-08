@@ -112,12 +112,12 @@ function NotificationButton({ bgColor }: { bgColor?: string }) {
   // System info menu crap end
 
   const sortedItems = useNotificationData();
-  const isLoggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
-    if (isLoggedIn) {
+    if (loggedIn) {
       getNotificationSeenTime().then(setNotificationSeenTime);
     }
-  }, [isLoggedIn]);
+  }, [loggedIn]);
 
   function topUpdate() {
     if (!sortedItems?.length) return '';
@@ -125,7 +125,7 @@ function NotificationButton({ bgColor }: { bgColor?: string }) {
   }
 
   function shouldRing(topUpdate) {
-    if (!isLoggedIn) {
+    if (!loggedIn) {
       const lastNotificationSeenTime = localStore?.getItem('notification-seen-time');
       return lastNotificationSeenTime !== topUpdate;
     } else {
@@ -135,7 +135,7 @@ function NotificationButton({ bgColor }: { bgColor?: string }) {
 
   async function handleUpdate(e) {
     setAnchorEl(e.currentTarget);
-    if (!isLoggedIn) {
+    if (!loggedIn) {
       localStore?.setItem('notification-seen-time', topUpdate());
     } else {
       setNotificationSeenTime(topUpdate());

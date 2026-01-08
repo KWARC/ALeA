@@ -3,9 +3,10 @@ import { checkIfPostOrSetError, executeAndEndSet500OnError, executeDontEndSet500
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
 import { createAclOrSetError } from '../access-control/create-acl';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
-import { OrganizationData, RecruiterData } from '@alea/spec';
+import { RecruiterData } from '@alea/spec';
 import { getDomainFromEmail, isFauId } from '@alea/utils';
 import { getRecruiterProfileByUserIdOrSet500OnError } from './get-recruiter-profile';
+import { getOrganizationProfileByIdOrSet500OnError } from './get-organization-profile';
 
 export function getOrgAcl(orgId: number) {
   return `org${orgId}-recruiters`;
@@ -81,19 +82,6 @@ async function deleteRecruiterProfileOrSetError(userId: string, res: NextApiResp
   return true;
 }
 
-async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextApiResponse) {
-  const results: OrganizationData[] = await executeDontEndSet500OnError(
-    `SELECT id,companyName,incorporationYear,isStartup, about, companyType,officeAddress,officePostalCode,website,domain
-      FROM organizationProfile 
-      WHERE id = ? 
-      `,
-    [id],
-    res
-  );
-  if (!results) return;
-  if (!results.length) return res.status(404).end();
-  return results[0];
-}
 
 export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {
   if (!id) return res.status(422).send('Organization id is missing');

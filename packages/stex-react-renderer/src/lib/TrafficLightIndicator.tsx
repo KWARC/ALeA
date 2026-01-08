@@ -61,15 +61,15 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [competencyData, setCompetencyData] = useState<NumericCognitiveValues[] | null>(null);
   const [prereqs, setPrereqs] = useState<string[] | null>(null);
-  const isLoggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!loggedIn) return;
 
     getDependenciesForSectionAgg(sectionUri).then((dependencies) => {
       setPrereqs(dependencies);
       getLmpUriWeightsAggBulk(dependencies).then((data) => setCompetencyData(data));
     });
-  }, [sectionUri, isLoggedIn]);
+  }, [sectionUri, loggedIn]);
 
   const handleBoxClick = () => {
     setDialogOpen(true);

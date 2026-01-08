@@ -3,26 +3,39 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface IsLoggedInContextType {
-  isLoggedIn: boolean;
+  loggedIn: boolean;
+  loginCheckPending: boolean;
 }
 export const IsLoggedInContext = createContext<IsLoggedInContextType>({
-  isLoggedIn: false,
+  loggedIn: false,
+  loginCheckPending: true,
 });
 export const useIsLoggedIn = () => {
-  const loggedIn = useContext(IsLoggedInContext).isLoggedIn;
-  return loggedIn || false;
+  return useContext(IsLoggedInContext);
 };
 
 export const IsLoggedInProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(getCookie('is_logged_in') === 'true');
+  const [loggedIn, setLoggedIn] = useState(getCookie('is_logged_in') === 'true');
+  const [loginCheckPending, setLoginCheckPending] = useState(true);
+
   useEffect(() => {
-    axios.get('/api/is-logged-in').then((response) => {
-      const isLoggedIn = response.data?.isLoggedIn ?? false;
-      setIsLoggedIn(isLoggedIn);
-    }).catch((err) => {
-      console.error('Error checking login status:', err);
-      setIsLoggedIn(false);
-    });
+    axios
+      .get('/api/is-logged-in')
+      .then((response) => {
+        const isLoggedIn = response.data?.isLoggedIn ?? false;
+        setLoggedIn(isLoggedIn);
+      })
+      .catch((err) => {
+        console.error('Error checking login status:', err);
+        setLoggedIn(false);
+      })
+      .finally(() => {
+        setLoginCheckPending(false);
+      });
   }, []);
-  return <IsLoggedInContext.Provider value={{ isLoggedIn }}>{children}</IsLoggedInContext.Provider>;
+  return (
+    <IsLoggedInContext.Provider value={{ loggedIn, loginCheckPending: loginCheckPending }}>
+      {children}
+    </IsLoggedInContext.Provider>
+  );
 };

@@ -173,7 +173,7 @@ function CoverageConfigurator({
     }
     setCheckedChapterIdxs(newChecked);
   };
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { flashCards: t } = getLocaleObject(router);
 
@@ -289,7 +289,7 @@ function ReviseAndDrillButtons({
   shuffle: boolean;
   setShuffle: (r: boolean) => void;
 }) {
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const isDisabled = selectedCards.length === 0;
   const router = useRouter();
   const { flashCards: t } = getLocaleObject(router);
@@ -376,7 +376,7 @@ export function DrillConfigurator({ courseId }: { courseId: string }) {
   const [mode, setMode] = useState(FlashCardMode.REVISION_MODE);
   const [shuffle, setShuffle] = useState(true);
 
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
 
   const sectionCounts = getSectionCounts(levels, loggedIn, courseCards);
   const selectedChapters = checkedChapterIdxs.map((idx) => sectionCounts[idx].sectionTitle);

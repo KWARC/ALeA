@@ -21,7 +21,7 @@ export const passwordRegex =
 
 const SignUpPage: NextPage = () => {
   const router = useRouter();
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const { login: t, logInSystem: l } = getLocaleObject(router);
   const [formData, setFormData] = useState<UserSignUpDetail>({
     firstName: '',

@@ -91,7 +91,7 @@ export function PersonaChooser({
 const LoginPage: NextPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const [fakeId, setFakeId] = useState('');
   const returnBackUrl = router.query.target as string;

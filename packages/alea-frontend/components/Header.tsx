@@ -129,7 +129,7 @@ function LanguageButton() {
 }
 
 export function Header({ headerBgColor }: { headerBgColor?: string }) {
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
   const background = headerBgColor
@@ -139,7 +139,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
     : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
     ? 'crimson !important'
     : 'blue !important';
- 
+
   return (
     <AppBar
       position="sticky"

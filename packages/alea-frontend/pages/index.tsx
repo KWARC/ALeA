@@ -77,7 +77,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
     home: { newHome: n },
   } = getLocaleObject(router);
   const isSmallScreen = useMediaQuery('(max-width:800px)');
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
 
   return (
     <>
@@ -296,8 +296,8 @@ function AleaFeatures({ img_url, title, description }) {
   );
 }
 
- const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: CourseInfo[] }) => {
-  const loggedIn = useIsLoggedIn();
+const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: CourseInfo[] }) => {
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];

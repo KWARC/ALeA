@@ -82,7 +82,7 @@ const StudyBuddyPage: NextPage = () => {
     if (!courseId || !fromServer?.active) return;
     if (courseId) getStudyBuddyList(courseId).then(setAllBuddies);
   }, [courseId, fromServer?.active]);
-  const isLoggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
     getAllCourses().then(setCourses);
   }, []);
@@ -92,13 +92,13 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, refetchStudyBuddyLists]);
 
   useEffect(() => {
-    if (!courseId || !isLoggedIn) return;
+    if (!courseId || !loggedIn) return;
     setIsLoading(true);
     getStudyBuddyUserInfo(courseId).then((data) => {
       setIsLoading(false);
       setFromServer(data);
     });
-  }, [courseId,isLoggedIn]);
+  }, [courseId,loggedIn]);
 
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
@@ -169,7 +169,7 @@ const StudyBuddyPage: NextPage = () => {
                 </Box>
               </CardActions>
             </Card>
-          ) : isLoggedIn? (
+          ) : loggedIn? (
             <CircularProgress />
           ) : (
             <>{t.loginToContinue}</>

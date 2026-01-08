@@ -11,7 +11,7 @@ const CrossDomainAuthInitPage: NextPage = () => {
   const router = useRouter();
   const targetUrl = router.query.target as string;
   const [status, setStatus] = useState('Preparing cross-domain authentication...');
-  const isLoggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
     if (IS_SERVER || !router.isReady) return;
 
@@ -23,7 +23,7 @@ const CrossDomainAuthInitPage: NextPage = () => {
     }
 
     const handleAuth = async () => {
-      if (!isLoggedIn) {
+      if (!loggedIn) {
         setStatus('Redirecting to IdM for login');
         const returnUrl = `${
           window.location.origin
@@ -59,7 +59,7 @@ const CrossDomainAuthInitPage: NextPage = () => {
     };
 
     handleAuth();
-  }, [router.isReady, targetUrl,isLoggedIn]);
+  }, [router.isReady, targetUrl, loggedIn]);
 
   return (
     <>

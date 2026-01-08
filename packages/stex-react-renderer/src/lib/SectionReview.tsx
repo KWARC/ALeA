@@ -63,12 +63,12 @@ const SectionReview = ({
   const [URIs, setURIs] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
-  const isLoggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!loggedIn) return;
     getDefiniedaInSectionAgg(sectionUri).then(setDefinedConcepts);
-  }, [sectionUri, isLoggedIn]);
+  }, [sectionUri, loggedIn]);
 
   useEffect(() => {
     if (!definedConcepts) return;

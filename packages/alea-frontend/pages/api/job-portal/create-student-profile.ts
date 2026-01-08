@@ -1,18 +1,19 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import {
+  checkIfPostOrSetError,
+  executeTxnAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
+import { isFauId } from '@alea/utils';
+
+function getJobPortalStudentsAcl() {
+  return `job-portal-students`;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const userId = await getUserIdIfAuthorizedOrSetError(
-    req,
-    res,
-    ResourceName.JOB_PORTAL,
-    Action.APPLY,
-    { instanceId: CURRENT_TERM }
-  );
-  if (!userId) return;
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId || !isFauId(userId)) return;
 
   const {
     name,
@@ -30,7 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } = req.body;
   if (!name || !email) return res.status(422).end();
   const parsedGpa = gpa ? Number(gpa) : null;
-  const result = await executeAndEndSet500OnError(
+  const studentsAclId = getJobPortalStudentsAcl();
+  const result = await executeTxnAndEndSet500OnError(
+    res,
     `INSERT INTO studentProfile 
       (name,userId, resumeUrl, email,gpa, mobile,altMobile, programme, yearOfAdmission, yearOfGraduation, 
         courses,location, about) 
@@ -50,7 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       location,
       about,
     ],
-    res
+    'INSERT INTO ACLMembership (parentACLId, memberUserId) VALUES (?, ?)',
+    [studentsAclId, userId]
   );
   if (!result) return;
   res.status(201).end();
