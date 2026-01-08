@@ -1,11 +1,4 @@
-import {
-  FirstPage,
-  InsertLink,
-  LastPage,
-  LinkOff,
-  NavigateBefore,
-  NavigateNext,
-} from '@mui/icons-material';
+import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -25,8 +18,9 @@ import { ExpandableContextMenu } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
-
 import styles from '../styles/slide-deck.module.scss';
+import { PresentationToggleButton } from './PresentationToggleButton';
+import { SlidesClipInfo } from '@alea/spec';
 
 export function SlidePopover({
   slides,
@@ -96,14 +90,12 @@ export function SlideNavBar({
   numSlides,
   goToNextSection = undefined,
   goToPrevSection = undefined,
-  setAutoSync,
 }: {
   slides: Slide[];
   slideNum: number;
   numSlides: number;
   goToNextSection?: () => void;
   goToPrevSection?: () => void;
-  setAutoSync?: Dispatch<SetStateAction<boolean>>;
 }) {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -127,7 +119,6 @@ export function SlideNavBar({
       <IconButton
         size="small"
         onClick={() => {
-          setAutoSync(false);
           slideNum > 1 ? setSlideNumAndSectionId(router, slideNum - 1) : goToPrevSection();
         }}
         sx={{
@@ -168,7 +159,6 @@ export function SlideNavBar({
       <IconButton
         size="small"
         onClick={() => {
-          setAutoSync(false);
           slideNum < numSlides ? setSlideNumAndSectionId(router, slideNum + 1) : goToNextSection();
         }}
         sx={{
@@ -285,6 +275,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
       <Box fragment-uri={slide.slide?.uri} fragment-kind="Slide">
         <SafeFTMLFragment
           key={slide.slide?.uri}
+          allowFullscreen={false}
           fragment={{ type: 'HtmlString', html: slide.slide?.html, uri: slide.slide.uri }}
         />
       </Box>
@@ -326,29 +317,27 @@ export const SlideDeck = memo(function SlidesFromUrl({
   goToNextSection = undefined,
   goToPrevSection = undefined,
   onClipChange,
-  autoSync,
-  setAutoSync,
   audioOnly,
   videoLoaded,
+  showPresentationVideo,
+  hasSlideAtCurrentTime,
+  onPresentationVideoToggle,
 }: {
   courseId: string;
   sectionId: string;
   navOnTop?: boolean;
   slideNum?: number;
-  slidesClipInfo?: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  };
+  slidesClipInfo?: SlidesClipInfo;
   topLevelDocUrl?: string;
   onSlideChange?: (slide: Slide) => void;
   goToNextSection?: () => void;
   goToPrevSection?: () => void;
   onClipChange?: (clip: any) => void;
-  autoSync?: boolean;
-  setAutoSync?: Dispatch<SetStateAction<boolean>>;
   audioOnly?: boolean;
   videoLoaded?: boolean;
+  showPresentationVideo?: boolean;
+  hasSlideAtCurrentTime?: boolean;
+  onPresentationVideoToggle?: () => void;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [css, setCss] = useState<FTML.Css[]>([]);
@@ -412,11 +401,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
     }
   }
   function getClipsFromVideoData(
-    slidesClipInfo: {
-      [sectionId: string]: {
-        [slideUri: string]: ClipInfo[];
-      };
-    },
+    slidesClipInfo: SlidesClipInfo | undefined,
     sectionId: string,
     slideUri: string
   ) {
@@ -454,15 +439,18 @@ export const SlideDeck = memo(function SlidesFromUrl({
     <Box
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
-      mt={navOnTop ? '-55px' : '0px'}
+      sx={{ position: 'relative' }}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
       </Box>
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
-        <Box id="slide-renderer-container" sx={{ '& *': { boxSizing: 'border-box' } }}>
-          <SafeFTMLSetup key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'} allowFullscreen={false}>
+        <Box id="slide-renderer-container" className="rustex-body">
+          <SafeFTMLSetup
+            key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'}
+            allowFullscreen={false}
+          >
             <SlideRenderer key={slideNum} slide={currentSlide} />
           </SafeFTMLSetup>
         </Box>
@@ -478,32 +466,25 @@ export const SlideDeck = memo(function SlidesFromUrl({
           No slides in this section
         </Box>
       )}
-      <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        width="100%"
+        sx={{ mt: navOnTop ? 1 : 0 }}
+      >
         <Box flex={1} />
-        {!audioOnly && slides.length > 0 && videoLoaded && (
-          <Box>
-            <Tooltip title={autoSync ? 'Disable video-slide sync' : 'Sync video to slides'}>
-              <IconButton
-                onClick={() => setAutoSync((prev) => !prev)}
-                sx={{
-                  backgroundColor: autoSync ? '#dfdfeb' : 'inherit',
-                  color: autoSync ? 'success.main' : 'secondary.main',
-                  mt: '-10px',
-                }}
-              >
-                {autoSync ? (
-                  <InsertLink sx={{ fontSize: '1.5rem', transform: 'rotate(90deg)' }} />
-                ) : (
-                  <LinkOff sx={{ fontSize: '1.5rem', transform: 'rotate(90deg)' }} />
-                )}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-
-        <Box display="flex" justifyContent="flex-end" flex={1}>
+        <Box display="flex" justifyContent="flex-end" alignItems="center" flex={1} gap={0.5} position="relative">
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />
+          )}
+          {!showPresentationVideo && onPresentationVideoToggle && (
+            <PresentationToggleButton
+              showPresentationVideo={showPresentationVideo}
+              hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+              onToggle={onPresentationVideoToggle}
+              inline={true}
+            />
           )}
           <SlideNavBar
             slides={slides}
@@ -511,7 +492,6 @@ export const SlideDeck = memo(function SlidesFromUrl({
             numSlides={slides.length}
             goToNextSection={goToNextSection}
             goToPrevSection={goToPrevSection}
-            setAutoSync={setAutoSync}
           />
         </Box>
       </Box>

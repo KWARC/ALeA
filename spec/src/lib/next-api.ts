@@ -43,13 +43,21 @@ export interface ClipDetails {
   r720?: string;
   r1080?: string;
   subtitles?: Record<string, string>;
-  thumbnailUrl?:string;
+  thumbnailUrl?: string;
+  presenterUrl?: string;
+  presentationUrl?: string;
+  compositeUrl?: string;
 }
 export interface ClipInfo {
   video_id: string;
   start_time?: number;
   end_time?: number;
 }
+export type SlidesClipInfo = {
+  [sectionId: string]: {
+    [slideUri: string]: ClipInfo[];
+  };
+};
 export interface ClipMetadata {
   start_time?: number;
   end_time?: number;
