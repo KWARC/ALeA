@@ -4,10 +4,12 @@ import {
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
   learningObjects as flamsLearningObjects,
+  learningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
 import { createSafeFlamsQuery } from './flams-query-creator';
 import { getAuthHeaders } from './lmp';
+import { FTMLProblemWithSolution } from './quiz';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
