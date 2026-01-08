@@ -7,8 +7,8 @@ interface CachedObject {
 }
 
 const CACHED_CLIP_INFO = new Map<string, CachedObject>();
-const FAU_TV_OEMBED_BASE_URL="https://api.video.uni-erlangen.de/services/oembed";
-const FAU_TV_BASE_URL = "https://www.fau.tv";
+const FAU_TV_OEMBED_BASE_URL = 'https://api.video.uni-erlangen.de/services/oembed';
+const FAU_TV_BASE_URL = 'https://www.fau.tv';
 
 function isFresh(cachedObject: CachedObject) {
   if (!cachedObject) return false;
@@ -16,24 +16,52 @@ function isFresh(cachedObject: CachedObject) {
   return Date.now() - cachedObject.cacheTimeMs < MAX_CACHE_STALENESS_MS;
 }
 
+function pickVariant(url?: string, height?: number, expected?: number, fallback?: string) {
+  return url && height === expected ? url : fallback;
+}
+
 export async function getVideoInfo(clipId: string): Promise<ClipDetails> {
   const url = `${FAU_TV_OEMBED_BASE_URL}?url=${FAU_TV_BASE_URL}/clip/id/${clipId}&format=json`;
   const { data } = await axios.get(url);
-//TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
-//TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
+  //TODO: Hack: for now FAU TV api provides 360p,720p and 1080p url for only presenter view
+  //TODO:  In both presenter+presentation view FAU TV provide only one url , so adding that only as of now.
+  const presenterUrl: string | undefined = data?.presenter_url || data?.file;
+  const r360 = pickVariant(
+    data?.alternative_Video_size_small_url,
+    data?.alternative_Video_size_small_height,
+    360,
+    presenterUrl
+  );
+  const r720 = pickVariant(
+    data?.alternative_Video_size_medium_url,
+    data?.alternative_Video_size_medium_height,
+    720,
+    presenterUrl
+  );
+  const r1080 = pickVariant(
+    data?.alternative_Video_size_large_url,
+    data?.alternative_Video_size_large_height,
+    1080,
+    presenterUrl
+  );
+  const presentationUrl: string | undefined = data?.presentation_url || data?.file;
+  const compositeUrl: string | undefined = data?.composite_url || data?.file;
+
   const videoInfo: ClipDetails = {
     // r360: data.alternative_Video_size_small_url || undefined,
     // r720: data.alternative_Video_size_medium_url || undefined,
     // r1080: data.alternative_Video_size_large_url || undefined,
-    r360: data.file|| undefined,
-    r720: data.file || undefined,
-    r1080: data.file || undefined,
+    r360,
+    r720,
+    r1080,
     subtitles: {
       default: data.transcript || undefined,
       en: data.transcript_en || undefined,
       de: data.transcript_de || undefined,
     },
     thumbnailUrl: data.thumbnail_url || undefined,
+    presentationUrl,
+    compositeUrl,
   };
   return videoInfo;
 }
