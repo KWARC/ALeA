@@ -3,11 +3,12 @@ import { FTML } from '@flexiformal/ftml';
 import {
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
-  learningObjects as flamsLearningObjects
+  learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
 import { createSafeFlamsQuery } from './flams-query-creator';
 import { getAuthHeaders } from './lmp';
+import { FTMLProblemWithSolution } from './quiz';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -167,9 +168,9 @@ function buildSearchUriQuery(parts: string[]): string {
 
   return `
 SELECT DISTINCT ?uri WHERE {
-  ?uri ?r ?o. 
-  ${filterConditions} 
-} 
+  ?uri ?r ?o.
+  ${filterConditions}
+}
 LIMIT 60`;
 }
 
@@ -186,7 +187,7 @@ export async function searchUriUsingSubstr(input: string) {
   return results?.results?.bindings.map((binding) => binding['uri']?.value) ?? [];
 }
 
-const TEMPL_GET_DEFINITIONS_IN_SECTION = `SELECT DISTINCT ?q ?s 
+const TEMPL_GET_DEFINITIONS_IN_SECTION = `SELECT DISTINCT ?q ?s
 WHERE { <_uri_section> (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
 export async function getDefiniedaInSection(sectionUri: string): Promise<ConceptAndDefinition[]> {
   if (!sectionUri) return [];
@@ -201,7 +202,7 @@ export async function getDefiniedaInSection(sectionUri: string): Promise<Concept
   );
 }
 
-const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?uri ?q ?s 
+const TEMPL_GET_DEFINITIONS_IN_SECTIONS = `SELECT DISTINCT ?uri ?q ?s
 WHERE { VALUES ?uri { <_multiuri_section_uris> } ?uri (ulo:contains|dc:hasPart)* ?q. ?q ulo:defines ?s.}`;
 
 export async function getDefiniedaInSections(
@@ -392,6 +393,72 @@ export const TEMPL_GET_PROBLEM_OBJECTS_BY_SUBSTR = `
       FILTER(CONTAINS(STR(?learningObject), "_uri_problem_id_substr"))
     }
   `;
+
+export function buildGetExamsForCourseQuery(courseId: string): string {
+  return `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?exam ?term ?number ?date
+WHERE {
+  ?exam rdf:type ulo:exam ;
+        ulo:has-course "${courseId}" .
+
+  OPTIONAL { ?exam ulo:has-course-term ?term }
+  OPTIONAL { ?exam ulo:is-number ?number }
+  OPTIONAL { ?exam ulo:has-date ?date }
+}
+ORDER BY DESC(?date)
+`;
+}
+
+export const TEMPL_GET_PROBLEMS_FOR_EXAM = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+
+  SELECT DISTINCT  ?prob WHERE {
+<_uri_exam>  (ulo:contains|dc:hasPart)* ?prob.
+?prob rdf:type ulo:problem.
+}
+`;
+
+export async function getProblemsForExam(examUri: string): Promise<string[]> {
+  if (!examUri) return [];
+
+  const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_EXAM, {
+    _uri_exam: examUri,
+  });
+
+  const problems = results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
+
+  return problems;
+}
+
+export async function getExamsForCourse(courseId: string) {
+  if (!courseId) return [];
+
+  const query = buildGetExamsForCourseQuery(courseId);
+  const results = await getParameterizedQueryResults(query);
+
+  const seen = new Map<string, any>();
+
+  for (const b of results?.results?.bindings ?? []) {
+    const examUri = b['exam']?.value;
+    if (!examUri) continue;
+
+    if (!seen.has(examUri)) {
+      seen.set(examUri, {
+        uri: examUri,
+        term: b['term']?.value,
+        number: b['number']?.value,
+        date: b['date']?.value,
+      });
+    }
+  }
+
+  return Array.from(seen.values());
+}
 
 export async function getProblemObjects(problemIdSubstr: string) {
   if (!problemIdSubstr) return [];
