@@ -208,6 +208,7 @@ export function MediaItem({
     audioOnly,
     timestampSec,
     applyVideoPlayerStyles,
+    clipId
   });
 
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
