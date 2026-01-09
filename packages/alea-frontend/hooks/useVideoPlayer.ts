@@ -60,17 +60,29 @@ export function useVideoPlayer({
               this.addClass('vjs-control');
               this.addClass('vjs-button');
               this.addClass('vjs-open-new-tab');
-              (this as any).controlText('Open in new tab');
+              (this as any).controlText('View Source');
 
               const el = this.el() as HTMLElement;
-              el.innerHTML = '⎋';
-              el.style.transform = 'rotate(90deg)';
+              el.innerHTML = `
+<svg
+xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 24 24"
+width="22"
+height="22"
+fill="currentColor"
+>
+<path d="M14 3v2h3.59L7 15.59 8.41 17 19 6.41V10h2V3h-7z"/>
+<path d="M5 5h6V3H5c-1.1 0-2 .9-2 2v14c0
+1.1.9 2 2 2h14c1.1 0 2-.9
+2-2v-6h-2v6H5V5z"/>
+</svg>
+`;
               el.style.display = 'flex';
               el.style.alignItems = 'center';
               el.style.justifyContent = 'center';
-              el.style.fontSize = '1.4em';
+              el.style.marginBottom = '10px';
+              el.style.fontSize = '0.5em';
               el.style.cursor = 'pointer';
-
               this.on('click', this.handleClick);
             }
 
@@ -95,7 +107,13 @@ export function useVideoPlayer({
 
         let openBtn = controlBar.getChild('OpenInNewTabButton') as any;
         if (!openBtn) {
-          openBtn = controlBar.addChild('OpenInNewTabButton', {}, 7);
+          const children = controlBar.children();
+          const captionsIndex = children.findIndex(
+            (c: any) => c.name && c.name() === 'SubsCapsButton'
+          );
+          const insertIndex = captionsIndex !== -1 ? captionsIndex + 1 : children.length;
+
+          openBtn = controlBar.addChild('OpenInNewTabButton', {}, insertIndex);
         }
 
         openBtn?.setClipId?.(clipId);
