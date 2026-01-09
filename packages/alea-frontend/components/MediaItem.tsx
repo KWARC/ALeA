@@ -299,6 +299,7 @@ export function MediaItem({
             ref={playerRef as MutableRefObject<HTMLVideoElement>}
             className="video-js vjs-fluid vjs-styles=defaults vjs-big-play-centered"
             style={videoStyles}
+            onContextMenu={(e) => e.preventDefault()}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -361,6 +362,7 @@ export function MediaItem({
                 ref={presentationPlayerRef as MutableRefObject<HTMLVideoElement>}
                 className="video-js vjs-fluid vjs-styles=defaults"
                 style={videoStyles}
+                onContextMenu={(e) => e.preventDefault()}
                 muted
               />
               <PresentationToggleButton

@@ -51,72 +51,54 @@ export function useVideoPlayer({
 
         const Button = videojs.getComponent('Button');
         const controlBar = player.getChild('controlBar');
-        if (!controlBar) {
-          return;
-        }
-
-        if (!videojs.getComponent('DownloadButton')) {
-          class DownloadButton extends Button {
+        if (!controlBar) return;
+        if (!videojs.getComponent('OpenInNewTabButton')) {
+          class OpenInNewTabButton extends Button {
             private clipId?: string;
-
             constructor(player: any, options?: any) {
               super(player, options);
-              this.addClass('vjs-download-control');
               this.addClass('vjs-control');
               this.addClass('vjs-button');
-              (this as any).controlText('Download');
+              this.addClass('vjs-open-new-tab');
+              (this as any).controlText('Open in new tab');
 
               const el = this.el() as HTMLElement;
-              el.innerHTML = '⬇';
+              el.innerHTML = '⎋';
+              el.style.transform = 'rotate(90deg)';
               el.style.display = 'flex';
               el.style.alignItems = 'center';
               el.style.justifyContent = 'center';
-              el.style.visibility = 'visible';
+              el.style.fontSize = '1.4em';
               el.style.cursor = 'pointer';
-              el.style.fontSize = '1.5em';
-              el.style.lineHeight = '1';
+
               this.on('click', this.handleClick);
             }
 
             setClipId = (clipId?: string) => {
               this.clipId = clipId;
               const el = this.el() as HTMLElement;
-
-              if (clipId) {
-                el.style.display = 'flex';
-                el.style.visibility = 'visible';
-                el.style.opacity = '1';
-              } else {
-                el.style.display = 'none';
-              }
+              el.style.display = clipId ? 'flex' : 'none';
             };
 
             private handleClick = () => {
-              if (!this.clipId) {
-                return;
-              }
-              window.location.href = `/download/${this.clipId}`;
+              if (!this.clipId) return;
+              window.open(
+                `https://www.fau.tv/clip/id/${this.clipId}`,
+                '_blank',
+                'noopener,noreferrer'
+              );
             };
           }
 
-          videojs.registerComponent('DownloadButton', DownloadButton as any);
+          videojs.registerComponent('OpenInNewTabButton', OpenInNewTabButton as any);
         }
 
-        let downloadBtn = controlBar.getChild('DownloadButton') as any;
-
-        if (!downloadBtn) {
-          downloadBtn = controlBar.addChild('DownloadButton', {}, 7);
+        let openBtn = controlBar.getChild('OpenInNewTabButton') as any;
+        if (!openBtn) {
+          openBtn = controlBar.addChild('OpenInNewTabButton', {}, 7);
         }
 
-        if (downloadBtn) {
-          if (downloadBtn.setClipId) {
-            downloadBtn.setClipId(clipId);
-          } else {
-            console.error('setClipId method NOT FOUND on download button!');
-          }
-        } else {
-          console.error('DOWNLOAD BUTTON IS NULL/UNDEFINED AFTER ADDING!');
-        }
+        openBtn?.setClipId?.(clipId);
       });
     } else {
       const currentTime = player.currentTime();
@@ -128,17 +110,14 @@ export function useVideoPlayer({
         const root = playerRef.current?.parentNode as HTMLElement;
         if (root) applyVideoPlayerStyles(root);
         const controlBar = player.getChild('controlBar');
-        if (controlBar) {
-          const downloadBtn = controlBar.getChild('DownloadButton') as any;
-          if (downloadBtn && downloadBtn.setClipId) {
-            downloadBtn.setClipId(clipId);
-          }
-        }
+        const openBtn = controlBar?.getChild('OpenInNewTabButton') as any;
+        openBtn?.setClipId?.(clipId);
       });
     }
 
     return () => {
-      if (audioOnly && player) {
+      if (player) {
+        player.pause();
         player.dispose();
         videoPlayer.current = null;
       }
