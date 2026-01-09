@@ -27,6 +27,13 @@ interface TitleMetadata {
   sectionTitle: string;
 }
 
+interface ExamInfo {
+  uri: string;
+  term?: string;
+  number?: string;
+  date?: string;
+}
+
 const extractTitlesAndSectionUri = (
   toc: FTML.TocElem | null,
   chapterTitle = ''
@@ -57,7 +64,7 @@ interface ProblemListProps {
 
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
-  const [exams, setExams] = useState<any[]>([]);
+  const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -167,7 +174,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
             const examUri = exam.uri;
             const dParam = getParamFromUri(examUri, 'd');
             const examLabel = exam.number
-              ? `Exam ${exam.number} ${exam.term ?? ''} ${dParam ?? 'NO-D'}`
+              ? `Exam ${exam.number} ${exam.term ?? ''} ${dParam ? ` ${dParam}` : ''}`
               : `Exam (${exam.term ?? 'General'}) ${dParam}`;
 
             return (

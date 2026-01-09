@@ -69,7 +69,7 @@ const ExamProblemsPage = () => {
           isGrading: false,
           showGrading: false,
           gradingInfo: undefined,
-          studentId: 'exam-view',
+          studentId: undefined,
         }}
       >
         <AnswerContext.Provider value={{}}>

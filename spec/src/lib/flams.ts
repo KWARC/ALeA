@@ -4,7 +4,6 @@ import {
   ProblemFeedbackJson,
   batchGradeHex as flamsBatchGradeHex,
   learningObjects as flamsLearningObjects,
-  learningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
 import { createSafeFlamsQuery } from './flams-query-creator';

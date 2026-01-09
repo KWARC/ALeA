@@ -65,7 +65,7 @@ function IndexEntry({
   showClock: boolean;
   onSelect: (idx: number) => void;
   isHomeWork: boolean;
-  isExamProblem: boolean;
+  isExamProblem?: boolean;
 }) {
   const { quiz: t } = getLocaleObject(useRouter());
   const isCorrectnessKnown =
@@ -152,7 +152,7 @@ function ProblemNavigation({
   onClose: () => void;
   onSelect: (idx: number) => void;
   isHomeWork: boolean;
-  isExamProblem: boolean;
+  isExamProblem?: boolean;
 }) {
   return (
     <FixedPositionMenu
