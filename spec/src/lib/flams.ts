@@ -7,8 +7,6 @@ import {
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
 import { createSafeFlamsQuery } from './flams-query-creator';
-import { getAuthHeaders } from './lmp';
-import { FTMLProblemWithSolution } from './quiz';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -99,29 +97,6 @@ export interface SparqlResponse {
   results?: {
     bindings: Record<string, { type: string; value: string }>[];
   };
-}
-
-export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
-  try {
-    return axios.post(
-      '/api/set-use-rdf-encode-uri',
-      { useRdfEncodeUri },
-      { headers: getAuthHeaders() }
-    );
-  } catch (error) {
-    console.error('Error setting use RDF encode URI:', error);
-    throw error;
-  }
-}
-
-export async function getUseRdfEncodeUri() {
-  try {
-    const response = await axios.get('/api/get-use-rdf-encode-uri');
-    return response.data.useRdfEncodeUri;
-  } catch (error) {
-    console.error('Error getting use RDF encode URI:', error);
-    throw error;
-  }
 }
 
 export async function getParameterizedQueryResults(

@@ -2,7 +2,6 @@ import { createSafeFlamsQuery } from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfPostOrSetError } from './comment-utils';
-import { getUseRdfEncodeUri } from './get-use-rdf-encode-uri';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -13,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!query || typeof query !== 'string') return res.status(400).send('query is invalid.');
 
   const safeUriParams = uriParams && typeof uriParams === 'object' ? uriParams : {};
-  const actualQuery = createSafeFlamsQuery(query, safeUriParams, getUseRdfEncodeUri());
+  const actualQuery = createSafeFlamsQuery(query, safeUriParams);
 
   if (dryRun) return res.status(200).json({ actualQuery });
 
