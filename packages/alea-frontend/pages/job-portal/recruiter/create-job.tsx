@@ -19,9 +19,7 @@ import {
   getRecruiterProfile,
   JobCategoryInfo,
   JobPostFormData,
-  JobPostInfo,
   RecruiterData,
-  updateJobPost,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/navigation';
@@ -39,25 +37,32 @@ const JobPostPage = () => {
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const [loading, setLoading] = useState(true);
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
   const [jobCategories, setJobCategories] = useState<JobCategoryInfo[]>([]);
   const [selectedJobCategory, setSelectedJobCategory] = useState<string>('');
   const [selectedJobCategoryId, setSelectedJobCategoryId] = useState<number>(null);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
-  const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>({
+  const initialJobPostFormData: JobPostFormData = {
     session: '',
     jobTitle: '',
     workLocation: '',
-    workMode:'',
+    workMode: '',
     applicationDeadline: '',
-    currency: '',
-    stipend: null,
     facilities: '',
+    compensation: {
+      type: 'salary',
+      mode: 'fixed',
+      fixedAmount: null,
+      minAmount: null,
+      maxAmount: null,
+      currency: 'EUR',
+      frequency: 'yearly',
+    },
     targetYears: '',
     openPositions: null,
     qualification: '',
     jobDescription: '',
-  });
+  };
+  const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>(initialJobPostFormData);
 
   useEffect(() => {
     fetchData();
@@ -110,9 +115,9 @@ const JobPostPage = () => {
   const handleJobCategoryChange = (event: any) => {
     const selectedId = event.target.value;
     setSelectedJobCategoryId(Number(selectedId));
-    const selectedJob = jobCategories.find((job) => job.id === selectedId);
-    if (selectedJob) {
-      setSelectedJobCategory(selectedJob.jobCategory);
+    const selectedJobCategory = jobCategories.find((job) => job.id === selectedId);
+    if (selectedJobCategory) {
+      setSelectedJobCategory(selectedJobCategory.jobCategory);
     }
   };
   useEffect(() => {
@@ -120,33 +125,49 @@ const JobPostPage = () => {
       setJobPostFormData((prevData) => ({
         ...prevData,
         session: `${selectedJobCategory}(${CURRENT_TERM})`,
+        compensation: {
+          ...prevData.compensation,
+          frequency: selectedJobCategory.toLowerCase() === 'full-time' ? 'yearly' : 'monthly',
+          type: selectedJobCategory.toLowerCase() === 'full-time' ? 'salary' : 'stipend',
+        },
       }));
       setIsFormDisabled(false);
     }
   }, [selectedJobCategory]);
-  const handleNext = async () => {
-    if (activeStep < 2) {
-      setActiveStep((prev) => prev + 1);
-    } else {
-      const jobPostPayload = {
-        ...jobPostFormData,
-        jobCategoryId: selectedJobCategoryId,
-        organizationId: recruiter?.organizationId,
-      };
-      setIsFormDisabled(true);
-      setLoading(true);
-      if (selectedJob) {
-        await updateJobPost({ ...jobPostPayload, id: selectedJob.id });
-      } else {
-        await createJobPost(jobPostPayload);
-      }
-      setSelectedJob(null);
-      fetchData();
-      setIsFormDisabled(false);
-      setLoading(false);
-      alert('New job created!');
-    }
+
+const handleNext = async () => {
+  if (activeStep < 2) {
+    setActiveStep((prev) => prev + 1);
+    return;
+  }
+  if (!recruiter?.organizationId || !selectedJobCategoryId) {
+    alert('Missing required data');
+    return;
+  }
+  const jobPostPayload = {
+    ...jobPostFormData,
+    jobCategoryId: selectedJobCategoryId,
+    organizationId: recruiter.organizationId,
   };
+  try {
+    setLoading(true);
+    setIsFormDisabled(true);
+    await createJobPost(jobPostPayload);
+    setSelectedJobCategory('');
+    setSelectedJobCategoryId(null);
+    setJobPostFormData(initialJobPostFormData);
+    setActiveStep(0);
+    fetchData();
+    alert('New job created!');
+  } catch (error) {
+    console.error(error);
+    alert('Failed to create job. Please try again.');
+  } finally {
+    setLoading(false);
+    setIsFormDisabled(false);
+  }
+};
+
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
   if (loading) return <CircularProgress />;
@@ -214,7 +235,7 @@ const JobPostPage = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(64, 56, 64, 0.2)', // Translucent overlay
+                backgroundColor: 'rgba(64, 56, 64, 0.2)', 
                 borderRadius: '20px',
                 zIndex: 1,
                 display: 'flex',
@@ -231,7 +252,7 @@ const JobPostPage = () => {
           </Tooltip>
         )}
         <Typography variant="h4" fontWeight="bold">
-          {selectedJob ? 'Update Job Post' : 'Create a New Job Post'}
+           Create a New Job Post
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel sx={{ mt: 4 }}>
           {['Job Descriptions', 'Offer Details', 'Eligibility'].map((label) => (
@@ -252,7 +273,16 @@ const JobPostPage = () => {
           )}
         </Box>
         <Box justifyContent="space-between" sx={{ mt: 4 }} display={'flex'}>
-          <Button onClick={() => router.push('/dashboard')} variant="outlined">
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setJobPostFormData(initialJobPostFormData);
+              setSelectedJobCategoryId(null);
+              setSelectedJobCategory('');
+              setIsFormDisabled(true);
+              setActiveStep(0);
+            }}
+          >
             Cancel
           </Button>
           <Box>

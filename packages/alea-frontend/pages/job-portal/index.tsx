@@ -1,25 +1,23 @@
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
-import { canAccessResource, checkIfUserRegisteredOnJP, getUserInfo, isLoggedIn } from '@alea/spec';
+import { canAccessResource, checkIfUserRegisteredOnJP, getUserInfo } from '@alea/spec';
 import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import MainLayout from '../../layouts/MainLayout';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 const JobPortal: NextPage = () => {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const [isLogIn, setIsLogIn] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [showAdminButton, setShowAdminButton] = useState(false);
   const [forceFauLogin, setForceFauLogin] = useState(false);
-
+  const loggedIn = useIsLoggedIn();
   useEffect(() => {
     const initAuth = async () => {
-      const loggedIn = isLoggedIn();
-      setIsLogIn(loggedIn);
       if (loggedIn) {
         const userInfo = await getUserInfo();
         const uid = userInfo?.userId;
@@ -37,7 +35,7 @@ const JobPortal: NextPage = () => {
       setAuthChecked(true);
     };
     initAuth();
-  }, []);
+  }, [loggedIn]);
 
   if (forceFauLogin) {
     return (
@@ -85,7 +83,7 @@ const JobPortal: NextPage = () => {
           )}
           {authChecked && (
             <>
-              {(!isLogIn || isStudent) && (
+              {(!loggedIn || isStudent) && (
                 <Button
                   fullWidth
                   size="large"
@@ -105,7 +103,7 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={async () => {
-                    if (!isLogIn) {
+                    if (!loggedIn) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {
@@ -122,7 +120,7 @@ const JobPortal: NextPage = () => {
                 </Button>
               )}
 
-              {(!isLogIn || isRecruiter) && (
+              {(!loggedIn || isRecruiter) && (
                 <Button
                   fullWidth
                   size="large"
@@ -142,7 +140,7 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={async () => {
-                    if (!isLogIn) {
+                    if (!loggedIn) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {
@@ -179,7 +177,7 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={() => {
-                    if (!isLogIn) {
+                    if (!loggedIn) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {

@@ -41,7 +41,7 @@ const AuthCallbackPage: NextPage = () => {
 
         if (response.status === 200) {
           setStatus('Authentication successful! Redirecting...');
-          router.push(targetUrl || '/');
+          window.location.replace(targetUrl || '/');
         } else {
           setStatus('Authentication failed. Please try logging in again.');
           return router.replace('/');

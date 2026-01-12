@@ -22,10 +22,9 @@ import {
   SmileyCognitiveValues,
   SmileyType,
   getUriSmileys,
-  isLoggedIn,
   smileyToLevel,
 } from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
+import { SafeHtml, useIsLoggedIn } from '@alea/react-utils';
 import {
   FixedPositionMenu,
   LayoutWithFixedMenu,
@@ -73,7 +72,7 @@ export function FlashCardFooter({
   needUpdateMarker: any;
   onFlip: () => void;
 }) {
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const { locale } = useRouter();
   const { flashCards: t } = getLocaleObject({ locale });
   return (
