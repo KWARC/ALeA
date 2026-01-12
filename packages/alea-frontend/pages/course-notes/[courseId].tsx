@@ -25,7 +25,7 @@ import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
 import Tooltip from '@mui/material/Tooltip';
 
-export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
+export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
       <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
@@ -34,6 +34,7 @@ export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResult
       <DialogContent sx={{ p: 1 }}>
         <SearchCourseNotes
           courseId={courseId || ''}
+          notesUri={notesUri}
           onClose={onClose}
           setHasResults={setHasResults}
         />
