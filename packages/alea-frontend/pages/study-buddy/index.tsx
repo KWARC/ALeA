@@ -73,7 +73,9 @@ function removeRecentCourse(courseCode: string) {
     localStore?.setItem(RECENT_COURSE_KEY, chosenCourses.filter((c) => c !== courseCode).join(','));
   }
 }
-function StudyBuddyOverviewGraph({ instanceId }: { instanceId: string }) {
+function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: string }) {
+  // TODO(M5)
+  const institutionId = 'FAU';
   const [sortedCourses, setSortedCourses] = useState<GetSortedCoursesByConnectionsResponse[]>();
   const [selectedCourseIndex, setSelectedCourseIndex] = useState<string>(null);
   const [connections, setConnections] = useState<UserStats['connections']>([]);
@@ -83,16 +85,16 @@ function StudyBuddyOverviewGraph({ instanceId }: { instanceId: string }) {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const data = await getStudyBuddyCoursesSortedbyConnections(instanceId);
+      const data = await getStudyBuddyCoursesSortedbyConnections(instanceId, institutionId);
       setSortedCourses(data);
       setIsLoading(false);
     };
     fetchData();
-  }, [instanceId]);
+  }, [instanceId, institutionId]);
 
   const handleListItemClick = async (courseId: string) => {
     setSelectedCourseIndex(courseId);
-    const data = await getStudyBuddyUsersStats(courseId, instanceId);
+    const data = await getStudyBuddyUsersStats(courseId, instanceId, institutionId);
     setConnections(data.connections);
     setUserIdsAndActiveStatus(data.userIdsAndActiveStatus);
   };
@@ -133,8 +135,10 @@ function StudyBuddyOverviewGraph({ instanceId }: { instanceId: string }) {
 }
 
 function StatsForModerator() {
+  // TODO(M5) we will change the frontend code after we have done with backend
+  const institutionId = 'FAU';
   const [overviewData, setOverviewData] = useState<AllCoursesStats>();
-  const [semester, setSemester] = useState('SS25');
+  const [semester, setSemester] = useState('WS25-26');
   const { studyBuddy: t } = getLocaleObject(useRouter());
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -142,10 +146,10 @@ function StatsForModerator() {
   };
   useEffect(() => {
     const fetchData = async () => {
-      getAllUsersStats(semester).then(setOverviewData);
+      getAllUsersStats(semester, institutionId).then(setOverviewData);
     };
     fetchData();
-  }, [semester]);
+  }, [semester, institutionId]);
   return (
     <>
       <Typography variant="h4">{t.insightHeading}</Typography>
@@ -166,6 +170,7 @@ function StatsForModerator() {
                   <MenuItem value="SS24">SS24</MenuItem>
                   <MenuItem value="WS24-25">WS24-25</MenuItem>
                   <MenuItem value="SS25">SS25</MenuItem>
+                  <MenuItem value="WS25-26">WS25-26</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -265,13 +270,16 @@ const Courses: NextPage = () => {
   const courseList = MaAI_COURSES;
   const { studyBuddy: t } = getLocaleObject(useRouter());
   const [, forceRerender] = useReducer((x) => x + 1, 0);
+  // TODO(M5) we will change the frontend code after we have done with backend
+  const institutionId = 'FAU';
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
   const [isUserAModerator, setIsUserAModerator] = useState(false);
 
   useEffect(() => {
-    getEnrolledCourseIds().then(setEnrolledCourseIds);
+    const instanceId = 'WS25-26';
+    getEnrolledCourseIds(institutionId, instanceId).then(setEnrolledCourseIds);
     canModerateStudyBuddy().then(setIsUserAModerator);
-  }, []);
+  }, [institutionId]);
   const courseIds = enrolledCourseIds.map((item) => item?.courseId);
   return (
     <MainLayout title="Study Buddy | ALeA">

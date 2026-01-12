@@ -96,7 +96,9 @@ CREATE TABLE userInfo (
 
 CREATE TABLE StudyBuddyUsers (
     userId VARCHAR(255) NOT NULL,
-    sbCourseId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+    instanceId VARCHAR(50) NOT NULL,
+    institutionId VARCHAR(50) NOT NULL DEFAULT 'FAU',
 
     active BOOLEAN NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -110,7 +112,7 @@ CREATE TABLE StudyBuddyUsers (
     dayPreference VARCHAR(255),
     createdTimestamp timestamp DEFAULT CURRENT_TIMESTAMP,
 
-    PRIMARY KEY (userId, sbCourseId)
+    PRIMARY KEY (userId, courseId, instanceId, institutionId)
 );
 
 CREATE TABLE BlogPosts (
@@ -135,9 +137,11 @@ CREATE TABLE CdnImages (
 CREATE TABLE StudyBuddyConnections (
     senderId VARCHAR(255) NOT NULL,
     receiverId VARCHAR(255) NOT NULL,
-    sbCourseId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+    instanceId VARCHAR(50) NOT NULL,
+    institutionId VARCHAR(50) NOT NULL DEFAULT 'FAU',
     timeOfIssue TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (senderId, receiverId, sbCourseId)
+    PRIMARY KEY (senderId, receiverId, courseId, instanceId, institutionId)
 );
 
 CREATE TABLE AccessControlList (
@@ -354,8 +358,7 @@ CREATE TABLE jobPost (
     qualification VARCHAR(255),                                   
     targetYears VARCHAR(255),                                     
     openPositions INT,                                            
-    currency VARCHAR(50),                                         
-    stipend DECIMAL(10, 2),                                       
+    compensation JSON,            
     facilities TEXT,                                              
     applicationDeadline DATETIME,   
     workMode VARCHAR(50),

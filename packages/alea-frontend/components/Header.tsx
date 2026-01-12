@@ -4,7 +4,8 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import { logout } from '@alea/spec';
-import { CountryFlag, useCurrentUser, useIsLoggedIn } from '@alea/react-utils';
+import { CountryFlag, useCurrentUser } from '@alea/react-utils';
+import { useIsLoggedIn } from '@alea/react-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -126,7 +127,7 @@ function LanguageButton() {
 }
 
 export function Header({ headerBgColor }: { headerBgColor?: string }) {
-  const loggedIn = useIsLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
   const background = headerBgColor

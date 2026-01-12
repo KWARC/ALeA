@@ -1,6 +1,5 @@
 import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
-import { getAuthHeaders } from '@alea/spec';
 import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios from 'axios';
 
@@ -91,8 +90,7 @@ export async function createNewIssue(
         description: desc,
         selectedText,
         context: withSourceContext[0]?.source,
-      },
-      { headers: getAuthHeaders() }
+      }
     );
     return response.data['issue_url'];
   } catch (err) {

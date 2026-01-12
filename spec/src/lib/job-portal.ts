@@ -49,6 +49,15 @@ export interface JobCategoryInfo {
   endDate?: string;
   internshipPeriod?: string;
 }
+export interface CompensationInfo {
+  type: 'salary' | 'stipend';
+  mode: 'fixed' | 'range';
+  fixedAmount?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  currency: 'EUR' | 'USD';
+  frequency: 'monthly' | 'yearly';
+}
 
 export interface JobPostInfo {
   id: number;
@@ -62,9 +71,8 @@ export interface JobPostInfo {
   qualification: string;
   targetYears: string;
   openPositions: number;
-  currency: string;
-  stipend: number;
   facilities: string;
+  compensation: CompensationInfo;
   applicationDeadline: string;
   createdByUserId?: string;
   createdAt?: string;

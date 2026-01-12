@@ -1,18 +1,14 @@
 import axios from 'axios';
 import { FTML } from '@flexiformal/ftml';
 import { HomeworkInfo, HomeworkPhase, HomeworkStatsInfo, HomeworkStub } from './homework';
-import { getAuthHeaders } from './lmp';
 import { GradingInfo } from './nap';
 
 export async function getHomeworkList(courseId: string) {
-  const resp = await axios.get(`/api/homework/get-homework-list?courseId=${courseId}`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/homework/get-homework-list?courseId=${courseId}`);
   return resp.data as HomeworkStub[];
 }
 export async function getHomeworkStats(courseId: string, homeworkId: string) {
   const resp = await axios.get(`/api/homework/get-homework-stats`, {
-    headers: getAuthHeaders(),
     params: { courseId, homeworkId },
   });
   return resp.data as HomeworkStatsInfo;
@@ -37,31 +33,23 @@ export interface ResponseWithSubProblemId {
 }
 
 export async function getHomework(id: number) {
-  const resp = await axios.get(`/api/homework/get-homework?id=${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const resp = await axios.get(`/api/homework/get-homework?id=${id}`);
   return resp.data as GetHomeworkResponse;
 }
 
 export type CreateHomeworkRequest = Omit<HomeworkInfo, 'id' | 'updaterId'>;
 export async function createHomework(data: CreateHomeworkRequest) {
-  return axios.post('/api/homework/create-homework', data, {
-    headers: getAuthHeaders(),
-  });
+  return axios.post('/api/homework/create-homework', data);
 }
 
 export type UpdateHomeworkRequest = Omit<HomeworkInfo, 'courseId' | 'courseInstance' | 'institutionId' | 'updaterId'>;
 export async function updateHomework(data: UpdateHomeworkRequest) {
-  return axios.post('/api/homework/update-homework', data, {
-    headers: getAuthHeaders(),
-  });
+  return axios.post('/api/homework/update-homework', data);
 }
 
 export async function deleteHomework(id: number, courseId: string) {
   const response = await axios.post(
     '/api/homework/delete-homework',
-    { id, courseId },
-    { headers: getAuthHeaders() }
-  );
+    { id, courseId }  );
   return response.data;
 }

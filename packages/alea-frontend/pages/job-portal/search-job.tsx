@@ -24,10 +24,12 @@ import {
 } from '@mui/material';
 import {
   canAccessResource,
+  CompensationInfo,
   createJobApplication,
   getAllJobPosts,
   getJobApplicationsByUserId,
   getOrganizationProfile,
+  JobPostInfo,
   OrganizationData,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
@@ -82,7 +84,7 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
-                <strong>Stipend:</strong> {selectedJob.stipend} {selectedJob.currency}
+                {formatCompensation(selectedJob.compensation)}{' '}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
@@ -208,6 +210,27 @@ export const OrganizationModal = ({
     </Modal>
   );
 };
+export function formatCompensation(c?: CompensationInfo): string | null {
+  if (!c) return null;
+  const typeText = c.type === 'salary' ? 'Salary' : 'Stipend';
+  const freqText =
+    c.frequency === 'yearly' ? 'per year' : c.frequency === 'monthly' ? 'per month' : c.frequency;
+  if (c.mode === 'fixed' && c.fixedAmount != null) {
+    return `${typeText}: ${c.currency} ${c.fixedAmount.toLocaleString()} ${freqText}`;
+  }
+  if (c.mode === 'range') {
+    const minText = c.minAmount != null ? c.minAmount.toLocaleString() : '';
+    const maxText = c.maxAmount != null ? c.maxAmount.toLocaleString() : '';
+    let rangeText = '';
+    if (minText && maxText) rangeText = `${c.currency}${minText} – ${c.currency}${maxText}`;
+    else if (minText) rangeText = `${c.currency}${minText}`;
+    else if (maxText) rangeText = `${c.currency}${maxText}`;
+    if (!rangeText) return null;
+    return `${typeText}:  ${rangeText} ${freqText}`;
+  }
+  return null;
+}
+
 export const JobBox = ({ job, onApply, onReadMore }) => {
   const [openOrgModal, setOpenOrgModal] = useState(false);
   const getIcon = () => {
@@ -275,7 +298,7 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
         </Box>
 
         <Typography variant="body2" gutterBottom>
-          💰 {`${job.stipend} ${job.currency}`}
+          💰 {formatCompensation(job.compensation)}
         </Typography>
 
         <Typography variant="body2" gutterBottom>
@@ -396,10 +419,23 @@ export function SearchJob() {
       );
     });
   };
+  const getCompensationValue = (job: JobPostInfo): number => {
+    const c = job.compensation;
+    if (!c) return 0;
+    if (c.mode === 'fixed') {
+      return c.fixedAmount ?? 0;
+    }
+    if (c.mode === 'range') {
+      if (c.minAmount != null) return c.minAmount;
+      if (c.maxAmount != null) return c.maxAmount;
+      return 0;
+    }
+    return 0;
+  };
 
   const handleSort = (filteredJobs) => {
     if (sortBy === 'salary') {
-      return filteredJobs.sort((a, b) => b.stipend - a.stipend);
+      return filteredJobs.sort((a, b) => getCompensationValue(b) - getCompensationValue(a));
     } else if (sortBy === 'latestJobPost') {
       return filteredJobs.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

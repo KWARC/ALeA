@@ -5,7 +5,6 @@ import {
 } from '../comment-utils';
 import { EnrolledCourseIds } from '@alea/spec';
 import { getCurrentTermForCourseId } from '../get-current-term';
-import { getCourseIdAndInstanceFromSbCourseId } from './study-buddy-utils';
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,17 +13,22 @@ export default async function handler(
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
+  const instanceId = req.query.instanceId as string;
+  const institutionId = req.query.institutionId as string;
+
+  if (!institutionId) {
+    res.status(422).end('Missing required field: institutionId');
+    return;
+  }
 
   const results: any[] = await executeAndEndSet500OnError(
-    `SELECT sbCourseId, active as activeStatus from StudyBuddyUsers 
-    WHERE sbCourseId LIKE '%${instanceId}' AND userId=?`,
-    [userId],
+    `SELECT courseId, active as activeStatus from StudyBuddyUsers 
+    WHERE instanceId = ? AND institutionId = ? AND userId=?`,
+    [instanceId, institutionId, userId],
     res
   );
   const enrolledCourseIds: EnrolledCourseIds[] = results.map((r) => ({
-    courseId: getCourseIdAndInstanceFromSbCourseId(r.sbCourseId).courseId,
+    courseId: r.courseId,
     activeStatus: r.activeStatus,
   }));
 
