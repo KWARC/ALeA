@@ -32,6 +32,46 @@ import {
 } from '../../../components/job-portal/JobList';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
+export type ValidationErrors = Partial<Record<keyof JobPostFormData, string>>;
+
+export function validateJobPost(data: JobPostFormData, step?: number): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+  if (step === 0 || step === undefined) {
+    if (!data.jobTitle.trim()) errors.jobTitle = 'Job title is required';
+    if (!data.workMode) errors.workMode = 'Work mode is required';
+  }
+
+  if (step === 1 || step === undefined) {
+    const c = data.compensation;
+
+    if (c.mode === 'fixed') {
+      if (!c.fixedAmount) errors.compensation = 'Fixed amount is required';
+    }
+
+    if (c.mode === 'range') {
+      const { minAmount, maxAmount } = c;
+
+      if (minAmount == null && maxAmount == null) {
+        errors.compensation = 'Min or Max amount is required';
+      } else if (minAmount != null && maxAmount != null && minAmount > maxAmount) {
+        errors.compensation = 'Min amount must be less than Max amount';
+      }
+    }
+
+    if (!c.currency) errors.compensation = 'Currency is required';
+    if (!c.frequency) errors.compensation = 'Frequency is required';
+  }
+
+  if (step === 2 || step === undefined) {
+    if (!data.qualification) errors.qualification = 'Qualification is required';
+    if (!data.targetYears) errors.targetYears = 'Target year is required';
+    if (!data.applicationDeadline) errors.applicationDeadline = 'Deadline is required';
+  }
+
+  return errors;
+}
+
 const JobPostPage = () => {
   const router = useRouter();
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
@@ -63,6 +103,7 @@ const JobPostPage = () => {
     jobDescription: '',
   };
   const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>(initialJobPostFormData);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   useEffect(() => {
     fetchData();
@@ -94,6 +135,10 @@ const JobPostPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJobPostFormData({ ...jobPostFormData, [name]: value });
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
 
   useEffect(() => {
@@ -135,41 +180,49 @@ const JobPostPage = () => {
     }
   }, [selectedJobCategory]);
 
-const handleNext = async () => {
-  if (activeStep < 2) {
-    setActiveStep((prev) => prev + 1);
-    return;
-  }
-  if (!recruiter?.organizationId || !selectedJobCategoryId) {
-    alert('Missing required data');
-    return;
-  }
-  const jobPostPayload = {
-    ...jobPostFormData,
-    jobCategoryId: selectedJobCategoryId,
-    organizationId: recruiter.organizationId,
-  };
-  try {
-    setLoading(true);
-    setIsFormDisabled(true);
-    await createJobPost(jobPostPayload);
-    setSelectedJobCategory('');
-    setSelectedJobCategoryId(null);
-    setJobPostFormData(initialJobPostFormData);
-    setActiveStep(0);
-    fetchData();
-    alert('New job created!');
-  } catch (error) {
-    console.error(error);
-    alert('Failed to create job. Please try again.');
-  } finally {
-    setLoading(false);
-    setIsFormDisabled(false);
-  }
-};
+  const handleNext = async () => {
+    const validationErrors = validateJobPost(jobPostFormData, activeStep);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
 
+    if (activeStep < 2) {
+      setActiveStep((prev) => prev + 1);
+      return;
+    }
+    if (!recruiter?.organizationId || !selectedJobCategoryId) {
+      alert('Missing required data');
+      return;
+    }
+    const jobPostPayload = {
+      ...jobPostFormData,
+      jobCategoryId: selectedJobCategoryId,
+      organizationId: recruiter.organizationId,
+    };
+    try {
+      setLoading(true);
+      setIsFormDisabled(true);
+      await createJobPost(jobPostPayload);
+      setSelectedJobCategory('');
+      setSelectedJobCategoryId(null);
+      setJobPostFormData(initialJobPostFormData);
+      setActiveStep(0);
+      fetchData();
+      alert('New job created!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to create job. Please try again.');
+    } finally {
+      setLoading(false);
+      setIsFormDisabled(false);
+    }
+  };
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
+  const hasErrors = Object.values(errors ?? {}).some(Boolean);
+  const isFinalStep = activeStep === 2;
   if (loading) return <CircularProgress />;
   return (
     <Box
@@ -235,7 +288,7 @@ const handleNext = async () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(64, 56, 64, 0.2)', 
+                backgroundColor: 'rgba(64, 56, 64, 0.2)',
                 borderRadius: '20px',
                 zIndex: 1,
                 display: 'flex',
@@ -252,7 +305,7 @@ const handleNext = async () => {
           </Tooltip>
         )}
         <Typography variant="h4" fontWeight="bold">
-           Create a New Job Post
+          Create a New Job Post
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel sx={{ mt: 4 }}>
           {['Job Descriptions', 'Offer Details', 'Eligibility'].map((label) => (
@@ -263,13 +316,25 @@ const handleNext = async () => {
         </Stepper>
         <Box sx={{ mt: 3 }}>
           {activeStep === 0 && (
-            <JobDescriptionsForm formData={jobPostFormData} handleChange={handleChange} />
+            <JobDescriptionsForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+            />
           )}
           {activeStep === 1 && (
-            <OfferDetailsForm formData={jobPostFormData} handleChange={handleChange} />
+            <OfferDetailsForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+            />
           )}
           {activeStep === 2 && (
-            <EligibilityForm formData={jobPostFormData} handleChange={handleChange} />
+            <EligibilityForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+            />
           )}
         </Box>
         <Box justifyContent="space-between" sx={{ mt: 4 }} display={'flex'}>
@@ -291,7 +356,11 @@ const handleNext = async () => {
                 Back
               </Button>
             )}
-            <Button onClick={handleNext} variant="contained">
+            <Button
+              onClick={handleNext}
+              variant="contained"
+              disabled={loading || (isFinalStep && hasErrors)}
+            >
               {activeStep === 2 ? 'Submit' : 'Next'}
             </Button>
           </Box>
