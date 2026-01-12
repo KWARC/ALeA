@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `access_token=${record.jwtToken}`,
     'HttpOnly',
     'Secure',
-    'SameSite=Strict',
+    'SameSite=Lax',
     'Path=/',
     `Max-Age=${180 * 24 * 60 * 60}`, // 6 months
   ].join('; ');
@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isLoggedInCookie = [
     'is_logged_in=true',
     'Path=/',
-    'SameSite=Strict',
+    'SameSite=Lax',
     'Max-Age=15552000',
   ].join('; ');
 
