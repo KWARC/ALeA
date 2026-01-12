@@ -1,12 +1,13 @@
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { canAccessResource, getAllCourses, getUserInfo } from '@alea/spec';
+import { canAccessResource, getAllCourses } from '@alea/spec';
 import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import { useCurrentUser } from '@alea/react-utils';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import HomeworkPerformanceTable from '../../components/HomeworkPerformanceTable';
 import { getLocaleObject } from '../../lang/utils';
@@ -22,17 +23,15 @@ const HomeworkPage: NextPage = () => {
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [forceFauLogin, setForceFauLogin] = useState(false);
-  const [userId, setUserId] = useState(null);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
 
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
   useEffect(() => {
-    getUserInfo().then((i) => {
-      const uid = i?.userId;
-      if (!uid) return;
-      setUserId(uid);
-      isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-    });
-  });
+    const uid = user?.userId;
+    if (!uid) return;
+    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+  }, [user]);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;

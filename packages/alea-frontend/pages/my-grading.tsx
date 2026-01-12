@@ -1,12 +1,6 @@
 import { Box, List, ListItemButton, ListItemText } from '@mui/material';
-import {
-  deleteGraded,
-  getMyGraded,
-  getUserInfo,
-  GradingWithAnswer,
-  UserInfo,
-} from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
+import { deleteGraded, getMyGraded, GradingWithAnswer } from '@alea/spec';
+import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -45,21 +39,17 @@ function GradedItemsList({
 
 const MyGrading: NextPage = () => {
   const [gradingItems, setGradingItems] = useState<GradingWithAnswer[]>([]);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+  const { user, isUserLoading } = useCurrentUser();
   const [selected, setSelected] = useState<{ gradedId: number } | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
-    getUserInfo().then((info) => {
-      if (!info) {
-        router.push('/login');
-        return;
-      }
-      getMyGraded().then((g) => {
-        setGradingItems(g);
-      });
-      setUserInfo(info);
-    });
-  }, [router]);
+    if (isUserLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    getMyGraded().then((g) => setGradingItems(g));
+  }, [router, user, isUserLoading]);
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this grade?')) {
       deleteGraded(id).then(() => {

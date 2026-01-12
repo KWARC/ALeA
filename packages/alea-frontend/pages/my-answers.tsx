@@ -17,12 +17,10 @@ import {
   deleteAnswer,
   FTMLProblemWithSolution,
   getMyAnswers,
-  getUserInfo,
   GradingInfo,
   Tristate,
-  UserInfo,
 } from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
+import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -298,7 +296,6 @@ function AnswerListSortFields({
 const MyAnswersPage: NextPage = () => {
   dayjs.extend(relativeTime);
   const [answerItems, setAnswerItems] = useState<AnswerResponse[]>([]);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [sortAndFilterParams, setSortAndFilterParams] = useState<SortAndFilterParams>({
     multiSelectField: {
       courseId: [],
@@ -311,19 +308,17 @@ const MyAnswersPage: NextPage = () => {
     sortOrders: DEFAULT_SORT_ORDER,
   });
   const [selected, setSelected] = useState<{ answerId: number } | undefined>(undefined);
+  const { user, isUserLoading } = useCurrentUser();
   const router = useRouter();
+
   useEffect(() => {
-    getUserInfo().then((info) => {
-      if (!info) {
-        router.push('/login');
-        return;
-      }
-      getMyAnswers().then((answers) => {
-        setAnswerItems(answers);
-      });
-      setUserInfo(info);
-    });
-  }, [router]);
+    if (isUserLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    getMyAnswers().then((answers) => setAnswerItems(answers));
+  }, [router, user, isUserLoading]);
   const selectedAnswersItems = useMemo(
     () => getSelectedAnswerItems(answerItems, sortAndFilterParams),
     [answerItems, sortAndFilterParams]
@@ -340,7 +335,7 @@ const MyAnswersPage: NextPage = () => {
     }
   };
   return (
-    <MainLayout title={`${userInfo?.fullName} | ALeA`}>
+    <MainLayout title={`${user?.fullName} | ALeA`}>
       {answerItems.length === 0 && <Typography>No Answer Items Found.</Typography>}
       <AnswerItemOrganizer
         answerItems={answerItems}

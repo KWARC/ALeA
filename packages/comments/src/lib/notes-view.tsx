@@ -1,7 +1,7 @@
 import { FTML } from '@flexiformal/ftml';
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
-import { Comment, getUserInfo } from '@alea/spec';
+import { Comment } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getPrivateNotes, refreshAllComments } from './comment-store-manager';
@@ -9,7 +9,7 @@ import { CommentReply } from './CommentReply';
 import styles from './comments.module.scss';
 import { CommentView } from './CommentView';
 import { getLocaleObject } from './lang/utils';
-import { useCommentRefresh } from '@alea/react-utils';
+import { useCommentRefresh, useCurrentUser } from '@alea/react-utils';
 
 export function NotesView({
   uri,
@@ -23,18 +23,17 @@ export function NotesView({
   allNotesMode?: boolean;
 }) {
   const t = getLocaleObject(useRouter());
-  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState([] as Comment[]);
   const { refreshKey } = useCommentRefresh();
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
 
   const refreshNotes = () => {
     refreshAllComments().then((_) => {
       getPrivateNotes(uri).then((c) => setNotes(c));
     });
   };
-  useEffect(() => {
-    getUserInfo().then((info) => setUserId(info?.userId));
-  }, []);
+
   useEffect(() => {
     if (!userId) return;
     getPrivateNotes(uri).then((c) => setNotes(c));
