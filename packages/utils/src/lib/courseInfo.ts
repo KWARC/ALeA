@@ -20,11 +20,19 @@ export interface CourseInfo {
   slides?: string;
 }
 
-export function getSlidesLink(courseId: string) {
+// CHANGED: Updated to support new URL structure with institutionId and instanceId
+// Falls back to old structure if institutionId/instanceId not provided (backward compatibility)
+export function getSlidesLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/course-view`;
+  }
   return `/course-view/${courseId}`;
 }
 
-export function getForumLink(courseId: string) {
+export function getForumLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/forum`;
+  }
   return `/forum/${courseId}`;
 }
 
@@ -32,15 +40,56 @@ export function getCardsLink(courseId: string) {
   return `/flash-cards/${courseId}`;
 }
 
-export function getCourseHome(courseId: string) {
+export function getCourseHome(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}`;
+  }
   return `/course-home/${courseId}`;
 }
 
-export function getNotesLink(courseId: string) {
+export function getNotesLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/course-notes`;
+  }
   return `/course-notes/${courseId}`;
 }
-export function getQuizzesLink(courseId: string) {
+
+export function getQuizzesLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/quiz-dash`;
+  }
   return `/quiz-dash/${courseId}`;
+}
+
+// NEW: Helper functions for new URL structure
+export function getHomeworkLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/homework`;
+  }
+  return `/homework/${courseId}`;
+}
+
+export function getStudyBuddyLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/study-buddy`;
+  }
+  return `/study-buddy/${courseId}`;
+}
+
+export function getPracticeProblemsLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/practice-problems`;
+  }
+  return `/practice-problems/${courseId}`;
+}
+
+export function getInstructorDashLink(courseId: string, institutionId?: string, instanceId?: string, tab?: string) {
+  if (institutionId && instanceId) {
+    const tabParam = tab ? `?tab=${tab}` : '';
+    return `/${institutionId}/${courseId}/${instanceId}/instructor-dash${tabParam}`;
+  }
+  const tabParam = tab ? `?tab=${tab}` : '';
+  return `/instructor-dash/${courseId}${tabParam}`;
 }
 export function getCoursePdfUrl(notesUri: string): string {
   try {
@@ -55,6 +104,7 @@ export function getCoursePdfUrl(notesUri: string): string {
 
 export const CURRENT_TERM = 'WS25-26';
 
+// CHANGED: Added optional institutionId and instanceId parameters for new URL structure
 export function createCourseInfo(
   courseId: string,
   courseName: string,
@@ -67,19 +117,21 @@ export function createCourseInfo(
   instances?: { semester: string; instructors?: string[] | null }[],
   instructors?: string[] | null,
   teaser?: string | null,
-  slides?: string
+  slides?: string,
+  institutionId?: string,
+  instanceId?: string
 ): CourseInfo {
   return {
     courseId,
     courseName,
     imageLink: `/${courseId}.jpg`,
     notes,
-    courseHome: getCourseHome(courseId),
-    notesLink: getNotesLink(courseId),
+    courseHome: getCourseHome(courseId, institutionId, instanceId),
+    notesLink: getNotesLink(courseId, institutionId, instanceId),
     cardsLink: getCardsLink(courseId),
-    slidesLink: getSlidesLink(courseId),
-    forumLink: getForumLink(courseId),
-    quizzesLink: getQuizzesLink(courseId),
+    slidesLink: getSlidesLink(courseId, institutionId, instanceId),
+    forumLink: getForumLink(courseId, institutionId, instanceId),
+    quizzesLink: getQuizzesLink(courseId, institutionId, instanceId),
     landing,
     isCurrent,
     hasQuiz,

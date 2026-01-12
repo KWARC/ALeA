@@ -71,8 +71,9 @@ const RecorrectionChecker: React.FC = () => {
     setCopiedLinks(new Set());
   };
 
-  const formatQuizLink = (courseId: string, courseTerm: string, quizId: string) => {
-    return `/instructor-dash/${courseId}?tab=quiz-dashboard&quizId=${quizId}`;
+  const formatQuizLink = (courseId: string, courseTerm: string, quizId: string, institutionId: string = 'FAU') => {
+    const instanceId = courseTerm || 'latest';
+    return `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=quiz-dashboard&quizId=${quizId}`;
   };
 
   const handleCopyLink = (courseId: string, courseTerm: string, quizId: string) => {

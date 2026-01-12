@@ -20,7 +20,7 @@ const PerSectionQuizPage: React.FC = () => {
   if (!courseId) return <div>Invalid URL: courseId is undefined</div>;
 
   const goToAllPracticeProblems = () => {
-    router.push(`/practice-problems/${courseId}`);
+    router.push(`/FAU/${courseId}/latest/practice-problems`);
   };
 
   const header = sectionTitle ? sectionTitle : getParamFromUri(sectionUri, 'd');

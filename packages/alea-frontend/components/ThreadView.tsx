@@ -19,10 +19,21 @@ import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
 import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 
-export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
+export function ThreadView({ 
+  courseId, 
+  threadId, 
+  institutionId, 
+  instanceId 
+}: { 
+  courseId: string; 
+  threadId: number;
+  institutionId?: string;
+  instanceId?: string;
+}) {
   const { forum: t } = getLocaleObject(useRouter());
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const currentTermFromContext = currentTermByCourseId[courseId];
+  const currentTerm = instanceId || currentTermFromContext;
 
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +65,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   return (
     <>
       <Box display="flex" justifyContent="space-between" mb="15px">
-        <Link href={`/forum/${courseId}`}>
+        <Link href={institutionId && instanceId ? `/${institutionId}/${courseId}/${instanceId}/forum` : `/forum/${courseId}`}>
           <IconButton>
             <ArrowBackIcon />
           </IconButton>

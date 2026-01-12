@@ -38,15 +38,25 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
   const {
     courseId,
     courseName,
-    courseHome,
+    courseHome: oldCourseHome,
     imageLink,
-    notesLink,
-    slidesLink,
+    notesLink: oldNotesLink,
+    slidesLink: oldSlidesLink,
     cardsLink,
-    forumLink,
-    quizzesLink,
+    forumLink: oldForumLink,
+    quizzesLink: oldQuizzesLink,
     hasQuiz,
+    universityId,
   } = course;
+  
+  const institutionId = universityId || 'FAU';
+  const instanceId = 'latest';
+  const courseHome = `/${institutionId}/${courseId}/${instanceId}`;
+  const notesLink = `/${institutionId}/${courseId}/${instanceId}/course-notes`;
+  const slidesLink = `/${institutionId}/${courseId}/${instanceId}/course-view`;
+  const forumLink = `/${institutionId}/${courseId}/${instanceId}/forum`;
+  const quizzesLink = `/${institutionId}/${courseId}/${instanceId}/quiz-dash`;
+  
   const width = courseId === 'iwgs-1' ? 83 : courseId === 'iwgs-2' ? 165 : 200;
   return (
     <Card
@@ -120,7 +130,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           }
 
           <Tooltip title={t.studyBuddy}>
-            <Link href={`/study-buddy/${courseId}`} passHref>
+            <Link href={course.universityId ? `/${course.universityId}/${courseId}/latest/study-buddy` : `/study-buddy/${courseId}`} passHref>
               <ColoredIconButton>
                 <Diversity3 htmlColor="white" />
               </ColoredIconButton>

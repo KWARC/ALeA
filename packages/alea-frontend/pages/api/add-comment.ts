@@ -10,11 +10,14 @@ import {
   sendNotification,
 } from './comment-utils';
 
-function linkToComment({ threadId, courseId, courseTerm, pageUrl }: any) {
-  if (threadId && courseId && courseTerm) {
-    return `/forum/${courseId}/${threadId}`;
+function linkToComment({ threadId, courseId, courseTerm, institutionId, pageUrl }: any) {
+  const instanceId = courseTerm || 'latest';
+  const resolvedInstitutionId = institutionId || 'FAU';
+  
+  if (threadId && courseId) {
+    return `/${resolvedInstitutionId}/${courseId}/${instanceId}/forum/${threadId}`;
   }
-  if (courseId) return `/forum/${courseId}`;
+  if (courseId) return `/${resolvedInstitutionId}/${courseId}/${instanceId}/forum`;
   return pageUrl || '/';
 }
 
@@ -166,7 +169,7 @@ export default async function handler(req, res) {
     userId,
     isPrivate,
     commentType === CommentType.QUESTION,
-    linkToComment({ threadId, courseId, currentTerm, pageUrl }),
+    linkToComment({ threadId, courseId, courseTerm: currentTerm, institutionId, pageUrl }),
     courseId,
     courseTerm
   );

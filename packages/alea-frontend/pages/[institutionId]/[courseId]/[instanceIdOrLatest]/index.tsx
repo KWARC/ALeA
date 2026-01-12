@@ -12,6 +12,9 @@ import {
   getUserInfo,
   LectureScheduleItem,
   UserInfo,
+  getLatestInstance, 
+  validateInstitution, 
+  validateInstance, 
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -53,13 +56,89 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import InstructorDetails from '../../components/InstructorDetails';
-import { PersonalCalendarSection } from '../../components/PersonalCalendar';
-import { RecordedSyllabus } from '../../components/RecordedSyllabus';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import { useStudentCount } from '../../hooks/useStudentCount';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
+import InstructorDetails from '../../../../components/InstructorDetails';
+import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
+import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
+import { useStudentCount } from '../../../../hooks/useStudentCount';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
+
+const BG_COLORS = {
+  'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
+  'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
+  krmt: 'radial-gradient(circle, white, #f5f5b7)',
+  gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+  rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
+  spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+};
+
+function CourseHeaderWithNewUrl({
+  courseId,
+  courseName,
+  imageLink,
+  institutionId,
+  instanceId,
+}: {
+  courseId: string;
+  courseName: string;
+  imageLink?: string;
+  institutionId: string;
+  instanceId: string | null;
+}) {
+  if (!courseName || !courseId) return <></>;
+  if (!imageLink) {
+    return (
+      <Box m="20px" textAlign="center" fontWeight="bold" fontSize="32px">
+        {courseName}
+      </Box>
+    );
+  }
+  const allowCrop = ['ai-1', 'ai-2', 'lbs', 'smai'].includes(courseId);
+  const courseHomeLink = institutionId && instanceId 
+    ? `/${institutionId}/${courseId}/${instanceId}/course-home` 
+    : `/course-home/${courseId}`; // Fallback to old structure if missing params
+  
+  return (
+    <Box textAlign="center">
+      <Link href={courseHomeLink}>
+        <Box
+          display="flex"
+          position="relative"
+          width="100%"
+          maxHeight="200px"
+          overflow="hidden"
+          borderBottom="2px solid #DDD"
+          sx={{ backgroundImage: BG_COLORS[courseId] }}
+        >
+          {allowCrop ? (
+            <img
+              src={imageLink}
+              alt={courseName}
+              style={{
+                objectFit: 'cover',
+                width: '100%',
+                aspectRatio: '16/9',
+              }}
+            />
+          ) : (
+            <img
+              src={imageLink}
+              alt={courseName}
+              style={{
+                objectFit: 'contain',
+                maxHeight: '200px',
+                margin: 'auto',
+              }}
+            />
+          )}
+        </Box>
+      </Link>
+      <Box m="20px 0 32px" fontWeight="bold" fontSize="32px">
+        {courseName}
+      </Box>
+    </Box>
+  );
+}
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -116,75 +195,6 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
         {children}
       </Button>
     </Link>
-  );
-}
-
-const BG_COLORS = {
-  'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
-  'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
-  krmt: 'radial-gradient(circle, white, #f5f5b7)',
-  gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
-  rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
-  spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-};
-
-export function CourseHeader({
-  courseId,
-  courseName,
-  imageLink,
-}: {
-  courseId: string;
-  courseName: string;
-  imageLink?: string;
-}) {
-  if (!courseName || !courseId) return <></>;
-  if (!imageLink) {
-    return (
-      <Box m="20px" textAlign="center" fontWeight="bold" fontSize="32px">
-        {courseName}
-      </Box>
-    );
-  }
-  const allowCrop = ['ai-1', 'ai-2', 'lbs', 'smai'].includes(courseId);
-  return (
-    <Box textAlign="center">
-      <Link href={`/course-home/${courseId}`}>
-        <Box
-          display="flex"
-          position="relative"
-          width="100%"
-          maxHeight="200px"
-          overflow="hidden"
-          borderBottom="2px solid #DDD"
-          sx={{ backgroundImage: BG_COLORS[courseId] }}
-        >
-          {allowCrop ? (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'cover',
-                width: '100%',
-                aspectRatio: '16/9',
-              }}
-            />
-          ) : (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'contain',
-                maxHeight: '200px',
-                margin: 'auto',
-              }}
-            />
-          )}
-        </Box>
-      </Link>
-      <Box m="20px 0 32px" fontWeight="bold" fontSize="32px">
-        {courseName}
-      </Box>
-    </Box>
   );
 }
 
@@ -529,7 +539,15 @@ function CourseScheduleSection({
   );
 }
 
-function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
+function AnnouncementsSection({ 
+  courseId, 
+  instanceId, 
+  institutionId 
+}: { 
+  courseId: string; 
+  instanceId: string; 
+  institutionId: string;
+}) {
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -537,7 +555,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU'); // TODO(M5)
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, institutionId);
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -547,7 +565,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       }
     }
     fetchAnnouncements();
-  }, [courseId, instanceId]);
+  }, [courseId, instanceId, institutionId]);
 
   if (loading) {
     return (
@@ -595,15 +613,133 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
 const CourseHomePage: NextPage = () => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const rawInstitutionId = router.query.institutionId as string;
   const courseId = router.query.courseId as string;
+  const instanceIdOrLatest = router.query.instanceIdOrLatest as string;
+  
+  const institutionId = rawInstitutionId?.toUpperCase() || '';
+  
+  const [institutionValidated, setInstitutionValidated] = useState(false);
+  
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  
+  const [resolvedInstanceId, setResolvedInstanceId] = useState<string | null>(null);
+  const [loadingInstanceId, setLoadingInstanceId] = useState(false);
+  
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(true);
+  
+  console.log('Resolved Instance ID:', resolvedInstanceId);
+  
+  useEffect(() => {
+    if (!router.isReady || !institutionId || !courseId || !instanceIdOrLatest) return;
+
+    setIsValidating(true);
+    setValidationError(null);
+
+    // Step 1: Validate institutionId exists
+    validateInstitution(institutionId)
+      .then((isValid) => {
+        if (!isValid) {
+          setValidationError('Invalid institutionId');
+          setIsValidating(false);
+          setInstitutionValidated(false);
+          router.push('/');
+          return;
+        }
+        
+        setInstitutionValidated(true);
+        
+        // Step 2: Validate courseId exists (check in courses list)
+        getAllCourses().then((allCourses) => {
+          setCourses(allCourses);
+          if (!allCourses[courseId]) {
+            setValidationError('Invalid courseId');
+            setIsValidating(false);
+            return;
+          }
+          
+          // Step 3: Handle instanceId resolution
+          if (instanceIdOrLatest === 'latest') {
+            // URL has "latest" keyword - fetch latest instanceId from API
+            setLoadingInstanceId(true);
+            getLatestInstance(institutionId)
+              .then((latestInstanceId) => {
+                setResolvedInstanceId(latestInstanceId);
+                setLoadingInstanceId(false);
+                setIsValidating(false);
+              })
+              .catch((error) => {
+                console.error('Failed to fetch latest instanceId:', error);
+                setValidationError('Failed to fetch latest instanceId');
+                setLoadingInstanceId(false);
+                setIsValidating(false);
+              });
+          } else {
+            // URL has specific instanceId (e.g., "WS25-26") - validate it exists
+            validateInstance(institutionId, instanceIdOrLatest)
+              .then((isValidInstance) => {
+                if (!isValidInstance) {
+                  // InstanceId doesn't exist - show error and redirect to home
+                  console.log(`InstanceId ${instanceIdOrLatest} not found`);
+                  setValidationError('Invalid instanceId');
+                  setIsValidating(false);
+                  // Redirect to home page after showing error for 3 seconds
+                  setTimeout(() => {
+                    router.push('/');
+                  }, 3000); // Show error message for 3 seconds before redirecting
+                } else {
+                  // InstanceId is valid - use it
+                  setResolvedInstanceId(instanceIdOrLatest);
+                  setLoadingInstanceId(false);
+                  setIsValidating(false);
+                }
+              })
+              .catch((error) => {
+                console.error('Error validating instanceId:', error);
+                setValidationError('Invalid instanceId');
+                setIsValidating(false);
+                // Redirect to home page after showing error for 3 seconds
+                setTimeout(() => {
+                  router.push('/');
+                }, 3000); // Show error message for 3 seconds before redirecting
+              });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Error validating institutionId:', error);
+        // If it's a server error (500), show a more specific message
+        const errorMessage = error.message || 'Error validating institutionId';
+        setValidationError(errorMessage);
+        setIsValidating(false);
+        setInstitutionValidated(false);
+      });
+  }, [router.isReady, institutionId, courseId, instanceIdOrLatest, router]);
+
+  useEffect(() => {
+    if (!router.isReady || !rawInstitutionId || !courseId || !instanceIdOrLatest) return;
+    if (!institutionValidated) return;
+    
+    const expectedQueryKeys = ['institutionId', 'courseId', 'instanceIdOrLatest'];
+    const hasUnwantedQuery = Object.keys(router.query).some(key => 
+      !expectedQueryKeys.includes(key) || (key === 'courseId' && router.query.courseId !== courseId)
+    );
+    
+    if (rawInstitutionId !== institutionId || hasUnwantedQuery) {
+      const normalizedPath = `/${institutionId}/${courseId}/${instanceIdOrLatest}`;
+      router.replace(normalizedPath);
+      return;
+    }
+  }, [router.isReady, rawInstitutionId, institutionId, courseId, instanceIdOrLatest, institutionValidated, router, router.query]);
+
+  const currentTerm = resolvedInstanceId || '';
 
   const studentCount = useStudentCount(courseId, currentTerm);
   const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
@@ -629,9 +765,7 @@ const CourseHomePage: NextPage = () => {
     });
   }, []);
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  // REMOVED: getAllCourses() call moved to validation useEffect to ensure courses are loaded before validation
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -678,12 +812,67 @@ const CourseHomePage: NextPage = () => {
     loadMetadata();
   }, [courseId, currentTerm]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
-  const courseInfo = courses[courseId];
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+  if (validationError && !isValidating && !loadingInstanceId) {
+    return (
+      <MainLayout title="Error | ALeA" bgColor={BG_COLOR}>
+        <Box sx={{ textAlign: 'center', mt: 10, px: 2 }}>
+          <Alert severity="error" sx={{ maxWidth: '600px', margin: 'auto', p: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+              {validationError === 'Invalid institutionId' && 'Invalid Institution ID'}
+              {validationError === 'Invalid courseId' && 'Invalid Course ID'}
+              {validationError === 'Invalid instanceId' && 'Invalid Instance ID'}
+              {!['Invalid institutionId', 'Invalid courseId', 'Invalid instanceId'].includes(validationError) && 'Error'}
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
+              {validationError === 'Invalid institutionId' && `The institution "${institutionId}" does not exist.`}
+              {validationError === 'Invalid courseId' && `The course "${courseId}" does not exist.`}
+              {validationError === 'Invalid instanceId' && `The instance "${instanceIdOrLatest}" does not exist for institution "${institutionId}".`}
+              {!['Invalid institutionId', 'Invalid courseId', 'Invalid instanceId'].includes(validationError) && validationError}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 2, mb: 2, color: 'text.secondary' }}>
+              Redirecting to home page in a few seconds...
+            </Typography>
+            <Button
+              variant="contained"
+              sx={{ mt: 2 }}
+              onClick={() => router.push('/')}
+            >
+              Go to Home Now
+            </Button>
+          </Alert>
+        </Box>
+      </MainLayout>
+    );
   }
+  
+  if (!router.isReady || isValidating || loadingInstanceId || !resolvedInstanceId) {
+    return <CircularProgress />;
+  }
+  
+  if (!courses || !courses[courseId]) {
+    return (
+      <MainLayout title="Error | ALeA" bgColor={BG_COLOR}>
+        <Box sx={{ textAlign: 'center', mt: 10 }}>
+          <Alert severity="error" sx={{ maxWidth: '600px', margin: 'auto', p: 3 }}>
+            <Typography variant="h5" gutterBottom>Course Not Found</Typography>
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              The course "{courseId}" does not exist.
+            </Typography>
+            <Button
+              variant="contained"
+              sx={{ mt: 3 }}
+              onClick={() => router.push('/')}
+            >
+              Go to Home
+            </Button>
+          </Alert>
+        </Box>
+      </MainLayout>
+    );
+  }
+  
+  const courseInfo = courses[courseId];
+  
   const instructorDetails =
     courseMetadata?.instructors?.map((ins) => ({
       name: ins.name,
@@ -691,26 +880,33 @@ const CourseHomePage: NextPage = () => {
     })) ?? [];
 
   const {
-    notesLink,
-    slidesLink,
+    notesLink: oldNotesLink,
+    slidesLink: oldSlidesLink,
     cardsLink,
-    forumLink,
-    quizzesLink,
     hasQuiz,
     notes,
     landing,
     slides,
   } = courseInfo;
+  
+  const notesLink = institutionId && resolvedInstanceId 
+    ? `/${institutionId}/${courseId}/${resolvedInstanceId}/course-notes`
+    : oldNotesLink; // Fallback to old structure if missing params
+  const slidesLink = institutionId && resolvedInstanceId
+    ? `/${institutionId}/${courseId}/${resolvedInstanceId}/course-view`
+    : oldSlidesLink; // Fallback to old structure if missing params
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
   const t = home.courseThumb;
 
   const showSearchBar = ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId);
+  
   function handleSearch() {
     if (!searchQuery) return;
-    router.push(`/search/${courseId}?query=${encodeURIComponent(searchQuery)}`);
+    router.push(`/${institutionId}/${courseId}/${resolvedInstanceId}/search?query=${encodeURIComponent(searchQuery)}`);
   }
+  
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
       handleSearch();
@@ -744,10 +940,14 @@ const CourseHomePage: NextPage = () => {
       title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
       bgColor={BG_COLOR}
     >
-      <CourseHeader
+      {/* CHANGED: Using new CourseHeaderWithNewUrl component instead of original CourseHeader */}
+      {/* NEW: Passes institutionId and resolvedInstanceId to build new URL structure */}
+      <CourseHeaderWithNewUrl
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
 
       <Box
@@ -817,33 +1017,36 @@ const CourseHomePage: NextPage = () => {
             {t.cards}&nbsp;{' '}
             <Image src="/noun-flash-cards-2494102.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
-          <CourseComponentLink href={forumLink}>
+          {/* CHANGED: All internal navigation links updated to use new URL structure */}
+          {/* OLD: href={`/forum/${courseId}`} or href={`/study-buddy/${courseId}`} */}
+          {/* NEW: Uses /[institutionId]/[courseId]/[instanceId]/resource-name pattern */}
+          <CourseComponentLink href={`/${institutionId}/${courseId}/${resolvedInstanceId}/forum`}>
             {t.forum}&nbsp;
             <QuestionAnswerIcon fontSize="large" />
           </CourseComponentLink>
           {hasQuiz && (
-            <CourseComponentLink href={quizzesLink}>
+            <CourseComponentLink href={`/${institutionId}/${courseId}/${resolvedInstanceId}/quiz-dash`}>
               {t.quizzes}&nbsp;
               <QuizIcon fontSize="large" />
             </CourseComponentLink>
           )}
           {['lbs', 'ai-1', 'smai'].includes(courseId) && (
-            <CourseComponentLink href={`/FAU/${courseId}/latest/homework`}>
+            <CourseComponentLink href={`/${institutionId}/${courseId}/${resolvedInstanceId}/homework`}>
               {t.homeworks}&nbsp;
               <AssignmentTurnedInIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={`/FAU/${courseId}/latest/study-buddy`}>
+          <CourseComponentLink href={`/${institutionId}/${courseId}/${resolvedInstanceId}/study-buddy`}>
             {t.studyBuddy}&nbsp;
             <Diversity3Icon fontSize="large" />
           </CourseComponentLink>
-          <CourseComponentLink href={`/FAU/${courseId}/latest/practice-problems`}>
+          <CourseComponentLink href={`/${institutionId}/${courseId}/${resolvedInstanceId}/practice-problems`}>
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
           {isInstructor && (
             <CourseComponentLink
-              href={`/FAU/${courseId}/latest/instructor-dash`}
+              href={`/${institutionId}/${courseId}/${resolvedInstanceId}/instructor-dash`}
               sx={{ backgroundColor: '#4565af' }}
             >
               {<p>{t.instructorDashBoard}</p>}&nbsp;
@@ -914,7 +1117,10 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
+        {/* CHANGED: AnnouncementsSection now receives institutionId as prop */}
+        {/* OLD: Was hardcoded to 'FAU' inside AnnouncementsSection */}
+        {/* NEW: Passes institutionId from URL to AnnouncementsSection */}
+        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} institutionId={institutionId} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         {showSearchBar && (
@@ -966,3 +1172,4 @@ const CourseHomePage: NextPage = () => {
   );
 };
 export default CourseHomePage;
+

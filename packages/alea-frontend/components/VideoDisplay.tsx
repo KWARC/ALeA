@@ -38,7 +38,7 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import Image from 'next/image';
 import Link from 'next/link';
-import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
+import { setSlideNumAndSectionId } from '../pages/[institutionId]/[courseId]/[instanceIdOrLatest]/course-view';
 
 export default function SeekVideo({
   currentSlideClipInfo,

@@ -486,7 +486,9 @@ const handleResourceClick = (
   router: any,
   resource: CourseResourceAction,
   action?: Action,
-  quizId?: string
+  quizId?: string,
+  institutionId: string = 'FAU',
+  instanceId: string = 'latest'
 ) => {
   const actionsToDisplay: Action[] = [
     Action.PREVIEW,
@@ -500,21 +502,21 @@ const handleResourceClick = (
   const { courseId, name } = resource;
   let url = '';
   if (name === ResourceName.COURSE_SYLLABUS) {
-    url = `instructor-dash/${courseId}?tab=syllabus`;
+    url = `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=syllabus`;
   } else if (name === ResourceName.COURSE_HOMEWORK) {
     if (action === Action.INSTRUCTOR_GRADING) {
-      url = `instructor-dash/${courseId}?tab=homework-grading`;
+      url = `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=homework-grading`;
     } else {
-      url = `instructor-dash/${courseId}?tab=homework-manager`;
+      url = `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=homework-manager`;
     }
   } else if (name === ResourceName.COURSE_QUIZ) {
     if (action === Action.PREVIEW && quizId) {
       url = `quiz/${quizId}`;
     } else {
-      url = `instructor-dash/${courseId}?tab=quiz-dashboard`;
+      url = `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=quiz-dashboard`;
     }
   } else if (name === ResourceName.COURSE_COMMENTS) {
-    url = `forum/${courseId}`;
+    url = `/${institutionId}/${courseId}/${instanceId}/forum`;
   }
   if (url) {
     router.push(url);
@@ -565,7 +567,7 @@ function CourseResourceGroup({
 
   return (
     <Box sx={{ marginBottom: 4 }}>
-      <Link href={`/course-home/${courseId}`}>
+      <Link href={`/FAU/${courseId}/latest`}>
         <Typography
           sx={{
             fontSize: '22px',
@@ -590,7 +592,7 @@ function CourseResourceGroup({
         <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
           All resource setup are not done.{' '}
           <span style={{ textDecoration: 'underline' }}>
-            <Link href={`/instructor-dash/${courseId}?tab=access-control`}>
+            <Link href={`/FAU/${courseId}/latest/instructor-dash?tab=access-control`}>
               Move to instructor dash to complete the setup.
             </Link>
           </span>

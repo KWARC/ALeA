@@ -116,7 +116,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   };
 
   const goToSection = (sectionId?: string) => {
-    window.location.href = `/course-notes/${courseId}#${sectionId}`;
+    window.location.href = `/FAU/${courseId}/latest/course-notes${sectionId ? `#${sectionId}` : ''}`;
   };
 
   return (

@@ -16,8 +16,8 @@ import { FeedbackSection, HiddenFeedback } from './Feedback';
 import { QuizPanelHeader } from './QuizPanelHeader';
 import { VariantDialog } from './VariantDialog';
 
-export const handleGoToSection = (courseId: string, sectionId: string) => {
-  const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
+export const handleGoToSection = (courseId: string, sectionId: string, institutionId: string = 'FAU', instanceId: string = 'latest') => {
+  const url = `/${institutionId}/${courseId}/${instanceId}/course-view?sectionId=${encodeURIComponent(sectionId)}`;
   window.open(url, '_blank');
 };
 

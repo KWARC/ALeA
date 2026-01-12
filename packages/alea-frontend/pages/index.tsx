@@ -222,8 +222,10 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
 export function CourseCard({ course, currentTerm }) {
   const { imageLink: courseImage, courseName, courseId, universityId, instructors } = course;
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
+  const institutionId = universityId || 'FAU';
+  const courseHomeLink = `/${institutionId}/${courseId}/latest`;
   return (
-    <Link href={`/course-home/${courseId}`}>
+    <Link href={courseHomeLink}>
       <Box
         sx={{
           cursor: 'pointer',

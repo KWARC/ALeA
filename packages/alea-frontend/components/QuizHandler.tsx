@@ -10,8 +10,8 @@ interface QuizHandlerProps {
 }
 
 export default function QuizHandler({ currentEntry, quiz }: QuizHandlerProps) {
-  const formatQuizLink = (courseId: string, quizId: string) =>
-    `/instructor-dash/${courseId}?tab=quiz-dashboard&quizId=${quizId}`;
+  const formatQuizLink = (courseId: string, quizId: string, institutionId: string = 'FAU', instanceId: string = 'latest') =>
+    `/${institutionId}/${courseId}/${instanceId}/instructor-dash?tab=quiz-dashboard&quizId=${quizId}`;
 
   if (quiz) {
     return (

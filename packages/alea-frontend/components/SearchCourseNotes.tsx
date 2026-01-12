@@ -69,7 +69,7 @@ const SearchCourseNotes = ({
             src={`\\${courseId}.jpg`}
             alt={courseId}
             style={{ borderRadius: '5px', cursor: 'pointer' }}
-            onClick={() => router.push(`/course-home/${courseId}`)}
+            onClick={() => router.push(`/FAU/${courseId}/latest`)}
           />
         </Tooltip>
         <TextField

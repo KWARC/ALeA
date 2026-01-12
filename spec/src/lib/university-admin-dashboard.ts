@@ -106,3 +106,48 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
   });
   return response.data;
 }
+
+
+export async function getLatestInstance(institutionId: string): Promise<string> {
+  const response = await axios.get(`/api/get-latest-instance/${institutionId}`);
+  if (response.data.instanceId) {
+    return response.data.instanceId;
+  }
+  throw new Error(response.data.error || 'Failed to get latest instanceId');
+}
+
+export async function validateInstitution(institutionId: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`/api/validate-institution/${institutionId}`);
+    return response.data.exists === true;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      if (error.response?.status === 500) {
+        console.error('Server error validating institution:', error.response?.data);
+        throw new Error(error.response?.data?.error || 'Failed to validate institutionId');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function validateInstance(institutionId: string, instanceIdParam: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`/api/validate-instance/${institutionId}/${instanceIdParam}`);
+    return response.data.exists === true;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      if (error.response?.status === 500) {
+        console.error('Server error validating instance:', error.response?.data);
+        throw new Error(error.response?.data?.error || 'Failed to validate instanceId');
+      }
+    }
+    throw error;
+  }
+}
