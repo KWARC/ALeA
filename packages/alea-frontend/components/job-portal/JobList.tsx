@@ -9,6 +9,7 @@ import {
   DialogTitle,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   IconButton,
   InputLabel,
   List,
@@ -26,7 +27,6 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import {
-  CompensationInfo,
   createJobPost,
   deleteJobPost,
   getJobPosts,
@@ -35,22 +35,27 @@ import {
   RecruiterData,
   updateJobPost,
 } from '@alea/spec';
-import { format } from 'path';
 import { formatCompensation } from 'packages/alea-frontend/pages/job-portal/search-job';
+import {
+  validateJobPost,
+  ValidationErrors,
+} from 'packages/alea-frontend/pages/job-portal/recruiter/create-job';
 
 export const EligibilityForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
         Eligibility
       </Typography>
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="normal" error={!!errors?.qualification}>
         <InputLabel id="qualification-year">Qualification</InputLabel>
         <Select
           labelId="qualification-year"
@@ -64,12 +69,15 @@ export const EligibilityForm = ({
           <MenuItem value="Bachelors">Bachelors</MenuItem>
           <MenuItem value="BachelorsAndMasters">Both (Masters+Bachelors)</MenuItem>
         </Select>
+        {errors?.qualification && <FormHelperText>{errors.qualification}</FormHelperText>}
       </FormControl>
       <TextField
         label="Target Year"
         fullWidth
         margin="normal"
         name="targetYears"
+        error={!!errors?.targetYears}
+        helperText={errors?.targetYears}
         value={formData.targetYears}
         onChange={handleChange}
         sx={{ bgcolor: 'white' }}
@@ -82,6 +90,8 @@ export const EligibilityForm = ({
         margin="normal"
         name="applicationDeadline"
         sx={{ bgcolor: 'white' }}
+        error={!!errors?.applicationDeadline}
+        helperText={errors?.applicationDeadline}
         value={
           formData.applicationDeadline
             ? formData.applicationDeadline.slice(0, 16).replace(' ', 'T')
@@ -114,9 +124,11 @@ export const EligibilityForm = ({
 export const OfferDetailsForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
   const { compensation } = formData;
   const handleCompensationChange = (field: string, value: any) => {
@@ -153,6 +165,7 @@ export const OfferDetailsForm = ({
             type="number"
             value={compensation.fixedAmount ?? ''}
             onChange={(e) => handleCompensationChange('fixedAmount', Number(e.target.value))}
+            error={!!errors?.compensation}
             sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
           />
         ) : (
@@ -162,6 +175,7 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.minAmount ?? ''}
               onChange={(e) => handleCompensationChange('minAmount', Number(e.target.value))}
+              error={!!errors?.compensation}
               sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
             />
 
@@ -170,12 +184,13 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.maxAmount ?? ''}
               onChange={(e) => handleCompensationChange('maxAmount', Number(e.target.value))}
+              error={!!errors?.compensation}
               sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
             />
           </>
         )}
 
-        <FormControl sx={{ flex: 1, minWidth: 140 }}>
+        <FormControl sx={{ flex: 1, minWidth: 140 }} error={!!errors?.compensation}>
           <InputLabel>Currency</InputLabel>
           <Select
             value={compensation.currency}
@@ -189,7 +204,7 @@ export const OfferDetailsForm = ({
           </Select>
         </FormControl>
 
-        <FormControl sx={{ flex: 1, minWidth: 160 }}>
+        <FormControl sx={{ flex: 1, minWidth: 160 }} error={!!errors?.compensation}>
           <InputLabel>Frequency</InputLabel>
           <Select
             value={compensation.frequency}
@@ -203,9 +218,15 @@ export const OfferDetailsForm = ({
           </Select>
         </FormControl>
       </Box>
+      {errors?.compensation ? (
+        <Typography variant="body2" color="error" mt={1}>
+          {errors.compensation}
+        </Typography>
+      ) : (
         <Typography variant="body2" color="text.secondary" mt={2}>
           {formatCompensation(compensation)}
-          </Typography>
+        </Typography>
+      )}
       <TextField
         label="Facilities / Perks"
         fullWidth
@@ -225,11 +246,12 @@ export const OfferDetailsForm = ({
 export const JobDescriptionsForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
-  console.log({ formData });
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -249,6 +271,9 @@ export const JobDescriptionsForm = ({
       />
       <TextField
         label="Job Title"
+        required
+        error={!!errors?.jobTitle}
+        helperText={errors?.jobTitle}
         fullWidth
         margin="normal"
         name="jobTitle"
@@ -269,7 +294,7 @@ export const JobDescriptionsForm = ({
           bgcolor: 'white',
         }}
       />
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="normal" error={!!errors?.workMode}>
         <InputLabel id="workMode-label">Work Mode</InputLabel>
         <Select
           labelId="workMode-label"
@@ -284,6 +309,7 @@ export const JobDescriptionsForm = ({
           <MenuItem value="onsite">Onsite</MenuItem>
           <MenuItem value="remote">Remote</MenuItem>
         </Select>
+        {errors?.workMode && <FormHelperText>{errors.workMode}</FormHelperText>}
       </FormControl>
       <TextField
         label="Job Description"
@@ -315,6 +341,8 @@ export const EditJobPostDialog = ({
   handleSave: (updatedJob: JobPostInfo) => Promise<void>;
 }) => {
   const [formData, setFormData] = useState<JobPostInfo | null>(jobData);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   useEffect(() => {
@@ -324,12 +352,25 @@ export const EditJobPostDialog = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => (prev ? { ...prev, [name]: value } : prev));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
-  console.log('as', formData);
-  const handleSubmit = () => {
-    if (formData) handleSave(formData);
+
+  const handleSubmit = async () => {
+    if (!formData) return;
+
+    const validationErrors = validateJobPost(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    await handleSave(formData);
     handleClose();
   };
+
   if (!formData) return null;
   return (
     <Dialog
@@ -348,9 +389,9 @@ export const EditJobPostDialog = ({
     >
       <DialogTitle>Edit Job Post</DialogTitle>
       <DialogContent dividers>
-        <JobDescriptionsForm formData={formData} handleChange={handleChange} />
-        <OfferDetailsForm formData={formData} handleChange={handleChange} />
-        <EligibilityForm formData={formData} handleChange={handleChange} />
+        <JobDescriptionsForm formData={formData} handleChange={handleChange} errors={errors} />
+        <OfferDetailsForm formData={formData} handleChange={handleChange} errors={errors} />
+        <EligibilityForm formData={formData} handleChange={handleChange} errors={errors} />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>

@@ -208,7 +208,6 @@ const AdminDashboard = () => {
     setEditJob(formattedEditJob);
     setModalOpen(true);
   };
-  console.log({ editJob });
 
   const updateJob = async () => {
     try {
@@ -217,7 +216,6 @@ const AdminDashboard = () => {
         startDate: editJob.startDate ? dayjs(editJob.startDate).format('YYYY-MM-DD') : null,
         endDate: editJob.endDate ? dayjs(editJob.endDate).format('YYYY-MM-DD') : null,
       };
-      console.log({ formattedEditJob });
       if (
         formattedEditJob.jobCategory === 'Full-Time' ||
         formattedEditJob.jobCategory === 'full-name'

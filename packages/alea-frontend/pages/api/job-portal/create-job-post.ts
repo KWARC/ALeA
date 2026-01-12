@@ -43,18 +43,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     !jobCategoryId ||
     !session ||
     !jobTitle ||
-    !jobDescription ||
-    !workLocation ||
     !workMode ||
     !qualification ||
     !targetYears ||
-    !openPositions ||
-    !facilities ||
     !applicationDeadline
   )
     return res.status(422).end();
   if (!isValidCompensation(compensation)) return res.status(422).end();
-
+  const normalizedOpenPositions = Number(openPositions) || 0;
   const applicationDeadlineMySQL = applicationDeadline
     ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
     : null;
@@ -73,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       workMode,
       qualification,
       targetYears,
-      openPositions,
+      normalizedOpenPositions,
       JSON.stringify(compensation),
       facilities,
       applicationDeadlineMySQL,

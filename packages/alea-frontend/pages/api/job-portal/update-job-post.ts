@@ -40,18 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!id) return res.status(422).send('Job Post Id is missing');
   if (
     !jobTitle ||
-    !workLocation ||
     !workMode ||
-    !jobDescription ||
     !qualification ||
     !targetYears ||
-    !openPositions ||
-    !facilities ||
     !applicationDeadline
   ) {
     return res.status(422).send('Missing required fields');
   }
   if (!isValidCompensation(compensation)) return res.status(422).end();
+  const normalizedOpenPositions = Number(openPositions) || 0;
   const currentJobPost = await getJobPostUsingIdOrSet500OnError(id, res);
   if (!currentJobPost) return;
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -77,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       qualification,
       targetYears,
       applicationDeadlineMySQL,
-      openPositions,
+      normalizedOpenPositions,
       id,
     ],
     res
