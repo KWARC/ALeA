@@ -99,28 +99,6 @@ export interface SparqlResponse {
   };
 }
 
-export async function setUseRdfEncodeUri(useRdfEncodeUri: boolean) {
-  try {
-    return axios.post(
-      '/api/set-use-rdf-encode-uri',
-      { useRdfEncodeUri }
-    );
-  } catch (error) {
-    console.error('Error setting use RDF encode URI:', error);
-    throw error;
-  }
-}
-
-export async function getUseRdfEncodeUri() {
-  try {
-    const response = await axios.get('/api/get-use-rdf-encode-uri');
-    return response.data.useRdfEncodeUri;
-  } catch (error) {
-    console.error('Error getting use RDF encode URI:', error);
-    throw error;
-  }
-}
-
 export async function getParameterizedQueryResults(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]> = {}

@@ -1,4 +1,4 @@
-import { rdfEncodeUri } from "@flexiformal/ftml";
+import { rdfEncodeUri } from '@flexiformal/ftml';
 
 const MULTIPLE_URI_PARAM_REGEX = /[<](_multiuri_[a-zA-Z0-9-_]+)[>]/g;
 const SINGLE_URI_PARAM_REGEX = /[<"](_uri_[a-zA-Z0-9-_]+)[>"]/g;
@@ -20,6 +20,7 @@ export function findAllUriParams(query: string) {
 function encodeSpecialChars(value: string) {
   return value.replace(/ /g, '%20');
 }
+const useRdfEncodeUri = process.env['NEXT_PUBLIC_USE_RDF_ENCODE_URI'] !== 'false';
 
 // This function creates a FLAMS query from a given query and parameters.
 // Single query parameters expect a string value, and are replaced with their values. `<>` or `"` are retained
@@ -34,8 +35,7 @@ function encodeSpecialChars(value: string) {
 // from `@flexiformal/ftml` (when true) or a minimal space-encoding function (when false / omitted).
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
-  uriParams: Record<string, string | string[]>,
-  useRdfEncodeUri=false
+  uriParams: Record<string, string | string[]>
 ) {
   let result = parameterizedQuery;
 
