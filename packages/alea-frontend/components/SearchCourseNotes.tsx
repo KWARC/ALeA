@@ -25,16 +25,28 @@ const SearchCourseNotes = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState(false);
 
+
+
   useEffect(() => {
     if (query) {
       setSearchQuery(query);
     }
   }, [query]);
 
+  // useEffect(() => {
+  //   if (!searchQuery.trim() || !notesUri) return;
+  //   handleSearch();
+  // }, [searchQuery, notesUri]);
+
   useEffect(() => {
-    if (!searchQuery.trim() || !notesUri) return;
-    handleSearch();
-  }, [searchQuery, notesUri]);
+    if (query && notesUri) {
+      handleSearch();
+    }
+  }, [query, notesUri]);
+
+  if (!notesUri) {
+  return null;
+}
 
   async function handleSearch() {
     if (!searchQuery.trim() || !notesUri) return;
@@ -119,6 +131,8 @@ const SearchCourseNotes = ({
             {results.map((res, idx) => {
               if (!res || typeof res !== 'object') return null;
 
+              const isLast = idx === results.length - 1;
+
               if ('Document' in res) {
                 return (
                   <Box key={idx} mb={2}>
@@ -129,6 +143,17 @@ const SearchCourseNotes = ({
                       chooseHighlightStyle={false}
                       toc="None"
                     />
+
+                    {!isLast && (
+                      <Box
+                        component="hr"
+                        sx={{
+                          border: 0,
+                          borderTop: '1px solid #000',
+                          mt: 2,
+                        }}
+                      />
+                    )}
                   </Box>
                 );
               }
@@ -137,6 +162,17 @@ const SearchCourseNotes = ({
                 return (
                   <Box key={idx} mb={2}>
                     <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: res.Paragraph.uri }} />
+
+                    {!isLast && (
+                      <Box
+                        component="hr"
+                        sx={{
+                          border: 0,
+                          borderTop: '1px solid #000',
+                          mt: 2,
+                        }}
+                      />
+                    )}
                   </Box>
                 );
               }

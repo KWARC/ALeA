@@ -332,13 +332,15 @@ const CourseViewPage: NextPage = () => {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+  const notes = courses?.[courseId]?.notes;
+
   const onClipChange = (clip: any) => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -363,9 +365,10 @@ const CourseViewPage: NextPage = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         courseId={courseId}
+        notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      /> */}
+      />
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
