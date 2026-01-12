@@ -1,4 +1,3 @@
-import { useIsLoggedIn } from '@alea/react-utils';
 import { loginUsingRedirect } from '@alea/spec';
 import { IS_SERVER } from '@alea/utils';
 import { CircularProgress, Typography } from '@mui/material';
@@ -11,7 +10,6 @@ const CrossDomainAuthInitPage: NextPage = () => {
   const router = useRouter();
   const targetUrl = router.query.target as string;
   const [status, setStatus] = useState('Preparing cross-domain authentication...');
-  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
     if (IS_SERVER || !router.isReady) return;
 
@@ -23,13 +21,15 @@ const CrossDomainAuthInitPage: NextPage = () => {
     }
 
     const handleAuth = async () => {
-      if (!loggedIn) {
+      try {
+        const isLoggedInResponse = await axios.get('/api/is-logged-in');
+        if (!isLoggedInResponse.data?.isLoggedIn) throw new Error('User is not logged in');
+      } catch (err) {
         setStatus('Redirecting to IdM for login');
         const returnUrl = `${
           window.location.origin
         }/cross-domain-auth/init?target=${encodeURIComponent(targetUrl || '/')}`;
         loginUsingRedirect(returnUrl);
-        return;
       }
 
       try {
@@ -59,7 +59,7 @@ const CrossDomainAuthInitPage: NextPage = () => {
     };
 
     handleAuth();
-  }, [router.isReady, targetUrl, loggedIn]);
+  }, [router.isReady, targetUrl, router]);
 
   return (
     <>
