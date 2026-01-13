@@ -12,9 +12,6 @@ import {
   getUserInfo,
   LectureScheduleItem,
   UserInfo,
-  getLatestInstance, 
-  validateInstitution, 
-  validateInstance, 
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -60,6 +57,8 @@ import InstructorDetails from '../../../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
 import { useStudentCount } from '../../../../hooks/useStudentCount';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 
@@ -614,130 +613,22 @@ const CourseHomePage: NextPage = () => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const rawInstitutionId = router.query.institutionId as string;
-  const courseId = router.query.courseId as string;
-  const instanceIdOrLatest = router.query.instanceIdOrLatest as string;
-  
-  const institutionId = rawInstitutionId?.toUpperCase() || '';
-  
-  const [institutionValidated, setInstitutionValidated] = useState(false);
-  
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const {
+    institutionId,
+    courseId,
+    instanceIdOrLatest,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
-  
-  const [resolvedInstanceId, setResolvedInstanceId] = useState<string | null>(null);
-  const [loadingInstanceId, setLoadingInstanceId] = useState(false);
-  
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isValidating, setIsValidating] = useState(true);
-  
-  console.log('Resolved Instance ID:', resolvedInstanceId);
-  
-  useEffect(() => {
-    if (!router.isReady || !institutionId || !courseId || !instanceIdOrLatest) return;
-
-    setIsValidating(true);
-    setValidationError(null);
-
-    // Step 1: Validate institutionId exists
-    validateInstitution(institutionId)
-      .then((isValid) => {
-        if (!isValid) {
-          setValidationError('Invalid institutionId');
-          setIsValidating(false);
-          setInstitutionValidated(false);
-          router.push('/');
-          return;
-        }
-        
-        setInstitutionValidated(true);
-        
-        // Step 2: Validate courseId exists (check in courses list)
-        getAllCourses().then((allCourses) => {
-          setCourses(allCourses);
-          if (!allCourses[courseId]) {
-            setValidationError('Invalid courseId');
-            setIsValidating(false);
-            return;
-          }
-          
-          // Step 3: Handle instanceId resolution
-          if (instanceIdOrLatest === 'latest') {
-            // URL has "latest" keyword - fetch latest instanceId from API
-            setLoadingInstanceId(true);
-            getLatestInstance(institutionId)
-              .then((latestInstanceId) => {
-                setResolvedInstanceId(latestInstanceId);
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              })
-              .catch((error) => {
-                console.error('Failed to fetch latest instanceId:', error);
-                setValidationError('Failed to fetch latest instanceId');
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              });
-          } else {
-            // URL has specific instanceId (e.g., "WS25-26") - validate it exists
-            validateInstance(institutionId, instanceIdOrLatest)
-              .then((isValidInstance) => {
-                if (!isValidInstance) {
-                  // InstanceId doesn't exist - show error and redirect to home
-                  console.log(`InstanceId ${instanceIdOrLatest} not found`);
-                  setValidationError('Invalid instanceId');
-                  setIsValidating(false);
-                  // Redirect to home page after showing error for 3 seconds
-                  setTimeout(() => {
-                    router.push('/');
-                  }, 3000); // Show error message for 3 seconds before redirecting
-                } else {
-                  // InstanceId is valid - use it
-                  setResolvedInstanceId(instanceIdOrLatest);
-                  setLoadingInstanceId(false);
-                  setIsValidating(false);
-                }
-              })
-              .catch((error) => {
-                console.error('Error validating instanceId:', error);
-                setValidationError('Invalid instanceId');
-                setIsValidating(false);
-                // Redirect to home page after showing error for 3 seconds
-                setTimeout(() => {
-                  router.push('/');
-                }, 3000); // Show error message for 3 seconds before redirecting
-              });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Error validating institutionId:', error);
-        // If it's a server error (500), show a more specific message
-        const errorMessage = error.message || 'Error validating institutionId';
-        setValidationError(errorMessage);
-        setIsValidating(false);
-        setInstitutionValidated(false);
-      });
-  }, [router.isReady, institutionId, courseId, instanceIdOrLatest, router]);
-
-  useEffect(() => {
-    if (!router.isReady || !rawInstitutionId || !courseId || !instanceIdOrLatest) return;
-    if (!institutionValidated) return;
-    
-    const expectedQueryKeys = ['institutionId', 'courseId', 'instanceIdOrLatest'];
-    const hasUnwantedQuery = Object.keys(router.query).some(key => 
-      !expectedQueryKeys.includes(key) || (key === 'courseId' && router.query.courseId !== courseId)
-    );
-    
-    if (rawInstitutionId !== institutionId || hasUnwantedQuery) {
-      const normalizedPath = `/${institutionId}/${courseId}/${instanceIdOrLatest}`;
-      router.replace(normalizedPath);
-      return;
-    }
-  }, [router.isReady, rawInstitutionId, institutionId, courseId, instanceIdOrLatest, institutionValidated, router, router.query]);
 
   const currentTerm = resolvedInstanceId || '';
 
@@ -814,34 +705,12 @@ const CourseHomePage: NextPage = () => {
 
   if (validationError && !isValidating && !loadingInstanceId) {
     return (
-      <MainLayout title="Error | ALeA" bgColor={BG_COLOR}>
-        <Box sx={{ textAlign: 'center', mt: 10, px: 2 }}>
-          <Alert severity="error" sx={{ maxWidth: '600px', margin: 'auto', p: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-              {validationError === 'Invalid institutionId' && 'Invalid Institution ID'}
-              {validationError === 'Invalid courseId' && 'Invalid Course ID'}
-              {validationError === 'Invalid instanceId' && 'Invalid Instance ID'}
-              {!['Invalid institutionId', 'Invalid courseId', 'Invalid instanceId'].includes(validationError) && 'Error'}
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
-              {validationError === 'Invalid institutionId' && `The institution "${institutionId}" does not exist.`}
-              {validationError === 'Invalid courseId' && `The course "${courseId}" does not exist.`}
-              {validationError === 'Invalid instanceId' && `The instance "${instanceIdOrLatest}" does not exist for institution "${institutionId}".`}
-              {!['Invalid institutionId', 'Invalid courseId', 'Invalid instanceId'].includes(validationError) && validationError}
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 2, mb: 2, color: 'text.secondary' }}>
-              Redirecting to home page in a few seconds...
-            </Typography>
-            <Button
-              variant="contained"
-              sx={{ mt: 2 }}
-              onClick={() => router.push('/')}
-            >
-              Go to Home Now
-            </Button>
-          </Alert>
-        </Box>
-      </MainLayout>
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instanceIdOrLatest={instanceIdOrLatest}
+      />
     );
   }
   
@@ -882,7 +751,7 @@ const CourseHomePage: NextPage = () => {
   const {
     notesLink: oldNotesLink,
     slidesLink: oldSlidesLink,
-    cardsLink,
+    cardsLink: oldCardsLink,
     hasQuiz,
     notes,
     landing,
@@ -891,10 +760,13 @@ const CourseHomePage: NextPage = () => {
   
   const notesLink = institutionId && resolvedInstanceId 
     ? `/${institutionId}/${courseId}/${resolvedInstanceId}/course-notes`
-    : oldNotesLink; // Fallback to old structure if missing params
+    : oldNotesLink;
   const slidesLink = institutionId && resolvedInstanceId
     ? `/${institutionId}/${courseId}/${resolvedInstanceId}/course-view`
-    : oldSlidesLink; // Fallback to old structure if missing params
+    : oldSlidesLink;
+  const cardsLink = institutionId && resolvedInstanceId
+    ? `/${institutionId}/${courseId}/${resolvedInstanceId}/flash-cards`
+    : oldCardsLink;
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);

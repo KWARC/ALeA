@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { getAllCourses, getLatestInstance, validateInstitution, validateInstance } from '@alea/spec';
 import { CommentButton } from '@alea/comments';
 import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
@@ -22,6 +21,8 @@ import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../../../components/SearchCourseNotes';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
 import Tooltip from '@mui/material/Tooltip';
 
@@ -84,107 +85,22 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
   
-  const rawInstitutionId = router.query.institutionId as string;
-  const courseId = router.query.courseId as string;
-  const instanceIdOrLatest = router.query.instanceIdOrLatest as string;
-  
-  // Normalize institutionId to uppercase
-  const institutionId = rawInstitutionId?.toUpperCase() || '';
-  
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const {
+    institutionId,
+    courseId,
+    instanceIdOrLatest,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('course-notes');
+
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
-  
-  const [resolvedInstanceId, setResolvedInstanceId] = useState<string | null>(null);
-  const [loadingInstanceId, setLoadingInstanceId] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isValidating, setIsValidating] = useState(true);
-
-  useEffect(() => {
-    if (!router.isReady || !rawInstitutionId || !courseId || !instanceIdOrLatest) return;
-    
-    const expectedQueryKeys = ['institutionId', 'courseId', 'instanceIdOrLatest'];
-    const hasUnwantedQuery = Object.keys(router.query).some(key => 
-      !expectedQueryKeys.includes(key) || (key === 'courseId' && router.query.courseId !== courseId)
-    );
-    
-    if (rawInstitutionId !== institutionId || hasUnwantedQuery) {
-      const normalizedPath = `/${institutionId}/${courseId}/${instanceIdOrLatest}/course-notes`;
-      router.replace(normalizedPath);
-      return;
-    }
-  }, [router.isReady, rawInstitutionId, institutionId, courseId, instanceIdOrLatest, router, router.query]);
-
-  // Validate and resolve instanceId
-  useEffect(() => {
-    if (!router.isReady || !institutionId || !courseId || !instanceIdOrLatest) return;
-    
-    setIsValidating(true);
-    setValidationError(null);
-    
-    validateInstitution(institutionId)
-      .then((isValid) => {
-        if (!isValid) {
-          setValidationError('Invalid institutionId');
-          setIsValidating(false);
-          setTimeout(() => router.push('/'), 3000);
-          return;
-        }
-        
-        getAllCourses().then((allCourses) => {
-          setCourses(allCourses);
-          if (!allCourses[courseId]) {
-            setValidationError('Invalid courseId');
-            setIsValidating(false);
-            setTimeout(() => router.push('/'), 3000);
-            return;
-          }
-          
-          if (instanceIdOrLatest === 'latest') {
-            setLoadingInstanceId(true);
-            getLatestInstance(institutionId)
-              .then((latestInstanceId) => {
-                setResolvedInstanceId(latestInstanceId);
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              })
-              .catch((error) => {
-                console.error('Failed to fetch latest instanceId:', error);
-                setValidationError('Failed to fetch latest instanceId');
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              });
-          } else {
-            validateInstance(institutionId, instanceIdOrLatest)
-              .then((isValidInstance) => {
-                if (!isValidInstance) {
-                  setValidationError('Invalid instanceId');
-                  setIsValidating(false);
-                  setTimeout(() => router.push('/'), 3000);
-                } else {
-                  setResolvedInstanceId(instanceIdOrLatest);
-                  setLoadingInstanceId(false);
-                  setIsValidating(false);
-                }
-              })
-              .catch((error) => {
-                console.error('Error validating instanceId:', error);
-                setValidationError('Invalid instanceId');
-                setIsValidating(false);
-                setTimeout(() => router.push('/'), 3000);
-              });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Error validating institutionId:', error);
-        setValidationError('Error validating institutionId');
-        setIsValidating(false);
-      });
-  }, [router.isReady, institutionId, courseId, instanceIdOrLatest, router]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,11 +163,12 @@ const CourseNotesPage: NextPage = () => {
 
   if (validationError && !isValidating && !loadingInstanceId) {
     return (
-      <MainLayout title="Error | ALeA">
-        <Box sx={{ textAlign: 'center', mt: 10 }}>
-          <CircularProgress />
-        </Box>
-      </MainLayout>
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instanceIdOrLatest={instanceIdOrLatest}
+      />
     );
   }
 

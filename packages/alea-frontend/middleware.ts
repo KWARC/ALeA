@@ -100,6 +100,14 @@ function redirectOldUrls(req: NextRequest): NextResponse | null {
     return NextResponse.redirect(newUrl, 308);
   }
 
+  const flashCardsMatch = pathname.match(/^\/flash-cards\/([^/]+)$/);
+  if (flashCardsMatch) {
+    const courseId = flashCardsMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/flash-cards`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
   return null;
 }
 

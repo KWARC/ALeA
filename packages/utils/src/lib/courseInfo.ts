@@ -36,7 +36,10 @@ export function getForumLink(courseId: string, institutionId?: string, instanceI
   return `/forum/${courseId}`;
 }
 
-export function getCardsLink(courseId: string) {
+export function getCardsLink(courseId: string, institutionId?: string, instanceId?: string) {
+  if (institutionId && instanceId) {
+    return `/${institutionId}/${courseId}/${instanceId}/flash-cards`;
+  }
   return `/flash-cards/${courseId}`;
 }
 

@@ -1,13 +1,15 @@
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { canAccessResource, getAllCourses, getUserInfo, getLatestInstance, validateInstitution, validateInstance } from '@alea/spec';
+import { canAccessResource, getUserInfo } from '@alea/spec';
 import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../../../components/ForceFAULogin';
 import HomeworkPerformanceTable from '../../../../components/HomeworkPerformanceTable';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import { CourseHeader, handleEnrollment } from '../../../course-home/[courseId]';
@@ -15,100 +17,21 @@ import { CourseHeader, handleEnrollment } from '../../../course-home/[courseId]'
 const HomeworkPage: NextPage = () => {
   const router = useRouter();
   
-  const rawInstitutionId = router.query.institutionId as string;
-  const courseId = router.query.courseId as string;
-  const instanceIdOrLatest = router.query.instanceIdOrLatest as string;
-  
-  const institutionId = rawInstitutionId?.toUpperCase() || '';
-  
-  const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
+  const {
+    institutionId,
+    courseId,
+    instanceIdOrLatest,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('homework');
 
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
   const [forceFauLogin, setForceFauLogin] = useState(false);
   const [userId, setUserId] = useState(null);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
-  
-  const [resolvedInstanceId, setResolvedInstanceId] = useState<string | null>(null);
-  const [loadingInstanceId, setLoadingInstanceId] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isValidating, setIsValidating] = useState(true);
-
-  useEffect(() => {
-    if (!router.isReady || !rawInstitutionId || !courseId || !instanceIdOrLatest) return;
-    if (rawInstitutionId !== institutionId) {
-      const queryString = router.asPath.includes('?') ? router.asPath.split('?')[1] : '';
-      const normalizedPath = `/${institutionId}/${courseId}/${instanceIdOrLatest}/homework${queryString ? `?${queryString}` : ''}`;
-      router.replace(normalizedPath);
-      return;
-    }
-  }, [router.isReady, rawInstitutionId, institutionId, courseId, instanceIdOrLatest, router]);
-
-  useEffect(() => {
-    if (!router.isReady || !institutionId || !courseId || !instanceIdOrLatest) return;
-    
-    setIsValidating(true);
-    setValidationError(null);
-    
-    validateInstitution(institutionId)
-      .then((isValid) => {
-        if (!isValid) {
-          setValidationError('Invalid institutionId');
-          setIsValidating(false);
-          setTimeout(() => router.push('/'), 3000);
-          return;
-        }
-        
-        getAllCourses().then((allCourses) => {
-          setCourses(allCourses);
-          if (!allCourses[courseId]) {
-            setValidationError('Invalid courseId');
-            setIsValidating(false);
-            setTimeout(() => router.push('/'), 3000);
-            return;
-          }
-          
-          if (instanceIdOrLatest === 'latest') {
-            setLoadingInstanceId(true);
-            getLatestInstance(institutionId)
-              .then((latestInstanceId) => {
-                setResolvedInstanceId(latestInstanceId);
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              })
-              .catch((error) => {
-                console.error('Failed to fetch latest instanceId:', error);
-                setValidationError('Failed to fetch latest instanceId');
-                setLoadingInstanceId(false);
-                setIsValidating(false);
-              });
-          } else {
-            validateInstance(institutionId, instanceIdOrLatest)
-              .then((isValidInstance) => {
-                if (!isValidInstance) {
-                  setValidationError('Invalid instanceId');
-                  setIsValidating(false);
-                  setTimeout(() => router.push('/'), 3000);
-                } else {
-                  setResolvedInstanceId(instanceIdOrLatest);
-                  setLoadingInstanceId(false);
-                  setIsValidating(false);
-                }
-              })
-              .catch((error) => {
-                console.error('Error validating instanceId:', error);
-                setValidationError('Invalid instanceId');
-                setIsValidating(false);
-                setTimeout(() => router.push('/'), 3000);
-              });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Error validating institutionId:', error);
-        setValidationError('Error validating institutionId');
-        setIsValidating(false);
-      });
-  }, [router.isReady, institutionId, courseId, instanceIdOrLatest, router]);
 
   useEffect(() => {
     getUserInfo().then((i) => {
@@ -133,11 +56,12 @@ const HomeworkPage: NextPage = () => {
 
   if (validationError && !isValidating && !loadingInstanceId) {
     return (
-      <MainLayout title="Error | ALeA">
-        <Box sx={{ textAlign: 'center', mt: 10 }}>
-          <CircularProgress />
-        </Box>
-      </MainLayout>
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instanceIdOrLatest={instanceIdOrLatest}
+      />
     );
   }
 
