@@ -1,4 +1,8 @@
 import { getOuterHTML } from 'domutils';
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+
+dayjs.extend(localizedFormat);
 
 export const BG_COLOR = 'hsl(210, 20%, 98%)';
 export const IS_SERVER = typeof window === 'undefined';
@@ -322,3 +326,15 @@ export const formatTime = (seconds: number) => {
     return `${minutes} min ${secondsLeft} sec`;
   }
 };
+
+export function dateToEpochMs(dateStr: string) {
+  return dayjs(dateStr).endOf('day').valueOf();
+}
+
+export function epochMsToDateInput(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('YYYY-MM-DD') : '';
+}
+
+export function epochMsToCivilDate(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('LL') : '';
+}

@@ -156,7 +156,7 @@ export default function RecruiterRegistration() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
-  return (<MainLayout title="Register-Recruiter | VoLL-KI">
+  return (<MainLayout title="Register-Recruiter | Job Portal - ALeA">
   <Container maxWidth="sm" sx={{ mt: 6 }}>
     <Box
       sx={{

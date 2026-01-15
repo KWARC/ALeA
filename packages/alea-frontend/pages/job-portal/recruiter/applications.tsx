@@ -75,7 +75,7 @@ const StatusFilter = ({
 
 export const JobSelect = ({
   setLoading,
-   setApplications,
+  setApplications,
   jobPosts,
 }: {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -200,8 +200,15 @@ const Applications = () => {
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <JobSelect setLoading={setLoading} setApplications={setApplications} jobPosts={jobPosts} />
-          <StatusFilter applications={applications} setFilteredApplications={setFilteredApplications} />
+          <JobSelect
+            setLoading={setLoading}
+            setApplications={setApplications}
+            jobPosts={jobPosts}
+          />
+          <StatusFilter
+            applications={applications}
+            setFilteredApplications={setFilteredApplications}
+          />
         </Box>
         <hr />
         <ApplicationTable
@@ -215,7 +222,15 @@ const Applications = () => {
 };
 
 const JobApplicationsPage = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<Applications />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Applications | Job Portal - ALeA"
+      description="Review and manage student job applications in the ALeA Job Portal"
+    >
+      {<Applications />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default JobApplicationsPage;

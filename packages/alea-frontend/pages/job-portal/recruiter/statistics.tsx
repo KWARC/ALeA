@@ -451,7 +451,15 @@ function RecruiterStatistics() {
   );
 }
 const Stats = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<RecruiterStatistics />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Statistics | Job Portal - ALeA"
+      description="View analytics and performance metrics for your job postings on the ALeA Job Portal"
+    >
+      {<RecruiterStatistics />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Stats;
