@@ -1,10 +1,8 @@
 import {
-  addRemoveMember,
   Announcement,
   canAccessResource,
   CourseInfoMetadata,
   getActiveAnnouncements,
-  getAllCourses,
   getCourseInfoMetadata,
   getCoverageTimeline,
   getLectureEntry,
@@ -15,10 +13,8 @@ import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
   Action,
   BG_COLOR,
-  CourseInfo,
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
-  isFauId,
   ResourceName,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -51,62 +47,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import InstructorDetails from '../../components/InstructorDetails';
-import { PersonalCalendarSection } from '../../components/PersonalCalendar';
-import { RecordedSyllabus } from '../../components/RecordedSyllabus';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import InstructorDetails from '../../../../components/InstructorDetails';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
+import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
+import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { useCurrentUser } from '@alea/react-utils';
-import { useStudentCount } from '../../hooks/useStudentCount';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-
-export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
-  return `${courseId}-${instanceId}-enrollments`;
-}
-export async function handleEnrollment(userId: string, courseId: string, currentTerm: string) {
-  if (!userId || !isFauId(userId)) {
-    alert('Please Login Using FAU Id.');
-    return false;
-  }
-
-  try {
-    await addRemoveMember({
-      memberId: userId,
-      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
-      isAclMember: false,
-      toBeAdded: true,
-    });
-    alert('Enrollment successful!');
-    return true;
-  } catch (error) {
-    console.error('Error during enrollment:', error);
-    alert('Enrollment failed. Please try again.');
-    return false;
-  }
-}
-
-export async function handleUnEnrollment(userId: string, courseId: string, currentTerm: string) {
-  if (!userId || !isFauId(userId)) {
-    alert('Please Login Using FAU Id.');
-    return false;
-  }
-
-  try {
-    await addRemoveMember({
-      memberId: userId,
-      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
-      isAclMember: false,
-      toBeAdded: false,
-    });
-
-    alert('You have been unenrolled.');
-    return true;
-  } catch (error) {
-    console.error('Error during unenrollment:', error);
-    alert('Unable to unenroll. Please try again.');
-    return false;
-  }
-}
+import { useStudentCount } from '../../../../hooks/useStudentCount';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
 
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
@@ -115,75 +67,6 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
         {children}
       </Button>
     </Link>
-  );
-}
-
-const BG_COLORS = {
-  'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
-  'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
-  krmt: 'radial-gradient(circle, white, #f5f5b7)',
-  gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
-  rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
-  spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-};
-
-export function CourseHeader({
-  courseId,
-  courseName,
-  imageLink,
-}: {
-  courseId: string;
-  courseName: string;
-  imageLink?: string;
-}) {
-  if (!courseName || !courseId) return <></>;
-  if (!imageLink) {
-    return (
-      <Box m="20px" textAlign="center" fontWeight="bold" fontSize="32px">
-        {courseName}
-      </Box>
-    );
-  }
-  const allowCrop = ['ai-1', 'ai-2', 'lbs', 'smai'].includes(courseId);
-  return (
-    <Box textAlign="center">
-      <Link href={`/course-home/${courseId}`}>
-        <Box
-          display="flex"
-          position="relative"
-          width="100%"
-          maxHeight="200px"
-          overflow="hidden"
-          borderBottom="2px solid #DDD"
-          sx={{ backgroundImage: BG_COLORS[courseId] }}
-        >
-          {allowCrop ? (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'cover',
-                width: '100%',
-                aspectRatio: '16/9',
-              }}
-            />
-          ) : (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'contain',
-                maxHeight: '200px',
-                margin: 'auto',
-              }}
-            />
-          )}
-        </Box>
-      </Link>
-      <Box m="20px 0 32px" fontWeight="bold" fontSize="32px">
-        {courseName}
-      </Box>
-    </Box>
   );
 }
 
@@ -528,7 +411,15 @@ function CourseScheduleSection({
   );
 }
 
-function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
+function AnnouncementsSection({
+  courseId,
+  instanceId,
+  institutionId,
+}: {
+  courseId: string;
+  instanceId: string;
+  institutionId: string;
+}) {
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -536,7 +427,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU'); // TODO(M5)
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, institutionId);
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -546,7 +437,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       }
     }
     fetchAnnouncements();
-  }, [courseId, instanceId]);
+  }, [courseId, instanceId, institutionId]);
 
   if (loading) {
     return (
@@ -594,24 +485,30 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
 const CourseHomePage: NextPage = () => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
-  const courseId = router.query.courseId as string;
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
-
-  const studentCount = useStudentCount(courseId, currentTerm);
+  const studentCount = useStudentCount(courseId, resolvedInstanceId || '');
   const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
 
     async function fetchSeries() {
       try {
-        const data = await getLectureEntry({ courseId, instanceId: currentTerm });
+        const data = await getLectureEntry({ courseId, instanceId: resolvedInstanceId });
         setSeriesId(data.seriesId || '');
       } catch (e) {
         console.error('Failed to load seriesId', e);
@@ -619,35 +516,31 @@ const CourseHomePage: NextPage = () => {
     }
 
     fetchSeries();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
   const { user } = useCurrentUser();
   const userId = user?.userId;
 
   useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
-
-  useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
         courseId,
-        instanceId: currentTerm,
+        instanceId: resolvedInstanceId,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
 
     async function checkAccess() {
       for (const { resource, action } of INSTRUCTOR_RESOURCE_AND_ACTION) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
-          instanceId: currentTerm,
+          instanceId: resolvedInstanceId,
         });
         if (hasAccess) {
           setIsInstructor(true);
@@ -656,14 +549,14 @@ const CourseHomePage: NextPage = () => {
       }
     }
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
 
     async function loadMetadata() {
       try {
-        const info = await getCourseInfoMetadata(courseId, currentTerm);
+        const info = await getCourseInfoMetadata(courseId, resolvedInstanceId);
         setCourseMetadata(info);
       } catch (e) {
         console.error('filled to load metadata', e);
@@ -671,14 +564,34 @@ const CourseHomePage: NextPage = () => {
       }
     }
     loadMetadata();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
-  const courseInfo = courses[courseId];
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+  if (isValidating || loadingInstanceId || !courses) {
+    return (
+      <MainLayout title="Loading... | ALeA" bgColor={BG_COLOR}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
   }
+
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
+  const courseInfo = courses[courseId];
+  if (!courseInfo || !resolvedInstanceId) {
+    return <CourseNotFound />;
+  }
+
   const instructorDetails =
     courseMetadata?.instructors?.map((ins) => ({
       name: ins.name,
@@ -697,8 +610,7 @@ const CourseHomePage: NextPage = () => {
     slides,
   } = courseInfo;
 
-  const locale = router.locale || 'en';
-  const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
+  const { home, courseHome: tCourseHome, quiz: q } = getLocaleObject(router);
   const t = home.courseThumb;
 
   const showSearchBar = ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId);
@@ -713,25 +625,29 @@ const CourseHomePage: NextPage = () => {
   };
 
   const enrollInCourse = async () => {
-    if (!userId || !courseId || !currentTerm) {
+    if (!userId || !courseId || !resolvedInstanceId) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, resolvedInstanceId);
     setIsEnrolled(enrollmentSuccess);
   };
 
   const unEnrollFromCourse = async () => {
-    if (!userId || !courseId || !currentTerm) {
+    if (!userId || !courseId || !resolvedInstanceId) {
       return router.push('/login');
     }
 
     const confirmed = window.confirm('Are you sure you want to un-enroll?');
     if (!confirmed) return;
 
-    const success = await handleUnEnrollment(userId, courseId, currentTerm);
+    const success = await handleUnEnrollment(userId, courseId, resolvedInstanceId);
     if (success) {
       setIsEnrolled(false);
     }
+  };
+
+  const buildLink = (path: string) => {
+    return `/${institutionId}/${courseId}/${resolvedInstanceId}${path}`;
   };
 
   return (
@@ -743,6 +659,8 @@ const CourseHomePage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
 
       <Box
@@ -823,24 +741,21 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
           {['lbs', 'ai-1', 'smai'].includes(courseId) && (
-            <CourseComponentLink href={`/homework/${courseId}`}>
+            <CourseComponentLink href={buildLink('/homework')}>
               {t.homeworks}&nbsp;
               <AssignmentTurnedInIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={`/study-buddy/${courseId}`}>
+          <CourseComponentLink href={buildLink('/study-buddy')}>
             {t.studyBuddy}&nbsp;
             <Diversity3Icon fontSize="large" />
           </CourseComponentLink>
-          <CourseComponentLink href={`/practice-problems/${courseId}`}>
+          <CourseComponentLink href={buildLink('/practice-problems')}>
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
           {isInstructor && (
-            <CourseComponentLink
-              href={`/instructor-dash/${courseId}`}
-              sx={{ backgroundColor: '#4565af' }}
-            >
+            <CourseComponentLink href={buildLink('/instructor-dash')} sx={{ backgroundColor: '#4565af' }}>
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
@@ -909,9 +824,13 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
+        <AnnouncementsSection
+          courseId={courseId}
+          instanceId={resolvedInstanceId}
+          institutionId={institutionId}
+        />
 
-        <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
+        <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={resolvedInstanceId} />
         {showSearchBar && (
           <Box
             sx={{

@@ -14,13 +14,106 @@ const IDM_ALLOWLIST = [
 ];
 
 export function middleware(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+
+  // Skip API routes and static files
+  if (pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.startsWith('/static/')) {
+    return NextResponse.next();
+  }
+
+  // Handle old URL patterns and redirect to new URL structure
+  const courseHomeMatch = pathname.match(/^\/course-home\/([^/]+)$/);
+  if (courseHomeMatch) {
+    const courseId = courseHomeMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const courseNotesMatch = pathname.match(/^\/course-notes\/([^/]+)$/);
+  if (courseNotesMatch) {
+    const courseId = courseNotesMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/course-notes`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const courseViewMatch = pathname.match(/^\/course-view\/([^/]+)$/);
+  if (courseViewMatch) {
+    const courseId = courseViewMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/course-view`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const homeworkMatch = pathname.match(/^\/homework\/([^/]+)$/);
+  if (homeworkMatch) {
+    const courseId = homeworkMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/homework`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const studyBuddyMatch = pathname.match(/^\/study-buddy\/([^/]+)$/);
+  if (studyBuddyMatch) {
+    const courseId = studyBuddyMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/study-buddy`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const practiceProblemsMatch = pathname.match(/^\/practice-problems\/([^/]+)$/);
+  if (practiceProblemsMatch) {
+    const courseId = practiceProblemsMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/practice-problems`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const quizDashMatch = pathname.match(/^\/quiz-dash\/([^/]+)$/);
+  if (quizDashMatch) {
+    const courseId = quizDashMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/quiz-dash`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const instructorDashMatch = pathname.match(/^\/instructor-dash\/([^/]+)$/);
+  if (instructorDashMatch) {
+    const courseId = instructorDashMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/instructor-dash`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const forumMatch = pathname.match(/^\/forum\/([^/]+)(?:\/(.+))?$/);
+  if (forumMatch) {
+    const courseId = forumMatch[1];
+    const threadPath = forumMatch[2];
+    const newUrl = req.nextUrl.clone();
+    if (threadPath) {
+      newUrl.pathname = `/FAU/${courseId}/latest/forum/${threadPath}`;
+    } else {
+      newUrl.pathname = `/FAU/${courseId}/latest/forum`;
+    }
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  const flashCardsMatch = pathname.match(/^\/flash-cards\/([^/]+)$/);
+  if (flashCardsMatch) {
+    const courseId = flashCardsMatch[1];
+    const newUrl = req.nextUrl.clone();
+    newUrl.pathname = `/FAU/${courseId}/latest/flash-cards`;
+    return NextResponse.redirect(newUrl, 308);
+  }
+
+  // Continue with existing FAU domain redirect logic
   if (!ENABLE_REDIRECT) return NextResponse.next();
 
   if (!FAU_DOMAIN || !TARGET_DOMAIN) {
     return NextResponse.next();
   }
   const host = req.headers.get('host')?.split(':')[0];
-  const { pathname, search } = req.nextUrl;
 
   if (host !== FAU_DOMAIN) return NextResponse.next();
 

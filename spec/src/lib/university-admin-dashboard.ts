@@ -89,3 +89,44 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
   const response = await axios.post(`${SEMESTER_BASE_URL}/delete-single-holiday`, data);
   return response.data;
 }
+
+export async function getLatestInstance(institutionId: string): Promise<string> {
+  const response = await axios.get(`/api/get-latest-instance/${institutionId}`);
+  return response.data.instanceId;
+}
+
+export async function validateInstitution(institutionId: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`/api/validate-institution/${institutionId}`);
+    return response.data.exists;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      if (error.response?.status === 500) {
+        console.error('Server error validating institution:', error.response?.data);
+        throw new Error(error.response?.data?.details || 'Server error validating institution');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function validateInstance(institutionId: string, instanceId: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`/api/validate-instance/${institutionId}/${instanceId}`);
+    return response.data.exists;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      if (error.response?.status === 500) {
+        console.error('Server error validating instance:', error.response?.data);
+        throw new Error(error.response?.data?.details || 'Server error validating instance');
+      }
+    }
+    throw error;
+  }
+}

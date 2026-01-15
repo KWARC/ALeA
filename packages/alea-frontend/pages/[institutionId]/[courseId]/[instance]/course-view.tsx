@@ -20,18 +20,21 @@ import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
-import { NextRouter, useRouter } from 'next/router';
-import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
+import { useRouter } from 'next/router';
+import QuizComponent from '../../../../components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
-import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
+import { getSlideUri, SlideDeck } from '../../../../components/SlideDeck';
+import { VideoDisplay, SlidesUriToIndexMap } from '../../../../components/VideoDisplay';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
+import CourseViewToolbarIcons from '../../../../components/course-view/CourseViewToolbarIcons';
+import NotesAndCommentsSection from '../../../../components/course-view/NotesAndCommentsSection';
 import { SlidesClipInfo } from '@alea/spec';
-// DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
+import { ViewMode, setSlideNumAndSectionId } from '../../../../utils/courseViewUtils';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+
 function RenderElements({ elements }: { elements: string[] }) {
   return (
     <>
@@ -43,11 +46,6 @@ function RenderElements({ elements }: { elements: string[] }) {
       ))}
     </>
   );
-}
-
-export enum ViewMode {
-  SLIDE_MODE = 'SLIDE_MODE',
-  COMBINED_MODE = 'COMBINED_MODE',
 }
 
 function ToggleModeButton({
@@ -101,18 +99,6 @@ function populateSlidesClipInfos(sections: SectionInfo[], slidesClipInfo: Slides
   }
 }
 
-export function setSlideNumAndSectionId(router: NextRouter, slideNum: number, sectionId?: string) {
-  const { pathname, query } = router;
-  const courseId = query.courseId as string;
-  if (sectionId) {
-    query.sectionId = sectionId;
-    localStore?.setItem(`lastReadSectionId-${courseId}`, sectionId);
-  }
-  query.slideNum = `${slideNum}`;
-  localStore?.setItem(`lastReadSlideNum-${courseId}`, `${slideNum}`);
-  router.push({ pathname, query });
-}
-
 function getSections(tocElems: FTML.TocElem[]): string[] {
   const sectionIds: string[] = [];
   for (const tocElem of tocElems) {
@@ -144,7 +130,17 @@ function findSection(
 
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    courses: coursesFromHook,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('course-view');
+
   const sectionId = router.query.sectionId as string;
   const slideNum = +((router.query.slideNum as string) || 0);
   const viewModeStr = router.query.viewMode as string;
@@ -152,8 +148,6 @@ const CourseViewPage: NextPage = () => {
   const isVideoVisible = viewMode === ViewMode.COMBINED_MODE;
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
   const [postNotes, setPostNotes] = useState([] as string[]);
@@ -174,7 +168,7 @@ const CourseViewPage: NextPage = () => {
   }>({});
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
   const { courseView: t, home: tHome } = getLocaleObject(router);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const courses = coursesFromHook;
   const [timestampSec, setTimestampSec] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [hasPresentationOrComposite, setHasPresentationOrComposite] = useState(false);
@@ -256,20 +250,16 @@ const CourseViewPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
-        instanceId: currentTerm,
+        instanceId: resolvedInstanceId,
       });
       setIsQUizMaker(hasAccess);
     };
     checkAccess();
-  }, [courseId, currentTerm]);
-
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  }, [courseId, resolvedInstanceId]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -341,32 +331,37 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     if (!router.isReady) return;
     if (sectionId && slideNum && viewMode && audioOnlyStr) return;
+    
     const { pathname, query } = router;
+    const newQuery = { ...query };
     let someParamMissing = false;
+    
     if (!sectionId) {
       someParamMissing = true;
       const inStore = localStore?.getItem(`lastReadSectionId-${courseId}`);
       if (inStore?.length) {
-        query.sectionId = inStore;
+        newQuery.sectionId = inStore;
       } else {
         const firstSection = Object.keys(slideCounts)?.[0];
-        if (firstSection) query.sectionId = firstSection;
+        if (firstSection) newQuery.sectionId = firstSection;
       }
     }
     if (!slideNum) {
       someParamMissing = true;
-      query.slideNum = localStore?.getItem(`lastReadSlideNum-${courseId}`) || '1';
+      newQuery.slideNum = localStore?.getItem(`lastReadSlideNum-${courseId}`) || '1';
     }
     if (!viewMode) {
       someParamMissing = true;
-      query.viewMode = localStore?.getItem('defaultMode') || ViewMode.COMBINED_MODE.toString();
+      newQuery.viewMode = localStore?.getItem('defaultMode') || ViewMode.COMBINED_MODE.toString();
     }
     if (!audioOnlyStr) {
       someParamMissing = true;
-      query.audioOnly = localStore?.getItem('audioOnly') || 'false';
+      newQuery.audioOnly = localStore?.getItem('audioOnly') || 'false';
     }
-    if (someParamMissing) router.replace({ pathname, query });
-  }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
+    if (someParamMissing) {
+      router.replace({ pathname, query: newQuery }, undefined, { shallow: true });
+    }
+  }, [router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts, router.pathname]);
 
   function goToPrevSection() {
     const secIdx = courseSections.indexOf(sectionId);
@@ -382,17 +377,29 @@ const CourseViewPage: NextPage = () => {
     setSlideNumAndSectionId(router, 1, secId);
   }
 
-  if (!router.isReady || !courses) {
+  if (isValidating || loadingInstanceId || !courses) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
+      <MainLayout title="Loading... | ALeA">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <CircularProgress />
+        </Box>
+      </MainLayout>
     );
   }
 
-  if (!courses[courseId]) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
+  if (!courses[courseId] || !resolvedInstanceId) {
+    return <CourseNotFound bgColor={undefined} />;
   }
 
   const onClipChange = (clip: any) => {
@@ -419,34 +426,6 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
-        <IconButton
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 64,
-            right: 24,
-            zIndex: 2002,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
-            boxShadow: 3,
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
-            },
-          }}
-          onClick={handleSearchClick}
-          size="large"
-          aria-label="Open search dialog"
-        >
-          <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
-        </IconButton>
-      </Tooltip>
-      <SearchDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        courseId={courseId}
-        hasResults={hasResults}
-        setHasResults={setHasResults}
-      /> */}
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
@@ -535,8 +514,9 @@ const CourseViewPage: NextPage = () => {
                     updateViewMode={(mode) => {
                       const modeStr = mode.toString();
                       localStore?.setItem('defaultMode', modeStr);
-                      router.query.viewMode = modeStr;
-                      router.replace(router);
+                      // FIX: Changed from router.replace(router) to explicit pathname/query to prevent infinite loops
+                      // Using shallow routing to avoid full page reload
+                      router.replace({ pathname: router.pathname, query: { ...router.query, viewMode: modeStr } }, undefined, { shallow: true });
                     }}
                   />
                   <CourseViewToolbarIcons
@@ -548,8 +528,9 @@ const CourseViewPage: NextPage = () => {
                     onAudioOnlyToggle={() => {
                       const newAudioOnly = !audioOnly;
                       localStore?.setItem('audioOnly', String(newAudioOnly));
-                      router.query.audioOnly = String(newAudioOnly);
-                      router.replace(router);
+                      // FIX: Changed from router.replace(router) to explicit pathname/query to prevent infinite loops
+                      // Using shallow routing to avoid full page reload
+                      router.replace({ pathname: router.pathname, query: { ...router.query, audioOnly: String(newAudioOnly) } }, undefined, { shallow: true });
                     }}
                     onResolutionChange={(res) => setResolution(res)}
                   />

@@ -481,7 +481,7 @@ const groupByCourseId = (resources: CourseResourceAction[]) => {
   }, {} as Record<string, CourseResourceAction[]>);
 };
 
-const handleResourceClick = (
+const handleResourceClick = async (
   router: any,
   resource: CourseResourceAction,
   action?: Action,
@@ -497,23 +497,27 @@ const handleResourceClick = (
   if (action && !actionsToDisplay.includes(action)) return;
 
   const { courseId, name } = resource;
+  const courses = await getAllCourses();
+  const course = courses[courseId];
+  const institutionId = course?.universityId || 'FAU';
+  
   let url = '';
   if (name === ResourceName.COURSE_SYLLABUS) {
-    url = `instructor-dash/${courseId}?tab=syllabus`;
+    url = `/${institutionId}/${courseId}/latest/instructor-dash?tab=syllabus`;
   } else if (name === ResourceName.COURSE_HOMEWORK) {
     if (action === Action.INSTRUCTOR_GRADING) {
-      url = `instructor-dash/${courseId}?tab=homework-grading`;
+      url = `/${institutionId}/${courseId}/latest/instructor-dash?tab=homework-grading`;
     } else {
-      url = `instructor-dash/${courseId}?tab=homework-manager`;
+      url = `/${institutionId}/${courseId}/latest/instructor-dash?tab=homework-manager`;
     }
   } else if (name === ResourceName.COURSE_QUIZ) {
     if (action === Action.PREVIEW && quizId) {
-      url = `quiz/${quizId}`;
+      url = `/quiz/${quizId}`;
     } else {
-      url = `instructor-dash/${courseId}?tab=quiz-dashboard`;
+      url = `/${institutionId}/${courseId}/latest/instructor-dash?tab=quiz-dashboard`;
     }
   } else if (name === ResourceName.COURSE_COMMENTS) {
-    url = `forum/${courseId}`;
+    url = `/${institutionId}/${courseId}/latest/forum`;
   }
   if (url) {
     router.push(url);
@@ -561,10 +565,16 @@ function CourseResourceGroup({
 }) {
   const hasOnlyCourseAccess =
     resources.length === 1 && resources[0].name === ResourceName.COURSE_ACCESS;
+  const [allCourses, setAllCourses] = useState<Record<string, CourseInfo>>({});
+  useEffect(() => {
+    getAllCourses().then(setAllCourses);
+  }, []);
+  const course = allCourses[courseId];
+  const institutionId = course?.universityId || 'FAU';
 
   return (
     <Box sx={{ marginBottom: 4 }}>
-      <Link href={`/course-home/${courseId}`}>
+      <Link href={`/${institutionId}/${courseId}/latest`}>
         <Typography
           sx={{
             fontSize: '22px',
@@ -589,7 +599,7 @@ function CourseResourceGroup({
         <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
           All resource setup are not done.{' '}
           <span style={{ textDecoration: 'underline' }}>
-            <Link href={`/instructor-dash/${courseId}?tab=access-control`}>
+            <Link href={`/${institutionId}/${courseId}/latest/instructor-dash?tab=access-control`}>
               Move to instructor dash to complete the setup.
             </Link>
           </span>

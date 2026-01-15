@@ -136,8 +136,13 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
     });
   };
 
-  const goToSection = (sectionId?: string) => {
-    window.location.href = `/course-notes/${courseId}#${sectionId}`;
+  const goToSection = async (sectionId?: string) => {
+    const { getAllCourses } = await import('@alea/spec');
+    const courses = await getAllCourses();
+    const course = courses[courseId];
+    const institutionId = course?.universityId || 'FAU';
+    const hash = sectionId ? `#${sectionId}` : '';
+    window.location.href = `/${institutionId}/${courseId}/latest/course-notes${hash}`;
   };
 
   return (

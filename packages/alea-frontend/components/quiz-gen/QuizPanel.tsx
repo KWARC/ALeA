@@ -16,8 +16,12 @@ import { FeedbackSection, HiddenFeedback } from './Feedback';
 import { QuizPanelHeader } from './QuizPanelHeader';
 import { VariantDialog } from './VariantDialog';
 
-export const handleGoToSection = (courseId: string, sectionId: string) => {
-  const url = `/course-view/${courseId}?sectionId=${encodeURIComponent(sectionId)}`;
+export const handleGoToSection = async (courseId: string, sectionId: string) => {
+  const { getAllCourses } = await import('@alea/spec');
+  const courses = await getAllCourses();
+  const course = courses[courseId];
+  const institutionId = course?.universityId || 'FAU';
+  const url = `/${institutionId}/${courseId}/latest/course-view?sectionId=${encodeURIComponent(sectionId)}`;
   window.open(url, '_blank');
 };
 

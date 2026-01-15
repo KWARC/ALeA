@@ -15,15 +15,17 @@ import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { useCurrentUser } from '@alea/react-utils';
-import { ForceFauLogin } from '../../components/ForceFAULogin';
-import QuizPerformanceTable from '../../components/QuizPerformanceTable';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
+import { ForceFauLogin } from '../../../../components/ForceFAULogin';
+import QuizPerformanceTable from '../../../../components/QuizPerformanceTable';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { handleEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
 
-//DM: uri:undefined should be discouraged
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
   return (
@@ -140,12 +142,19 @@ const PRACTICE_QUIZ_INFO = {
 
 const QuizDashPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('quiz-dash');
+
   const { quiz: t, home: tHome } = getLocaleObject(router);
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
 
   const now = Date.now();
   const upcomingQuizzes = quizList.filter(({ quizStartTs }) => quizStartTs > now);
@@ -163,7 +172,7 @@ const QuizDashPage: NextPage = () => {
   }, [user]);
 
   useEffect(() => {
-    getAllCourses().then(setCourses);
+    getAllCourses().then(() => {});
   }, []);
 
   useEffect(() => {
@@ -176,34 +185,55 @@ const QuizDashPage: NextPage = () => {
       setQuizList(quizzes);
     });
   }, [courseId]);
+
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
     const enrolledStudentActions = [{ resource: ResourceName.COURSE_QUIZ, action: Action.TAKE }];
     async function checkAccess() {
       for (const { resource, action } of enrolledStudentActions) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
-          instanceId: currentTerm,
+          instanceId: resolvedInstanceId,
         });
         setIsEnrolled(hasAccess);
       }
     }
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (isValidating || loadingInstanceId || !courses) {
+    return (
+      <MainLayout title="Loading... | ALeA">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
+  }
+
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
   const courseInfo = courses[courseId];
   const notes = courseInfo?.notes;
 
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+  if (!courseInfo || !resolvedInstanceId) {
+    return <CourseNotFound bgColor={undefined} />;
   }
+
   const enrollInCourse = async () => {
-    if (!userId || !courseId) {
+    if (!userId || !courseId || !resolvedInstanceId) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, resolvedInstanceId);
     setIsEnrolled(enrollmentSuccess);
   };
 
@@ -212,7 +242,7 @@ const QuizDashPage: NextPage = () => {
       <MainLayout
         title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.quizzes} | VoLL-KI`}
       >
-        <ForceFauLogin content={"quizzes"}/>
+        <ForceFauLogin content={'quizzes'} />
       </MainLayout>
     );
   }
@@ -223,6 +253,8 @@ const QuizDashPage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
       <Box fragment-uri={notes} fragment-kind="Section" maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{t.enrollmentMessage}</Alert>}

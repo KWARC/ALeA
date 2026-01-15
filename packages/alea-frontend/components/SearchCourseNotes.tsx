@@ -85,7 +85,13 @@ const SearchCourseNotes = ({
             src={`/${courseId}.jpg`}
             alt={courseId}
             style={{ borderRadius: '5px', cursor: 'pointer' }}
-            onClick={() => router.push(`/course-home/${courseId}`)}
+            onClick={async () => {
+              const { getAllCourses } = await import('@alea/spec');
+              const courses = await getAllCourses();
+              const course = courses[courseId];
+              const institutionId = course?.universityId || 'FAU';
+              router.push(`/${institutionId}/${courseId}/latest`);
+            }}
           />
         </Tooltip>
         <TextField
