@@ -38,11 +38,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   )
     return res.status(422).end();
   const normalizedOpenPositions = Number(openPositions) || 0;
+  const applicationDeadlineTimestamp_sec = Math.floor(applicationDeadlineTimestamp_ms / 1000);
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobPost 
       (jobCategoryId, organizationId, session, jobTitle, jobDescription, workLocation, workMode, qualification, graduationYears, openPositions, compensation, facilities, applicationDeadline, createdByUserId) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000), ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), ?)`,
     [
       jobCategoryId,
       organizationId,
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       normalizedOpenPositions,
       JSON.stringify(compensation),
       facilities,
-      applicationDeadlineTimestamp_ms,
+      applicationDeadlineTimestamp_sec,
       userId,
     ],
     res

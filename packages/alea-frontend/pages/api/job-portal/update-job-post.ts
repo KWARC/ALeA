@@ -41,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required fields');
   }
   const normalizedOpenPositions = Number(openPositions) || 0;
+  const applicationDeadlineTimestamp_sec = Math.floor(applicationDeadlineTimestamp_ms / 1000);
   const currentJobPost = await getJobPostUsingIdOrSet500OnError(id, res);
   if (!currentJobPost) return;
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -63,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     facilities = ?,
     qualification = ?,
     graduationYears = ?,
-    applicationDeadline = FROM_UNIXTIME(? / 1000),
+    applicationDeadline = FROM_UNIXTIME(?),
     openPositions = ?,
     updatedAt = CURRENT_TIMESTAMP
   WHERE id = ?
@@ -78,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       facilities,
       qualification,
       graduationYears,
-      applicationDeadlineTimestamp_ms,
+      applicationDeadlineTimestamp_sec,
       normalizedOpenPositions,
       id,
     ],

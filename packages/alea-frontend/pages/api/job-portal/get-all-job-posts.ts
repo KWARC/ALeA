@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       facilities,
       workMode,
       UNIX_TIMESTAMP(applicationDeadline) * 1000 AS applicationDeadlineTimestamp_ms,
-      createdAt,
+      createdAt
     FROM jobPost
     `,
     [],
