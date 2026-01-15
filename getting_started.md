@@ -93,6 +93,24 @@ VALUES (
 );
 ```
 
+## Job Portal ACL for ADMINS
+
+- A closed ACL `job-portal-admins` for admins of Job Portal.
+- System Administrator will decide whom to make admin.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-admins',
+  'Admins of job portal',
+  'sys-admin',
+  0
+);
+```
+- After ACL is being created ,add members into `job-portal-admins` manually using UI.
+
 ## env.local
 
 Create a .env.local file inside the packages/alea-frontend directory with the following content:

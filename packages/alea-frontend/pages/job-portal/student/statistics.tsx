@@ -11,7 +11,7 @@ import JobStatsChart from './dashboard';
 
 const StudentStats = () => {
   const [applications, setApplications] = useState([]);
-  const [profileStrength, setProfileStrength] = useState(0); // Sample profile strength
+  const [profileStrength, setProfileStrength] = useState(0); 
   const [resumeInsights, setResumeInsights] = useState({
     skills: [],
     experience: 0,
@@ -347,7 +347,15 @@ const StudentStats = () => {
 };
 
 const Stats = () => {
-  return <JpLayoutWithSidebar role="student">{<StudentStats />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Statistics | Job Portal - ALeA"
+      description="View your activity, application stats, and performance metrics on the ALeA Job Portal"
+    >
+      {<StudentStats />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Stats;
