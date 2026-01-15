@@ -16,6 +16,8 @@ import { StudyBuddyModeratorStats } from '../../components/StudyBuddyModeratorSt
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
 import CourseMetadata from '../../components/instructor-panel/CourseMetadata';
+import { useTheme } from '@mui/material/styles';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -116,6 +118,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 };
 
 const InstructorDash: NextPage = () => {
+  const theme = useTheme();
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const { currentTermByCourseId } = useCurrentTermContext();
@@ -214,14 +217,26 @@ const InstructorDash: NextPage = () => {
         imageLink={courseInfo?.imageLink}
         courseId={courseId}
       />
+      {/* <Box
+  sx={{
+    width: '100%',
+    margin: 'auto',
+    maxWidth: TAB_MAX_WIDTH[accessibleTabs[currentTabIdx]],
+  }}
+> */}
+
       <Box
         sx={{
           width: '100%',
-          margin: 'auto',
+          mx: 'auto',
           maxWidth: TAB_MAX_WIDTH[accessibleTabs[currentTabIdx]],
+          bgcolor: 'background.paper',
+          borderRadius: theme.shape.borderRadius,
+          boxShadow: theme.shadows[1],
+          mt: 3,
         }}
       >
-        <Tabs
+        {/* <Tabs
           value={currentTabIdx}
           onChange={handleChange}
           variant="scrollable"
@@ -240,6 +255,18 @@ const InstructorDash: NextPage = () => {
               minWidth: '120px',
               textTransform: 'none',
             },
+          }}
+        > */}
+        <Tabs
+          value={currentTabIdx}
+          onChange={handleChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          aria-label="Instructor Dashboard Tabs"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            px: 2,
           }}
         >
           {accessibleTabs.map((tabName, index) => (

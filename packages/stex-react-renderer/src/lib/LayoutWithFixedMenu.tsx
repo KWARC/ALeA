@@ -17,7 +17,8 @@ export function FixedPositionMenu({
   const staticSection = (
     <Box
       sx={{
-        border: '2px solid #CCC',
+        border: '2px solid',
+        borderColor: 'divider',
         fontFamily: 'Open Sans,Verdana,sans-serif',
       }}
     >
@@ -104,6 +105,13 @@ export function LayoutWithFixedMenu({
         anchor={drawerAnchor}
         open={useDrawer && showDashboard}
         onClose={() => setShowDashboard(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            backgroundImage: 'none',
+          },
+        }}
       >
         <MenuContext.Provider value={{ offset, inDrawer: true }}>
           {menu}
@@ -126,13 +134,13 @@ export function LayoutWithFixedMenu({
               border: `2px solid ${PRIMARY_COL}`,
               borderRadius: '500px',
               color: PRIMARY_COL,
-              backgroundColor: 'white',
+              backgroundColor: 'background.paper',
               boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.5)',
               transition: 'all 0.3s ease 0s',
               ':hover': {
                 boxShadow: '0px 15px 20px rgba(0, 0, 0, 0.4)',
                 transform: 'translateY(1px)',
-                backgroundColor: 'white',
+                backgroundColor: 'background.paper',
               },
             }}
             onClick={() => setShowDashboard(true)}

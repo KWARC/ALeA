@@ -34,7 +34,7 @@ const GuidedTourPage: NextPage = () => {
           </Select>
         </FormControl>
       </Box>
-      <Box flexGrow={1} bgcolor={BG_COLOR}>
+      <Box flexGrow={1} bgcolor="background.default">
         <TourDisplay tourId={tourId} language={language} topOffset={125} />
       </Box>
     </MainLayout>

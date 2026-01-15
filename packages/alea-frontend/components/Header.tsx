@@ -1,7 +1,19 @@
 import { useMatomo } from '@jonkoops/matomo-tracker-react';
 import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import {
+  Box,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Tooltip,
+  TextField,
+} from '@mui/material';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import AppBar from '@mui/material/AppBar';
 import { getUserInfo, isLoggedIn, logout } from '@alea/spec';
 import { CountryFlag, useScrollDirection } from '@alea/react-utils';
@@ -12,6 +24,8 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import styles from '../styles/header.module.scss';
 import NotificationButton from './NotificationButton';
+import { useColorMode } from '../contexts/ColorModeContext';
+import { useTheme } from '@mui/material/styles';
 
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
 
@@ -43,7 +57,7 @@ function UserButton() {
 
   return (
     <Box whiteSpace="nowrap">
-      <Button
+      {/* <Button
         sx={{
           color: 'black',
           border: '1px solid black',
@@ -52,7 +66,22 @@ function UserButton() {
         onClick={handleClick}
       >
         {userName}
+      </Button> */}
+      <Button
+        sx={{
+          color: 'header.text',
+          border: '1px solid black',
+          textTransform: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+        onClick={handleClick}
+      >
+        <PersonOutlineIcon fontSize="small" />
+        {userName}
       </Button>
+
       <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem
           onClick={() => {
@@ -75,54 +104,105 @@ function UserButton() {
   );
 }
 
-function LanguageButton() {
+// function LanguageButton() {
+//   const router = useRouter();
+//   const { locale } = router;
+//   const { header: t } = getLocaleObject(router);
+
+//   // Menu crap Start
+//   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+//   const open = Boolean(anchorEl);
+//   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+//     setAnchorEl(event.currentTarget);
+//   };
+//   const handleClose = () => {
+//     setAnchorEl(null);
+//   };
+//   // Menu crap End
+
+//   function changeLocale(locale: string) {
+//     const { pathname, asPath, query } = router;
+//     // change just the locale and maintain all other route information including href's query
+//     router.replace({ pathname, query }, asPath, { locale });
+//   }
+//   return (
+//     <Box whiteSpace="nowrap">
+//       <Tooltip title={t.changeLanguage}>
+//         <IconButton onClick={handleClick}>
+//           <CountryFlag flag={locale === 'en' ? 'gb' : locale} size="28x21" size2="56x42" />
+//         </IconButton>
+//       </Tooltip>
+//       <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
+//         <MenuItem
+//           onClick={() => {
+//             changeLocale('en');
+//             handleClose();
+//           }}
+//         >
+//           <CountryFlag flag="gb" size="28x21" size2="56x42" />
+//           &nbsp; English
+//         </MenuItem>
+//         <MenuItem
+//           onClick={() => {
+//             changeLocale('de');
+//             handleClose();
+//           }}
+//         >
+//           <CountryFlag flag="de" size="28x21" size2="56x42" />
+//           &nbsp; Deutsch
+//         </MenuItem>
+//       </Menu>
+//     </Box>
+//   );
+// }
+
+function LanguageSelect() {
   const router = useRouter();
-  const { locale } = router;
-  const { header: t } = getLocaleObject(router);
+  const { locale, pathname, query, asPath } = router;
 
-  // Menu crap Start
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newLocale = event.target.value;
+    router.push({ pathname, query }, asPath, { locale: newLocale });
   };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  // Menu crap End
 
-  function changeLocale(locale: string) {
-    const { pathname, asPath, query } = router;
-    // change just the locale and maintain all other route information including href's query
-    router.replace({ pathname, query }, asPath, { locale });
-  }
+  const languages = [
+    { code: 'en', label: 'English', flag: 'gb' },
+    { code: 'de', label: 'Deutsch', flag: 'de' },
+  ];
+
   return (
-    <Box whiteSpace="nowrap">
-      <Tooltip title={t.changeLanguage}>
-        <IconButton onClick={handleClick}>
-          <CountryFlag flag={locale === 'en' ? 'gb' : locale} size="28x21" size2="56x42" />
-        </IconButton>
-      </Tooltip>
-      <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
-        <MenuItem
-          onClick={() => {
-            changeLocale('en');
-            handleClose();
-          }}
-        >
-          <CountryFlag flag="gb" size="28x21" size2="56x42" />
-          &nbsp; English
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            changeLocale('de');
-            handleClose();
-          }}
-        >
-          <CountryFlag flag="de" size="28x21" size2="56x42" />
-          &nbsp; Deutsch
-        </MenuItem>
-      </Menu>
+    <Box width={160}>
+      <TextField
+        select
+        size="small"
+        value={locale}
+        onChange={handleChange}
+        variant="outlined"
+        SelectProps={{
+          renderValue: (value) => {
+            const lang = languages.find((l) => l.code === value);
+            if (!lang) return value;
+
+            return (
+              <Box display="flex" alignItems="center" gap={1}>
+                <CountryFlag flag={lang.flag} size="28x21" size2="56x42" />
+                <Box component="span" sx={{ color: 'header.text', fontWeight: 500 }}>
+                  {lang.label}
+                </Box>
+              </Box>
+            );
+          },
+        }}
+      >
+        {languages.map((lang) => (
+          <MenuItem key={lang.code} value={lang.code}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <CountryFlag flag={lang.flag} size="28x21" size2="56x42" />
+              {lang.label}
+            </Box>
+          </MenuItem>
+        ))}
+      </TextField>
     </Box>
   );
 }
@@ -131,9 +211,11 @@ export function Header() {
   const loggedIn = isLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
+  const theme = useTheme();
+  const colorMode = useColorMode();
   const background =
     process.env.NEXT_PUBLIC_SITE_VERSION === 'production'
-      ? undefined
+      ? theme.palette.header.main
       : process.env.NEXT_PUBLIC_SITE_VERSION === 'staging'
       ? 'crimson !important'
       : 'blue !important';
@@ -146,7 +228,7 @@ export function Header() {
         transition: 'top 0.4s ease-out',
       }}
     >
-      <Toolbar className={styles['toolbar']} sx={{ background }}>
+      <Toolbar className={styles['toolbar']} sx={{ background, color: 'header.text' }}>
         <Link href="/" passHref>
           <Tooltip
             placement="right"
@@ -174,22 +256,48 @@ export function Header() {
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
                 <IconButton>
-                  <HelpIcon htmlColor="white" />
+                  <HelpIcon color="inherit" />
                 </IconButton>
               </Tooltip>
             </Link>
-            <LanguageButton />
+            <Tooltip
+              title={theme.palette.mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              <IconButton onClick={colorMode.toggleColorMode} color="inherit">
+                {theme.palette.mode === 'dark' ? (
+                  <Brightness7Icon />
+                ) : (
+                  <Brightness4Icon color="inherit" />
+                )}
+              </IconButton>
+            </Tooltip>
+            <LanguageSelect />
             {loggedIn ? (
               <UserButton />
             ) : (
+              // <Button
+              //   sx={{ color: 'black', border: '1px solid black' }}
+              //   onClick={() => {
+              //     // Don't change target when user reclicks 'Login' button.
+              //     if (window.location.pathname === '/login') return;
+              //     router.push('/login?target=' + encodeURIComponent(window.location.href));
+              //   }}
+              // >
+              //   {t.login}
+              // </Button>
               <Button
-                sx={{ color: 'black', border: '1px solid black' }}
+                sx={{
+                  color: 'header.text',
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  textTransform: 'none',
+                  gap: 1,
+                }}
                 onClick={() => {
-                  // Don't change target when user reclicks 'Login' button.
                   if (window.location.pathname === '/login') return;
                   router.push('/login?target=' + encodeURIComponent(window.location.href));
                 }}
               >
+                <PersonOutlineIcon fontSize="small" />
                 {t.login}
               </Button>
             )}

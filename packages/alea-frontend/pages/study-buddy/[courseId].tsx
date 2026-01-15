@@ -112,7 +112,7 @@ const StudyBuddyPage: NextPage = () => {
   const notes = courseInfo?.notes;
 
   return (
-    <MainLayout title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`} bgColor={BG_COLOR}>
+    <MainLayout title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`}>
       <CourseHeader courseName={courseName} imageLink={courseInfo?.imageLink} courseId={courseId} />
       <Box
         fragment-uri={notes}

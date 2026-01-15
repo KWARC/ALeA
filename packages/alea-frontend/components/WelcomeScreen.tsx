@@ -593,8 +593,9 @@ function ResourceCard({
       key={resource.name}
       sx={{
         flex: '1 1 calc(25% - 16px)',
-        border: '1px solid lightgray',
-        boxShadow: '0px 4px 6px gray',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: 3,
         borderRadius: '8px',
         minHeight: '122px',
         minWidth: '250px',
@@ -602,7 +603,7 @@ function ResourceCard({
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'scale(1.02)',
-          boxShadow: '0px 8px 12px gray',
+          boxShadow: 6,
         },
       }}
     >
@@ -767,7 +768,7 @@ function WelcomeScreen({
         meantime, you can still access course content.
       </Typography>*/}
       <BannerSection tight={true} />
-      <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: '#F5F5F5' }}>
+      <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: 'background.default' }}>
         <Typography
           sx={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}
         >
@@ -789,15 +790,15 @@ function WelcomeScreen({
                   fontSize: '22px',
                   fontWeight: 'bold',
                   marginBottom: 2,
-                  backgroundColor: PRIMARY_COL,
-                  color: 'white',
+                  backgroundColor: 'primary.main',
+                  color: 'primary.contrastText',
                   padding: '10px',
                   textAlign: 'center',
                   '&:hover': {
                     cursor: 'pointer',
                     textDecoration: 'underline',
                     backgroundColor: 'secondary.main',
-                    color: PRIMARY_COL,
+                    color: 'primary.main',
                   },
                 }}
               >
@@ -844,7 +845,7 @@ function WelcomeScreen({
           <Button variant="contained">{n.exploreOurCourse}</Button>
         </Link>
       </Box>
-      <VollKiInfoSection bgcolor="white" />
+      <VollKiInfoSection />
     </MainLayout>
   );
 }

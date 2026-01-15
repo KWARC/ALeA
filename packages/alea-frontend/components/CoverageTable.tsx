@@ -62,12 +62,13 @@ const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slide
 
 const tooltipBoxProps = {
   maxWidth: '600px',
-  color: '#1a237e',
-  border: '2px solid #3f51b5',
+  color: 'text.primary',
+  border: '2px solid',
+  borderColor: 'primary.main',
   p: '12px',
   borderRadius: '8px',
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-  bgcolor: 'white',
+  bgcolor: 'background.paper',
 };
 
 function SectionTooltipContent({
@@ -605,13 +606,15 @@ export function CoverageTable({
       <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2, mb: 3 }}>
         <Table sx={{ minWidth: 650 }} size="medium">
           <TableHead>
-            <TableRow sx={{ bgcolor: 'primary.light' }}>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Section Completed</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Target Section</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Clip</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Quiz</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Actions</TableCell>
+            <TableRow sx={{ bgcolor: 'primary.main' }}>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Date</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>
+                Section Completed
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Target Section</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Clip</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Quiz</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

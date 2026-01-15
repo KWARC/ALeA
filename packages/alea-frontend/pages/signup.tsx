@@ -126,8 +126,9 @@ const SignUpPage: NextPage = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            border: '1px solid #dee2e6',
-            backgroundColor: BG_COLOR,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
         >
           <br />

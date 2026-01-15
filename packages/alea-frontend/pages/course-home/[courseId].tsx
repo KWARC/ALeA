@@ -34,6 +34,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import { useTheme } from '@mui/material/styles';
 import {
   Alert,
   Box,
@@ -46,8 +47,22 @@ import {
   InputAdornment,
   TextField,
   Typography,
+  Grid,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
+// import Grid from '@mui/material/Grid';
+import {
+  Article,
+  AssignmentTurnedIn,
+  CalendarMonth,
+  Diversity3,
+  Person,
+  PictureAsPdf,
+  QuestionAnswer,
+  Quiz,
+  School,
+  Search,
+  Slideshow,
+} from '@mui/icons-material';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -291,7 +306,7 @@ function CourseScheduleSection({
         minute: '2-digit',
       })
     : null;
-  const fontColor = '#01453d';
+  const fontColor = 'text.primary';
   return (
     <Box
       sx={{
@@ -299,7 +314,7 @@ function CourseScheduleSection({
         maxWidth: '850px',
         p: { xs: 0, sm: 1 },
         borderRadius: '12px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'background.paper',
         border: { xs: 'none', sm: '1px solid #e0e0e0' },
       }}
     >
@@ -318,8 +333,9 @@ function CourseScheduleSection({
                   px: { xs: 1, sm: 2 },
                   py: { xs: 1, sm: 1.5 },
                   borderRadius: 1,
-                  background: 'linear-gradient(135deg, #e8f5e8, #f0f9ff)',
-                  border: '1px solid #b2dfdb',
+                  bgcolor: 'section.secondary',
+                  border: '1px solid',
+                  borderColor: 'divider',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
@@ -352,26 +368,27 @@ function CourseScheduleSection({
                         mb: 1,
                         p: 1,
                         borderRadius: 1,
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0f2f1',
+                        backgroundColor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                           {getWeekdayName(entry.dayOfWeek)}
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
                           🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: '#00695c' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                           📍 Venue:{' '}
                           {entry.venueLink ? (
                             <Link
                               href={entry.venueLink}
                               target="_blank"
-                              style={{ textDecoration: 'underline', color: '#004d40' }}
+                              style={{ textDecoration: 'underline', color: 'primary.main' }}
                             >
                               {entry.venue}
                             </Link>
@@ -405,7 +422,7 @@ function CourseScheduleSection({
                     onClick={() => setShowAllLectures(!showAllLectures)}
                     sx={{
                       cursor: 'pointer',
-                      color: '#42a5f5',
+                      color: 'primary.main',
                       fontSize: 14,
                       mt: 1,
                       textAlign: 'center',
@@ -425,13 +442,14 @@ function CourseScheduleSection({
                   px: { xs: 1, sm: 2 },
                   py: { xs: 1, sm: 1.5 },
                   borderRadius: 1,
-                  background: 'linear-gradient(135deg, #e8f5e8, #f0f9ff)',
-                  border: '1px solid #ffe0b2',
+                  bgcolor: 'section.secondary',
+                  border: '1px solid',
+                  borderColor: 'divider',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                  <CalendarMonthIcon sx={{ color: '#004d40', fontSize: 20 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#004d40', fontSize: 16 }}>
+                  <CalendarMonthIcon sx={{ color: 'text.primary', fontSize: 20 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16 }}>
                     Tutorial Schedule
                   </Typography>
                 </Box>
@@ -450,26 +468,27 @@ function CourseScheduleSection({
                         mb: 1,
                         p: 1,
                         borderRadius: 1,
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0f2f1',
+                        backgroundColor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#004d40' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                           {getWeekdayName(entry.dayOfWeek)}
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: '#00695c', whiteSpace: 'nowrap' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
                           🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: '#00695c' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                           📍 Venue:{' '}
                           {entry.venueLink ? (
                             <Link
                               href={entry.venueLink}
                               target="_blank"
-                              style={{ textDecoration: 'underline', color: '#004d40' }}
+                              style={{ textDecoration: 'underline', color: 'primary.main' }}
                             >
                               {entry.venue}
                             </Link>
@@ -503,7 +522,7 @@ function CourseScheduleSection({
                     onClick={() => setShowAllTutorials(!showAllTutorials)}
                     sx={{
                       cursor: 'pointer',
-                      color: '#42a5f5',
+                      color: 'primary.main',
                       fontSize: 14,
                       mt: 1,
                       textAlign: 'center',
@@ -743,7 +762,6 @@ const CourseHomePage: NextPage = () => {
   return (
     <MainLayout
       title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
-      bgColor={BG_COLOR}
     >
       <CourseHeader
         courseName={courseInfo.courseName}
@@ -919,48 +937,84 @@ const CourseHomePage: NextPage = () => {
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         {showSearchBar && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '100%',
-              maxWidth: '600px',
-              margin: '0 auto',
-            }}
-          >
+          //     <Box
+          //       sx={{
+          //         display: 'flex',
+          //         justifyContent: 'center',
+          //         alignItems: 'center',
+          //          width: '100%',
+          //        maxWidth: '600px',
+          //        margin: '0 auto',
+          //        }}
+          //       maxWidth={600} mx="auto" mt={3}
+          //     >
+          //       <TextField
+          //          fullWidth
+          //          variant="outlined"
+          //          placeholder="Search in notes..."
+          //          fullWidth
+          //     placeholder="Search in notes..."
+          //     onChange={(e) => setSearchQuery(e.target.value)}
+          //     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          //         InputProps={{
+          //           startAdornment: (
+          //             <InputAdornment position="start">
+          //                <IconButton>
+          //                 <SearchIcon onClick={() => handleSearch()} />
+          //                 <IconButton onClick={handleSearch}>
+          //                 <Search />
+          //               </IconButton>
+          //             </InputAdornment>
+          //           ),
+          //         }}
+          //         sx={{
+          //           backgroundColor: 'white',
+          //           borderRadius: '30px',
+          //           mt: '10px',
+          //          }}
+          //         onKeyDown={handleKeyDown}
+          //         onChange={(e) => setSearchQuery(e.target.value)}
+          //       />
+          //     </Box>
+          //    )}
+          //  <Box fragment-uri={landing} fragment-kind="Section">
+          <Box maxWidth={600} mx="auto" mt={3}>
             <TextField
               fullWidth
-              variant="outlined"
               placeholder="Search in notes..."
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconButton>
-                      <SearchIcon onClick={() => handleSearch()} />
+                    <IconButton onClick={handleSearch}>
+                      <Search />
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
-              sx={{
-                backgroundColor: 'white',
-                borderRadius: '30px',
-                mt: '10px',
-              }}
-              onKeyDown={handleKeyDown}
-              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
         )}
-        <Box fragment-uri={landing} fragment-kind="Section">
+        <Box
+          mt={4}
+          sx={{
+            '& .stex-document, & .ftml-document, & .omdoc-content, & div': {
+              backgroundColor: 'transparent !important',
+              color: 'text.primary',
+            },
+            '& a': {
+              color: 'primary.main',
+            },
+          }}
+        >
           <SafeFTMLDocument
             document={{ type: 'FromBackend', uri: landing }}
             showContent={false}
-            pdfLink={false}
-            chooseHighlightStyle={false}
             toc="None"
           />
         </Box>
+
         <RecordedSyllabus courseId={courseId} />
       </Box>
     </MainLayout>

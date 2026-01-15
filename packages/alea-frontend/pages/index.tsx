@@ -1,6 +1,6 @@
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
   getResourcesForUser,
   isLoggedIn,
@@ -114,7 +114,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             variant="h2"
             sx={{
               paddingBottom: 2,
-              color: PRIMARY_COL,
+              color: 'primary.main',
               fontFamily: 'sans-serif,roboto',
             }}
           >
@@ -184,7 +184,9 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   );
 };
 
-export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string }) {
+export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
+  const theme = useTheme();
+  const background = bgcolor || theme.palette.section.secondary;
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -195,7 +197,7 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        bgcolor,
+        bgcolor: background,
         padding: '20px',
         mb: '-10px',
       }}
@@ -232,7 +234,9 @@ export function CourseCard({ course, currentTerm }) {
           margin: '15px',
           textAlign: 'center',
           height: '260px',
-          backgroundColor: 'rgb(237, 237, 237)',
+          backgroundColor: 'card.background',
+          border: '1px solid',
+          borderColor: 'card.border',
           borderRadius: '2rem',
           padding: '1rem',
           transition: 'transform 0.3s',
@@ -254,7 +258,7 @@ export function CourseCard({ course, currentTerm }) {
               fontSize: '18px',
               fontWeight: 'bold',
               padding: '10px',
-              color: '#003786',
+              color: 'text.primary',
             }}
           >
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
@@ -290,7 +294,7 @@ function AleaFeatures({ img_url, title, description }) {
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '12px', color: '#696969', textAlign: 'center' }}>
+      <Typography sx={{ fontSize: '12px', color: 'text.secondary', textAlign: 'center' }}>
         {description}
       </Typography>
     </Box>
@@ -338,20 +342,23 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: '#F5F5F5', padding: '80px' }}>
+        <Box sx={{ backgroundColor: 'section.secondary', padding: '80px' }}>
           <Box sx={{ margin: '0 auto', maxWidth: '1200px' }}>
             <Typography
               style={{
-                color: '#757575',
+                color: 'text.secondary',
                 fontWeight: '400',
                 fontSize: '20px',
                 textAlign: 'center',
               }}
             >
               <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
-              <span style={{ color: PRIMARY_COL }}>
-                <b> {n.partneredWith.split('+')[2]}</b>
-              </span>
+              <Typography
+                component="span"
+                sx={{ color: 'primary.main', fontWeight: 'bold' }}
+              >
+                {n.partneredWith.split('+')[2]}
+              </Typography>
               .
             </Typography>
             <br />
@@ -412,7 +419,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
             sx={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: PRIMARY_COL,
+              color: 'primary.main',
               fontSize: '24px',
               marginTop: '30px',
             }}
@@ -453,7 +460,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           <Typography
             sx={{
               fontWeight: 'bold',
-              color: PRIMARY_COL,
+              color: 'primary.main',
               fontSize: '24px',
               marginTop: '30px',
             }}

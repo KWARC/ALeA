@@ -138,8 +138,8 @@ const MyProfilePage = () => {
           <Box
             sx={{
               p: 4,
-              bgcolor: PRIMARY_COL,
-              color: 'white',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: { xs: 'center', sm: 'flex-start' },
@@ -151,8 +151,8 @@ const MyProfilePage = () => {
                 width: 100,
                 height: 100,
                 fontSize: '2.5rem',
-                bgcolor: 'white',
-                color: PRIMARY_COL,
+                bgcolor: 'background.paper',
+                color: 'primary.main',
               }}
             >
               {userInfo.fullName.charAt(0)}

@@ -66,7 +66,7 @@ function NotificationBell({ shouldRing }: { shouldRing: boolean }) {
   if (!shouldRing) return <NotificationsIcon htmlColor="white" />;
   return (
     <BouncingBox>
-      <NotificationsIcon htmlColor="#0039c1" />
+      <NotificationsIcon htmlColor="white" />
     </BouncingBox>
   );
 }
@@ -158,9 +158,9 @@ function NotificationButton() {
         sx={{ '& .MuiMenu-list': { pb: 0 } }}
       >
         {sortedItems.slice(0, 7).map((item, idx) => (
-          <Link 
-            key={`${item.link}-${item.postedTimestamp}`} 
-            href={item.link} 
+          <Link
+            key={`${item.link}-${item.postedTimestamp}`}
+            href={item.link}
             target={getLinkTarget(item.notificationType)}
           >
             <MenuItem onClick={handleClose}>

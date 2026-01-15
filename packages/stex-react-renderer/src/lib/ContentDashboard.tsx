@@ -157,9 +157,9 @@ function RenderTree({
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
   const background = sectionInProgress
-    ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
+    ? `repeating-linear-gradient(45deg, rgba(255, 255, 204, 0.2), rgba(255, 255, 204, 0.2) 10px, rgba(255, 255, 255, 0.2) 10px, rgba(255, 255, 255, 0.2) 20px)`
     : undefined;
-  const backgroundColor = sectionCompleted ? '#FFC' : undefined;
+  const backgroundColor = sectionCompleted ? 'action.selected' : undefined;
   return (
     <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
       <Box

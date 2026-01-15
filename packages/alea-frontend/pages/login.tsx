@@ -133,8 +133,9 @@ const LoginPage: NextPage = () => {
           sx={{
             p: '1.5rem',
             borderRadius: '0.3rem',
-            border: '1px solid #dee2e6',
-            backgroundColor: BG_COLOR,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
         >
           <br />

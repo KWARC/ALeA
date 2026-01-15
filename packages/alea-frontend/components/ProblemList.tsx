@@ -145,8 +145,9 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           boxShadow: 3,
           overflowY: 'auto',
           textAlign: 'left',
-          backgroundColor: '#ffffff',
-          borderLeft: `3px solid ${PRIMARY_COL}`,
+          backgroundColor: 'background.paper',
+          borderLeft: '3px solid',
+          borderColor: 'primary.main',
         }}
       >
         {Object.entries(groupedByChapter).map(([chapter, sections]) => (
@@ -170,13 +171,13 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      backgroundColor: '#f0f4f8',
+                      backgroundColor: 'action.hover',
                       borderRadius: '8px',
                       py: 2,
                       px: 2,
                       transition: 'background-color 0.3s ease, transform 0.2s ease',
                       '&:hover': {
-                        background: 'linear-gradient(90deg, #e0f7fa 0%, #d1c4e9 100%)',
+                        backgroundColor: 'action.selected',
                       },
                     }}
                   >

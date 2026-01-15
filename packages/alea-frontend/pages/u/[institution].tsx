@@ -22,8 +22,8 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
     <IconButton
       sx={{
-        bgcolor: PRIMARY_COL,
-        '&:hover, &.Mui-focusVisible': { bgcolor: PRIMARY_COL_DARK_HOVER },
+        bgcolor: 'primary.main',
+        '&:hover, &.Mui-focusVisible': { bgcolor: 'primary.dark' },
       }}
     >
       {children}
@@ -51,8 +51,9 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
   return (
     <Card
       sx={{
-        backgroundColor: 'hsl(210, 20%, 95%)',
-        border: '1px solid #CCC',
+        backgroundColor: 'card.background',
+        border: '1px solid',
+        borderColor: 'card.border',
         p: '10px',
         m: '10px',
         width: '200px',
@@ -159,7 +160,7 @@ const StudentHomePage: NextPage = ({
               width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
               height={150}
             />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'#04316a'}>
+            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color="text.primary">
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>

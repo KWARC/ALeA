@@ -2,16 +2,17 @@ import { useMatomo } from '@jonkoops/matomo-tracker-react';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import { Box, Button, IconButton, Toolbar } from '@mui/material';
-import { ReportProblemPopover } from '@alea/report-a-problem';
+import { Box, Button, IconButton, Toolbar, useTheme } from '@mui/material';
+// import { ReportProblemPopover } from '@alea/report-a-problem';
 import { PositionContext } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
+// import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useContext, useEffect, useState } from 'react';
 import { Header } from '../components/Header';
 import { getLocaleObject } from '../lang/utils';
+
 function SessionResetSlider() {
   const [open, setOpen] = useState(false);
 
@@ -31,25 +32,24 @@ function SessionResetSlider() {
         transform: 'translateY(-50%)',
         display: 'flex',
         alignItems: 'center',
-        bgcolor: 'rgba(211, 211, 211, 0.2)',
-        p: '5px 5px 5px 15px',
+        bgcolor: 'background.paper',
+        boxShadow: 3,
+        p: 1,
         transition: 'left 0.3s ease',
         zIndex: 2001,
       }}
     >
-      <IconButton onClick={() => setOpen(!open)} sx={{ p: 0.5 }}>
+      <IconButton onClick={() => setOpen(!open)} size="small">
         {open ? <ChevronLeft /> : <ChevronRight />}
       </IconButton>
 
       {open && (
         <Button
           onClick={handleResetSession}
-          sx={{
-            bgcolor: 'red',
-            color: 'white',
-            borderRadius: '4px',
-            '&:hover': { bgcolor: 'darkred' },
-          }}
+          variant="contained"
+          color="error"
+          size="small"
+          sx={{ ml: 1 }}
         >
           Reset Session
         </Button>
@@ -58,6 +58,7 @@ function SessionResetSlider() {
   );
 }
 const RecordingComponent = () => {
+  const theme = useTheme();
   const { isRecording, setIsRecording } = useContext(PositionContext);
   const [blink, setBlink] = useState(false);
 
@@ -82,24 +83,24 @@ const RecordingComponent = () => {
           top: 0,
           left: 0,
           p: 1,
-          bgcolor: 'lightcoral',
+          bgcolor: theme.palette.error.light,
           zIndex: 2000,
           borderRadius: '4px',
           '&:hover': {
-            bgcolor: '#CD5C5C',
+            bgcolor: theme.palette.error.main,
           },
         }}
       >
         <GpsFixedIcon
           sx={{
-            color: isRecording ? 'green' : 'inherit',
+            color: isRecording ? theme.palette.success.main : theme.palette.text.primary,
           }}
         />
         {isRecording && (
           <FiberManualRecordIcon
             sx={{
-              color: blink ? 'red' : 'white',
-              ml: 1,
+              color: blink ? theme.palette.error.main : theme.palette.common.white,
+              ml: 0.5,
             }}
           />
         )}
@@ -110,14 +111,14 @@ const RecordingComponent = () => {
           bottom: 0,
           right: 0,
           p: 1,
-          bgcolor: 'lightcoral',
+          bgcolor: theme.palette.error.light,
           zIndex: 2000,
           borderRadius: '4px',
         }}
       >
         <GpsFixedIcon
           sx={{
-            color: isRecording ? 'green' : 'inherit',
+            color: isRecording ? theme.palette.success.main : theme.palette.text.primary,
           }}
         />
       </IconButton>
@@ -132,7 +133,7 @@ export default function MainLayout({
   bgColor,
 }: {
   title?: string;
-  children: any;
+  children: React.ReactNode;
   bgColor?: string;
 }) {
   const { trackPageView } = useMatomo();
@@ -156,7 +157,12 @@ export default function MainLayout({
   }, []);
 
   return (
-    <Box minHeight="100vh" display="flex" flexDirection="column" bgcolor={bgColor}>
+    <Box
+      minHeight="100vh"
+      display="flex"
+      flexDirection="column"
+      bgcolor={bgColor || 'background.default'}
+    >
       <Head>
         <title>{title || 'ALeA'}</title>
         <meta name="description" content="VoLL-KI" />
@@ -165,16 +171,9 @@ export default function MainLayout({
           href="https://www.voll-ki.fau.de/wp-content/themes/FAU-Einrichtungen/img/socialmedia/favicon.ico"
         />
       </Head>
-
+      <Header />
+      {/* <ReportProblemPopover /> */}
       <main style={{ flexGrow: 1 }}>
-        <Header />
-        <ReportProblemPopover />
-        {/*<Typography
-          sx={{ color: 'red', fontWeight: 'bold', textAlign: 'center' }}
-        >
-          Unfortunately, the login facility of website is not working. We are
-          working to get it resolved and apologize for the inconvenience.
-        </Typography>*/}
         <Box>{children}</Box>
         {conceptTracking && <RecordingComponent />}
       </main>
@@ -183,8 +182,8 @@ export default function MainLayout({
           variant="dense"
           sx={{
             mt: '10px',
-            background: PRIMARY_COL,
-            color: SECONDARY_COL,
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
             display: 'flex',
             flexDirection: 'row-reverse',
             fontFamily: '"Roboto"',

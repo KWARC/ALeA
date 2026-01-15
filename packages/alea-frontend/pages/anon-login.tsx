@@ -129,7 +129,7 @@ const AnonLoginPage: NextPage = () => {
 
   return (
     <MainLayout>
-      <Box sx={{ m: 'auto', maxWidth: '700px', px: '10px', backgroundColor: BG_COLOR, py: '20px' }}>
+      <Box sx={{ m: 'auto', maxWidth: '700px', px: '10px', bgcolor: 'background.paper', py: '20px' }}>
         <Box sx={{ padding: '20px', width: '400px', m: 'auto' }}>
           <Typography variant="h4" textAlign="center" mb={2}>
             {isLoginMode ? 'Login' : 'Sign Up'}

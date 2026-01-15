@@ -110,7 +110,7 @@ const SearchCourseNotes = ({
                   >
                     <SafeFTMLDocument
                       document={{ type: 'FromBackend', uri: reference.uri }}
-                      showContent={false}
+                      showContent={true}
                       pdfLink={false}
                       chooseHighlightStyle={false}
                       toc="None"
