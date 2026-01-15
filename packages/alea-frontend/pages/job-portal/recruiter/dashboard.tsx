@@ -203,7 +203,10 @@ export function RecruiterDashboard() {
   }
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: '30px 16px', md: '30px' } }}>
-      <ProfileCompletionDialog open={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
+      <ProfileCompletionDialog
+        open={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      />
       <StatsSection
         stats={stats}
         iconComponents={iconComponents}
@@ -236,7 +239,15 @@ export function RecruiterDashboard() {
 }
 
 const Dashboard = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<RecruiterDashboard />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Dashboard | Job Portal - ALeA"
+      description="Overview of your job postings, applications, and activity in the ALeA Job Portal"
+    >
+      {<RecruiterDashboard />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Dashboard;

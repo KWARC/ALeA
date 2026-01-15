@@ -2,17 +2,6 @@ import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { CompensationInfo } from '@alea/spec';
-export function isValidCompensation(c: CompensationInfo): boolean {
-  if (!c || !c.mode || !c.currency || !c.frequency) return false;
-  if (c.mode === 'fixed') {
-    return c.fixedAmount != null;
-  }
-  if (c.mode === 'range') {
-    return c.minAmount != null || c.maxAmount != null;
-  }
-  return false;
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -33,11 +22,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     workLocation,
     workMode,
     qualification,
-    targetYears,
+    graduationYears,
     openPositions,
     compensation,
     facilities,
-    applicationDeadline,
+    applicationDeadlineTimestamp_ms,
   } = req.body;
   if (
     !jobCategoryId ||
@@ -45,20 +34,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     !jobTitle ||
     !workMode ||
     !qualification ||
-    !targetYears ||
-    !applicationDeadline
+    !applicationDeadlineTimestamp_ms
   )
     return res.status(422).end();
-  if (!isValidCompensation(compensation)) return res.status(422).end();
   const normalizedOpenPositions = Number(openPositions) || 0;
-  const applicationDeadlineMySQL = applicationDeadline
-    ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
-    : null;
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobPost 
-      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,compensation,facilities,applicationDeadline,createdByUserId) 
-     VALUES (?,?,?, ?,?, ?, ?,?,?,?,?,?,?,?)`,
+      (jobCategoryId, organizationId, session, jobTitle, jobDescription, workLocation, workMode, qualification, graduationYears, openPositions, compensation, facilities, applicationDeadline, createdByUserId) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000), ?)`,
     [
       jobCategoryId,
       organizationId,
@@ -68,11 +52,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       workLocation,
       workMode,
       qualification,
-      targetYears,
+      graduationYears,
       normalizedOpenPositions,
       JSON.stringify(compensation),
       facilities,
-      applicationDeadlineMySQL,
+      applicationDeadlineTimestamp_ms,
       userId,
     ],
     res

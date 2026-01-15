@@ -153,7 +153,7 @@ export default function StudentRegistration() {
   };
 
   return (
-    <MainLayout title="Register-Student | VoLL-KI">
+    <MainLayout title="Register-Student | Job Portal - ALeA">
       <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
         <Box
           sx={{

@@ -10,12 +10,13 @@ import {
   WorkOutline,
 } from '@mui/icons-material';
 import { Box, Button, Divider, Modal, Stack, Typography } from '@mui/material';
-import { getOrganizationProfile } from '@alea/spec';
+import { getOrganizationProfile, JobPostInfo } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { formatCompensation } from 'packages/alea-frontend/pages/job-portal/search-job';
+import { formatCompensation } from '../../pages/job-portal/search-job';
+import { epochMsToCivilDate } from '@alea/utils';
 
-const JobDetails = ({ job }) => {
+const JobDetails = ({ job }: { job: JobPostInfo }) => {
   const [organizationName, setOrganizationName] = useState('');
 
   useEffect(() => {
@@ -42,20 +43,18 @@ const JobDetails = ({ job }) => {
         <Typography variant="body2">{job.workLocation}</Typography>
       </Stack>
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-        <WorkOutline fontSize="small"  color="primary" />
+        <WorkOutline fontSize="small" color="primary" />
         <Typography variant="body2">{job.workMode}</Typography>
       </Stack>
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
         <MonetizationOn fontSize="small" color="success" />
-        <Typography variant="body2">
-          {formatCompensation(job.compensation)}
-        </Typography>
+        <Typography variant="body2">{formatCompensation(job.compensation)}</Typography>
       </Stack>
 
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
         <Event fontSize="small" color="error" />
         <Typography variant="body2">
-          Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
+          Deadline: {epochMsToCivilDate(job.applicationDeadlineTimestamp_ms)}
         </Typography>
       </Stack>
 
@@ -109,7 +108,13 @@ const JobDetails = ({ job }) => {
     </Box>
   );
 };
-export const JobCard = ({ job, hideJobRedirect = false }) => {
+export const JobCard = ({
+  job,
+  hideJobRedirect = false,
+}: {
+  job: JobPostInfo;
+  hideJobRedirect?: boolean;
+}) => {
   const [open, setOpen] = useState(false);
 
   const handleToggleDetails = () => setOpen((prev) => !prev);
@@ -143,15 +148,13 @@ export const JobCard = ({ job, hideJobRedirect = false }) => {
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>
         <AttachMoney color="success" />
-        <Typography variant="body2">
-          {formatCompensation(job.compensation)}
-        </Typography>
+        <Typography variant="body2">{formatCompensation(job.compensation)}</Typography>
       </Box>
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>
         <Event color="error" />
         <Typography variant="body2">
-          Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
+          Deadline: {epochMsToCivilDate(job.applicationDeadlineTimestamp_ms)}
         </Typography>
       </Box>
 

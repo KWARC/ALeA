@@ -9,7 +9,6 @@ import {
   JobApplicationInfo,
   JobPostInfo,
   StudentData,
-  
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -18,11 +17,11 @@ import { useEffect, useState } from 'react';
 import { Add, Assignment, Cancel, Chat, EmojiPeople, SvgIconComponent } from '@mui/icons-material';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import { JobCard } from '../../../components/job-portal/JobCard';
-export const OFFER_STATUSES:ApplicationStatus[] = [
+export const OFFER_STATUSES: ApplicationStatus[] = [
   APPLICATION_STATUS.OFFERED,
   APPLICATION_STATUS.OFFER_ACCEPTED,
   APPLICATION_STATUS.OFFER_REJECTED,
-]; 
+];
 export const DashboardJobSection = ({
   title,
   jobs,
@@ -232,9 +231,9 @@ export function StudentDashboard() {
       }
       if (OFFER_STATUSES.includes(applicationStatus)) {
         statusStats.offerReceived += 1;
-      }  
+      }
     });
-        return statusStats;
+    return statusStats;
   };
 
   const stats = [
@@ -273,7 +272,15 @@ export function StudentDashboard() {
 }
 
 const Dashboard = () => {
-  return <JpLayoutWithSidebar role="student">{<StudentDashboard />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Dashboard | Job Portal - ALeA"
+      description="Overview of your job applications, and activity on the ALeA Job Portal"
+    >
+      {<StudentDashboard />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Dashboard;
