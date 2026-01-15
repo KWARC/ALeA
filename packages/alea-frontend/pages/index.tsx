@@ -3,22 +3,21 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import {
   getResourcesForUser,
-  isLoggedIn,
   updateUserInfoFromToken,
 } from '@alea/spec';
-import { ServerLinksContext } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 import { getAllCoursesFromDb } from './api/get-all-courses';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -78,7 +77,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
     home: { newHome: n },
   } = getLocaleObject(router);
   const isSmallScreen = useMediaQuery('(max-width:800px)');
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
 
   return (
     <>
@@ -300,7 +299,7 @@ function AleaFeatures({ img_url, title, description }) {
 }
 
 const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: CourseInfo[] }) => {
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];

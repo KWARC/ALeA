@@ -4,9 +4,7 @@ import {
   FTMLProblemWithSolution,
   ProblemAnswerEvent,
   ResponseWithSubProblemId,
-  UserInfo,
   createAnswer,
-  getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
@@ -17,6 +15,7 @@ import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
+import { useCurrentUser } from '@alea/react-utils';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -228,14 +227,8 @@ export function ProblemDisplay({
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
 }) {
-  const [userId, setUserId] = useState('');
-  useEffect(() => {
-    getUserInfo().then((u: UserInfo | undefined) => {
-      if (u) {
-        setUserId(u.userId as string);
-      }
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const userId = user?.userId ?? ''
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 

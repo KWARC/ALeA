@@ -1,44 +1,55 @@
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
+import { SafeFTMLDocument, SafeFTMLFragment } from '@alea/stex-react-renderer';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
-import { GptSearchResult, searchCourseNotes } from '@alea/spec';
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
+import { searchDocs, type SearchResult } from '@flexiformal/ftml-backend';
 
 const SearchCourseNotes = ({
   courseId,
+  notesUri,
   query,
   onClose,
   setHasResults,
 }: {
   courseId: string;
+  notesUri: string;
   query?: string;
   onClose?: any;
   setHasResults?: (val: boolean) => void;
 }) => {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState<string>(query);
-  const [references, setReferences] = useState<GptSearchResult[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>(query || '');
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
   useEffect(() => {
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [query]);
+
+  useEffect(() => {
+    if (!searchQuery.trim() || !notesUri) return;
     handleSearch();
-  }, []);
+  }, [searchQuery, notesUri]);
 
   async function handleSearch() {
-    if (!searchQuery || !courseId) {
-      setHasResults(false);
-      return;
-    }
+    if (!searchQuery.trim() || !notesUri) return;
+
     setIsLoading(true);
+    setHasSearched(true);
     try {
-      const response = await searchCourseNotes(searchQuery, courseId);
-      setReferences(response?.sources || []);
-      setHasResults((response?.sources?.length || 0) > 0);
-    } catch (error) {
-      setReferences([]);
-      setHasResults(false);
-      console.error('Error fetching search results:', error);
+      const res: [number, SearchResult][] = await searchDocs(searchQuery, [notesUri], 15);
+      console.log({ res });
+
+      const normalized = (res ?? []).map(([, r]) => r);
+      setResults(normalized);
+    } catch (e) {
+      console.error(e);
+      setResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +60,10 @@ const SearchCourseNotes = ({
       handleSearch();
     }
   };
+
+  if (isLoading) {
+    return <LinearProgress />;
+  }
 
   return (
     <Box>
@@ -66,7 +81,8 @@ const SearchCourseNotes = ({
         <Tooltip title={courseId}>
           <img
             height="60px"
-            src={`\\${courseId}.jpg`}
+            // src={`\\${courseId}.jpg`}
+            src={`/${courseId}.jpg`}
             alt={courseId}
             style={{ borderRadius: '5px', cursor: 'pointer' }}
             onClick={() => router.push(`/FAU/${courseId}/latest`)}
@@ -75,6 +91,7 @@ const SearchCourseNotes = ({
         <TextField
           fullWidth
           variant="outlined"
+          value={searchQuery}
           placeholder={`Search in ${courseId.toUpperCase() || 'the'} notes`}
           InputProps={{
             endAdornment: (
@@ -90,36 +107,44 @@ const SearchCourseNotes = ({
         />
       </Box>
 
-      {isLoading ? (
-        <LinearProgress />
-      ) : (
-        references.length > 0 && (
-          <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
-            <Box maxWidth="800px" m="0 auto" p="10px">
-              {references
-                .filter((reference) => reference.uri)
-                .map((reference) => (
-                  <Box
-                    key={reference.uri}
-                    sx={{
-                      border: '1px',
-                      borderRadius: 1,
-                      mb: 2,
-                      p: 1,
-                    }}
-                  >
+      {hasSearched && results.length === 0 && (
+        <Box textAlign="center" mt={4} color="text.secondary">
+          No results found
+        </Box>
+      )}
+
+      {results.length > 0 && (
+        <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
+          <Box maxWidth="800px" m="0 auto" p="10px">
+            {results.map((res, idx) => {
+              if (!res || typeof res !== 'object') return null;
+
+              if ('Document' in res) {
+                return (
+                  <Box key={idx} mb={2}>
                     <SafeFTMLDocument
-                      document={{ type: 'FromBackend', uri: reference.uri }}
-                      showContent={false}
+                      document={{ type: 'FromBackend', uri: res.Document }}
+                      showContent={true}
                       pdfLink={false}
                       chooseHighlightStyle={false}
                       toc="None"
                     />
                   </Box>
-                ))}
-            </Box>
+                );
+              }
+
+              if ('Paragraph' in res) {
+                return (
+                  <Box key={idx} mb={2}>
+                    <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: res.Paragraph.uri }} />
+                  </Box>
+                );
+              }
+
+              return null;
+            })}
           </Box>
-        )
+        </Box>
       )}
     </Box>
   );

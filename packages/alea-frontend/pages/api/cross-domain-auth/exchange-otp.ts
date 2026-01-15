@@ -47,15 +47,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (createdAt.getTime() + EXPIRATION_SECONDS * 1000 < Date.now())
     return res.status(410).send('OTP token has expired');
 
-  const cookieOptions = [
+  const accessTokenCookie = [
     `access_token=${record.jwtToken}`,
-    /* TODO: Uncomment this when we can handle httpOnly cookies.
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',*/
+    'SameSite=Lax',
     'Path=/',
-    `Max-Age=${365 * 24 * 60 * 60}`, // 1 year
+    `Max-Age=${180 * 24 * 60 * 60}`, // 6 months
   ].join('; ');
 
-  res.setHeader('Set-Cookie', cookieOptions).send('Authentication successful');
+  const isLoggedInCookie = [
+    'is_logged_in=true',
+    'Path=/',
+    'SameSite=Lax',
+    'Max-Age=15552000',
+  ].join('; ');
+
+  res.setHeader('Set-Cookie', [accessTokenCookie, isLoggedInCookie]).send('Authentication successful');
 }

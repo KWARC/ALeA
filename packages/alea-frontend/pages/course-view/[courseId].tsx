@@ -3,11 +3,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+import { Box, Button, CircularProgress, Typography, Container, Paper, Stack } from '@mui/material';
 import {
   canAccessResource,
   ClipInfo,
@@ -19,10 +15,8 @@ import {
   SectionInfo,
   Slide,
 } from '@alea/spec';
-import { CommentNoteToggleView } from '@alea/comments';
-import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -31,11 +25,12 @@ import QuizComponent from 'packages/alea-frontend/components/GenerateQuiz';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
+import { VideoDisplay, SlidesUriToIndexMap } from '../../components/VideoDisplay';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { SearchDialog } from '../course-notes/[courseId]';
-
+import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
+import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
+import { SlidesClipInfo } from '@alea/spec';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -43,7 +38,7 @@ function RenderElements({ elements }: { elements: string[] }) {
       {elements.map((e, idx) => (
         <Fragment key={idx}>
           <SafeFTMLFragment fragment={{ type: 'HtmlString', html: e, uri: undefined }} />
-          {idx < elements.length - 1 && <br />}
+          {idx < elements.length - 1 && <Box sx={{ my: 1 }} />}
         </Fragment>
       ))}
     </>
@@ -54,6 +49,7 @@ export enum ViewMode {
   SLIDE_MODE = 'SLIDE_MODE',
   COMBINED_MODE = 'COMBINED_MODE',
 }
+
 function ToggleModeButton({
   viewMode,
   updateViewMode,
@@ -69,21 +65,24 @@ function ToggleModeButton({
 
   return (
     <Button
-      variant="outlined"
+      variant={isCombinedMode ? 'contained' : 'outlined'}
       onClick={() => {
         const newMode = isCombinedMode ? ViewMode.SLIDE_MODE : ViewMode.COMBINED_MODE;
         updateViewMode(newMode);
       }}
+      startIcon={<VideoCameraBack />}
       sx={{
-        m: '5px 0',
-        '&:hover': {
-          backgroundColor: 'primary.main',
-          color: 'white',
-        },
+        borderRadius: 2,
+        textTransform: 'none',
+        fontWeight: 500,
+        px: { xs: 2, sm: 3 },
+        py: 1,
+        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+        whiteSpace: 'nowrap',
+        minWidth: { xs: 'auto', sm: '140px' },
       }}
     >
       {buttonLabel}
-      <VideoCameraBack sx={{ ml: '5px' }} />
     </Button>
   );
 }
@@ -95,14 +94,7 @@ function populateClipIds(sections: SectionInfo[], clipIds: { [sectionId: string]
   }
 }
 
-function populateSlidesClipInfos(
-  sections: SectionInfo[],
-  slidesClipInfo: {
-    [sectionId: string]: {
-      [slideUri: string]: ClipInfo[];
-    };
-  }
-) {
+function populateSlidesClipInfos(sections: SectionInfo[], slidesClipInfo: SlidesClipInfo) {
   for (const section of sections) {
     slidesClipInfo[section.id] = section.clipInfo;
     populateSlidesClipInfos(section.children, slidesClipInfo);
@@ -157,11 +149,11 @@ const CourseViewPage: NextPage = () => {
   const slideNum = +((router.query.slideNum as string) || 0);
   const viewModeStr = router.query.viewMode as string;
   const viewMode = ViewMode[viewModeStr as keyof typeof ViewMode];
+  const isVideoVisible = viewMode === ViewMode.COMBINED_MODE;
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
   const [postNotes, setPostNotes] = useState([] as string[]);
@@ -170,7 +162,6 @@ const CourseViewPage: NextPage = () => {
     [sectionId: string]: number;
   }>({});
   const [slidesUriToIndexMap, setSlidesUriToIndexMap] = useState<SlidesUriToIndexMap>({});
-
   const [clipIds, setClipIds] = useState<{ [sectionId: string]: string }>({});
   const [slidesClipInfo, setSlidesClipInfo] = useState<{
     [sectionId: string]: {
@@ -181,13 +172,12 @@ const CourseViewPage: NextPage = () => {
   const [videoExtractedData, setVideoExtractedData] = useState<{
     [timestampSec: number]: ClipMetadata;
   }>({});
-
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
   const { courseView: t, home: tHome } = getLocaleObject(router);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [timestampSec, setTimestampSec] = useState(0);
-  const [autoSync, setAutoSync] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [hasPresentationOrComposite, setHasPresentationOrComposite] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
   const [currentSlideUri, setCurrentSlideUri] = useState<string>('');
   const [isQuizMaker, setIsQUizMaker] = useState(false);
@@ -195,6 +185,54 @@ const CourseViewPage: NextPage = () => {
   const [hasResults, setHasResults] = useState(false);
   const handleSearchClick = () => setDialogOpen(true);
   const handleDialogClose = () => setDialogOpen(false);
+  const [resolution, setResolution] = useState(720);
+  const [videoMode, setVideoMode] = useState<'presenter' | 'presentation' | null>(() => {
+    const saved = localStore?.getItem('videoMode');
+    if (saved === 'presenter' || saved === 'presentation') return saved;
+    return null;
+  });
+  const [showPresentationVideo, setShowPresentationVideo] = useState(false);
+  const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
+  const selectedSectionTOC = useMemo(() => {
+    return findSection(toc, sectionId);
+  }, [toc, sectionId]);
+
+  const handleVideoLoad = (status) => {
+    setVideoLoaded(status);
+  };
+  const sectionSlidesMap = useMemo(() => {
+    if (!videoExtractedData) return {};
+    const result: Record<string, boolean> = {};
+    for (const [, item] of Object.entries(videoExtractedData)) {
+      const secId = (item.sectionId as string) || '';
+      const slideUri = (item.slideUri as string) || '';
+      if (!secId || !slideUri.trim()) continue;
+      result[secId] = true;
+    }
+    return result;
+  }, [videoExtractedData]);
+  const sectionSlides = slidesUriToIndexMap?.[sectionId] ?? {};
+
+  const hasSlidesFromMapping = Object.keys(sectionSlides ?? {}).length > 0;
+
+  const hasSlidesFromVideoMarkers = useMemo(() => {
+    if (!videoExtractedData || !sectionId) return false;
+
+    return Object.values(videoExtractedData).some(
+      (item: any) =>
+        (item.sectionId || '').trim() === sectionId && (item.slideUri || '').trim() !== ''
+    );
+  }, [videoExtractedData, sectionId]);
+
+  const sectionContainSlides = hasSlidesFromMapping || hasSlidesFromVideoMarkers;
+
+  const hasVideoForSection = !!currentClipId && !!clipIds?.[sectionId];
+
+  const showSideBySideSlides =
+    viewMode === ViewMode.COMBINED_MODE &&
+    sectionContainSlides &&
+    videoLoaded &&
+    hasSlideAtCurrentTime;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,14 +254,6 @@ const CourseViewPage: NextPage = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  const selectedSectionTOC = useMemo(() => {
-    return findSection(toc, sectionId);
-  }, [toc, sectionId]);
-
-  const handleVideoLoad = (status) => {
-    setVideoLoaded(status);
-  };
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -268,6 +298,37 @@ const CourseViewPage: NextPage = () => {
   }, [courseId, router.isReady]);
 
   useEffect(() => {
+    if (!router.isReady || !sectionId || !clipIds || Object.keys(clipIds).length === 0) return;
+    const newClipId = clipIds[sectionId];
+    if (!newClipId) {
+      if (currentClipId) {
+        setCurrentClipId('');
+        setVideoLoaded(false);
+        setVideoExtractedData({});
+        setTimestampSec(0);
+      }
+      return;
+    }
+
+    if (!currentClipId) {
+      setCurrentClipId(newClipId);
+      return;
+    }
+
+    const sectionExistsInCurrentClip =
+      slidesClipInfo?.[sectionId] &&
+      Object.values(slidesClipInfo[sectionId] || {}).some(
+        (clips: ClipInfo[]) =>
+          Array.isArray(clips) && clips.some((clip) => clip.video_id === currentClipId)
+      );
+    if (newClipId !== currentClipId && !sectionExistsInCurrentClip) {
+      setCurrentClipId(newClipId);
+      setVideoLoaded(false);
+      setTimestampSec(0);
+    }
+  }, [router.isReady, sectionId, clipIds, currentClipId, slidesClipInfo]);
+
+  useEffect(() => {
     if (!router.isReady || !courseId?.length || !currentClipId) return;
     getSlideDetails(courseId, currentClipId)
       .then(setVideoExtractedData)
@@ -307,12 +368,6 @@ const CourseViewPage: NextPage = () => {
     if (someParamMissing) router.replace({ pathname, query });
   }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
 
-  useEffect(() => {
-    if (!sectionId) return;
-    const newClipId = clipIds?.[sectionId];
-    setCurrentClipId(newClipId);
-  }, [slidesClipInfo, clipIds, sectionId]);
-
   function goToPrevSection() {
     const secIdx = courseSections.indexOf(sectionId);
     if (secIdx === -1 || secIdx === 0) return;
@@ -327,14 +382,40 @@ const CourseViewPage: NextPage = () => {
     setSlideNumAndSectionId(router, 1, secId);
   }
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (!router.isReady || !courses) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   if (!courses[courseId]) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+
   const onClipChange = (clip: any) => {
     setCurrentClipId(clip.video_id);
     setTimestampSec(clip.start_time);
+  };
+
+  const hasSlidesForSection =
+    (sectionSlides && Object.keys(sectionSlides).length > 0) || !!sectionSlidesMap[sectionId];
+  const onSlideChange = (slide: Slide) => {
+    setPreNotes(slide?.preNotes.map((p) => p.html) || []);
+    setPostNotes(slide?.postNotes.map((p) => p.html) || []);
+
+    const slideUri = getSlideUri(slide);
+    setCurrentSlideUri(slideUri || '');
+
+    if (slidesClipInfo?.[sectionId]?.[slideUri]) {
+      const slideClips = slidesClipInfo[sectionId][slideUri];
+      const matchedClip = slideClips.find((c) => c.video_id === currentClipId) || slideClips[0];
+      setCurrentSlideClipInfo(matchedClip);
+    } else {
+      setCurrentSlideClipInfo(null);
+    }
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
@@ -376,7 +457,36 @@ const CourseViewPage: NextPage = () => {
               selectedSection={sectionId}
               onClose={() => setShowDashboard(false)}
               onSectionClick={(sectionId: string) => {
-                setAutoSync(false);
+                const newClipId = clipIds?.[sectionId];
+                if (newClipId) {
+                  setCurrentClipId(newClipId);
+                } else {
+                  setCurrentClipId('');
+                  setVideoLoaded(false);
+                  setVideoExtractedData({});
+                  setTimestampSec(0);
+                }
+                const sectionSlides = slidesUriToIndexMap?.[sectionId];
+                if (sectionSlides && Object.keys(sectionSlides).length > 0) {
+                  const firstSlideUri =
+                    Object.keys(sectionSlides).find((slideUri) => sectionSlides[slideUri] === 0) ||
+                    Object.keys(sectionSlides)[0];
+
+                  if (firstSlideUri && slidesClipInfo?.[sectionId]?.[firstSlideUri]) {
+                    const slideClips = slidesClipInfo[sectionId][firstSlideUri];
+                    if (Array.isArray(slideClips) && slideClips.length > 0) {
+                      const matchedClip = newClipId
+                        ? slideClips.find((clip) => clip.video_id === newClipId)
+                        : null;
+                      const clipToUse = matchedClip || slideClips[0];
+                      if (clipToUse.start_time !== undefined) {
+                        setTimestampSec(clipToUse.start_time);
+                      }
+                      setCurrentSlideClipInfo(clipToUse);
+                    }
+                  }
+                }
+
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
             />
@@ -387,103 +497,255 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box display="flex" minHeight="100svh">
-          <Box maxWidth="800px" margin="0 auto" width="100%" pl="4px">
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Box display="flex" alignItems="center">
-                <ToggleModeButton
-                  viewMode={viewMode}
-                  updateViewMode={(mode) => {
-                    const modeStr = mode.toString();
-                    localStore?.setItem('defaultMode', modeStr);
-                    router.query.viewMode = modeStr;
-                    router.replace(router);
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+          <Container
+            maxWidth="xl"
+            sx={{
+              py: { xs: 2, sm: 3, md: 4 },
+              px: { xs: 0.5, sm: 1 },
+            }}
+          >
+            <Paper
+              elevation={1}
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                mb: { xs: 2, sm: 3 },
+                borderRadius: 2,
+                bgcolor: 'white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              }}
+            >
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 1.5, sm: 2 }}
+                justifyContent="space-between"
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  sx={{
+                    flexWrap: 'wrap',
+                    gap: 1,
                   }}
-                />
-                {courses?.[courseId]?.slides && (
-                  <Tooltip title="Download slides PDF" placement="bottom">
-                    <IconButton
-                      color="primary"
-                      onClick={() => {
-                        const slides = courses?.[courseId]?.slides;
-                        const notes = courses?.[courseId]?.notes;
-                        const sourceUri = slides || notes;
-                        if (!sourceUri) return;
-                        const pdfUrl = getCoursePdfUrl(sourceUri);
-                        window.open(pdfUrl, '_blank');
-                      }}
-                      size="medium"
-                      aria-label="Download slides PDF"
-                    >
-                      <PictureAsPdfIcon fontSize="medium" />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                >
+                  <ToggleModeButton
+                    viewMode={viewMode}
+                    updateViewMode={(mode) => {
+                      const modeStr = mode.toString();
+                      localStore?.setItem('defaultMode', modeStr);
+                      router.query.viewMode = modeStr;
+                      router.replace(router);
+                    }}
+                  />
+                  <CourseViewToolbarIcons
+                    audioOnly={audioOnly}
+                    resolution={resolution}
+                    courseId={courseId}
+                    courses={courses}
+                    viewMode={viewMode}
+                    onAudioOnlyToggle={() => {
+                      const newAudioOnly = !audioOnly;
+                      localStore?.setItem('audioOnly', String(newAudioOnly));
+                      router.query.audioOnly = String(newAudioOnly);
+                      router.replace(router);
+                    }}
+                    onResolutionChange={(res) => setResolution(res)}
+                  />
+                </Stack>
+
+                <Link href={courses[courseId]?.notesLink ?? ''} passHref>
+                  <Button
+                    variant="contained"
+                    startIcon={<ArticleIcon />}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      px: 3,
+                      whiteSpace: 'nowrap',
+                      bgcolor: '#1976d2',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: '#1565c0',
+                      },
+                    }}
+                  >
+                    {t.notes}
+                  </Button>
+                </Link>
+              </Stack>
+            </Paper>
+            <Stack
+              direction={{
+                xs: 'column',
+                lg: viewMode === ViewMode.COMBINED_MODE ? 'row' : 'column',
+              }}
+              spacing={{ xs: 2, sm: 3 }}
+              sx={{ mb: { xs: 2, sm: 3 } }}
+            >
+              {viewMode === ViewMode.COMBINED_MODE && (
+                <Box
+                  sx={{
+                    flex:
+                      showPresentationVideo || hasPresentationOrComposite
+                        ? '1 1 100%'
+                        : { xs: '1', lg: '1 1 50%' },
+                    minWidth: 0,
+                  }}
+                >
+                  <Paper
+                    elevation={2}
+                    sx={{
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      bgcolor: '#f5f5f5',
+                      border: '1px solid #e0e0e0',
+                    }}
+                  >
+                    <VideoDisplay
+                      clipId={currentClipId}
+                      clipIds={clipIds}
+                      setCurrentClipId={setCurrentClipId}
+                      audioOnly={audioOnly}
+                      timestampSec={timestampSec}
+                      setTimestampSec={setTimestampSec}
+                      currentSlideClipInfo={currentSlideClipInfo}
+                      videoExtractedData={videoExtractedData}
+                      slidesUriToIndexMap={slidesUriToIndexMap}
+                      onVideoLoad={handleVideoLoad}
+                      onVideoTypeChange={setHasPresentationOrComposite}
+                      videoMode={videoMode}
+                      currentSectionId={sectionId}
+                      currentSlideUri={currentSlideUri}
+                      courseId={courseId}
+                      slidesClipInfo={slidesClipInfo}
+                      showPresentationVideo={showPresentationVideo}
+                      onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
+                      sectionTitle={selectedSectionTOC?.title || ''}
+                      hasSlidesForSection={hasSlidesForSection}
+                      onHasSlideAtCurrentTimeChange={setHasSlideAtCurrentTime}
+                      videoLoaded={videoLoaded}
+                      resolution={resolution}
+                    />
+                  </Paper>
+                </Box>
+              )}
+              {showSideBySideSlides && (
+                <Box
+                  sx={{
+                    position: 'relative',
+                    flex:
+                      showPresentationVideo || hasPresentationOrComposite
+                        ? '0'
+                        : { xs: '1', lg: '1 1 50%' },
+                    minWidth: 0,
+                    display: showPresentationVideo || hasPresentationOrComposite ? 'none' : 'block',
+                  }}
+                >
+                  <Paper
+                    elevation={2}
+                    sx={{
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                    }}
+                  >
+                    <SlideDeck
+                      navOnTop={viewMode === ViewMode.COMBINED_MODE}
+                      courseId={courseId}
+                      sectionId={sectionId}
+                      onSlideChange={onSlideChange}
+                      goToNextSection={goToNextSection}
+                      goToPrevSection={goToPrevSection}
+                      slideNum={slideNum}
+                      slidesClipInfo={slidesClipInfo}
+                      onClipChange={onClipChange}
+                      audioOnly={audioOnly}
+                      videoLoaded={videoLoaded}
+                      showPresentationVideo={showPresentationVideo}
+                      hasSlideAtCurrentTime={hasSlideAtCurrentTime}
+                      onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
+                    />
+                  </Paper>
+                </Box>
+              )}
+            </Stack>
+            {sectionContainSlides && !(isVideoVisible && videoLoaded && hasVideoForSection) && (
+              <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <SlideDeck
+                    navOnTop
+                    courseId={courseId}
+                    sectionId={sectionId}
+                    onSlideChange={onSlideChange}
+                    goToNextSection={goToNextSection}
+                    goToPrevSection={goToPrevSection}
+                    slideNum={slideNum}
+                    slidesClipInfo={slidesClipInfo}
+                    onClipChange={onClipChange}
+                    audioOnly={audioOnly}
+                    videoLoaded={videoLoaded}
+                  />
+                </Paper>
               </Box>
-              <Link href={courses[courseId]?.notesLink ?? ''} passHref>
-                <Button size="small" variant="contained" sx={{ mr: '10px' }}>
-                  {t.notes}&nbsp;
-                  <ArticleIcon />
-                </Button>
-              </Link>
-            </Box>
-            <Box sx={{ marginBottom: '10px', marginTop: '10px' }}>
-              <Typography variant="h6" sx={{ color: '#333' }}>
-                <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
-              </Typography>
-            </Box>
-            {viewMode === ViewMode.COMBINED_MODE && (
-              <VideoDisplay
-                clipId={currentClipId}
-                clipIds={clipIds}
-                setCurrentClipId={setCurrentClipId}
-                audioOnly={audioOnly}
-                timestampSec={timestampSec}
-                setTimestampSec={setTimestampSec}
-                currentSlideClipInfo={currentSlideClipInfo}
-                videoExtractedData={videoExtractedData}
-                slidesUriToIndexMap={slidesUriToIndexMap}
-                autoSync={autoSync}
-                onVideoLoad={handleVideoLoad}
-              />
             )}
-            {(viewMode === ViewMode.SLIDE_MODE || viewMode === ViewMode.COMBINED_MODE) && (
-              <SlideDeck
-                navOnTop={viewMode === ViewMode.COMBINED_MODE}
-                courseId={courseId}
-                sectionId={sectionId}
-                onSlideChange={(slide: Slide) => {
-                  setPreNotes(slide?.preNotes.map((p) => p.html) || []);
-                  setPostNotes(slide?.postNotes.map((p) => p.html) || []);
-                  const slideUri = getSlideUri(slide);
-                  setCurrentSlideUri(slideUri || '');
-                  if (
-                    slidesClipInfo &&
-                    slidesClipInfo[sectionId] &&
-                    slidesClipInfo[sectionId][slideUri]
-                  ) {
-                    const slideClips = slidesClipInfo[sectionId][slideUri];
-                    if (!Array.isArray(slideClips)) {
-                      return;
-                    }
-                    const matchedClip = slideClips.find((clip) => clip.video_id === currentClipId);
-                    setCurrentSlideClipInfo(matchedClip || slideClips[0]);
-                  } else setCurrentSlideClipInfo(null);
+
+            {(preNotes.length > 0 || postNotes.length > 0) && (
+              <Paper
+                elevation={1}
+                sx={{
+                  p: { xs: 2, sm: 3 },
+                  mb: { xs: 2, sm: 3 },
+                  borderRadius: 2,
+                  bgcolor: '#fff9e6',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  border: '1px solid #ffeaa7',
                 }}
-                goToNextSection={goToNextSection}
-                goToPrevSection={goToPrevSection}
-                slideNum={slideNum}
-                slidesClipInfo={slidesClipInfo}
-                onClipChange={onClipChange}
-                autoSync={autoSync}
-                setAutoSync={setAutoSync}
-                audioOnly={audioOnly}
-                videoLoaded={videoLoaded}
-              />
+              >
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#1a1a1a',
+                      fontSize: { xs: '1rem', sm: '1.125rem' },
+                    }}
+                  >
+                    {t.instructorNotes}
+                  </Typography>
+                </Stack>
+                <Box
+                  sx={{
+                    overflowX: 'auto',
+                    '& > *': { mb: 1.5 },
+                  }}
+                >
+                  <RenderElements elements={preNotes} />
+                  {preNotes.length > 0 && postNotes.length > 0 && (
+                    <Box
+                      sx={{
+                        my: 2,
+                        borderTop: '2px dashed #fdcb6e',
+                      }}
+                    />
+                  )}
+                  <RenderElements elements={postNotes} />
+                </Box>
+              </Paper>
             )}
-            <hr style={{ width: '98%', padding: '1px 0' }} />
             {selectedSectionTOC && (
-              <Box sx={{ marginTop: '10px', marginBottom: '10px' }}>
+              <Stack spacing={{ xs: 2, sm: 3 }}>
                 <SectionReview
                   sectionUri={selectedSectionTOC.uri}
                   sectionTitle={selectedSectionTOC.title}
@@ -491,23 +753,10 @@ const CourseViewPage: NextPage = () => {
                 {isQuizMaker && (
                   <QuizComponent key={sectionId} courseId={courseId} sectionId={sectionId} />
                 )}
-              </Box>
+              </Stack>
             )}
-            <CommentNoteToggleView
-              uri={currentSlideUri}
-              defaultPrivate={true}
-              extraPanel={{
-                label: t.instructorNotes,
-                panelContent: (
-                  <Box p="5px" sx={{ overflowX: 'auto' }}>
-                    <RenderElements elements={preNotes} />
-                    {preNotes.length > 0 && postNotes.length > 0 && <hr style={{ width: '98%' }} />}
-                    <RenderElements elements={postNotes} />
-                  </Box>
-                ),
-              }}
-            />
-          </Box>
+            <NotesAndCommentsSection currentSlideUri={currentSlideUri} />
+          </Container>
         </Box>
       </LayoutWithFixedMenu>
     </MainLayout>

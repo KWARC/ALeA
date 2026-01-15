@@ -29,10 +29,9 @@ import {
   addComment,
   canModerateComment,
   getCourseInstanceThreads,
-  getUserInfo,
 } from '@alea/spec';
 import { MdEditor } from '@alea/markdown';
-import { DateView } from '@alea/react-utils';
+import { DateView, useCurrentUser } from '@alea/react-utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
@@ -131,12 +130,8 @@ function ForumViewControls({
   const currentTerm = instanceId || currentTermFromContext;
   const resolvedInstitutionId = institutionId || 'FAU';
   
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+  const { user: userInfo } = useCurrentUser();
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;

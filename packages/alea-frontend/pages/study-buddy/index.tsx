@@ -30,14 +30,12 @@ import {
 import {
   AllCoursesStats,
   GetSortedCoursesByConnectionsResponse,
-  UserInfo,
   UserStats,
   canModerateStudyBuddy,
   getAllUsersStats,
   getEnrolledCourseIds,
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
-  getUserInfo,
 } from '@alea/spec';
 import { MaAI_COURSES, PRIMARY_COL, localStore } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -275,7 +273,6 @@ const Courses: NextPage = () => {
   // TODO(M5) we will change the frontend code after we have done with backend
   const institutionId = 'FAU';
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(null);
   const [isUserAModerator, setIsUserAModerator] = useState(false);
 
   useEffect(() => {

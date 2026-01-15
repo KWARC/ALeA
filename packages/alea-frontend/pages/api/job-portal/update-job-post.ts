@@ -6,6 +6,7 @@ import {
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
+import { isValidCompensation } from './create-job-post';
 
 export async function getJobPostUsingIdOrSet500OnError(id: number, res: NextApiResponse) {
   const results: any = await executeDontEndSet500OnError(
@@ -29,8 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     workLocation,
     workMode,
     jobDescription,
-    currency,
-    stipend,
+    compensation,
     facilities,
     qualification,
     targetYears,
@@ -38,7 +38,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     openPositions,
   } = req.body;
   if (!id) return res.status(422).send('Job Post Id is missing');
-
+  if (
+    !jobTitle ||
+    !workMode ||
+    !qualification ||
+    !targetYears ||
+    !applicationDeadline
+  ) {
+    return res.status(422).send('Missing required fields');
+  }
+  if (!isValidCompensation(compensation)) return res.status(422).end();
+  const normalizedOpenPositions = Number(openPositions) || 0;
   const currentJobPost = await getJobPostUsingIdOrSet500OnError(id, res);
   if (!currentJobPost) return;
   const userId = await getUserIdIfAuthorizedOrSetError(
@@ -53,19 +63,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
     : null;
   const result = await executeAndEndSet500OnError(
-    'UPDATE jobPost SET jobTitle = ?, workLocation = ?,workMode=?, jobDescription = ?, currency = ?, stipend=?,facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt =CURRENT_TIMESTAMP WHERE id = ?',
+    'UPDATE jobPost SET jobTitle = ?, workLocation = ?,workMode=?, jobDescription = ?, compensation = ?, facilities=?,qualification=?,targetYears=?,applicationDeadline=?,openPositions=?,updatedAt =CURRENT_TIMESTAMP WHERE id = ?',
     [
       jobTitle,
       workLocation,
       workMode,
       jobDescription,
-      currency,
-      stipend,
+      JSON.stringify(compensation),
       facilities,
       qualification,
       targetYears,
       applicationDeadlineMySQL,
-      openPositions,
+      normalizedOpenPositions,
       id,
     ],
     res

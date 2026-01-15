@@ -13,6 +13,7 @@ import { Box, Button, Divider, Modal, Stack, Typography } from '@mui/material';
 import { getOrganizationProfile } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { formatCompensation } from 'packages/alea-frontend/pages/job-portal/search-job';
 
 const JobDetails = ({ job }) => {
   const [organizationName, setOrganizationName] = useState('');
@@ -47,7 +48,7 @@ const JobDetails = ({ job }) => {
       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
         <MonetizationOn fontSize="small" color="success" />
         <Typography variant="body2">
-          {job.stipend} {job.currency}
+          {formatCompensation(job.compensation)}
         </Typography>
       </Stack>
 
@@ -143,7 +144,7 @@ export const JobCard = ({ job, hideJobRedirect = false }) => {
       <Box display="flex" alignItems="center" gap={1} mt={1}>
         <AttachMoney color="success" />
         <Typography variant="body2">
-          {job.stipend} {job.currency}
+          {formatCompensation(job.compensation)}
         </Typography>
       </Box>
 

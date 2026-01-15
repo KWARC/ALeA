@@ -18,7 +18,6 @@ import {
   GetStudyBuddiesResponse,
   getStudyBuddyList,
   getStudyBuddyUserInfo,
-  isLoggedIn,
   Languages,
   MeetType,
   removeConnectionRequest,
@@ -35,6 +34,7 @@ import { StudyBuddyListing, StudyBuddyListingTable } from '../../components/Stud
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 function OptOutButton({ studyBuddy, courseId, institutionId, instanceId }: { studyBuddy: StudyBuddy; courseId: string; institutionId: string; instanceId: string }) {
   const { studyBuddy: t } = getLocaleObject(useRouter());
@@ -95,7 +95,7 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, refetchStudyBuddyLists]);
 
   useEffect(() => {
-    if (!courseId || !isLoggedIn()) return;
+    if (!courseId || !loggedIn) return;
     setIsLoading(true);
     getStudyBuddyUserInfo(courseId, institutionId, instanceId).then((data) => {
       setIsLoading(false);
@@ -172,7 +172,7 @@ const StudyBuddyPage: NextPage = () => {
                 </Box>
               </CardActions>
             </Card>
-          ) : isLoggedIn() ? (
+          ) : loggedIn? (
             <CircularProgress />
           ) : (
             <>{t.loginToContinue}</>

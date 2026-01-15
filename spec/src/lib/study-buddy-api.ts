@@ -1,5 +1,4 @@
 import axios, { AxiosError } from 'axios';
-import { getAuthHeaders } from './lmp';
 import {
   AllCoursesStats,
   EnrolledCourseIds,
@@ -65,7 +64,7 @@ export async function removeConnectionRequest(courseId: string, receiverId: stri
 }
 
 export async function purgeStudyBuddyData() {
-  const resp = await axios.post(`/api/study-buddy/purge-info`, {}, { headers: getAuthHeaders() });
+  const resp = await axios.post(`/api/study-buddy/purge-info`, {});
   return resp.data as StudyBuddy;
 }
 

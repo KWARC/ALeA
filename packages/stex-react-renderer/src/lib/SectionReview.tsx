@@ -1,4 +1,4 @@
-import { SafeHtml } from '@alea/react-utils';
+import { SafeHtml, useIsLoggedIn } from '@alea/react-utils';
 import {
   BloomDimension,
   ConceptAndDefinition,
@@ -7,7 +7,6 @@ import {
   clearWeightsCache,
   getDefiniedaInSectionAgg,
   getLmpUriWeightsAggBulk,
-  isLoggedIn,
 } from '@alea/spec';
 import { BG_COLOR } from '@alea/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -64,11 +63,12 @@ const SectionReview = ({
   const [URIs, setURIs] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
+  const { loggedIn } = useIsLoggedIn();
 
   useEffect(() => {
-    if (!isLoggedIn()) return;
+    if (!loggedIn) return;
     getDefiniedaInSectionAgg(sectionUri).then(setDefinedConcepts);
-  }, [sectionUri]);
+  }, [sectionUri, loggedIn]);
 
   useEffect(() => {
     if (!definedConcepts) return;

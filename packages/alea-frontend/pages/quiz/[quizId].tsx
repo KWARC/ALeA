@@ -5,10 +5,8 @@ import {
   getAllCourses,
   getQuiz,
   GetQuizResponse,
-  getUserInfo,
   insertQuizResponse,
   Phase,
-  UserInfo,
 } from '@alea/spec';
 import { QuizDisplay } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
@@ -24,6 +22,7 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { handleEnrollment } from '../course-home/[courseId]';
+import { useCurrentUser } from '@alea/react-utils';
 
 function ToBeStarted({ quizStartTs }: { quizStartTs?: number }) {
   const [showReload, setShowReload] = useState(false);
@@ -107,7 +106,6 @@ const QuizPage: NextPage = () => {
 
   const [problems, setProblems] = useState<{ [problemId: string]: FTMLProblemWithSolution }>({});
   const [finished, setFinished] = useState(false);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined | null>(null);
   const [quizInfo, setQuizInfo] = useState<GetQuizResponse | undefined>(undefined);
   const [moderatorPhase, setModeratorPhase] = useState<Phase>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
@@ -123,20 +121,20 @@ const QuizPage: NextPage = () => {
   const currentTerm = currentTermByCourseId[courseId];
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
+  const { user } = useCurrentUser();
 
   const enrollInCourse = async () => {
-    if (!userInfo.userId || !courseId || !currentTerm) return;
-    const enrollmentSuccess = await handleEnrollment(userInfo.userId, courseId, currentTerm);
+    const userId = user?.userId;
+    if (!userId || !courseId || !currentTerm) return;
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 
   useEffect(() => {
-    getUserInfo().then((i) => {
-      const uid = i?.userId;
-      if (!uid) return;
-      isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-    });
-  }, []);
+    const uid = user?.userId;
+    if (!uid) return;
+    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+  }, [user]);
 
   useEffect(() => {
     if (!quizId) return;
@@ -169,10 +167,6 @@ const QuizPage: NextPage = () => {
     if (!quizId) return;
     setFinished(isFinishedFromLocalStore(quizId));
   }, [quizId]);
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
 
   useEffect(() => {
     if (!courseId || !instanceId) return;
@@ -245,7 +239,7 @@ const QuizPage: NextPage = () => {
   return (
     <MainLayout title="Quizzes | ALeA">
       <Box>
-        {!userInfo ? (
+        {!user ? (
           <Box p="20px">You must be logged in to see quizzes.</Box>
         ) : phase === undefined ? (
           <Box p="20px">

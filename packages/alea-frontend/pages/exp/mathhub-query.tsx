@@ -2,7 +2,6 @@ import {
   createSafeFlamsQuery,
   findAllUriParams,
   getParameterizedQueryResults,
-  getUseRdfEncodeUri,
   SparqlResponse,
 } from '@alea/spec';
 import AddIcon from '@mui/icons-material/Add';
@@ -58,17 +57,12 @@ export default function MathhubQuery() {
   const [uriValues, setUriValues] = useState<Record<string, string | string[]>>(
     initialTemplate.defaultUriParams
   );
-  const [useRdfEncodeUri, setUseRdfEncodeUri] = useState(false);
 
   const { singleParamNames, multiParamNames } = useMemo(() => findAllUriParams(query), [query]);
   const allParamNames = useMemo(
     () => [...singleParamNames, ...multiParamNames],
     [singleParamNames, multiParamNames]
   );
-
-  useEffect(() => {
-    getUseRdfEncodeUri().then(setUseRdfEncodeUri);
-  }, []);
 
   useEffect(() => {
     setUriValues((prev) => {
@@ -86,10 +80,7 @@ export default function MathhubQuery() {
     });
   }, [allParamNames, multiParamNames]);
 
-  const finalQuery = useMemo(
-    () => createSafeFlamsQuery(query, uriValues, useRdfEncodeUri),
-    [query, uriValues]
-  );
+  const finalQuery = useMemo(() => createSafeFlamsQuery(query, uriValues), [query, uriValues]);
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -140,7 +131,9 @@ export default function MathhubQuery() {
           MathHub Query Interface
         </Typography>
         <Typography variant="body1" gutterBottom color="text.secondary">
-          {useRdfEncodeUri ? 'Using RDF encode URI' : 'Not using RDF encode URI'}
+          {process.env['NEXT_PUBLIC_USE_RDF_ENCODE_URI'] !== 'false'
+            ? 'Using RDF encode URI'
+            : 'Not using RDF encode URI'}
         </Typography>
 
         <QueryEditorContainer elevation={0}>

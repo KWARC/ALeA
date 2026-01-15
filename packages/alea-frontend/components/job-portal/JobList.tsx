@@ -1,4 +1,4 @@
-import { Edit } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -9,33 +9,53 @@ import {
   DialogTitle,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   IconButton,
   InputLabel,
   List,
   ListItem,
   ListItemText,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   Switch,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { createJobPost, getJobPosts, JobPostFormData, JobPostInfo, RecruiterData, updateJobPost } from '@alea/spec';
+import {
+  createJobPost,
+  deleteJobPost,
+  getJobPosts,
+  JobPostFormData,
+  JobPostInfo,
+  RecruiterData,
+  updateJobPost,
+} from '@alea/spec';
+import { formatCompensation } from 'packages/alea-frontend/pages/job-portal/search-job';
+import {
+  validateJobPost,
+  ValidationErrors,
+} from 'packages/alea-frontend/pages/job-portal/recruiter/create-job';
 
 export const EligibilityForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
         Eligibility
       </Typography>
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="normal" error={!!errors?.qualification}>
         <InputLabel id="qualification-year">Qualification</InputLabel>
         <Select
           labelId="qualification-year"
@@ -49,12 +69,15 @@ export const EligibilityForm = ({
           <MenuItem value="Bachelors">Bachelors</MenuItem>
           <MenuItem value="BachelorsAndMasters">Both (Masters+Bachelors)</MenuItem>
         </Select>
+        {errors?.qualification && <FormHelperText>{errors.qualification}</FormHelperText>}
       </FormControl>
       <TextField
         label="Target Year"
         fullWidth
         margin="normal"
         name="targetYears"
+        error={!!errors?.targetYears}
+        helperText={errors?.targetYears}
         value={formData.targetYears}
         onChange={handleChange}
         sx={{ bgcolor: 'white' }}
@@ -67,6 +90,8 @@ export const EligibilityForm = ({
         margin="normal"
         name="applicationDeadline"
         sx={{ bgcolor: 'white' }}
+        error={!!errors?.applicationDeadline}
+        helperText={errors?.applicationDeadline}
         value={
           formData.applicationDeadline
             ? formData.applicationDeadline.slice(0, 16).replace(' ', 'T')
@@ -84,6 +109,7 @@ export const EligibilityForm = ({
       />
       <TextField
         label="Number of Intended Offers"
+        type="number"
         fullWidth
         margin="normal"
         name="openPositions"
@@ -98,50 +124,120 @@ export const EligibilityForm = ({
 export const OfferDetailsForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
+  const { compensation } = formData;
+  const handleCompensationChange = (field: string, value: any) => {
+    handleChange({
+      target: {
+        name: 'compensation',
+        value: {
+          ...compensation,
+          [field]: value,
+        },
+      },
+    });
+  };
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Offer Details
+        Compensation
       </Typography>
-      <FormControl fullWidth margin="normal">
-        <InputLabel id="currency">Currency</InputLabel>
-        <Select
-          labelId="currency"
-          label="currency"
-          name="currency"
-          value={formData.currency}
-          //   onChange={(e) => handleChange({ target: { name: 'currency', value: e.target.value } })}
-          onChange={handleChange}
-          sx={{ bgcolor: 'white' }}
-          MenuProps={{ disablePortal: true }}
-        >
-          <MenuItem value="Euro per month">EURO per month</MenuItem>
-          <MenuItem value="USD per month">USD per month</MenuItem>
-        </Select>
-      </FormControl>
+
+      <RadioGroup
+        row
+        value={compensation.mode}
+        onChange={(e) => handleCompensationChange('mode', e.target.value)}
+      >
+        <FormControlLabel value="fixed" control={<Radio />} label="Fixed amount" />
+        <FormControlLabel value="range" control={<Radio />} label="Range" />
+      </RadioGroup>
+
+      <Box display="flex" mt={2} gap={2} flexWrap="wrap" alignItems="center">
+        {compensation.mode === 'fixed' ? (
+          <TextField
+            label="Amount"
+            type="number"
+            value={compensation.fixedAmount ?? ''}
+            onChange={(e) => handleCompensationChange('fixedAmount', Number(e.target.value))}
+            error={!!errors?.compensation}
+            sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+          />
+        ) : (
+          <>
+            <TextField
+              label="Min"
+              type="number"
+              value={compensation.minAmount ?? ''}
+              onChange={(e) => handleCompensationChange('minAmount', Number(e.target.value))}
+              error={!!errors?.compensation}
+              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+            />
+
+            <TextField
+              label="Max"
+              type="number"
+              value={compensation.maxAmount ?? ''}
+              onChange={(e) => handleCompensationChange('maxAmount', Number(e.target.value))}
+              error={!!errors?.compensation}
+              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+            />
+          </>
+        )}
+
+        <FormControl sx={{ flex: 1, minWidth: 140 }} error={!!errors?.compensation}>
+          <InputLabel>Currency</InputLabel>
+          <Select
+            value={compensation.currency}
+            label="Currency"
+            onChange={(e) => handleCompensationChange('currency', e.target.value)}
+            sx={{ bgcolor: 'white' }}
+            MenuProps={{ disablePortal: true }}
+          >
+            <MenuItem value="EUR">EUR</MenuItem>
+            <MenuItem value="USD">USD</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ flex: 1, minWidth: 160 }} error={!!errors?.compensation}>
+          <InputLabel>Frequency</InputLabel>
+          <Select
+            value={compensation.frequency}
+            label="Frequency"
+            onChange={(e) => handleCompensationChange('frequency', e.target.value)}
+            sx={{ bgcolor: 'white' }}
+            MenuProps={{ disablePortal: true }}
+          >
+            <MenuItem value="monthly">Monthly</MenuItem>
+            <MenuItem value="yearly">Yearly</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+      {errors?.compensation ? (
+        <Typography variant="body2" color="error" mt={1}>
+          {errors.compensation}
+        </Typography>
+      ) : (
+        <Typography variant="body2" color="text.secondary" mt={2}>
+          {formatCompensation(compensation)}
+        </Typography>
+      )}
       <TextField
-        label="Stipend"
-        fullWidth
-        margin="normal"
-        name="stipend"
-        value={formData.stipend}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white' }}
-      />
-      <TextField
-        label="Other Facilities"
+        label="Facilities / Perks"
         fullWidth
         margin="normal"
         name="facilities"
-        value={formData.facilities}
+        value={formData.facilities ?? ''}
         onChange={handleChange}
         multiline
-        rows={4}
-        sx={{ bgcolor: 'white' }}
+        rows={3}
+        sx={{ bgcolor: 'white', mt: 3 }}
+        placeholder="Health insurance, relocation support, meals..."
       />
     </Box>
   );
@@ -150,11 +246,12 @@ export const OfferDetailsForm = ({
 export const JobDescriptionsForm = ({
   formData,
   handleChange,
+  errors,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
+  errors?: ValidationErrors;
 }) => {
-  console.log({ formData });
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -174,6 +271,9 @@ export const JobDescriptionsForm = ({
       />
       <TextField
         label="Job Title"
+        required
+        error={!!errors?.jobTitle}
+        helperText={errors?.jobTitle}
         fullWidth
         margin="normal"
         name="jobTitle"
@@ -194,7 +294,7 @@ export const JobDescriptionsForm = ({
           bgcolor: 'white',
         }}
       />
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="normal" error={!!errors?.workMode}>
         <InputLabel id="workMode-label">Work Mode</InputLabel>
         <Select
           labelId="workMode-label"
@@ -209,6 +309,7 @@ export const JobDescriptionsForm = ({
           <MenuItem value="onsite">Onsite</MenuItem>
           <MenuItem value="remote">Remote</MenuItem>
         </Select>
+        {errors?.workMode && <FormHelperText>{errors.workMode}</FormHelperText>}
       </FormControl>
       <TextField
         label="Job Description"
@@ -228,7 +329,7 @@ export const JobDescriptionsForm = ({
   );
 };
 
-export const JobPostDialog = ({
+export const EditJobPostDialog = ({
   open,
   handleClose,
   jobData,
@@ -239,28 +340,58 @@ export const JobPostDialog = ({
   jobData: JobPostInfo | null;
   handleSave: (updatedJob: JobPostInfo) => Promise<void>;
 }) => {
-  const [formData, setFormData] = useState<JobPostInfo>(jobData);
+  const [formData, setFormData] = useState<JobPostInfo | null>(jobData);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   useEffect(() => {
     if (!jobData) return;
     setFormData(jobData);
   }, [jobData]);
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => (prev ? { ...prev, [name]: value } : prev));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
 
-  const handleSubmit = () => {
-    handleSave(formData);
+  const handleSubmit = async () => {
+    if (!formData) return;
+
+    const validationErrors = validateJobPost(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    await handleSave(formData);
     handleClose();
   };
-  if (!jobData) return;
+
+  if (!formData) return null;
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" sx={{ zIndex: 2004, p: 20 }}>
-      <DialogTitle>{'Edit Job Post'}</DialogTitle>
-      <DialogContent>
-        <JobDescriptionsForm formData={formData} handleChange={handleChange} />
-        <OfferDetailsForm formData={formData} handleChange={handleChange} />
-        <EligibilityForm formData={formData} handleChange={handleChange} />
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      fullScreen={fullScreen}
+      scroll="paper"
+      sx={{
+        '& .MuiDialog-paper': {
+          maxHeight: '90vh',
+          p: { xs: 2, sm: 4 },
+        },
+      }}
+    >
+      <DialogTitle>Edit Job Post</DialogTitle>
+      <DialogContent dividers>
+        <JobDescriptionsForm formData={formData} handleChange={handleChange} errors={errors} />
+        <OfferDetailsForm formData={formData} handleChange={handleChange} errors={errors} />
+        <EligibilityForm formData={formData} handleChange={handleChange} errors={errors} />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
@@ -401,6 +532,26 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
                 <IconButton color="primary" onClick={() => handleEdit(job)}>
                   <Edit />
                 </IconButton>
+                <IconButton
+                  color="error"
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      `Are you sure you want to delete the job "${job.jobTitle}"?`
+                    );
+                    if (!confirmed) return;
+                    try {
+                      setLoading(true);
+                      await deleteJobPost(job.id);
+                      setJobPosts((prev) => prev.filter((j) => j.id !== job.id));
+                    } catch (err) {
+                      console.error('Failed to delete job:', err);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <Delete />
+                </IconButton>
                 {/* //TODO add badge showing */}
                 {/* <IconButton>
                     <Badge badgeContent={job.applicantCount} color="error">
@@ -412,7 +563,7 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
           ))}
         </List>
       )}
-      <JobPostDialog
+      <EditJobPostDialog
         open={openDialog}
         handleClose={handleClose}
         jobData={selectedJob}

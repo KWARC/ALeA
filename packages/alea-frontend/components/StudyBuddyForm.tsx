@@ -10,16 +10,10 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import {
-  Days,
-  Languages,
-  MeetType,
-  StudyBuddy,
-  getUserInfo,
-} from '@alea/spec';
+import { Days, Languages, MeetType, StudyBuddy } from '@alea/spec';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
+import { useCurrentUser } from '@alea/react-utils';
 
 export function StudyBuddyForm({
   studyBuddy,
@@ -29,10 +23,8 @@ export function StudyBuddyForm({
   onUpdate: (studyBuddy: StudyBuddy) => void;
 }) {
   const { studyBuddy: t } = getLocaleObject(useRouter());
-  const [userName, setUserName] = useState('');
-  useEffect(() => {
-    getUserInfo().then((u) => setUserName(u.fullName));
-  }, []);
+  const { user } = useCurrentUser();
+  const userName = user?.fullName ?? '';
   return (
     <Box>
       <TextField label={t.nameLabel} value={userName}/>

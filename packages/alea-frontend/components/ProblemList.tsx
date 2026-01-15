@@ -6,23 +6,32 @@ import {
   ListItemText,
   Paper,
   Typography,
+  Select,
+  MenuItem,
   CircularProgress,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
-import { PRIMARY_COL } from '@alea/utils';
-import axios from 'axios';
+import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@flexiformal/ftml';
 import { getCourseProblemCounts } from '@alea/spec';
+import { getExamsForCourse } from '@alea/spec';
 
 interface TitleMetadata {
   uri?: string;
   id?: string;
   chapterTitle: string;
   sectionTitle: string;
+}
+
+interface ExamInfo {
+  uri: string;
+  term?: string;
+  number?: string;
+  date?: string;
 }
 
 const extractTitlesAndSectionUri = (
@@ -45,7 +54,6 @@ const extractTitlesAndSectionUri = (
   }
 
   if (!chapterTitle && toc.type === 'Section') chapterTitle = toc.title;
-
   return toc.children.flatMap((child) => extractTitlesAndSectionUri(child, chapterTitle));
 };
 
@@ -56,14 +64,27 @@ interface ProblemListProps {
 
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
+  const [exams, setExams] = useState<ExamInfo[]>([]);
+  const [selectedExam, setSelectedExam] = useState('');
+  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
+
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
 
   useEffect(() => {
     if (!courseId) return;
+
+    getExamsForCourse(courseId).then(setExams).catch(console.error);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    setLoading(true);
     getCourseProblemCounts(courseId)
       .then((data) => setProblemCounts(data))
-      .catch((err) => console.error('Error fetching problem counts:', err));
+      .catch((err) => console.error('Error fetching problem counts:', err))
+      .finally(() => setLoading(false));
   }, [courseId]);
 
   if (problemCounts === null) {
@@ -128,7 +149,42 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
         {t.practiceProblemsDescription}
       </Typography>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', my: 3, gap: 2 }}>
+        <Select
+          displayEmpty
+          size="small"
+          value={selectedExam}
+          sx={{ minWidth: 220 }}
+          onChange={(e) => {
+            const examUri = e.target.value as string;
+
+            if (!examUri) return;
+            setSelectedExam(examUri);
+            router.push({
+              pathname: '/exam-problems',
+              query: { examUri },
+            });
+          }}
+        >
+          <MenuItem disabled value="">
+            Select Exam
+          </MenuItem>
+
+          {exams.map((exam) => {
+            const examUri = exam.uri;
+            const dParam = getParamFromUri(examUri, 'd');
+            const examLabel = exam.number
+              ? `Exam ${exam.number} ${exam.term ?? ''} ${dParam ? ` ${dParam}` : ''}`
+              : `Exam (${exam.term ?? 'General'}) ${dParam}`;
+
+            return (
+              <MenuItem key={exam.uri} value={exam.uri}>
+                {examLabel}
+              </MenuItem>
+            );
+          })}
+        </Select>
+
         <Box sx={{ marginLeft: 'auto' }}>
           <Link href={`/peer-grading/${courseId}`} passHref>
             <Button variant="contained" sx={{ height: '48px', fontSize: '16px' }}>
@@ -157,13 +213,13 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
               </Typography>
             </Box>
             <List>
-              {sections.map(({ id, uri, sectionTitle }) => {
-                const problemCount = problemCounts[uri || ''] || 0;
+              {sections.map(({ id, uri, sectionTitle }, index) => {
+                const problemCount = problemCounts?.[uri || ''] || 0;
                 const isEnabled = problemCount > 0;
 
                 return (
                   <ListItem
-                    key={uri}
+                    key={`${uri}-${index}-${id}`}
                     disablePadding
                     sx={{
                       mb: 1,

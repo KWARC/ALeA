@@ -76,6 +76,22 @@ Run the following SQL query to add resource access control:
    - The user then enters a 3-letter word (e.g., abc, xyz).
    - The system automatically creates a fake user with the username fake_abc or fake_xyz.  
 
+## Job Portal ACL for Students
+
+- An open ACL `job-portal-students` for all FAU students registering on the Job Portal.
+- Anyone with a valid FAU ID can join this ACL.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-students',
+  'students enrolled in job portal',
+  'sys-admin',
+  1
+);
+```
 
 ## env.local
 

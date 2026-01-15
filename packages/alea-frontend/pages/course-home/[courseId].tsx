@@ -9,9 +9,7 @@ import {
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
-  getUserInfo,
   LectureScheduleItem,
-  UserInfo,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -57,6 +55,7 @@ import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import { useCurrentUser } from '@alea/react-utils';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
@@ -599,7 +598,6 @@ const CourseHomePage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
   const { currentTermByCourseId } = useCurrentTermContext();
@@ -623,11 +621,8 @@ const CourseHomePage: NextPage = () => {
     fetchSeries();
   }, [courseId, currentTerm]);
 
-  useEffect(() => {
-    getUserInfo().then((userInfo: UserInfo) => {
-      setUserId(userInfo?.userId);
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
 
   useEffect(() => {
     getAllCourses().then(setCourses);
