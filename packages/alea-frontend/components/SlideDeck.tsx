@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { memo, useEffect, useRef, useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
@@ -320,6 +321,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
   showPresentationVideo,
   hasSlideAtCurrentTime,
   onPresentationVideoToggle,
+  isNotCovered,
 }: {
   courseId: string;
   sectionId: string;
@@ -336,6 +338,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
   showPresentationVideo?: boolean;
   hasSlideAtCurrentTime?: boolean;
   onPresentationVideoToggle?: () => void;
+  isNotCovered?: boolean;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [css, setCss] = useState<FTML.Css[]>([]);
@@ -345,6 +348,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
   const [containerWidth, setContainerWidth] = useState(630);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { courseNotes: t } = getLocaleObject(useRouter());
 
   useEffect(() => {
     injectCss(css);
@@ -461,7 +465,8 @@ export const SlideDeck = memo(function SlidesFromUrl({
       ref={containerRef}
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
-      sx={{ position: 'relative' }}
+      sx={{ position: 'relative', bgcolor: isNotCovered ? '#fdd' : undefined }}
+      title={isNotCovered ? t.notCovered : undefined}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
