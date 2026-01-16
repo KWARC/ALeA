@@ -92,6 +92,39 @@ VALUES (
   1
 );
 ```
+- Run the following SQL query to add corresponding resource access control:
+(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'APPLY', 'job-portal-students');
+   ```
+
+## Job Portal ACL for ADMINS
+
+- A closed ACL `job-portal-admins` for admins of Job Portal.
+- System Administrator will decide whom to make admin.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-admins',
+  'Admins of job portal',
+  'sys-admin',
+  0
+);
+```
+
+- Run the following SQL query to add corresponding resource access control:(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'MANAGE_JOB_TYPES', 'job-portal-admins');
+   ```
+
+- After ACL is being created ,add members into `job-portal-admins` **manually using UI**.
 
 ## Job Portal ACL for ADMINS
 
