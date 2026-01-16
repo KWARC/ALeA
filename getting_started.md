@@ -92,6 +92,13 @@ VALUES (
   1
 );
 ```
+- Run the following SQL query to add corresponding resource access control:
+(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'APPLY', 'job-portal-students');
+   ```
 
 ## Job Portal ACL for ADMINS
 
@@ -109,7 +116,15 @@ VALUES (
   0
 );
 ```
-- After ACL is being created ,add members into `job-portal-admins` manually using UI.
+
+- Run the following SQL query to add corresponding resource access control:(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'MANAGE_JOB_TYPES', 'job-portal-admins');
+   ```
+
+- After ACL is being created ,add members into `job-portal-admins` **manually using UI**.
 
 ## env.local
 
