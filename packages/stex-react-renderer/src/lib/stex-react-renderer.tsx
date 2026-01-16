@@ -6,7 +6,7 @@ import axios from 'axios';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CompetencyTable from './CompetencyTable';
-import { ContentDashboard } from './ContentDashboard';
+import { ContentDashboard, NOT_COVERED_SECTIONS } from './ContentDashboard';
 import { DocProblemBrowser } from './DocProblemBrowser';
 import { ExpandableContextMenu } from './ExpandableContextMenu';
 import { GradingCreator } from './GradingCreator';
@@ -163,6 +163,7 @@ export {
   LevelIcon,
   ListStepper,
   NoMaxWidthTooltip,
+  NOT_COVERED_SECTIONS,
   PerSectionQuiz,
   PositionContext,
   PositionProvider,
