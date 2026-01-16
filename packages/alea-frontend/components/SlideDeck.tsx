@@ -17,7 +17,7 @@ import { ClipInfo, getSlides, Slide, SlideType } from '@alea/spec';
 import { ExpandableContextMenu } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
 import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
-import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
+import { setSlideNumAndSectionId } from '../utils/courseViewUtils';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
 import { SlidesClipInfo } from '@alea/spec';

@@ -191,7 +191,7 @@ function CourseStub({ courseCode, onCancel }: { courseCode: string; onCancel?: (
     <Button
       sx={{ display: 'flex', alignItems: 'center' }}
       variant="contained"
-      onClick={() => router.push(`/study-buddy/${courseCode}`)}
+      onClick={() => router.push(`/FAU/${courseCode}/latest/study-buddy`)}
     >
       {MaAI_COURSES[courseCode]?.courseName ?? courseCode}
       {onCancel && (
@@ -331,7 +331,7 @@ const Courses: NextPage = () => {
               addRecentCourse(courseCode);
               forceRerender();
               await new Promise((r) => setTimeout(r, 500));
-              router.push(`/study-buddy/${courseCode}`);
+              router.push(`/FAU/${courseCode}/latest/study-buddy`);
             }
           }}
         />
@@ -348,7 +348,7 @@ const Courses: NextPage = () => {
                 <TableRow key={courseCode}>
                   <TableCell>
                     <Link
-                      href={`/study-buddy/${courseCode}`}
+                      href={`/FAU/${courseCode}/latest/study-buddy`}
                       onClick={() => addRecentCourse(courseCode)}
                     >
                       {courseList[courseCode]?.courseName}

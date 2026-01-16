@@ -120,7 +120,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           }
 
           <Tooltip title={t.studyBuddy}>
-            <Link href={`/study-buddy/${courseId}`} passHref>
+            <Link href={`/${course.universityId || 'FAU'}/${courseId}/latest/study-buddy`} passHref>
               <ColoredIconButton>
                 <Diversity3 htmlColor="white" />
               </ColoredIconButton>

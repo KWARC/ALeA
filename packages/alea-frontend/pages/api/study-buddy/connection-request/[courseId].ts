@@ -50,6 +50,6 @@ export default async function handler(
     `${user.fullName} würde gerne gemeinsam für den ${courseId}-Kurs lernen.`,
     '',
     NotificationType.STUDY_BUDDY,
-    `/study-buddy/${courseId}`
+    `/FAU/${courseId}/latest/study-buddy`
   );
 }

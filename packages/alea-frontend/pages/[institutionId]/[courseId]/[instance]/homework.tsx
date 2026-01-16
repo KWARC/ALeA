@@ -6,22 +6,32 @@ import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { useCurrentUser } from '@alea/react-utils';
-import { ForceFauLogin } from '../../components/ForceFAULogin';
-import HomeworkPerformanceTable from '../../components/HomeworkPerformanceTable';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
+import { ForceFauLogin } from '../../../../components/ForceFAULogin';
+import HomeworkPerformanceTable from '../../../../components/HomeworkPerformanceTable';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { handleEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
 
 const HomeworkPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.id as string;
-  const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('homework');
 
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
+
   const [forceFauLogin, setForceFauLogin] = useState(false);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
 
@@ -34,45 +44,58 @@ const HomeworkPage: NextPage = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_HOMEWORK, Action.TAKE, {
         courseId,
-        instanceId: currentTerm,
+        instanceId: resolvedInstanceId,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  if (isValidating || loadingInstanceId || !courses) {
+    return (
+      <MainLayout title="Loading... | ALeA">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
+  }
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
 
   const courseInfo = courses[courseId];
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+  if (!courseInfo || !resolvedInstanceId) {
+    return <CourseNotFound />;
   }
 
   if (forceFauLogin) {
     return (
-
       <MainLayout
         title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}
       >
-        <ForceFauLogin content={"homework"} />
-
+        <ForceFauLogin content={'homework'} />
       </MainLayout>
     );
   }
+
   const enrollInCourse = async () => {
-    if (!userId || !courseId || !currentTerm) {
+    if (!userId || !courseId || !resolvedInstanceId) {
       return router.push('/login');
     }
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, resolvedInstanceId);
     if (enrollmentSuccess) setIsEnrolled(true);
   };
 
@@ -82,6 +105,8 @@ const HomeworkPage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
       <Box maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{q.enrollmentMessage}</Alert>}
