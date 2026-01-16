@@ -1,8 +1,15 @@
 /* eslint-disable react/display-name, react/no-children-prop */
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
+import { CommentButton } from '@alea/comments';
+import { getAllCourses } from '@alea/spec';
+import {
+  NOT_COVERED_SECTIONS,
+  SafeFTMLDocument,
+  SectionReview,
+  TrafficLightIndicator,
+} from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
-import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
@@ -12,18 +19,13 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import { getAllCourses } from '@alea/spec';
-import { CommentButton } from '@alea/comments';
-import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
-import Tooltip from '@mui/material/Tooltip';
 
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
@@ -54,8 +56,15 @@ const FragmentWrap: React.FC<{
   children: ReactNode;
   uriToTitle: Record<string, string>;
 }> = ({ uri, fragmentKind, children, uriToTitle }) => {
+  const { courseNotes: t } = getLocaleObject(useRouter());
+  const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
   return (
-    <Box fragment-uri={uri} fragment-kind={fragmentKind}>
+    <Box
+      fragment-uri={uri}
+      fragment-kind={fragmentKind}
+      bgcolor={notCovered ? '#fdd' : undefined}
+      title={notCovered ? t.notCovered : undefined}
+    >
       {fragmentKind === 'Section' ? (
         <>
           {children}
@@ -238,9 +247,7 @@ const CourseNotesPage: NextPage = () => {
               );
             }
           }}
-          onSectionTitle={(uri, lvl) => {
-            return <TrafficLightIndicator sectionUri={uri} />;
-          }}
+          onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
         />
       </Box>
     </MainLayout>

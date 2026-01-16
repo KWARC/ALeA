@@ -28,8 +28,8 @@ interface SectionTreeNode {
 export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
   lbs: [
     'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-qsa&l=en&e=section',
-    '//http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-inference&l=en&e=section',
-  ], // "efl/section/frag4-nps/section/frag4-qsa/section"
+    //'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-inference&l=en&e=section',
+  ],
 };
 
 function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
@@ -60,24 +60,24 @@ function getTopLevelSections(
 function getSectionTree(
   courseId: string,
   tocElem: FTML.TocElem,
-  parentNode: SectionTreeNode
+  parentNode: SectionTreeNode,
+  parentNotCovered = false
 ): SectionTreeNode | SectionTreeNode[] | undefined {
   if (tocElem.type === 'Paragraph' || tocElem.type === 'Slide') return undefined;
   const isSection = tocElem.type === 'Section';
 
   if (isSection) {
     const children: SectionTreeNode[] = [];
-    const notCovered = NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri);
-
-    if (notCovered) return { tocElem, children, parentNode, notCovered } as SectionTreeNode;
+    const notCovered = parentNotCovered || NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri);
 
     const thisNode = {
       tocElem,
       children,
       parentNode,
+      notCovered,
     } as SectionTreeNode;
     for (const s of tocElem.children || []) {
-      const subNodes = getSectionTree(courseId, s, thisNode);
+      const subNodes = getSectionTree(courseId, s, thisNode, notCovered);
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -86,7 +86,7 @@ function getSectionTree(
   } else {
     const children: SectionTreeNode[] = [];
     for (const s of tocElem.children || []) {
-      const subNodes = getSectionTree(courseId, s, parentNode);
+      const subNodes = getSectionTree(courseId, s, parentNode, parentNotCovered);
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -172,7 +172,7 @@ function RenderTree({
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
   const background = node.notCovered
-    ? '#fcc'
+    ? '#fdd'
     : sectionInProgress
     ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
     : undefined;
