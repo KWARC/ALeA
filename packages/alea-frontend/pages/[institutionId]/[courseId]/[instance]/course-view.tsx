@@ -1,9 +1,3 @@
-import { SafeFTMLFragment } from '@alea/stex-react-renderer';
-import { contentToc } from '@flexiformal/ftml-backend';
-import { FTML, injectCss } from '@flexiformal/ftml';
-import { VideoCameraBack } from '@mui/icons-material';
-import ArticleIcon from '@mui/icons-material/Article';
-import { Box, Button, CircularProgress, Typography, Container, Paper, Stack } from '@mui/material';
 import {
   canAccessResource,
   ClipInfo,
@@ -14,9 +8,21 @@ import {
   getSlideUriToIndexMapping,
   SectionInfo,
   Slide,
+  SlidesClipInfo,
 } from '@alea/spec';
-import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
+import {
+  ContentDashboard,
+  LayoutWithFixedMenu,
+  NOT_COVERED_SECTIONS,
+  SafeFTMLFragment,
+  SectionReview,
+} from '@alea/stex-react-renderer';
 import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import { FTML, injectCss } from '@flexiformal/ftml';
+import { contentToc } from '@flexiformal/ftml-backend';
+import { VideoCameraBack } from '@mui/icons-material';
+import ArticleIcon from '@mui/icons-material/Article';
+import { Box, Button, CircularProgress, Container, Paper, Stack, Typography } from '@mui/material';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -114,18 +120,22 @@ function getSections(tocElems: FTML.TocElem[]): string[] {
 
 function findSection(
   toc: FTML.TocElem[],
-  sectionId: string
-): Extract<FTML.TocElem, { type: 'Section' }> | undefined {
+  courseId: string,
+  sectionId: string,
+  isParentNotCovered = false
+): { tocElem: Extract<FTML.TocElem, { type: 'Section' }>; isNotCovered: boolean } {
   for (const tocElem of toc) {
+    const isNotCovered =
+      isParentNotCovered ||
+      (tocElem.type === 'Section' && NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri));
     if (tocElem.type === 'Section' && tocElem.id === sectionId) {
-      return tocElem;
-    }
-    if ('children' in tocElem) {
-      const result = findSection(tocElem.children, sectionId);
-      if (result) return result;
+      return { tocElem, isNotCovered };
+    } else if ('children' in tocElem) {
+      const result = findSection(tocElem.children, courseId, sectionId, isNotCovered);
+      if (result.tocElem) return result;
     }
   }
-  return undefined;
+  return { tocElem: undefined, isNotCovered: false };
 }
 
 const CourseViewPage: NextPage = () => {
@@ -187,9 +197,9 @@ const CourseViewPage: NextPage = () => {
   });
   const [showPresentationVideo, setShowPresentationVideo] = useState(false);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
-  const selectedSectionTOC = useMemo(() => {
-    return findSection(toc, sectionId);
-  }, [toc, sectionId]);
+  const { tocElem: selectedSectionTOC, isNotCovered: sectionIsNotCovered } = useMemo(() => {
+    return findSection(toc, courseId, sectionId);
+  }, [toc, courseId, sectionId]);
 
   const handleVideoLoad = (status) => {
     setVideoLoaded(status);
@@ -649,6 +659,7 @@ const CourseViewPage: NextPage = () => {
                       showPresentationVideo={showPresentationVideo}
                       hasSlideAtCurrentTime={hasSlideAtCurrentTime}
                       onPresentationVideoToggle={() => setShowPresentationVideo((prev) => !prev)}
+                      isNotCovered={sectionIsNotCovered}
                     />
                   </Paper>
                 </Box>
@@ -677,6 +688,7 @@ const CourseViewPage: NextPage = () => {
                     onClipChange={onClipChange}
                     audioOnly={audioOnly}
                     videoLoaded={videoLoaded}
+                    isNotCovered={sectionIsNotCovered}
                   />
                 </Paper>
               </Box>
