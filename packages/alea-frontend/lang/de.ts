@@ -191,6 +191,9 @@ export const de = {
     description2:
       ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch Lernenden-Modell) wird in allen semantischen Diensten in ALeA verwendet.',
   },
+  courseNotes: {
+    notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
+  },
   courseView: {
     notes: 'Notizen',
     instructorNotes: 'Notizen der Lehrenden',
