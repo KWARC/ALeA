@@ -1,3 +1,6 @@
+import { MdViewer } from '@alea/markdown';
+import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@alea/spec';
+import { NOT_COVERED_SECTIONS } from '@alea/stex-react-renderer';
 import DownloadIcon from '@mui/icons-material/Download';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import {
@@ -11,8 +14,6 @@ import {
   TableRow,
   Tabs,
 } from '@mui/material';
-import { GetHistoricalSyllabusResponse, SectionInfo, SyllabusRow } from '@alea/spec';
-import { MdViewer } from '@alea/markdown';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
@@ -31,19 +32,25 @@ function joinerForLevel(level: number) {
   }
 }
 
-function sectionTitleWithFormatting(title: string, level: number) {
+function sectionTitleWithFormatting(notCovered: boolean, title: string, level: number) {
   switch (level) {
     case 0:
-      return `**${title.toUpperCase()}**`;
+      return notCovered ? `~~**${title.toUpperCase()}**~~` : `**${title.toUpperCase()}**`;
     case 1:
-      return `**${title}**`;
+      return notCovered ? `~~**${title}**~~` : `**${title}**`;
     default:
-      return title;
+      return notCovered ? `~~${title}~~` : title;
   }
 }
 
-function joinSectionWithChildren(parent: string, parentLevel: number, children: string) {
-  const formattedParent = sectionTitleWithFormatting(parent, parentLevel);
+function joinSectionWithChildren(
+  notCovered: boolean,
+  parentTitle: string,
+  parentLevel: number,
+  children: string
+) {
+  const formattedParent = sectionTitleWithFormatting(notCovered, parentTitle, parentLevel);
+  if (notCovered) return `${formattedParent}`;
   switch (parentLevel) {
     case 0:
       return `${formattedParent}\\\n${children}`;
@@ -69,35 +76,37 @@ function createAndPush(
   if (!obj[timestamp_ms]) obj[timestamp_ms] = [];
   obj[timestamp_ms].push(val);
 }
+
 function getLectureDescs(sections: SectionInfo[]): {
   [timestamp_ms: number]: string;
 } {
   const descPieces: { [timestamp_ms: number]: string[] } = {};
   for (const section of sections) {
-    const { title, level, timestamp_ms } = section;
+    const { title, level, timestamp_ms, uri } = section;
     if (!timestamp_ms) break;
 
     const secInfo = getLectureDescs(section.children);
+    const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
     let addedForThis = false;
 
     for (const childTimestamp_ms of Object.keys(secInfo).map((n) => +n)) {
       const childDesc = secInfo[childTimestamp_ms];
       if (childDesc?.length) {
-        const piece = joinSectionWithChildren(title, level, childDesc);
+        const piece = joinSectionWithChildren(notCovered, title, level, childDesc);
         createAndPush(descPieces, childTimestamp_ms, piece);
         if (childTimestamp_ms === timestamp_ms) addedForThis = true;
       }
     }
 
     if (!addedForThis) {
-      const piece = sectionTitleWithFormatting(title, level);
+      const piece = sectionTitleWithFormatting(notCovered, title, level);
       createAndPush(descPieces, timestamp_ms, piece);
     }
   }
 
   const descriptions: { [timestamp_ms: number]: string } = {};
   for (const timestamp_ms of Object.keys(descPieces)) {
-    const pieces = descPieces[timestamp_ms];
+    const pieces: string[] = descPieces[timestamp_ms];
     const isJoined = pieces.some((piece) => piece.includes(',') || piece.includes('\n'));
     const joiner = isJoined ? joinerForLevel(sections[0]?.level) : ', ';
     descriptions[timestamp_ms] = pieces.join(joiner);
@@ -151,7 +160,7 @@ function SyllabusTable({
         </TableHead>
         <TableBody>
           {rows.map(({ timestamp_ms, topics, clipId }, idx) => (
-            <TableRow key={`${timestamp_ms}`} >
+            <TableRow key={`${timestamp_ms}`}>
               <TableCell sx={{ textAlign: 'center', minWidth: '110px' }}>
                 <b>{idx + 1}.&nbsp;</b>
                 {dayjs(timestamp_ms).format(showYear ? 'DD-MMM-YY' : 'DD-MMM')}
@@ -185,7 +194,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
   const { courseHome: t } = getLocaleObject(useRouter());
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
+
   const [lectureDescs, setLectureDescs] = useState<{
     [timestamp_ms: number]: string;
   }>({});

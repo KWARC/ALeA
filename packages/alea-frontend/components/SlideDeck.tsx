@@ -1,6 +1,7 @@
-import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
-import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
+import { getSlides, Slide, SlidesClipInfo, SlideType } from '@alea/spec';
+import { ExpandableContextMenu, SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 import { FTML, injectCss } from '@flexiformal/ftml';
+import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import MovieIcon from '@mui/icons-material/Movie';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
@@ -13,14 +14,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ClipInfo, getSlides, Slide, SlideType } from '@alea/spec';
-import { ExpandableContextMenu } from '@alea/stex-react-renderer';
 import { useRouter } from 'next/router';
-import { Dispatch, memo, SetStateAction, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
-import { SlidesClipInfo } from '@alea/spec';
 
 export function SlidePopover({
   slides,
@@ -322,6 +321,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
   showPresentationVideo,
   hasSlideAtCurrentTime,
   onPresentationVideoToggle,
+  isNotCovered,
 }: {
   courseId: string;
   sectionId: string;
@@ -338,17 +338,42 @@ export const SlideDeck = memo(function SlidesFromUrl({
   showPresentationVideo?: boolean;
   hasSlideAtCurrentTime?: boolean;
   onPresentationVideoToggle?: () => void;
+  isNotCovered?: boolean;
 }) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [css, setCss] = useState<FTML.Css[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadedSectionId, setLoadedSectionId] = useState('');
   const [currentSlide, setCurrentSlide] = useState(undefined as Slide | undefined);
+  const [containerWidth, setContainerWidth] = useState(630);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { courseNotes: t } = getLocaleObject(useRouter());
 
   useEffect(() => {
     injectCss(css);
   }, [css]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      const width = container.clientWidth;
+      setContainerWidth(Math.min(Math.max(width, 500), 700) - 10);
+    };
+
+    // Initial measurement
+    updateWidth();
+
+    // Use ResizeObserver to track width changes
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -437,16 +462,30 @@ export const SlideDeck = memo(function SlidesFromUrl({
   }
   return (
     <Box
+      ref={containerRef}
       className={styles['deck-box']}
       flexDirection={navOnTop ? 'column-reverse' : 'column'}
-      sx={{ position: 'relative' }}
+      sx={{ position: 'relative', bgcolor: isNotCovered ? '#fdd' : undefined }}
+      title={isNotCovered ? t.notCovered : undefined}
     >
       <Box sx={{ position: 'absolute', right: '20px' }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
       </Box>
       {slides.length ? (
         // TODO ALEA4-S2 hack: Without border box, the content spills out of the container.
-        <Box id="slide-renderer-container" className="rustex-body">
+        <Box
+          id="slide-renderer-container"
+          style={
+            {
+              '--rustex-curr-width': `${containerWidth - 30}px`,
+              '--rustex-this-width': `${containerWidth - 30}px`,
+              'max-width': `${containerWidth}px`,
+              'padding-right': currentSlide?.slideType === SlideType.FRAME ? '30px' : undefined,
+              'box-sizing': 'border-box',
+              margin: '0 auto',
+            } as any
+          }
+        >
           <SafeFTMLSetup
             key={currentSlide ? getSlideUri(currentSlide) : 'no-slide'}
             allowFullscreen={false}
@@ -474,7 +513,14 @@ export const SlideDeck = memo(function SlidesFromUrl({
         sx={{ mt: navOnTop ? 1 : 0 }}
       >
         <Box flex={1} />
-        <Box display="flex" justifyContent="flex-end" alignItems="center" flex={1} gap={0.5} position="relative">
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          alignItems="center"
+          flex={1}
+          gap={0.5}
+          position="relative"
+        >
           {!audioOnly && slides.length > 0 && videoLoaded && clips.length > 0 && (
             <ClipSelector clips={clips} onClipChange={onClipChange} />
           )}
