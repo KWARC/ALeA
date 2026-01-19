@@ -35,13 +35,21 @@ export function useVideoMarkers({
   const autoSyncRef = useRef(autoSyncEnabled);
   const lastSyncedMarkerTime = useRef<number | null>(null);
   const lastHasSlideAtCurrentTime = useRef<boolean | null>(null);
+  const isSeekingRef = useRef(false);
+  const routerRef = useRef(router);
 
   const markersInDescOrder = useMemo(() => {
     return (markers ?? []).slice().sort((a, b) => b.time - a.time);
   }, [markers]);
+
   useEffect(() => {
     autoSyncRef.current = autoSyncEnabled;
   }, [autoSyncEnabled]);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -97,25 +105,58 @@ export function useVideoMarkers({
 
     const handleCurrentMarkerUpdate = () => {
       const currentTime = player.currentTime();
-      const markersInDescOrder = (markers ?? []).slice().sort((a, b) => b.time - a.time);
-      const markerIndex = markersInDescOrder.findIndex((marker) => marker.time <= currentTime);
+      const currentMarkers = (markers ?? []).slice().sort((a, b) => b.time - a.time);
+      const markerIndex = currentMarkers.findIndex((marker) => marker.time <= currentTime);
       if (markerIndex < 0) return;
-      const newMarker = markersInDescOrder[markerIndex];
+      const newMarker = currentMarkers[markerIndex];
       handleMarkerClick(newMarker);
     };
 
-    const onPause = () => handleCurrentMarkerUpdate();
-    const onSeeked = () => handleCurrentMarkerUpdate();
+    const onSeeking = () => {
+      isSeekingRef.current = true;
+    };
 
-    player.on('pause', onPause);
+    const onSeeked = () => {
+      isSeekingRef.current = false;
+
+      const currentTime = player.currentTime();
+      const latestMarker = markersInDescOrder.find((marker) => marker.time <= currentTime);
+
+      if (latestMarker) {
+        const currentRouter = routerRef.current;
+        const isDynamicRoute = Boolean(
+          currentRouter.query.institutionId && currentRouter.query.instance
+        );
+        const routeSectionId = currentRouter.query.sectionId as string | undefined;
+
+        const sectionId = isDynamicRoute
+          ? latestMarker.data?.sectionId
+          : routeSectionId || latestMarker.data?.sectionId;
+        const slideUri = latestMarker.data?.slideUri;
+        const slideIndex = slidesUriToIndexMap?.[sectionId]?.[slideUri];
+
+        if (autoSyncRef.current && sectionId && slideIndex !== undefined) {
+          setSlideNumAndSectionId(currentRouter, (slideIndex ?? -1) + 1, sectionId);
+        }
+      }
+
+      handleCurrentMarkerUpdate();
+    };
+
+    const onPause = () => handleCurrentMarkerUpdate();
+
+    player.on('seeking', onSeeking);
     player.on('seeked', onSeeked);
+    player.on('pause', onPause);
 
     return () => {
-      player.off('pause', onPause);
+      player.off('seeking', onSeeking);
       player.off('seeked', onSeeked);
+      player.off('pause', onPause);
     };
-  }, [markers, videoPlayer, handleMarkerClick]);
+  }, [markers, videoPlayer, handleMarkerClick, markersInDescOrder, slidesUriToIndexMap]);
 
+  // Handle time updates
   useEffect(() => {
     const player = videoPlayer.current;
     if (!player) return;
@@ -142,14 +183,27 @@ export function useVideoMarkers({
       }
 
       if (latestMarker) {
-        const sectionId = latestMarker.data?.sectionId;
+        const currentRouter = routerRef.current;
+        const isDynamicRoute = Boolean(
+          currentRouter.query.institutionId && currentRouter.query.instance
+        );
+
+        if (isDynamicRoute && isSeekingRef.current) {
+          return;
+        }
+
+        const routeSectionId = currentRouter.query.sectionId as string | undefined;
+        const sectionId = isDynamicRoute
+          ? latestMarker.data?.sectionId
+          : routeSectionId || latestMarker.data?.sectionId;
         const slideUri = latestMarker.data?.slideUri;
         const slideIndex = slidesUriToIndexMap?.[sectionId]?.[slideUri];
+
         if (autoSyncRef.current && sectionId && slideIndex !== undefined) {
           const shouldUpdate = lastSyncedMarkerTime.current !== latestMarker.time;
           if (shouldUpdate) {
             lastSyncedMarkerTime.current = latestMarker.time;
-            setSlideNumAndSectionId(router, (slideIndex ?? -1) + 1, sectionId);
+            setSlideNumAndSectionId(currentRouter, (slideIndex ?? -1) + 1, sectionId);
           }
         }
       } else {
@@ -164,7 +218,6 @@ export function useVideoMarkers({
   }, [
     markersInDescOrder,
     slidesUriToIndexMap,
-    router,
     videoPlayer,
     hasSlideAtCurrentTime,
     setHasSlideAtCurrentTime,

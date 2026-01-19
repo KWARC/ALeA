@@ -4,6 +4,7 @@ import { CountryFlag } from './CountryFlag';
 import { DateView } from './DateView';
 import { IsLoggedInProvider,useIsLoggedIn  } from './IsLoggedInContext';
 import { UserContextProvider,useCurrentUser  } from './UserContext';
+import { CourseProvider, useCourses } from './CourseContext';
 import { updateRouterQuery } from './routerHelpers';
 import { SafeHtml } from './SafeHtml';
 import { useScrollDirection } from './useScrollDirection';
@@ -16,6 +17,8 @@ export {
   IsLoggedInProvider,
   UserContextProvider,
   useCurrentUser,
+  CourseProvider,
+  useCourses,
   SafeHtml,
   updateRouterQuery,
   useCommentRefresh,

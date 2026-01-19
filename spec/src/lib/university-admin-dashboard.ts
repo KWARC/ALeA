@@ -90,11 +90,6 @@ export async function deleteSingleHoliday(data: DeleteSingleHolidayRequest) {
   return response.data;
 }
 
-export async function getLatestInstance(institutionId: string): Promise<string> {
-  const response = await axios.get(`/api/get-latest-instance/${institutionId}`);
-  return response.data.instanceId;
-}
-
 export async function validateInstitution(institutionId: string): Promise<boolean> {
   try {
     const response = await axios.get(`/api/validate-institution/${institutionId}`);

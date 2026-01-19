@@ -6,33 +6,26 @@ export enum ViewMode {
   COMBINED_MODE = 'COMBINED_MODE',
 }
 
-export function setSlideNumAndSectionId(
-  router: NextRouter,
-  slideNum: number,
-  sectionId?: string
-) {
-  const institutionId = router.query.institutionId as string;
-  const courseId = router.query.courseId as string;
-  const instance = router.query.instance as string;
-  
-  if (!institutionId || !courseId || !instance) {
-    console.error('Missing route parameters for setSlideNumAndSectionId');
+export function setSlideNumAndSectionId(router: NextRouter, slideNum: number, sectionId?: string) {
+  const { pathname, query } = router;
+  const isDynamicRoute = Boolean(query.institutionId && query.instance);
+  const courseId = query.courseId as string;
+  const slideNumStr = `${slideNum}`;
+  if (query.slideNum === slideNumStr && (!sectionId || query.sectionId === sectionId)) {
     return;
   }
-  
-  const query: any = {
-    institutionId,
-    courseId,
-    instance,
-  };
+
+  const newQuery = { ...query };
   if (sectionId) {
-    query.sectionId = sectionId;
+    newQuery.sectionId = sectionId;
     localStore?.setItem(`lastReadSectionId-${courseId}`, sectionId);
   }
-  query.slideNum = `${slideNum}`;
-  localStore?.setItem(`lastReadSlideNum-${courseId}`, `${slideNum}`);
-  router.push({
-    pathname: `/${institutionId}/${courseId}/${instance}/course-view`,
-    query,
-  });
+  newQuery.slideNum = slideNumStr;
+  localStore?.setItem(`lastReadSlideNum-${courseId}`, slideNumStr);
+
+  if (isDynamicRoute) {
+    router.replace({ pathname, query: newQuery }, undefined, { shallow: true });
+  } else {
+    router.push({ pathname, query: newQuery });
+  }
 }
