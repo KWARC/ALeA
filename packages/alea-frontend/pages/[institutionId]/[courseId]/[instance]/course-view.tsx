@@ -35,7 +35,6 @@ import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import CourseViewToolbarIcons from '../../../../components/course-view/CourseViewToolbarIcons';
 import NotesAndCommentsSection from '../../../../components/course-view/NotesAndCommentsSection';
-import { SlidesClipInfo } from '@alea/spec';
 import { ViewMode, setSlideNumAndSectionId } from '../../../../utils/courseViewUtils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';

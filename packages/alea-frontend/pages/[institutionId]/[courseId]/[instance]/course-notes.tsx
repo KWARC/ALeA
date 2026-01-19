@@ -17,7 +17,7 @@ import {
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { getLocaleObject } from '../../lang/utils';
+import { getLocaleObject } from '../../../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import MainLayout from '../../../../layouts/MainLayout';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
