@@ -41,22 +41,18 @@ export const formatExamLabel = (examUri?: string, exam?: { number?: string; term
   const dParam = getParamFromUri(examUri, 'd') || '';
   const pParam = getParamFromUri(examUri, 'p') || '';
   const termFromUri = pParam.split('/')[0];
-
   const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-
   const term = exam?.term || termFromUri;
 
   if (exam && exam.number) {
     return `${term} ${cleanedD}`.trim();
   }
-
   return term ? `${term} ${cleanedD}` : cleanedD;
 };
 const ExamProblemsPage = () => {
   const router = useRouter();
   const examUri = router.query.examUri as string | undefined;
   const targetProblemId = router.query.problemId as string | undefined;
-
   const examLabel = useMemo(() => {
     return formatExamLabel(examUri);
   }, [examUri]);

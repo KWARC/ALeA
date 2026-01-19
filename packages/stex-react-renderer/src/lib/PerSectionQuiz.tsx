@@ -33,7 +33,6 @@ function isValidExamRef(uri?: string) {
   if (!uri) return false;
   return Boolean(getParamFromUri(uri, 'd'));
 }
-
 const commonTooltipSlotProps = {
   popper: {
     sx: {
@@ -62,15 +61,11 @@ export function handleViewSource(problemUri: string) {
 
 export function getProblemType(uri: string): 'quiz' | 'homework' | 'exam' | 'uncategorized' {
   const dParam = getParamFromUri(uri, 'd');
-
   if (uri.includes('/quiz') || uri.includes('&e=quiz')) return 'quiz';
-
   if (uri.includes('/assignments')) return 'homework';
-
   if (dParam) {
     return 'exam';
   }
-
   return 'uncategorized';
 }
 
@@ -278,7 +273,6 @@ export function PerSectionQuiz({
   }
 
   if (!problemUri) return null;
-
   if (!problemUris.length) {
     return (
       <Typography sx={{ mt: 2 }} color="text.secondary">
@@ -286,7 +280,6 @@ export function PerSectionQuiz({
       </Typography>
     );
   }
-
   return (
     <Box mb={4}>
       <Box

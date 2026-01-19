@@ -29,9 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   const exams = await getExamsForCourse(courseId);
-
   const examProblemMap = new Map<string, { examUri: string; examLabel: string }[]>();
-
   const examOnlyProblemSet = new Set<string>();
 
   for (const exam of exams) {
@@ -39,16 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const problemUri of examProblems) {
       const normalized = normalizeProblemUri(problemUri);
-
       examOnlyProblemSet.add(normalized);
 
       const existing = examProblemMap.get(normalized) ?? [];
-
       existing.push({
         examUri: exam.uri,
         examLabel: exam.number ? `Exam ${exam.number} ${exam.term ?? ''}` : 'Exam',
       });
-
       examProblemMap.set(normalized, existing);
     }
   }
@@ -65,7 +60,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }));
 
   const allProblems = [...practiceProblems, ...examOnlyProblems];
-
   const enrichedProblems = allProblems.map((p) => ({
     ...p,
     examRefs: examProblemMap.get(normalizeProblemUri(p.problemId)) ?? [],
