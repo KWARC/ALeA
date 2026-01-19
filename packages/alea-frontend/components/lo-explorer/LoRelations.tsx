@@ -84,11 +84,11 @@ function NonDimensionalUriListDisplay({
 }) {
   const uniqueUris = Array.from(new Set(data.split(',')));
   return (
-    <Box border="1px solid black" mb="10px" bgcolor="white">
+    <Box border="1px solid" borderColor="divider" mb="10px" bgcolor="background.paper">
       <Typography fontWeight="bold" sx={{ p: '10px' }}>
         {title}&nbsp;
       </Typography>
-      <Box borderTop="1px solid #AAA" p="5px" display="flex" flexWrap="wrap">
+      <Box borderTop="1px solid" borderColor="divider" p="5px" display="flex" flexWrap="wrap">
         <URIListDisplay uris={uniqueUris} displayReverseRelation={displayReverseRelation} />
       </Box>
     </Box>
@@ -149,9 +149,10 @@ const LoRelations = ({
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           sx={{
-            borderBottom: '1px solid #BDBDBD',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             '&:hover': {
-              backgroundColor: '#F0F0F0',
+              backgroundColor: 'action.hover',
             },
           }}
         >
@@ -166,7 +167,7 @@ const LoRelations = ({
         </AccordionSummary>
         <AccordionDetails
           sx={{
-            backgroundColor: '#F0F2F5',
+            backgroundColor: (theme) => (theme.palette.mode === 'dark' ? 'background.default' : '#F0F2F5'),
             padding: '16px',
           }}
         >

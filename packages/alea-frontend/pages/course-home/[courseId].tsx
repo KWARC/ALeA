@@ -1003,9 +1003,6 @@ const CourseHomePage: NextPage = () => {
               backgroundColor: 'transparent !important',
               color: 'text.primary',
             },
-            '& a': {
-              color: 'primary.main',
-            },
           }}
         >
           <SafeFTMLDocument

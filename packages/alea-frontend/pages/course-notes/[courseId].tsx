@@ -231,10 +231,6 @@ const CourseNotesPage: NextPage = () => {
             backgroundColor: 'transparent !important',
             color: 'inherit',
           },
-          '& .traffic-light-indicator circle': {
-            fill: (theme) =>
-              theme.palette.mode === 'dark' ? theme.palette.primary.main : '#CBD5E1',
-          },
         }}
       >
         <SafeFTMLDocument

@@ -5,7 +5,7 @@ import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/st
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
 // import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import { getTheme } from '../theme';
 import dynamic from 'next/dynamic';
 import Box from '@mui/material/Box';
@@ -77,31 +77,59 @@ const ReportProblemPopover = dynamic(
 
 function CustomApp({ Component, pageProps }: AppProps) {
   const [readyToRender, setReadyToRender] = useState(flamsInitialized);
-  // State to manage the current mode
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [mode, setMode] = useState<'light' | 'dark' | 'system'>('system');
 
-  // Provide the toggle function to the context
-  const colorMode = useMemo(
-    () => ({
-      toggleColorMode: () => {
-        const newMode = mode === 'light' ? 'dark' : 'light';
-        setMode(newMode);
-        localStorage.setItem('colorMode', newMode);
-      },
-      mode: mode,
-    }),
-    [mode]
-  );
+  // Helper to determine the actual theme to use
+  const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const savedMode = localStorage.getItem('colorMode') as 'light' | 'dark';
+    const savedMode = localStorage.getItem('colorMode') as 'light' | 'dark' | 'system';
     if (savedMode) {
       setMode(savedMode);
     }
   }, []);
 
-  // Generate the theme based on the current mode
-  const theme = useMemo(() => getTheme(mode), [mode]);
+  useEffect(() => {
+    if (mode === 'system') {
+      const matchMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        setResolvedMode(e.matches ? 'dark' : 'light');
+      };
+
+      setResolvedMode(matchMedia.matches ? 'dark' : 'light');
+      matchMedia.addEventListener('change', handleChange);
+      return () => matchMedia.removeEventListener('change', handleChange);
+    } else {
+      setResolvedMode(mode);
+    }
+  }, [mode]);
+
+  // Provide the functions to the context
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        const targetMode = resolvedMode === 'light' ? 'dark' : 'light';
+        const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        
+        if (targetMode === systemMode) {
+          setMode('system');
+          localStorage.setItem('colorMode', 'system');
+        } else {
+          setMode(targetMode);
+          localStorage.setItem('colorMode', targetMode);
+        }
+      },
+      setMode: (targetMode: 'light' | 'dark' | 'system') => {
+        setMode(targetMode);
+        localStorage.setItem('colorMode', targetMode);
+      },
+      mode: mode,
+    }),
+    [mode, resolvedMode]
+  );
+
+  // Generate the theme based on the resolved mode
+  const theme = useMemo(() => getTheme(resolvedMode), [resolvedMode]);
 
   useEffect(() => {
     if (readyToRender) return;
@@ -146,6 +174,21 @@ function CustomApp({ Component, pageProps }: AppProps) {
           <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
               <CssBaseline />
+              <GlobalStyles
+                styles={(theme) => ({
+                  '.stex-document, .ftml-document, .omdoc-content': {
+                    backgroundColor: 'transparent !important',
+                  },
+                  '.term, .definition, .concept, [class*="term"], [class*="definition"], [class*="concept"]': {
+                    backgroundColor: 'transparent !important',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? '#60a5fa !important'
+                        : `${theme.palette.primary.main} !important`,
+                    textDecoration: 'underline !important',
+                  },
+                })}
+              />
               <MathJaxContext>
                 <FTMLReadyContext.Provider value={readyToRender}>
                   <PositionProvider>

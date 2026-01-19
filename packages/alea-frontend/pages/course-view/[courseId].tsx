@@ -428,7 +428,7 @@ const CourseViewPage: NextPage = () => {
               </Link>
             </Box>
             <Box sx={{ marginBottom: '10px', marginTop: '10px' }}>
-              <Typography variant="h6" sx={{ color: '#333' }}>
+              <Typography variant="h6" sx={{ color: 'text.primary' }}>
                 <SafeHtml html={selectedSectionTOC?.title || '<i>...</i>'} />
               </Typography>
             </Box>

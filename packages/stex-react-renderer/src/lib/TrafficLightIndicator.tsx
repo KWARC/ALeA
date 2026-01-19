@@ -1,5 +1,5 @@
-import { DialogContentText, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
+import { DialogContentText, Typography, useTheme, alpha } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -16,34 +16,27 @@ import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
 
 const trafficLightStyle = {
-  width: '30px',
-  height: '30px',
+  width: '28px',
+  height: '28px',
   borderRadius: '50%',
-  margin: '0px 5px ',
-  boxShadow: 'inset 0px 0px 5px 2px rgba(0, 0, 0, 0.5)',
+  margin: '0px 4px',
+  transition: 'all 0.3s ease',
 };
-const getColor = (color: string, averageUnderstand: number) => {
+
+const getColor = (color: string, averageUnderstand: number, theme: any) => {
+  const isDark = theme.palette.mode === 'dark';
+  const inactiveColor = isDark ? '#FFFFFF' : '#000000';
+
   if (color === 'green') {
-    if (averageUnderstand >= 0.8) {
-      return 'lightgreen';
-    } else {
-      return 'gray';
-    }
+    return averageUnderstand >= 0.8 ? '#4CAF50' : inactiveColor;
   }
   if (color === 'yellow') {
-    if (averageUnderstand > 0.3 && averageUnderstand < 0.8) {
-      return 'yellow';
-    } else {
-      return 'gray';
-    }
+    return averageUnderstand > 0.3 && averageUnderstand < 0.8 ? '#FFC107' : inactiveColor;
   }
   if (color === 'red') {
-    if (averageUnderstand < 0.3) {
-      return 'red';
-    } else {
-      return 'gray';
-    }
+    return averageUnderstand < 0.3 ? '#F44336' : inactiveColor;
   }
+  return inactiveColor;
 };
 
 function getText(averageUnderstand: number): string {
@@ -90,6 +83,9 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
       competencyData.length
     : 0;
 
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   if (!prereqs?.length) return null;
 
   return (
@@ -99,17 +95,22 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
           display: 'flex',
           textAlign: 'center',
           cursor: 'pointer',
-          transition: 'all 0.3s ease-in-out',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           alignItems: 'center',
+          py: 0.5,
+          pr: 2,
           '&:hover': {
-            width: 'calc(100% - 30px)',
-            backgroundColor: 'black',
-            padding: '10px',
-            borderRadius: '10px',
+            width: 'fit-content',
+            backgroundColor: isDark ? alpha(theme.palette.primary.main, 0.1) : '#F1F5F9',
+            borderRadius: '0 12px 12px 0',
+            borderLeft: `4px solid ${isDark ? theme.palette.primary.main : '#ef4444'}`,
+            pl: '6px',
+            boxShadow: theme.shadows[2],
             '& .hover-text': {
               display: 'block',
-              color: 'white',
-              whiteSpace: 'nowrap',
+              color: 'text.primary',
+              fontWeight: 500,
+              ml: 2,
             },
           },
         }}
@@ -119,31 +120,27 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
           sx={{
             display: 'flex',
             justifyContent: 'left',
-            marginLeft: '10px',
+            marginLeft: '4px',
             flexShrink: '0',
           }}
         >
-          <Box
-            sx={{
-              ...trafficLightStyle,
-              backgroundColor: getColor('green', averageUnderstand),
-            }}
-          ></Box>
-          <Box
-            sx={{
-              ...trafficLightStyle,
-              backgroundColor: getColor('yellow', averageUnderstand),
-            }}
-          ></Box>
-          <Box
-            sx={{
-              ...trafficLightStyle,
-              backgroundColor: getColor('red', averageUnderstand),
-            }}
-          ></Box>
+          {['green', 'yellow', 'red'].map((color) => (
+            <Box
+              key={color}
+              sx={{
+                ...trafficLightStyle,
+                backgroundColor: getColor(color, averageUnderstand, theme),
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? `inset 0px 2px 4px rgba(0, 0, 0, 0.4), ${theme.shadows[1]}`
+                    : `inset 0px 0px 5px 2px rgba(255, 0, 0, 0.4), ${theme.shadows[1]}`,
+                border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+              }}
+            />
+          ))}
         </Box>
         <Box className="hover-text" sx={{ display: 'none' }}>
-          <Typography>{getText(averageUnderstand)}</Typography>
+          <Typography variant="body2">{getText(averageUnderstand)}</Typography>
         </Box>
       </Box>
       <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth={true} maxWidth="lg">

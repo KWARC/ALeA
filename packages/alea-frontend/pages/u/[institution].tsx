@@ -54,9 +54,11 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
         backgroundColor: 'card.background',
         border: '1px solid',
         borderColor: 'card.border',
-        p: '10px',
-        m: '10px',
-        width: '200px',
+        p: '20px',
+        m: '15px',
+        width: '240px',
+        borderRadius: '2rem',
+        boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
       }}
     >
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
@@ -64,13 +66,13 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           <Link href={courseHome} style={{ textAlign: 'center' }}>
             <Image
               src={imageLink}
-              width={width}
-              height={100}
+              width={width + 20}
+              height={120}
               alt={courseName}
               style={{ display: 'block', margin: 'auto' }}
               priority={true}
             />
-            <span style={{ fontSize: '16px', marginTop: '5px', fontWeight: 'bold' }}>
+            <span style={{ fontSize: '18px', marginTop: '10px', fontWeight: 'bold' }}>
               {courseName.length > 50 ? courseId.toUpperCase() : courseName}
             </span>
           </Link>

@@ -1,19 +1,23 @@
-import { Typography, Box, Tooltip } from '@mui/material';
+import { Typography, Box, Tooltip, useTheme } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import { PRIMARY_COL } from '@alea/utils';
+// import { PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 
 function InstructorDetails({ details = [] }) {
+  const theme = useTheme();
+  // const isDarkMode = theme.palette.mode === 'dark';
+  // const color = isDarkMode ? '#fff' : PRIMARY_COL;
+
   if (!details.length) return null;
   return (
     <Box display="flex" alignItems="center" gap={1} mb={1}>
-      <Typography variant="h6" sx={{ fontSize: '0.85rem', color: PRIMARY_COL, fontWeight: 800 }}>
+      <Typography variant="h6" sx={{ fontSize: '0.85rem', color: 'text.primary', fontWeight: 800 }}>
         Instructors :
       </Typography>
 
       {details.map((item, index) => (
         <Box display="flex" key={index} gap={0.5} alignItems="center">
-          <PersonIcon sx={{ color: PRIMARY_COL, fontSize: '1rem' }} />
+          <PersonIcon sx={{ color: 'text.primary', fontSize: '1rem' }} />
           {item.url ? (
             <Tooltip title={item.url}>
               <Link
@@ -22,7 +26,7 @@ function InstructorDetails({ details = [] }) {
                 rel="noopener noreferrer"
                 style={{
                   textDecoration: 'underline',
-                  color: PRIMARY_COL,
+                  color: theme.palette.text.primary,
                   fontSize: '0.95rem',
                   fontWeight: 400,
                 }}
@@ -35,7 +39,7 @@ function InstructorDetails({ details = [] }) {
               sx={{
                 fontSize: '0.95rem',
                 fontWeight: 400,
-                color: PRIMARY_COL,
+                color: 'text.primary',
               }}
             >
               {item.name}
@@ -44,7 +48,7 @@ function InstructorDetails({ details = [] }) {
           {index < details.length - 1 && (
             <Typography
               sx={{
-                color: PRIMARY_COL,
+                color: 'text.primary',
                 fontWeight: 600,
               }}
             >

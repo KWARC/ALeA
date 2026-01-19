@@ -1,6 +1,6 @@
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, Card, IconButton, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
   getResourcesForUser,
   isLoggedIn,
@@ -72,6 +72,7 @@ const aleaFeatures = [
 const FEATURED_COURSES = ['ai-1', 'ai-2', 'gdp', 'iwgs-2', 'krmt', 'smai'];
 
 export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
+  const theme = useTheme();
   const router = useRouter();
   const {
     home: t,
@@ -114,7 +115,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             variant="h2"
             sx={{
               paddingBottom: 2,
-              color: 'primary.main',
+              color: theme.palette.mode === 'dark' ? '#fff' : 'primary.main',
               fontFamily: 'sans-serif,roboto',
             }}
           >
@@ -142,7 +143,8 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
           )}
           <Button
             sx={{ margin: '5px 5px 5px 0px' }}
-            variant="outlined"
+            variant="contained"
+            color="primary"
             onClick={() => {
               router.push('/course-list');
             }}
@@ -160,8 +162,12 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             blog
           </Button>
           <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
-            variant="outlined"
+            sx={{
+              margin: '5px 5px 5px 0px',
+              gap: '5px',
+            }}
+            variant="contained"
+            color="primary"
             onClick={() => {
               router.push('https://kwarc.github.io/bibs/voll-ki/');
             }}
@@ -226,19 +232,18 @@ export function CourseCard({ course, currentTerm }) {
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
   return (
     <Link href={`/course-home/${courseId}`}>
-      <Box
+      <Card
         sx={{
           cursor: 'pointer',
-          boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
-          width: '220px',
-          margin: '15px',
+          width: '260px',
+          margin: '20px',
           textAlign: 'center',
-          height: '260px',
+          height: '300px',
           backgroundColor: 'card.background',
           border: '1px solid',
           borderColor: 'card.border',
           borderRadius: '2rem',
-          padding: '1rem',
+          padding: '2rem',
           transition: 'transform 0.3s',
           '&:hover': {
             transform: 'scale(1.1)',
@@ -246,16 +251,16 @@ export function CourseCard({ course, currentTerm }) {
         }}
       >
         <Image
-          height={120}
-          width={courseId === 'iwgs-1' ? 100 : 200}
+          height={140}
+          width={courseId === 'iwgs-1' ? 120 : 220}
           src={courseImage}
           alt="course-image"
           style={{ borderRadius: '10px' }}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '15px' }}>
           <Typography
             sx={{
-              fontSize: '18px',
+              fontSize: '20px',
               fontWeight: 'bold',
               padding: '10px',
               color: 'text.primary',
@@ -266,7 +271,7 @@ export function CourseCard({ course, currentTerm }) {
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
         </Box>
-      </Box>
+      </Card>
     </Link>
   );
 }

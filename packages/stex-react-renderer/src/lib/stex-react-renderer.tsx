@@ -43,14 +43,15 @@ export function getPoints(problem: FTMLProblemWithSolution, response?: FTML.Prob
 
 const NoMaxWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
-))({
+))(({ theme }) => ({
   [`& .${tooltipClasses.tooltip}`]: {
     maxWidth: 'none',
     margin: '0',
     padding: '0',
-    backgroundColor: 'white',
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
+    color: theme.palette.text.primary,
   },
-});
+}));
 
 interface PositionData {
   top: number;

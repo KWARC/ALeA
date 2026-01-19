@@ -94,7 +94,7 @@ const SearchCourseNotes = ({
         <LinearProgress />
       ) : (
         references.length > 0 && (
-          <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
+          <Box bgcolor="background.paper" color="text.primary" borderRadius="5px" mb="15px" p="10px">
             <Box maxWidth="800px" m="0 auto" p="10px">
               {references
                 .filter((reference) => reference.uri)

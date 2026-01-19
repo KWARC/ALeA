@@ -207,6 +207,25 @@ function LanguageSelect() {
   );
 }
 
+function ThemeSelector() {
+  const { mode, toggleColorMode } = useColorMode();
+  const theme = useTheme();
+
+  const getIcon = () => {
+    return theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />;
+  };
+
+  const label = theme.palette.mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+
+  return (
+    <Tooltip title={label}>
+      <IconButton onClick={toggleColorMode} color="inherit" aria-label={label}>
+        {getIcon()}
+      </IconButton>
+    </Tooltip>
+  );
+}
+
 export function Header() {
   const loggedIn = isLoggedIn();
   const router = useRouter();
@@ -256,21 +275,11 @@ export function Header() {
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
                 <IconButton>
-                  <HelpIcon color="inherit" />
+                  <HelpIcon sx={{ color: 'header.text' }} />
                 </IconButton>
               </Tooltip>
             </Link>
-            <Tooltip
-              title={theme.palette.mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              <IconButton onClick={colorMode.toggleColorMode} color="inherit">
-                {theme.palette.mode === 'dark' ? (
-                  <Brightness7Icon />
-                ) : (
-                  <Brightness4Icon color="inherit" />
-                )}
-              </IconButton>
-            </Tooltip>
+            <ThemeSelector />
             <LanguageSelect />
             {loggedIn ? (
               <UserButton />
