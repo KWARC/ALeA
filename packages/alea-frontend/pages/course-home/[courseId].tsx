@@ -9,10 +9,9 @@ import {
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
-  getUserInfo,
   LectureScheduleItem,
-  UserInfo,
 } from '@alea/spec';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
   Action,
   BG_COLOR,
@@ -22,15 +21,14 @@ import {
   isFauId,
   ResourceName,
 } from '@alea/utils';
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import PersonIcon from '@mui/icons-material/Person';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -43,9 +41,9 @@ import {
   Card,
   CircularProgress,
   IconButton,
-  Tooltip,
   InputAdornment,
   TextField,
+  Tooltip,
   Typography,
   Grid,
 } from '@mui/material';
@@ -72,6 +70,7 @@ import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import { useCurrentUser } from '@alea/react-utils';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
@@ -556,7 +555,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId);
+        const fetchedAnnouncements = await getActiveAnnouncements(courseId, instanceId, 'FAU'); // TODO(M5)
         setAnnouncements(fetchedAnnouncements);
       } catch (e) {
         setError('Failed to fetch announcements.');
@@ -575,9 +574,8 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       </Box>
     );
   }
-  if (!announcements || announcements.length === 0) {
-    return null;
-  }
+  if (!announcements?.length) return null;
+
   return (
     <Box
       mt={3}
@@ -619,7 +617,6 @@ const CourseHomePage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
   const { currentTermByCourseId } = useCurrentTermContext();
@@ -643,11 +640,8 @@ const CourseHomePage: NextPage = () => {
     fetchSeries();
   }, [courseId, currentTerm]);
 
-  useEffect(() => {
-    getUserInfo().then((userInfo: UserInfo) => {
-      setUserId(userInfo?.userId);
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
 
   useEffect(() => {
     getAllCourses().then(setCourses);

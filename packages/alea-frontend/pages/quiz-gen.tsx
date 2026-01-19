@@ -1,10 +1,8 @@
-import {
-  getUserInfo,
+import {  
   ProblemJson,
   QuizProblem,
   runGraphDbSelectQuery,
   runGraphDbUpdateQuery,
-  UserInfo,
 } from '@alea/spec';
 import { PRIMARY_COL } from '@alea/utils';
 import { Alert, Box, Button, CircularProgress, Paper, TextField, Typography } from '@mui/material';
@@ -15,6 +13,7 @@ import { QuizPanel } from '../components/quiz-gen/QuizPanel';
 import { QuestionSidebar } from '../components/quiz-gen/QuizSidebar';
 import { QuizViewMode, ViewModeSelector } from '../components/quiz-gen/ViewModeSelector';
 import { SecInfo } from '../types';
+import { useCurrentUser } from '@alea/react-utils';
 
 export function getSectionNameFromIdOrUri(
   idOrUri: string | undefined,
@@ -131,19 +130,17 @@ const QuizGen = () => {
   const [allIdx, setAllIdx] = useState(0);
   const [viewMode, setViewMode] = useState<QuizViewMode>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+  const { user,isUserLoading } = useCurrentUser();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
   useEffect(() => {
-    getUserInfo().then((info) => {
-      if (!info) {
-        router.push('/login');
-        return;
-      }
-      setUserInfo(info);
-    });
-  }, [router]);
+    if(isUserLoading) return;
+    if(!user){
+      router.push('/login');
+      return;
+    }
+  }, [router, user, isUserLoading]);
 
   const currentIdx =
     viewMode === 'generated' ? generatedIdx : viewMode === 'existing' ? existingIdx : allIdx;
@@ -160,6 +157,7 @@ const QuizGen = () => {
     if (viewMode === 'existing') return existingProblems;
     return [...generatedProblems, ...existingProblems];
   }, [viewMode, generatedProblems, existingProblems]);
+  if(isUserLoading) return <CircularProgress />;
   return (
     <Box display="flex" height="100vh" bgcolor="#f4f6f8">
       <Box flex={1} px={4} py={3} overflow="auto">
@@ -185,7 +183,7 @@ const QuizGen = () => {
           setCurrentIdx={setCurrentIdx}
           sections={sections}
           courseId={courseId}
-          userInfo={userInfo}
+          userInfo={user}
         />
       </Box>
       <QuestionSidebar

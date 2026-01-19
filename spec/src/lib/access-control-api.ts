@@ -1,12 +1,10 @@
 import { Action, ResourceActionPair, ResourceName } from '@alea/utils';
 import axios from 'axios';
 import { AccessControlList, ResourceAction } from './access-control';
-import { getAuthHeaders } from './lmp';
 
 export async function hasAclAssociatedResources(aclId: string): Promise<boolean> {
   const response = await axios.get<{ hasResources: boolean }>(
-    `/api/access-control/has-acl-associated-resources?aclId=${aclId}`,
-    { headers: getAuthHeaders() }
+    `/api/access-control/has-acl-associated-resources?aclId=${aclId}`
   );
   return response.data.hasResources;
 }
@@ -26,7 +24,7 @@ export async function createAcl(newAcl: CreateACLRequest): Promise<void> {
 }
 
 export async function deleteAcl(aclId: string): Promise<void> {
-  await axios.post('/api/access-control/delete-acl', { id: aclId }, { headers: getAuthHeaders() });
+  await axios.post('/api/access-control/delete-acl', { id: aclId });
 }
 
 export async function getAcl(aclId: string): Promise<AccessControlList> {
@@ -54,69 +52,46 @@ export async function getAllAclMembers(
 }
 
 export async function updateAcl(updateAcl: UpdateACLRequest): Promise<void> {
-  await axios.post('/api/access-control/update-acl', updateAcl, { headers: getAuthHeaders() });
+  await axios.post('/api/access-control/update-acl', updateAcl);
 }
 
 export async function isUserMember(id: string): Promise<boolean> {
-  const { data } = await axios.get(`/api/access-control/is-user-member?id=${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const { data } = await axios.get(`/api/access-control/is-user-member?id=${id}`);
   return data as boolean;
 }
 
 export async function isMember(id: string, userId: string): Promise<boolean> {
-  const { data } = await axios.get(`/api/access-control/is-member?id=${id}&userId=${userId}`, {
-    headers: getAuthHeaders(),
-  });
+  const { data } = await axios.get(`/api/access-control/is-member?id=${id}&userId=${userId}`);
   return data as boolean;
 }
 
 export async function isValid(id: string): Promise<boolean> {
-  const { data } = await axios.get(`/api/access-control/is-valid?id=${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const { data } = await axios.get(`/api/access-control/is-valid?id=${id}`);
   return data as boolean;
 }
 
 export async function recomputeMemberships(): Promise<void> {
-  await axios.post(
-    '/api/access-control/recompute-memberships',
-    {},
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+  await axios.post('/api/access-control/recompute-memberships', {});
 }
 
 export async function createResourceAction(resourceData: CreateResourceAction): Promise<void> {
-  await axios.post('/api/access-control/create-resourceaction', resourceData, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/access-control/create-resourceaction', resourceData);
 }
 export async function updateResourceAction(resourceData: UpdateResourceAction): Promise<void> {
-  await axios.post('/api/access-control/update-resourceaccess-pair', resourceData, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/access-control/update-resourceaccess-pair', resourceData);
 }
 export async function deleteResourceAction(resourceId: string, actionId: string): Promise<void> {
-  await axios.post(
-    '/api/access-control/delete-resourceaction',
-    { resourceId, actionId },
-    { headers: getAuthHeaders() }
-  );
+  await axios.post('/api/access-control/delete-resourceaction', { resourceId, actionId });
 }
 
 export async function getAllResourceActions(): Promise<ResourceAction[]> {
-  const { data } = await axios.get('/api/access-control/get-all-resourceacces-pairs', {
-    headers: getAuthHeaders(),
-  });
+  const { data } = await axios.get('/api/access-control/get-all-resourceacces-pairs');
   return data as ResourceAction[];
 }
 
 export async function getInstructorResourceActions(courseId: string, instanceId: string) {
   const { data } = await axios.get(
-    `/api/access-control/get-instructor-resourceactions?courseId=${courseId}&instanceId=${instanceId}`,
-    { headers: getAuthHeaders() }
+    `/api/access-control/get-instructor-resourceactions?courseId=${courseId}&instanceId=${instanceId}`
   );
   return data as ResourceAction[];
 }
@@ -132,7 +107,7 @@ export async function canAccessResource(
   }
   const url = `/api/access-control/can-access-resource?${queryParams.toString()}`;
   try {
-    const { data } = await axios.get(url, { headers: getAuthHeaders() });
+    const { data } = await axios.get(url);
     return data as boolean;
   } catch (e: any) {
     if (e?.response?.status !== 403 && e?.response?.status !== 401) {
@@ -144,7 +119,6 @@ export async function canAccessResource(
 
 export async function canModerateComment(courseId?: string, courseTerm?: string) {
   const { data } = await axios.get('/api/access-control/can-moderate-comment', {
-    headers: getAuthHeaders(),
     params: { courseId, courseTerm },
   });
   return data as boolean;
@@ -152,7 +126,6 @@ export async function canModerateComment(courseId?: string, courseTerm?: string)
 
 export async function canModerateStudyBuddy(courseId?: string, courseTerm?: string) {
   const { data } = await axios.get('/api/access-control/can-moderate-study-buddy', {
-    headers: getAuthHeaders(),
     params: { courseId, courseTerm },
   });
   return data as boolean;
@@ -169,11 +142,12 @@ export async function addRemoveMember({
   isAclMember: boolean;
   toBeAdded: boolean;
 }): Promise<void> {
-  await axios.post(
-    '/api/access-control/add-remove-member',
-    { memberId, aclId, isAclMember, toBeAdded },
-    { headers: getAuthHeaders() }
-  );
+  await axios.post('/api/access-control/add-remove-member', {
+    memberId,
+    aclId,
+    isAclMember,
+    toBeAdded,
+  });
 }
 
 export type UpdateACLRequest = Omit<AccessControlList, 'updatedAt' | 'createdAt'>;
@@ -193,7 +167,6 @@ export interface AutocompleteAclSuggestion {
 
 export async function getUserSuggestions(query: string): Promise<AutocompleteUserSuggestion[]> {
   const { data } = await axios.get('/api/access-control/get-user-suggestions', {
-    headers: getAuthHeaders(),
     params: { q: query },
   });
   return data as AutocompleteUserSuggestion[];
@@ -201,7 +174,6 @@ export async function getUserSuggestions(query: string): Promise<AutocompleteUse
 
 export async function getAclSuggestions(query: string): Promise<AutocompleteAclSuggestion[]> {
   const { data } = await axios.get('/api/access-control/get-acl-suggestions', {
-    headers: getAuthHeaders(),
     params: { q: query },
   });
   return data as AutocompleteAclSuggestion[];

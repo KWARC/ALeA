@@ -58,3 +58,5 @@ static
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+packages/alea-frontend/next-env.d.ts

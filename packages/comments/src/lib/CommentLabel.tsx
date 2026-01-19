@@ -1,15 +1,8 @@
 import ReplyIcon from '@mui/icons-material/Reply';
 import ShieldTwoToneIcon from '@mui/icons-material/ShieldTwoTone';
 import { Box, Button, Tooltip } from '@mui/material';
-import {
-  canModerateComment,
-  Comment,
-  getUserInfo,
-  isHiddenNotSpam,
-  isSpam,
-  pointsToLevel,
-} from '@alea/spec';
-import { DateView } from '@alea/react-utils';
+import { canModerateComment, Comment, isHiddenNotSpam, isSpam, pointsToLevel } from '@alea/spec';
+import { DateView, useCurrentUser } from '@alea/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { CommentMenu } from './CommentMenu';
@@ -83,19 +76,17 @@ export function CommentLabel({
   const showHiddenStatus =
     !isPrivateNote && (isSpam(hiddenStatus) || isHiddenNotSpam(hiddenStatus));
   const statusStyle = isSpam(hiddenStatus) ? 'spam_status' : 'hidden_status';
+  const { user, isUserLoading } = useCurrentUser();
+  const userId = user?.userId;
 
   useEffect(() => {
-    getUserInfo().then(
-      (userInfo) => {
-        const userId = userInfo?.userId;
-        const isLoggedIn = !!userId;
-        setIsLoggedIn(isLoggedIn);
-        setFromCurrentUser(isLoggedIn && userId === comment?.userId);
-      },
-      () => setFromCurrentUser(false)
-    );
+    if (isUserLoading) return;
+    const isLoggedIn = !!userId;
+    setIsLoggedIn(isLoggedIn);
+    setFromCurrentUser(isLoggedIn && userId === comment?.userId);
+
     canModerateComment(comment.courseId, comment.courseTerm).then(setCanModerate);
-  }, [comment?.userId]);
+  }, [comment?.userId, isUserLoading, userId, comment.courseId, comment.courseTerm]);
 
   if (comment.isDeleted) return <i className={styles['deleted_message']}>{t.wasDeleted}</i>;
 

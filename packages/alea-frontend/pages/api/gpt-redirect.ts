@@ -8,7 +8,7 @@ function apiNameToPath(apiName: string, projectName?: string): string {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { method, body, headers } = req;
+    const { method, body } = req;
     const { apiname, projectName, ...otherQueryParams } = req.query; // The URL to forward the request to
 
     if (!apiname || typeof apiname !== 'string') {
@@ -20,7 +20,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const url = `${apiNameToPath(apiname, projectName as string)}${
       queryString ? `?${queryString}` : ''
     }`;
-
+    const token = req.cookies?.access_token;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers.Authorization = `JWT ${token}`;
+    }
     const axiosConfig = {
       method: method as Method,
       url,

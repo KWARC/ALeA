@@ -1,4 +1,4 @@
-import { canModerateComment, Comment, getUserInfo } from '@alea/spec';
+import { canModerateComment, Comment } from '@alea/spec';
 import CheckIcon from '@mui/icons-material/Check';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -9,7 +9,7 @@ import { getPublicCommentTrees, refreshAllComments } from './comment-store-manag
 import { CommentReply } from './CommentReply';
 import { CommentView } from './CommentView';
 
-import { useCommentRefresh } from '@alea/react-utils';
+import { useCommentRefresh, useCurrentUser } from '@alea/react-utils';
 import { FTML } from '@flexiformal/ftml';
 import { Refresh } from '@mui/icons-material';
 import { useRouter } from 'next/router';
@@ -169,12 +169,14 @@ export function CommentSection({
 
   const filteredComments = getFilteredComments(commentsFromStore, filters);
   const numComments = filteredComments.reduce((sum, comment) => sum + treeSize(comment), 0);
+  const { user, isUserLoading } = useCurrentUser();
 
   useEffect(() => {
-    getUserInfo().then((userInfo) => setCanAddComment(!!userInfo?.userId));
+    if (isUserLoading) return;
+    setCanAddComment(!!user?.userId);
     if (!currentTerm) return;
     canModerateComment(courseId, currentTerm).then(setCanModerate);
-  }, [courseId, currentTerm]);
+  }, [courseId, currentTerm, isUserLoading, user]);
 
   useEffect(() => {
     getPublicCommentTrees(uri).then((c) => setCommentsFromStore(c));

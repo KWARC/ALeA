@@ -16,7 +16,7 @@ $ npm start alea-frontend
 
 #### Serve for production
 
-alea-frontend is currently being served at https://courses.voll-ki.fau.de using the following command:
+alea-frontend is currently being served at https://alea.education and https://courses.voll-ki.fau.de using the following command:
 
 ```
 $ ./update-and-build.sh

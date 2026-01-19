@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import { Action, getResourceId, ResourceName } from '@alea/utils';
 
 const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
@@ -103,7 +103,7 @@ const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
               borderRadius: '5px',
             }}
           >
-            <MystViewer content={blogPost.title} />
+            <MdViewer content={blogPost.title} />
             <hr />
             {blogPost.heroImageUrl && (
               <img
@@ -116,13 +116,13 @@ const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
             )}
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography sx={{ display: 'flex', alignItems: 'center' }}>
-                <MystViewer content={blogPost.authorName} />
+                <MdViewer content={blogPost.authorName} />
               </Typography>
               <Typography fontWeight="bold">
-                <MystViewer content={blogPost.createdAt.split('T')[0]} />
+                <MdViewer content={blogPost.createdAt.split('T')[0]} />
               </Typography>
             </Box>
-            <MystViewer content={blogPost.body} />
+            <MdViewer content={blogPost.body} />
           </Box>
         </Box>
       </Box>

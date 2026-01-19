@@ -6,9 +6,9 @@ import { ResourceName, Action } from '@alea/utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { id, courseId, instanceId } = req.body;
+  const { id, courseId, instanceId, institutionId } = req.body;
 
-  if (!id || !courseId || !instanceId) {
+  if (!id || !courseId || !instanceId || !institutionId) {
     res.status(422).send('Missing required fields');
     return;
   }
@@ -23,8 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const result = await executeAndEndSet500OnError(
-    `DELETE FROM announcement WHERE id = ? AND courseId = ? AND instanceId = ?`,
-    [id, courseId, instanceId],
+    `DELETE FROM announcement WHERE id = ? AND courseId = ? AND instanceId = ? AND institutionId = ?`,
+    [id, courseId, instanceId, institutionId],
     res
   );
   if (!result) return;

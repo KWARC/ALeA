@@ -4,7 +4,6 @@ import {
   getUserIdOrSetError,
 } from '../../comment-utils';
 import { StudyBuddy } from '@alea/spec';
-import { getSbCourseId } from '../study-buddy-utils';
 import { getCurrentTermForCourseId } from '../../get-current-term';
 
 export default async function handler(
@@ -13,15 +12,20 @@ export default async function handler(
 ) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  let instanceId = req.query.instanceId as string;
-  if (!instanceId) instanceId = await getCurrentTermForCourseId(req.query.courseId as string);
+  const instanceId = req.query.instanceId as string;
 
   const courseId = req.query.courseId as string;
-  const sbCourseId = await getSbCourseId(courseId, instanceId);
+  const institutionId = req.query.institutionId as string;
+
+  if (!institutionId || !courseId || !instanceId) {
+    res.status(422).end('Missing required field: institutionId or courseId or instanceId');
+    return;
+  }
+
   // TODO: should not select *
   const results: any[] = await executeAndEndSet500OnError(
-    'SELECT * FROM StudyBuddyUsers WHERE userId=? AND sbCourseId=?',
-    [userId, sbCourseId],
+    'SELECT * FROM StudyBuddyUsers WHERE userId=? AND courseId=? AND instanceId=? AND institutionId=?',
+    [userId, courseId, instanceId, institutionId],
     res
   );
 

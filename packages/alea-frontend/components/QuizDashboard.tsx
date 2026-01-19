@@ -57,6 +57,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { getSecInfo } from './coverage-update';
 import { SecInfo } from '../types';
 import { getLectureEntry, LectureSchedule } from '@alea/spec';
+import { useRef } from 'react';
 dayjs.extend(utc);
 dayjs.extend(timezonePlugin);
 
@@ -181,14 +182,20 @@ export function getUpcomingQuizSyllabus(
 
 interface QuizDashboardProps {
   courseId: string;
+  institutionId: string;
   quizId?: string;
   onQuizIdChange?: (quizId: string) => void;
 }
 
-const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizIdChange }) => {
-  const selectedQuizId = quizId || NEW_QUIZ_ID;
+const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, quizId, onQuizIdChange }) => {
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
+  const [statsLoading, setStatsLoading] = useState<boolean>(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const justCreatedQuizIdRef = useRef<string | null>(null);
+  const quizzesRef = useRef<QuizWithStatus[]>([]);
+
+  const selectedQuizId = quizId ?? NEW_QUIZ_ID;
 
   const [title, setTitle] = useState<string>('');
   const [quizStartTs, setQuizStartTs] = useState<number>(roundToMinutes(Date.now()));
@@ -236,12 +243,35 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
   const [lectureSchedule, setLectureSchedule] = useState<LectureSchedule[]>([]);
 
   useEffect(() => {
+    quizzesRef.current = quizzes;
+  }, [quizzes]);
+
+  useEffect(() => {
+    if (!justCreatedQuizIdRef.current) return;
+
+    const id = justCreatedQuizIdRef.current;
+    if (!quizzes.find(q => q.id === id)) return;
+
+      justCreatedQuizIdRef.current = null;
+      onQuizIdChange?.(id);
+  }, [quizzes, onQuizIdChange]);
+
+  useEffect(() => {
+    if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID) return;
+
+    setTitle('');
+    setProblems({});
+    setCss([]);
+    setManuallySetPhase(Phase.UNSET);
+
+    setFormLoading(true);
+  }, [selectedQuizId]);
+
+  useEffect(() => {
     async function loadTimezone() {
       try {
-        const courses = await getAllCourses();
-        const universityId = courses?.[courseId]?.universityId;
-        if (universityId && UniversityDetail[universityId]) {
-          setTimezone(UniversityDetail[universityId].defaultTimezone);
+        if (institutionId && UniversityDetail[institutionId]) {
+          setTimezone(UniversityDetail[institutionId].defaultTimezone);
         } else {
           setTimezone(undefined);
         }
@@ -264,32 +294,75 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     if (currentTerm) loadLectureSchedule();
   }, [courseId, currentTerm]);
 
+  const fetchQuizzes = async (): Promise<QuizWithStatus[]> => {
+    if (!currentTerm) return [];
+
+    const allQuizzes = await getAllQuizzes(courseId, currentTerm);
+    allQuizzes.sort((a, b) => b.quizStartTs - a.quizStartTs);
+
+    for (const q of allQuizzes) {
+      injectCss(q.css);
+    }
+
+    setQuizzes(allQuizzes);
+
+    setFormLoading(false);
+
+    return allQuizzes;
+  };
+
   useEffect(() => {
-    async function fetchQuizzes() {
-      if (!currentTerm) return;
-      const allQuizzes: QuizWithStatus[] = await getAllQuizzes(courseId, currentTerm);
-      allQuizzes?.sort((a, b) => b.quizStartTs - a.quizStartTs);
-      for (const q of allQuizzes ?? []) {
-        injectCss(q.css);
-      }
-      setQuizzes(allQuizzes);
-      const validQuiz = allQuizzes.find((q) => q.id === quizId);
-      if (quizId !== NEW_QUIZ_ID && (!quizId || !validQuiz) && allQuizzes.length > 0) {
-        onQuizIdChange?.(allQuizzes[0].id);
+    fetchQuizzes();
+  }, [courseId, currentTerm]);
+
+  useEffect(() => {
+    console.log('Quizzes updated:', quizzes);
+  }, [quizzes]);
+
+  useEffect(() => {
+    if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID || !currentTerm) return;
+
+    let cancelled = false;
+
+    setStatsLoading(true);
+    setStats({
+      attemptedHistogram: {},
+      scoreHistogram: {},
+      requestsPerSec: {},
+      perProblemStats: {},
+      totalStudents: 0,
+    });
+
+    async function loadStats() {
+      try {
+        const data = await getQuizStats(selectedQuizId, courseId, currentTerm);
+        if (!cancelled) {
+          setStats(data);
+          setStatsLoading(false);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          console.warn('Stats not ready yet for quiz', selectedQuizId);
+          setStats({
+            attemptedHistogram: {},
+            scoreHistogram: {},
+            requestsPerSec: {},
+            perProblemStats: {},
+            totalStudents: 0,
+          });
+          setStatsLoading(false);
+        }
       }
     }
-    fetchQuizzes().catch((err) => console.error('Failed to fetch Quiz', err));
-  }, [courseId, currentTerm, onQuizIdChange, quizId]);
+    loadStats();
 
-  useEffect(() => {
-    if (!selectedQuizId || selectedQuizId === NEW_QUIZ_ID || quizzes.length === 0) return;
-    getQuizStats(selectedQuizId, courseId, currentTerm).then(setStats);
-    const interval = setInterval(() => {
-      getQuizStats(selectedQuizId, courseId, currentTerm).then(setStats);
-    }, 5000);
+    const interval = setInterval(loadStats, 5000);
 
-    return () => clearInterval(interval);
-  }, [selectedQuizId, courseId, currentTerm, quizzes]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [selectedQuizId, courseId, currentTerm]);
 
   useEffect(() => {
     if (selectedQuizId !== NEW_QUIZ_ID) return;
@@ -442,9 +515,16 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
     setProblems(selected.problems);
     setCss(selected.css || []);
     setCourseTerm(selected.courseTerm);
+    setFormLoading(false);
   }, [selectedQuizId, quizzes]);
 
-  if (!selectedQuiz && !isNew) return <>Error</>;
+  if (!selectedQuiz && !isNew) {
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   async function handleDelete(quizId: string) {
     const confirmed = window.confirm(
@@ -482,8 +562,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         <Select
           value={selectedQuizId}
           onChange={(e) => {
-            const newQuizId = e.target.value;
-            onQuizIdChange?.(newQuizId);
+            onQuizIdChange?.(e.target.value);
           }}
         >
           {accessType == 'MUTATE' ? (
@@ -518,62 +597,79 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
         </Button>
       </Box>
 
-      <h2>
-        {isNew && accessType == 'MUTATE'
-          ? 'New Quiz'
-          : selectedQuizId === 'New'
-          ? ''
-          : selectedQuizId}
-      </h2>
-      <b>
-        <SafeHtml html={title} />
-      </b>
-      {selectedQuiz && (
-        <b>
-          <br />
-          Current State: {getQuizPhase(selectedQuiz)}
-        </b>
+      {statsLoading ? (
+        <Box display="flex" justifyContent="center" mt={4} mb={4}>
+          <CircularProgress size={36} />
+        </Box>
+      ) : (
+        <>
+          <h2>
+            {isNew && accessType == 'MUTATE'
+              ? 'New Quiz'
+              : selectedQuizId === 'New'
+              ? ''
+              : selectedQuizId}
+          </h2>
+          <b>
+            <SafeHtml html={title} />
+          </b>
+          {selectedQuiz && (
+            <b>
+              <br />
+              Current State: {getQuizPhase(selectedQuiz)}
+            </b>
+          )}
+        </>
       )}
-      <QuizDurationInfo
-        quizStartTs={quizStartTs}
-        quizEndTs={quizEndTs}
-        feedbackReleaseTs={feedbackReleaseTs}
-      />
-      <CheckboxWithTimestamp
-        timestamp={quizStartTs}
-        setTimestamp={setQuizStartTs}
-        label="Quiz start time"
-        timezone={timezone}
-      />
-      <CheckboxWithTimestamp
-        timestamp={quizEndTs}
-        setTimestamp={setQuizEndTs}
-        label="Quiz end time"
-        timezone={timezone}
-      />
-      <CheckboxWithTimestamp
-        timestamp={feedbackReleaseTs}
-        setTimestamp={setFeedbackReleaseTs}
-        label="Feedback release time"
-        timezone={timezone}
-      />
-      <FormControl variant="outlined" sx={{ minWidth: '300px', m: '10px 0' }}>
-        <InputLabel id="manually-set-phase-label">Manually set phase</InputLabel>
-        <Select
-          label="Manually Set Phase"
-          labelId="manually-set-phase-label"
-          value={manuallySetPhase}
-          onChange={(e) => setManuallySetPhase(e.target.value as Phase)}
-        >
-          {Object.values(Phase).map((enumValue) => (
-            <MenuItem key={enumValue} value={enumValue}>
-              {enumValue}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {accessType == 'MUTATE' && (
-        <QuizFileReader setCss={setCss} setTitle={setTitle} setProblems={setProblems} />
+
+      {formLoading ? (
+        <Box display="flex" justifyContent="center" mt={4} mb={4}>
+          <CircularProgress size={28} />
+        </Box>
+      ) : (
+        <>
+          <QuizDurationInfo
+            quizStartTs={quizStartTs}
+            quizEndTs={quizEndTs}
+            feedbackReleaseTs={feedbackReleaseTs}
+          />
+          <CheckboxWithTimestamp
+            timestamp={quizStartTs}
+            setTimestamp={setQuizStartTs}
+            label="Quiz start time"
+            timezone={timezone}
+          />
+          <CheckboxWithTimestamp
+            timestamp={quizEndTs}
+            setTimestamp={setQuizEndTs}
+            label="Quiz end time"
+            timezone={timezone}
+          />
+          <CheckboxWithTimestamp
+            timestamp={feedbackReleaseTs}
+            setTimestamp={setFeedbackReleaseTs}
+            label="Feedback release time"
+            timezone={timezone}
+          />
+          <FormControl variant="outlined" sx={{ minWidth: '300px', m: '10px 0' }}>
+            <InputLabel id="manually-set-phase-label">Manually set phase</InputLabel>
+            <Select
+              label="Manually Set Phase"
+              labelId="manually-set-phase-label"
+              value={manuallySetPhase}
+              onChange={(e) => setManuallySetPhase(e.target.value as Phase)}
+            >
+              {Object.values(Phase).map((enumValue) => (
+                <MenuItem key={enumValue} value={enumValue}>
+                  {enumValue}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {accessType == 'MUTATE' && (
+            <QuizFileReader setCss={setCss} setTitle={setTitle} setProblems={setProblems} />
+          )}
+        </>
       )}
       <br />
       <i>{Object.keys(problems).length} problems found.</i>
@@ -634,14 +730,26 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
                 resp = await (isNew ? createQuiz(quiz) : updateQuiz(quiz));
               } catch (e) {
                 alert(e);
-                location.reload();
+                setIsUpdating(false);
+                return;
               }
               if (![200, 204].includes(resp.status)) {
                 alert(`Error: ${resp.status} ${resp.statusText}`);
-              } else {
-                alert(`Quiz ${isNew ? 'created' : 'updated'} successfully.`);
+                setIsUpdating(false);
+                return;
               }
-              location.reload();
+              alert(`Quiz ${isNew ? 'created' : 'updated'} successfully.`);
+
+              if (isNew) {
+                const refreshedQuizzes = await fetchQuizzes();
+
+                const latest = refreshedQuizzes[0];
+                if (latest) {
+                  onQuizIdChange?.(latest.id);
+                }
+              }
+
+              setIsUpdating(false);
             }}
           >
             {isNew ? 'Create New Quiz' : 'Update Quiz'}
@@ -692,14 +800,32 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, quizId, onQuizI
             quizId={selectedQuizId}
             courseId={courseId}
             courseInstance={courseTerm}
+            institutionId={institutionId}
           />
         </Box>
       )}
 
-      <QuizStatsDisplay
-        stats={stats}
-        maxProblems={Object.keys(selectedQuiz?.problems || {}).length || 1}
-      />
+      {!isNew && (
+        <Box mt={4} textAlign="center">
+          {statsLoading ? (
+            <CircularProgress size={28} />
+          ) : stats.totalStudents === 0 ? (
+            <>
+              <Typography>
+                <b>Quiz attempted by 0 students</b>
+              </Typography>
+              <Typography color="text.secondary">
+                No responses yet. Charts will appear once students start taking the quiz.
+              </Typography>
+            </>
+          ) : (
+            <QuizStatsDisplay
+              stats={stats}
+              maxProblems={Object.keys(selectedQuiz?.problems || {}).length || 1}
+            />
+          )}
+        </Box>
+      )}
     </Box>
   );
 };

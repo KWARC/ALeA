@@ -1,12 +1,10 @@
-import { MystEditor } from '@alea/myst';
+import { MdEditor } from '@alea/markdown';
 import {
   AnswerUpdateEntry,
   FTMLProblemWithSolution,
   ProblemAnswerEvent,
   ResponseWithSubProblemId,
-  UserInfo,
   createAnswer,
-  getUserInfo,
   postAnswerToLMP,
 } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
@@ -17,6 +15,7 @@ import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
+import { useCurrentUser } from '@alea/react-utils';
 
 export function PointsInfo({ points }: { points: number | undefined }) {
   return (
@@ -172,6 +171,7 @@ function AnswerAccepter({
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
+        institutionId: 'FAU', // TODO(M5)
         homeworkId: +(router.query.id ?? 0),
       });
       console.log('All answers saved successfully!');
@@ -190,7 +190,7 @@ function AnswerAccepter({
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        <MystEditor
+        <MdEditor
           name={name}
           editingEnabled={!isFrozen}
           placeholder={'...'}
@@ -227,14 +227,8 @@ export function ProblemDisplay({
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
 }) {
-  const [userId, setUserId] = useState('');
-  useEffect(() => {
-    getUserInfo().then((u: UserInfo | undefined) => {
-      if (u) {
-        setUserId(u.userId as string);
-      }
-    });
-  }, []);
+  const { user } = useCurrentUser();
+  const userId = user?.userId ?? ''
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 

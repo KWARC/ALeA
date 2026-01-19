@@ -17,6 +17,7 @@ import {
   isUserMember,
   deleteAcl,
   hasAclAssociatedResources,
+  getAllResourceActions,
 } from '@alea/spec';
 import EditIcon from '@mui/icons-material/Edit';
 import { Delete } from '@mui/icons-material';
@@ -27,10 +28,10 @@ import React, { useEffect, useState } from 'react';
 import AclDisplay from '../../components/AclDisplay';
 import MainLayout from '../../layouts/MainLayout';
 import { ConfirmationDialog } from '../../components/confirmation-dialog/ConfirmationDialog';
-interface MemberNameAndId  {
-      fullName: string;
-      userId: string;
-    }
+interface MemberNameAndId {
+  fullName: string;
+  userId: string;
+}
 const AclId: NextPage = () => {
   const router = useRouter();
   const { query } = router;
@@ -49,6 +50,7 @@ const AclId: NextPage = () => {
   const [allMemberNamesAndIds, setAllMemberNamesAndIds] = useState<any[]>([]);
   const [showAllMembers, setShowAllMembers] = useState<boolean>(false);
   const [hasAssociatedResources, setHasAssociatedResources] = useState<boolean>(false);
+  const [resourceActions, setResourceActions] = useState<any[]>([]);
 
   const handleOpenDeleteDialog = () => {
     setDeleteError('');
@@ -126,14 +128,19 @@ const AclId: NextPage = () => {
 
       const fetchStatusAndResources = async () => {
         try {
-          const [userMemberStatus, hasResources, updaterMemberStatus] = await Promise.all([
-            isUserMember(aclId),
-            hasAclAssociatedResources(aclId),
-            updaterACLId ? isUserMember(updaterACLId) : Promise.resolve(false),
-          ]);
+          const [userMemberStatus, hasResources, updaterMemberStatus, allResourceActions] =
+            await Promise.all([
+              isUserMember(aclId),
+              hasAclAssociatedResources(aclId),
+              updaterACLId ? isUserMember(updaterACLId) : Promise.resolve(false),
+              getAllResourceActions(),
+            ]);
           setUserIsMember(userMemberStatus);
           setHasAssociatedResources(hasResources);
           setIsUpdaterMember(updaterMemberStatus);
+
+          const linked = allResourceActions.filter((entry: any) => entry.aclId === aclId);
+          setResourceActions(linked);
         } catch (error) {
           console.error('Error fetching ACL status or resources:', error);
           setUserIsMember(false);
@@ -381,6 +388,35 @@ const AclId: NextPage = () => {
                   </React.Fragment>
                 ))}
               </List>
+            </Box>
+          )}
+
+          {resourceActions.length !== 0 && (
+            <Box sx={{ marginTop: '32px' }}>
+              <Typography variant="h6" color="secondary" gutterBottom>
+                Resources linked to this ACL
+              </Typography>
+              <List>
+                {resourceActions.map((entry, index) => (
+                  <React.Fragment key={`${entry.resourceId}-${entry.actionId}`}>
+                    <ListItem sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}>
+                      <ListItemText
+                        primary={entry.resourceId}
+                        secondary={`Action: ${entry.actionId}`}
+                      />
+                    </ListItem>
+                    {index < resourceActions.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Box>
+          )}
+
+          {resourceActions.length === 0 && hasAssociatedResources === false && (
+            <Box sx={{ marginTop: '32px' }}>
+              <Typography variant="body2" color="textSecondary">
+                No resources are currently linked to this ACL.
+              </Typography>
             </Box>
           )}
         </Box>

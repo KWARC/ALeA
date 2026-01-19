@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  const { questionId, questionTitle, subProblemId, courseId, homeworkId } =
+  const { questionId, questionTitle, subProblemId, courseId, homeworkId, institutionId } =
     req.body as CreateAnswerRequest;
   let { courseInstance, answer } = req.body as CreateAnswerRequest;
 
@@ -26,8 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!courseInstance) courseInstance = await getCurrentTermForCourseId(courseId);
   answer = answer.trim();
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO Answer (questionId, userId, answer, questionTitle, subProblemId, courseId, courseInstance, homeworkId) VALUES (?,?,?,?,?,?,?,?)`,
-    [questionId, userId, answer, questionTitle, subProblemId, courseId, courseInstance, homeworkId],
+    `INSERT INTO Answer (questionId, userId, answer, questionTitle, subProblemId, courseId, courseInstance, institutionId, homeworkId) VALUES (?,?,?,?,?,?,?,?,?)`,
+    [questionId, userId, answer, questionTitle, subProblemId, courseId, courseInstance, institutionId, homeworkId],
     res
   );
   if (!result) return;

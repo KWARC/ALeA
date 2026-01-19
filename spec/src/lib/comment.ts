@@ -28,6 +28,7 @@ export interface Comment {
   threadId?: number;
   courseId?: string;
   courseTerm?: string;
+  institutionId?: string;
   selectedText?: string;
 
   statement?: string;

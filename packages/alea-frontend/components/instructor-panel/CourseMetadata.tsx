@@ -4,6 +4,8 @@ import AnnouncementsTab from './Announcements';
 import { generateLectureEntry } from '@alea/spec';
 import LectureScheduleTab from './LectureSchedule';
 import CourseInfoTab from './CourseInfo';
+import { getLocaleObject } from '../../lang/utils';
+import { useRouter } from 'next/router';
 
 interface CourseMetadataProps {
   courseId: string;
@@ -13,6 +15,9 @@ interface CourseMetadataProps {
 const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
   const [generateLoading, setGenerateLoading] = useState(false);
   const [generateMessage, setGenerateMessage] = useState('');
+  const router = useRouter();
+  const { courseMetadata: tm } = getLocaleObject(router);
+
   const handleGenerateLectureEntry = async () => {
     setGenerateLoading(true);
     setGenerateMessage('Generating lecture entries...');
@@ -42,7 +47,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
     <Box p={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight="bold">
-          Course metadata
+          {tm.pageTitle}
         </Typography>
         <Button
           variant="contained"
@@ -50,7 +55,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
           disabled={generateLoading}
           startIcon={generateLoading ? <CircularProgress size={20} /> : null}
         >
-          Generate Lecture Entry
+          {tm.generateLectureEntry}
         </Button>
       </Box>
       <Snackbar

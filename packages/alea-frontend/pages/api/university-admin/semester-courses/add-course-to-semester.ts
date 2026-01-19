@@ -33,6 +33,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ message: 'Course already exists for this semester' });
   }
 
+  const alreadyExistCourseIdRow = await executeAndEndSet500OnError(
+    `SELECT courseName, notes, landing, slides, teaser
+     FROM courseMetadata
+     WHERE courseId = ? AND universityId = ?
+     LIMIT 1`,
+    [courseId, universityId],
+    res
+  );
+  if (!alreadyExistCourseIdRow) return;
+
+  let courseName = '';
+  let notes = '';
+  let landing = '';
+  let slides = '';
+  let teaser: string | null = null;
+
+  if (Array.isArray(alreadyExistCourseIdRow) && alreadyExistCourseIdRow.length > 0) {
+    const template = alreadyExistCourseIdRow[0] as any;
+    courseName = template?.courseName || courseName;
+    notes = template?.notes || notes;
+    landing = template?.landing || landing;
+    slides = template?.slides || slides;
+    teaser = template?.teaser ?? teaser;
+  }
+
 
   const insertResult = await executeAndEndSet500OnError(
     `INSERT INTO courseMetadata (
@@ -62,11 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       false,
       false,
       userId,
-      '',
-      '',
-      '',
-      '',
-      null,
+      courseName,
+      notes,
+      landing,
+      slides,
+      teaser,
       JSON.stringify([]),
     ],
     res

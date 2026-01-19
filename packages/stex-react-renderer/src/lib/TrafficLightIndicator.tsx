@@ -1,3 +1,10 @@
+import {
+  BloomDimension,
+  NumericCognitiveValues,
+  clearWeightsCache,
+  getDependenciesForSectionAgg,
+  getLmpUriWeightsAggBulk,
+} from '@alea/spec';
 import Box from '@mui/material/Box';
 import { DialogContentText, Typography, useTheme, alpha } from '@mui/material';
 import Button from '@mui/material/Button';
@@ -5,15 +12,9 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import {
-  BloomDimension,
-  NumericCognitiveValues,
-  getSectionDependencies,
-  getUriWeights,
-  isLoggedIn,
-} from '@alea/spec';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 const trafficLightStyle = {
   width: '28px',
@@ -53,15 +54,15 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [competencyData, setCompetencyData] = useState<NumericCognitiveValues[] | null>(null);
   const [prereqs, setPrereqs] = useState<string[] | null>(null);
-
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
-    if (!isLoggedIn()) return;
+    if (!loggedIn) return;
 
-    getSectionDependencies(sectionUri).then((dependencies) => {
+    getDependenciesForSectionAgg(sectionUri).then((dependencies) => {
       setPrereqs(dependencies);
-      getUriWeights(dependencies).then((data) => setCompetencyData(data));
+      getLmpUriWeightsAggBulk(dependencies).then((data) => setCompetencyData(data));
     });
-  }, [sectionUri]);
+  }, [sectionUri, loggedIn]);
 
   const handleBoxClick = () => {
     setDialogOpen(true);
@@ -75,7 +76,8 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
       setCompetencyData([]);
       return;
     }
-    getUriWeights(prereqs).then((data) => setCompetencyData(data));
+    clearWeightsCache(); // invalidateWeightsCache(prereqs); wont be enough?
+    getLmpUriWeightsAggBulk(prereqs).then((data) => setCompetencyData(data));
   }
 
   const averageUnderstand = competencyData?.length

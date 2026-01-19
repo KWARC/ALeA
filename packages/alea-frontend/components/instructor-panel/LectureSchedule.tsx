@@ -27,9 +27,6 @@ import {
   updateLectureEntry,
   deleteLectureEntry,
   addLectureSchedule,
-  updateHasHomework,
-  updateHasQuiz,
-  updateSeriesId,
 } from '@alea/spec';
 import { UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
 import { getAllCourses } from '@alea/spec';
@@ -199,7 +196,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const handleSaveNew = async () => {
     if (!newEntry.lectureDay || !newEntry.lectureStartTime || !newEntry.lectureEndTime)
       if (!selectedScheduleType) {
-        alert('Please first select Lecture Schedule or Tutorial Schedule');
+        alert(t.selectScheduleTypeAlert);
+
         return;
       }
 
@@ -255,7 +253,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
   const handleFieldChange = (field: keyof LectureScheduleUI, value: string | boolean | number) => {
     if (!selectedScheduleType) {
-      alert('Please first select Lecture Schedule or Tutorial Schedule');
+      alert(t.selectScheduleTypeAlert);
+
       return;
     }
 
@@ -279,31 +278,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
           {t.title.replace('{{courseId}}', courseId)}
         </Typography>
-        <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-          <Box sx={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            <TextField
-              label="Series ID"
-              value={seriesId}
-              size="small"
-              sx={{ width: 140 }}
-              placeholder="4334"
-              onChange={(e) => setSeriesIdState(e.target.value)}
-              onBlur={async () => {
-                if (!seriesId.trim()) return;
-                const confirmUpdate = confirm('Are you sure you want to update the Series ID?');
-                if (!confirmUpdate) return;
-                try {
-                  await updateSeriesId({ courseId, instanceId, seriesId });
-                  alert('Series ID updated successfully!');
-                  fetchLectures();
-                } catch (err) {
-                  console.error('Failed to update Series ID', err);
-                  alert('Failed to update Series ID. Please try again.');
-                }
-              }}
-            />
-          </Box>
-        </Paper>
 
         <Box
           sx={{
@@ -314,8 +288,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           }}
         >
           {[
-            { label: 'Lecture Schedule', type: 'lecture' },
-            { label: 'Tutorial Schedule', type: 'tutorial' },
+            { label: t.lectureScheduleTab, type: 'lecture' },
+            { label: t.tutorialScheduleTab, type: 'tutorial' },
           ].map((item) => {
             const isActive = activeTab === item.type;
             return (
@@ -452,11 +426,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 }}
               >
                 <Typography fontWeight="bold" sx={{ width: '100%' }}>
-                  Quiz Settings
+                  {t.quizSettings}
                 </Typography>
 
                 <TextField
-                  label="Offset (min)"
+                  label={t.offsetMinutes}
                   type="number"
                   value={
                     lectureScheduleData.quizOffsetMinutes !== undefined
@@ -480,25 +454,25 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 />
                 <TextField
                   select
-                  label="Before/After"
+                  label={t.beforeAfter}
                   value={lectureScheduleData.quizOffsetDirection || 'before'}
-                onChange={(e) => {
-                  const newDirection = e.target.value as 'before' | 'after';
-                  const unsignedMinutes = Math.abs(lectureScheduleData.quizOffsetMinutes || 0);
-                  const signedOffset =
-                    newDirection === 'before' ? -unsignedMinutes : unsignedMinutes;
-                  handleFieldChange('quizOffsetDirection', newDirection);
-                  handleFieldChange('quizOffsetMinutes', signedOffset);
-                }}
+                  onChange={(e) => {
+                    const newDirection = e.target.value as 'before' | 'after';
+                    const unsignedMinutes = Math.abs(lectureScheduleData.quizOffsetMinutes || 0);
+                    const signedOffset =
+                      newDirection === 'before' ? -unsignedMinutes : unsignedMinutes;
+                    handleFieldChange('quizOffsetDirection', newDirection);
+                    handleFieldChange('quizOffsetMinutes', signedOffset);
+                  }}
                   size="small"
                   sx={{ width: 140 }}
                 >
-                  <MenuItem value="before">Before</MenuItem>
-                  <MenuItem value="after">After</MenuItem>
+                  <MenuItem value="before">{t.before}</MenuItem>
+                  <MenuItem value="after">{t.after}</MenuItem>
                 </TextField>
                 <TextField
                   select
-                  label="From"
+                  label={t.from}
                   value={lectureScheduleData.quizOffsetReference || 'lecture-start'}
                   onChange={(e) =>
                     handleFieldChange(
@@ -509,12 +483,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   size="small"
                   sx={{ width: 170 }}
                 >
-                  <MenuItem value="lecture-start">Start of Lecture</MenuItem>
-                  <MenuItem value="lecture-end">End of Lecture</MenuItem>
+                  <MenuItem value="lecture-start">{t.startOfLecture}</MenuItem>
+                  <MenuItem value="lecture-end">{t.endOfLecture}</MenuItem>
                 </TextField>
 
                 <TextField
-                  label="Quiz Duration (min)"
+                  label={t.quizDuration}
                   type="number"
                   value={lectureScheduleData.quizDurationMinutes || ''}
                   onChange={(e) => handleFieldChange('quizDurationMinutes', Number(e.target.value))}
@@ -523,7 +497,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 />
 
                 <TextField
-                  label="Feedback Delay (min)"
+                  label={t.feedbackDelay}
                   type="number"
                   value={lectureScheduleData.quizFeedbackDelayMinutes || ''}
                   onChange={(e) =>
@@ -548,7 +522,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               }}
             >
               <AddIcon fontSize="small" />
-              {selectedScheduleType === 'lecture' ? 'Add Lecture' : 'Add Tutorial'}
+              {selectedScheduleType === 'lecture' ? t.addLectureButton : t.addTutorialButton}
             </Button>
           </Box>
         </Paper>
@@ -643,7 +617,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         <DialogTitle>
           {t.editDialogTitle.replace(
             '{{type}}',
-            selectedScheduleType === 'lecture' ? 'Lecture' : 'Tutorial'
+            selectedScheduleType === 'lecture' ? t.lecture : t.tutorial
           )}
         </DialogTitle>
 
@@ -703,11 +677,11 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               }}
             >
               <Typography fontWeight="bold" sx={{ width: '100%' }}>
-                Quiz Settings
+                {t.quizSettings}
               </Typography>
 
               <TextField
-                label="Offset (min)"
+                label={t.offsetMinutes}
                 type="number"
                 value={
                   editEntry?.quizOffsetMinutes !== undefined
@@ -718,7 +692,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   const input = e.target.value;
                   if (!editEntry) return;
                   if (input === '') {
-                    // allow clearing; no offset
                     setEditEntry((prev) => prev && { ...prev, quizOffsetMinutes: undefined });
                     return;
                   }
@@ -734,7 +707,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
               <TextField
                 select
-                label="Before/After"
+                label={t.beforeAfter}
                 value={editEntry?.quizOffsetDirection || 'before'}
                 onChange={(e) =>
                   setEditEntry((prev) => {
@@ -759,7 +732,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
               <TextField
                 select
-                label="From"
+                label={t.from}
                 value={editEntry?.quizOffsetReference || 'lecture-start'}
                 onChange={(e) =>
                   setEditEntry(
@@ -778,7 +751,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               </TextField>
 
               <TextField
-                label="Quiz Duration (min)"
+                label={t.quizDuration}
                 type="number"
                 value={editEntry?.quizDurationMinutes || ''}
                 onChange={(e) =>
@@ -791,7 +764,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               />
 
               <TextField
-                label="Feedback Delay (min)"
+                label={t.feedbackDelay}
                 type="number"
                 value={editEntry?.quizFeedbackDelayMinutes || ''}
                 onChange={(e) =>

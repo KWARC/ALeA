@@ -3,7 +3,7 @@ import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { Box, Button, Dialog, DialogActions, IconButton, Tooltip } from '@mui/material';
 import { Comment } from '@alea/spec';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import { useCommentRefresh } from '@alea/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -102,7 +102,7 @@ export function CommentButton({ url = '', fragmentKind }: { url?: string; fragme
         <Tooltip
           title={
             <Box>
-              <MystViewer content={topNote?.statement || ''} />
+              <MdViewer content={topNote?.statement || ''} />
               {numPrivateNotes > 1 ? '..and more' : ''}
             </Box>
           }
@@ -125,7 +125,7 @@ export function CommentButton({ url = '', fragmentKind }: { url?: string; fragme
             numPublicComments > 0 ? (
               <Box>
                 <b>{topComment?.userName}</b>&nbsp;<i>says:</i>
-                <MystViewer content={topComment?.statement || ''} />
+                <MdViewer content={topComment?.statement || ''} />
                 {numPublicComments > 1 ? t.andMore : ''}
               </Box>
             ) : (

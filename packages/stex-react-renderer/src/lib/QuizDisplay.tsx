@@ -53,6 +53,7 @@ function IndexEntry({
   showClock,
   onSelect,
   isHomeWork,
+  isExamProblem,
 }: {
   problem: FTMLProblemWithSolution;
   response: FTML.ProblemResponse | undefined;
@@ -64,6 +65,7 @@ function IndexEntry({
   showClock: boolean;
   onSelect: (idx: number) => void;
   isHomeWork: boolean;
+  isExamProblem?: boolean;
 }) {
   const { quiz: t } = getLocaleObject(useRouter());
   const isCorrectnessKnown =
@@ -71,15 +73,16 @@ function IndexEntry({
   const isPartiallyCorrect = points && points > 0;
   const totalPoints = problem.problem.total_points ?? 1;
   const isCorrect = points === totalPoints;
-  const color = isHomeWork
-    ? '#333'
-    : isCorrectnessKnown
-    ? isCorrect
-      ? 'green'
-      : isPartiallyCorrect
-      ? '#cc0'
-      : 'red'
-    : '#333';
+  const color =
+    isHomeWork || isExamProblem
+      ? '#333'
+      : isCorrectnessKnown
+      ? isCorrect
+        ? 'green'
+        : isPartiallyCorrect
+        ? '#cc0'
+        : 'red'
+      : '#333';
   const responded = numInputsResponded(response);
   const numInputs = response?.responses?.length ?? 1;
   const respondedIcon = isFrozen ? (
@@ -112,7 +115,10 @@ function IndexEntry({
         <span>
           &nbsp;{t.problem} {idx + 1}&nbsp;
         </span>
-        {!isHomeWork && isCorrectnessKnown && (isCorrect ? <CheckCircleIcon /> : <CancelIcon />)}
+        {!isHomeWork &&
+          !isExamProblem &&
+          isCorrectnessKnown &&
+          (isCorrect ? <CheckCircleIcon /> : <CancelIcon />)}
       </Box>
       {showClock && (
         <Box fontSize="12px">
@@ -134,6 +140,7 @@ function ProblemNavigation({
   onClose,
   onSelect,
   isHomeWork,
+  isExamProblem,
 }: {
   problems: Record<string, FTMLProblemWithSolution>;
   responses: Record<string, FTML.ProblemResponse | undefined>;
@@ -145,6 +152,7 @@ function ProblemNavigation({
   onClose: () => void;
   onSelect: (idx: number) => void;
   isHomeWork: boolean;
+  isExamProblem?: boolean;
 }) {
   return (
     <FixedPositionMenu
@@ -169,6 +177,7 @@ function ProblemNavigation({
           isFrozen={isFrozen}
           onSelect={onSelect}
           isHomeWork={isHomeWork}
+          isExamProblem={isExamProblem}
         />
       ))}
     </FixedPositionMenu>
@@ -234,6 +243,7 @@ export function QuizDisplay({
   existingResponses,
   isFrozen,
   homeworkId,
+  isExamProblem = false,
 }: {
   quizEndTs?: number;
   showPerProblemTime: boolean;
@@ -247,6 +257,7 @@ export function QuizDisplay({
     result: { [problemId: string]: number | undefined }
   ) => void;
   homeworkId?: number;
+  isExamProblem?: boolean;
 }) {
   const isHomeWork = homeworkId ? true : false;
   const { quiz: t } = getLocaleObject(useRouter());
@@ -315,6 +326,7 @@ export function QuizDisplay({
           onClose={() => setShowDashboard(false)}
           onSelect={(i) => setProblemIdx2(i)}
           isHomeWork={isHomeWork}
+          isExamProblem={isExamProblem}
         />
       }
       topOffset={64}
@@ -380,7 +392,8 @@ export function QuizDisplay({
             </Button>
           )
         ) : Object.values(points).every((s) => s !== undefined && !Number.isNaN(s)) ? (
-          !isHomeWork && (
+          !isHomeWork &&
+          !isExamProblem && (
             <i style={{ margin: '20px 0', color: '#333', fontSize: '26px' }}>
               {t.youScored.replace('$1', roundedScore(points)).replace(
                 '$2',

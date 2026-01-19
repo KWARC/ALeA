@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   InputAdornment,
   MenuItem,
   Select,
@@ -12,15 +13,14 @@ import {
   GRADE_TO_PERCENT_LOOPUP,
   POSSIBLE_GERMAN_GRADES,
   TO_EXCLUDE,
-  UserInfo,
-  getUserInfo,
-  reportEvent
+  reportEvent,
 } from '@alea/spec';
 import { localStore } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
+import { useCurrentUser } from '@alea/react-utils';
 
 const COURSE_LIST = Object.keys(COURSE_DESCRIPTIONS).filter(
   (id) => !TO_EXCLUDE.includes(id)
@@ -48,9 +48,7 @@ function clamp(num: number, min: number, max: number) {
   return Math.min(Math.max(num, min), max);
 }
 
-function setGradeInfoToLocalStorage(gradeInfo: {
-  [courseId: string]: GradeInfo;
-}) {
+function setGradeInfoToLocalStorage(gradeInfo: { [courseId: string]: GradeInfo }) {
   COURSE_LIST.forEach((courseId) => {
     const gInfo = gradeInfo[courseId] ?? {};
     localStore?.setItem(gradeInfoKey(courseId), JSON.stringify(gInfo));
@@ -59,23 +57,16 @@ function setGradeInfoToLocalStorage(gradeInfo: {
 const MyCourseHistory = () => {
   const { locale } = useRouter();
   const { learnerModelPriming: t } = getLocaleObject({ locale });
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
   const [courseInfo, setCourseInfo] = useState<{
     [courseId: string]: GradeInfo;
   }>(getGradeInfoFromLocalStorage());
+  const { user, isUserLoading } = useCurrentUser();
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
   const lang = locale ?? 'en';
 
-  if (!userInfo) {
-    return (
-      <MainLayout title={`${t.learnerModelPriming} | ALᴇA`}>
-        {t.loginToContinue}
-      </MainLayout>
-    );
+  if (isUserLoading) return <CircularProgress />;
+  if (!user) {
+    return <MainLayout title={`${t.learnerModelPriming} | ALᴇA`}>{t.loginToContinue}</MainLayout>;
   }
 
   return (

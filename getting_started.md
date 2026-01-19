@@ -51,15 +51,9 @@ npm run start alea-frontend
 
 This guide provides step-by-step instructions to create and configure an Access Control List (ACL) in the system.
 
-### Step 1: Create a New ACL
+### Step 1: Run Initial SQL Setup
 
-1. Go to the `/acl` endpoint in the application.
-2. Create a new ACL with the following details:
-   - **ACL ID**: `sys-admin`
-   - **Description**: `write-dexription`
-   - **Add Member ID**: Specify the member ID, e.g., `fake_joy`
-   - **Add Member ACL**: Leave empty if no additional ACLs are to be added.
-   - **Updater ACL**: Set this to `sys-admin`.
+Execute the SQL queries from the `intialSqlSetup.sql` file to set up the sys-admin ACL, initial course metadata, and other required data.
 
 ### Step 2: Insert into `ResourceAccess`
 
@@ -82,6 +76,73 @@ Run the following SQL query to add resource access control:
    - The user then enters a 3-letter word (e.g., abc, xyz).
    - The system automatically creates a fake user with the username fake_abc or fake_xyz.  
 
+## Job Portal ACL for Students
+
+- An open ACL `job-portal-students` for all FAU students registering on the Job Portal.
+- Anyone with a valid FAU ID can join this ACL.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-students',
+  'students enrolled in job portal',
+  'sys-admin',
+  1
+);
+```
+- Run the following SQL query to add corresponding resource access control:
+(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'APPLY', 'job-portal-students');
+   ```
+
+## Job Portal ACL for ADMINS
+
+- A closed ACL `job-portal-admins` for admins of Job Portal.
+- System Administrator will decide whom to make admin.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-admins',
+  'Admins of job portal',
+  'sys-admin',
+  0
+);
+```
+
+- Run the following SQL query to add corresponding resource access control:(**NOTE**: replace semester name in `resourceId` with the current `semesterId` **or** prefer **UI** instead of using this sql query to add resourceAccess control)
+
+   ```sql
+   INSERT INTO ResourceAccess (resourceId, actionId, aclId) 
+   VALUES ('/instance/WS25-26/job-portal', 'MANAGE_JOB_TYPES', 'job-portal-admins');
+   ```
+
+- After ACL is being created ,add members into `job-portal-admins` **manually using UI**.
+
+## Job Portal ACL for ADMINS
+
+- A closed ACL `job-portal-admins` for admins of Job Portal.
+- System Administrator will decide whom to make admin.
+
+#### Database Entry
+
+```sql
+INSERT INTO AccessControlList (id, description, updaterACLId, isOpen)
+VALUES (
+  'job-portal-admins',
+  'Admins of job portal',
+  'sys-admin',
+  0
+);
+```
+- After ACL is being created ,add members into `job-portal-admins` manually using UI.
 
 ## env.local
 

@@ -17,11 +17,9 @@ import {
   BloomDimension,
   CardsWithSmileys,
   SmileyLevel,
-  getAuthHeaders,
-  isLoggedIn,
   smileyToLevel,
 } from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
+import { SafeHtml, useIsLoggedIn } from '@alea/react-utils';
 import { ConfigureLevelSlider } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL, Window, stableShuffle } from '@alea/utils';
 import axios from 'axios';
@@ -175,7 +173,7 @@ function CoverageConfigurator({
     }
     setCheckedChapterIdxs(newChecked);
   };
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { flashCards: t } = getLocaleObject(router);
 
@@ -291,7 +289,7 @@ function ReviseAndDrillButtons({
   shuffle: boolean;
   setShuffle: (r: boolean) => void;
 }) {
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const isDisabled = selectedCards.length === 0;
   const router = useRouter();
   const { flashCards: t } = getLocaleObject(router);
@@ -378,7 +376,7 @@ export function DrillConfigurator({ courseId }: { courseId: string }) {
   const [mode, setMode] = useState(FlashCardMode.REVISION_MODE);
   const [shuffle, setShuffle] = useState(true);
 
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
 
   const sectionCounts = getSectionCounts(levels, loggedIn, courseCards);
   const selectedChapters = checkedChapterIdxs.map((idx) => sectionCounts[idx].sectionTitle);
@@ -388,9 +386,7 @@ export function DrillConfigurator({ courseId }: { courseId: string }) {
     if (!courseId) return;
     setIsLoading(true);
     axios
-      .get(`/api/get-cards-with-smileys/${courseId}`, {
-        headers: getAuthHeaders(),
-      })
+      .get(`/api/get-cards-with-smileys/${courseId}`)
       .then((r) => {
         setIsLoading(false);
         setCourseCards(r.data);

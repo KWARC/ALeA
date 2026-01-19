@@ -1,11 +1,10 @@
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
-
 export interface Announcement {
   id: number;
   courseId: string;
   instructorId: string;
   instanceId: string;
+  institutionId: string;
   title: string;
   content: string;
   createdAt: string;
@@ -22,6 +21,7 @@ export interface DeleteAnnouncementRequest {
   id: number;
   courseId: string;
   instanceId: string;
+  institutionId: string;
 }
 
 export type UpdateAnnouncementRequest = Omit<
@@ -30,34 +30,36 @@ export type UpdateAnnouncementRequest = Omit<
 >;
 
 export async function createAnnouncement(details: CreateAnnouncementRequest) {
-  await axios.post('/api/announcement/create-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/create-announcement', details);
 }
 
-export async function getAnnouncements(courseId: string, instanceId: string) {
+export async function getAnnouncements(
+  courseId: string,
+  instanceId: string,
+  institutionId: string
+) {
   const resp = await axios.get('/api/announcement/get-announcements', {
-    params: { courseId, instanceId },
+    params: { courseId, instanceId, institutionId },
   });
   return resp.data as Announcement[];
 }
 
-export async function getActiveAnnouncements(courseId: string, instanceId: string) {
+export async function getActiveAnnouncements(
+  courseId: string,
+  instanceId: string,
+  institutionId: string
+) {
   const resp = await axios.get('/api/announcement/get-active-announcements', {
-    params: { courseId, instanceId },
+    params: { courseId, instanceId, institutionId },
   });
 
   return resp.data as Announcement[];
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {
-  await axios.post('/api/announcement/delete-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/delete-announcement', details);
 }
 
 export async function updateAnnouncement(details: UpdateAnnouncementRequest) {
-  await axios.post('/api/announcement/update-announcement', details, {
-    headers: getAuthHeaders(),
-  });
+  await axios.post('/api/announcement/update-announcement', details);
 }

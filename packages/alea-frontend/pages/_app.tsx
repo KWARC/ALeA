@@ -10,8 +10,8 @@ import { getTheme } from '../theme';
 import dynamic from 'next/dynamic';
 import Box from '@mui/material/Box';
 import { AppProps } from 'next/app';
-import { CommentRefreshProvider } from '@alea/react-utils';
-import { useEffect, useState, useMemo } from 'react';
+import { UserContextProvider, CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
+import { useEffect, useState ,useMemo} from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import { ColorModeContext } from '../contexts/ColorModeContext';
 import './styles.scss';
@@ -60,7 +60,6 @@ const instance = createInstance({
 
 let flamsInitialized = false;
 const initStartTime = Date.now();
-
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
   .then(() => {
     console.log('FTML initialized: ', Date.now() - initStartTime, 'ms');
@@ -171,47 +170,30 @@ function CustomApp({ Component, pageProps }: AppProps) {
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
         <MatomoProvider value={instance}>
-          <ColorModeContext.Provider value={colorMode}>
-            <ThemeProvider theme={theme}>
-              <CssBaseline />
-              <GlobalStyles
-                styles={(theme) => ({
-                  '.stex-document, .ftml-document, .omdoc-content': {
-                    backgroundColor: 'transparent !important',
-                  },
-                  '.term, .definition, .concept, [class*="term"], [class*="definition"], [class*="concept"]': {
-                    backgroundColor: 'transparent !important',
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? '#60a5fa !important'
-                        : `${theme.palette.primary.main} !important`,
-                    textDecoration: 'underline !important',
-                  },
-                })}
-              />
-              <MathJaxContext>
-                <FTMLReadyContext.Provider value={readyToRender}>
-                  <PositionProvider>
-                    <CurrentTermProvider>
-                      <Box
-                        sx={{
-                          width: '100vw',
-                          height: '100vh',
-                          overflowY: 'auto',
-                          overflowX: 'hidden',
-                          bgcolor: 'background.default', // Ensure background follows theme
-                          color: 'text.primary', // Ensure text color follows theme
-                        }}
-                      >
-                        <Component {...pageProps} />
-                      </Box>
-                    </CurrentTermProvider>
-                  </PositionProvider>
-                </FTMLReadyContext.Provider>
-              </MathJaxContext>
-              <ReportProblemPopover />
-            </ThemeProvider>
-          </ColorModeContext.Provider>
+          <ThemeProvider theme={theme}>
+            <MathJaxContext>
+              <FTMLReadyContext.Provider value={readyToRender}>
+                <PositionProvider>
+                  <UserContextProvider>
+                    <IsLoggedInProvider>
+                      <CurrentTermProvider>
+                        <div
+                          style={{
+                            width: '100vw',
+                            height: '100vh',
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
+                          }}
+                        >
+                          <Component {...pageProps} />
+                        </div>
+                      </CurrentTermProvider>
+                    </IsLoggedInProvider>
+                  </UserContextProvider>
+                </PositionProvider>
+              </FTMLReadyContext.Provider>
+            </MathJaxContext>
+          </ThemeProvider>
         </MatomoProvider>
       </ServerLinksContext.Provider>
     </CommentRefreshProvider>

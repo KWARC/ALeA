@@ -1,5 +1,5 @@
 import { Box, Tooltip, Typography } from '@mui/material';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import type { NextPage } from 'next';
@@ -44,7 +44,7 @@ const UpdatesPage: NextPage = () => {
                 sx={{ img: { maxWidth: '200px !important' } }}
                 id={'image' + update.id}
               >
-                <MystViewer
+                <MdViewer
                   content={
                     locale === 'de'
                       ? update.content_de || update.content

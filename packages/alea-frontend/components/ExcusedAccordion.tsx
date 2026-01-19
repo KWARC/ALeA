@@ -22,7 +22,7 @@ import {
 import { createExcused, deleteExcused, getExcused } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
-export function ExcusedAccordion({ quizId, courseId, courseInstance }) {
+export function ExcusedAccordion({ quizId, courseId, courseInstance, institutionId }) {
   const [excusedList, setExcusedList] = useState([]);
   const [newUserId, setNewUserId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export function ExcusedAccordion({ quizId, courseId, courseInstance }) {
     setSuccess('');
 
     try {
-      await createExcused(quizId, newUserId.trim(), courseId, courseInstance);
+      await createExcused(quizId, newUserId.trim(), courseId, courseInstance, institutionId);
       setNewUserId('');
       setSuccess(`Student ${newUserId.trim()} added to excused list`);
       await fetchExcused();

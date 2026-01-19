@@ -1,4 +1,3 @@
-import { getAuthHeaders } from "./lmp";
 import axios from "axios";
 
 interface ConceptProperty {
@@ -14,8 +13,7 @@ export async function getConceptPropertyInSection(sectionUri:string){
       apiname: 'get-concept-properties-in-section',
       projectName: 'quiz-gen',
       sectionUri,
-    },
-    headers: getAuthHeaders(),
+    }
   });
 
   return resp.data as ConceptPropertiesMap;
@@ -36,8 +34,7 @@ export async function getSectionGoals(courseNotesUri:string,sectionUri:string){
       projectName: 'quiz-gen',
       courseUri:courseNotesUri,
       sectionUri
-    },
-    headers: getAuthHeaders(),
+    }
   });
 
   return resp.data as GoalsData;

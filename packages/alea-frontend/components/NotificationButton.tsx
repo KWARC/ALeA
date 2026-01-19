@@ -13,10 +13,9 @@ import {
   NotificationType,
   getNotificationSeenTime,
   getUserNotifications,
-  isLoggedIn,
   updateNotificationSeenTime,
 } from '@alea/spec';
-import { DateView } from '@alea/react-utils';
+import { DateView, useIsLoggedIn } from '@alea/react-utils';
 import { PRIMARY_COL, localStore } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -102,7 +101,7 @@ export function useNotificationData() {
   return sortedItems;
 }
 
-function NotificationButton() {
+function NotificationButton({ bgColor }: { bgColor?: string }) {
   const router = useRouter();
   const { notification: t } = getLocaleObject(router);
   const [notificationSeenTime, setNotificationSeenTime] = useState<string | undefined>(undefined);
@@ -113,12 +112,12 @@ function NotificationButton() {
   // System info menu crap end
 
   const sortedItems = useNotificationData();
-
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
-    if (isLoggedIn()) {
+    if (loggedIn) {
       getNotificationSeenTime().then(setNotificationSeenTime);
     }
-  }, []);
+  }, [loggedIn]);
 
   function topUpdate() {
     if (!sortedItems?.length) return '';
@@ -126,7 +125,7 @@ function NotificationButton() {
   }
 
   function shouldRing(topUpdate) {
-    if (!isLoggedIn()) {
+    if (!loggedIn) {
       const lastNotificationSeenTime = localStore?.getItem('notification-seen-time');
       return lastNotificationSeenTime !== topUpdate;
     } else {
@@ -136,7 +135,7 @@ function NotificationButton() {
 
   async function handleUpdate(e) {
     setAnchorEl(e.currentTarget);
-    if (!isLoggedIn()) {
+    if (!loggedIn) {
       localStore?.setItem('notification-seen-time', topUpdate());
     } else {
       setNotificationSeenTime(topUpdate());

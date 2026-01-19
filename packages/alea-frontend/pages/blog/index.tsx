@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from '@mui/material';
 import { BlogPost, canAccessResource, getPostSnippets, PostSnippet } from '@alea/spec';
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import { Action, ResourceName } from '@alea/utils';
 import fs from 'fs';
 import { NextPage } from 'next';
@@ -76,7 +76,7 @@ const BlogHomePage: NextPage = ({ postSnippets }: { postSnippets: PostSnippet[] 
                 width="100%"
                 style={{ objectFit: 'cover', objectPosition: snippet.heroImagePosition }}
               />
-              <MystViewer content={snippet.title} />
+              <MdViewer content={snippet.title} />
               <Box
                 display="flex"
                 flexDirection={'row'}
@@ -89,7 +89,7 @@ const BlogHomePage: NextPage = ({ postSnippets }: { postSnippets: PostSnippet[] 
                   {snippet.createdAt.split('T')[0]}
                 </Typography>
                 <Typography display="flex" alignItems="center">
-                  Author: <MystViewer content={snippet.authorName} />
+                  Author: <MdViewer content={snippet.authorName} />
                 </Typography>
               </Box>
             </Box>

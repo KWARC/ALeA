@@ -11,6 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     instanceId,
     universityId,
     courseName,
+    seriesId,
     notes,
     landing,
     slides,
@@ -49,6 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        teaser = COALESCE(?, teaser),
        instructors = COALESCE(?, instructors),
        universityId = COALESCE(?, universityId),
+        seriesId = COALESCE(?, seriesId),
        updaterId = ?,
        updatedAt = CURRENT_TIMESTAMP
      WHERE courseId = ? AND instanceId = ?`,
@@ -60,6 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       teaser,
       instructors ? JSON.stringify(instructors) : null,
       universityId || null,
+      seriesId || null,
       updaterId,
       courseId,
       instanceId,

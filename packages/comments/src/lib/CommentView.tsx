@@ -4,7 +4,7 @@ import { CommentLabel } from './CommentLabel';
 import { CommentReply } from './CommentReply';
 import { EditView } from './EditView';
 
-import { MystViewer } from '@alea/myst';
+import { MdViewer } from '@alea/markdown';
 import { discardDraft } from './comment-helpers';
 import styles from './comments.module.scss';
 import { SelectedInfo } from './selected-info';
@@ -28,7 +28,7 @@ export function CommentView({ comment, onUpdate }: { comment: Comment; onUpdate:
               <SelectedInfo text={comment.selectedText} />
               {!editingComment && (
                 <div style={{ margin: '-1em 0 0' }}>
-                  <MystViewer content={comment.statement || ''} />
+                  <MdViewer content={comment.statement || ''} />
                 </div>
               )}
               <EditView

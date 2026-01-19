@@ -1,4 +1,3 @@
-import { getUserInfo } from '@alea/spec';
 import { handleViewSource } from '@alea/stex-react-renderer';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {
@@ -17,6 +16,7 @@ import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { createNewIssue, SelectionContext } from './issueCreator';
 import { getLocaleObject } from './lang/utils';
+import { useCurrentUser } from '@alea/react-utils';
 
 function getIssueTitle(title: string, description: string) {
   if (title?.trim()?.length > 0) return title;
@@ -43,9 +43,9 @@ export function ReportProblemDialog({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [userName, setUserName] = useState('');
   const [postAnonymously, setPostAnonymously] = useState(false);
-
+  const { user } = useCurrentUser();
+  const userName = user?.fullName || '';
   const descRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,13 +53,6 @@ export function ReportProblemDialog({
       setTimeout(() => descRef.current?.focus(), 100);
     }
   }, [open]);
-
-  useEffect(() => {
-    getUserInfo().then((userInfo) => {
-      if (!userInfo) return;
-      setUserName(userInfo.fullName);
-    });
-  }, []);
 
   const descriptionError = !description?.trim();
   const anyError = descriptionError;

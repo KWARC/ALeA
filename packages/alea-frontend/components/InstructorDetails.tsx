@@ -1,59 +1,37 @@
-import { Typography, Box, Tooltip, useTheme } from '@mui/material';
+import { PRIMARY_COL } from '@alea/utils';
 import PersonIcon from '@mui/icons-material/Person';
-// import { PRIMARY_COL } from '@alea/utils';
+import { Box, Typography } from '@mui/material';
 import Link from 'next/link';
 
 function InstructorDetails({ details = [] }) {
-  const theme = useTheme();
-  // const isDarkMode = theme.palette.mode === 'dark';
-  // const color = isDarkMode ? '#fff' : PRIMARY_COL;
-
-  if (!details.length) return null;
+  if (!details.length) return;
   return (
-    <Box display="flex" alignItems="center" gap={1} mb={1}>
-      <Typography variant="h6" sx={{ fontSize: '0.85rem', color: 'text.primary', fontWeight: 800 }}>
-        Instructors :
+    <Box display="flex" alignItems="center" gap={1} my={1}>
+      <Typography variant="h6" sx={{ color: PRIMARY_COL, fontWeight: 800 }}>
+        Instructors:
       </Typography>
 
       {details.map((item, index) => (
         <Box display="flex" key={index} gap={0.5} alignItems="center">
-          <PersonIcon sx={{ color: 'text.primary', fontSize: '1rem' }} />
+          <PersonIcon sx={{ color: PRIMARY_COL }} />
           {item.url ? (
-            <Tooltip title={item.url}>
-              <Link
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  textDecoration: 'underline',
-                  color: theme.palette.text.primary,
-                  fontSize: '0.95rem',
-                  fontWeight: 400,
-                }}
-              >
-                {item.name}
-              </Link>
-            </Tooltip>
-          ) : (
-            <Typography
-              sx={{
-                fontSize: '0.95rem',
-                fontWeight: 400,
-                color: 'text.primary',
-              }}
+            <Link
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: 'underline', color: PRIMARY_COL }}
             >
+              <Typography variant="h6" sx={{ color: PRIMARY_COL }}>
+                {item.name}
+              </Typography>
+            </Link>
+          ) : (
+            <Typography variant="h6" sx={{ color: PRIMARY_COL }}>
               {item.name}
             </Typography>
           )}
           {index < details.length - 1 && (
-            <Typography
-              sx={{
-                color: 'text.primary',
-                fontWeight: 600,
-              }}
-            >
-              |
-            </Typography>
+            <Typography sx={{ color: PRIMARY_COL, fontWeight: 600 }}>|</Typography>
           )}
         </Box>
       ))}

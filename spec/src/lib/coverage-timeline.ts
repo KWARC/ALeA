@@ -1,6 +1,5 @@
 import { CoverageTimeline, LectureEntry } from '@alea/utils';
 import axios from 'axios';
-import { getAuthHeaders } from './lmp';
 interface CoverageUpdatePayload {
   courseId: string;
   updatedEntry?: LectureEntry;
@@ -36,6 +35,5 @@ export async function updateCoverageTimeline(payload: CoverageUpdatePayload) {
     ...(payload.updatedEntry && { updatedEntry: payload.updatedEntry }),
     ...(payload.timestamp_ms && { timestamp_ms: payload.timestamp_ms }),
   };
-  const headers = getAuthHeaders();
-  return axios.post('/api/set-coverage-timeline', finalPayload, { headers });
+  return axios.post('/api/set-coverage-timeline', finalPayload);
 }

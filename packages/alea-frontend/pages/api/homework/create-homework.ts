@@ -6,7 +6,7 @@ import { CreateHomeworkRequest } from '@alea/spec';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const { title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, css, problems } =
+  const { title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, institutionId, css, problems } =
     req.body as CreateHomeworkRequest;
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const result = await executeAndEndSet500OnError(
-    'INSERT INTO homework (versionNo, title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, css, problems, updaterId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO homework (versionNo, title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, institutionId, css, problems, updaterId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       0,
       title,
@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       feedbackReleaseTs,
       courseId,
       courseInstance,
+      institutionId,
       JSON.stringify(css),
       JSON.stringify(problems),
       userId,

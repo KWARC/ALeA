@@ -3,10 +3,8 @@ import {
   getHomework,
   getHomeworkPhase,
   GetHomeworkResponse,
-  getUserInfo,
   GradingInfo,
   ResponseWithSubProblemId,
-  UserInfo,
 } from '@alea/spec';
 import {
   AnswerContext,
@@ -21,13 +19,12 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../components/ForceFAULogin';
 import MainLayout from '../layouts/MainLayout';
+import { useCurrentUser } from '@alea/react-utils';
 
 const HomeworkDocPage: React.FC = () => {
   const router = useRouter();
 
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined | null>(null);
-  const [fetchingUserInfo, setFetchingUserInfo] = useState(false);
   const [fetchingHomework, setFetchingHomework] = useState(false);
   const [hwInfo, setHwInfo] = useState<GetHomeworkResponse | undefined>(undefined);
 
@@ -36,20 +33,14 @@ const HomeworkDocPage: React.FC = () => {
   const [subProblemInfoToGradingInfo, setSubProblemInfoToGradingInfo] = useState<
     Record<string, GradingInfo[]>
   >({});
+  const { user, isUserLoading } = useCurrentUser();
 
   useEffect(() => {
-    setFetchingUserInfo(true);
-    getUserInfo()
-      .then((i) => {
-        setUserInfo(i);
-        const uid = i?.userId;
-        if (!uid) return;
-        isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-      })
-      .finally(() => {
-        setFetchingUserInfo(false);
-      });
-  }, []);
+    if (isUserLoading) return;
+    const uid = user?.userId;
+    if (!uid) return;
+    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+  }, [user,isUserLoading]);
   const courseId = hwInfo?.homework.courseId;
   const instanceId = hwInfo?.homework.courseInstance;
 
@@ -98,9 +89,9 @@ const HomeworkDocPage: React.FC = () => {
   return (
     <MainLayout title={`${courseId ?? ''} Homework | ALeA`}>
       <Box>
-        {fetchingUserInfo || fetchingHomework ? (
+        {isUserLoading || fetchingHomework ? (
           <CircularProgress />
-        ) : !userInfo ? (
+        ) : !user ? (
           <Box p="20px">You must be logged in to see homeworks.</Box>
         ) : !phase || phase === 'NOT_GIVEN' ? (
           <Box>Homework is invalid or not yet given.</Box>

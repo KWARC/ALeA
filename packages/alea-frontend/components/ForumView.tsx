@@ -29,10 +29,9 @@ import {
   addComment,
   canModerateComment,
   getCourseInstanceThreads,
-  getUserInfo,
 } from '@alea/spec';
-import { MystEditor } from '@alea/myst';
-import { DateView } from '@alea/react-utils';
+import { MdEditor } from '@alea/markdown';
+import { DateView, useCurrentUser } from '@alea/react-utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
@@ -69,7 +68,7 @@ export function AskAQuestionDialog({
     <>
       <DialogTitle>{t.askAQuestion}</DialogTitle>
       <DialogContent>
-        <MystEditor
+        <MdEditor
           name="question-input"
           minRows={5}
           placeholder={t.enterQuestion}
@@ -124,12 +123,8 @@ function ForumViewControls({
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
   
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+  const { user: userInfo } = useCurrentUser();
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -191,6 +186,7 @@ function ForumViewControls({
               commentId: -1,
               courseId,
               courseTerm: currentTerm,
+              institutionId: 'FAU',// TODO(M5)
               isPrivate: false,
               isAnonymous,
               commentType: CommentType.QUESTION,
@@ -249,7 +245,7 @@ export function ForumView() {
 
   useEffect(() => {
     if (!router.isReady || !courseId || !currentTerm) return;
-    getCourseInstanceThreads(courseId, currentTerm).then(setThreadComments);
+    getCourseInstanceThreads(courseId, currentTerm, 'FAU').then(setThreadComments);// TODO(M5)
   }, [courseId, router.isReady, updateCounter, currentTerm]);
 
   if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;

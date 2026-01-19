@@ -1,3 +1,14 @@
+import { SafeHtml, useIsLoggedIn } from '@alea/react-utils';
+import {
+  BloomDimension,
+  ConceptAndDefinition,
+  NumericCognitiveValues,
+  SHOW_DIMENSIONS,
+  clearWeightsCache,
+  getDefiniedaInSectionAgg,
+  getLmpUriWeightsAggBulk,
+} from '@alea/spec';
+import { BG_COLOR } from '@alea/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -13,17 +24,6 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import LinearProgress from '@mui/material/LinearProgress';
-import {
-  BloomDimension,
-  ConceptAndDefinition,
-  NumericCognitiveValues,
-  SHOW_DIMENSIONS,
-  getDefiniedaInSection,
-  getUriWeights,
-  isLoggedIn,
-} from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
-import { BG_COLOR } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
@@ -63,22 +63,24 @@ const SectionReview = ({
   const [URIs, setURIs] = useState<string[]>([]);
   const t = getLocaleObject(useRouter());
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
+  const { loggedIn } = useIsLoggedIn();
 
   useEffect(() => {
-    if (!isLoggedIn()) return;
-    getDefiniedaInSection(sectionUri).then(setDefinedConcepts);
-  }, [sectionUri]);
+    if (!loggedIn) return;
+    getDefiniedaInSectionAgg(sectionUri).then(setDefinedConcepts);
+  }, [sectionUri, loggedIn]);
 
   useEffect(() => {
     if (!definedConcepts) return;
     const URIs = [...new Set(definedConcepts.flatMap((data) => data.conceptUri))];
     setURIs(URIs);
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }, [definedConcepts]);
 
   function refetchCompetencyData() {
     if (!URIs?.length) return;
-    getUriWeights(URIs).then((data) => setCompetencyData(data));
+    clearWeightsCache(); // invalidateWeightsCache(URIs); wont be enough?
+    getLmpUriWeightsAggBulk(URIs).then((data) => setCompetencyData(data));
   }
 
   const averages = SHOW_DIMENSIONS.reduce((acc, competency) => {

@@ -8,7 +8,7 @@ import { alpha, Box, IconButton, Paper, TextField, Tooltip, Typography } from '@
 import { LoType } from '@alea/spec';
 import { UriProblemViewer } from '@alea/stex-react-renderer';
 import { capitalizeFirstLetter, getParamsFromUri } from '@alea/utils';
-import { memo, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { CartItem } from './lo-explorer/LoCartModal';
 import LoRelations from './lo-explorer/LoRelations';
 import { LoReverseRelations } from './lo-explorer/LoReverseRelation';
@@ -17,7 +17,7 @@ interface UrlData {
   projectName: string;
   topic: string;
   fileName?: string;
-  icon?: JSX.Element;
+  icon?: React.ReactElement;
 }
 
 export function getUrlInfo(url: string): UrlData {

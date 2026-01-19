@@ -6,7 +6,7 @@ import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-ut
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const { quizId, userId, courseId } = req.body;
+  const { quizId, userId, courseId, institutionId } = req.body;
   let courseInstance = req.body.courseInstance as string;
   if (!courseInstance) courseInstance = await getCurrentTermForCourseId(courseId);
   if (!quizId || !userId || !courseId || !courseInstance) {
@@ -31,10 +31,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const query =
-    'INSERT INTO excused (userId, quizId, courseId, courseInstance) VALUES (?, ?, ?, ?)';
+    'INSERT INTO excused (userId, quizId, courseId, courseInstance, institutionId) VALUES (?, ?, ?, ?, ?)';
   const result = await executeAndEndSet500OnError(
     query,
-    [userId, quizId, courseId, courseInstance],
+    [userId, quizId, courseId, courseInstance, institutionId],
     res
   );
   if (!result) return;

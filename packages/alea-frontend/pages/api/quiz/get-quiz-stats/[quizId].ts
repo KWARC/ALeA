@@ -87,10 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         WHERE quizId = ?
         GROUP BY quizId, problemId, userId
       )
+      AND quizId = ?
       GROUP BY userId
     ) AS T1
     GROUP BY score`,
-    [quizId],
+    [quizId, quizId],
     res
   );
   if (!results2) return;
@@ -123,11 +124,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     WHERE (quizId, problemId, userId, browserTimestamp_ms) IN ( 
         SELECT quizId, problemId, userId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
         FROM grading
-        WHERE quizId=?
+        WHERE quizId= ?
         GROUP BY quizId, problemId, userId
     )
+    AND quizId = ?
     GROUP BY quizId, problemId, points`,
-    [quizId],
+    [quizId, quizId],
     res
   );
   if (!results4) return;

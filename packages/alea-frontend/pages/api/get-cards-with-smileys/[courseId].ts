@@ -1,7 +1,13 @@
 import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
-import { CardsWithSmileys, getDefiniedaInSection, getUriSmileys } from '@alea/spec';
+import {
+  CardsWithSmileys,
+  getDefiniedaInSectionAgg,
+  getUriSmileyInternal,
+  SmileyCognitiveValues,
+} from '@alea/spec';
 import { getAllCoursesFromDb } from '../get-all-courses';
+import { lmpRedirect } from '../lmp-redirect';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 const CARDS_CACHE: { [courseId: string]: CourseCards } = {};
@@ -46,7 +52,7 @@ export async function getCardsBySection(notesUri: string) {
   const topLevelSections = tocContent.map((toc) => getChapterAndSections(toc)).flat();
   const courseCards: CourseCards = {};
   const cardsBySection = await Promise.all(
-    topLevelSections.map(({ uri }) => getDefiniedaInSection(uri))
+    topLevelSections.map(({ uri }) => getDefiniedaInSectionAgg(uri))
   );
   topLevelSections.forEach((section, index) => {
     const { chapterTitle, uri, sectionTitle } = section;
@@ -54,10 +60,26 @@ export async function getCardsBySection(notesUri: string) {
   });
   return courseCards;
 }
+async function getUriSmileysBackend(concepts: string[], token: string) {
+  const data = await lmpRedirect(
+    'lmp',
+    'lmp/output/multiple',
+    'POST',
+    null,
+    {
+      concepts,
+      'special-output': '5StepLikertSmileys',
+      'include-confidence': false,
+    },
+    token
+  );
+
+  return getUriSmileyInternal(data, concepts);
+}
 
 export default async function handler(req, res) {
   const { courseId } = req.query;
-  const Authorization = req.headers.authorization;
+  const token = req.cookies?.access_token;
   const courses = await getAllCoursesFromDb();
   const courseInfo = courses[courseId];
   if (!courseInfo) {
@@ -74,10 +96,13 @@ export default async function handler(req, res) {
   for (const chapter of Object.keys(cards)) {
     conceptUris.push(...(cards[chapter]?.cardUris.map((c) => c.conceptUri) || []));
   }
-  const smileyValues = Authorization
-    ? await getUriSmileys(conceptUris, { Authorization })
-    : new Map();
-
+  let smileyValues: Map<string, SmileyCognitiveValues>;
+  try {
+    smileyValues = token ? await getUriSmileysBackend(conceptUris, token) : new Map();
+  } catch (err) {
+    console.error('Error fetching smiley values from LMP:', err);
+    return res.status(500).send('Error fetching smiley values');
+  }
   const output: CardsWithSmileys[] = [];
   for (const sectionTitle of Object.keys(cards)) {
     const { chapterTitle, cardUris } = cards[sectionTitle];

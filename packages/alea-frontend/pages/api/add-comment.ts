@@ -27,7 +27,7 @@ async function sendCommentAlert(
   courseTerm
 ) {
   if (isPrivate) return;
-  const fullLink = `https://courses.voll-ki.fau.de${link}`;
+  const fullLink = `https://${process.env.NEXT_PUBLIC_NON_FAU_DOMAIN}${link}`;
   const message = (await canUserModerateComments(userId, courseId, courseTerm))
     ? `A moderator posted at ${fullLink}`
     : `A ${isQuestion ? 'question' : 'comment'} was posted at ${fullLink}`;
@@ -82,6 +82,7 @@ export default async function handler(req, res) {
     parentCommentId,
     courseId,
     courseTerm,
+    institutionId,
     selectedText,
     userEmail,
     userName,
@@ -115,8 +116,8 @@ export default async function handler(req, res) {
   }
   const results = await executeAndEndSet500OnError(
     `INSERT INTO comments
-      (archive, filepath, statement, parentCommentId, threadId, courseId, courseTerm, selectedText, isPrivate, commentType, questionStatus, isAnonymous, userId, userName, userEmail, isDeleted, isEdited ,uri, pageUrl)
-      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?, ?)`,
+      (archive, filepath, statement, parentCommentId, threadId, courseId, courseTerm, institutionId, selectedText, isPrivate, commentType, questionStatus, isAnonymous, userId, userName, userEmail, isDeleted, isEdited ,uri, pageUrl)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?, ?)`,
     [
       archive,
       filepath,
@@ -125,6 +126,7 @@ export default async function handler(req, res) {
       threadId,
       courseId,
       courseTerm,
+      institutionId,
       selectedText,
       isPrivate ? 1 : 0,
       commentType,

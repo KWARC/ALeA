@@ -7,10 +7,8 @@ import {
   getCourseQuizList,
   getCoverageTimeline,
   getHomeworkList,
-  getUserInfo,
   QuestionStatus,
   QuizStubInfo,
-  UserInfo,
 } from '@alea/spec';
 import {
   Action,
@@ -31,6 +29,7 @@ import GradingIcon from '@mui/icons-material/Grading';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import QuizIcon from '@mui/icons-material/Quiz';
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -53,6 +52,7 @@ import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
 import SystemAlertBanner from './SystemAlertBanner';
+import { useCurrentUser } from '@alea/react-utils';
 
 interface ColorInfo {
   color: string;
@@ -69,7 +69,7 @@ interface ResourceDisplayInfo {
   colorInfo?: ColorInfo;
 }
 
-const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY, ResourceName.COURSE_ACCESS];
+const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY];
 
 const getResourceDisplayText = (name: ResourceName, router: NextRouter) => {
   const { resource: r } = getLocaleObject(router);
@@ -122,7 +122,7 @@ const getResourceIcon = (name: ResourceName) => {
 
 async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm);
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');// TODO(M5)
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -550,6 +550,75 @@ function MyCourses({ enrolledCourseIds }) {
   );
 }
 
+function CourseResourceGroup({
+  courseId,
+  resources,
+  descriptions,
+}: {
+  courseId: string;
+  resources: CourseResourceAction[];
+  descriptions: Record<string, ResourceDisplayInfo>;
+}) {
+  const hasOnlyCourseAccess =
+    resources.length === 1 && resources[0].name === ResourceName.COURSE_ACCESS;
+
+  return (
+    <Box sx={{ marginBottom: 4 }}>
+      <Link href={`/course-home/${courseId}`}>
+        <Typography
+          sx={{
+            fontSize: '22px',
+            fontWeight: 'bold',
+            marginBottom: 2,
+            backgroundColor: PRIMARY_COL,
+            color: 'white',
+            padding: '10px',
+            textAlign: 'center',
+            '&:hover': {
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              backgroundColor: 'secondary.main',
+              color: PRIMARY_COL,
+            },
+          }}
+        >
+          {courseId.toUpperCase()}
+        </Typography>
+      </Link>
+      {hasOnlyCourseAccess && (
+        <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
+          All resource setup are not done.{' '}
+          <span style={{ textDecoration: 'underline' }}>
+            <Link href={`/instructor-dash/${courseId}?tab=access-control`}>
+              Move to instructor dash to complete the setup.
+            </Link>
+          </span>
+        </Alert>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
+        {resources
+          .filter((resource) => resource.name !== ResourceName.COURSE_ACCESS)
+          .map((resource, index) => (
+            <ResourceCard
+              resource={resource}
+              key={index}
+              descriptions={descriptions}
+              courseId={courseId}
+            />
+          ))}
+      </Box>
+    </Box>
+  );
+}
+
 function ResourceCard({
   resource,
   descriptions,
@@ -692,12 +761,12 @@ function WelcomeScreen({
   resourcesForInstructor: CourseResourceAction[];
   filteredCourses: CourseInfo[];
 }) {
-  const [userInfo, setUserInfo] = useState<UserInfo>(null);
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];
+  const { user } = useCurrentUser();
 
   const {
     resource: r,
@@ -707,15 +776,12 @@ function WelcomeScreen({
     () => groupByCourseId(resourcesForInstructor),
     [resourcesForInstructor]
   );
-  useEffect(() => {
-    getUserInfo().then((user) => setUserInfo(user));
-  }, []);
 
   useEffect(() => {
     getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
   }, [currentTerm]);
 
-  const isFAUId = isFauId(userInfo?.userId);
+  const isFAUId = isFauId(user?.userId);
 
   useEffect(() => {
     const fetchDescriptions = async () => {
@@ -772,7 +838,7 @@ function WelcomeScreen({
         <Typography
           sx={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}
         >
-          {r.welcome}, {userInfo?.fullName}
+          {r.welcome}, {user?.fullName}
         </Typography>
         {isFAUId && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2 }}>
@@ -783,47 +849,12 @@ function WelcomeScreen({
         )}
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
         {Object.entries(groupedResources).map(([courseId, resources]) => (
-          <Box key={courseId} sx={{ marginBottom: 4 }}>
-            <Link href={`/course-home/${courseId}`}>
-              <Typography
-                sx={{
-                  fontSize: '22px',
-                  fontWeight: 'bold',
-                  marginBottom: 2,
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  padding: '10px',
-                  textAlign: 'center',
-                  '&:hover': {
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    backgroundColor: 'secondary.main',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {courseId.toUpperCase()}
-              </Typography>
-            </Link>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 1,
-              }}
-            >
-              {resources.map((resource, index) => (
-                <ResourceCard
-                  resource={resource}
-                  key={index}
-                  descriptions={descriptions}
-                  courseId={courseId}
-                />
-              ))}
-            </Box>
-          </Box>
+          <CourseResourceGroup
+            key={courseId}
+            courseId={courseId}
+            resources={resources}
+            descriptions={descriptions}
+          />
         ))}
       </Box>
       <Box

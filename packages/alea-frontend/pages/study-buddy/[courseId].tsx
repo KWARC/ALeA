@@ -18,7 +18,6 @@ import {
   GetStudyBuddiesResponse,
   getStudyBuddyList,
   getStudyBuddyUserInfo,
-  isLoggedIn,
   Languages,
   MeetType,
   removeConnectionRequest,
@@ -35,8 +34,9 @@ import { StudyBuddyListing, StudyBuddyListingTable } from '../../components/Stud
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
+import { useIsLoggedIn } from '@alea/react-utils';
 
-function OptOutButton({ studyBuddy, courseId }: { studyBuddy: StudyBuddy; courseId: string }) {
+function OptOutButton({ studyBuddy, courseId, institutionId, instanceId }: { studyBuddy: StudyBuddy; courseId: string; institutionId: string; instanceId: string }) {
   const { studyBuddy: t } = getLocaleObject(useRouter());
   return (
     <Button
@@ -44,7 +44,7 @@ function OptOutButton({ studyBuddy, courseId }: { studyBuddy: StudyBuddy; course
       onClick={async () => {
         const prompt = t.optOutPrompt.replace('$1', courseId);
         if (studyBuddy.active && !confirm(prompt)) return;
-        await setActive(courseId, !studyBuddy.active);
+        await setActive(courseId, !studyBuddy.active, institutionId, instanceId);
         if (!studyBuddy.active) alert(t.haveEnrolled.replace('$1', courseId));
         location.reload();
       }}
@@ -57,6 +57,9 @@ function OptOutButton({ studyBuddy, courseId }: { studyBuddy: StudyBuddy; course
 const StudyBuddyPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  // TODO(M5)
+  const institutionId = 'FAU';
+  const instanceId = 'WS25-26';
   const { studyBuddy: t } = getLocaleObject(router);
   const [isLoading, setIsLoading] = useState(true);
   const [fromServer, setFromServer] = useState<StudyBuddy | undefined>(undefined);
@@ -80,9 +83,10 @@ const StudyBuddyPage: NextPage = () => {
   const masterCourses = MaAI_COURSES;
   const refetchStudyBuddyLists = useCallback(() => {
     if (!courseId || !fromServer?.active) return;
-    if (courseId) getStudyBuddyList(courseId).then(setAllBuddies);
-  }, [courseId, fromServer?.active]);
-
+    if (courseId) getStudyBuddyList(courseId, institutionId, instanceId).then(setAllBuddies);
+  }, [courseId, fromServer?.active, institutionId, instanceId]);
+      
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
     getAllCourses().then(setCourses);
   }, []);
@@ -92,13 +96,13 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, refetchStudyBuddyLists]);
 
   useEffect(() => {
-    if (!courseId || !isLoggedIn()) return;
+    if (!courseId || !loggedIn) return;
     setIsLoading(true);
-    getStudyBuddyUserInfo(courseId).then((data) => {
+    getStudyBuddyUserInfo(courseId, institutionId, instanceId).then((data) => {
       setIsLoading(false);
       setFromServer(data);
     });
-  }, [courseId]);
+  }, [courseId, institutionId, instanceId, loggedIn]);
 
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
@@ -149,7 +153,7 @@ const StudyBuddyPage: NextPage = () => {
                     <Button
                       variant="contained"
                       onClick={async () => {
-                        await updateStudyBuddyInfo(courseId, userInput);
+                        await updateStudyBuddyInfo(courseId, userInput, institutionId, instanceId);
                         location.reload();
                       }}
                       sx={{ mr: '10px' }}
@@ -164,12 +168,12 @@ const StudyBuddyPage: NextPage = () => {
                     )}
                   </Box>
                   {fromServer?.active && (
-                    <OptOutButton studyBuddy={fromServer} courseId={courseId} />
+                    <OptOutButton studyBuddy={fromServer} courseId={courseId} institutionId={institutionId} instanceId={instanceId} />
                   )}
                 </Box>
               </CardActions>
             </Card>
-          ) : isLoggedIn() ? (
+          ) : loggedIn? (
             <CircularProgress />
           ) : (
             <>{t.loginToContinue}</>
@@ -191,7 +195,7 @@ const StudyBuddyPage: NextPage = () => {
                 >
                   {t.editInfo}
                 </Button>
-                {!fromServer.active && <OptOutButton studyBuddy={fromServer} courseId={courseId} />}
+                {!fromServer.active && <OptOutButton studyBuddy={fromServer} courseId={courseId} institutionId={institutionId} instanceId={instanceId} />}
               </CardActions>
             </Card>
           </>
@@ -213,7 +217,7 @@ const StudyBuddyPage: NextPage = () => {
           actionIcon={<HandshakeIcon color="primary" />}
           subText={t.requestReceivedSubtext}
           onAction={(buddy) => {
-            connectionRequest(courseId, buddy.userId).then(async () => {
+            connectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
               refetchStudyBuddyLists();
               alert(t.connectedAlert.replace('$1', buddy.userName));
             });
@@ -225,7 +229,7 @@ const StudyBuddyPage: NextPage = () => {
           actionIcon={<CancelIcon color="warning" />}
           subText={t.requestSentSubtext}
           onAction={(buddy) => {
-            removeConnectionRequest(courseId, buddy.userId).then(async () => {
+            removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
               refetchStudyBuddyLists();
               alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
             });
@@ -237,7 +241,7 @@ const StudyBuddyPage: NextPage = () => {
           subText={t.lookingForSubtext}
           actionIcon={<ThumbUpAltIcon color="primary" />}
           onAction={(buddy) => {
-            connectionRequest(courseId, buddy.userId).then(async () => {
+            connectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
               refetchStudyBuddyLists();
               alert(t.connectionRequestSent.replace('$1', buddy.userName));
             });

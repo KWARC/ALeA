@@ -198,7 +198,7 @@ def check_endpoint(endpoint: dict, retries: int = 3) -> Tuple[bool, Optional[str
                 print(
                     f"✗ {endpoint['name']}: {error_msg} (Attempt {attempt + 1}/{retries})"
                 )
-                time.sleep(1)
+                time.sleep(5)
             else:
                 print(f"✗ {endpoint['name']}: {error_msg} (All retries exhausted)")
                 return False, error_msg

@@ -1,19 +1,18 @@
-import { injectCss } from '@flexiformal/ftml';
-import SchoolIcon from '@mui/icons-material/School';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { isEmptyResponse } from '@alea/quiz-utils';
 import {
   canAccessResource,
   FTMLProblemWithSolution,
   getAllCourses,
   getQuiz,
   GetQuizResponse,
-  getUserInfo,
   insertQuizResponse,
   Phase,
-  UserInfo,
 } from '@alea/spec';
 import { QuizDisplay } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
+import { injectCss } from '@flexiformal/ftml';
+import SchoolIcon from '@mui/icons-material/School';
+import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -23,7 +22,7 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { handleEnrollment } from '../course-home/[courseId]';
-import { isEmptyResponse } from '@alea/quiz-utils';
+import { useCurrentUser } from '@alea/react-utils';
 
 function ToBeStarted({ quizStartTs }: { quizStartTs?: number }) {
   const [showReload, setShowReload] = useState(false);
@@ -107,7 +106,6 @@ const QuizPage: NextPage = () => {
 
   const [problems, setProblems] = useState<{ [problemId: string]: FTMLProblemWithSolution }>({});
   const [finished, setFinished] = useState(false);
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined | null>(null);
   const [quizInfo, setQuizInfo] = useState<GetQuizResponse | undefined>(undefined);
   const [moderatorPhase, setModeratorPhase] = useState<Phase>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
@@ -123,24 +121,24 @@ const QuizPage: NextPage = () => {
   const currentTerm = currentTermByCourseId[courseId];
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
+  const { user } = useCurrentUser();
 
   const enrollInCourse = async () => {
-    if (!userInfo.userId || !courseId || !currentTerm) return;
-    const enrollmentSuccess = await handleEnrollment(userInfo.userId, courseId, currentTerm);
+    const userId = user?.userId;
+    if (!userId || !courseId || !currentTerm) return;
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
 
   useEffect(() => {
-    getUserInfo().then((i) => {
-      const uid = i?.userId;
-      if (!uid) return;
-      isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-    });
-  }, []);
+    const uid = user?.userId;
+    if (!uid) return;
+    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+  }, [user]);
 
   useEffect(() => {
     if (!quizId) return;
-    getQuiz(quizId).then((quizInfo) => {
+    getQuiz(quizId, localStore?.getItem('targetUserId')).then((quizInfo) => {
       injectCss(quizInfo.css);
 
       setQuizInfo(quizInfo);
@@ -169,10 +167,6 @@ const QuizPage: NextPage = () => {
     if (!quizId) return;
     setFinished(isFinishedFromLocalStore(quizId));
   }, [quizId]);
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
 
   useEffect(() => {
     if (!courseId || !instanceId) return;
@@ -211,7 +205,7 @@ const QuizPage: NextPage = () => {
   if (forceFauLogin) {
     return (
       <MainLayout title="Quizzes | ALeA">
-        <ForceFauLogin />
+        <ForceFauLogin content={'quizzes'} />
       </MainLayout>
     );
   }
@@ -245,7 +239,7 @@ const QuizPage: NextPage = () => {
   return (
     <MainLayout title="Quizzes | ALeA">
       <Box>
-        {!userInfo ? (
+        {!user ? (
           <Box p="20px">You must be logged in to see quizzes.</Box>
         ) : phase === undefined ? (
           <Box p="20px">

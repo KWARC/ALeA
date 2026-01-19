@@ -1,13 +1,13 @@
+import { getDefiniedaInSectionAgg, getLearningObjects } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { getDefiniedaInSection, getLearningObjects } from '@alea/spec';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { handleViewSource, UriProblemViewer } from './PerSectionQuiz';
-import { ListStepper } from './QuizDisplay';
 import { ProblemFilter } from './ProblemFilter';
+import { ListStepper } from './QuizDisplay';
 
 export function ForMe({
   sectionUri,
@@ -40,7 +40,7 @@ export function ForMe({
     setIsLoadingProblemUris(true);
     const fetchProblemUris = async () => {
       try {
-        const data = await getDefiniedaInSection(sectionUri);
+        const data = await getDefiniedaInSectionAgg(sectionUri);
         const URIs = data?.flatMap((item) => item.conceptUri) || [];
         const fetchedResponse = await getLearningObjects(
           URIs,

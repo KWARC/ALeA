@@ -15,8 +15,8 @@ import {
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import AppBar from '@mui/material/AppBar';
-import { getUserInfo, isLoggedIn, logout } from '@alea/spec';
-import { CountryFlag, useScrollDirection } from '@alea/react-utils';
+import { logout } from '@alea/spec';
+import { CountryFlag, useCurrentUser, useIsLoggedIn } from '@alea/react-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -43,17 +43,14 @@ function UserButton() {
     setAnchorEl(null);
   };
   // Menu crap End
-
-  const [userName, setUserName] = useState('User');
   const { pushInstruction } = useMatomo();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
-    getUserInfo().then((userInfo) => {
-      if (!userInfo) return;
-      setUserName(userInfo.givenName);
-      pushInstruction('setUserId', userInfo.userId);
-    });
-  }, []);
+    if (!user) return;
+    pushInstruction('setUserId', user.userId);
+  }, [user]);
+  const displayName = user?.givenName ?? 'User';
 
   return (
     <Box whiteSpace="nowrap">
@@ -79,7 +76,7 @@ function UserButton() {
         onClick={handleClick}
       >
         <PersonOutlineIcon fontSize="small" />
-        {userName}
+        {displayName}
       </Button>
 
       <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
@@ -104,105 +101,54 @@ function UserButton() {
   );
 }
 
-// function LanguageButton() {
-//   const router = useRouter();
-//   const { locale } = router;
-//   const { header: t } = getLocaleObject(router);
-
-//   // Menu crap Start
-//   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-//   const open = Boolean(anchorEl);
-//   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-//     setAnchorEl(event.currentTarget);
-//   };
-//   const handleClose = () => {
-//     setAnchorEl(null);
-//   };
-//   // Menu crap End
-
-//   function changeLocale(locale: string) {
-//     const { pathname, asPath, query } = router;
-//     // change just the locale and maintain all other route information including href's query
-//     router.replace({ pathname, query }, asPath, { locale });
-//   }
-//   return (
-//     <Box whiteSpace="nowrap">
-//       <Tooltip title={t.changeLanguage}>
-//         <IconButton onClick={handleClick}>
-//           <CountryFlag flag={locale === 'en' ? 'gb' : locale} size="28x21" size2="56x42" />
-//         </IconButton>
-//       </Tooltip>
-//       <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
-//         <MenuItem
-//           onClick={() => {
-//             changeLocale('en');
-//             handleClose();
-//           }}
-//         >
-//           <CountryFlag flag="gb" size="28x21" size2="56x42" />
-//           &nbsp; English
-//         </MenuItem>
-//         <MenuItem
-//           onClick={() => {
-//             changeLocale('de');
-//             handleClose();
-//           }}
-//         >
-//           <CountryFlag flag="de" size="28x21" size2="56x42" />
-//           &nbsp; Deutsch
-//         </MenuItem>
-//       </Menu>
-//     </Box>
-//   );
-// }
-
-function LanguageSelect() {
+function LanguageButton() {
   const router = useRouter();
-  const { locale, pathname, query, asPath } = router;
+  const { locale } = router;
+  const { header: t } = getLocaleObject(router);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newLocale = event.target.value;
-    router.push({ pathname, query }, asPath, { locale: newLocale });
+  // Menu crap Start
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
   };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  // Menu crap End
 
-  const languages = [
-    { code: 'en', label: 'English', flag: 'gb' },
-    { code: 'de', label: 'Deutsch', flag: 'de' },
-  ];
-
+  function changeLocale(locale: string) {
+    const { pathname, asPath, query } = router;
+    // change just the locale and maintain all other route information including href's query
+    router.replace({ pathname, query }, asPath, { locale });
+  }
   return (
-    <Box width={160}>
-      <TextField
-        select
-        size="small"
-        value={locale}
-        onChange={handleChange}
-        variant="outlined"
-        SelectProps={{
-          renderValue: (value) => {
-            const lang = languages.find((l) => l.code === value);
-            if (!lang) return value;
-
-            return (
-              <Box display="flex" alignItems="center" gap={1}>
-                <CountryFlag flag={lang.flag} size="28x21" size2="56x42" />
-                <Box component="span" sx={{ color: 'header.text', fontWeight: 500 }}>
-                  {lang.label}
-                </Box>
-              </Box>
-            );
-          },
-        }}
-      >
-        {languages.map((lang) => (
-          <MenuItem key={lang.code} value={lang.code}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <CountryFlag flag={lang.flag} size="28x21" size2="56x42" />
-              {lang.label}
-            </Box>
-          </MenuItem>
-        ))}
-      </TextField>
+    <Box whiteSpace="nowrap">
+      <Tooltip title={t.changeLanguage}>
+        <IconButton onClick={handleClick}>
+          <CountryFlag flag={locale === 'en' ? 'gb' : locale} size="28x21" size2="56x42" />
+        </IconButton>
+      </Tooltip>
+      <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
+        <MenuItem
+          onClick={() => {
+            changeLocale('en');
+            handleClose();
+          }}
+        >
+          <CountryFlag flag="gb" size="28x21" size2="56x42" />
+          &nbsp; English
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            changeLocale('de');
+            handleClose();
+          }}
+        >
+          <CountryFlag flag="de" size="28x21" size2="56x42" />
+          &nbsp; Deutsch
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }
@@ -227,7 +173,7 @@ function ThemeSelector() {
 }
 
 export function Header() {
-  const loggedIn = isLoggedIn();
+  const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
   const { header: t } = getLocaleObject(router);
   const theme = useTheme();
@@ -271,7 +217,7 @@ export function Header() {
         </Link>
         <Box>
           <Box display="flex" alignItems="center">
-            <NotificationButton />
+            <NotificationButton bgColor="#ced9f2" />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
                 <IconButton>
@@ -280,33 +226,18 @@ export function Header() {
               </Tooltip>
             </Link>
             <ThemeSelector />
-            <LanguageSelect />
+            <LanguageButton />
             {loggedIn ? (
               <UserButton />
             ) : (
-              // <Button
-              //   sx={{ color: 'black', border: '1px solid black' }}
-              //   onClick={() => {
-              //     // Don't change target when user reclicks 'Login' button.
-              //     if (window.location.pathname === '/login') return;
-              //     router.push('/login?target=' + encodeURIComponent(window.location.href));
-              //   }}
-              // >
-              //   {t.login}
-              // </Button>
               <Button
-                sx={{
-                  color: 'header.text',
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  textTransform: 'none',
-                  gap: 1,
-                }}
+                sx={{ color: 'header.text', border: '1px solid black' }}
                 onClick={() => {
+                  // Don't change target when user reclicks 'Login' button.
                   if (window.location.pathname === '/login') return;
                   router.push('/login?target=' + encodeURIComponent(window.location.href));
                 }}
               >
-                <PersonOutlineIcon fontSize="small" />
                 {t.login}
               </Button>
             )}

@@ -1,8 +1,15 @@
 /* eslint-disable react/display-name, react/no-children-prop */
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
+import { CommentButton } from '@alea/comments';
+import { getAllCourses } from '@alea/spec';
+import {
+  NOT_COVERED_SECTIONS,
+  SafeFTMLDocument,
+  SectionReview,
+  TrafficLightIndicator,
+} from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
-// import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
@@ -12,46 +19,27 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material';
-// import IconButton from '@mui/material/IconButton';
-import { getAllCourses } from '@alea/spec';
-import { CommentButton } from '@alea/comments';
-import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
-// import Tooltip from '@mui/material/Tooltip';
 
-// export const SearchDialog = ({ open, onClose, courseId, hasResults, setHasResults }) => {
-interface SearchDialogProps {
-  open: boolean;
-  onClose: () => void;
-  courseId: string;
-  hasResults: boolean;
-  setHasResults: (val: boolean) => void;
-}
-export const SearchDialog: React.FC<SearchDialogProps> = ({
-  open,
-  onClose,
-  courseId,
-  hasResults,
-  setHasResults,
-}) => {
+export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
       <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
         {courseId.toUpperCase()}
       </DialogTitle>
       <DialogContent sx={{ p: 1 }}>
-        {/* <SearchCourseNotes
+        <SearchCourseNotes
           courseId={courseId || ''}
+          notesUri={notesUri}
           onClose={onClose}
           setHasResults={setHasResults}
-        /> */}
-        <SearchCourseNotes courseId={courseId} onClose={onClose} setHasResults={setHasResults} />
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} variant="contained">
@@ -62,17 +50,21 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   );
 };
 
-// const FragmentWrap: React.FC<{
-interface FragmentWrapProps {
+const FragmentWrap: React.FC<{
   uri: string;
   fragmentKind: 'Section' | 'Slide' | 'Paragraph';
   children: ReactNode;
   uriToTitle: Record<string, string>;
-}
-// }> = ({ uri, fragmentKind, children, uriToTitle }) => {
-const FragmentWrap: React.FC<FragmentWrapProps> = ({ uri, fragmentKind, children, uriToTitle }) => {
+}> = ({ uri, fragmentKind, children, uriToTitle }) => {
+  const { courseNotes: t } = getLocaleObject(useRouter());
+  const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
   return (
-    <Box fragment-uri={uri} fragment-kind={fragmentKind}>
+    <Box
+      fragment-uri={uri}
+      fragment-kind={fragmentKind}
+      bgcolor={notCovered ? '#fdd' : undefined}
+      title={notCovered ? t.notCovered : undefined}
+    >
       {fragmentKind === 'Section' ? (
         <>
           {children}
@@ -93,8 +85,7 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
     if (elem.type === 'Section') {
       uriToTitle[elem.uri] = elem.title;
     }
-    // if ('children' in elem) {
-    if ('children' in elem && elem.children) {
+    if ('children' in elem) {
       getSectionUriToTitle(elem.children, uriToTitle);
     }
   }
@@ -102,15 +93,10 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
-  // const courseId = router.query.courseId as string;
-  const courseId = router.query.courseId as string | undefined;
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>();
-  const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[]>();
-  const [toc, setToc] = useState<FTML.TocElem[]>();
-  //  if (!courseId) return <CircularProgress />;
-  // const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
-  // const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
-  // const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
+  const courseId = router.query.courseId as string;
+  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+  const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
+  const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
@@ -146,12 +132,10 @@ const CourseNotesPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!router.isReady || !courseId || !courses?.[courseId]?.notes) return;
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
     setToc(undefined);
-    // contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
-    contentToc({ uri: notes }).then(([_, toc] = [[], []]) => {
+    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
       setToc(toc);
       uriToTitle.current = {};
       getSectionUriToTitle(toc, uriToTitle.current);
@@ -160,15 +144,13 @@ const CourseNotesPage: NextPage = () => {
 
   useEffect(() => {
     async function fetchGottos() {
-      if (!courseId) return;
       try {
         const response = await axios.get('/api/get-coverage-timeline');
         const currentSemData: LectureEntry[] = response.data[courseId] || [];
         const coverageData = currentSemData
           .filter((item) => item.sectionUri)
           .map((item) => ({
-            // uri: item.sectionUri,
-            uri: item.sectionUri!,
+            uri: item.sectionUri,
             timestamp: item.timestamp_ms,
           }));
         setGottos(coverageData);
@@ -225,12 +207,6 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
-          bgcolor: 'background.default',
-          color: 'text.primary',
-          '& div, & section, & article, & p, & span': {
-            backgroundColor: 'transparent !important',
-            color: 'inherit',
-          },
         }}
       >
         <SafeFTMLDocument
@@ -243,24 +219,20 @@ const CourseNotesPage: NextPage = () => {
             return (ch) => (
               <FragmentWrap
                 uri={uri}
-                fragmentKind="Section"
-                //children={ch}
+                fragmentKind={'Section'}
+                children={ch}
                 uriToTitle={uriToTitle.current}
-              >
-                {ch}
-              </FragmentWrap>
+              />
             );
           }}
           slideWrap={(uri) => {
             return (ch) => (
               <FragmentWrap
                 uri={uri}
-                fragmentKind="Slide"
-                // children={ch}
+                fragmentKind={'Slide'}
+                children={ch}
                 uriToTitle={uriToTitle.current}
-              >
-                {ch}
-              </FragmentWrap>
+              />
             );
           }}
           paragraphWrap={(uri, kind) => {
@@ -268,34 +240,14 @@ const CourseNotesPage: NextPage = () => {
               return (ch) => (
                 <FragmentWrap
                   uri={uri}
-                  fragmentKind="Paragraph"
-                  // children={ch}
+                  fragmentKind={'Paragraph'}
+                  children={ch}
                   uriToTitle={uriToTitle.current}
-                >
-                  {ch}
-                </FragmentWrap>
+                />
               );
             }
           }}
-          onSectionTitle={(uri, lvl) => {
-            return <TrafficLightIndicator sectionUri={uri} />;
-          }}
-          // onSectionTitle={(uri) => {
-          //   return (
-          //     <Box
-          //       sx={{
-          //         '& svg circle': {
-          //           fill: (theme) =>
-          //             theme.palette.mode === 'dark'
-          //               ? theme.palette.success.main
-          //               : theme.palette.text.secondary,
-          //         },
-          //       }}
-          //     >
-          //       <TrafficLightIndicator sectionUri={uri} />
-          //     </Box>
-          //   );
-          // }}
+          onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
         />
       </Box>
     </MainLayout>
