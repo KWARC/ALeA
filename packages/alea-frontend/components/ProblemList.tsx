@@ -173,9 +173,8 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           {exams.map((exam) => {
             const examUri = exam.uri;
             const dParam = getParamFromUri(examUri, 'd');
-            const examLabel = exam.number
-              ? `Exam ${exam.number} ${exam.term ?? ''} ${dParam ? ` ${dParam}` : ''}`
-              : `Exam (${exam.term ?? 'General'}) ${dParam}`;
+            const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+            const examLabel = exam.term ? `${exam.term} ${cleanedD}`.trim() : cleanedD;
 
             return (
               <MenuItem key={exam.uri} value={exam.uri}>

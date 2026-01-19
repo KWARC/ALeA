@@ -10,6 +10,7 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  Chip,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -19,9 +20,19 @@ import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
-import { getProblemState } from './ProblemDisplay';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
+import { getProblemState } from './ProblemDisplay';
+
+export interface ExamRef {
+  examUri: string;
+  examLabel: string;
+}
+
+function isValidExamRef(uri?: string) {
+  if (!uri) return false;
+  return Boolean(getParamFromUri(uri, 'd'));
+}
 
 const commonTooltipSlotProps = {
   popper: {
@@ -50,9 +61,16 @@ export function handleViewSource(problemUri: string) {
 }
 
 export function getProblemType(uri: string): 'quiz' | 'homework' | 'exam' | 'uncategorized' {
-  if (uri.includes('/assignments')) return 'homework';
-  if (uri.includes('/hwexam')) return 'exam';
+  const dParam = getParamFromUri(uri, 'd');
+
   if (uri.includes('/quiz') || uri.includes('&e=quiz')) return 'quiz';
+
+  if (uri.includes('/assignments')) return 'homework';
+
+  if (dParam) {
+    return 'exam';
+  }
+
   return 'uncategorized';
 }
 
@@ -149,11 +167,25 @@ export function PerSectionQuiz({
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
+
   const orderedCategoryKeys = useMemo(() => {
-    const knownOrder = ['syllabus', 'adventurous'];
-    const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
-    return [...knownOrder, ...rest];
+    return ['syllabus', 'adventurous'].filter((cat) => categoryMap[cat]?.length);
   }, [categoryMap]);
+
+  const examProblemIds = useMemo(
+    () =>
+      problems
+        .filter((p) => p.examRefs?.some((e) => isValidExamRef(e.examUri)))
+        .map((p) => p.problemId),
+    [problems]
+  );
+
+  const problemUri = problemUris[problemIdx];
+
+  const currentProblem = useMemo(() => {
+    if (!problemUri) return undefined;
+    return problems.find((p) => p.problemId === problemUri);
+  }, [problems, problemUri]);
 
   useEffect(() => {
     if (cachedProblemUris?.length) {
@@ -245,11 +277,15 @@ export function PerSectionQuiz({
     );
   }
 
-  const problemUri = problemUris[problemIdx];
-  // TODO ALEA4-P3 const response = responses[problemIdx];
-  // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
+  if (!problemUri) return null;
 
-  const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
+  if (!problemUris.length) {
+    return (
+      <Typography sx={{ mt: 2 }} color="text.secondary">
+        No problems found for this filter.
+      </Typography>
+    );
+  }
 
   return (
     <Box mb={4}>
@@ -347,13 +383,25 @@ export function PerSectionQuiz({
           <>
             <ProblemFilter
               allProblemUris={allProblemUris}
+              problems={problems}
               onApply={(filtered, type) => {
-                setProblemUris(filtered);
-                setIsSubmitted(filtered.map(() => false));
-                setResponses(filtered.map(() => undefined));
+                filtered.forEach((u) => {
+                  console.log(u, getProblemType(u)); //
+                });
+                let finalUris = filtered;
+
+                if (type === 'exam') {
+                  finalUris = examProblemIds;
+                }
+
+                setProblemUris(finalUris);
+                setAllProblemUris(finalUris);
+                setIsSubmitted(finalUris.map(() => false));
+                setResponses(finalUris.map(() => undefined));
                 setProblemIdx(0);
               }}
             />
+
             {!problemUris.length ? (
               <Typography
                 variant="body2"
@@ -363,8 +411,38 @@ export function PerSectionQuiz({
               </Typography>
             ) : (
               <>
-                <Typography fontWeight="bold" textAlign="left">
-                  {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                    mt: 2,
+                  }}
+                >
+                  <Typography fontWeight="bold">
+                    {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length}`}
+                  </Typography>
+
+                  {currentProblem?.examRefs
+                    ?.filter((exam) => isValidExamRef(exam.examUri))
+                    .slice(0, 1)
+                    .map((exam) => (
+                      <Chip
+                        key={exam.examUri}
+                        label={`Open ${exam.examLabel}`}
+                        color="error"
+                        clickable
+                        onClick={() =>
+                          window.open(
+                            `/exam-problems?examUri=${encodeURIComponent(exam.examUri)}`,
+                            '_blank'
+                          )
+                        }
+                      />
+                    ))}
+                </Box>
+                <Box mb={1}>
                   {currentProblem?.showForeignLanguageNotice && (
                     <Tooltip
                       title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
@@ -414,16 +492,8 @@ export function PerSectionQuiz({
                         />
                       </Tooltip>
                     ))}
-                </Typography>
+                </Box>
 
-                <Box
-                  px={2}
-                  maxWidth="800px"
-                  m="auto"
-                  bgcolor="white"
-                  border="1px solid #CCC"
-                  borderRadius="5px"
-                ></Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                   <ListStepper
                     idx={problemIdx}
@@ -433,12 +503,13 @@ export function PerSectionQuiz({
                       setShowSolution(false);
                     }}
                   />
-                  <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
+                  <IconButton onClick={() => handleViewSource(problemUri)}>
                     <Tooltip title="view source">
                       <OpenInNewIcon />
                     </Tooltip>
                   </IconButton>
                 </Box>
+
                 <Box mb="14px">
                   <UriProblemViewer
                     key={problemUri}
@@ -446,40 +517,22 @@ export function PerSectionQuiz({
                     isSubmitted={isSubmitted[problemIdx]}
                     setIsSubmitted={(v) =>
                       setIsSubmitted((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
+                        const next = [...prev];
+                        next[problemIdx] = v;
+                        return next;
                       })
                     }
                     response={responses[problemIdx]}
                     setResponse={(v) =>
                       setResponses((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
+                        const next = [...prev];
+                        next[problemIdx] = v;
+                        return next;
                       })
                     }
                   />
-                  {/* TODO ALEA4-P3
-          <ProblemDisplay
-          r={response}
-          uri={problemUris[problemIdx]}
-          showPoints={false}
-          problem={problem}
-          isFrozen={isFrozen[problemIdx]}
-          onResponseUpdate={(response) => {
-            forceRerender();
-            setResponses((prev) => {
-              prev[problemIdx] = response;
-              return prev;
-            });
-          }}
-          onFreezeResponse={() =>
-            setIsFrozen((prev) => {
-              prev[problemIdx] = true;
-              return [...prev];
-            })
-          }
-         />*/}
                 </Box>
+
                 <Box
                   mb={6}
                   sx={{
@@ -489,18 +542,7 @@ export function PerSectionQuiz({
                     alignItems: 'flex-start',
                   }}
                 >
-                  {/* TODO ALEA4-P3 solutions?.length > 0 && (
-          <Button variant="contained" onClick={() => setShowSolution(!showSolution)}>
-            {showSolution ? t.hideSolution : t.showSolution}
-          </Button>
-         )}*/}
-                  {showSolution && (
-                    <Box mb="10px">
-                      {/* solutions.map((solution) => (
-              <div style={{ color: '#555' }} dangerouslySetInnerHTML={{__html:solution}}></div>
-            ))*/}
-                    </Box>
-                  )}
+                  {showSolution && <Box mb="10px"></Box>}
                   {showHideButton && (
                     <Button onClick={() => setShow(false)} variant="contained" color="secondary">
                       {t.hideProblems}
