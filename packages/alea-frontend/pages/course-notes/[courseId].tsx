@@ -133,6 +133,35 @@ const CourseNotesPage: NextPage = () => {
     });
   }, [router.isReady, courses, courseId]);
 
+  // ✅ FIX: wait until FTML DOM is actually rendered
+  useEffect(() => {
+    if (!router.isReady || !toc?.length) return;
+
+    const hash = window.location.hash;
+    if (!hash) return;
+
+    const fragment = decodeURIComponent(hash.slice(1));
+
+    let attempts = 0;
+
+    const tryScroll = () => {
+      const el = document.querySelector(`[fragment-uri="${fragment}"]`);
+
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      // retry (FTML renders async)
+      if (attempts < 20) {
+        attempts++;
+        requestAnimationFrame(tryScroll);
+      }
+    };
+
+    tryScroll();
+  }, [router.isReady, toc]);
+
   useEffect(() => {
     async function fetchGottos() {
       try {
@@ -165,7 +194,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -190,9 +219,10 @@ const CourseNotesPage: NextPage = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         courseId={courseId}
+        notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      /> */}
+      />
       <Box
         sx={{
           height: 'calc(100vh - 120px)',

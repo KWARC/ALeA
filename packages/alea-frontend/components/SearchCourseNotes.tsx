@@ -4,7 +4,8 @@ import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } f
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
-import { searchDocs, type SearchResult } from '@flexiformal/ftml-backend';
+import { searchDocs, type SearchResult, contentToc } from '@flexiformal/ftml-backend';
+import { getSecInfo } from '../components/coverage-update';
 
 const SearchCourseNotes = ({
   courseId,
@@ -25,13 +26,35 @@ const SearchCourseNotes = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-
+  const [sections, setSections] = useState<{ id: string; uri: string }[]>([]);
 
   useEffect(() => {
     if (query) {
       setSearchQuery(query);
     }
   }, [query]);
+
+  // 🟢 NEW: load TOC ONCE and extract sections
+  useEffect(() => {
+    if (!notesUri) return;
+
+    contentToc({ uri: notesUri }).then(([, toc] = [[], []]) => {
+      const secs = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
+      setSections(secs);
+    });
+  }, [notesUri]);
+
+  function getIdWrtUri(targetUri: string ) {
+    const section = sections.find((s) => s.uri === targetUri);
+    return section ? section.id : null;
+  }
+
+  // 🔴 CHANGED: sync + cached section resolver
+  // function resolveSectionFromUri(targetUri: string) {
+  //   return sections
+  //     .filter((s) => targetUri.startsWith(s.uri))
+  //     .sort((a, b) => b.uri.length - a.uri.length)[0];
+  // }
 
   // useEffect(() => {
   //   if (!searchQuery.trim() || !notesUri) return;
@@ -45,8 +68,18 @@ const SearchCourseNotes = ({
   }, [query, notesUri]);
 
   if (!notesUri) {
-  return null;
-}
+    return null;
+  }
+
+  // async function resolveSectionFromUri(targetUri: string) {
+  //   const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
+
+  //   const sections = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
+
+  //   return sections
+  //     .filter((s) => targetUri.startsWith(s.uri))
+  //     .sort((a, b) => b.uri.length - a.uri.length)[0];
+  // }
 
   async function handleSearch() {
     if (!searchQuery.trim() || !notesUri) return;
@@ -134,15 +167,74 @@ const SearchCourseNotes = ({
               const isLast = idx === results.length - 1;
 
               if ('Document' in res) {
+                const uri = res.Document;
+                const id = getIdWrtUri(uri);
+                console.log({ uri, id });
                 return (
                   <Box key={idx} mb={2}>
-                    <SafeFTMLDocument
-                      document={{ type: 'FromBackend', uri: res.Document }}
-                      showContent={true}
-                      pdfLink={false}
-                      chooseHighlightStyle={false}
-                      toc="None"
-                    />
+                    <Box display="flex" gap={2}>
+                      <Box flex={1}>
+                        <SafeFTMLDocument
+                          document={{ type: 'FromBackend', uri }}
+                          showContent={false}
+                          pdfLink={false}
+                          chooseHighlightStyle={false}
+                          allowFullscreen={false}
+                          toc="None"
+                        />
+                      </Box>
+
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        {/* <IconButton
+                          size="small"
+                          onClick={async () => {
+                            const section = await resolveSectionFromUri(uri);
+                            if (!section) return;
+
+                            // const hash = sectionUriToHash(section.uri);
+                            // if (!hash) return;
+
+                            // router.push(
+                            //   `/course-notes/${courseId}#section/${section.id}`
+                            // );
+
+                            // window.location.href = `/course-notes/${courseId}#${section.id}`;
+                            window.location.href = `/course-notes/${courseId}#${encodeURIComponent(
+                              uri
+                            )}`;
+                          }}
+                        >
+                          Notes
+                        </IconButton> */}
+
+                        <IconButton
+                          size="small"
+                          // onClick={async () => {
+                          //   window.location.href = `/course-notes/${courseId}#${encodeURIComponent(
+                          //     uri
+                          //   )}`;
+                          // }}
+
+                          onClick={async () => {
+                            window.location.href = `/course-notes/${courseId}#${id
+                            }`;
+                          }}
+                        >
+                          Notes
+                        </IconButton>
+
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            router.push(
+                              `/course-view/${courseId}?fragment=${encodeURIComponent(uri)}`
+                            )
+                          }
+                        >
+                          Slides
+                        </IconButton>
+                      </Box>
+                    </Box>
 
                     {!isLast && (
                       <Box
@@ -159,9 +251,61 @@ const SearchCourseNotes = ({
               }
 
               if ('Paragraph' in res) {
+                const uri = res.Paragraph.uri;
+                const id = getIdWrtUri(uri);
+                console.log({ uri, id });
                 return (
                   <Box key={idx} mb={2}>
-                    <SafeFTMLFragment fragment={{ type: 'FromBackend', uri: res.Paragraph.uri }} />
+                    <Box display="flex" gap={2}>
+                      <Box flex={1}>
+                        <SafeFTMLFragment
+                          fragment={{ type: 'FromBackend', uri }}
+                          allowFullscreen={false}
+                        />
+                      </Box>
+
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        {/* <IconButton
+                          size="small"
+                          onClick={async () => {
+                           const section = await resolveSectionFromUri(uri);
+                            if (!section) return;
+
+                            // const hash = sectionUriToHash(section.uri);
+                            // if (!hash) return;
+
+                            // router.push(
+                            //   `/course-notes/${courseId}#section/${section.id}`
+                            // );
+
+                            // window.location.href = `/course-notes/${courseId}#${section.id}`;
+                            window.location.href = `/course-notes/${courseId}#${encodeURIComponent(uri)}`;
+                          }}
+                        >
+                          Notes
+                        </IconButton> */}
+
+                        <IconButton
+                          size="small"
+                          onClick={async () => {
+                            window.location.href = `/course-notes/${courseId}#${id}`;
+                          }}
+                        >
+                          Notes
+                        </IconButton>
+
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            router.push(
+                              `/course-view/${courseId}?fragment=${encodeURIComponent(uri)}`
+                            )
+                          }
+                        >
+                          Slides
+                        </IconButton>
+                      </Box>
+                    </Box>
 
                     {!isLast && (
                       <Box

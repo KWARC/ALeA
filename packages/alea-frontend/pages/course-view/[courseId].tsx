@@ -22,7 +22,14 @@ import {
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import { ContentDashboard, LayoutWithFixedMenu, SectionReview } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, getCoursePdfUrl, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import {
+  Action,
+  CourseInfo,
+  getCoursePdfUrl,
+  localStore,
+  ResourceName,
+  shouldUseDrawer,
+} from '@alea/utils';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -254,6 +261,41 @@ const CourseViewPage: NextPage = () => {
     getSlideCounts(courseId).then(setSlideCounts);
     getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
   }, [router.isReady, courses, courseId]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const fragmentParam = router.query.fragment;
+    if (!fragmentParam || typeof fragmentParam !== 'string') return;
+
+    if (router.query.sectionId && router.query.slideNum) return;
+
+    const fragment = decodeURIComponent(fragmentParam);
+
+    const slideNum = slidesUriToIndexMap[fragment];
+    if (slideNum === undefined) return;
+
+    let foundSectionId: string | undefined;
+
+    for (const [sectionId, slides] of Object.entries(slidesClipInfo)) {
+      if (slides && fragment in slides) {
+        foundSectionId = sectionId;
+        break;
+      }
+    }
+
+    if (!foundSectionId) return;
+
+    router.replace({
+      pathname: router.pathname,
+      query: {
+        ...router.query,
+        sectionId: foundSectionId,
+        slideNum: String(slideNum),
+      },
+    });
+  }, [router.isReady, router.query.fragment, slidesUriToIndexMap, slidesClipInfo]);
+  //
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
