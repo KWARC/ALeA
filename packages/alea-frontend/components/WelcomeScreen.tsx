@@ -16,6 +16,7 @@ import {
   CourseResourceAction,
   isFauId,
   LectureEntry,
+  pathToInstructorDash,
   PRIMARY_COL,
   ResourceName,
 } from '@alea/utils';
@@ -599,7 +600,7 @@ function CourseResourceGroup({
         <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
           All resource setup are not done.{' '}
           <span style={{ textDecoration: 'underline' }}>
-            <Link href={`/${institutionId}/${courseId}/latest/instructor-dash?tab=access-control`}>
+            <Link href={`${pathToInstructorDash(institutionId, courseId)}?tab=access-control`}>
               Move to instructor dash to complete the setup.
             </Link>
           </span>

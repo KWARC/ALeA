@@ -15,6 +15,10 @@ import {
   BG_COLOR,
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
+  pathToHomework,
+  pathToInstructorDash,
+  pathToPracticeProblems,
+  pathToStudyBuddy,
   ResourceName,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -646,9 +650,6 @@ const CourseHomePage: NextPage = () => {
     }
   };
 
-  const buildLink = (path: string) => {
-    return `/${institutionId}/${courseId}/${resolvedInstanceId}${path}`;
-  };
 
   return (
     <MainLayout
@@ -741,21 +742,21 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
           {['lbs', 'ai-1', 'smai'].includes(courseId) && (
-            <CourseComponentLink href={buildLink('/homework')}>
+            <CourseComponentLink href={pathToHomework(institutionId, courseId, resolvedInstanceId)}>
               {t.homeworks}&nbsp;
               <AssignmentTurnedInIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={buildLink('/study-buddy')}>
+          <CourseComponentLink href={pathToStudyBuddy(institutionId, courseId, resolvedInstanceId)}>
             {t.studyBuddy}&nbsp;
             <Diversity3Icon fontSize="large" />
           </CourseComponentLink>
-          <CourseComponentLink href={buildLink('/practice-problems')}>
+          <CourseComponentLink href={pathToPracticeProblems(institutionId, courseId, resolvedInstanceId)}>
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
           {isInstructor && (
-            <CourseComponentLink href={buildLink('/instructor-dash')} sx={{ backgroundColor: '#4565af' }}>
+            <CourseComponentLink href={pathToInstructorDash(institutionId, courseId, resolvedInstanceId)} sx={{ backgroundColor: '#4565af' }}>
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
             </CourseComponentLink>

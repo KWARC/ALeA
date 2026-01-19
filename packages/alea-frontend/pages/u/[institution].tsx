@@ -4,7 +4,7 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
 import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
+import { CourseInfo, pathToStudyBuddy, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -120,7 +120,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           }
 
           <Tooltip title={t.studyBuddy}>
-            <Link href={`/${course.universityId || 'FAU'}/${courseId}/latest/study-buddy`} passHref>
+            <Link href={pathToStudyBuddy(course.universityId || 'FAU', courseId)} passHref>
               <ColoredIconButton>
                 <Diversity3 htmlColor="white" />
               </ColoredIconButton>

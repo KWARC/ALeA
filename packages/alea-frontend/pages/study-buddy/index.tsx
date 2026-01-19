@@ -37,7 +37,7 @@ import {
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
 } from '@alea/spec';
-import { MaAI_COURSES, PRIMARY_COL, localStore } from '@alea/utils';
+import { MaAI_COURSES, pathToStudyBuddy, PRIMARY_COL, localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -348,7 +348,7 @@ const Courses: NextPage = () => {
                 <TableRow key={courseCode}>
                   <TableCell>
                     <Link
-                      href={`/FAU/${courseCode}/latest/study-buddy`}
+                      href={pathToStudyBuddy('FAU', courseCode)}
                       onClick={() => addRecentCourse(courseCode)}
                     >
                       {courseList[courseCode]?.courseName}

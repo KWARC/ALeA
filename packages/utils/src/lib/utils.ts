@@ -338,3 +338,48 @@ export function epochMsToDateInput(epochMs?: number) {
 export function epochMsToCivilDate(epochMs?: number) {
   return epochMs ? dayjs(epochMs).format('LL') : '';
 }
+
+export function pathToCourseResource(
+  institutionId: string,
+  courseId: string,
+  instance: string,
+  resourceName: string
+): string {
+  return `/${institutionId}/${courseId}/${instance}${resourceName.startsWith('/') ? resourceName : `/${resourceName}`}`;
+}
+
+
+export function pathToStudyBuddy(
+  institutionId: string,
+  courseId: string,
+  instance: string = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/study-buddy');
+}
+
+
+export function pathToHomework(
+  institutionId: string,
+  courseId: string,
+  instance: string = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/homework');
+}
+
+
+export function pathToPracticeProblems(
+  institutionId: string,
+  courseId: string,
+  instance: string = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/practice-problems');
+}
+
+
+export function pathToInstructorDash(
+  institutionId: string,
+  courseId: string,
+  instance: string = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/instructor-dash');
+}
