@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic';
 import Box from '@mui/material/Box';
 import { AppProps } from 'next/app';
 import { UserContextProvider, CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
-import { useEffect, useState ,useMemo} from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import { ColorModeContext } from '../contexts/ColorModeContext';
 import './styles.scss';
@@ -108,8 +108,10 @@ function CustomApp({ Component, pageProps }: AppProps) {
     () => ({
       toggleColorMode: () => {
         const targetMode = resolvedMode === 'light' ? 'dark' : 'light';
-        const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        
+        const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+
         if (targetMode === systemMode) {
           setMode('system');
           localStorage.setItem('colorMode', 'system');
@@ -170,30 +172,32 @@ function CustomApp({ Component, pageProps }: AppProps) {
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
         <MatomoProvider value={instance}>
-          <ThemeProvider theme={theme}>
-            <MathJaxContext>
-              <FTMLReadyContext.Provider value={readyToRender}>
-                <PositionProvider>
-                  <UserContextProvider>
-                    <IsLoggedInProvider>
-                      <CurrentTermProvider>
-                        <div
-                          style={{
-                            width: '100vw',
-                            height: '100vh',
-                            overflowY: 'auto',
-                            overflowX: 'hidden',
-                          }}
-                        >
-                          <Component {...pageProps} />
-                        </div>
-                      </CurrentTermProvider>
-                    </IsLoggedInProvider>
-                  </UserContextProvider>
-                </PositionProvider>
-              </FTMLReadyContext.Provider>
-            </MathJaxContext>
-          </ThemeProvider>
+          <ColorModeContext.Provider value={colorMode}>
+            <ThemeProvider theme={theme}>
+              <MathJaxContext>
+                <FTMLReadyContext.Provider value={readyToRender}>
+                  <PositionProvider>
+                    <UserContextProvider>
+                      <IsLoggedInProvider>
+                        <CurrentTermProvider>
+                          <div
+                            style={{
+                              width: '100vw',
+                              height: '100vh',
+                              overflowY: 'auto',
+                              overflowX: 'hidden',
+                            }}
+                          >
+                            <Component {...pageProps} />
+                          </div>
+                        </CurrentTermProvider>
+                      </IsLoggedInProvider>
+                    </UserContextProvider>
+                  </PositionProvider>
+                </FTMLReadyContext.Provider>
+              </MathJaxContext>
+            </ThemeProvider>
+          </ColorModeContext.Provider>
         </MatomoProvider>
       </ServerLinksContext.Provider>
     </CommentRefreshProvider>
