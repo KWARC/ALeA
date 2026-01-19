@@ -18,7 +18,7 @@ export type FilterType = 'all' | 'quiz' | 'homework' | 'exam' | 'uncategorized';
 
 interface ProblemFilterProps {
   allProblemUris: string[];
-  problems: { problemId: string; examRefs?: any[] }[];
+  problems?: { problemId: string; examRefs?: any[] }[];
   onApply: (filtered: string[], type: FilterType) => void;
 }
 
@@ -35,7 +35,7 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
   const t = getLocaleObject(useRouter()).problemFilter;
 
   const isExamProblem = (uri: string) =>
-    problems.find((p) => p.problemId === uri)?.examRefs?.length;
+    problems?.find((p) => p.problemId === uri)?.examRefs?.length;
 
   useEffect(() => {
     setFilteredProblems(allProblemUris);
@@ -108,9 +108,9 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
           </Typography>
 
           {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => {
-            const count =
+            const examcount =
               type === 'exam'
-                ? problems.filter((p) => p.examRefs?.length).length
+                ? problems?.filter((p) => p.examRefs?.length).length
                 : allProblemUris.filter((uri) => getProblemType(uri) === type).length;
 
             return (
@@ -118,6 +118,7 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
                 key={type}
                 control={
                   <Checkbox
+                    disabled={type === 'exam' && !problems?.length}
                     checked={tempFilters[type]}
                     onChange={handleFilterChange(type)}
                     size="small"
@@ -127,7 +128,7 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                     <span>{t[type]}</span>
                     <Typography variant="caption" color="text.secondary">
-                      ({count})
+                      ({examcount})
                     </Typography>
                   </Box>
                 }
