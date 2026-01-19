@@ -133,34 +133,65 @@ const CourseNotesPage: NextPage = () => {
     });
   }, [router.isReady, courses, courseId]);
 
-  // ✅ FIX: wait until FTML DOM is actually rendered
+  // // ✅ FIX: wait until FTML DOM is actually rendered
+  // useEffect(() => {
+  //   if (!router.isReady || !toc?.length) return;
+
+  //   const hash = window.location.hash;
+  //   if (!hash) return;
+
+  //   const fragment = decodeURIComponent(hash.slice(1));
+
+  //   let attempts = 0;
+
+  //   const tryScroll = () => {
+  //     const el = document.querySelector(`[fragment-uri="${fragment}"]`);
+
+  //     if (el) {
+  //       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //       return;
+  //     }
+
+  //     // retry (FTML renders async)
+  //     if (attempts < 20) {
+  //       attempts++;
+  //       requestAnimationFrame(tryScroll);
+  //     }
+  //   };
+
+  //   tryScroll();
+  // }, [router.isReady, toc]);
+
+
   useEffect(() => {
-    if (!router.isReady || !toc?.length) return;
+  if (!router.asPath.includes("#")) return;
 
-    const hash = window.location.hash;
-    if (!hash) return;
+  const sectionId = decodeURIComponent(
+    router.asPath.split("#")[1]
+  );
 
-    const fragment = decodeURIComponent(hash.slice(1));
+  if (!sectionId) return;
 
-    let attempts = 0;
+  const scrollToSection = () => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    }
+    return false;
+  };
 
-    const tryScroll = () => {
-      const el = document.querySelector(`[fragment-uri="${fragment}"]`);
+  if (scrollToSection()) return;
 
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
-      }
+  // Retry until content appears
+  const interval = setInterval(() => {
+    if (scrollToSection()) {
+      clearInterval(interval);
+    }
+  }, 100);
 
-      // retry (FTML renders async)
-      if (attempts < 20) {
-        attempts++;
-        requestAnimationFrame(tryScroll);
-      }
-    };
-
-    tryScroll();
-  }, [router.isReady, toc]);
+  return () => clearInterval(interval);
+}, [toc]); 
 
   useEffect(() => {
     async function fetchGottos() {

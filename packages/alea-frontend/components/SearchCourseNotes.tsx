@@ -4,9 +4,29 @@ import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } f
 import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
-import { searchDocs, type SearchResult, contentToc } from '@flexiformal/ftml-backend';
+import { searchDocs, type SearchResult, contentToc, TocElem } from '@flexiformal/ftml-backend';
 import { getSecInfo } from '../components/coverage-update';
+import { getAllCourses } from '@alea/spec';
+function findImmediateParentSection(
+  targetUri: string,
+  toc: TocElem[] | undefined,
+  parent: TocElem | null = null
+): TocElem | null {
+  if (!toc) return null;
 
+  for (const node of toc) {
+    if ('uri' in node && node.uri === targetUri) {
+      return parent;
+    }
+    if ('children' in node && node.children?.length) {
+      const found = findImmediateParentSection(targetUri, node.children, node);
+
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
 const SearchCourseNotes = ({
   courseId,
   notesUri,
@@ -25,8 +45,9 @@ const SearchCourseNotes = ({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState(false);
-
+  console.log({ notesUri });
   const [sections, setSections] = useState<{ id: string; uri: string }[]>([]);
+  const [toc, setToc] = useState<any>([]);
 
   useEffect(() => {
     if (query) {
@@ -39,15 +60,29 @@ const SearchCourseNotes = ({
     if (!notesUri) return;
 
     contentToc({ uri: notesUri }).then(([, toc] = [[], []]) => {
-      const secs = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
-      setSections(secs);
+      console.log({ toc });
+      setToc(toc);
+
+      // const sec= getSecInfo(toc)
+      // const secs = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
+      // setSections(secs);
     });
   }, [notesUri]);
 
-  function getIdWrtUri(targetUri: string ) {
-    const section = sections.find((s) => s.uri === targetUri);
-    return section ? section.id : null;
+  function getSecIdWrtLoUri(targetUri: string, toc: any) {
+    console.log({ targetUri });
+    console.log({ sections });
+    if (toc?.uri === targetUri) return toc.id;
+    if (!toc?.children?.length) return;
+    const children = toc?.children;
+    getSecIdWrtLoUri(targetUri, children);
   }
+  // function getSecIdWrtUri(targetUri: string ) {
+  //   console.log({targetUri})
+  //   console.log({sections})
+  //   const section = sections.find((s) => s.uri === targetUri);
+  //   return section ? section.id : null;
+  // }
 
   // 🔴 CHANGED: sync + cached section resolver
   // function resolveSectionFromUri(targetUri: string) {
@@ -60,6 +95,47 @@ const SearchCourseNotes = ({
   //   if (!searchQuery.trim() || !notesUri) return;
   //   handleSearch();
   // }, [searchQuery, notesUri]);
+  type CourseTocMap = Record<string, TocElem[]>;
+
+  const [courseTocs, setCourseTocs] = useState<CourseTocMap>({});
+  useEffect(() => {
+    const init = async () => {
+      const tocMap = await buildCourseTocMap();
+      setCourseTocs(tocMap);
+    };
+
+    init();
+  }, []);
+  const buildCourseTocMap = async (): Promise<CourseTocMap> => {
+    const courses = await getAllCourses();
+
+    const entries = await Promise.all(
+      Object.entries(courses ?? {}).map(async ([courseId, courseInfo]) => {
+        if (!courseInfo?.notes) {
+          return [courseId, [] as TocElem[]];
+        }
+
+        try {
+          const [, toc] = (await contentToc({ uri: courseInfo.notes })) ?? [];
+          return [courseId, toc ?? []];
+        } catch (err) {
+          console.error(`Failed to load TOC for course ${courseId}`, err);
+          return [courseId, [] as TocElem[]];
+        }
+      })
+    );
+
+    return Object.fromEntries(entries);
+  };
+  const findParentAcrossCourses = (targetUri: string, courseTocs: CourseTocMap) => {
+    for (const [courseId, toc] of Object.entries(courseTocs)) {
+      const parent = findImmediateParentSection(targetUri, toc);
+      if (parent) {
+        return { courseId, parent };
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (query && notesUri) {
@@ -168,7 +244,17 @@ const SearchCourseNotes = ({
 
               if ('Document' in res) {
                 const uri = res.Document;
-                const id = getIdWrtUri(uri);
+
+                // const id = getSecIdWrtLoUri(uri, toc);
+                // console.log('avhi2', id);
+                const result = findParentAcrossCourses(uri, courseTocs);
+                                const id = result?.parent.id??"#";
+
+                if (result) {
+                  console.log('Found in course:', result.courseId);
+                  console.log('Parent section:', result.parent);
+                }
+                const foundCourseId = result?.courseId ?? courseId;
                 console.log({ uri, id });
                 return (
                   <Box key={idx} mb={2}>
@@ -216,8 +302,7 @@ const SearchCourseNotes = ({
                           // }}
 
                           onClick={async () => {
-                            window.location.href = `/course-notes/${courseId}#${id
-                            }`;
+                            window.location.href = `/course-notes/${foundCourseId}#${id}`;
                           }}
                         >
                           Notes
@@ -252,7 +337,17 @@ const SearchCourseNotes = ({
 
               if ('Paragraph' in res) {
                 const uri = res.Paragraph.uri;
-                const id = getIdWrtUri(uri);
+                const result = findParentAcrossCourses(uri, courseTocs);
+
+                if (result) {
+                  console.log('Found in course:', result.courseId);
+                  console.log('Parent section:', result.parent);
+                }
+                const foundCourseId = result?.courseId ?? courseId;
+
+                // const id = getSecIdWrtLoUri(uri, toc);
+                const id = result?.parent?.id??"#";
+                console.log('avhi', id);
                 console.log({ uri, id });
                 return (
                   <Box key={idx} mb={2}>
@@ -288,7 +383,7 @@ const SearchCourseNotes = ({
                         <IconButton
                           size="small"
                           onClick={async () => {
-                            window.location.href = `/course-notes/${courseId}#${id}`;
+                            window.location.href = `/course-notes/${foundCourseId}#${id}`;
                           }}
                         >
                           Notes
