@@ -164,7 +164,9 @@ export function PerSectionQuiz({
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
 
   const orderedCategoryKeys = useMemo(() => {
-    return ['syllabus', 'adventurous'].filter((cat) => categoryMap[cat]?.length);
+    const knownOrder = ['syllabus', 'adventurous'];
+    const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
+    return [...knownOrder, ...rest].filter((cat) => categoryMap[cat]?.length);
   }, [categoryMap]);
 
   const examProblemIds = useMemo(
@@ -176,6 +178,7 @@ export function PerSectionQuiz({
   );
 
   const problemUri = problemUris[problemIdx];
+  // TODO ALEA4-P3 const response = responses[problemIdx];
 
   const currentProblem = useMemo(() => {
     if (!problemUri) return undefined;
@@ -273,13 +276,18 @@ export function PerSectionQuiz({
   }
 
   if (!problemUri) return null;
-  if (!problemUris.length) {
-    return (
-      <Typography sx={{ mt: 2 }} color="text.secondary">
-        No problems found for this filter.
-      </Typography>
-    );
-  }
+  const handleApplyFilter = (filtered: string[], type: string) => {
+    let finalUris = filtered;
+    if (type === 'exam') {
+      finalUris = examProblemIds;
+    }
+    setProblemUris(finalUris);
+    setAllProblemUris(finalUris);
+    setIsSubmitted(finalUris.map(() => false));
+    setResponses(finalUris.map(() => undefined));
+    setProblemIdx(0);
+  };
+
   return (
     <Box mb={4}>
       <Box
@@ -377,22 +385,23 @@ export function PerSectionQuiz({
             <ProblemFilter
               allProblemUris={allProblemUris}
               problems={problems}
-              onApply={(filtered, type) => {
-                filtered.forEach((u) => {
-                  console.log(u, getProblemType(u)); //
-                });
-                let finalUris = filtered;
+              onApply={handleApplyFilter}
+              // onApply={(filtered, type) => {
+              //   filtered.forEach((u) => {
+              //     console.log(u, getProblemType(u)); //
+              //   });
+              //   let finalUris = filtered;
 
-                if (type === 'exam') {
-                  finalUris = examProblemIds;
-                }
+              //   if (type === 'exam') {
+              //     finalUris = examProblemIds;
+              //   }
 
-                setProblemUris(finalUris);
-                setAllProblemUris(finalUris);
-                setIsSubmitted(finalUris.map(() => false));
-                setResponses(finalUris.map(() => undefined));
-                setProblemIdx(0);
-              }}
+              //   setProblemUris(finalUris);
+              //   setAllProblemUris(finalUris);
+              //   setIsSubmitted(finalUris.map(() => false));
+              //   setResponses(finalUris.map(() => undefined));
+              //   setProblemIdx(0);
+              // }}
             />
 
             {!problemUris.length ? (
@@ -435,6 +444,28 @@ export function PerSectionQuiz({
                       />
                     ))}
                 </Box>
+                {/* TODO ALEA4-P3
+          <ProblemDisplay
+          r={response}
+          uri={problemUris[problemIdx]}
+          showPoints={false}
+          problem={problem}
+          isFrozen={isFrozen[problemIdx]}
+          onResponseUpdate={(response) => {
+            forceRerender();
+            setResponses((prev) => {
+              prev[problemIdx] = response;
+              return prev;
+            });
+          }}
+          onFreezeResponse={() =>
+            setIsFrozen((prev) => {
+              prev[problemIdx] = true;
+              return [...prev];
+            })
+          }
+         />*/}
+
                 <Box mb={1}>
                   {currentProblem?.showForeignLanguageNotice && (
                     <Tooltip

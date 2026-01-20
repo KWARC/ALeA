@@ -108,9 +108,9 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
           </Typography>
 
           {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => {
-            const examcount =
+            const typecount =
               type === 'exam'
-                ? problems?.filter((p) => p.examRefs?.length).length
+                ? problems?.filter((p) => p.examRefs?.length).length ?? 0
                 : allProblemUris.filter((uri) => getProblemType(uri) === type).length;
 
             return (
@@ -128,7 +128,7 @@ export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilt
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                     <span>{t[type]}</span>
                     <Typography variant="caption" color="text.secondary">
-                      ({examcount})
+                      ({typecount})
                     </Typography>
                   </Box>
                 }

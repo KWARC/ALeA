@@ -35,26 +35,24 @@ export async function buildExamProblems(
   return result;
 }
 
-export const formatExamLabel = (examUri?: string, exam?: { number?: string; term?: string }) => {
+export function formatExamLabel(examUri?: string) {
   if (!examUri) return '';
-
   const dParam = getParamFromUri(examUri, 'd') || '';
   const pParam = getParamFromUri(examUri, 'p') || '';
   const termFromUri = pParam.split('/')[0];
   const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  const term = exam?.term || termFromUri;
 
-  if (exam && exam.number) {
-    return `${term} ${cleanedD}`.trim();
+  if (termFromUri && cleanedD) {
+    return `${termFromUri} ${cleanedD}`;
   }
-  return term ? `${term} ${cleanedD}` : cleanedD;
-};
+  return cleanedD || termFromUri || '';
+}
 const ExamProblemsPage = () => {
   const router = useRouter();
   const examUri = router.query.examUri as string | undefined;
   const targetProblemId = router.query.problemId as string | undefined;
   const examLabel = useMemo(() => {
-    return formatExamLabel(examUri);
+    return formatExamLabel(decodeURIComponent(examUri));
   }, [examUri]);
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [loading, setLoading] = useState(true);

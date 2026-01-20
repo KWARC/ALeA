@@ -282,12 +282,6 @@ export function QuizDisplay({
   }, [initialProblemIdx]);
 
   useEffect(() => {
-    if (initialProblemIdx !== undefined) {
-      setProblemIdx(initialProblemIdx);
-    }
-  }, [initialProblemIdx]);
-
-  useEffect(() => {
     const numQ = Object.keys(problems ?? {}).length || 0;
     if (numQ === 0) return;
     setEvents([timerEvent(TimerEventType.SWITCH, 0)]);

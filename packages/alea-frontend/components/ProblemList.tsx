@@ -19,6 +19,7 @@ import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@flexiformal/ftml';
 import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
+import { formatExamLabel } from '../pages/exam-problems';
 
 interface TitleMetadata {
   uri?: string;
@@ -67,9 +68,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
   const [loading, setLoading] = useState(true);
-
   const router = useRouter();
-
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
 
   useEffect(() => {
@@ -173,8 +172,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           {exams.map((exam) => {
             const examUri = exam.uri;
             const dParam = getParamFromUri(examUri, 'd');
-            const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-            const examLabel = exam.term ? `${exam.term} ${cleanedD}`.trim() : cleanedD;
+            const examLabel = formatExamLabel(exam.uri);
 
             return (
               <MenuItem key={exam.uri} value={exam.uri}>
