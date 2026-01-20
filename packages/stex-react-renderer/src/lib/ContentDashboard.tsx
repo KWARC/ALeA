@@ -31,8 +31,8 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
     //'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-inference&l=en&e=section',
   ],
   'ai-1': [
-    'https://mathhub.info/?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
-    'https://mathhub.info/?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
+    'http://mathhub.info/?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
+    'http://mathhub.info/?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
   ],
 };
 
