@@ -9,6 +9,9 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Tooltip,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
@@ -148,46 +151,85 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
         {t.practiceProblemsDescription}
       </Typography>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 3, gap: 2 }}>
-        <Select
-          displayEmpty
-          size="small"
-          value={selectedExam}
-          sx={{ minWidth: 220 }}
-          onChange={(e) => {
-            const examUri = e.target.value as string;
+      <Box
+        sx={{
+          my: 4,
+          p: 3,
+          bgcolor: '#fafafa',
+          borderRadius: '12px',
+          border: '1px solid #eee',
+          boxShadow: '0px 2px 8px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Typography
+          variant="body1"
+          sx={{ color: '#555', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
+        >
+          Old exams are a good source of practice materials. We provide all old exams here. Note
+          that exam style has changed over the years, and the younger exams may be better models for
+          the upcoming exams. Also note that the fact that a topic in the course has not been
+          covered in an exam does not preclude it from being in the upcoming exam.
+        </Typography>
 
-            if (!examUri) return;
-            setSelectedExam(examUri);
-            router.push({
-              pathname: '/exam-problems',
-              query: { examUri },
-            });
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
           }}
         >
-          <MenuItem disabled value="">
-            Select Exam
-          </MenuItem>
+          <FormControl fullWidth sx={{ maxWidth: { xs: '100%', sm: 500 } }}>
+            <InputLabel id="exam-select-label">Select Exam</InputLabel>
+            <Select
+              labelId="exam-select-label"
+              id="exam-select"
+              label="Select Exam"
+              value={selectedExam}
+              sx={{ height: '56px', bgcolor: '#fff' }}
+              onChange={(e) => {
+                const examUri = e.target.value as string;
+                if (!examUri) return;
 
-          {exams.map((exam) => {
-            const examUri = exam.uri;
-            const dParam = getParamFromUri(examUri, 'd');
-            const examLabel = formatExamLabel(exam.uri);
+                setSelectedExam(examUri);
 
-            return (
-              <MenuItem key={exam.uri} value={exam.uri}>
-                {examLabel}
+                router.push({
+                  pathname: '/exam-problems',
+                  query: { examUri },
+                });
+              }}
+            >
+              <MenuItem disabled value="">
+                <em>Select Exam</em>
               </MenuItem>
-            );
-          })}
-        </Select>
 
-        <Box sx={{ marginLeft: 'auto' }}>
-          <Link href={`/peer-grading/${courseId}`} passHref>
-            <Button variant="contained" sx={{ height: '48px', fontSize: '16px' }}>
-              {g.peerGrading}
-            </Button>
-          </Link>
+              {exams.map((exam) => {
+                const fullTitle = formatExamLabel(exam.uri);
+
+                return (
+                  <MenuItem key={exam.uri} value={exam.uri}>
+                    <Tooltip title={fullTitle} placement="right" arrow>
+                      <Typography noWrap sx={{ maxWidth: '400px' }}>
+                        {fullTitle}
+                      </Typography>
+                    </Tooltip>
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+
+          <Box sx={{ marginLeft: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+            <Link href={`/peer-grading/${courseId}`} passHref>
+              <Button
+                variant="contained"
+                fullWidth={true}
+                sx={{ height: '56px', px: 4, fontSize: '16px', fontWeight: 'bold' }}
+              >
+                {g.peerGrading}
+              </Button>
+            </Link>
+          </Box>
         </Box>
       </Box>
 

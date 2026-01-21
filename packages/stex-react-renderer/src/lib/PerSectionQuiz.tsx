@@ -275,6 +275,9 @@ export function PerSectionQuiz({
     );
   }
 
+  // TODO ALEA4-P3 const response = responses[problemIdx];
+  // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
+
   if (!problemUri) return null;
   const handleApplyFilter = (filtered: string[], type: string) => {
     let finalUris = filtered;
@@ -386,22 +389,6 @@ export function PerSectionQuiz({
               allProblemUris={allProblemUris}
               problems={problems}
               onApply={handleApplyFilter}
-              // onApply={(filtered, type) => {
-              //   filtered.forEach((u) => {
-              //     console.log(u, getProblemType(u)); //
-              //   });
-              //   let finalUris = filtered;
-
-              //   if (type === 'exam') {
-              //     finalUris = examProblemIds;
-              //   }
-
-              //   setProblemUris(finalUris);
-              //   setAllProblemUris(finalUris);
-              //   setIsSubmitted(finalUris.map(() => false));
-              //   setResponses(finalUris.map(() => undefined));
-              //   setProblemIdx(0);
-              // }}
             />
 
             {!problemUris.length ? (
@@ -444,27 +431,6 @@ export function PerSectionQuiz({
                       />
                     ))}
                 </Box>
-                {/* TODO ALEA4-P3
-          <ProblemDisplay
-          r={response}
-          uri={problemUris[problemIdx]}
-          showPoints={false}
-          problem={problem}
-          isFrozen={isFrozen[problemIdx]}
-          onResponseUpdate={(response) => {
-            forceRerender();
-            setResponses((prev) => {
-              prev[problemIdx] = response;
-              return prev;
-            });
-          }}
-          onFreezeResponse={() =>
-            setIsFrozen((prev) => {
-              prev[problemIdx] = true;
-              return [...prev];
-            })
-          }
-         />*/}
 
                 <Box mb={1}>
                   {currentProblem?.showForeignLanguageNotice && (
@@ -555,6 +521,27 @@ export function PerSectionQuiz({
                       })
                     }
                   />
+                  {/* TODO ALEA4-P3
+          <ProblemDisplay
+          r={response}
+          uri={problemUris[problemIdx]}
+          showPoints={false}
+          problem={problem}
+          isFrozen={isFrozen[problemIdx]}
+          onResponseUpdate={(response) => {
+            forceRerender();
+            setResponses((prev) => {
+              prev[problemIdx] = response;
+              return prev;
+            });
+          }}
+          onFreezeResponse={() =>
+            setIsFrozen((prev) => {
+              prev[problemIdx] = true;
+              return [...prev];
+            })
+          }
+         />*/}
                 </Box>
 
                 <Box
@@ -566,7 +553,18 @@ export function PerSectionQuiz({
                     alignItems: 'flex-start',
                   }}
                 >
-                  {showSolution && <Box mb="10px"></Box>}
+                  {/* TODO ALEA4-P3 solutions?.length > 0 && (
+          <Button variant="contained" onClick={() => setShowSolution(!showSolution)}>
+            {showSolution ? t.hideSolution : t.showSolution}
+          </Button>
+         )}*/}
+                  {showSolution && (
+                    <Box mb="10px">
+                      {/* solutions.map((solution) => (
+              <div style={{ color: '#555' }} dangerouslySetInnerHTML={{__html:solution}}></div>
+            ))*/}
+                    </Box>
+                  )}
                   {showHideButton && (
                     <Button onClick={() => setShow(false)} variant="contained" color="secondary">
                       {t.hideProblems}
