@@ -33,6 +33,12 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
   'ai-1': [
     'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/CompLog&p=kr/sec&d=kr-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=semweb-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section'
   ],
 };
 
