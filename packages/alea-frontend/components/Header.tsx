@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import styles from '../styles/header.module.scss';
 import NotificationButton from './NotificationButton';
-import { PRIMARY_COL } from '@alea/utils';
 
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
 
@@ -151,7 +150,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
             placement="right"
             title={
               <Tooltip title={t.headerWarning}>
-                <WarningIcon fontSize="large" sx={{ cursor: 'pointer', color: '#e20' }} />
+                <WarningIcon fontSize="large" sx={{ cursor: 'pointer', color: "error.600"}} />
               </Tooltip>
             }
           >
@@ -169,10 +168,10 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
         </Link>
         <Box>
           <Box display="flex" alignItems="center">
-            <NotificationButton bgColor="#ced9f2" />
+            <NotificationButton bgColor="primary.400" />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
-                <IconButton sx={{ bgcolor: PRIMARY_COL, ml: '5px' }}>
+                <IconButton sx={{ bgcolor: "primary.main", ml: '5px' }}>
                   <HelpIcon htmlColor="white" />
                 </IconButton>
               </Tooltip>

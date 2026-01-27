@@ -1,0 +1,188 @@
+import { PaletteOptions } from '@mui/material/styles';
+
+// export const lightPalette: PaletteOptions = {
+export const lightPalette = {
+  mode: 'light',
+
+  primary: {
+    main: '#203360',
+
+    50: '#f2f4f9',
+    100: '#d6ddf0',
+    200: '#b8c4e6',
+    300: '#9aaadb',
+    400: '#5f73b8',
+
+    500: '#203360',
+
+    600: '#1b2b52',
+    700: '#162343',
+    800: '#111b34',
+    900: '#0b1225',
+  },
+  secondary: {
+    main: '#8c9fb1',
+    50: '#F1F4F7',
+    100: '#E1E7ED',
+    200: '#C7D2DD',
+    300: '#A9B9C9',
+    400: '#94A6B7',
+    500: '#8c9fb1',
+    600: '#7A8FA3',
+    700: '#647789',
+    800: '#4E5E6C',
+    900: '#3A4652',
+  },
+
+  background: {
+    default: '#F5F7FB',
+    paper: '#FFFFFF',
+  },
+
+  text: {
+    primary: '#203360',
+    secondary: '#8c9fb1',
+    disabled: '#9CB5CF',
+  },
+
+  header: {
+    main: '#203360',
+    text: '#FFFFFF',
+  },
+
+  section: {
+    secondary: '#EEF2F7',
+  },
+
+  card: {
+    background: '#FFFFFF',
+    border: '#E2E8F0',
+  },
+
+  page: {
+    background: '#F5F7FB',
+  },
+  warning: {
+    main: '#eaa43b',
+    50: '#fdf6eb',
+    100: '#f8e3c2',
+    200: '#f5d5a5',
+    300: '#f1c27c',
+    400: '#eeb662',
+    500: '#eaa43b',
+    600: '#d59536',
+    700: '#a6742a',
+    800: '#815a20',
+    900: '#624519',
+  },
+  error: {
+    main: '#ff4242',
+    50: '#ffecec',
+    100: '#ffc4c4',
+    200: '#ffa8a8',
+    300: '#ff8080',
+    400: '#ff6868',
+    500: '#ff4242',
+    600: '#e83c3c',
+    700: '#b52f2f',
+    800: '#8c2424',
+    900: '#6b1c1c',
+  },
+  success: {
+    main: '#1fc25b',
+    50: '#e9f9ef',
+    100: '#baeccc',
+    200: '#98e3b4',
+    300: '#69d691',
+    400: '#4cce7c',
+    500: '#1fc25b',
+    600: '#1cb153',
+    700: '#168a41',
+    800: '#116b32',
+    900: '#0d5126',
+  },
+  grey: {
+    50: '#eef1f4',
+    100: '#c9d2dc',
+    200: '#afbdcb',
+    300: '#8a9fb3',
+    400: '#738ca4',
+    500: '#506f8d',
+    600: '#496580',
+    700: '#394f64',
+    800: '#2c3d4e',
+    900: '#222f3b',
+  },
+  blue: {
+    50: '#eef3ff',
+    100: '#d6e1ff',
+    200: '#b3c7ff',
+    300: '#8fafff',
+    400: '#4d7dff',
+    500: '#0039C1',
+    600: '#0032ad',
+    700: '#002a92',
+    800: '#002176',
+    900: '#00185a',
+  },
+};
+
+export const darkPalette: PaletteOptions = {
+  mode: 'dark',
+
+  primary: {
+    main: '#203360',
+    50: '#0B1326',
+    100: '#121E3A',
+    200: '#18274A',
+    300: '#1C2E56',
+    400: '#203360',
+    500: '#3B517A',
+    600: '#5B6F95',
+    700: '#7F94B3',
+    800: '#A9B9C9',
+    900: '#D9E1EC',
+  },
+
+  secondary: {
+    main: '#8c9fb1',
+    50: '#3A4652',
+    100: '#4E5E6C',
+    200: '#647789',
+    300: '#7A8FA3',
+    400: '#8c9fb1',
+    500: '#A9B9C9',
+    600: '#C7D2DD',
+    700: '#E1E7ED',
+    800: '#F1F4F7',
+    900: '#FFFFFF',
+  },
+
+  background: {
+    default: '#020617',
+    paper: '#0F172A',
+  },
+
+  text: {
+    primary: '#E5E7EB',
+    secondary: '#9CA3AF',
+  },
+
+  header: {
+    main: '#020617',
+    text: '#E5E7EB',
+  },
+
+  section: {
+    secondary: '#020617',
+  },
+
+  card: {
+    background: '#0F172A',
+    border: '#1E293B',
+  },
+
+  page: {
+    background: '#020617',
+  },
+};
