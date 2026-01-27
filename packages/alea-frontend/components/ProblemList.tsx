@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
-import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
+import { getParamFromUri, pathToExamProblems, PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -165,8 +165,11 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
             if (!examUri) return;
             setSelectedExam(examUri);
+            const institutionId = (router.query.institutionId as string) || 'FAU';
+            const instance = (router.query.instance as string) || 'latest';
+            
             router.push({
-              pathname: '/exam-problems',
+              pathname: pathToExamProblems(institutionId, courseId, instance),
               query: { examUri },
             });
           }}

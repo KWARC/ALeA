@@ -16,17 +16,57 @@ export interface RouteValidationResult {
   institutionValidated: boolean;
 }
 
+function resolveLatestInstance(
+  course: CourseInfo,
+  institutionId: string,
+  currentTermByUniversityId: Record<string, string>
+): string | null {
+  const courseInstances = course.instances || [];
+  if (courseInstances.length === 0) return null;
+
+  const institutionLatestTerm = currentTermByUniversityId[institutionId];
+
+  if (institutionLatestTerm) {
+    const hasInstitutionLatest = courseInstances.some(
+      (inst) => inst.semester === institutionLatestTerm
+    );
+    if (hasInstitutionLatest) {
+      return institutionLatestTerm;
+    }
+  }
+
+  return courseInstances[courseInstances.length - 1]?.semester || null;
+}
+
+function isValidInstanceForCourse(course: CourseInfo, instance: string): boolean {
+  const courseInstances = course.instances || [];
+  return courseInstances.some((inst) => inst.semester === instance);
+}
+
+function buildNormalizedPath(
+  institutionId: string,
+  courseId: string,
+  instance: string,
+  routePath: string
+): string {
+  const basePath = `/${institutionId}/${courseId}/${instance}`;
+  return routePath ? `${basePath}/${routePath}` : basePath;
+}
+
+function removeRouteParamsFromQuery(query: Record<string, any>) {
+  const { institutionId, courseId, instance, ...rest } = query;
+  return rest;
+}
+
 export function useRouteValidation(routePath: string): RouteValidationResult {
   const router = useRouter();
+  const { courses, isLoading: coursesLoading } = useCourses();
+  const { currentTermByUniversityId } = useCurrentTermContext();
 
   const rawInstitutionId = router.query.institutionId as string;
   const courseId = router.query.courseId as string;
   const instance = router.query.instance as string;
-
   const institutionId = rawInstitutionId?.toUpperCase() || '';
-
-  const { courses, isLoading: coursesLoading } = useCourses();
-  const { currentTermByUniversityId } = useCurrentTermContext();
 
   const [institutionValidated, setInstitutionValidated] = useState(false);
   const [resolvedInstanceId, setResolvedInstanceId] = useState<string | null>(null);
@@ -36,24 +76,25 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
 
   useEffect(() => {
     if (!router.isReady || !rawInstitutionId || !courseId || !instance) return;
-    if (!institutionValidated) return;
+    if (!institutionValidated || !resolvedInstanceId) return;
 
-    if (rawInstitutionId !== institutionId) {
-      const normalizedPath = `/${institutionId}/${courseId}/${instance}${
-        routePath ? `/${routePath}` : ''
-      }`;
-      const query = { ...router.query };
-      query.institutionId = institutionId;
+    const needsCaseFix = rawInstitutionId !== institutionId;
+    const needsInstanceResolve = instance === 'latest';
 
-      router.replace({ pathname: normalizedPath, query }, undefined, { shallow: true });
-      return;
-    }
+    if (!needsCaseFix && !needsInstanceResolve) return;
+
+    const actualInstance = needsInstanceResolve ? resolvedInstanceId : instance;
+    const normalizedPath = buildNormalizedPath(institutionId, courseId, actualInstance, routePath);
+    const cleanQuery = removeRouteParamsFromQuery(router.query);
+
+    router.replace({ pathname: normalizedPath, query: cleanQuery }, undefined, { shallow: true });
   }, [
     router.isReady,
     rawInstitutionId,
     institutionId,
     courseId,
     instance,
+    resolvedInstanceId,
     institutionValidated,
     routePath,
     router,
@@ -66,7 +107,6 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
     setIsValidating(true);
     setValidationError(null);
 
-    // A. Validate Course (Synchronous)
     const course = courses?.[courseId];
     if (!course) {
       setValidationError('Invalid courseId');
@@ -85,35 +125,34 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
     setInstitutionValidated(true);
 
     if (instance === 'latest') {
-      const latestTerm = currentTermByUniversityId[institutionId];
+      const resolvedInstance = resolveLatestInstance(
+        course,
+        institutionId,
+        currentTermByUniversityId
+      );
 
-      if (latestTerm) {
-        setResolvedInstanceId(latestTerm);
+      if (resolvedInstance) {
+        setResolvedInstanceId(resolvedInstance);
         setLoadingInstanceId(false);
         setIsValidating(false);
       } else {
-        console.error(`Could not resolve 'latest' instance for institution: ${institutionId}`);
+        console.error(`Could not resolve 'latest' instance for course "${courseId}"`);
         setValidationError('Failed to resolve latest instance');
         setLoadingInstanceId(false);
         setIsValidating(false);
       }
     } else {
-      const courseInstances = course.instances || [];
-      const isValidInstance = courseInstances.some((inst) => inst.semester === instance);
-
-      if (!isValidInstance) {
-        console.log(`InstanceId ${instance} not found`);
+      if (!isValidInstanceForCourse(course, instance)) {
+        console.error(`Instance "${instance}" not found for course "${courseId}"`);
         setValidationError('Invalid instanceId');
         setIsValidating(false);
-        const timer = setTimeout(() => {
-          router.push('/');
-        }, 3000);
-        return () => clearTimeout(timer);
-      } else {
-        setResolvedInstanceId(instance);
-        setLoadingInstanceId(false);
-        setIsValidating(false);
+        setTimeout(() => router.push('/'), 3000);
+        return;
       }
+
+      setResolvedInstanceId(instance);
+      setLoadingInstanceId(false);
+      setIsValidating(false);
     }
   }, [
     router.isReady,

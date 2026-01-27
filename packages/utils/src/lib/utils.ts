@@ -383,3 +383,11 @@ export function pathToInstructorDash(
 ): string {
   return pathToCourseResource(institutionId, courseId, instance, '/instructor-dash');
 }
+
+export function pathToExamProblems(
+  institutionId: string,
+  courseId: string,
+  instance: string = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/exam-problems');
+}
