@@ -1,5 +1,14 @@
 import { formatExamLabelDropdown, formatExamLabelFull } from '@alea/spec';
-import { FormControl, InputLabel, Select, MenuItem, Tooltip, Typography } from '@mui/material';
+import { Theme } from '@emotion/react';
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  Typography,
+  SxProps,
+} from '@mui/material';
 
 interface ExamInfo {
   uri: string;
@@ -15,6 +24,7 @@ interface ExamSelectProps {
   onChange: (examUri: string) => void;
   label?: string;
   size?: 'small' | 'medium';
+  sx?: SxProps<Theme>;
 }
 
 export function ExamSelect({
@@ -29,20 +39,13 @@ export function ExamSelect({
 
   return (
     <FormControl size={size} sx={{ minWidth: 220 }}>
-      <InputLabel sx={{ fontSize: '0.78rem' }}>{label}</InputLabel>
+      <InputLabel>{label}</InputLabel>
 
       <Select
         size="small"
         value={value}
         label={label}
         onChange={(e) => onChange(e.target.value as string)}
-        sx={{
-          height: 32,
-          minWidth: 180,
-          padding: '6px 10px',
-          display: 'flex',
-          alignItems: 'center',
-        }}
       >
         <MenuItem disabled value="">
           <em>Select exam</em>

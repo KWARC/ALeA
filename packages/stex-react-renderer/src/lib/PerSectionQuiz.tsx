@@ -462,6 +462,11 @@ export function PerSectionQuiz({
                         onChange={(uri) => setSelectedExamUri(uri)}
                         label="Appeared in exams"
                         size="small"
+                        sx={{
+                          minwidth: 160,
+                          height: 30,
+                          fontSize: '0.75rem',
+                        }}
                       />
                     )}
 
