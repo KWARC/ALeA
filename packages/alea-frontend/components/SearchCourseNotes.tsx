@@ -27,6 +27,34 @@ function findImmediateParentSection(
 
   return null;
 }
+
+function extractAParam(uri: string): string {
+  const match = uri.match(/[?&]a=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : uri;
+}
+
+function findParentSlideUri(targetUri: string, toc: TocElem[] | undefined): string | undefined {
+  const normalizedTarget = extractAParam(targetUri);
+
+  let foundSlideUri: string | undefined;
+
+  function recurse(nodes: TocElem[]): boolean {
+    for (const node of nodes) {
+      if (node.type === 'Slide' && typeof node.uri === 'string') {
+        if (normalizedTarget.includes(node.uri)) {
+          foundSlideUri = node.uri;
+        }
+      }
+      if ('children' in node && node.children?.length) {
+        if (recurse(node.children)) return true;
+      }
+    }
+    return false;
+  }
+  if (toc) recurse(toc);
+  return foundSlideUri;
+}
+
 const SearchCourseNotes = ({
   courseId,
   notesUri,
@@ -55,17 +83,12 @@ const SearchCourseNotes = ({
     }
   }, [query]);
 
-  // 🟢 NEW: load TOC ONCE and extract sections
   useEffect(() => {
     if (!notesUri) return;
 
     contentToc({ uri: notesUri }).then(([, toc] = [[], []]) => {
       console.log({ toc });
       setToc(toc);
-
-      // const sec= getSecInfo(toc)
-      // const secs = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
-      // setSections(secs);
     });
   }, [notesUri]);
 
@@ -77,24 +100,7 @@ const SearchCourseNotes = ({
     const children = toc?.children;
     getSecIdWrtLoUri(targetUri, children);
   }
-  // function getSecIdWrtUri(targetUri: string ) {
-  //   console.log({targetUri})
-  //   console.log({sections})
-  //   const section = sections.find((s) => s.uri === targetUri);
-  //   return section ? section.id : null;
-  // }
 
-  // 🔴 CHANGED: sync + cached section resolver
-  // function resolveSectionFromUri(targetUri: string) {
-  //   return sections
-  //     .filter((s) => targetUri.startsWith(s.uri))
-  //     .sort((a, b) => b.uri.length - a.uri.length)[0];
-  // }
-
-  // useEffect(() => {
-  //   if (!searchQuery.trim() || !notesUri) return;
-  //   handleSearch();
-  // }, [searchQuery, notesUri]);
   type CourseTocMap = Record<string, TocElem[]>;
 
   const [courseTocs, setCourseTocs] = useState<CourseTocMap>({});
@@ -147,16 +153,6 @@ const SearchCourseNotes = ({
     return null;
   }
 
-  // async function resolveSectionFromUri(targetUri: string) {
-  //   const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
-
-  //   const sections = toc.flatMap((entry) => getSecInfo(entry).map(({ id, uri }) => ({ id, uri })));
-
-  //   return sections
-  //     .filter((s) => targetUri.startsWith(s.uri))
-  //     .sort((a, b) => b.uri.length - a.uri.length)[0];
-  // }
-
   async function handleSearch() {
     if (!searchQuery.trim() || !notesUri) return;
 
@@ -173,6 +169,63 @@ const SearchCourseNotes = ({
       setResults([]);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function navigateToSlideFromUri(foundCourseId: string, targetUri: string) {
+    try {
+      const mapRes = await fetch(
+        `/api/get-slide-uri-to-index-mapping?courseId=${encodeURIComponent(foundCourseId)}`
+      );
+      if (!mapRes.ok) throw new Error('mapping fetch failed');
+      const mapping = (await mapRes.json()) as Record<string, Record<string, number>>;
+
+      const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
+
+      console.log('targetUri:', targetUri);
+      console.log('normalizedTarget:', extractAParam(targetUri));
+      console.log('parentSlideUri:', parentSlideUri);
+      console.log(
+        'All mapping keys:',
+        Object.values(mapping).flatMap((slideMap) => Object.keys(slideMap))
+      );
+
+      if (!parentSlideUri) {
+        router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
+        return;
+      }
+
+      let foundSectionId: string | undefined;
+      let foundSlideNum: number | undefined;
+      for (const [sectionId, slideMap] of Object.entries(mapping)) {
+        if (slideMap && Object.prototype.hasOwnProperty.call(slideMap, parentSlideUri)) {
+          foundSectionId = sectionId;
+          foundSlideNum = slideMap[parentSlideUri] + 1;
+          break;
+        }
+      }
+
+      if (foundSectionId && foundSlideNum !== undefined) {
+        console.log('Navigating to:', {
+          foundCourseId,
+          foundSectionId,
+          foundSlideNum,
+          parentSlideUri,
+          mapping,
+        });
+
+        router.push(
+          `/course-view/${foundCourseId}?sectionId=${encodeURIComponent(
+            foundSectionId
+          )}&slideNum=${encodeURIComponent(String(foundSlideNum))}`
+        );
+        return;
+      }
+
+      router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
+    } catch (err) {
+      console.error('Failed to resolve slide via mapping, falling back to fragment route', err);
+      router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
     }
   }
 
@@ -245,10 +298,8 @@ const SearchCourseNotes = ({
               if ('Document' in res) {
                 const uri = res.Document;
 
-                // const id = getSecIdWrtLoUri(uri, toc);
-                // console.log('avhi2', id);
                 const result = findParentAcrossCourses(uri, courseTocs);
-                                const id = result?.parent.id??"#";
+                const id = result?.parent.id ?? '#';
 
                 if (result) {
                   console.log('Found in course:', result.courseId);
@@ -271,36 +322,8 @@ const SearchCourseNotes = ({
                       </Box>
 
                       <Box display="flex" flexDirection="column" gap={1}>
-                        {/* <IconButton
-                          size="small"
-                          onClick={async () => {
-                            const section = await resolveSectionFromUri(uri);
-                            if (!section) return;
-
-                            // const hash = sectionUriToHash(section.uri);
-                            // if (!hash) return;
-
-                            // router.push(
-                            //   `/course-notes/${courseId}#section/${section.id}`
-                            // );
-
-                            // window.location.href = `/course-notes/${courseId}#${section.id}`;
-                            window.location.href = `/course-notes/${courseId}#${encodeURIComponent(
-                              uri
-                            )}`;
-                          }}
-                        >
-                          Notes
-                        </IconButton> */}
-
                         <IconButton
                           size="small"
-                          // onClick={async () => {
-                          //   window.location.href = `/course-notes/${courseId}#${encodeURIComponent(
-                          //     uri
-                          //   )}`;
-                          // }}
-
                           onClick={async () => {
                             window.location.href = `/course-notes/${foundCourseId}#${id}`;
                           }}
@@ -310,11 +333,11 @@ const SearchCourseNotes = ({
 
                         <IconButton
                           size="small"
-                          onClick={() =>
-                            router.push(
-                              `/course-view/${courseId}?fragment=${encodeURIComponent(uri)}`
-                            )
-                          }
+                          onClick={() => {
+                            onClose?.();
+
+                            navigateToSlideFromUri(foundCourseId, uri);
+                          }}
                         >
                           Slides
                         </IconButton>
@@ -345,8 +368,7 @@ const SearchCourseNotes = ({
                 }
                 const foundCourseId = result?.courseId ?? courseId;
 
-                // const id = getSecIdWrtLoUri(uri, toc);
-                const id = result?.parent?.id??"#";
+                const id = result?.parent?.id ?? '#';
                 console.log('avhi', id);
                 console.log({ uri, id });
                 return (
@@ -360,26 +382,6 @@ const SearchCourseNotes = ({
                       </Box>
 
                       <Box display="flex" flexDirection="column" gap={1}>
-                        {/* <IconButton
-                          size="small"
-                          onClick={async () => {
-                           const section = await resolveSectionFromUri(uri);
-                            if (!section) return;
-
-                            // const hash = sectionUriToHash(section.uri);
-                            // if (!hash) return;
-
-                            // router.push(
-                            //   `/course-notes/${courseId}#section/${section.id}`
-                            // );
-
-                            // window.location.href = `/course-notes/${courseId}#${section.id}`;
-                            window.location.href = `/course-notes/${courseId}#${encodeURIComponent(uri)}`;
-                          }}
-                        >
-                          Notes
-                        </IconButton> */}
-
                         <IconButton
                           size="small"
                           onClick={async () => {
@@ -391,11 +393,10 @@ const SearchCourseNotes = ({
 
                         <IconButton
                           size="small"
-                          onClick={() =>
-                            router.push(
-                              `/course-view/${courseId}?fragment=${encodeURIComponent(uri)}`
-                            )
-                          }
+                          onClick={() => {
+                            onClose?.();
+                            navigateToSlideFromUri(foundCourseId, uri);
+                          }}
                         >
                           Slides
                         </IconButton>

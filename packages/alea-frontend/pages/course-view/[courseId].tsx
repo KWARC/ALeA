@@ -157,6 +157,52 @@ function findSection(
   return undefined;
 }
 
+
+function extractAParam(uri: string): string {
+  const match = uri.match(/[?&]a=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : uri;
+}
+
+function resolveSlideFromFragment(
+  fragment: string,
+  slidesUriToIndexMap: SlidesUriToIndexMap
+): { sectionId: string; slideNum: number } | null {
+  const decoded = decodeURIComponent(fragment);
+  const normalizedFragment = extractAParam(decoded);
+
+  let bestMatch: { sectionId: string; slideUri: string; slideIndex: number } | null = null;
+
+  for (const [sectionId, slideMap] of Object.entries(slidesUriToIndexMap)) {
+    if (!slideMap) continue;
+    for (const [slideUri, slideIndex] of Object.entries(slideMap)) {
+      if (
+        normalizedFragment.startsWith(slideUri) ||
+        slideUri.startsWith(normalizedFragment) ||
+        normalizedFragment.includes(slideUri) ||
+        slideUri.includes(normalizedFragment)
+      ) {
+        if (
+          !bestMatch ||
+          slideUri.length > bestMatch.slideUri.length
+        ) {
+          bestMatch = { sectionId, slideUri, slideIndex };
+        }
+      }
+    }
+  }
+
+  if (bestMatch) {
+    return {
+      sectionId: bestMatch.sectionId,
+      slideNum: bestMatch.slideIndex + 1,
+    };
+  }
+
+  return null;
+}
+
+
+
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
@@ -259,53 +305,66 @@ const CourseViewPage: NextPage = () => {
       injectCss(css);
     });
     getSlideCounts(courseId).then(setSlideCounts);
-    getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
+    getSlideUriToIndexMapping(courseId).then((map) => {
+      console.log('Loaded slidesUriToIndexMap:', map);
+      setSlidesUriToIndexMap(map);
+    });
   }, [router.isReady, courses, courseId]);
 
+ 
   useEffect(() => {
     if (!router.isReady) return;
 
     const fragmentParam = router.query.fragment;
     if (!fragmentParam || typeof fragmentParam !== 'string') return;
 
-    if (router.query.sectionId && router.query.slideNum) return;
+    if (!Object.keys(slidesUriToIndexMap).length) return;
 
     const fragment = decodeURIComponent(fragmentParam);
+    console.log('Fragment:', fragment);
+    console.log('All slideUris:', Object.values(slidesUriToIndexMap).flatMap((slideMap) => Object.keys(slideMap)));
 
-    const slideNum = slidesUriToIndexMap[fragment];
-    if (slideNum === undefined) return;
+    const resolved = resolveSlideFromFragment(fragment, slidesUriToIndexMap);
 
-    let foundSectionId: string | undefined;
-
-    for (const [sectionId, slides] of Object.entries(slidesClipInfo)) {
-      if (slides && fragment in slides) {
-        foundSectionId = sectionId;
-        break;
-      }
+    if (!resolved) {
+      console.warn('No slide resolved for fragment', fragment);
+      return;
     }
 
-    if (!foundSectionId) return;
+    const currentSection = router.query.sectionId as string | undefined;
+    const currentSlideNum = Number(router.query.slideNum);
 
-    router.replace({
-      pathname: router.pathname,
-      query: {
-        ...router.query,
-        sectionId: foundSectionId,
-        slideNum: String(slideNum),
+    if (currentSection === resolved.sectionId && currentSlideNum === resolved.slideNum) {
+      return;
+    }
+
+    const { fragment: _ignored, ...restQuery } = router.query;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: {
+          ...restQuery,
+          sectionId: resolved.sectionId,
+          slideNum: String(resolved.slideNum),
+        },
       },
-    });
-  }, [router.isReady, router.query.fragment, slidesUriToIndexMap, slidesClipInfo]);
-  //
+      undefined,
+      { shallow: true }
+    );
+  }, [router.isReady, router.query.fragment, slidesUriToIndexMap]);
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
     axios.get(`/api/get-section-info/${courseId}`).then((r) => {
+      console.log('Raw section info:', r.data);
       const clipIds = {};
       populateClipIds(r.data, clipIds);
       setClipIds(clipIds);
       const slidesClipInfo = {};
       populateSlidesClipInfos(r.data, slidesClipInfo);
       setSlidesClipInfo(slidesClipInfo);
+      console.log('Loaded slidesClipInfo:', slidesClipInfo);
     });
   }, [courseId, router.isReady]);
 
@@ -321,6 +380,9 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
+
+    if (router.query.fragment) return;
+
     if (sectionId && slideNum && viewMode && audioOnlyStr) return;
     const { pathname, query } = router;
     let someParamMissing = false;
@@ -347,7 +409,17 @@ const CourseViewPage: NextPage = () => {
       query.audioOnly = localStore?.getItem('audioOnly') || 'false';
     }
     if (someParamMissing) router.replace({ pathname, query });
-  }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
+  }, [
+    router,
+    router.isReady,
+    router.query.fragment,
+    sectionId,
+    slideNum,
+    viewMode,
+    courseId,
+    audioOnlyStr,
+    slideCounts,
+  ]);
 
   useEffect(() => {
     if (!sectionId) return;

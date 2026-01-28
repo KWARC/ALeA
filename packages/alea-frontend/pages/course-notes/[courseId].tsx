@@ -133,65 +133,32 @@ const CourseNotesPage: NextPage = () => {
     });
   }, [router.isReady, courses, courseId]);
 
-  // // ✅ FIX: wait until FTML DOM is actually rendered
-  // useEffect(() => {
-  //   if (!router.isReady || !toc?.length) return;
-
-  //   const hash = window.location.hash;
-  //   if (!hash) return;
-
-  //   const fragment = decodeURIComponent(hash.slice(1));
-
-  //   let attempts = 0;
-
-  //   const tryScroll = () => {
-  //     const el = document.querySelector(`[fragment-uri="${fragment}"]`);
-
-  //     if (el) {
-  //       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  //       return;
-  //     }
-
-  //     // retry (FTML renders async)
-  //     if (attempts < 20) {
-  //       attempts++;
-  //       requestAnimationFrame(tryScroll);
-  //     }
-  //   };
-
-  //   tryScroll();
-  // }, [router.isReady, toc]);
-
-
   useEffect(() => {
-  if (!router.asPath.includes("#")) return;
+    if (!router.asPath.includes('#')) return;
 
-  const sectionId = decodeURIComponent(
-    router.asPath.split("#")[1]
-  );
+    const sectionId = decodeURIComponent(router.asPath.split('#')[1]);
 
-  if (!sectionId) return;
+    if (!sectionId) return;
 
-  const scrollToSection = () => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      return true;
-    }
-    return false;
-  };
+    const scrollToSection = () => {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return true;
+      }
+      return false;
+    };
 
-  if (scrollToSection()) return;
+    if (scrollToSection()) return;
 
-  // Retry until content appears
-  const interval = setInterval(() => {
-    if (scrollToSection()) {
-      clearInterval(interval);
-    }
-  }, 100);
+    const interval = setInterval(() => {
+      if (scrollToSection()) {
+        clearInterval(interval);
+      }
+    }, 100);
 
-  return () => clearInterval(interval);
-}, [toc]); 
+    return () => clearInterval(interval);
+  }, [toc]);
 
   useEffect(() => {
     async function fetchGottos() {
