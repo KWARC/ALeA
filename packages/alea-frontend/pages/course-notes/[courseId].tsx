@@ -2,12 +2,14 @@
 import { CommentButton } from '@alea/comments';
 import { getAllCourses } from '@alea/spec';
 import {
+  ContentDashboard,
+  LayoutWithFixedMenu,
   NOT_COVERED_SECTIONS,
   SafeFTMLDocument,
   SectionReview,
   TrafficLightIndicator,
 } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { CourseInfo, LectureEntry, PRIMARY_COL, shouldUseDrawer } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import {
@@ -100,6 +102,23 @@ const CourseNotesPage: NextPage = () => {
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
+  const [selectedSectionId, setSelectedSectionId] = useState<string>('');
+
+  useEffect(() => {
+    if (!router.isReady || !toc) return;
+    const hashSection = decodeURIComponent(window.location.hash.slice(1));
+    const storedSection = localStorage.getItem(`lastReadNotesSectionId-${courseId}`);
+    const sectionToRestore = hashSection || storedSection;
+    if (!sectionToRestore) return;
+    setSelectedSectionId(sectionToRestore);
+    if (hashSection !== sectionToRestore) {
+      router.replace({ hash: encodeURIComponent(sectionToRestore) }, undefined, {
+        shallow: true,
+      });
+    }
+  }, [router.isReady, toc, courseId]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -171,6 +190,11 @@ const CourseNotesPage: NextPage = () => {
     return <>Course Not Found!</>;
   }
   const { notes } = courseInfo;
+  const handleSectionClick = (sectionId: string, _sectionUri: string) => {
+    setSelectedSectionId(sectionId);
+    localStorage.setItem(`lastReadNotesSectionId-${courseId}`, sectionId);
+    router.replace({ hash: encodeURIComponent(sectionId) }, undefined, { shallow: true });
+  };
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
@@ -207,48 +231,70 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
+          bgcolor: '#f9fafb',
         }}
       >
-        <SafeFTMLDocument
-          allowFullscreen={false}
-          key={notes}
-          document={{ type: 'FromBackend', uri: notes }}
-          toc={{ Ready: toc }}
-          tocProgress={gottos}
-          sectionWrap={(uri, _) => {
-            return (ch) => (
-              <FragmentWrap
-                uri={uri}
-                fragmentKind={'Section'}
-                children={ch}
-                uriToTitle={uriToTitle.current}
+        <LayoutWithFixedMenu
+          menu={
+            toc?.length > 0 && (
+              <ContentDashboard
+                key={courseId}
+                courseId={courseId}
+                toc={toc}
+                selectedSection={selectedSectionId}
+                onClose={() => setShowDashboard(false)}
+                onSectionClick={handleSectionClick}
               />
-            );
-          }}
-          slideWrap={(uri) => {
-            return (ch) => (
-              <FragmentWrap
-                uri={uri}
-                fragmentKind={'Slide'}
-                children={ch}
-                uriToTitle={uriToTitle.current}
-              />
-            );
-          }}
-          paragraphWrap={(uri, kind) => {
-            if (kind === 'Paragraph') {
+            )
+          }
+          topOffset={64}
+          showDashboard={showDashboard}
+          setShowDashboard={setShowDashboard}
+          drawerAnchor="left"
+        >
+          <SafeFTMLDocument
+            allowFullscreen={false}
+            key={notes}
+            document={{ type: 'FromBackend', uri: notes }}
+            sectionWrap={(uri, _) => {
               return (ch) => (
                 <FragmentWrap
                   uri={uri}
-                  fragmentKind={'Paragraph'}
+                  fragmentKind={'Section'}
                   children={ch}
                   uriToTitle={uriToTitle.current}
                 />
               );
-            }
-          }}
-          onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
-        />
+            }}
+            slideWrap={(uri) => {
+              return (ch) => (
+                <FragmentWrap
+                  uri={uri}
+                  fragmentKind={'Slide'}
+                  children={ch}
+                  uriToTitle={uriToTitle.current}
+                />
+              );
+            }}
+            paragraphWrap={(uri, kind) => {
+              if (kind === 'Paragraph') {
+                return (ch) => (
+                  <FragmentWrap
+                    uri={uri}
+                    fragmentKind={'Paragraph'}
+                    children={ch}
+                    uriToTitle={uriToTitle.current}
+                  />
+                );
+              }
+            }}
+            onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
+            showContent={false}
+            pdfLink={false}
+            chooseHighlightStyle={false}
+            toc="None"
+          />
+        </LayoutWithFixedMenu>
       </Box>
     </MainLayout>
   );
