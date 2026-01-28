@@ -27,6 +27,7 @@ import { GradingContext, GradingDisplay, ShowGradingFor } from './SubProblemAnsw
 import { TourAPIEntry, TourDisplay } from './TourDisplay';
 import TrafficLightIndicator from './TrafficLightIndicator';
 import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
+import { ExamSelect } from './ExamSelect';
 
 import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@alea/spec';
 
@@ -153,6 +154,7 @@ export {
   DimAndURIListDisplay,
   DimIcon,
   DocProblemBrowser,
+  ExamSelect,
   ExpandableContextMenu,
   FixedPositionMenu,
   GradingContext,

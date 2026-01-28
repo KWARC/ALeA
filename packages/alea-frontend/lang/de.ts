@@ -404,7 +404,7 @@ export const de = {
   practiceProblems: {
     practiceProblems: 'Übungsaufgaben',
     practiceProblemsDescription:
-      'Die folgenden Aufgaben sollen Ihnen beim Lernen helfen. Sie decken den Kursstoff nicht erschöpfend ab und es gibt keine Garantie dafür, dass die Aufgaben richtig sind oder dass sie repräsentativ für die Aufgabentypen sind, die in den Tests oder der Prüfung vorkommen werden.',
+      'Diese Aufgaben dienen nur zur Unterstützung beim Lernen, sind nicht vollständig oder garantiert korrekt und spiegeln möglicherweise nicht die tatsächlichen Quiz- oder Prüfungsfragen wider.',
     problems: 'Probleme',
     practice: 'Üben',
   },

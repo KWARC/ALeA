@@ -6,15 +6,10 @@ import {
   ListItemText,
   Paper,
   Typography,
-  Select,
-  MenuItem,
   CircularProgress,
-  Tooltip,
-  InputLabel,
-  FormControl,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
-import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
+import { PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -22,7 +17,8 @@ import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@flexiformal/ftml';
 import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
-import { formatExamLabel } from '../pages/exam-problems';
+
+import { ExamSelect } from '@alea/stex-react-renderer';
 
 interface TitleMetadata {
   uri?: string;
@@ -30,7 +26,6 @@ interface TitleMetadata {
   chapterTitle: string;
   sectionTitle: string;
 }
-
 interface ExamInfo {
   uri: string;
   term?: string;
@@ -66,6 +61,14 @@ interface ProblemListProps {
   courseId: string;
 }
 
+const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
+  return [...exams].sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : 0;
+    const db = b.date ? new Date(b.date).getTime() : 0;
+    return db - da;
+  });
+};
+
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
   const [exams, setExams] = useState<ExamInfo[]>([]);
@@ -77,7 +80,12 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   useEffect(() => {
     if (!courseId) return;
 
-    getExamsForCourse(courseId).then(setExams).catch(console.error);
+    getExamsForCourse(courseId)
+      .then((data) => {
+        const sorted = sortExamsByDateDesc(data);
+        setExams(sorted);
+      })
+      .catch(console.error);
   }, [courseId]);
 
   useEffect(() => {
@@ -147,9 +155,18 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       <Typography variant="h4" my={3} textAlign="center">
         {t.practiceProblems}
       </Typography>
-      <Typography variant="body1" my={3}>
-        {t.practiceProblemsDescription}
-      </Typography>
+
+      <Box sx={{ marginLeft: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+        <Link href={`/peer-grading/${courseId}`} passHref>
+          <Button
+            variant="contained"
+            fullWidth={true}
+            sx={{ height: '56px', px: 4, fontSize: '16px', fontWeight: 'bold' }}
+          >
+            {g.peerGrading}
+          </Button>
+        </Link>
+      </Box>
 
       <Box
         sx={{
@@ -165,10 +182,9 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           variant="body1"
           sx={{ color: '#555', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
         >
-          Old exams are a good source of practice materials. We provide all old exams here. Note
-          that exam style has changed over the years, and the younger exams may be better models for
-          the upcoming exams. Also note that the fact that a topic in the course has not been
-          covered in an exam does not preclude it from being in the upcoming exam.
+          Old exams are great practice resources, but since exam styles evolve, recent exams are
+          better models, and any course topic even if not asked before can still appear in upcoming
+          exams
         </Typography>
 
         <Box
@@ -179,59 +195,25 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
             flexWrap: { xs: 'wrap', sm: 'nowrap' },
           }}
         >
-          <FormControl fullWidth sx={{ maxWidth: { xs: '100%', sm: 500 } }}>
-            <InputLabel id="exam-select-label">Select Exam</InputLabel>
-            <Select
-              labelId="exam-select-label"
-              id="exam-select"
-              label="Select Exam"
-              value={selectedExam}
-              sx={{ height: '56px', bgcolor: '#fff' }}
-              onChange={(e) => {
-                const examUri = e.target.value as string;
-                if (!examUri) return;
-
-                setSelectedExam(examUri);
-
-                router.push({
-                  pathname: '/exam-problems',
-                  query: { examUri },
-                });
-              }}
-            >
-              <MenuItem disabled value="">
-                <em>Select Exam</em>
-              </MenuItem>
-
-              {exams.map((exam) => {
-                const fullTitle = formatExamLabel(exam.uri);
-
-                return (
-                  <MenuItem key={exam.uri} value={exam.uri}>
-                    <Tooltip title={fullTitle} placement="right" arrow>
-                      <Typography noWrap sx={{ maxWidth: '400px' }}>
-                        {fullTitle}
-                      </Typography>
-                    </Tooltip>
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
-
-          <Box sx={{ marginLeft: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
-            <Link href={`/peer-grading/${courseId}`} passHref>
-              <Button
-                variant="contained"
-                fullWidth={true}
-                sx={{ height: '56px', px: 4, fontSize: '16px', fontWeight: 'bold' }}
-              >
-                {g.peerGrading}
-              </Button>
-            </Link>
-          </Box>
+          <ExamSelect
+            exams={exams}
+            courseId={courseId}
+            value={selectedExam}
+            onChange={(examUri) => {
+              setSelectedExam(examUri);
+              router.push({
+                pathname: '/exam-problems',
+                query: { examUri },
+              });
+            }}
+            label="Select Exam"
+          />
         </Box>
       </Box>
+
+      <Typography variant="body1" my={3}>
+        {t.practiceProblemsDescription}
+      </Typography>
 
       <Paper
         sx={{

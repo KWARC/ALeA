@@ -14,7 +14,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getProblemsPerSection, getUserProfile, ProblemData } from '@alea/spec';
+import {
+  formatExamLabelDropdown,
+  getProblemsPerSection,
+  getUserProfile,
+  ProblemData,
+} from '@alea/spec';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -23,10 +28,15 @@ import { getLocaleObject } from './lang/utils';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
 import { getProblemState } from './ProblemDisplay';
+import { ExamSelect } from './ExamSelect';
 
 export interface ExamRef {
   examUri: string;
   examLabel: string;
+}
+
+interface ExamInfoLite {
+  uri: string;
 }
 
 function isValidExamRef(uri?: string) {
@@ -165,8 +175,14 @@ export function PerSectionQuiz({
 
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
-    const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
-    return [...knownOrder, ...rest].filter((cat) => categoryMap[cat]?.length);
+
+    const rest = Object.keys(categoryMap).filter(
+      (cat) => !knownOrder.includes(cat) && cat !== 'exam'
+    );
+
+    return [...knownOrder, ...rest].filter(
+      (cat) => cat === 'syllabus' || cat === 'adventurous' || categoryMap[cat]?.length
+    );
   }, [categoryMap]);
 
   const examProblemIds = useMemo(
@@ -178,12 +194,33 @@ export function PerSectionQuiz({
   );
 
   const problemUri = problemUris[problemIdx];
-  // TODO ALEA4-P3 const response = responses[problemIdx];
 
   const currentProblem = useMemo(() => {
     if (!problemUri) return undefined;
     return problems.find((p) => p.problemId === problemUri);
   }, [problems, problemUri]);
+
+  const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedExamUri(null);
+  }, [problemUri]);
+
+  const examOptions = useMemo<ExamInfoLite[]>(() => {
+    if (!currentProblem?.examRefs) return [];
+
+    const seen = new Map<string, ExamInfoLite>();
+
+    currentProblem.examRefs
+      .filter((e) => isValidExamRef(e.examUri))
+      .forEach((e) => {
+        if (!seen.has(e.examUri)) {
+          seen.set(e.examUri, { uri: e.examUri });
+        }
+      });
+
+    return Array.from(seen.values());
+  }, [currentProblem]);
 
   useEffect(() => {
     if (cachedProblemUris?.length) {
@@ -206,6 +243,9 @@ export function PerSectionQuiz({
             if (!map[p.category]) map[p.category] = [];
             map[p.category].push(p.problemId);
           }
+          if (!map['syllabus']) map['syllabus'] = [];
+          if (!map['adventurous']) map['adventurous'] = [];
+
           setCategoryMap(map);
           setProblems(problems);
 
@@ -413,23 +453,32 @@ export function PerSectionQuiz({
                     {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length}`}
                   </Typography>
 
-                  {currentProblem?.examRefs
-                    ?.filter((exam) => isValidExamRef(exam.examUri))
-                    .slice(0, 1)
-                    .map((exam) => (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {examOptions.length > 0 && !selectedExamUri && (
+                      <ExamSelect
+                        exams={examOptions}
+                        courseId={courseId}
+                        value=""
+                        onChange={(uri) => setSelectedExamUri(uri)}
+                        label="Appeared in exams"
+                        size="small"
+                      />
+                    )}
+
+                    {selectedExamUri && (
                       <Chip
-                        key={exam.examUri}
-                        label={`Open ${exam.examLabel}`}
+                        label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
                         color="error"
-                        clickable
+                        onDelete={() => setSelectedExamUri(null)}
                         onClick={() =>
                           window.open(
-                            `/exam-problems?examUri=${encodeURIComponent(exam.examUri)}`,
+                            `/exam-problems?examUri=${encodeURIComponent(selectedExamUri)}`,
                             '_blank'
                           )
                         }
                       />
-                    ))}
+                    )}
+                  </Box>
                 </Box>
 
                 <Box mb={1}>
