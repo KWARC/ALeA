@@ -121,7 +121,7 @@ const getResourceIcon = (name: ResourceName) => {
 
 async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm);
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
