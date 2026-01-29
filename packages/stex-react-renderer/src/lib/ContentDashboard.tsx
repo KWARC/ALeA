@@ -29,6 +29,9 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
   lbs: [
     'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-qsa&l=en&e=section',
     //'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-inference&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/LBS/course&p=tense/sec&d=tense&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/ComSem&p=nlfrags/sec&d=quantifier-scope-ambiguity&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section'
   ],
   'ai-1': [
     'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
