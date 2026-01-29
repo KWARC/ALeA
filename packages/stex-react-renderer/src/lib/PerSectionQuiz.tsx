@@ -472,7 +472,7 @@ export function PerSectionQuiz({
 
                     {selectedExamUri && (
                       <Chip
-                        label={formatExamLabelDropdown(selectedExamUri)}
+                        label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
                         color="error"
                         onDelete={() => setSelectedExamUri(null)}
                         onClick={() =>

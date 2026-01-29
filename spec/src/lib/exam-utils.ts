@@ -10,20 +10,26 @@ export function getExamMeta(
   const decodedUri = decodeURIComponent(examUri);
   let courseAcronym = '';
 
-  if (!courseAcronym && courseId) {
-    courseAcronym = courseId.toUpperCase();
-  } else {
+  // 1. Agar courseId explicitly passed hai (AI-1 ya AI-2)
+  if (courseId) {
+    // Normalize: if it's just "ai", label it "AI-1", otherwise use the ID (like AI-2)
+    const normalized = courseId.toLowerCase();
+    courseAcronym = normalized === 'ai' ? 'AI-1' : normalized.toUpperCase();
+  }
+
+  // 2. Fallback: Agar courseId nahi hai ya blank hai, toh URL se nikalo
+  if (!courseAcronym) {
     const match = decodedUri.match(/courses\/[^/]+\/([^/]+)/);
     if (match && match[1]) {
-      const rawAcronym = match[1].toUpperCase();
-      courseAcronym = rawAcronym === 'AI' ? 'AI-1' : rawAcronym;
+      const raw = match[1].toLowerCase();
+      // Handle the "ai" -> "AI-1" legacy mapping, but keep "ai-2" as "AI-2"
+      courseAcronym = raw === 'ai' ? 'AI-1' : raw.toUpperCase();
     } else {
-      courseAcronym = 'AI-1';
+      courseAcronym = 'AI-1'; // Absolute fallback
     }
   }
   const dParam = getParamFromUri(decodedUri, 'd') || '';
   const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-
   const pParam = getParamFromUri(decodedUri, 'p') || '';
   const rawTerm = exam?.term || pParam.split('/')[0] || '';
   const formattedTerm = rawTerm.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');

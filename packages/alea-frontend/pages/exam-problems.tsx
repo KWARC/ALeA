@@ -25,11 +25,11 @@ function getCourseIdFromExamUri(examUri?: string) {
   const match = decoded.match(/courses\/[^/]+\/([^/]+)/);
   if (match && match[1]) {
     const cid = match[1].toLowerCase();
+    // Agar URL mein sirf 'ai' hai, toh use 'ai-1' treat karein for backward compatibility
     return cid === 'ai' ? 'ai-1' : cid;
   }
   return null;
 }
-
 export function getExamMetaFromUri(examUri?: string) {
   if (!examUri) return null;
 
