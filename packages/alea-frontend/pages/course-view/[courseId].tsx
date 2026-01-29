@@ -26,6 +26,7 @@ import {
   Action,
   CourseInfo,
   getCoursePdfUrl,
+  getParamFromUri,
   localStore,
   ResourceName,
   shouldUseDrawer,
@@ -157,18 +158,12 @@ function findSection(
   return undefined;
 }
 
-
-function extractAParam(uri: string): string {
-  const match = uri.match(/[?&]a=([^&]+)/);
-  return match ? decodeURIComponent(match[1]) : uri;
-}
-
 function resolveSlideFromFragment(
   fragment: string,
   slidesUriToIndexMap: SlidesUriToIndexMap
 ): { sectionId: string; slideNum: number } | null {
   const decoded = decodeURIComponent(fragment);
-  const normalizedFragment = extractAParam(decoded);
+  const normalizedFragment = getParamFromUri(decoded, 'a') || decoded;
 
   let bestMatch: { sectionId: string; slideUri: string; slideIndex: number } | null = null;
 
@@ -181,10 +176,7 @@ function resolveSlideFromFragment(
         normalizedFragment.includes(slideUri) ||
         slideUri.includes(normalizedFragment)
       ) {
-        if (
-          !bestMatch ||
-          slideUri.length > bestMatch.slideUri.length
-        ) {
+        if (!bestMatch || slideUri.length > bestMatch.slideUri.length) {
           bestMatch = { sectionId, slideUri, slideIndex };
         }
       }
@@ -200,8 +192,6 @@ function resolveSlideFromFragment(
 
   return null;
 }
-
-
 
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
@@ -311,7 +301,6 @@ const CourseViewPage: NextPage = () => {
     });
   }, [router.isReady, courses, courseId]);
 
- 
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -322,7 +311,10 @@ const CourseViewPage: NextPage = () => {
 
     const fragment = decodeURIComponent(fragmentParam);
     console.log('Fragment:', fragment);
-    console.log('All slideUris:', Object.values(slidesUriToIndexMap).flatMap((slideMap) => Object.keys(slideMap)));
+    console.log(
+      'All slideUris:',
+      Object.values(slidesUriToIndexMap).flatMap((slideMap) => Object.keys(slideMap))
+    );
 
     const resolved = resolveSlideFromFragment(fragment, slidesUriToIndexMap);
 

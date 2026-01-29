@@ -6,7 +6,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { searchDocs, type SearchResult, contentToc, TocElem } from '@flexiformal/ftml-backend';
 import { getSecInfo } from '../components/coverage-update';
-import { getAllCourses } from '@alea/spec';
+import { getAllCourses, getSlideUriToIndexMapping } from '@alea/spec';
+import { getParamFromUri } from '@alea/utils';
+
 function findImmediateParentSection(
   targetUri: string,
   toc: TocElem[] | undefined,
@@ -28,13 +30,8 @@ function findImmediateParentSection(
   return null;
 }
 
-function extractAParam(uri: string): string {
-  const match = uri.match(/[?&]a=([^&]+)/);
-  return match ? decodeURIComponent(match[1]) : uri;
-}
-
 function findParentSlideUri(targetUri: string, toc: TocElem[] | undefined): string | undefined {
-  const normalizedTarget = extractAParam(targetUri);
+  const normalizedTarget = getParamFromUri(targetUri, 'a') || targetUri;
 
   let foundSlideUri: string | undefined;
 
@@ -174,16 +171,12 @@ const SearchCourseNotes = ({
 
   async function navigateToSlideFromUri(foundCourseId: string, targetUri: string) {
     try {
-      const mapRes = await fetch(
-        `/api/get-slide-uri-to-index-mapping?courseId=${encodeURIComponent(foundCourseId)}`
-      );
-      if (!mapRes.ok) throw new Error('mapping fetch failed');
-      const mapping = (await mapRes.json()) as Record<string, Record<string, number>>;
+      const mapping = await getSlideUriToIndexMapping(foundCourseId);
 
       const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
 
       console.log('targetUri:', targetUri);
-      console.log('normalizedTarget:', extractAParam(targetUri));
+      console.log('normalizedTarget:', getParamFromUri(targetUri, 'a') ?? targetUri);
       console.log('parentSlideUri:', parentSlideUri);
       console.log(
         'All mapping keys:',
