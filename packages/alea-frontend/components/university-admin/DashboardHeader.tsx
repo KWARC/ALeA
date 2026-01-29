@@ -8,7 +8,6 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { PRIMARY_COL } from '@alea/utils';
 
 interface DashboardHeaderProps {
   semester: string;
@@ -27,14 +26,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleSemForm,
   showSemForm,
 }) => {
-
-
   return (
     <>
       <Typography
         variant="h4"
         gutterBottom
-        sx={{ fontWeight: 700, color: PRIMARY_COL, letterSpacing: 1 }}
+        sx={{ fontWeight: 700, color: 'primary.main', letterSpacing: 1 }}
       >
         University Admin Dashboard
       </Typography>
@@ -51,8 +48,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             {loadingOptions ? (
               <MenuItem disabled>Loading...</MenuItem>
             ) : (
-              semesterOptions.map(opt => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              semesterOptions.map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {opt}
+                </MenuItem>
               ))
             )}
           </Select>
@@ -68,4 +67,4 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </Stack>
     </>
   );
-}; 
+};

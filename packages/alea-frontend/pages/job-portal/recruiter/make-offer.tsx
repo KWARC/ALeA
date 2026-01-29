@@ -26,7 +26,7 @@ import {
 import { Cancel, History, Visibility } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { JobSelect } from './applications';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
@@ -373,7 +373,7 @@ const MakeOffer = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" fontWeight="bold" color={PRIMARY_COL}>
+      <Typography variant="h4" fontWeight="bold" color="primary.main">
         Make Offers
       </Typography>
 

@@ -137,7 +137,7 @@ export function SlideNavBar({
           sx={{
             px: 1,
             py: 0.3,
-            backgroundColor: '#ffffff',
+            backgroundColor: 'background.paper',
             color: 'text.primary',
             border: '1px solid #ccc',
             borderRadius: '24px',
@@ -145,7 +145,7 @@ export function SlideNavBar({
             transition: 'all 0.3s ease',
             '&:hover': {
               backgroundColor: 'primary.main',
-              color: '#ffffff',
+              color: 'background.paper',
               transform: 'scale(1.05)',
             },
           }}

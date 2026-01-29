@@ -1,11 +1,16 @@
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import {
-  getResourcesForUser,
-  updateUserInfoFromToken,
-} from '@alea/spec';
-import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
+  Box,
+  Button,
+  IconButton,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
+import { Action, CourseInfo, CourseResourceAction } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -18,6 +23,7 @@ import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 import { getAllCoursesFromDb } from './api/get-all-courses';
 import { useIsLoggedIn } from '@alea/react-utils';
+import shadows from '../theme/shadows';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -78,6 +84,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   } = getLocaleObject(router);
   const isSmallScreen = useMediaQuery('(max-width:800px)');
   const { loggedIn } = useIsLoggedIn();
+  const theme = useTheme();
 
   return (
     <>
@@ -113,7 +120,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             variant="h2"
             sx={{
               paddingBottom: 2,
-              color: PRIMARY_COL,
+              color: theme.palette.mode === 'dark' ? 'white' : 'primary.main',
               fontFamily: 'sans-serif,roboto',
             }}
           >
@@ -125,6 +132,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             mb="16px"
             fontFamily={'sans-serif,roboto'}
             display="flex"
+            color={theme.palette.mode === 'dark' ? 'white' : undefined}
           >
             {n.aleaDesc}
           </Typography>
@@ -140,7 +148,11 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             </Button>
           )}
           <Button
-            sx={{ margin: '5px 5px 5px 0px' }}
+            sx={{
+              margin: '5px 5px 5px 0px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="outlined"
             onClick={() => {
               router.push('/course-list');
@@ -149,7 +161,11 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             {n.exploreOurCourse}
           </Button>
           <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
+            sx={{
+              margin: '5px 5px 5px 0px',
+              gap: '5px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="contained"
             onClick={() => {
               router.push('/blog');
@@ -159,7 +175,12 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             blog
           </Button>
           <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
+            sx={{
+              margin: '5px 5px 5px 0px',
+              gap: '5px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="outlined"
             onClick={() => {
               router.push('https://kwarc.github.io/bibs/voll-ki/');
@@ -183,7 +204,8 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   );
 };
 
-export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string }) {
+export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
+  const background = bgcolor || 'section.secondary';
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -194,7 +216,7 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        bgcolor,
+        bgcolor: background,
         padding: '20px',
         mb: '-10px',
       }}
@@ -226,12 +248,12 @@ export function CourseCard({ course, currentTerm }) {
       <Box
         sx={{
           cursor: 'pointer',
-          boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
+          boxShadow: shadows[3],
           width: '220px',
-          margin: '15px',
+          margin: '10px',
           textAlign: 'center',
-          height: '260px',
-          backgroundColor: 'rgb(237, 237, 237)',
+          height: '290px',
+          backgroundColor: 'card.background',
           borderRadius: '2rem',
           padding: '1rem',
           transition: 'transform 0.3s',
@@ -241,7 +263,7 @@ export function CourseCard({ course, currentTerm }) {
         }}
       >
         <Image
-          height={120}
+          height={110}
           width={courseId === 'iwgs-1' ? 100 : 200}
           src={courseImage}
           alt="course-image"
@@ -253,13 +275,21 @@ export function CourseCard({ course, currentTerm }) {
               fontSize: '18px',
               fontWeight: 'bold',
               padding: '10px',
-              color: '#003786',
+              color: 'text.primary',
             }}
           >
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
           </Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
-          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              padding: '5px',
+              color: (theme) => (theme.palette.mode === 'dark' ? 'white' : undefined),
+            }}
+          >
+            {instructor}
+          </Typography>
         </Box>
       </Box>
     </Link>
@@ -289,7 +319,7 @@ function AleaFeatures({ img_url, title, description }) {
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '12px', color: '#696969', textAlign: 'center' }}>
+      <Typography sx={{ fontSize: '12px', color: 'text.secondary', textAlign: 'center' }}>
         {description}
       </Typography>
     </Box>
@@ -337,20 +367,20 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: '#F5F5F5', padding: '80px' }}>
+        <Box sx={{ backgroundColor: 'section.secondary', padding: '80px' }}>
           <Box sx={{ margin: '0 auto', maxWidth: '1200px' }}>
             <Typography
               style={{
-                color: '#757575',
+                color: 'text.secondary',
                 fontWeight: '400',
                 fontSize: '20px',
                 textAlign: 'center',
               }}
             >
               <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
-              <span style={{ color: PRIMARY_COL }}>
-                <b> {n.partneredWith.split('+')[2]}</b>
-              </span>
+              <Typography component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                {n.partneredWith.split('+')[2]}
+              </Typography>
               .
             </Typography>
             <br />
@@ -411,7 +441,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
             sx={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: PRIMARY_COL,
+              color: 'primary.main',
               fontSize: '24px',
               marginTop: '30px',
             }}
@@ -452,7 +482,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           <Typography
             sx={{
               fontWeight: 'bold',
-              color: PRIMARY_COL,
+              color: 'primary.main',
               fontSize: '24px',
               marginTop: '30px',
             }}

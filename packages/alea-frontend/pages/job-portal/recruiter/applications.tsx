@@ -19,7 +19,7 @@ import {
   JobPostInfo,
   RecruiterData,
 } from '@alea/spec';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { ApplicationTable } from '../../../components/job-portal/ApplicationsTable';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
@@ -196,7 +196,7 @@ const Applications = () => {
   return (
     <Box sx={{ maxWidth: '1200px', margin: 'auto', p: { xs: '30px 16px', md: '30px' } }}>
       <Box>
-        <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.main">
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>

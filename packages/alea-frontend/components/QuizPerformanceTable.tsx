@@ -20,7 +20,6 @@ import {
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
-import { PRIMARY_COL } from '@alea/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -113,7 +112,7 @@ function QuizPerformanceTable({
                 <TableRow key={quiz.quizId}>
                   <TableCell
                     sx={{
-                      color: PRIMARY_COL,
+                      color: 'primary.main',
                       wordBreak: 'break-word',
                       minWidth: '100px',
                     }}

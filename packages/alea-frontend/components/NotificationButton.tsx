@@ -16,7 +16,7 @@ import {
   updateNotificationSeenTime,
 } from '@alea/spec';
 import { DateView, useIsLoggedIn } from '@alea/react-utils';
-import { PRIMARY_COL, localStore } from '@alea/utils';
+import { localStore } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -65,7 +65,7 @@ function NotificationBell({ shouldRing }: { shouldRing: boolean }) {
   if (!shouldRing) return <NotificationsIcon htmlColor="white" />;
   return (
     <BouncingBox>
-      <NotificationsIcon htmlColor="#0039c1" />
+      <NotificationsIcon htmlColor="blue.500" />
     </BouncingBox>
   );
 }
@@ -180,7 +180,7 @@ function NotificationButton({ bgColor }: { bgColor?: string }) {
             </MenuItem>
           </Link>
         ))}
-        <Box textAlign="center" p="8px" bgcolor={PRIMARY_COL}>
+        <Box textAlign="center" p="8px" bgcolor="primary.main">
           <Link href="/all-notifications">
             <Typography style={{ color: 'white' }}>{t.allNotifications}</Typography>
           </Link>

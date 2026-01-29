@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { Cancel, CheckCircle, ContentCopy, ExpandMore, MenuOpen } from '@mui/icons-material';
 import { ListStepper } from '@alea/stex-react-renderer';
-import { PRIMARY_COL } from '@alea/utils';
 import { generateQuizProblems } from '@alea/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
@@ -80,7 +79,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
     });
   if (problemData?.manualEdits?.length) {
     const latestEdit = problemData.manualEdits[problemData.manualEdits.length - 1];
-    console.log({latestEdit})
+    console.log({ latestEdit });
     return (
       <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
         <Typography variant="body2" color="text.secondary" mt={1}>
@@ -151,7 +150,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
       )}
       {problemData.explanation && (
         <Typography fontSize="0.875rem" color="text.secondary" mt={0.5}>
-          <Typography component="span" sx={{ color: PRIMARY_COL, fontWeight: 500 }}>
+          <Typography component="span" sx={{ color: 'primary.main', fontWeight: 500 }}>
             Explanation:
           </Typography>{' '}
           {problemData.explanation}
@@ -210,7 +209,7 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
           expandIcon={<ExpandMore />}
           sx={{ display: 'flex', alignItems: 'center' }}
         >
-          <Typography variant="h6" sx={{ flexGrow: 1, color: PRIMARY_COL }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, color: 'primary.main' }}>
             Generate Quiz Problems
           </Typography>
           {showQuiz ? (
@@ -282,7 +281,7 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   }}
                 >
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" color={PRIMARY_COL}>
+                    <Typography variant="h5" color="primary.main">
                       Question {currentIdx + 1} of {problems.length}
                     </Typography>
                   </Box>

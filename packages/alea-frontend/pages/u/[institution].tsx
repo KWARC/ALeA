@@ -4,7 +4,6 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
 import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,15 +14,15 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
+import { CourseInfo, PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
     <IconButton
       sx={{
-        bgcolor: PRIMARY_COL,
-        '&:hover, &.Mui-focusVisible': { bgcolor: PRIMARY_COL_DARK_HOVER },
+        bgcolor: 'primary.main',
+        '&:hover, &.Mui-focusVisible': { bgcolor: 'primary.dark' },
       }}
     >
       {children}
@@ -159,7 +158,7 @@ const StudentHomePage: NextPage = ({
               width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
               height={150}
             />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'#04316a'}>
+            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'primary.550'}>
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>

@@ -37,7 +37,7 @@ import {
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
 } from '@alea/spec';
-import { MaAI_COURSES, PRIMARY_COL, localStore } from '@alea/utils';
+import { MaAI_COURSES, localStore } from '@alea/utils';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -339,7 +339,7 @@ const Courses: NextPage = () => {
         <TableContainer component={Paper} sx={{ mt: '20px' }}>
           <Table sx={{ textAlign: 'center', maxWidth: '800px' }}>
             <TableHead>
-              <TableRow sx={{ backgroundColor: PRIMARY_COL }}>
+              <TableRow sx={{ backgroundColor: 'primary.main' }}>
                 <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>{t.allCourses}</TableCell>
               </TableRow>
             </TableHead>

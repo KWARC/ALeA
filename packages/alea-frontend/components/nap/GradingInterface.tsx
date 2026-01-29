@@ -337,7 +337,7 @@ function GradingItemsList({
             <ListItemButton
               key={`${homeworkId}-${questionId}-${studentId}`}
               onClick={(e) => onSelectItem(homeworkId, questionId, studentId, answerId)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : '#ffffff' }}
+              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
             >
               <ListItemIcon>
                 {numSubProblemsInstructorGraded === numSubProblemsAnswered ? (
@@ -456,7 +456,6 @@ function GradingItemDisplay({
       <GradingProblem
         answerClasses={answerClasses}
         onNewGrading={async (acs, feedback) => {
-          
           await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
           refreshGradingInfo();
         }}

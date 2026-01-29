@@ -3,7 +3,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import PublicIcon from '@mui/icons-material/Public';
 import { Box, Tab, Tabs } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { CommentSection } from './comment-section';
@@ -37,10 +36,9 @@ export function CommentNoteToggleView({
   selectedText?: string;
   selectedElement?: any;
   allNotesMode?: boolean;
- 
 }) {
   const t = getLocaleObject(useRouter());
-  const [value, setValue] = useState( defaultPrivate ? 0 : 1);
+  const [value, setValue] = useState(defaultPrivate ? 0 : 1);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -59,7 +57,7 @@ export function CommentNoteToggleView({
               background: '#DDD',
 
               borderRadius: '10px 10px 0 0',
-              borderBottom: `2px solid ${PRIMARY_COL}`,
+              borderBottom: `2px solid ${'primary.main'}`,
               borderTop: `2px solid #AAA`,
               borderLeft: `2px solid #AAA`,
               borderRight: `2px solid #AAA`,
@@ -69,9 +67,9 @@ export function CommentNoteToggleView({
             },
             '& .Mui-selected': {
               background: 'white !important',
-              borderTop: `2px solid ${PRIMARY_COL} !important`,
-              borderLeft: `2px solid ${PRIMARY_COL} !important`,
-              borderRight: `2px solid ${PRIMARY_COL} !important`,
+              borderTop: `2px solid ${'primary.main'} !important`,
+              borderLeft: `2px solid ${'primary.main'} !important`,
+              borderRight: `2px solid ${'primary.main'} !important`,
               borderBottom: `2px solid white !important`,
             },
           }}

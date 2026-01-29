@@ -8,8 +8,8 @@ import {
   getDefiniedaInSectionAgg,
   getLmpUriWeightsAggBulk,
 } from '@alea/spec';
-import { BG_COLOR } from '@alea/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Button,
@@ -57,6 +57,7 @@ const SectionReview = ({
   sectionUri: string;
   sectionTitle: string;
 }) => {
+  const theme = useTheme();
   const [competencyData, setCompetencyData] = useState<NumericCognitiveValues[] | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [definedConcepts, setDefinedConcepts] = useState<ConceptAndDefinition[] | null>(null);
@@ -120,7 +121,7 @@ const SectionReview = ({
               <Tooltip key={dim} title={`${dim}: ${(averages[dim] * 100).toFixed(1)}%`}>
                 <Box
                   className={styles['details-competence-bar']}
-                  bgcolor={BG_COLOR}
+                  bgcolor="section.secondary"
                   onClick={() => setOpenDialog(true)}
                 >
                   <DimIcon dim={dim} white={false} showTitle={true} />

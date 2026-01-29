@@ -1,6 +1,6 @@
 import { getSlides, Slide } from '@alea/spec';
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
-import { getParamsFromUri, PRIMARY_COL } from '@alea/utils';
+import { getParamsFromUri } from '@alea/utils';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -32,7 +32,7 @@ export function getSlideTitle(slide: Slide, index: number) {
 
 export function isLeafSectionId(sectionId: string, secInfo: Record<string, SecInfo>): boolean {
   return !Object.values(secInfo).some(
-    (s) => s.id?.startsWith(`${sectionId}/`) && s.id !== sectionId 
+    (s) => s.id?.startsWith(`${sectionId}/`) && s.id !== sectionId
   );
 }
 
@@ -175,7 +175,7 @@ export function SlidePicker({
         sx={{
           mb: 2,
           backgroundColor: '#f5f5f5',
-          borderLeft: `4px solid ${PRIMARY_COL}`,
+          borderLeft: `4px solid ${'primary.main'}`,
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 2,

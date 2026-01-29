@@ -14,7 +14,7 @@ import {
   SubProblemData,
 } from '@alea/spec';
 import { MdEditor, MdViewer } from '@alea/markdown';
-import { localStore, PRIMARY_COL } from '@alea/utils';
+import { localStore } from '@alea/utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useRouter } from 'next/router';
@@ -222,7 +222,7 @@ export function SubProblemAnswer({
           padding: '5px',
           borderRadius: '5px',
           margin: '10px 0px',
-          border: `1px solid ${PRIMARY_COL}`,
+          border: `1px solid ${'primary.main'}`,
         }}
       >
         {/*mmtHTMLToReact(subProblem.solution.replace(MMT_CUSTOM_ID_PREFIX, ''))*/}
@@ -233,7 +233,7 @@ export function SubProblemAnswer({
     );
   return (
     <>
-      <span style={{ color: PRIMARY_COL, fontWeight: 'bold' }}>
+      <span style={{ color: 'primary.main', fontWeight: 'bold' }}>
         {problem?.subProblemData?.length === 1
           ? t.yourAnswer
           : t.yourAnswerWithIdx
@@ -268,7 +268,7 @@ export function SubProblemAnswer({
             <IconButton
               disabled={!canSaveAnswer}
               onClick={onSaveClick}
-              sx={{ color: PRIMARY_COL, ml: 2 }}
+              sx={{ color: 'primary.main', ml: 2 }}
             >
               <SaveIcon />
             </IconButton>

@@ -56,7 +56,7 @@ export function URIListDisplay({ uris, displayReverseRelation }: URIListDisplayP
             href={uri}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ textDecoration: 'none', color: '#1976d2' }}
+            style={{ textDecoration: 'none', color: 'primary.10' }}
           >
             {conceptUriToName(uri)}
           </a>
