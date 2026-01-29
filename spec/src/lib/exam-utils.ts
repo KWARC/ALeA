@@ -10,7 +10,7 @@ export function getExamMeta(
   const decodedUri = decodeURIComponent(examUri);
   let courseAcronym = '';
 
-  if (courseId) {
+  if (!courseAcronym && courseId) {
     courseAcronym = courseId.toUpperCase();
   } else {
     const match = decodedUri.match(/courses\/[^/]+\/([^/]+)/);
