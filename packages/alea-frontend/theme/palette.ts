@@ -1,7 +1,7 @@
 import { PaletteOptions } from '@mui/material/styles';
 
 // export const lightPalette: PaletteOptions = {
-export const lightPalette = {
+export const lightPalette: any = {
   mode: 'light',
 
   primary: {

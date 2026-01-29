@@ -14,7 +14,7 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
+import { CourseInfo, PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {

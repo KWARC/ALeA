@@ -1,10 +1,10 @@
-import { createTheme, TypographyVariantsOptions } from "@mui/material/styles";
+import { createTheme, TypographyVariantsOptions } from '@mui/material/styles';
 
 const HEADING_LINE_HEIGHT = 1.5;
 const theme = createTheme();
 
-export const TYPOGRAPHY: TypographyVariantsOptions = {
-  fontFamily: `'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif`,//TODO: acc to wald, also look for T1 and T2
+export const typography: TypographyVariantsOptions = {
+  fontFamily: `'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif`, //TODO: acc to wald, also look for T1 and T2
   fontWeightLight: 400,
   fontWeightRegular: 400,
   fontWeightMedium: 600,
@@ -13,10 +13,10 @@ export const TYPOGRAPHY: TypographyVariantsOptions = {
     fontSize: 48,
     lineHeight: HEADING_LINE_HEIGHT,
     fontWeight: 600,
-    [theme.breakpoints.down("lg")]: {
+    [theme.breakpoints.down('lg')]: {
       fontSize: 32,
     },
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down('sm')]: {
       fontSize: 28,
     },
   },
@@ -24,7 +24,7 @@ export const TYPOGRAPHY: TypographyVariantsOptions = {
     fontSize: 30,
     lineHeight: HEADING_LINE_HEIGHT,
     fontWeight: 500,
-    [theme.breakpoints.down("md")]: {
+    [theme.breakpoints.down('md')]: {
       fontSize: 24,
     },
   },
@@ -32,7 +32,7 @@ export const TYPOGRAPHY: TypographyVariantsOptions = {
     fontSize: 24,
     lineHeight: HEADING_LINE_HEIGHT,
     fontWeight: 500,
-    [theme.breakpoints.down("md")]: {
+    [theme.breakpoints.down('md')]: {
       fontSize: 20,
     },
   },
@@ -40,7 +40,7 @@ export const TYPOGRAPHY: TypographyVariantsOptions = {
     fontSize: 20,
     lineHeight: HEADING_LINE_HEIGHT,
     fontWeight: 500,
-    [theme.breakpoints.down("md")]: {
+    [theme.breakpoints.down('md')]: {
       fontSize: 18,
     },
   },
@@ -55,16 +55,15 @@ export const TYPOGRAPHY: TypographyVariantsOptions = {
     fontWeight: 600,
   },
   body1: {
-    fontSize: "16px",
+    fontSize: '16px',
   },
   body2: {
-    fontSize: "14px",
+    fontSize: '14px',
   },
   subtitle1: {
-    fontSize: "12px",
+    fontSize: '12px',
   },
   subtitle2: {
-    fontSize: "10px",
+    fontSize: '10px',
   },
 };
-

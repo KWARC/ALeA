@@ -1,7 +1,7 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, PaletteMode } from '@mui/material/styles';
 import '@mui/material/styles';
 
-import typography from './typography';
+import { typography } from './typography';
 import shadows from './shadows';
 import components from './components';
 import { lightPalette, darkPalette } from './palette';
@@ -42,7 +42,7 @@ declare module '@mui/material/styles' {
   }
 }
 
-export const getTheme = (mode: 'light' | 'dark') =>
+export const getTheme = (mode: PaletteMode) =>
   createTheme({
     palette: mode === 'dark' ? darkPalette : lightPalette,
     typography,
