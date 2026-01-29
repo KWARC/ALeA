@@ -18,7 +18,6 @@ import {
   CourseResourceAction,
   isFauId,
   LectureEntry,
-  PRIMARY_COL,
   ResourceName,
 } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';

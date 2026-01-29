@@ -2,7 +2,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import { PerSectionQuiz } from '@alea/stex-react-renderer';
-import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
+import { getParamFromUri } from '@alea/utils';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { getLocaleObject } from '../lang/utils';
@@ -41,7 +41,7 @@ const PerSectionQuizPage: React.FC = () => {
             {t.problemsFor}&nbsp;
             <span
               style={{
-                color: PRIMARY_COL,
+                color: 'primary.main',
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
               }}

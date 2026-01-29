@@ -7,9 +7,10 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
-import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
+import { Action, CourseInfo, CourseResourceAction } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -83,6 +84,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   } = getLocaleObject(router);
   const isSmallScreen = useMediaQuery('(max-width:800px)');
   const { loggedIn } = useIsLoggedIn();
+  const theme = useTheme();
 
   return (
     <>
@@ -118,7 +120,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             variant="h2"
             sx={{
               paddingBottom: 2,
-              color: 'primary.main',
+              color: theme.palette.mode === 'dark' ? 'white' : 'primary.main',
               fontFamily: 'sans-serif,roboto',
             }}
           >
@@ -130,6 +132,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             mb="16px"
             fontFamily={'sans-serif,roboto'}
             display="flex"
+            color={theme.palette.mode === 'dark' ? 'white' : undefined}
           >
             {n.aleaDesc}
           </Typography>
@@ -145,7 +148,11 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             </Button>
           )}
           <Button
-            sx={{ margin: '5px 5px 5px 0px' }}
+            sx={{
+              margin: '5px 5px 5px 0px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="outlined"
             onClick={() => {
               router.push('/course-list');
@@ -154,7 +161,11 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             {n.exploreOurCourse}
           </Button>
           <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
+            sx={{
+              margin: '5px 5px 5px 0px',
+              gap: '5px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="contained"
             onClick={() => {
               router.push('/blog');
@@ -163,8 +174,13 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
             <FeedIcon />
             blog
           </Button>
-       <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
+          <Button
+            sx={{
+              margin: '5px 5px 5px 0px',
+              gap: '5px',
+              color: theme.palette.mode === 'dark' ? 'white' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
+            }}
             variant="outlined"
             onClick={() => {
               router.push('https://kwarc.github.io/bibs/voll-ki/');
@@ -189,7 +205,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
 };
 
 export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
-  const background = bgcolor || "section.secondary";
+  const background = bgcolor || 'section.secondary';
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -229,14 +245,14 @@ export function CourseCard({ course, currentTerm }) {
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
   return (
     <Link href={`/course-home/${courseId}`}>
-    <Box
+      <Box
         sx={{
           cursor: 'pointer',
           boxShadow: shadows[3],
           width: '220px',
-          margin: '15px',
+          margin: '10px',
           textAlign: 'center',
-          height: '260px',
+          height: '290px',
           backgroundColor: 'card.background',
           borderRadius: '2rem',
           padding: '1rem',
@@ -246,9 +262,8 @@ export function CourseCard({ course, currentTerm }) {
           },
         }}
       >
-        
         <Image
-          height={140}
+          height={110}
           width={courseId === 'iwgs-1' ? 100 : 200}
           src={courseImage}
           alt="course-image"
@@ -266,7 +281,15 @@ export function CourseCard({ course, currentTerm }) {
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
           </Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
-          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              padding: '5px',
+              color: (theme) => (theme.palette.mode === 'dark' ? 'white' : undefined),
+            }}
+          >
+            {instructor}
+          </Typography>
         </Box>
       </Box>
     </Link>

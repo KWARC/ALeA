@@ -15,7 +15,6 @@ import {
 } from '@alea/spec';
 import {
   Action,
-  BG_COLOR,
   CourseInfo,
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
@@ -134,14 +133,14 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
   );
 }
 
-const BG_COLORS = {
-  'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
-  'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
-  krmt: 'radial-gradient(circle, white, #f5f5b7)',
-  gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
-  rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
-  spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-};
+// const BG_COLORS = {
+//   'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
+//   'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
+//   krmt: 'radial-gradient(circle, white, #f5f5b7)',
+//   gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+//   rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
+//   spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+// };
 
 export function CourseHeader({
   courseId,
@@ -152,6 +151,7 @@ export function CourseHeader({
   courseName: string;
   imageLink?: string;
 }) {
+  const theme = useTheme();
   if (!courseName || !courseId) return <></>;
   if (!imageLink) {
     return (
@@ -171,7 +171,7 @@ export function CourseHeader({
           maxHeight="200px"
           overflow="hidden"
           borderBottom="2px solid #DDD"
-          sx={{ backgroundImage: BG_COLORS[courseId] }}
+          sx={{ backgroundImage: theme.palette.gradients?.[courseId] }}
         >
           {allowCrop ? (
             <img
@@ -378,7 +378,10 @@ function CourseScheduleSection({
                           {getWeekdayName(entry.dayOfWeek)}
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                        >
                           🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
                         </Typography>
 
@@ -449,7 +452,10 @@ function CourseScheduleSection({
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                   <CalendarMonthIcon sx={{ color: 'text.primary', fontSize: 20 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16 }}
+                  >
                     Tutorial Schedule
                   </Typography>
                 </Box>
@@ -478,7 +484,10 @@ function CourseScheduleSection({
                           {getWeekdayName(entry.dayOfWeek)}
                         </Typography>
 
-                        <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                        >
                           🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
                         </Typography>
 
@@ -595,7 +604,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
                 padding: 2,
                 borderRadius: '8px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid #1976d2',
+                borderLeft: '4px solid primary.10',
               }}
             >
               <Typography variant="body1" fontWeight="bold">
@@ -760,9 +769,7 @@ const CourseHomePage: NextPage = () => {
   };
 
   return (
-    <MainLayout
-      title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}
-    >
+    <MainLayout title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}>
       <CourseHeader
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
@@ -999,9 +1006,13 @@ const CourseHomePage: NextPage = () => {
         <Box
           mt={4}
           sx={{
+            backgroundColor: 'white',
+            color: 'black',
+            p: 2,
+            borderRadius: 1,
             '& .stex-document, & .ftml-document, & .omdoc-content, & div': {
               backgroundColor: 'transparent !important',
-              color: 'text.primary',
+              color: 'black',
             },
           }}
         >

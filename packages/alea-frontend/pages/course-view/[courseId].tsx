@@ -574,7 +574,7 @@ const CourseViewPage: NextPage = () => {
                       fontWeight: 500,
                       px: 3,
                       whiteSpace: 'nowrap',
-                      bgcolor: '#1976d2',
+                      bgcolor: 'primary.10',
                       color: 'white',
                       '&:hover': {
                         bgcolor: '#1565c0',

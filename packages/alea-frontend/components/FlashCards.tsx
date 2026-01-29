@@ -31,7 +31,7 @@ import {
   LevelIcon,
   SelfAssessment2,
 } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, getParamFromUri, localStore } from '@alea/utils';
+import { getParamFromUri, localStore } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
@@ -315,7 +315,7 @@ export function ItemListWithStatus({
 
   return (
     <table style={{ marginBottom: '20px' }}>
-      <tr style={{ color: PRIMARY_COL }}>
+      <tr style={{ color: 'primary.main' }}>
         <th>{t.concept}</th>
         <th>{t.remember}</th>
         <th>{t.understand}</th>

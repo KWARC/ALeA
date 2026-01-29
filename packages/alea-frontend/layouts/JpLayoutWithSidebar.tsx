@@ -12,7 +12,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { Header } from '../components/Header';
-import { PRIMARY_COL } from '@alea/utils';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useRouter } from 'next/router';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -99,7 +98,7 @@ const Sidebar = ({
           width: isMdUp ? (drawerOpen ? 270 : 120) : 270,
           top: isMdUp ? 0 : 64,
           height: isMdUp ? '100%' : 'calc(100% - 64px)',
-          background: 'linear-gradient(to bottom, #806BE7, #4A69E1, #525AE2, #5C49E0)',
+          background: 'linear-gradient(to bottom, #806BE7, primary.450, #525AE2, #5C49E0)',
           transition: 'width 0.3s',
           borderRadius: isMdUp ? '0 15px 15px 0' : 0,
         },
@@ -125,7 +124,7 @@ const Sidebar = ({
               }}
               sx={{
                 bgcolor: isActive ? '#f9f5f2' : 'transparent',
-                color: isActive ? '#4A69E1' : '#f9f5f2',
+                color: isActive ? 'primary.450' : '#f9f5f2',
                 pr: 4,
                 borderRadius: '30px 0 0px 30px ',
                 '&:hover': isActive
@@ -134,11 +133,11 @@ const Sidebar = ({
                       bgcolor: 'rgba(249, 245, 242, 0.1)',
                     },
                 '&:hover .MuiListItemIcon-root': {
-                  color: PRIMARY_COL,
+                  color: 'primary.main',
                 },
               }}
             >
-              <ListItemIcon sx={{ color: isActive ? PRIMARY_COL : 'white' }}>
+              <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'white' }}>
                 {icon || <DashboardIcon />}
               </ListItemIcon>
               {drawerOpen && <ListItemText primary={label} />}
@@ -237,7 +236,7 @@ const JpLayoutWithSidebar = ({
                 left: 0,
                 zIndex: 1000,
                 bgcolor: '#fff',
-                color: PRIMARY_COL,
+                color: 'primary.main',
                 borderRadius: '50%',
                 m: 1,
                 boxShadow: 1,

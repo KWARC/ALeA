@@ -2,7 +2,7 @@ import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from '../theme';
 import { AppProps } from 'next/app';
 import { UserContextProvider, CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
@@ -46,7 +46,8 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
 
 function CustomApp({ Component, pageProps }: AppProps) {
   const [readyToRender, setReadyToRender] = useState(flamsInitialized);
-  const [mode, setMode] = useState<'light' | 'dark' | 'system'>('system');
+ // const [mode, setMode] = useState<'light' | 'dark' | 'system'>('system');
+   const [mode, setMode] = useState<'light' | 'dark' | 'system'>('light');
 
   const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>('light');
 
@@ -142,22 +143,6 @@ function CustomApp({ Component, pageProps }: AppProps) {
           <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
               <CssBaseline />
-              <GlobalStyles
-                styles={(theme) => ({
-                  '.stex-document, .ftml-document, .omdoc-content': {
-                    backgroundColor: 'transparent !important',
-                  },
-                  '.term, .definition, .concept, [class*="term"], [class*="definition"], [class*="concept"]':
-                    {
-                      backgroundColor: 'transparent !important',
-                      color:
-                        theme.palette.mode === 'dark'
-                          ? '#60a5fa !important'
-                          : `${theme.palette.primary.main} !important`,
-                      textDecoration: 'underline !important',
-                    },
-                })}
-              />
               <MathJaxContext>
                 <FTMLReadyContext.Provider value={readyToRender}>
                   <PositionProvider>

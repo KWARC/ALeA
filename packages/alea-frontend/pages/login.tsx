@@ -15,7 +15,7 @@ import {
   loginUsingRedirect,
   logout,
 } from '@alea/spec';
-import { BG_COLOR, IS_SERVER, setCookie } from '@alea/utils';
+import { IS_SERVER, setCookie } from '@alea/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -133,7 +133,8 @@ const LoginPage: NextPage = () => {
             p: '1.5rem',
             borderRadius: '0.3rem',
             border: '1px solid #dee2e6',
-            backgroundColor: BG_COLOR,
+            backgroundColor: 'background.paper',
+           // backgroundColor: ''card.background'',
           }}
         >
           <br />

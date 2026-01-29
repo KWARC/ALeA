@@ -9,7 +9,6 @@ import {
   Typography,
 } from '@mui/material';
 import { HomeworkStub, LearnerHomeworkInfo, getHomeworkList } from '@alea/spec';
-import { PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -76,7 +75,9 @@ function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
           <TableBody>
             {homeworkData.map((homework, index) => (
               <TableRow key={index}>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   <Link
                     href={{
                       pathname: '/homework-doc',
@@ -84,7 +85,7 @@ function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
                     }}
                     style={{
                       textDecoration: 'none',
-                      color: PRIMARY_COL,
+                      color: 'primary.main',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                     onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
@@ -92,7 +93,9 @@ function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
                     <SafeHtml html={homework.title} />
                   </Link>
                 </TableCell>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   <Link
                     href={{
                       pathname: '/homework-doc',
@@ -100,7 +103,7 @@ function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
                     }}
                     style={{
                       textDecoration: 'none',
-                      color: PRIMARY_COL,
+                      color: 'primary.main',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                     onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
@@ -108,16 +111,24 @@ function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
                     {homework.givenTs}
                   </Link>
                 </TableCell>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   {homework.dueTs}
                 </TableCell>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   {homework.maxPoints}
                 </TableCell>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   {homework.myScore}
                 </TableCell>
-                <TableCell sx={{ color: PRIMARY_COL, wordBreak: 'break-word', minWidth: '100px' }}>
+                <TableCell
+                  sx={{ color: 'primary.main', wordBreak: 'break-word', minWidth: '100px' }}
+                >
                   {homework.avgScore}
                 </TableCell>
               </TableRow>

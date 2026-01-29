@@ -1,5 +1,5 @@
 import { getCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { convertHtmlStringToPlain, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -38,7 +38,7 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
     'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section'
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section',
   ],
 };
 
@@ -213,7 +213,7 @@ function RenderTree({
             cursor: 'pointer',
             color: isSelected ? 'white' : undefined,
             padding: isSelected ? '0 3px' : undefined,
-            backgroundColor: isSelected ? PRIMARY_COL : 'inherit',
+            backgroundColor: isSelected ? 'primary.main' : 'inherit',
             borderRadius: '3px',
           }}
           onClick={(e) => {

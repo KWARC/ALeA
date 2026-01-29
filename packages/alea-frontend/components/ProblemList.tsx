@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
-import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
+import { getParamFromUri } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -201,8 +201,8 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           boxShadow: 3,
           overflowY: 'auto',
           textAlign: 'left',
-          backgroundColor: '#ffffff',
-          borderLeft: `3px solid ${PRIMARY_COL}`,
+          backgroundColor: 'background.paper',
+          borderLeft: `3px solid ${'primary.main'}`,
         }}
       >
         {Object.entries(groupedByChapter).map(([chapter, sections]) => (

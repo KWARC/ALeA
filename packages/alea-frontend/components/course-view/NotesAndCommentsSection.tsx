@@ -35,7 +35,7 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
         <Typography
           variant="body2"
           sx={{
-            color: '#1976d2',
+            color: 'primary.10',
             fontSize: { xs: '0.813rem', sm: '0.875rem' },
             fontWeight: 500,
           }}

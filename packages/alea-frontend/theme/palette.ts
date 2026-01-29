@@ -6,15 +6,15 @@ export const lightPalette = {
 
   primary: {
     main: '#203360',
-
+    10: '#1976d2',
     50: '#f2f4f9',
     100: '#d6ddf0',
     200: '#b8c4e6',
     300: '#9aaadb',
     400: '#5f73b8',
-
+    450: '#4A69E1',
     500: '#203360',
-
+    550: '#04316a',
     600: '#1b2b52',
     700: '#162343',
     800: '#111b34',
@@ -43,6 +43,14 @@ export const lightPalette = {
     primary: '#203360',
     secondary: '#8c9fb1',
     disabled: '#9CB5CF',
+  },
+  gradients: {
+    'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
+    'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
+    krmt: 'radial-gradient(circle, white, #f5f5b7)',
+    gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+    rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
+    spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
   },
 
   header: {
@@ -162,7 +170,14 @@ export const darkPalette: PaletteOptions = {
     default: '#020617',
     paper: '#0F172A',
   },
-
+  gradients: {
+    'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
+    'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
+    krmt: 'radial-gradient(circle, white, #f5f5b7)',
+    gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+    rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
+    spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+  },
   text: {
     primary: '#E5E7EB',
     secondary: '#9CA3AF',

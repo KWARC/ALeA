@@ -1,5 +1,5 @@
 import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL } from '@alea/utils';
+import { CourseInfo } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
 import { NextPage } from 'next';
@@ -60,7 +60,7 @@ const CourseList: NextPage = () => {
                   <Typography display="flex" alignItems="center" fontWeight="bold">
                     {uni.title}{' '}
                     <Link href={uni.url} target="_blank">
-                      <OpenInNewIcon style={{ color: PRIMARY_COL }} />
+                      <OpenInNewIcon style={{ color: 'primary.main' }} />
                     </Link>
                   </Typography>
                   <Typography>{uni.country + ', ' + uni.place}</Typography>

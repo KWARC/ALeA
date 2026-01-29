@@ -213,7 +213,7 @@ const RecorrectionChecker: React.FC = () => {
                                     gap: 0.5,
                                     ml: 1,
                                     textDecoration: 'underline dotted',
-                                    '&:hover': { color: '#1976d2' },
+                                    '&:hover': { color: 'primary.10' },
                                     fontSize: 14,
                                   }}
                                   onClick={() =>

@@ -13,7 +13,6 @@ import {
   Typography,
 } from '@mui/material';
 import { conceptUriToName } from '@alea/spec';
-import { PRIMARY_COL } from '@alea/utils';
 import React from 'react';
 import { ConceptProperty } from './SectionDetailsDialog';
 
@@ -107,12 +106,12 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
             sx={{
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: PRIMARY_COL,
+              color: 'primary.main',
               backgroundColor: '#f8f9fa',
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
-              border: `1px solid ${PRIMARY_COL}30`,
+              border: `1px solid ${'primary.main'}30`,
               wordBreak: 'break-all',
             }}
           >

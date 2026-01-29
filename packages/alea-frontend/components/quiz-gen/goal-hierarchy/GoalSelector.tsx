@@ -22,7 +22,7 @@ interface GoalSelectorProps {
 
 const GOAL_COLORS = {
   selected: '#e3f2fd',
-  selectedBorder: '#1976d2',
+  selectedBorder: 'primary.10',
   hover: '#f5f5f5',
   headerBg: '#fafafa',
   subGoalBg: '#fbfbfb',

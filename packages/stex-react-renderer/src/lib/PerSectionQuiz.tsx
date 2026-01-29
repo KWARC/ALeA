@@ -372,7 +372,7 @@ export function PerSectionQuiz({
                     >
                       <WarningAmberIcon
                         onClick={() => Router.push('/my-profile')}
-                        style={{ ...commonIconStyles, color: '#1976d2' }}
+                        style={{ ...commonIconStyles, color: 'primary.10' }}
                       />
                     </Tooltip>
                   )}
@@ -410,7 +410,7 @@ export function PerSectionQuiz({
                       >
                         <WarningAmberIcon
                           onClick={() => Router.push('/my-profile')}
-                          style={{ ...commonIconStyles, color: '#1976d2' }}
+                          style={{ ...commonIconStyles, color: 'primary.10' }}
                         />
                       </Tooltip>
                     ))}

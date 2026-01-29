@@ -5,7 +5,6 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import { Box, Button, IconButton, Toolbar } from '@mui/material';
 import { ReportProblemPopover } from '@alea/report-a-problem';
 import { PositionContext } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -183,8 +182,8 @@ export default function MainLayout({
           variant="dense"
           sx={{
             mt: '10px',
-            background: PRIMARY_COL,
-            color: SECONDARY_COL,
+            background: 'primary.main',
+            color: 'secondary.main',
             display: 'flex',
             flexDirection: 'row-reverse',
             fontFamily: '"Roboto"',

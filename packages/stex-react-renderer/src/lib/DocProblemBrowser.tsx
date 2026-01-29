@@ -1,7 +1,8 @@
 import { FTML } from '@flexiformal/ftml';
 import { Box, CircularProgress } from '@mui/material';
-import { BG_COLOR, shouldUseDrawer } from '@alea/utils';
+import { shouldUseDrawer } from '@alea/utils';
 import axios from 'axios';
+import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ContentDashboard } from './ContentDashboard';
@@ -86,7 +87,8 @@ export function DocProblemBrowser({
       setShowDashboard={setShowDashboard}
       noFrills={noFrills}
     >
-      <Box px="10px" bgcolor={BG_COLOR}>
+      <Box px="10px" bgcolor="section.secondary">
+      {/* <Box px="10px" bgcolor="background.paper"> */}
         {/*ancestors?.length && (
           <h3>
             <span style={{ color: 'gray' }}>{t.problemsFor}</span> // TODO ALEA4-P1

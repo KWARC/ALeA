@@ -12,8 +12,43 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import styles from '../styles/header.module.scss';
 import NotificationButton from './NotificationButton';
+import { useColorMode } from '../contexts/ColorModeContext';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
+
+function ThemeToggleButton() {
+  const { mode, setMode } = useColorMode();
+
+  const handleModeChange = () => {
+    if (mode === 'light') {
+      setMode('dark');
+    } else if (mode === 'dark') {
+      setMode('system');
+    } else {
+      setMode('light');
+    }
+  };
+
+  const title = `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`;
+
+  return (
+    <Tooltip title={title}>
+      <IconButton onClick={handleModeChange} sx={{ color: 'white','&:hover': {
+      bgcolor:  'action.hover',} }}>
+        {mode === 'dark' ? (
+          <Brightness4Icon />
+        ) : mode === 'light' ? (
+          <Brightness7Icon />
+        ) : (
+          <SettingsBrightnessIcon />
+        )}
+      </IconButton>
+    </Tooltip>
+  );
+}
 
 function UserButton() {
   const router = useRouter();
@@ -169,6 +204,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
         <Box>
           <Box display="flex" alignItems="center">
             <NotificationButton bgColor="primary.400" />
+            <ThemeToggleButton />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
                 <IconButton sx={{ bgcolor: "primary.main", ml: '5px' }}>

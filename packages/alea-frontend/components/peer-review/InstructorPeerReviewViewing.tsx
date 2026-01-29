@@ -40,7 +40,7 @@ export default function InstructorPeerReviewViewing({ courseId }: { courseId: st
   );
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this grade?')) {
-      deleteReview(id,courseId).then(() => {
+      deleteReview(id, courseId).then(() => {
         getReviewItems(courseId).then((items) => setReviewItems(items));
       });
       setSelected(undefined);
@@ -122,7 +122,7 @@ function PeerReviewItemsList({
             <ListItemButton
               key={`${idx}-${questionId}-${checkerId}`}
               onClick={(e) => onSelectItem(id)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : '#ffffff' }}
+              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
             >
               <ListItemText
                 primary={customFeedback ? truncateText(customFeedback, 50) : 'No feedback'}
