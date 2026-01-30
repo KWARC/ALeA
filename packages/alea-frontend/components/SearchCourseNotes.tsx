@@ -8,6 +8,7 @@ import { searchDocs, type SearchResult, contentToc, TocElem } from '@flexiformal
 import { getSecInfo } from '../components/coverage-update';
 import { getAllCourses, getSlideUriToIndexMapping } from '@alea/spec';
 import { getParamFromUri } from '@alea/utils';
+import type { CourseInfo } from '@alea/utils';
 
 function findImmediateParentSection(
   targetUri: string,
@@ -31,25 +32,38 @@ function findImmediateParentSection(
 }
 
 function findParentSlideUri(targetUri: string, toc: TocElem[] | undefined): string | undefined {
-  const normalizedTarget = getParamFromUri(targetUri, 'a') || targetUri;
+  if (!toc) return;
 
-  let foundSlideUri: string | undefined;
+  const targetKey = getParamFromUri(targetUri, 'a') ?? targetUri;
 
-  function recurse(nodes: TocElem[]): boolean {
+  function walk(nodes: TocElem[]): string | undefined {
     for (const node of nodes) {
-      if (node.type === 'Slide' && typeof node.uri === 'string') {
-        if (normalizedTarget.includes(node.uri)) {
-          foundSlideUri = node.uri;
+      if ('uri' in node && typeof node.uri === 'string') {
+        const nodeKey = getParamFromUri(node.uri, 'a') ?? node.uri;
+
+        if (nodeKey === targetKey) {
+          return node.uri;
         }
       }
+
       if ('children' in node && node.children?.length) {
-        if (recurse(node.children)) return true;
+        const found = walk(node.children);
+        if (found) return found;
       }
     }
-    return false;
   }
-  if (toc) recurse(toc);
-  return foundSlideUri;
+
+  return walk(toc);
+}
+
+function getSectionId(node: TocElem | null | undefined): string | undefined {
+  if (!node) return undefined;
+
+  if (node.type === 'Section' || node.type === 'Inputref') {
+    return node.id;
+  }
+
+  return undefined;
 }
 
 const SearchCourseNotes = ({
@@ -70,7 +84,6 @@ const SearchCourseNotes = ({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState(false);
-  console.log({ notesUri });
   const [sections, setSections] = useState<{ id: string; uri: string }[]>([]);
   const [toc, setToc] = useState<any>([]);
 
@@ -84,14 +97,11 @@ const SearchCourseNotes = ({
     if (!notesUri) return;
 
     contentToc({ uri: notesUri }).then(([, toc] = [[], []]) => {
-      console.log({ toc });
       setToc(toc);
     });
   }, [notesUri]);
 
   function getSecIdWrtLoUri(targetUri: string, toc: any) {
-    console.log({ targetUri });
-    console.log({ sections });
     if (toc?.uri === targetUri) return toc.id;
     if (!toc?.children?.length) return;
     const children = toc?.children;
@@ -110,7 +120,7 @@ const SearchCourseNotes = ({
     init();
   }, []);
   const buildCourseTocMap = async (): Promise<CourseTocMap> => {
-    const courses = await getAllCourses();
+    const courses = (await getAllCourses()) as Record<string, CourseInfo>;
 
     const entries = await Promise.all(
       Object.entries(courses ?? {}).map(async ([courseId, courseInfo]) => {
@@ -157,7 +167,6 @@ const SearchCourseNotes = ({
     setHasSearched(true);
     try {
       const res: [number, SearchResult][] = await searchDocs(searchQuery, [notesUri], 15);
-      console.log({ res });
 
       const normalized = (res ?? []).map(([, r]) => r);
       setResults(normalized);
@@ -174,15 +183,6 @@ const SearchCourseNotes = ({
       const mapping = await getSlideUriToIndexMapping(foundCourseId);
 
       const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
-
-      console.log('targetUri:', targetUri);
-      console.log('normalizedTarget:', getParamFromUri(targetUri, 'a') ?? targetUri);
-      console.log('parentSlideUri:', parentSlideUri);
-      console.log(
-        'All mapping keys:',
-        Object.values(mapping).flatMap((slideMap) => Object.keys(slideMap))
-      );
-
       if (!parentSlideUri) {
         router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
         return;
@@ -199,14 +199,6 @@ const SearchCourseNotes = ({
       }
 
       if (foundSectionId && foundSlideNum !== undefined) {
-        console.log('Navigating to:', {
-          foundCourseId,
-          foundSectionId,
-          foundSlideNum,
-          parentSlideUri,
-          mapping,
-        });
-
         router.push(
           `/course-view/${foundCourseId}?sectionId=${encodeURIComponent(
             foundSectionId
@@ -292,14 +284,9 @@ const SearchCourseNotes = ({
                 const uri = res.Document;
 
                 const result = findParentAcrossCourses(uri, courseTocs);
-                const id = result?.parent.id ?? '#';
+                const id = getSectionId(result?.parent) ?? '#';
 
-                if (result) {
-                  console.log('Found in course:', result.courseId);
-                  console.log('Parent section:', result.parent);
-                }
                 const foundCourseId = result?.courseId ?? courseId;
-                console.log({ uri, id });
                 return (
                   <Box key={idx} mb={2}>
                     <Box display="flex" gap={2}>
@@ -355,15 +342,10 @@ const SearchCourseNotes = ({
                 const uri = res.Paragraph.uri;
                 const result = findParentAcrossCourses(uri, courseTocs);
 
-                if (result) {
-                  console.log('Found in course:', result.courseId);
-                  console.log('Parent section:', result.parent);
-                }
                 const foundCourseId = result?.courseId ?? courseId;
 
-                const id = result?.parent?.id ?? '#';
-                console.log('avhi', id);
-                console.log({ uri, id });
+                const id = getSectionId(result?.parent) ?? '#';
+
                 return (
                   <Box key={idx} mb={2}>
                     <Box display="flex" gap={2}>

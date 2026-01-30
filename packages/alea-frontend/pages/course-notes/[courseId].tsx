@@ -10,6 +10,7 @@ import {
 import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
@@ -18,6 +19,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import axios from 'axios';
 import type { NextPage } from 'next';
@@ -144,30 +147,20 @@ const CourseNotesPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.asPath.includes('#')) return;
+    if (!toc) return;
 
     const sectionId = decodeURIComponent(router.asPath.split('#')[1]);
-
     if (!sectionId) return;
 
-    const scrollToSection = () => {
+    requestAnimationFrame(() => {
       const el = document.getElementById(sectionId);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return true;
       }
-      return false;
-    };
+    });
+  }, [toc, router.asPath]);
 
-    if (scrollToSection()) return;
-
-    const interval = setInterval(() => {
-      if (scrollToSection()) {
-        clearInterval(interval);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [toc]);
+  //TODO: Improve navigation
 
   useEffect(() => {
     async function fetchGottos() {
