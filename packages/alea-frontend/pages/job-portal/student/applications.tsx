@@ -237,7 +237,7 @@ const Applications = () => {
             ) : (
               <TableBody>
                 {filteredApplications.length > 0 ? (
-                  filteredApplications.map((jobApplication,idx) => (
+                  filteredApplications.map((jobApplication, idx) => (
                     <TableRow key={jobApplication.id} hover>
                       <TableCell align="center">{idx + 1}</TableCell>
                       <TableCell align="center">
@@ -355,7 +355,15 @@ const Applications = () => {
 };
 
 const Application = () => {
-  return <JpLayoutWithSidebar role="student">{<Applications />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Applications | Job Portal - ALeA"
+      description="View and manage your job applications submitted through the ALeA Job Portal"
+    >
+      {<Applications />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Application;

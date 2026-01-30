@@ -1,43 +1,32 @@
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
-import { canAccessResource, checkIfUserRegisteredOnJP, getUserInfo, isLoggedIn } from '@alea/spec';
+import { addRemoveMember, canAccessResource, checkIfUserRegisteredOnJP } from '@alea/spec';
 import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import MainLayout from '../../layouts/MainLayout';
-
+import { useCurrentUser } from '@alea/react-utils';
+function getJobPortalStudentsAcl() {
+  return `job-portal-students`;
+}
 const JobPortal: NextPage = () => {
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isLogIn, setIsLogIn] = useState(false);
-  const [isStudent, setIsStudent] = useState(false);
-  const [isRecruiter, setIsRecruiter] = useState(false);
   const [showAdminButton, setShowAdminButton] = useState(false);
   const [forceFauLogin, setForceFauLogin] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user, isUserLoading } = useCurrentUser();
+
+  const userId = user?.userId;
+  const isStudent = !!userId && isFauId(userId);
+  const isRecruiter = !!userId && !isFauId(userId);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const loggedIn = isLoggedIn();
-      setIsLogIn(loggedIn);
-      if (loggedIn) {
-        const userInfo = await getUserInfo();
-        const uid = userInfo?.userId;
-        if (uid) {
-          if (isFauId(uid)) setIsStudent(true);
-          else setIsRecruiter(true);
-        }
-        const hasAdminAccess = await canAccessResource(
-          ResourceName.JOB_PORTAL,
-          Action.MANAGE_JOB_TYPES,
-          { instanceId: CURRENT_TERM }
-        );
-        setShowAdminButton(hasAdminAccess);
-      }
-      setAuthChecked(true);
-    };
-    initAuth();
-  }, []);
+    if (isUserLoading || !user) return;
+    canAccessResource(ResourceName.JOB_PORTAL, Action.MANAGE_JOB_TYPES, {
+      instanceId: CURRENT_TERM,
+    }).then(setShowAdminButton);
+  }, [user, isUserLoading]);
 
   if (forceFauLogin) {
     return (
@@ -47,7 +36,7 @@ const JobPortal: NextPage = () => {
     );
   }
   return (
-    <MainLayout title="Job-Portal | VoLL-KI">
+    <MainLayout title="Job-Portal | ALeA">
       <Container maxWidth="sm" sx={{ mt: 8 }}>
         <Box
           sx={{
@@ -78,14 +67,14 @@ const JobPortal: NextPage = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             Choose your role to continue
           </Typography>
-          {!authChecked && (
+          {isUserLoading && (
             <Box display="flex" justifyContent="center" py={4}>
               <CircularProgress />
             </Box>
           )}
-          {authChecked && (
+          {!isUserLoading && (
             <>
-              {(!isLogIn || isStudent) && (
+              {(!user || isStudent) && (
                 <Button
                   fullWidth
                   size="large"
@@ -105,24 +94,38 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={async () => {
-                    if (!isLogIn) {
+                    if (!user) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {
                       const result = await checkIfUserRegisteredOnJP();
-                      router.push(
-                        result?.exists
-                          ? 'job-portal/student/dashboard'
-                          : 'job-portal/register/student'
-                      );
+                      if (result?.exists) {
+                        router.push('job-portal/student/dashboard');
+                      } else {
+                        try {
+                          await addRemoveMember({
+                            memberId: userId,
+                            aclId: getJobPortalStudentsAcl(),
+                            isAclMember: false,
+                            toBeAdded: true,
+                          });
+                        } catch (err) {
+                          console.error('Error adding user to students ACL', err);
+                          alert('Something went wrong. Please try again.');
+                          return;
+                        } finally {
+                          setLoading(false);
+                        }
+                        router.push('job-portal/register/student');
+                      }
                     }
                   }}
                 >
-                  Continue as Student
+                  {loading ? 'Processing...' : 'Continue as Student'}
                 </Button>
               )}
 
-              {(!isLogIn || isRecruiter) && (
+              {(!user || isRecruiter) && (
                 <Button
                   fullWidth
                   size="large"
@@ -142,7 +145,7 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={async () => {
-                    if (!isLogIn) {
+                    if (!user) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {
@@ -179,7 +182,7 @@ const JobPortal: NextPage = () => {
                     },
                   }}
                   onClick={() => {
-                    if (!isLogIn) {
+                    if (!user) {
                       if (window.location.pathname === '/login') return;
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {

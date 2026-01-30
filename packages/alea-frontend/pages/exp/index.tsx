@@ -1,5 +1,5 @@
 import { MdEditor } from '@alea/markdown';
-import { BloomDimension, getUseRdfEncodeUri, setUseRdfEncodeUri } from '@alea/spec';
+import { BloomDimension } from '@alea/spec';
 import { SelfAssessment2 } from '@alea/stex-react-renderer';
 import { localStore } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -8,7 +8,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Button, IconButton } from '@mui/material';
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { SearchBar } from '../../components/SearchBar';
 import MainLayout from '../../layouts/MainLayout';
 
@@ -35,11 +35,6 @@ function InternalButtonLink({ href, children }: any) {
 
 const ExperimentsHome: NextPage = () => {
   const [value, setValue] = useState('# This is a Myst Test\n\n**Math** works: $E=mc^2$.');
-  const [usingRdfEncodeUri, setUsingRdfEncodeUri] = useState(false);
-
-  useEffect(() => {
-    getUseRdfEncodeUri().then(setUsingRdfEncodeUri);
-  }, []);
 
   return (
     <MainLayout title="Experiments | ALeA">
@@ -68,17 +63,7 @@ const ExperimentsHome: NextPage = () => {
                 Concept Position Tracking
               </InternalButtonLink>
               <InternalButtonLink href="/job-portal">Job Portal</InternalButtonLink>
-              <br/>
-              <Button
-                variant="contained"
-                onClick={async () => {
-                  await setUseRdfEncodeUri(!usingRdfEncodeUri);
-                  alert('Updated. Reloading...');
-                  window.location.reload();
-                }}
-              >
-                {usingRdfEncodeUri ? 'Disable' : 'Enable'} RDF encode URI
-              </Button>
+              <br />
             </Box>
             <Box>
               <h2>Paper Prototypes (What we are working towards)</h2>

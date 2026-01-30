@@ -3,12 +3,11 @@ import DownloadIcon from '@mui/icons-material/Download';
 import EmailIcon from '@mui/icons-material/Email';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import { Avatar, Box, Button, Container, Paper, Tab, Tabs, Typography } from '@mui/material';
+import { Avatar, Box, Button, CircularProgress, Container, Paper, Tab, Tabs, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 import {
   ANON_USER_ID_PREFIX,
-  getUserInfo,
   getUserInformation,
   getUserProfile,
   purgeAllMyData,
@@ -28,6 +27,7 @@ import { ProfileTab } from '../components/profile/ProfileTab';
 import { SettingsTab } from '../components/profile/SettingsTab';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
+import { useCurrentUser } from '@alea/react-utils';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -47,7 +47,6 @@ function TabPanel(props) {
 const MyProfilePage = () => {
   const router = useRouter();
   const { myProfile: t, logInSystem: l } = getLocaleObject(router);
-  const [userInfo, setUserInfo] = useState(undefined);
   const [persona, setPresetProfileName] = useState('Blank');
   const [trafficLightStatus, setTrafficLightStatus] = useState(false);
   const [sectionReviewStatus, setSectionReviewStatus] = useState(false);
@@ -56,16 +55,15 @@ const MyProfilePage = () => {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [isProfileUpdated, setIsProfileUpdated] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const { user: userInfo, isUserLoading } = useCurrentUser();
 
   useEffect(() => {
-    getUserInfo().then((info) => {
-      if (!info) {
-        router.push('/login');
-        return;
-      }
-      setUserInfo(info);
-    });
-  }, [router]);
+    if (isUserLoading) return;
+    if (!userInfo) {
+      router.push('/login');
+      return;
+    }
+  }, [isUserLoading, router, userInfo]);
 
   useEffect(() => {
     getUserInformation().then((res) => {
@@ -128,7 +126,7 @@ const MyProfilePage = () => {
     }));
     setIsProfileUpdated(true);
   };
-
+  if (isUserLoading) return <CircularProgress />;
   if (!userInfo) return null;
 
   return (

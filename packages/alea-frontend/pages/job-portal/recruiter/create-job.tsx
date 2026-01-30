@@ -2,14 +2,9 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Step,
   StepLabel,
   Stepper,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -19,9 +14,7 @@ import {
   getRecruiterProfile,
   JobCategoryInfo,
   JobPostFormData,
-  JobPostInfo,
   RecruiterData,
-  updateJobPost,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/navigation';
@@ -34,30 +27,55 @@ import {
 } from '../../../components/job-portal/JobList';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
+export type ValidationErrors = Partial<Record<keyof JobPostFormData, string>>;
+
+export function validateJobPost(data: JobPostFormData, step?: number): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+  if (step === 0 || step === undefined) {
+    if (!data.jobCategoryId) errors.jobCategoryId = 'Job category is required';
+    if (!data.jobTitle.trim()) errors.jobTitle = 'Job title is required';
+    if (!data.workMode) errors.workMode = 'Work mode is required';
+  }
+
+  if (step === 2 || step === undefined) {
+    if (!data.qualification) errors.qualification = 'Qualification is required';
+    if (!data.applicationDeadlineTimestamp_ms) errors.applicationDeadlineTimestamp_ms = 'Deadline is required';
+  }
+
+  return errors;
+}
+
 const JobPostPage = () => {
   const router = useRouter();
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const [loading, setLoading] = useState(true);
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
   const [jobCategories, setJobCategories] = useState<JobCategoryInfo[]>([]);
-  const [selectedJobCategory, setSelectedJobCategory] = useState<string>('');
-  const [selectedJobCategoryId, setSelectedJobCategoryId] = useState<number>(null);
-  const [isFormDisabled, setIsFormDisabled] = useState(true);
-  const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>({
+  const initialJobPostFormData: JobPostFormData = {
+    jobCategoryId: null,
     session: '',
     jobTitle: '',
     workLocation: '',
-    workMode:'',
-    applicationDeadline: '',
-    currency: '',
-    stipend: null,
+    workMode: '',
+    applicationDeadlineTimestamp_ms: null,
     facilities: '',
-    targetYears: '',
+    compensation: {
+      type: 'salary',
+      mode: 'fixed',
+      fixedAmount: null,
+      minAmount: null,
+      maxAmount: null,
+      currency: 'EUR',
+      frequency: 'yearly',
+    },
+    graduationYears: '',
     openPositions: null,
     qualification: '',
     jobDescription: '',
-  });
+  };
+  const [jobPostFormData, setJobPostFormData] = useState<JobPostFormData>(initialJobPostFormData);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   useEffect(() => {
     fetchData();
@@ -89,6 +107,10 @@ const JobPostPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJobPostFormData({ ...jobPostFormData, [name]: value });
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
 
   useEffect(() => {
@@ -107,48 +129,61 @@ const JobPostPage = () => {
     fetchJobCategoryData();
   }, []);
 
-  const handleJobCategoryChange = (event: any) => {
-    const selectedId = event.target.value;
-    setSelectedJobCategoryId(Number(selectedId));
-    const selectedJob = jobCategories.find((job) => job.id === selectedId);
-    if (selectedJob) {
-      setSelectedJobCategory(selectedJob.jobCategory);
-    }
-  };
   useEffect(() => {
-    if (selectedJobCategory) {
-      setJobPostFormData((prevData) => ({
-        ...prevData,
-        session: `${selectedJobCategory}(${CURRENT_TERM})`,
-      }));
-      setIsFormDisabled(false);
-    }
-  }, [selectedJobCategory]);
+    const selectedId = jobPostFormData.jobCategoryId;
+    if (!selectedId) return;
+    const selectedJob = jobCategories.find((job) => job.id === selectedId);
+    if (!selectedJob) return;
+    const categoryName = selectedJob.jobCategory; 
+    setJobPostFormData((prevData) => ({
+      ...prevData,
+      session: `${categoryName}(${CURRENT_TERM})`,
+      compensation: {
+        ...prevData.compensation,
+        frequency: categoryName.toLowerCase() === 'full-time' ? 'yearly' : 'monthly',
+        type: categoryName.toLowerCase() === 'full-time' ? 'salary' : 'stipend',
+      },
+    }));
+  }, [jobPostFormData.jobCategoryId, jobCategories]);
+
   const handleNext = async () => {
+    const validationErrors = validateJobPost(jobPostFormData, activeStep);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+
     if (activeStep < 2) {
       setActiveStep((prev) => prev + 1);
-    } else {
-      const jobPostPayload = {
-        ...jobPostFormData,
-        jobCategoryId: selectedJobCategoryId,
-        organizationId: recruiter?.organizationId,
-      };
-      setIsFormDisabled(true);
+      return;
+    }
+    if (!recruiter?.organizationId) {
+      alert('Missing required data');
+      return;
+    }
+    const jobPostPayload = {
+      ...jobPostFormData,
+      organizationId: recruiter.organizationId,
+    };
+    try {
       setLoading(true);
-      if (selectedJob) {
-        await updateJobPost({ ...jobPostPayload, id: selectedJob.id });
-      } else {
-        await createJobPost(jobPostPayload);
-      }
-      setSelectedJob(null);
+      await createJobPost(jobPostPayload);
+      setJobPostFormData(initialJobPostFormData);
+      setActiveStep(0);
       fetchData();
-      setIsFormDisabled(false);
-      setLoading(false);
       alert('New job created!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to create job. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
+  const hasErrors = Object.values(errors ?? {}).some(Boolean);
+  const isFinalStep = activeStep === 2;
   if (loading) return <CircularProgress />;
   return (
     <Box
@@ -162,36 +197,6 @@ const JobPostPage = () => {
         mx: 'auto',
       }}
     >
-      <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2, bgcolor: 'white' }}>
-        <InputLabel id="job-category-select-label">Select Job Category</InputLabel>
-        <Select
-          labelId="job-category-select-label"
-          value={selectedJobCategoryId}
-          onChange={handleJobCategoryChange}
-          label="Select Job Category"
-          fullWidth
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '8px',
-            },
-            '& .MuiSelect-icon': {
-              right: 8,
-            },
-          }}
-        >
-          {jobCategories.map((job, index) => (
-            <MenuItem key={index} value={job.id}>
-              {job.jobCategory}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {!jobCategories.length && (
-        <Typography color="error" variant="subtitle2">
-          No job categories available. Please contact job portal admin to create job categories so
-          you can create a job post.
-        </Typography>
-      )}
       <Box
         sx={{
           bgcolor: '#ededed',
@@ -200,38 +205,8 @@ const JobPostPage = () => {
           position: 'relative',
         }}
       >
-        {isFormDisabled && (
-          <Tooltip
-            title={
-              !loading && !jobCategories.length && 'No job Categories available to create job.'
-            }
-            arrow
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(64, 56, 64, 0.2)', // Translucent overlay
-                borderRadius: '20px',
-                zIndex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              {loading && (
-                <Box>
-                  <CircularProgress />
-                </Box>
-              )}
-            </Box>
-          </Tooltip>
-        )}
         <Typography variant="h4" fontWeight="bold">
-          {selectedJob ? 'Update Job Post' : 'Create a New Job Post'}
+          Create a New Job Post
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel sx={{ mt: 4 }}>
           {['Job Descriptions', 'Offer Details', 'Eligibility'].map((label) => (
@@ -242,17 +217,36 @@ const JobPostPage = () => {
         </Stepper>
         <Box sx={{ mt: 3 }}>
           {activeStep === 0 && (
-            <JobDescriptionsForm formData={jobPostFormData} handleChange={handleChange} />
+            <JobDescriptionsForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+              jobCategories={jobCategories}
+            />
           )}
           {activeStep === 1 && (
-            <OfferDetailsForm formData={jobPostFormData} handleChange={handleChange} />
+            <OfferDetailsForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+            />
           )}
           {activeStep === 2 && (
-            <EligibilityForm formData={jobPostFormData} handleChange={handleChange} />
+            <EligibilityForm
+              formData={jobPostFormData}
+              handleChange={handleChange}
+              errors={errors}
+            />
           )}
         </Box>
         <Box justifyContent="space-between" sx={{ mt: 4 }} display={'flex'}>
-          <Button onClick={() => router.push('/dashboard')} variant="outlined">
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setJobPostFormData(initialJobPostFormData);
+              setActiveStep(0);
+            }}
+          >
             Cancel
           </Button>
           <Box>
@@ -261,18 +255,30 @@ const JobPostPage = () => {
                 Back
               </Button>
             )}
-            <Button onClick={handleNext} variant="contained">
+            <Button
+              onClick={handleNext}
+              variant="contained"
+              disabled={loading || (isFinalStep && hasErrors)}
+            >
               {activeStep === 2 ? 'Submit' : 'Next'}
             </Button>
           </Box>
         </Box>
       </Box>
-      <JobList recruiter={recruiter} />
+      <JobList recruiter={recruiter} jobCategories ={jobCategories} />
     </Box>
   );
 };
 const CreateJob = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<JobPostPage />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Create Job | Job Portal - ALeA"
+      description="Create and publish new job openings for students on the ALeA Job Portal"
+    >
+      {<JobPostPage />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default CreateJob;

@@ -1,4 +1,3 @@
-import { deleteCookie, getCookie, setCookie } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { LoType } from './flams';
 
@@ -116,10 +115,21 @@ export async function getUriWeights(concepts: string[]): Promise<NumericCognitiv
   });
   return concepts.map((concept) => compMap.get(concept) || cleanupNumericCognitiveValues({}));
 }
+export async function getUriSmileyInternal(data: LmpOutputMultipleResponse, concepts: string[]) {
+  const compMap = new Map<string, SmileyCognitiveValues>();
+  if (!data?.model) return compMap;
+  data.model.forEach((c) => {
+    compMap.set(c.concept, cleanupSmileyCognitiveValues(c.competences as SmileyCognitiveValues));
+  });
+
+  concepts.map((concept) => {
+    if (!compMap.has(concept)) compMap.set(concept, cleanupSmileyCognitiveValues({}));
+  });
+  return compMap;
+}
 
 export async function getUriSmileys(
-  concepts: string[],
-  inputHeaders?: any
+  concepts: string[]
 ): Promise<Map<string, SmileyCognitiveValues>> {
   if (!concepts?.length) return new Map();
   const data: LmpOutputMultipleResponse = await lmpRequest(
@@ -131,19 +141,9 @@ export async function getUriSmileys(
       concepts,
       'special-output': '5StepLikertSmileys',
       'include-confidence': false,
-    },
-    inputHeaders
+    }
   );
-  const compMap = new Map<string, SmileyCognitiveValues>();
-  if (!data?.model) return compMap;
-  data.model.forEach((c) => {
-    compMap.set(c.concept, cleanupSmileyCognitiveValues(c.competences as SmileyCognitiveValues));
-  });
-
-  concepts.map((concept) => {
-    if (!compMap.has(concept)) compMap.set(concept, cleanupSmileyCognitiveValues({}));
-  });
-  return compMap;
+  return getUriSmileyInternal(data, concepts);
 }
 
 export async function getAllMyData(): Promise<{
@@ -182,11 +182,6 @@ export async function purgeAllMyData() {
 export async function reportEvent(event: LMPEvent) {
   return await lmpRequest('lmp', 'lmp/input/events', 'POST', {}, event);
 }
-
-const SERVER_TO_ADDRESS = {
-  lmp: process.env['NEXT_PUBLIC_LMP_URL'],
-  auth: process.env['NEXT_PUBLIC_AUTH_SERVER_URL'],
-};
 
 export type SmileyType = 'smiley-2' | 'smiley-1' | 'smiley0' | 'smiley1' | 'smiley2';
 
@@ -255,16 +250,12 @@ export const ALL_DIMENSIONS = [
 ];
 
 export const SHOW_DIMENSIONS = ALL_DIMENSIONS.slice(0, 3);
-
 export interface UserInfo {
   userId: string;
   givenName: string;
   sn: string;
   fullName: string;
-}
-
-export function getAccessToken() {
-  return getCookie('access_token');
+  issued: number;
 }
 
 const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
@@ -279,30 +270,15 @@ const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
   anushka: ['http://mathhub.info/smglom/mv/mod?structure?mathematical-structure'],
 };
 
-export function isLoggedIn() {
-  return !!getAccessToken();
-}
-
-export function logout() {
-  deleteCookie('access_token');
+export async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
   location.reload();
 }
 
-export function logoutAndGetToLoginPage() {
-  deleteCookie('access_token');
+export async function logoutAndGetToLoginPage() {
+  await fetch('/api/logout', { method: 'POST' });
   const redirectUrl = `/login?target=${encodeURIComponent(window.location.href)}`;
   window.location.replace(redirectUrl);
-}
-
-export function login() {
-  deleteCookie('access_token');
-  location.reload();
-}
-
-export function getAuthHeaders() {
-  const token = getAccessToken();
-  if (!token) return undefined;
-  return { Authorization: 'JWT ' + token };
 }
 
 export function loginUsingRedirect(returnBackUrl?: string) {
@@ -321,7 +297,7 @@ export function loginUsingRedirect(returnBackUrl?: string) {
     return;
   }
 
-  const redirectUrl = `${SERVER_TO_ADDRESS.auth}/login?target=${encodeURIComponent(returnBackUrl)}`;
+  const redirectUrl = `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/login?target=${encodeURIComponent(returnBackUrl)}`;
 
   window.location.replace(redirectUrl);
 }
@@ -333,10 +309,7 @@ export function fakeLoginUsingRedirect(
   persona?: string
 ) {
   if (!name && !persona) {
-    axios.get(`/api/fake-login/${fakeId}`).then((resp) => {
-      // For developers.
-      const access_token = resp.data.access_token;
-      setCookie('access_token', access_token);
+    axios.get(`/api/fake-login/${fakeId}`).then(() => {
       window.location.replace(returnBackUrl || '/');
     });
     return;
@@ -353,7 +326,7 @@ export function fakeLoginUsingRedirect(
   const n = name || fakeId;
 
   const redirectUrl =
-    `${SERVER_TO_ADDRESS.auth}/fake-login?fake-id=${fakeId}&target=${target}` +
+    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${fakeId}&target=${target}` +
     (name ? `&name=${n}` : '');
 
   window.location.replace(redirectUrl);
@@ -364,23 +337,20 @@ export async function lmpRequest(
   apiUrl: string,
   requestType: string,
   defaultVal: any,
-  data?: any,
-  inputHeaders?: any
+  data?: any
 ) {
-  const headers = inputHeaders ? inputHeaders : getAuthHeaders();
-  if (!headers) {
-    return Promise.resolve(defaultVal);
-  }
   try {
-    const serverAddress = SERVER_TO_ADDRESS[server];
-    const fullUrl = `${serverAddress}/${apiUrl}`;
-    const resp =
-      requestType === 'POST'
-        ? await axios.post(fullUrl, data, { headers })
-        : await axios.get(fullUrl, { headers });
+    const resp = await axios.post(`/api/lmp-redirect`, {
+      server,
+      apiUrl,
+      requestType,
+      defaultVal,
+      data,
+    });
     return resp.data;
   } catch (err) {
     const error = err as Error | AxiosError;
+    console.error('LMP Request Unauthorized:', error);
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         logoutAndGetToLoginPage();
@@ -411,13 +381,20 @@ export function cleanupSmileyCognitiveValues(dim: SmileyCognitiveValues): Smiley
     Create: dim.Create || defaultSmiley,
   };
 }
-export function lmpResponseToUserInfo(lmpRespData: any): UserInfo | undefined {
+interface UserInfoLms {
+  user_id: string;
+  given_name: string;
+  sn: string;
+  issued: number;
+}
+export function lmpResponseToUserInfo(lmpRespData: UserInfoLms): UserInfo | undefined {
   if (!lmpRespData) return undefined;
   return {
-    userId: lmpRespData['user_id'],
-    givenName: lmpRespData['given_name'],
-    sn: lmpRespData['sn'],
-    fullName: `${lmpRespData['given_name'] ?? ''} ${lmpRespData['sn'] ?? ''}`,
+    userId: lmpRespData.user_id,
+    givenName: lmpRespData.given_name,
+    sn: lmpRespData.sn,
+    fullName: `${lmpRespData.given_name ?? ''} ${lmpRespData.sn ?? ''}`,
+    issued: lmpRespData.issued,
   };
 }
 

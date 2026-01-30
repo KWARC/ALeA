@@ -22,37 +22,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     workLocation,
     workMode,
     qualification,
-    targetYears,
+    graduationYears,
     openPositions,
-    currency,
-    stipend,
+    compensation,
     facilities,
-    applicationDeadline,
+    applicationDeadlineTimestamp_ms,
   } = req.body;
   if (
     !jobCategoryId ||
     !session ||
     !jobTitle ||
-    !jobDescription ||
-    !workLocation ||
-    !workMode||
+    !workMode ||
     !qualification ||
-    !targetYears ||
-    !openPositions ||
-    !currency ||
-    !stipend ||
-    !facilities ||
-    !applicationDeadline
+    !applicationDeadlineTimestamp_ms
   )
     return res.status(422).end();
-  const applicationDeadlineMySQL = applicationDeadline
-    ? new Date(applicationDeadline).toISOString().slice(0, 19).replace('T', ' ')
-    : null;
+  const normalizedOpenPositions = Number(openPositions) || 0;
+  const applicationDeadlineTimestamp_sec = Math.floor(applicationDeadlineTimestamp_ms / 1000);
 
   const result = await executeAndEndSet500OnError(
     `INSERT INTO jobPost 
-      (jobCategoryId,organizationId ,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline,createdByUserId) 
-     VALUES (?,?,?, ?,?, ?, ?,?,?,?,?,?,?,?,?)`,
+      (jobCategoryId, organizationId, session, jobTitle, jobDescription, workLocation, workMode, qualification, graduationYears, openPositions, compensation, facilities, applicationDeadline, createdByUserId) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), ?)`,
     [
       jobCategoryId,
       organizationId,
@@ -62,12 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       workLocation,
       workMode,
       qualification,
-      targetYears,
-      openPositions,
-      currency,
-      stipend,
+      graduationYears,
+      normalizedOpenPositions,
+      JSON.stringify(compensation),
       facilities,
-      applicationDeadlineMySQL,
+      applicationDeadlineTimestamp_sec,
       userId,
     ],
     res

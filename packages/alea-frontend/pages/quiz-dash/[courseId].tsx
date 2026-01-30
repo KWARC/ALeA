@@ -8,7 +8,6 @@ import {
   canAccessResource,
   getAllCourses,
   getCourseQuizList,
-  getUserInfo,
 } from '@alea/spec';
 import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
@@ -17,6 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
+import { useCurrentUser } from '@alea/react-utils';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import QuizPerformanceTable from '../../components/QuizPerformanceTable';
 import { getLocaleObject } from '../../lang/utils';
@@ -144,9 +144,6 @@ const QuizDashPage: NextPage = () => {
   const { quiz: t, home: tHome } = getLocaleObject(router);
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-
-  const [userId, setUserId] = useState<string | null>(null);
-
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
 
@@ -157,15 +154,13 @@ const QuizDashPage: NextPage = () => {
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
 
   useEffect(() => {
-    getUserInfo().then((i) => {
-      const uid = i?.userId;
-      setUserId(i?.userId);
-      if (!uid) return;
-      isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
-    });
-  });
+    if (!userId) return;
+    isFauId(userId) ? setForceFauLogin(false) : setForceFauLogin(true);
+  }, [user]);
 
   useEffect(() => {
     getAllCourses().then(setCourses);

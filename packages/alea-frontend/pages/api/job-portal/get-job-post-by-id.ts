@@ -2,19 +2,48 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeDontEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { normalizeJobPost } from './get-job-post';
+import { JobPostInfo } from '@alea/spec';
 
-export async function getJobPostByIdOrSetError(jobPostId: string, res:NextApiResponse) {
-  if (!jobPostId) return res.status(422).end();
+export async function getJobPostByIdOrSetError(
+  jobPostId: string,
+  res: NextApiResponse
+): Promise<JobPostInfo | undefined> {
+  if (!jobPostId) {
+    res.status(422).end();
+    return;
+  }
   const results: any = await executeDontEndSet500OnError(
-    `SELECT id,jobCategoryId,organizationId ,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,currency,stipend,facilities,applicationDeadline
-    FROM jobPost 
-    WHERE id = ?`,
+    `
+    SELECT 
+      id,
+      jobCategoryId,
+      organizationId,
+      session,
+      jobTitle,
+      jobDescription,
+      workLocation,
+      workMode,
+      qualification,
+      graduationYears,
+      openPositions,
+      compensation,
+      facilities,
+      UNIX_TIMESTAMP(applicationDeadline) * 1000 AS applicationDeadlineTimestamp_ms
+    FROM jobPost
+    WHERE id = ?
+    `,
     [jobPostId],
     res
   );
   if (!results) return;
-  if (!results.length) return res.status(404).end();
-  return results[0];
+  if (!results.length) {
+    res.status(404).end();
+    return;
+  }
+  const job: any = results[0];
+  const normalizedJobPost = normalizeJobPost(job);
+  return normalizedJobPost;
 }
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;

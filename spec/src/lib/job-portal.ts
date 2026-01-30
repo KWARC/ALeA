@@ -49,7 +49,17 @@ export interface JobCategoryInfo {
   endDate?: string;
   internshipPeriod?: string;
 }
-
+export interface CompensationInfo {
+  type: 'salary' | 'stipend';
+  mode: 'fixed' | 'range';
+  fixedAmount?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  currency: 'EUR' | 'USD';
+  frequency: 'monthly' | 'yearly';
+}
+export const JOB_SORT_OPTIONS = ['salary', 'latestJobPost', 'closestDeadline'] as const;
+export type JobSortOption = typeof JOB_SORT_OPTIONS[number];
 export interface JobPostInfo {
   id: number;
   organizationId: number;
@@ -60,16 +70,19 @@ export interface JobPostInfo {
   workLocation: string;
   workMode: string;
   qualification: string;
-  targetYears: string;
+  graduationYears: string;
   openPositions: number;
-  currency: string;
-  stipend: number;
   facilities: string;
-  applicationDeadline: string;
+  compensation: CompensationInfo;
+  applicationDeadlineTimestamp_ms: number | null;
   createdByUserId?: string;
   createdAt?: string;
 }
-export type JobPostFormData = Omit<JobPostInfo, 'id' | 'organizationId' | 'jobCategoryId'>;
+export interface JobPostEnriched extends JobPostInfo {
+  organization: OrganizationData;
+  alreadyApplied: boolean;
+}
+export type JobPostFormData = Omit<JobPostInfo, 'id' | 'organizationId'>;
 export type InitialJobData = Partial<JobPostInfo>;
 export interface JobApplicationInfo {
   id: number;

@@ -24,19 +24,32 @@ import {
 } from '@mui/material';
 import {
   canAccessResource,
+  CompensationInfo,
   createJobApplication,
   getAllJobPosts,
   getJobApplicationsByUserId,
   getOrganizationProfile,
-  getUserInfo,
+  JOB_SORT_OPTIONS,
+  JobPostEnriched,
+  JobPostInfo,
+  JobSortOption,
   OrganizationData,
 } from '@alea/spec';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import { Action, CURRENT_TERM, epochMsToCivilDate, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import JpLayoutWithSidebar from '../../layouts/JpLayoutWithSidebar';
+import { useCurrentUser } from '@alea/react-utils';
 
-const JobDetailsModal = ({ open, onClose, selectedJob }) => {
+const JobDetailsModal = ({
+  open,
+  onClose,
+  selectedJob,
+}: {
+  open: boolean;
+  onClose: () => void;
+  selectedJob: JobPostEnriched;
+}) => {
   return (
     <Modal open={open} onClose={onClose} closeAfterTransition sx={{ zIndex: 2005 }}>
       <Fade in={open}>
@@ -82,12 +95,12 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
-                <strong>Stipend:</strong> {selectedJob.stipend} {selectedJob.currency}
+                {formatCompensation(selectedJob.compensation)}{' '}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
                 <strong>Application Deadline:</strong> ⏳{' '}
-                {new Date(selectedJob.applicationDeadline).toLocaleDateString()}
+                {epochMsToCivilDate(selectedJob.applicationDeadlineTimestamp_ms)}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
@@ -99,7 +112,7 @@ const JobDetailsModal = ({ open, onClose, selectedJob }) => {
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 3 }}>
-                <strong>Target Years:</strong> {selectedJob.targetYears}
+                <strong>Student Graduation Year:</strong> {selectedJob.graduationYears}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 2 }}>
@@ -208,7 +221,36 @@ export const OrganizationModal = ({
     </Modal>
   );
 };
-export const JobBox = ({ job, onApply, onReadMore }) => {
+export function formatCompensation(c?: CompensationInfo): string | null {
+  if (!c) return null;
+  const typeText = c.type === 'salary' ? 'Salary' : 'Stipend';
+  const freqText =
+    c.frequency === 'yearly' ? 'per year' : c.frequency === 'monthly' ? 'per month' : c.frequency;
+  if (c.mode === 'fixed' && c.fixedAmount != null) {
+    return `${typeText}: ${c.currency} ${c.fixedAmount.toLocaleString()} ${freqText}`;
+  }
+  if (c.mode === 'range') {
+    const minText = c.minAmount != null ? c.minAmount.toLocaleString() : '';
+    const maxText = c.maxAmount != null ? c.maxAmount.toLocaleString() : '';
+    let rangeText = '';
+    if (minText && maxText) rangeText = `${c.currency}${minText} – ${c.currency}${maxText}`;
+    else if (minText) rangeText = `${c.currency}${minText}`;
+    else if (maxText) rangeText = `${c.currency}${maxText}`;
+    if (!rangeText) return null;
+    return `${typeText}:  ${rangeText} ${freqText}`;
+  }
+  return null;
+}
+
+export const JobBox = ({
+  job,
+  onApply,
+  onReadMore,
+}: {
+  job: JobPostEnriched;
+  onApply: (jobPostId: number) => Promise<void>;
+  onReadMore: (job: JobPostEnriched) => void;
+}) => {
   const [openOrgModal, setOpenOrgModal] = useState(false);
   const getIcon = () => {
     if (job.workMode === 'remote')
@@ -275,7 +317,7 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
         </Box>
 
         <Typography variant="body2" gutterBottom>
-          💰 {`${job.stipend} ${job.currency}`}
+          💰 {formatCompensation(job.compensation)}
         </Typography>
 
         <Typography variant="body2" gutterBottom>
@@ -283,7 +325,7 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
         </Typography>
 
         <Typography variant="body2">
-          ⏳ Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
+          ⏳ Deadline: {epochMsToCivilDate(job.applicationDeadlineTimestamp_ms)}
         </Typography>
 
         <Box mt={2}>
@@ -313,13 +355,14 @@ export const JobBox = ({ job, onApply, onReadMore }) => {
 export function SearchJob() {
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [jobPosts, setJobPosts] = useState([]);
+  const [jobPosts, setJobPosts] = useState<JobPostEnriched[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('latestJobPost');
+  const [sortBy, setSortBy] = useState<JobSortOption>('latestJobPost');
   const [filters, setFilters] = useState({ remote: false, onsite: false, hybrid: false });
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedJob, setSelectedJob] = useState<JobPostEnriched>(null);
   const [openJobModal, setOpenJobModal] = useState(false);
   const router = useRouter();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -395,23 +438,36 @@ export function SearchJob() {
       );
     });
   };
+  const getCompensationValue = (job: JobPostInfo): number => {
+    const c = job.compensation;
+    if (!c) return 0;
+    if (c.mode === 'fixed') {
+      return c.fixedAmount ?? 0;
+    }
+    if (c.mode === 'range') {
+      if (c.minAmount != null) return c.minAmount;
+      if (c.maxAmount != null) return c.maxAmount;
+      return 0;
+    }
+    return 0;
+  };
 
-  const handleSort = (filteredJobs) => {
+  const handleSort = (filteredJobs: JobPostEnriched[]) => {
     if (sortBy === 'salary') {
-      return filteredJobs.sort((a, b) => b.stipend - a.stipend);
+      return filteredJobs.sort((a, b) => getCompensationValue(b) - getCompensationValue(a));
     } else if (sortBy === 'latestJobPost') {
       return filteredJobs.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     } else if (sortBy === 'closestDeadline') {
       return filteredJobs.sort(
-        (a, b) =>
-          new Date(b.applicationDeadline).getTime() - new Date(a.applicationDeadline).getTime()
+        (a, b) => a.applicationDeadlineTimestamp_ms - b.applicationDeadlineTimestamp_ms
       );
     }
+    return filteredJobs;
   };
 
-  const handleReadMore = (job) => {
+  const handleReadMore = (job: JobPostEnriched) => {
     setSelectedJob(job);
     setOpenJobModal(true);
   };
@@ -422,8 +478,7 @@ export function SearchJob() {
   };
   const handleApply = async (jobPostId: number) => {
     try {
-      const userInfo = await getUserInfo();
-      if (!userInfo) return;
+      if (!user) return;
       await createJobApplication(jobPostId);
       setJobPosts((prevJobs) =>
         prevJobs.map((job) => (job.id === jobPostId ? { ...job, alreadyApplied: true } : job))
@@ -496,7 +551,7 @@ export function SearchJob() {
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => setSortBy(e.target.value as JobSortOption)}
               label="Sort By"
               sx={{
                 borderRadius: '10px',
@@ -506,9 +561,15 @@ export function SearchJob() {
                 },
               }}
             >
-              <MenuItem value="latestJobPost">Latest</MenuItem>
-              <MenuItem value="salary">Highest Salary</MenuItem>
-              <MenuItem value="closestDeadline">Closest Deadline</MenuItem>
+              {JOB_SORT_OPTIONS.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option === 'salary'
+                    ? 'Highest Salary'
+                    : option === 'latestJobPost'
+                    ? 'Latest'
+                    : 'Closest Deadline'}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -601,7 +662,15 @@ export function SearchJob() {
 }
 
 const JobPage = () => {
-  return <JpLayoutWithSidebar role="student">{<SearchJob />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Search Jobs | Job Portal - ALEA"
+      description="Search and apply for job opportunities through the ALeA Job Portal"
+    >
+      {<SearchJob />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default JobPage;

@@ -8,19 +8,21 @@ const StudyBuddyConnectionsGraph = dynamic(() => import('./StudyBuddyConnections
   ssr: false,
 });
 
-export function StudyBuddyModeratorStats({ courseId }: { courseId: string }) {
+export function StudyBuddyModeratorStats({ courseId, institutionId }: { courseId: string; institutionId: string }) {
+  // TODO(M5): make instanceId dynamic
+  const instanceId = 'WS25-26';
   const [overviewData, setOverviewData] = useState<AllCoursesStats>();
   const [connections, setConnections] = useState<UserStats['connections']>([]);
   const [userIdsAndActiveStatus, setUserIdsAndActiveStatus] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getStudyBuddyUsersStats(courseId);
+      const data = await getStudyBuddyUsersStats(courseId, instanceId, institutionId);
       setOverviewData(data);
       setConnections(data.connections);
       setUserIdsAndActiveStatus(data.userIdsAndActiveStatus);
     };
     fetchData();
-  }, [courseId]);
+  }, [courseId, instanceId, institutionId]);
 
   return (
     <>

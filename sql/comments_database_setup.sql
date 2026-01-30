@@ -96,7 +96,9 @@ CREATE TABLE userInfo (
 
 CREATE TABLE StudyBuddyUsers (
     userId VARCHAR(255) NOT NULL,
-    sbCourseId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+    instanceId VARCHAR(50) NOT NULL,
+    institutionId VARCHAR(50) NOT NULL DEFAULT 'FAU',
 
     active BOOLEAN NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -110,7 +112,7 @@ CREATE TABLE StudyBuddyUsers (
     dayPreference VARCHAR(255),
     createdTimestamp timestamp DEFAULT CURRENT_TIMESTAMP,
 
-    PRIMARY KEY (userId, sbCourseId)
+    PRIMARY KEY (userId, courseId, instanceId, institutionId)
 );
 
 CREATE TABLE BlogPosts (
@@ -135,9 +137,11 @@ CREATE TABLE CdnImages (
 CREATE TABLE StudyBuddyConnections (
     senderId VARCHAR(255) NOT NULL,
     receiverId VARCHAR(255) NOT NULL,
-    sbCourseId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+    instanceId VARCHAR(50) NOT NULL,
+    institutionId VARCHAR(50) NOT NULL DEFAULT 'FAU',
     timeOfIssue TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (senderId, receiverId, sbCourseId)
+    PRIMARY KEY (senderId, receiverId, courseId, instanceId, institutionId)
 );
 
 CREATE TABLE AccessControlList (
@@ -279,12 +283,12 @@ CREATE TABLE studentProfile (
     resumeUrl VARCHAR(2083), 
     email VARCHAR(255) NOT NULL, 
     mobile VARCHAR(15), 
-    programme VARCHAR(255) NOT NULL, 
-    yearOfAdmission YEAR NOT NULL, 
-    yearOfGraduation YEAR, 
+    programme VARCHAR(255), 
+    yearOfAdmission VARCHAR(50) ,
+    yearOfGraduation VARCHAR(50), 
     courses TEXT, 
     about TEXT, 
-    gpa FLOAT,
+    gpa VARCHAR(50),
     location VARCHAR(100),
     altMobile VARCHAR(15),
     socialLinks JSON,
@@ -297,7 +301,7 @@ CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     companyName VARCHAR(255) , 
     domain VARCHAR(255) ,
-    incorporationYear YEAR ,
+    incorporationYear VARCHAR(50) ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
     about TEXT, 
@@ -352,12 +356,11 @@ CREATE TABLE jobPost (
     jobDescription TEXT,                                          
     workLocation VARCHAR(255),                                
     qualification VARCHAR(255),                                   
-    targetYears VARCHAR(255),                                     
+    graduationYears VARCHAR(255),                                     
     openPositions INT,                                            
-    currency VARCHAR(50),                                         
-    stipend DECIMAL(10, 2),                                       
+    compensation JSON,            
     facilities TEXT,                                              
-    applicationDeadline DATETIME,   
+    applicationDeadline TIMESTAMP,   
     workMode VARCHAR(50),
     createdByUserId VARCHAR(50),                              
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
@@ -366,7 +369,6 @@ CREATE TABLE jobPost (
     FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
     FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
 );
-
 
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -422,7 +424,7 @@ CREATE TABLE orgInvitations (
     organizationId int NOT NULL,
     inviteeEmail VARCHAR(255) NOT NULL,
     inviteruserId CHAR(36) NOT NULL,     
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
 );
 

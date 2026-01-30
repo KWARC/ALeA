@@ -390,7 +390,15 @@ const MakeOffer = () => {
 };
 
 const MakeOfferPage = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<MakeOffer />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Make Offer | Job Portal - ALeA"
+      description="Send job offers to selected students and manage offer details on the ALeA Job Portal"
+    >
+      {<MakeOffer />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default MakeOfferPage;

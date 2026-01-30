@@ -26,6 +26,7 @@ import {
   Send,
   Work,
 } from '@mui/icons-material';
+import Head from 'next/head';
 
 const Sidebar = ({
   drawerOpen,
@@ -169,9 +170,13 @@ const Sidebar = ({
 const JpLayoutWithSidebar = ({
   role,
   children,
+  title,
+  description,
 }: {
   role: 'student' | 'recruiter' | 'admin';
   children: any;
+  title?: string;
+  description?: string;
 }) => {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -184,6 +189,20 @@ const JpLayoutWithSidebar = ({
         backgroundColor: '#f4f4f4',
       }}
     >
+      <Head>
+        <title>{title || 'ALeA Job Portal'}</title>
+        <meta
+          name="description"
+          content={
+            description ||
+            'ALeA Job Portal – student profiles, job applications, and recruiter access'
+          }
+        />
+        <link
+          rel="icon"
+          href="https://www.voll-ki.fau.de/wp-content/themes/FAU-Einrichtungen/img/socialmedia/favicon.ico"
+        />
+      </Head>
       <Sidebar drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} role={role} />
       <Box
         sx={{

@@ -1,18 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
+import { isFauId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const userId = await getUserIdIfAuthorizedOrSetError(
-    req,
-    res,
-    ResourceName.JOB_PORTAL,
-    Action.APPLY,
-    { instanceId: CURRENT_TERM }
-  );
-  if (!userId) return;
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId || !isFauId(userId)) return;
 
   const {
     name,
@@ -29,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     resumeUrl,
   } = req.body;
   if (!name || !email) return res.status(422).end();
-  const parsedGpa = gpa ? Number(gpa) : null;
   const result = await executeAndEndSet500OnError(
     `INSERT INTO studentProfile 
       (name,userId, resumeUrl, email,gpa, mobile,altMobile, programme, yearOfAdmission, yearOfGraduation, 
@@ -40,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userId,
       resumeUrl,
       email,
-      parsedGpa,
+      gpa,
       mobile,
       altMobile,
       programme,

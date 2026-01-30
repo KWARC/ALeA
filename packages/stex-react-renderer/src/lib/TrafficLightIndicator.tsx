@@ -4,7 +4,6 @@ import {
   clearWeightsCache,
   getDependenciesForSectionAgg,
   getLmpUriWeightsAggBulk,
-  isLoggedIn
 } from '@alea/spec';
 import { DialogContentText, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -15,6 +14,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useEffect, useState } from 'react';
 import CompetencyTable from './CompetencyTable';
+import { useIsLoggedIn } from '@alea/react-utils';
 
 const trafficLightStyle = {
   width: '30px',
@@ -61,15 +61,15 @@ const TrafficLightIndicator = ({ sectionUri }: { sectionUri: string }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [competencyData, setCompetencyData] = useState<NumericCognitiveValues[] | null>(null);
   const [prereqs, setPrereqs] = useState<string[] | null>(null);
-
+  const { loggedIn } = useIsLoggedIn();
   useEffect(() => {
-    if (!isLoggedIn()) return;
+    if (!loggedIn) return;
 
     getDependenciesForSectionAgg(sectionUri).then((dependencies) => {
       setPrereqs(dependencies);
       getLmpUriWeightsAggBulk(dependencies).then((data) => setCompetencyData(data));
     });
-  }, [sectionUri]);
+  }, [sectionUri, loggedIn]);
 
   const handleBoxClick = () => {
     setDialogOpen(true);

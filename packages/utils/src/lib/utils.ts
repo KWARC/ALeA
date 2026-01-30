@@ -1,4 +1,8 @@
 import { getOuterHTML } from 'domutils';
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+
+dayjs.extend(localizedFormat);
 
 export const BG_COLOR = 'hsl(210, 20%, 98%)';
 export const IS_SERVER = typeof window === 'undefined';
@@ -185,27 +189,17 @@ export function getCookie(name: string) {
   return (parts.pop() as string).split(';').shift();
 }
 
+export function isLoggedInViaCookie() {
+  const cookie = getCookie('is_logged_in');
+  return cookie === 'true';
+}
+
 export function setCookie(name: string, value: string) {
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1); // Set expiry date to one year from now
   const expiry = `; expires=${date.toUTCString()}`;
   const path = '; path=/';
   document.cookie = `${name}=${value}${expiry}${path}`;
-}
-
-export function deleteCookie(name: string) {
-  const EXPIRY_STRING = '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-  document.cookie = name + EXPIRY_STRING;
-  // HACK: In prod, the cookie can comes from 'lms.voll-ki.fau.de'. This server
-  // sets the cookie to the parent domain (voll-ki.fau.de) so that any of its
-  // subdomains can access it.
-  document.cookie = name + `${EXPIRY_STRING} domain=voll-ki.fau.de;`;
-
-  // For a short while cookie domain was set to 'fau.de'. This would allow those users to logout.
-  document.cookie = name + `${EXPIRY_STRING} domain=fau.de;`;
-
-  // For staging server.
-  document.cookie = name + `${EXPIRY_STRING} domain=kwarc.info;`;
 }
 
 export function downloadFile(data: any, fileName: string, fileType: string) {
@@ -332,3 +326,15 @@ export const formatTime = (seconds: number) => {
     return `${minutes} min ${secondsLeft} sec`;
   }
 };
+
+export function dateToEpochMs(dateStr: string) {
+  return dayjs(dateStr).endOf('day').valueOf();
+}
+
+export function epochMsToDateInput(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('YYYY-MM-DD') : '';
+}
+
+export function epochMsToCivilDate(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('LL') : '';
+}

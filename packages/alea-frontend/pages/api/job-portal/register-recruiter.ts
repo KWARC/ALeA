@@ -1,11 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError, executeDontEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  executeDontEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
 import { createAclOrSetError } from '../access-control/create-acl';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
-import { OrganizationData, RecruiterData } from '@alea/spec';
+import { RecruiterData } from '@alea/spec';
 import { getDomainFromEmail, isFauId } from '@alea/utils';
 import { getRecruiterProfileByUserIdOrSet500OnError } from './get-recruiter-profile';
+import { getOrganizationProfileByIdOrSet500OnError } from './get-organization-profile';
 
 export function getOrgAcl(orgId: number) {
   return `org${orgId}-recruiters`;
@@ -81,20 +87,6 @@ async function deleteRecruiterProfileOrSetError(userId: string, res: NextApiResp
   return true;
 }
 
-async function getOrganizationProfileByIdOrSet500OnError(id: number, res: NextApiResponse) {
-  const results: OrganizationData[] = await executeDontEndSet500OnError(
-    `SELECT id,companyName,incorporationYear,isStartup, about, companyType,officeAddress,officePostalCode,website,domain
-      FROM organizationProfile 
-      WHERE id = ? 
-      `,
-    [id],
-    res
-  );
-  if (!results) return;
-  if (!results.length) return res.status(404).end();
-  return results[0];
-}
-
 export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {
   if (!id) return res.status(422).send('Organization id is missing');
   const orgProfile = await getOrganizationProfileByIdOrSet500OnError(id, res);
@@ -112,23 +104,23 @@ async function createOrganizationProfileOrSet500OnError(
   {
     companyName,
     domain,
-    incorporationYear = null,
-    isStartup = null,
-    website = null,
-    about = null,
-    companyType = null,
-    officeAddress = null,
-    officePostalCode = null,
+    incorporationYear,
+    isStartup,
+    website,
+    about,
+    companyType,
+    officeAddress,
+    officePostalCode,
   }: {
     companyName: string;
     domain: string;
-    incorporationYear?: string | null;
-    isStartup?: boolean | null;
-    website?: string | null;
-    about?: string | null;
-    companyType?: string | null;
-    officeAddress?: string | null;
-    officePostalCode?: string | null;
+    incorporationYear?: string;
+    isStartup?: boolean;
+    website?: string;
+    about?: string;
+    companyType?: string;
+    officeAddress?: string;
+    officePostalCode?: string;
   },
   res: NextApiResponse
 ) {
@@ -248,12 +240,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!hasInvite) {
       return res.status(200).json({ message: 'No invite found', showInviteDialog: true });
     }
-    const result = await createRecruiterOrSetError(
-      { name, email, position },
-      orgId,
-      userId,
-      res
-    );
+    const result = await createRecruiterOrSetError({ name, email, position }, orgId, userId, res);
     if (!result) return;
     return res
       .status(200)
