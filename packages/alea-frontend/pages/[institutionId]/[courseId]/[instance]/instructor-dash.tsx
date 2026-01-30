@@ -5,17 +5,20 @@ import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import CourseAccessControlDashboard from '../../components/CourseAccessControlDashboard';
-import CoverageUpdateTab from '../../components/coverage-update';
-import HomeworkManager from '../../components/HomeworkManager';
-import { GradingInterface } from '../../components/nap/GradingInterface';
-import InstructorPeerReviewViewing from '../../components/peer-review/InstructorPeerReviewViewing';
-import QuizDashboard from '../../components/QuizDashboard';
-import { StudyBuddyModeratorStats } from '../../components/StudyBuddyModeratorStats';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader } from '../course-home/[courseId]';
-import CourseMetadata from '../../components/instructor-panel/CourseMetadata';
+import CourseAccessControlDashboard from '../../../../components/CourseAccessControlDashboard';
+import CoverageUpdateTab from '../../../../components/coverage-update';
+import HomeworkManager from '../../../../components/HomeworkManager';
+import { GradingInterface } from '../../../../components/nap/GradingInterface';
+import InstructorPeerReviewViewing from '../../../../components/peer-review/InstructorPeerReviewViewing';
+import QuizDashboard from '../../../../components/QuizDashboard';
+import { StudyBuddyModeratorStats } from '../../../../components/StudyBuddyModeratorStats';
+import MainLayout from '../../../../layouts/MainLayout';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { Typography } from '@mui/material';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -119,15 +122,18 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 
 const InstructorDash: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
-  const institutionId = 'FAU';// TODO(M5)
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    courses,
+    validationError,
+    isValidating,
+    loadingInstanceId,
+  } = useRouteValidation('instructor-dash');
 
-  const instanceId = (router.query.instanceId as string) ?? currentTerm;
   const tab = router.query.tab as TabName;
-
-  const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
 
   const [accessibleTabs, setAccessibleTabs] = useState<TabName[] | undefined>(undefined);
   const [currentTabIdx, setCurrentTabIdx] = useState<number>(0);
@@ -157,16 +163,16 @@ const InstructorDash: NextPage = () => {
     updateRouterQuery(router, newQuery, false);
   };
   useEffect(() => {
-    getAllCourses().then(setCourses);
+    getAllCourses().then(() => {});
   }, []);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !resolvedInstanceId) return;
     async function checkTabAccess() {
       const tabAccessPromises$ = Object.entries(TAB_ACCESS_REQUIREMENTS).map(
         async ([tabName, { resource, actions }]) => {
           for (const action of actions) {
-            if (await canAccessResource(resource, action, { courseId, instanceId: currentTerm })) {
+            if (await canAccessResource(resource, action, { courseId, instanceId: resolvedInstanceId })) {
               return tabName as TabName;
             }
           }
@@ -190,7 +196,7 @@ const InstructorDash: NextPage = () => {
       setAccessibleTabs(sortedTabs);
     }
     checkTabAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
   useEffect(() => {
     if (accessibleTabs === undefined) return;
@@ -208,8 +214,37 @@ const InstructorDash: NextPage = () => {
     }
   }, [tab, router]);
 
+  if (isValidating || loadingInstanceId || !courses) {
+    return (
+      <MainLayout title="Loading... | ALeA">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
+  }
+
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
   const courseInfo = courses?.[courseId];
-  if (!accessibleTabs) return <CircularProgress />;
+  if (!accessibleTabs || !courseInfo || !resolvedInstanceId) {
+    return (
+      <MainLayout title="Loading... | ALeA">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -217,6 +252,8 @@ const InstructorDash: NextPage = () => {
         courseName={courseInfo?.courseName}
         imageLink={courseInfo?.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
       <Box
         sx={{
@@ -256,7 +293,7 @@ const InstructorDash: NextPage = () => {
               tabName={tabName}
               courseId={courseId}
               institutionId={institutionId}
-              instanceId={instanceId}
+              instanceId={resolvedInstanceId}
               quizId={quizId}
               onQuizIdChange={handleQuizIdChange}
             />

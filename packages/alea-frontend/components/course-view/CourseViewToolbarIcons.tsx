@@ -6,7 +6,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { IconButton, Menu, MenuItem, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { CourseInfo, getCoursePdfUrl, localStore } from '@alea/utils';
 import { useState } from 'react';
-import { ViewMode } from '../../pages/course-view/[courseId]';
+import { ViewMode } from '../../utils/courseViewUtils';
 
 interface CourseViewToolbarIconsProps {
   audioOnly: boolean;
