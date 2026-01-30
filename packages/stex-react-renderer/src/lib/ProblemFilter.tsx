@@ -18,10 +18,11 @@ export type FilterType = 'all' | 'quiz' | 'homework' | 'exam' | 'uncategorized';
 
 interface ProblemFilterProps {
   allProblemUris: string[];
+  problems?: { problemId: string; examRefs?: any[] }[];
   onApply: (filtered: string[], type: FilterType) => void;
 }
 
-export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
+export function ProblemFilter({ allProblemUris, problems, onApply }: ProblemFilterProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [filteredProblems, setFilteredProblems] = useState<string[]>(allProblemUris);
   const [tempFilters, setTempFilters] = useState({
@@ -32,6 +33,9 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
   });
   const [filterType, setFilterType] = useState<FilterType>('all');
   const t = getLocaleObject(useRouter()).problemFilter;
+
+  const isExamProblem = (uri: string) =>
+    problems?.find((p) => p.problemId === uri)?.examRefs?.length;
 
   useEffect(() => {
     setFilteredProblems(allProblemUris);
@@ -66,6 +70,8 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
       .map(([key]) => key as FilterType);
 
     const filtered = allProblemUris.filter((uri) => {
+      if (activeTypes.includes('exam') && isExamProblem(uri)) return true;
+
       const type = getProblemType(uri);
       return activeTypes.includes(type);
     });
@@ -101,26 +107,34 @@ export function ProblemFilter({ allProblemUris, onApply }: ProblemFilterProps) {
             {t.filterTitle}
           </Typography>
 
-          {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => (
-            <FormControlLabel
-              key={type}
-              control={
-                <Checkbox
-                  checked={tempFilters[type]}
-                  onChange={handleFilterChange(type)}
-                  size="small"
-                />
-              }
-              label={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                  <span>{t[type]}</span>
-                  <Typography variant="caption" color="text.secondary">
-                    ({allProblemUris.filter((uri) => getProblemType(uri) === type).length})
-                  </Typography>
-                </Box>
-              }
-            />
-          ))}
+          {(['quiz', 'homework', 'exam', 'uncategorized'] as const).map((type) => {
+            const typecount =
+              type === 'exam'
+                ? problems?.filter((p) => p.examRefs?.length).length ?? 0
+                : allProblemUris.filter((uri) => getProblemType(uri) === type).length;
+
+            return (
+              <FormControlLabel
+                key={type}
+                control={
+                  <Checkbox
+                    disabled={type === 'exam' && !problems?.length}
+                    checked={tempFilters[type]}
+                    onChange={handleFilterChange(type)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <span>{t[type]}</span>
+                    <Typography variant="caption" color="text.secondary">
+                      ({typecount})
+                    </Typography>
+                  </Box>
+                }
+              />
+            );
+          })}
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button size="small" onClick={handleFilterClose}>
