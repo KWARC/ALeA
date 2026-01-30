@@ -150,6 +150,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', my: 3, gap: 2 }}>
+        {/* Old exams */}
         <Select
           displayEmpty
           size="small"
@@ -162,7 +163,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
             setSelectedExam(examUri);
             router.push({
               pathname: '/exam-problems',
-              query: { examUri },
+              query: { examUri,courseId },
             });
           }}
         >
