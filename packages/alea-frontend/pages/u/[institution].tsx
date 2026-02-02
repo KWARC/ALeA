@@ -158,7 +158,7 @@ const StudentHomePage: NextPage = ({
               width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
               height={150}
             />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'primary.550'}>
+            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'blue.800'}>
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>

@@ -1,4 +1,4 @@
-import { createTheme, PaletteMode } from '@mui/material/styles';
+import { Color, createTheme, PaletteMode } from '@mui/material/styles';
 import '@mui/material/styles';
 
 import { typography } from './typography';
@@ -8,37 +8,12 @@ import { lightPalette, darkPalette } from './palette';
 
 declare module '@mui/material/styles' {
   interface Palette {
-    header: {
-      main: string;
-      text: string;
-    };
-    section: {
-      secondary: string;
-    };
-    card: {
-      background: string;
-      border: string;
-    };
-    page: {
-      background: string;
-    };
+    blue: Color & { sky?: string };
+    gradients: Record<string, string>;
   }
-
   interface PaletteOptions {
-    header?: {
-      main: string;
-      text: string;
-    };
-    section?: {
-      secondary: string;
-    };
-    card?: {
-      background: string;
-      border: string;
-    };
-    page?: {
-      background: string;
-    };
+    blue?: Partial<Color & { sky?: string }>;
+    gradients?: Record<string, string>;
   }
 }
 

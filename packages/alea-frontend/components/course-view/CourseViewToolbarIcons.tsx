@@ -43,10 +43,10 @@ export default function CourseViewToolbarIcons({
           size={isMobile ? 'small' : 'medium'}
           sx={{
             border: { xs: '1.5px solid', sm: '2px solid' },
-            borderColor: audioOnly ? 'primary.10' : '#9e9e9e',
+            borderColor: audioOnly ? 'blue.sky' : '#9e9e9e',
             borderRadius: { xs: 1.5, sm: 2 },
             bgcolor: audioOnly ? '#e3f2fd' : 'white',
-            color: audioOnly ? 'primary.10' : '#616161',
+            color: audioOnly ? 'blue.sky' : '#616161',
             opacity: isVideoHidden ? 0.5 : 1,
             padding: { xs: '6px', sm: '8px' },
             '&:hover': {
@@ -126,10 +126,10 @@ export default function CourseViewToolbarIcons({
             size={isMobile ? 'small' : 'medium'}
             sx={{
               border: { xs: '1.5px solid', sm: '2px solid' },
-              borderColor: 'primary.10',
+              borderColor: 'blue.sky',
               borderRadius: { xs: 1.5, sm: 2 },
               bgcolor: 'white',
-              color: 'primary.10',
+              color: 'blue.sky',
               padding: { xs: '6px', sm: '8px' },
               '&:hover': {
                 bgcolor: '#e3f2fd',

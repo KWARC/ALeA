@@ -147,8 +147,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
 };
 
 export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
-  const theme = useTheme();
-  const background = bgcolor || theme.palette.section.secondary;
+  const background = bgcolor || 'secondary.main';
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -198,9 +197,9 @@ export function CourseCard({ course, currentTerm }) {
           margin: '20px',
           textAlign: 'center',
           height: '300px',
-          backgroundColor: 'card.background',
+          backgroundColor: 'secondary.main',
           border: '1px solid',
-          borderColor: 'card.border',
+          borderColor: 'divider',
           borderRadius: '2rem',
           padding: '2rem',
           transition: 'transform 0.3s',

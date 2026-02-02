@@ -134,7 +134,6 @@ const LoginPage: NextPage = () => {
             borderRadius: '0.3rem',
             border: '1px solid #dee2e6',
             backgroundColor: 'background.paper',
-           // backgroundColor: ''card.background'',
           }}
         >
           <br />

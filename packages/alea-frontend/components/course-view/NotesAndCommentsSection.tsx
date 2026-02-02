@@ -8,7 +8,7 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
       sx={{
         mt: { xs: 2, sm: 3 },
         borderRadius: 2,
-        bgcolor: 'white',
+        bgcolor: 'background.paper',
         overflow: 'hidden',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
@@ -18,7 +18,7 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
           px: { xs: 2, sm: 3 },
           py: 2,
           borderBottom: '1px solid #e5e5e5',
-          background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+          bgcolor: 'blue.100'
         }}
       >
         <Typography
@@ -35,7 +35,7 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
         <Typography
           variant="body2"
           sx={{
-            color: 'primary.10',
+            color: 'blue.sky',
             fontSize: { xs: '0.813rem', sm: '0.875rem' },
             fontWeight: 500,
           }}

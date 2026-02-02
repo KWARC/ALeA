@@ -176,7 +176,7 @@ export default function RecruiterRegistration() {
             variant="h4"
             fontWeight="bold"
             gutterBottom
-            color="primary.450 "
+            color="blue.400 "
             sx={{ mb: 4 }}
           >
             Recruiter Registration
@@ -229,7 +229,7 @@ export default function RecruiterRegistration() {
             fullWidth
             sx={{
               mt: 4,
-              bgcolor: 'primary.450 ',
+              bgcolor: 'blue.400 ',
               textTransform: 'none',
               fontWeight: 600,
               py: 1.5,

@@ -574,7 +574,7 @@ const CourseViewPage: NextPage = () => {
                       fontWeight: 500,
                       px: 3,
                       whiteSpace: 'nowrap',
-                      bgcolor: 'primary.10',
+                      bgcolor: 'blue.sky',
                       color: 'white',
                       '&:hover': {
                         bgcolor: '#1565c0',
@@ -719,7 +719,7 @@ const CourseViewPage: NextPage = () => {
                   p: { xs: 2, sm: 3 },
                   mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
-                  bgcolor: '#fff9e6',
+                  bgcolor: 'warning.50',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                   border: '1px solid #ffeaa7',
                 }}
@@ -729,7 +729,7 @@ const CourseViewPage: NextPage = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#1a1a1a',
+                      color: 'text.primary',
                       fontSize: { xs: '1rem', sm: '1.125rem' },
                     }}
                   >
@@ -747,7 +747,8 @@ const CourseViewPage: NextPage = () => {
                     <Box
                       sx={{
                         my: 2,
-                        borderTop: '2px dashed #fdcb6e',
+                        borderTop: '2px dashed ',
+                        borderColor: 'warning.500',//TODO: check at different places for default color applied
                       }}
                     />
                   )}

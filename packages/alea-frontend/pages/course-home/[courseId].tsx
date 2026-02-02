@@ -333,7 +333,7 @@ function CourseScheduleSection({
                   px: { xs: 1, sm: 2 },
                   py: { xs: 1, sm: 1.5 },
                   borderRadius: 1,
-                  bgcolor: 'section.secondary',
+                  bgcolor: 'secondary.main',
                   border: '1px solid',
                   borderColor: 'divider',
                 }}
@@ -445,7 +445,7 @@ function CourseScheduleSection({
                   px: { xs: 1, sm: 2 },
                   py: { xs: 1, sm: 1.5 },
                   borderRadius: 1,
-                  bgcolor: 'section.secondary',
+                  bgcolor: 'secondary.main',
                   border: '1px solid',
                   borderColor: 'divider',
                 }}
@@ -604,7 +604,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
                 padding: 2,
                 borderRadius: '8px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid primary.10',
+                borderLeft: '4px solid blue.sky',
               }}
             >
               <Typography variant="body1" fontWeight="bold">
@@ -1003,7 +1003,7 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         )}
-        <Box
+        {/* <Box
           mt={4}
           sx={{
             backgroundColor: 'white',
@@ -1015,16 +1015,18 @@ const CourseHomePage: NextPage = () => {
               color: 'black',
             },
           }}
-        >
-          <SafeFTMLDocument
-            document={{ type: 'FromBackend', uri: landing }}
-            showContent={false}
-            toc="None"
-          />
-        </Box>
-
-        <RecordedSyllabus courseId={courseId} />
+        > */}
+        <SafeFTMLDocument
+          document={{ type: 'FromBackend', uri: landing }}
+          showContent={false}
+          toc="None"
+          pdfLink={false}
+          chooseHighlightStyle={false}
+        />
       </Box>
+
+      <RecordedSyllabus courseId={courseId} />
+      {/* </Box> */}
     </MainLayout>
   );
 };

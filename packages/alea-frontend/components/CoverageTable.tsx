@@ -165,7 +165,7 @@ function CoverageRow({
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
-                        color: 'primary.10',
+                        color: 'blue.sky',
                         textDecoration: 'underline',
                         fontWeight: 'bold',
                         fontSize: '0.85rem',

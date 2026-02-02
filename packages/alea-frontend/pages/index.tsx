@@ -205,7 +205,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
 };
 
 export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
-  const background = bgcolor || 'section.secondary';
+  const background = bgcolor || 'secondary.main';
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -253,7 +253,7 @@ export function CourseCard({ course, currentTerm }) {
           margin: '10px',
           textAlign: 'center',
           height: '290px',
-          backgroundColor: 'card.background',
+          backgroundColor: 'background.paper',
           borderRadius: '2rem',
           padding: '1rem',
           transition: 'transform 0.3s',
@@ -367,7 +367,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: 'section.secondary', padding: '80px' }}>
+        <Box sx={{ backgroundColor: 'secondary.main', padding: '80px' }}>
           <Box sx={{ margin: '0 auto', maxWidth: '1200px' }}>
             <Typography
               style={{

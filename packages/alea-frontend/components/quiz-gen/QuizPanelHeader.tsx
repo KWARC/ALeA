@@ -54,8 +54,8 @@ export function QuizPanelHeader({
           onClick={() => onGoToSection(courseId, currentProblem.sectionId)}
           clickable
           sx={{
-            color: 'primary.10',
-            borderColor: 'primary.10',
+            color: 'blue.sky',
+            borderColor: 'blue.sky',
             fontWeight: 500,
           }}
         />

@@ -144,7 +144,7 @@ const PositionDataSelector: React.FC = () => {
             title="Concepts Position Info"
             sx={{
               textAlign: 'center',
-              backgroundColor: 'primary.10',
+              backgroundColor: 'blue.sky',
               color: 'white',
               borderRadius: '12px 12px 0 0',
               padding: 2,

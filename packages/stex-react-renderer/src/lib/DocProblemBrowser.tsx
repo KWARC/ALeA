@@ -87,7 +87,7 @@ export function DocProblemBrowser({
       setShowDashboard={setShowDashboard}
       noFrills={noFrills}
     >
-      <Box px="10px" bgcolor="section.secondary">
+      <Box px="10px" bgcolor="secondary.main">
       {/* <Box px="10px" bgcolor="background.paper"> */}
         {/*ancestors?.length && (
           <h3>

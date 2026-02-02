@@ -34,7 +34,7 @@ const ProblemIdPreview: React.FC<ProblemIdPreviewProps> = ({ uri, param }) => {
           alignItems: 'center',
           gap: 0.5,
           '&:hover': {
-            color: 'primary.10',
+            color: 'blue.sky',
           },
         }}
       >

@@ -121,7 +121,7 @@ const SectionReview = ({
               <Tooltip key={dim} title={`${dim}: ${(averages[dim] * 100).toFixed(1)}%`}>
                 <Box
                   className={styles['details-competence-bar']}
-                  bgcolor="section.secondary"
+                  bgcolor="secondary.main"
                   onClick={() => setOpenDialog(true)}
                 >
                   <DimIcon dim={dim} white={false} showTitle={true} />

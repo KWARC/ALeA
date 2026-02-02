@@ -42,8 +42,8 @@ export function PersonalCalendarSection({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CalendarMonthIcon sx={{ fontSize: 20, color: 'primary.10' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.10', fontSize: '1rem' }}>
+          <CalendarMonthIcon sx={{ fontSize: 20, color: 'blue.sky' }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'blue.sky', fontSize: '1rem' }}>
             Copy Personal Calendar Link
           </Typography>
         </Box>

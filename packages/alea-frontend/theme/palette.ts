@@ -1,20 +1,15 @@
 import { PaletteOptions } from '@mui/material/styles';
-
-// export const lightPalette: PaletteOptions = {
-export const lightPalette: any = {
+export const lightPalette: PaletteOptions = {
   mode: 'light',
-
+  divider: '#E0E0E0',
   primary: {
     main: '#203360',
-    10: '#1976d2',
     50: '#f2f4f9',
     100: '#d6ddf0',
     200: '#b8c4e6',
     300: '#9aaadb',
     400: '#5f73b8',
-    450: '#4A69E1',
     500: '#203360',
-    550: '#04316a',
     600: '#1b2b52',
     700: '#162343',
     800: '#111b34',
@@ -33,42 +28,18 @@ export const lightPalette: any = {
     800: '#4E5E6C',
     900: '#3A4652',
   },
-
-  background: {
-    default: '#F5F7FB',
-    paper: '#FFFFFF',
-  },
-
-  text: {
-    primary: '#203360',
-    secondary: '#8c9fb1',
-    disabled: '#9CB5CF',
-  },
-  gradients: {
-    'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
-    'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
-    krmt: 'radial-gradient(circle, white, #f5f5b7)',
-    gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
-    rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
-    spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-  },
-
-  header: {
-    main: '#203360',
-    text: '#FFFFFF',
-  },
-
-  section: {
-    secondary: '#EEF2F7',
-  },
-
-  card: {
-    background: '#FFFFFF',
-    border: '#E2E8F0',
-  },
-
-  page: {
-    background: '#F5F7FB',
+  error: {
+    main: '#ff4242',
+    50: '#ffecec',
+    100: '#ffc4c4',
+    200: '#ffa8a8',
+    300: '#ff8080',
+    400: '#ff6868',
+    500: '#ff4242',
+    600: '#e83c3c',
+    700: '#b52f2f',
+    800: '#8c2424',
+    900: '#6b1c1c',
   },
   warning: {
     main: '#eaa43b',
@@ -83,19 +54,6 @@ export const lightPalette: any = {
     800: '#815a20',
     900: '#624519',
   },
-  error: {
-    main: '#ff4242',
-    50: '#ffecec',
-    100: '#ffc4c4',
-    200: '#ffa8a8',
-    300: '#ff8080',
-    400: '#ff6868',
-    500: '#ff4242',
-    600: '#e83c3c',
-    700: '#b52f2f',
-    800: '#8c2424',
-    900: '#6b1c1c',
-  },
   success: {
     main: '#1fc25b',
     50: '#e9f9ef',
@@ -108,6 +66,15 @@ export const lightPalette: any = {
     700: '#168a41',
     800: '#116b32',
     900: '#0d5126',
+  },
+  background: {
+    default: '#F5F7FB',
+    paper: '#FFFFFF',
+  },
+  text: {
+    primary: '#203360',
+    secondary: '#8c9fb1',
+    disabled: '#9CB5CF',
   },
   grey: {
     50: '#eef1f4',
@@ -122,6 +89,7 @@ export const lightPalette: any = {
     900: '#222f3b',
   },
   blue: {
+    sky: '#1976d2',
     50: '#eef3ff',
     100: '#d6e1ff',
     200: '#b3c7ff',
@@ -133,11 +101,22 @@ export const lightPalette: any = {
     800: '#002176',
     900: '#00185a',
   },
+  page: {
+    background: '#F5F7FB',
+  },
+  gradients: {
+    'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
+    'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
+    krmt: 'radial-gradient(circle, white, #f5f5b7)',
+    gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+    rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
+    spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+  },
 };
 
 export const darkPalette: PaletteOptions = {
   mode: 'dark',
-
+  divider: '#2033603D',
   primary: {
     main: '#203360',
     50: '#0B1326',
@@ -151,7 +130,6 @@ export const darkPalette: PaletteOptions = {
     800: '#A9B9C9',
     900: '#D9E1EC',
   },
-
   secondary: {
     main: '#8c9fb1',
     50: '#3A4652',
@@ -165,10 +143,80 @@ export const darkPalette: PaletteOptions = {
     800: '#F1F4F7',
     900: '#FFFFFF',
   },
-
+  error: {
+    main: '#ff6868',
+    50: '#6b1c1c',
+    100: '#8c2424',
+    200: '#b52f2f',
+    300: '#e83c3c',
+    400: '#ff4242',
+    500: '#ff6868',
+    600: '#ff8080',
+    700: '#ffa8a8',
+    800: '#ffc4c4',
+    900: '#ffecec',
+  },
+  warning: {
+    main: '#eeb662',
+    50: '#624519',
+    100: '#815a20',
+    200: '#a6742a',
+    300: '#d59536',
+    400: '#eaa43b',
+    500: '#eeb662',
+    600: '#f1c27c',
+    700: '#f5d5a5',
+    800: '#f8e3c2',
+    900: '#fdf6eb',
+  },
+  success: {
+    main: '#4cce7c',
+    50: '#0d5126',
+    100: '#116b32',
+    200: '#168a41',
+    300: '#1cb153',
+    400: '#1fc25b',
+    500: '#4cce7c',
+    600: '#69d691',
+    700: '#98e3b4',
+    800: '#baeccc',
+    900: '#e9f9ef',
+  },
   background: {
     default: '#020617',
     paper: '#0F172A',
+  },
+  text: {
+    primary: '#ffffff',
+    secondary: '#c9d2dc',
+    disabled: '#738ca4',
+  },
+  grey: {
+    50: '#222f3b',
+    100: '#2c3d4e',
+    200: '#394f64',
+    300: '#496580',
+    400: '#506f8d',
+    500: '#738ca4',
+    600: '#8a9fb3',
+    700: '#afbdcb',
+    800: '#c9d2dc',
+    900: '#eef1f4',
+  },
+  blue: {
+    50: '#1a2033',
+    100: '#202744',
+    200: '#27305a',
+    300: '#2f3a70',
+    400: '#38448a',
+    500: '#0039C1',
+    600: '#0032ad',
+    700: '#002a92', 
+    800: '#002176',
+    900: '#00185a',
+  },
+  page: {
+    background: '#020617',
   },
   gradients: {
     'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
@@ -177,27 +225,5 @@ export const darkPalette: PaletteOptions = {
     gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
     rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
     spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-  },
-  text: {
-    primary: '#E5E7EB',
-    secondary: '#9CA3AF',
-  },
-
-  header: {
-    main: '#020617',
-    text: '#E5E7EB',
-  },
-
-  section: {
-    secondary: '#020617',
-  },
-
-  card: {
-    background: '#0F172A',
-    border: '#1E293B',
-  },
-
-  page: {
-    background: '#020617',
   },
 };

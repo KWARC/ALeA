@@ -98,7 +98,7 @@ const Sidebar = ({
           width: isMdUp ? (drawerOpen ? 270 : 120) : 270,
           top: isMdUp ? 0 : 64,
           height: isMdUp ? '100%' : 'calc(100% - 64px)',
-          background: 'linear-gradient(to bottom, #806BE7, primary.450, #525AE2, #5C49E0)',
+          background: 'linear-gradient(to bottom, #806BE7, blue.400, #525AE2, #5C49E0)',
           transition: 'width 0.3s',
           borderRadius: isMdUp ? '0 15px 15px 0' : 0,
         },
@@ -124,7 +124,7 @@ const Sidebar = ({
               }}
               sx={{
                 bgcolor: isActive ? '#f9f5f2' : 'transparent',
-                color: isActive ? 'primary.450' : '#f9f5f2',
+                color: isActive ? 'blue.400' : '#f9f5f2',
                 pr: 4,
                 borderRadius: '30px 0 0px 30px ',
                 '&:hover': isActive
