@@ -164,6 +164,8 @@ export function ConfigureLevelSlider({
   );
 }
 
+export type SmileyEventType = 'self-assessment-5StepLikertSmileys' | 'edit-5StepLikertSmileys';
+
 export function SelfAssessmentDialogRow({
   dim,
   uri,
@@ -171,6 +173,7 @@ export function SelfAssessmentDialogRow({
   dimText,
   selectedLevel,
   onValueUpdate,
+  eventType = 'self-assessment-5StepLikertSmileys',
 }: {
   dim: BloomDimension;
   uri: string;
@@ -178,6 +181,7 @@ export function SelfAssessmentDialogRow({
   dimText: boolean;
   selectedLevel?: number;
   onValueUpdate?: () => void;
+  eventType?: SmileyEventType;
 }) {
   const t = getLocaleObject(useRouter());
   return (
@@ -213,7 +217,7 @@ export function SelfAssessmentDialogRow({
               sx={{ p: '0' }}
               onClick={async () => {
                 await reportEvent({
-                  type: 'self-assessment-5StepLikertSmileys',
+                  type: eventType,
                   concept: uri,
                   competences: {
                     [dim]: `smiley${l}`,

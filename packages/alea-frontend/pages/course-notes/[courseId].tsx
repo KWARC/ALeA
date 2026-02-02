@@ -10,6 +10,7 @@ import {
 import { CourseInfo, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
@@ -18,6 +19,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import axios from 'axios';
 import type { NextPage } from 'next';
@@ -143,6 +146,23 @@ const CourseNotesPage: NextPage = () => {
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
+    if (!router.asPath.includes('#')) return;
+    if (!toc) return;
+
+    const sectionId = decodeURIComponent(router.asPath.split('#')[1]);
+    if (!sectionId) return;
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }, [toc, router.asPath]);
+
+  //TODO: Improve navigation
+
+  useEffect(() => {
     async function fetchGottos() {
       try {
         const response = await axios.get('/api/get-coverage-timeline');
@@ -174,7 +194,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -199,9 +219,10 @@ const CourseNotesPage: NextPage = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         courseId={courseId}
+        notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      /> */}
+      />
       <Box
         sx={{
           height: 'calc(100vh - 120px)',

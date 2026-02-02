@@ -290,6 +290,7 @@ export function CompetencyTable({
                           dimText={false}
                           selectedLevel={uriWeightToSmileyLevel(Number(row.values[dimension]))}
                           onValueUpdate={onValueUpdate}
+                          eventType="edit-5StepLikertSmileys"
                         />
                       }
                     >
