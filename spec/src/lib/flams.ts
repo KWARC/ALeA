@@ -374,28 +374,25 @@ export interface ExamMeta {
 
 export function getExamMetaFromExamUri(
   examUri: string,
-  exam?: { term?: string; number?: string; date?: string; courseId?: string }
-): ExamMeta {
-  const decodedUri = decodeURIComponent(examUri);
-
-  let courseAcronym = 'AI';
-  if (exam?.courseId) {
-    courseAcronym = exam.courseId.toUpperCase();
-  } else if (exam?.number) {
-    courseAcronym = `AI-${exam.number}`;
+  exam?: {
+    term?: string;
+    number?: string;
+    date?: string;
+    courseId?: string;
   }
+): ExamMeta {
+  const decoded = decodeURIComponent(examUri);
 
-  const dParam = getParamFromUri(decodedUri, 'd') || '';
+  const courseAcronym = exam?.courseId?.toUpperCase() ?? exam?.number ?? 'UNKNOWN';
+
+  const dParam = getParamFromUri(decoded, 'd') ?? '';
+
   const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const pParam = getParamFromUri(decodedUri, 'p') || '';
-  const rawTerm = exam?.term || pParam.split('/')[0] || '';
+  const rawTerm = exam?.term ?? '';
   const formattedTerm = rawTerm.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
 
-  let formattedDate: string | undefined;
-  if (exam?.date) {
-    formattedDate = new Date(exam.date).toLocaleDateString('en-GB');
-  }
+  const formattedDate = exam?.date ? new Date(exam.date).toLocaleDateString('en-GB') : undefined;
 
   return {
     courseAcronym,

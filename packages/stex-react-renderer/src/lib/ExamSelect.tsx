@@ -34,6 +34,7 @@ export function ExamSelect({
   onChange,
   label = 'Appeared in exams',
   size = 'small',
+  sx,
 }: ExamSelectProps) {
   if (!exams.length) return null;
 
