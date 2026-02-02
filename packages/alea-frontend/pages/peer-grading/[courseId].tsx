@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { GradingInterface } from '../../components/nap/GradingInterface';
 import MainLayout from '../../layouts/MainLayout';
 import { useState } from "react";
-import { CourseHeader } from "../course-home/[courseId]";
+import { CourseHeader } from '../../components/CourseHeader';
 
 
 const PeerGradingListPage: NextPage = () => {

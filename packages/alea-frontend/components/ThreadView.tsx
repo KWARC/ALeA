@@ -19,10 +19,22 @@ import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
 import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
 
-export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
-  const { forum: t } = getLocaleObject(useRouter());
+export function ThreadView({
+  courseId,
+  threadId,
+  institutionId,
+  instanceId,
+}: {
+  courseId: string;
+  threadId: number;
+  institutionId?: string;
+  instanceId?: string;
+}) {
+  const router = useRouter();
+  const { forum: t } = getLocaleObject(router);
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const resolvedInstanceId = instanceId || currentTermByCourseId[courseId];
+  const resolvedInstitutionId = institutionId || 'FAU';
 
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,12 +50,12 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   }, [threadId, updateCounter]);
 
   useEffect(() => {
-    if (!currentTerm) return;
+    if (!resolvedInstanceId) return;
     canAccessResource(ResourceName.COURSE_COMMENTS, Action.MODERATE, {
       courseId,
-      instanceId: currentTerm,
+      instanceId: resolvedInstanceId,
     }).then(setIsUserAuthorized);
-  }, [courseId, currentTerm]);
+  }, [courseId, resolvedInstanceId]);
 
   if (!threadComments?.length) return null;
 
@@ -54,7 +66,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   return (
     <>
       <Box display="flex" justifyContent="space-between" mb="15px">
-        <Link href={`/forum/${courseId}`}>
+        <Link href={`/${resolvedInstitutionId}/${courseId}/${resolvedInstanceId}/forum`}>
           <IconButton>
             <ArrowBackIcon />
           </IconButton>

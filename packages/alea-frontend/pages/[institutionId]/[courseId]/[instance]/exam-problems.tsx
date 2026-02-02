@@ -8,8 +8,8 @@ import {
   QuizDisplay,
   ShowGradingFor,
 } from '@alea/stex-react-renderer';
-import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
+import MainLayout from 'packages/alea-frontend/layouts/MainLayout';
 
 export async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
   const fragmentResponse: any[] = await contentFragment({ uri: problemUri });

@@ -1,6 +1,6 @@
 import { getResourceId, INSTRUCTOR_RESOURCE_AND_ACTION } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
+import { getCourseEnrollmentAcl } from '../../components/courseHelpers';
 import { getAclMembers } from './acl-utils/acl-common-utils';
 import { returnAclIdForResourceIdAndActionId } from './acl-utils/resourceaccess-utils/resource-common-utils';
 
