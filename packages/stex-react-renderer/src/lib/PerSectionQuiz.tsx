@@ -453,7 +453,17 @@ export function PerSectionQuiz({
                     {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length}`}
                   </Typography>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 2,
+                      mb: 1,
+                      mt: 2,
+                    }}
+                  >
                     {examOptions.length > 0 && !selectedExamUri && (
                       <ExamSelect
                         exams={examOptions}
@@ -462,11 +472,7 @@ export function PerSectionQuiz({
                         onChange={(uri) => setSelectedExamUri(uri)}
                         label="Appeared in exams"
                         size="small"
-                        sx={{
-                          minwidth: 160,
-                          height: 30,
-                          fontSize: '0.75rem',
-                        }}
+                        sx={{ minWidth: 150 }}
                       />
                     )}
 

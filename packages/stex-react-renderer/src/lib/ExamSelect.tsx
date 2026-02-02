@@ -39,14 +39,21 @@ export function ExamSelect({
   if (!exams.length) return null;
 
   return (
-    <FormControl size={size} sx={{ minWidth: 220 }}>
-      <InputLabel>{label}</InputLabel>
+    <FormControl size={size} sx={{ minWidth: 180 }}>
+      <InputLabel sx={{ fontSize: '0.85rem' }}>{label}</InputLabel>
 
       <Select
         size="small"
         value={value}
         label={label}
         onChange={(e) => onChange(e.target.value as string)}
+        sx={{
+          height: 32,
+          fontSize: '0.80rem',
+          '& .MuiSelect-select': {
+            py: 0.5,
+          },
+        }}
       >
         <MenuItem disabled value="">
           <em>Select exam</em>

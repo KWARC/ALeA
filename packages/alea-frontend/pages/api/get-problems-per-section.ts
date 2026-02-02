@@ -32,11 +32,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const examProblemMap = new Map<string, { examUri: string; examLabel: string }[]>();
   const examOnlyProblemSet = new Set<string>();
 
+  const sectionProblemSet = new Set(practiceProblems.map((p) => normalizeProblemUri(p.problemId)));
+
   for (const exam of exams) {
     const examProblems = await getProblemsForExam(exam.uri);
 
     for (const problemUri of examProblems) {
       const normalized = normalizeProblemUri(problemUri);
+
+      if (!sectionProblemSet.has(normalized)) continue;
+
       examOnlyProblemSet.add(normalized);
 
       const existing = examProblemMap.get(normalized) ?? [];
@@ -44,6 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         examUri: exam.uri,
         examLabel: exam.number ? `Exam ${exam.number} ${exam.term ?? ''}` : 'Exam',
       });
+
       examProblemMap.set(normalized, existing);
     }
   }
