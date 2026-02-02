@@ -51,7 +51,7 @@ const SearchPage: NextPage = () => {
       )}
 
       {courseId && !loading && !notesUri && (
-        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>Loading course notes…</Box>
+        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>Course notes not found</Box>
       )}
     </MainLayout>
   );
