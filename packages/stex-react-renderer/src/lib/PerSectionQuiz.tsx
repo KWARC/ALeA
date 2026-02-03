@@ -458,10 +458,8 @@ export function PerSectionQuiz({
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 2,
-                      mb: 1,
-                      mt: 2,
+                      gap: 1,
+                      my: 2,
                     }}
                   >
                     {examOptions.length > 0 && !selectedExamUri && (
