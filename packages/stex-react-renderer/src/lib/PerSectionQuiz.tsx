@@ -463,15 +463,16 @@ export function PerSectionQuiz({
                     }}
                   >
                     {examOptions.length > 0 && !selectedExamUri && (
-                      <ExamSelect
-                        exams={examOptions}
-                        courseId={courseId}
-                        value=""
-                        onChange={(uri) => setSelectedExamUri(uri)}
-                        label="Appeared in exams"
-                        size="small"
-                        sx={{ minWidth: 150 }}
-                      />
+                      <Box sx={{ minWidth: 150 }}>
+                        <ExamSelect
+                          exams={examOptions}
+                          courseId={courseId}
+                          value=""
+                          onChange={(uri) => setSelectedExamUri(uri)}
+                          label="Appeared in exams"
+                          size="small"
+                        />
+                      </Box>
                     )}
 
                     {selectedExamUri && (
