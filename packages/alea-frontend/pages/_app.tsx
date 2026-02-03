@@ -46,9 +46,7 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
 
 function CustomApp({ Component, pageProps }: AppProps) {
   const [readyToRender, setReadyToRender] = useState(flamsInitialized);
- // const [mode, setMode] = useState<'light' | 'dark' | 'system'>('system');
-   const [mode, setMode] = useState<'light' | 'dark' | 'system'>('light');
-
+  const [mode, setMode] = useState<'light' | 'dark' | 'system'>('light');
   const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {

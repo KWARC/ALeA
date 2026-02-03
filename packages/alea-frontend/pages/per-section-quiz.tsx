@@ -1,5 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import { PerSectionQuiz } from '@alea/stex-react-renderer';
 import { getParamFromUri } from '@alea/utils';
@@ -39,15 +39,16 @@ const PerSectionQuizPage: React.FC = () => {
 
           <b style={{ color: 'gray', fontSize: '1.5rem', fontWeight: 'bold' }}>
             {t.problemsFor}&nbsp;
-            <span
-              style={{
+            <Typography
+              component="span"
+              sx={{
                 color: 'primary.main',
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
               }}
             >
-              {header ? <SafeHtml html={header} /> : '<i>Section</i>'} ({courseId.toUpperCase()})
-            </span>
+              {header ? <SafeHtml html={header} /> : <i>Section</i>} ({courseId.toUpperCase()})
+            </Typography>
           </b>
         </Box>
         <PerSectionQuiz courseId={courseId} sectionUri={sectionUri} showButtonFirst={false} />

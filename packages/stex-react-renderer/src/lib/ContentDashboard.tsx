@@ -31,7 +31,7 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
     //'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-inference&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/LBS/course&p=tense/sec&d=tense&l=en&e=section',
     'http://mathhub.info?a=courses/Jacobs/ComSem&p=nlfrags/sec&d=quantifier-scope-ambiguity&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section'
+    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section',
   ],
   'ai-1': [
     'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
@@ -42,7 +42,7 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=pop&l=en&e=section'
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=pop&l=en&e=section',
   ],
 };
 
@@ -211,14 +211,15 @@ function RenderTree({
             )}
           </IconButton>
         )}
-        <span
+        <Box
+          component="span"
           className={itemClassName}
-          style={{
+          sx={{
             cursor: 'pointer',
-            color: isSelected ? 'white' : undefined,
-            padding: isSelected ? '0 3px' : undefined,
+            color: isSelected ? 'white' : 'undefined',
+            px: isSelected ? 0.5 : 0,
             backgroundColor: isSelected ? 'primary.main' : 'inherit',
-            borderRadius: '3px',
+            borderRadius: 0.5,
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -227,14 +228,17 @@ function RenderTree({
           }}
         >
           {preAdornment ? preAdornment(node.tocElem.id) : null}
+
           {lectureHover ? (
-            <Tooltip title={<span style={{ fontSize: 'medium' }}>{lectureHover}</span>}>
-              <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{lectureHover}</Box>}>
+              <Box component="span">
+                {convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}
+              </Box>
             </Tooltip>
           ) : (
-            <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Box component="span">{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</Box>
           )}
-        </span>
+        </Box>
       </Box>
       {isOpen && node.children.length > 0 && (
         <Box display="flex" ml="3px">

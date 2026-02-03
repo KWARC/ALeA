@@ -20,7 +20,7 @@ function GradedItemsList({
           <ListItemButton
             key={`${questionTitle}-${id}-${idx}`}
             onClick={(e) => onSelectItem(id)}
-            sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
+            sx={{ py: 0, bgcolor: idx % 2 === 0 ? 'grey.100' : 'background.paper' }}
           >
             <ListItemText
               primary={questionTitle ? <SafeHtml html={questionTitle} /> : id}

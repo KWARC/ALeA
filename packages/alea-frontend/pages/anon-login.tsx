@@ -137,7 +137,11 @@ const AnonLoginPage: NextPage = () => {
             {isLoginMode ? 'Login' : 'Sign Up'}
           </Typography>
           <Typography variant="body1" textAlign="center" mb={2}>
-            {!isLoginMode && <strong style={{ color: 'primary.main' }}>Choose Your Avatar</strong>}
+            {!isLoginMode && (
+              <Typography component="strong" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                Choose Your Avatar
+              </Typography>
+            )}
           </Typography>
           <Box sx={{ display: 'flex' }}>
             <FormControl>

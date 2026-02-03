@@ -1,6 +1,6 @@
 import { Visibility } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Link, Typography, useTheme } from '@mui/material';
 import { BloomDimension, conceptUriToName } from '@alea/spec';
 import { DimIcon } from './SelfAssessmentDialog';
 
@@ -52,14 +52,14 @@ export function URIListDisplay({ uris, displayReverseRelation }: URIListDisplayP
     <Box>
       {uris?.map((uri, index, array) => (
         <span key={index}>
-          <a
+          <Link
             href={uri}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ textDecoration: 'none', color: 'blue.sky' }}
+            sx={{ color: 'blue.sky', textDecoration: 'none' }}
           >
             {conceptUriToName(uri)}
-          </a>
+          </Link>
           <IconButton
             size="small"
             onClick={() => handleCopy(uri)}
@@ -103,7 +103,16 @@ export function DimAndURIListDisplay({
       {Object.entries(transformedData)
         .filter(([_, uris]) => uris.length > 0)
         .map(([group, uris]) => (
-          <Box key={group} borderTop="1px solid #AAA" p="5px" display="flex" flexWrap="wrap">
+          <Box
+            key={group}
+            sx={{
+              borderTop: 1,
+              borderColor: 'divider',
+              p: '5px',
+              display: 'flex',
+              flexWrap: 'wrap',
+            }}
+          >
             <DimIcon dim={group as BloomDimension} /> &nbsp;
             <URIListDisplay uris={uris} displayReverseRelation={displayReverseRelation} />
           </Box>

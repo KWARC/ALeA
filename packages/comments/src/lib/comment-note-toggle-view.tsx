@@ -39,7 +39,7 @@ export function CommentNoteToggleView({
 }) {
   const t = getLocaleObject(useRouter());
   const [value, setValue] = useState(defaultPrivate ? 0 : 1);
-
+  const PRIMARY_COL = '#203360'; //TODO: out of alea project
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
@@ -57,7 +57,7 @@ export function CommentNoteToggleView({
               background: '#DDD',
 
               borderRadius: '10px 10px 0 0',
-              borderBottom: `2px solid ${'primary.main'}`,
+              borderBottom: `2px solid ${PRIMARY_COL}`,
               borderTop: `2px solid #AAA`,
               borderLeft: `2px solid #AAA`,
               borderRight: `2px solid #AAA`,
@@ -67,9 +67,9 @@ export function CommentNoteToggleView({
             },
             '& .Mui-selected': {
               background: 'white !important',
-              borderTop: `2px solid ${'primary.main'} !important`,
-              borderLeft: `2px solid ${'primary.main'} !important`,
-              borderRight: `2px solid ${'primary.main'} !important`,
+              borderTop: `2px solid ${PRIMARY_COL} !important`,
+              borderLeft: `2px solid ${PRIMARY_COL} !important`,
+              borderRight: `2px solid ${PRIMARY_COL} !important`,
               borderBottom: `2px solid white !important`,
             },
           }}

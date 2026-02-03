@@ -216,13 +216,14 @@ export function SubProblemAnswer({
   const solutionBox =
     isFrozen && subProblem.solution ? (
       <Box
-        style={{
-          color: '#555',
-          backgroundColor: 'white',
-          padding: '5px',
+        sx={{
+          color: 'text.secondary',
+          bgcolor: 'background.paper',
+          p: '5px',
           borderRadius: '5px',
-          margin: '10px 0px',
-          border: `1px solid ${'primary.main'}`,
+          my: '10px',
+          border: 1,
+          borderColor: 'primary.main',
         }}
       >
         {/*mmtHTMLToReact(subProblem.solution.replace(MMT_CUSTOM_ID_PREFIX, ''))*/}
@@ -233,13 +234,13 @@ export function SubProblemAnswer({
     );
   return (
     <>
-      <span style={{ color: 'primary.main', fontWeight: 'bold' }}>
+      <Box component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
         {problem?.subProblemData?.length === 1
           ? t.yourAnswer
           : t.yourAnswerWithIdx
               .replace('$1', (Number(subProblemId) + 1).toString())
               .replace('$2', problem?.subProblemData?.length.toString())}
-      </span>
+      </Box>
       <Box>
         {isGrading && solutionBox}
         {isFrozen ? (

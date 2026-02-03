@@ -60,7 +60,7 @@ const CourseList: NextPage = () => {
                   <Typography display="flex" alignItems="center" fontWeight="bold">
                     {uni.title}{' '}
                     <Link href={uni.url} target="_blank">
-                      <OpenInNewIcon style={{ color: 'primary.main' }} />
+                      <OpenInNewIcon sx={{ color: 'primary.main' }} />
                     </Link>
                   </Typography>
                   <Typography>{uni.country + ', ' + uni.place}</Typography>

@@ -12,7 +12,6 @@ import {
   reportEvent,
   smileyToLevel,
 } from '@alea/spec';
-import { useTheme } from '@mui/material/styles';
 import { SafeHtml } from '@alea/react-utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -85,12 +84,13 @@ function SelfAssessmentPopup({
   return (
     <Box
       sx={{
-        background: 'secondary.main',
-        border: `1px solid ${'primary.main'}`,
+        bgcolor: 'secondary.main',
+        border: 1,
+        borderColor: 'primary.main',
         userSelect: 'none',
+        p: '5px 3px',
+        borderRadius: '5px',
       }}
-      p="5px 3px"
-      borderRadius="5px"
     >
       {dims.map((dim, idx) => (
         <Box key={dim} mt={idx ? '5px' : '0'}>
@@ -275,7 +275,6 @@ export function SelfAssessmentDialog({
   htmlName: string;
   onUpdate?: (level: SmileyCognitiveValues) => void;
 }) {
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [smileys, setSmileys] = useState<SmileyCognitiveValues | undefined>(undefined);
   function onValueUpdate() {
@@ -308,11 +307,11 @@ export function SelfAssessmentDialog({
         <Box
           display="flex"
           p="0"
-          border="1px solid #AAA"
+          border="1px solid"
+          borderColor="divider"
           borderRadius="10px"
           width="fit-content"
-          // bgcolor='background.paper'
-          bgcolor="secondary.main"
+          bgcolor="background.paper"
           sx={{ cursor: 'pointer' }}
           onClick={() => setOpen(true)}
         >

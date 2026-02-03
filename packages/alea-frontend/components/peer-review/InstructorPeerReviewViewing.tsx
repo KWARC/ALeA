@@ -122,7 +122,7 @@ function PeerReviewItemsList({
             <ListItemButton
               key={`${idx}-${questionId}-${checkerId}`}
               onClick={(e) => onSelectItem(id)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
+              sx={{ py: 0, bgcolor: idx % 2 === 0 ? 'grey.100' : 'background.paper' }}
             >
               <ListItemText
                 primary={customFeedback ? truncateText(customFeedback, 50) : 'No feedback'}
