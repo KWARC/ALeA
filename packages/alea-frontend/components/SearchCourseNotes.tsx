@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import { useEffect, useState } from 'react';
 import { searchDocs, type SearchResult } from '@flexiformal/ftml-backend';
+import { getAllCourses } from '@alea/spec';
 
 const SearchCourseNotes = ({
   courseId,
@@ -86,7 +87,6 @@ const SearchCourseNotes = ({
             alt={courseId}
             style={{ borderRadius: '5px', cursor: 'pointer' }}
             onClick={async () => {
-              const { getAllCourses } = await import('@alea/spec');
               const courses = await getAllCourses();
               const course = courses[courseId];
               const institutionId = course?.universityId || 'FAU';

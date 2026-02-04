@@ -17,7 +17,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@flexiformal/ftml';
-import { getCourseProblemCounts } from '@alea/spec';
+import { getAllCourses, getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
 
 interface TitleMetadata {
@@ -137,7 +137,6 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   };
 
   const goToSection = async (sectionId?: string) => {
-    const { getAllCourses } = await import('@alea/spec');
     const courses = await getAllCourses();
     const course = courses[courseId];
     const institutionId = course?.universityId || 'FAU';

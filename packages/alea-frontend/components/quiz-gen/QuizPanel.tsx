@@ -2,6 +2,7 @@ import { OpenInNew } from '@mui/icons-material';
 import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import {
   generateQuizProblems,
+  getAllCourses,
   getFinalizedVariants,
   getLatestProblemDraft,
   QuizProblem,
@@ -17,7 +18,6 @@ import { QuizPanelHeader } from './QuizPanelHeader';
 import { VariantDialog } from './VariantDialog';
 
 export const handleGoToSection = async (courseId: string, sectionId: string) => {
-  const { getAllCourses } = await import('@alea/spec');
   const courses = await getAllCourses();
   const course = courses[courseId];
   const institutionId = course?.universityId || 'FAU';
