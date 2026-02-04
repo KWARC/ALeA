@@ -49,9 +49,10 @@ const HomeworkForm = ({
         <Box
           sx={{
             px: 1,
-            color: '#888',
-            border: '1px solid #AAA',
-            borderRadius: '5px',
+            color: 'secondary.400',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
             fontWeight: 'bold',
             ':before': {
               content: '"Title"',

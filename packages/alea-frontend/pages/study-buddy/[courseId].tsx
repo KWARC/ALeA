@@ -25,7 +25,8 @@ import {
   StudyBuddy,
   updateStudyBuddyInfo,
 } from '@alea/spec';
-import { BG_COLOR, CourseInfo, MaAI_COURSES } from '@alea/utils';
+import {CourseInfo, MaAI_COURSES } from '@alea/utils';
+import { useTheme } from '@mui/material/styles';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -55,6 +56,7 @@ function OptOutButton({ studyBuddy, courseId, institutionId, instanceId }: { stu
 }
 
 const StudyBuddyPage: NextPage = () => {
+  const theme = useTheme();
   const router = useRouter();
   const courseId = router.query.courseId as string;
   // TODO(M5)
@@ -116,7 +118,7 @@ const StudyBuddyPage: NextPage = () => {
   const notes = courseInfo?.notes;
 
   return (
-    <MainLayout title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`} bgColor={BG_COLOR}>
+    <MainLayout title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`} bgColor={theme.palette.background.default}>
       <CourseHeader courseName={courseName} imageLink={courseInfo?.imageLink} courseId={courseId} />
       <Box
         fragment-uri={notes}

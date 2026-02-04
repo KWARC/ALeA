@@ -231,10 +231,10 @@ const SearchCourseNotes = ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '10px',
-          maxWidth: '800px',
+          p: 1.25,
+          maxWidth: 800,
           margin: '0 auto',
-          gap: '10px',
+          gap: 1.25,
         }}
       >
         <Tooltip title={courseId}>
@@ -273,8 +273,8 @@ const SearchCourseNotes = ({
       )}
 
       {results.length > 0 && (
-        <Box bgcolor="white" borderRadius="5px" mb="15px" p="10px">
-          <Box maxWidth="800px" m="0 auto" p="10px">
+        <Box bgcolor="white" borderRadius={1} mb={2} p={1.25}>
+          <Box maxWidth={800} m="0 auto" p={2.5}>
             {results.map((res, idx) => {
               if (!res || typeof res !== 'object') return null;
 
@@ -329,7 +329,8 @@ const SearchCourseNotes = ({
                         component="hr"
                         sx={{
                           border: 0,
-                          borderTop: '1px solid #000',
+                          borderTop: '1px solid',
+                          borderTopColor: 'primary.900',
                           mt: 2,
                         }}
                       />
@@ -383,7 +384,8 @@ const SearchCourseNotes = ({
                         component="hr"
                         sx={{
                           border: 0,
-                          borderTop: '1px solid #000',
+                          borderTop: '1px solid',
+                          borderTopColor: 'primary.900',
                           mt: 2,
                         }}
                       />

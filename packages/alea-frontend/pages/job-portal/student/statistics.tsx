@@ -11,7 +11,7 @@ import JobStatsChart from './dashboard';
 
 const StudentStats = () => {
   const [applications, setApplications] = useState([]);
-  const [profileStrength, setProfileStrength] = useState(0); 
+  const [profileStrength, setProfileStrength] = useState(0);
   const [resumeInsights, setResumeInsights] = useState({
     skills: [],
     experience: 0,
@@ -263,11 +263,11 @@ const StudentStats = () => {
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography
                       variant="h6"
-                      sx={{ color: '#FFFFFF', fontWeight: '500', fontSize: '1.5rem' }}
+                      sx={{ color: 'background.paper', fontWeight: '500', fontSize: '1.5rem' }}
                     >
                       {stat}
                     </Typography>
-                    <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: '600' }}>
+                    <Typography variant="h3" sx={{ color: 'background.paper', fontWeight: '600' }}>
                       {Math.floor(Math.random() * 100) % 10}
                     </Typography>
                   </Box>
@@ -328,11 +328,11 @@ const StudentStats = () => {
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography
                       variant="h6"
-                      sx={{ color: '#FFFFFF', fontWeight: '500', fontSize: '1.5rem' }}
+                      sx={{ color: 'background.paper', fontWeight: '500', fontSize: '1.5rem' }}
                     >
                       {stat}
                     </Typography>
-                    <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: '600' }}>
+                    <Typography variant="h3" sx={{ color: 'background.paper', fontWeight: '600' }}>
                       {Math.floor(Math.random() * 100) % 10}
                     </Typography>
                   </Box>

@@ -33,7 +33,7 @@ import MainLayout from '../../layouts/MainLayout';
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
+      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
         {courseId.toUpperCase()}
       </DialogTitle>
       <DialogContent sx={{ p: 1 }}>
@@ -202,10 +202,10 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            bgcolor: 'primary.50',
             boxShadow: 3,
             '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
+              bgcolor: 'primary.300',
             },
           }}
           onClick={handleSearchClick}

@@ -14,7 +14,7 @@ import {
   RecruiterData,
   updateRecruiterProfile,
 } from '@alea/spec';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { OrganizationDetails } from '../../../components/job-portal/OrganizationDetails';
@@ -186,7 +186,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
                 Edit Profile
               </Typography>
 

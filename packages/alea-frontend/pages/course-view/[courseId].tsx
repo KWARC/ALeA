@@ -44,6 +44,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import shadows from '../../theme/shadows';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -105,9 +106,9 @@ function ToggleModeButton({
         fontWeight: 500,
         px: { xs: 2, sm: 3 },
         py: 1,
-        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+        fontSize: { xs: 12, sm: 14 },
         whiteSpace: 'nowrap',
-        minWidth: { xs: 'auto', sm: '140px' },
+        minWidth: { xs: 'auto', sm: 140 },
       }}
     >
       {buttonLabel}
@@ -550,10 +551,10 @@ const CourseViewPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 2002,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            bgcolor: 'primary.50',
             boxShadow: 3,
             '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
+              bgcolor: 'primary.300',
             },
           }}
           onClick={handleSearchClick}
@@ -621,7 +622,7 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+        <Box sx={{ minHeight: '100vh',bgcolor:'background.default' }}>
           <Container
             maxWidth="xl"
             sx={{
@@ -635,8 +636,8 @@ const CourseViewPage: NextPage = () => {
                 p: { xs: 1.5, sm: 2 },
                 mb: { xs: 2, sm: 3 },
                 borderRadius: 2,
-                bgcolor: 'white',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                bgcolor: 'background.paper',
+                boxShadow: shadows[2],
               }}
             >
               <Stack
@@ -689,10 +690,9 @@ const CourseViewPage: NextPage = () => {
                       fontWeight: 500,
                       px: 3,
                       whiteSpace: 'nowrap',
-                      bgcolor: '#1976d2',
-                      color: 'white',
+                      bgcolor: 'blue.sky',
                       '&:hover': {
-                        bgcolor: '#1565c0',
+                        bgcolor: 'blue.sky',
                       },
                     }}
                   >
@@ -724,8 +724,9 @@ const CourseViewPage: NextPage = () => {
                     sx={{
                       borderRadius: 2,
                       overflow: 'hidden',
-                      bgcolor: '#f5f5f5',
-                      border: '1px solid #e0e0e0',
+                      bgcolor: 'background.paper',
+                      border: '1px solid ',
+                      borderColor: 'divider',
                     }}
                   >
                     <VideoDisplay
@@ -773,8 +774,9 @@ const CourseViewPage: NextPage = () => {
                     sx={{
                       borderRadius: 2,
                       overflow: 'hidden',
-                      bgcolor: 'white',
-                      border: '1px solid #e0e0e0',
+                      bgcolor: 'background.paper',
+                      border: '1px solid ',
+                      borderColor: 'divider',
                     }}
                   >
                     <SlideDeck
@@ -805,8 +807,9 @@ const CourseViewPage: NextPage = () => {
                   sx={{
                     borderRadius: 2,
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e0e0e0',
+                    bgcolor: 'background.paper',
+                    border: '1px solid ',
+                    borderColor: 'divider',
                   }}
                 >
                   <SlideDeck
@@ -834,9 +837,10 @@ const CourseViewPage: NextPage = () => {
                   p: { xs: 2, sm: 3 },
                   mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
-                  bgcolor: '#fff9e6',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  border: '1px solid #ffeaa7',
+                  bgcolor: 'warning.50',
+                  boxShadow: shadows[2],
+                  border: '1px solid ',
+                  borderColor: 'divider',
                 }}
               >
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -844,8 +848,6 @@ const CourseViewPage: NextPage = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#1a1a1a',
-                      fontSize: { xs: '1rem', sm: '1.125rem' },
                     }}
                   >
                     {t.instructorNotes}
@@ -862,7 +864,8 @@ const CourseViewPage: NextPage = () => {
                     <Box
                       sx={{
                         my: 2,
-                        borderTop: '2px dashed #fdcb6e',
+                        borderTop: '2px dashed ',
+                        borderColor: 'warning.500',
                       }}
                     />
                   )}

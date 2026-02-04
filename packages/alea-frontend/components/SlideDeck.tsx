@@ -20,6 +20,7 @@ import { getLocaleObject } from '../lang/utils';
 import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
+import shadows from '../theme/shadows';
 
 export function SlidePopover({
   slides,
@@ -50,13 +51,14 @@ export function SlidePopover({
               p: 1,
               mb: 1,
               borderRadius: 2,
-              border: '1px solid #ddd',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              border: '1px solid ',
+              borderColor: 'divider',
+              boxShadow: shadows[1],
               cursor: 'pointer',
               transition: 'all 0.2s',
               '&:hover': {
-                backgroundColor: '#f0f0f0',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                backgroundColor: 'seondary.main',
+                boxShadow: shadows[2],
               },
             }}
             onClick={() => {
@@ -107,8 +109,8 @@ export function SlideNavBar({
   return (
     <Box
       sx={{
-        borderRadius: '12px',
-        backgroundColor: '#f0f0f0',
+        borderRadius: 3,
+        backgroundColor: 'background.paper',
         p: 0.5,
         display: 'flex',
         alignItems: 'center',
@@ -121,10 +123,10 @@ export function SlideNavBar({
           slideNum > 1 ? setSlideNumAndSectionId(router, slideNum - 1) : goToPrevSection();
         }}
         sx={{
-          padding: '4px',
-          borderRadius: '12px',
+          padding: 0.5,
+          borderRadius: 3,
           '&:hover': {
-            backgroundColor: '#e0e0e0',
+            backgroundColor: 'secondary.main',
           },
         }}
       >
@@ -137,15 +139,16 @@ export function SlideNavBar({
           sx={{
             px: 1,
             py: 0.3,
-            backgroundColor: '#ffffff',
+            backgroundColor: 'background.paper',
             color: 'text.primary',
-            border: '1px solid #ccc',
-            borderRadius: '24px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+            border: '1px solid ',
+            borderColor: 'divider',
+            borderRadius: 6,
+            boxShadow: shadows[1],
             transition: 'all 0.3s ease',
             '&:hover': {
               backgroundColor: 'primary.main',
-              color: '#ffffff',
+              color: 'background.paper',
               transform: 'scale(1.05)',
             },
           }}
@@ -161,10 +164,10 @@ export function SlideNavBar({
           slideNum < numSlides ? setSlideNumAndSectionId(router, slideNum + 1) : goToNextSection();
         }}
         sx={{
-          padding: '4px',
-          borderRadius: '12px',
+          padding: 0.5,
+          borderRadius: 3,
           '&:hover': {
-            backgroundColor: '#e0e0e0',
+            backgroundColor: 'secondary.main',
           },
         }}
       >
@@ -468,7 +471,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
       sx={{ position: 'relative', bgcolor: isNotCovered ? '#fdd' : undefined }}
       title={isNotCovered ? t.notCovered : undefined}
     >
-      <Box sx={{ position: 'absolute', right: '20px' }}>
+      <Box sx={{ position: 'absolute', right: 20 }}>
         <ExpandableContextMenu uri={getSlideUri(currentSlide)} />
       </Box>
       {slides.length ? (
@@ -495,7 +498,7 @@ export const SlideDeck = memo(function SlidesFromUrl({
         </Box>
       ) : (
         <Box
-          height="574px"
+          height={574}
           display="flex"
           alignItems="center"
           justifyContent="center"
