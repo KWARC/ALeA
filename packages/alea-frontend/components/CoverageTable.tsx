@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   IconButton,
+  Link,
   Paper,
   Table,
   TableBody,
@@ -29,7 +30,6 @@ import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { getSectionNameForUri } from './CoverageUpdater';
 import QuizHandler from './QuizHandler';
 import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
-import Link from 'next/link';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;

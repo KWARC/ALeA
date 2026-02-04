@@ -182,7 +182,7 @@ export default function MainLayout({
           variant="dense"
           sx={{
             mt: '10px',
-            background: 'primary.main',
+            bgcolor: 'primary.500',
             color: 'secondary.main',
             display: 'flex',
             flexDirection: 'row-reverse',
