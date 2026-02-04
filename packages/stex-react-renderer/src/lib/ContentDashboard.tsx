@@ -41,8 +41,7 @@ export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
     'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
     'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=pop&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section'
   ],
 };
 
