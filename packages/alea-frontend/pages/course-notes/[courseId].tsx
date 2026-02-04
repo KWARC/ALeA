@@ -7,7 +7,7 @@ import {
   SectionReview,
   TrafficLightIndicator,
 } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry } from '@alea/utils';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
@@ -33,7 +33,7 @@ import MainLayout from '../../layouts/MainLayout';
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'primary.main' }}>
+      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
         {courseId.toUpperCase()}
       </DialogTitle>
       <DialogContent sx={{ p: 1 }}>
@@ -202,10 +202,10 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            bgcolor: 'primary.50',
             boxShadow: 3,
             '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
+              bgcolor: 'primary.300',
             },
           }}
           onClick={handleSearchClick}
@@ -228,15 +228,8 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
-          backgroundColor: 'white',
-          color: 'black',
-          '& .stex-document, & .ftml-document, & .omdoc-content, & div': {
-            backgroundColor: 'transparent !important',
-            color: 'black',
-          },
         }}
       >
-        <div id="ftml-content-wrapper">
         <SafeFTMLDocument
           allowFullscreen={false}
           key={notes}
@@ -277,7 +270,6 @@ const CourseNotesPage: NextPage = () => {
           }}
           onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
         />
-        </div>
       </Box>
     </MainLayout>
   );

@@ -1,5 +1,6 @@
 import { Box, Paper, Typography } from '@mui/material';
 import { CommentNoteToggleView } from '@alea/comments';
+import  shadows from '../../theme/shadows';
 
 export default function NotesAndCommentsSection({ currentSlideUri }: { currentSlideUri: string }) {
   return (
@@ -10,14 +11,15 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
         borderRadius: 2,
         bgcolor: 'background.paper',
         overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        boxShadow: shadows[1],
       }}
     >
       <Box
         sx={{
           px: { xs: 2, sm: 3 },
           py: 2,
-          borderBottom: '1px solid #e5e5e5',
+          borderBottom: '1px solid ',
+          borderBottomColor: 'divider',
           bgcolor: 'blue.100'
         }}
       >
@@ -25,8 +27,8 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
           variant="h6"
           sx={{
             fontWeight: 600,
-            color: '#1a1a1a',
-            fontSize: { xs: '1rem', sm: '1.125rem' },
+            color: 'primary.900',
+            fontSize: { xs: 16, sm: 18 },
             mb: 0.5,
           }}
         >
@@ -36,7 +38,6 @@ export default function NotesAndCommentsSection({ currentSlideUri }: { currentSl
           variant="body2"
           sx={{
             color: 'blue.sky',
-            fontSize: { xs: '0.813rem', sm: '0.875rem' },
             fontWeight: 500,
           }}
         >

@@ -538,7 +538,7 @@ function MyCourses({ enrolledCourseIds }) {
       >
         My Courses
       </Typography>
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap', maxWidth: 'lg' }}>
         {enrolledCourseIds
           .filter((courseId: string) => allCourses[courseId])
           .map((courseId: string) => (
@@ -767,10 +767,8 @@ function WelcomeScreen({
         meantime, you can still access course content.
       </Typography>*/}
       <BannerSection tight={true} />
-      <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: 'background.default' }}>
-        <Typography
-          sx={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}
-        >
+      <Box sx={{ px: 4, py: 4, bgcolor: 'background.paper' }}>
+        <Typography variant="h2" textAlign="center" fontWeight="bold">
           {r.welcome}, {userInfo?.fullName}
         </Typography>
         {isFAUId && (
@@ -833,13 +831,15 @@ function WelcomeScreen({
           marginTop: '40px',
           flexWrap: 'wrap',
           alignItems: 'center',
+          maxWidth: 'lg',
+          mx: 'auto',
         }}
       >
-        {filteredCourses.map((course) => (
-          <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />
-        ))}
+        {filteredCourses.map((course) => {
+          return <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />;
+        })}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5, mb: 2 }}>
         <Link href="/course-list">
           <Button variant="contained">{n.exploreOurCourse}</Button>
         </Link>

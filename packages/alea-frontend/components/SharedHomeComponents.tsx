@@ -28,7 +28,6 @@ export function getInstructor(courseData: CourseInfo, currentSemester: string) {
 }
 
 export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
-  const theme = useTheme();
   const router = useRouter();
   const {
     home: t,

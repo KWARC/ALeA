@@ -49,10 +49,10 @@ const CourseList: NextPage = () => {
 
   return (
     <MainLayout title="Course-List | ALeA">
-      <Box m="0 auto" maxWidth="800px">
+      <Box m="0 auto" maxWidth={800}>
         {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
           <Box key={universityId}>
-            <Typography variant="h3">{universityId}</Typography>
+            <Typography variant="h1">{universityId}</Typography>
             {universities.map((uni) => {
               if (uni.acronym !== universityId) return null;
               return (

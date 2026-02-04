@@ -4,7 +4,6 @@ import { shouldUseDrawer, Window } from '@alea/utils';
 import { useTheme } from '@mui/material/styles';
 import { createContext, useContext, useEffect, useState } from 'react';
 import styles from './stex-react-renderer.module.scss';
-
 const MenuContext = createContext({ offset: 0, inDrawer: false });
 const MENU_WIDTH = '300px';
 export function FixedPositionMenu({

@@ -458,7 +458,7 @@ export function ContentDashboard({
         <>
           <Box display="flex" alignItems="center" sx={{ m: '5px' }}>
             <IconButton sx={{ m: '2px' }} onClick={() => onClose()}>
-              <CloseIcon />
+              <CloseIcon sx={{ bgcolor: 'secondary.100' }} />
             </IconButton>
             <TextField
               id="tree-filter-string"
@@ -473,7 +473,7 @@ export function ContentDashboard({
             <Tooltip title={t.expandCollapseAll}>
               <IconButton
                 onClick={() => setDefaultOpen((v) => !v)}
-                sx={{ border: '1px solid #CCC', borderRadius: '40px' }}
+                sx={{ border: '1px solid ', borderColor: 'divider', borderRadius: '40px',color:'secondary.main' }}
               >
                 {defaultOpen ? <UnfoldLessDoubleIcon /> : <UnfoldMoreDoubleIcon />}
               </IconButton>

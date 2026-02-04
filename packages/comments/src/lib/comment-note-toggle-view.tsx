@@ -46,55 +46,70 @@ export function CommentNoteToggleView({
   return (
     <Box>
       <Box>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          variant="fullWidth"
-          sx={{
-            '& .MuiTab-root': {
-              fontWeight: 'bold',
-              ':hover': { background: '#DDD' },
-              background: '#DDD',
+<Tabs
+  value={value}
+  onChange={handleChange}
+  variant="fullWidth"
+  sx={(theme) => {
+    const isDark = theme.palette.mode === 'dark';
 
-              borderRadius: '10px 10px 0 0',
-              borderBottom: `2px solid ${PRIMARY_COL}`,
-              borderTop: `2px solid #AAA`,
-              borderLeft: `2px solid #AAA`,
-              borderRight: `2px solid #AAA`,
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#FFFFFF00 !important',
-            },
-            '& .Mui-selected': {
-              background: 'white !important',
-              borderTop: `2px solid ${PRIMARY_COL} !important`,
-              borderLeft: `2px solid ${PRIMARY_COL} !important`,
-              borderRight: `2px solid ${PRIMARY_COL} !important`,
-              borderBottom: `2px solid white !important`,
-            },
-          }}
-        >
-          <Tab
-            sx={{ flexGrow: '1' }}
-            label={
-              <Box display="flex" alignItems="center">
-                <PersonIcon sx={{ fontSize: '28px' }} />
-                <sup style={{ margin: '-5px 5px 0 -7px' }}>
-                  <LockIcon sx={{ fontSize: '11px' }} />
-                </sup>
-                {t.myNotes}
-              </Box>
-            }
-          />
-          <Tab
-            sx={{ flexGrow: '1' }}
-            label={
-              <Box display="flex" alignItems="center">
-                <PublicIcon sx={{ mr: '5px' }} />
-                {t.comments}
-              </Box>
-            }
-          />
+    return {
+      backgroundColor: theme.palette.background.paper,
+      borderRadius: '10px 10px 0 0',
+      border: `1px solid ${theme.palette.divider}`,
+      borderBottom: `2px solid ${theme.palette.primary.main}`,
+
+      '& .MuiTabs-indicator': {
+        display: 'none', // cleaner than transparent hack
+      },
+
+      '& .MuiTab-root': {
+        fontWeight: 600,
+        color: theme.palette.text.secondary,
+        textTransform: 'none',
+        minHeight: 48,
+
+        '&:hover': {
+          backgroundColor: theme.palette.action.hover,
+        },
+      },
+
+      '& .MuiTab-root.Mui-selected': {
+        color: theme.palette.text.primary,
+        backgroundColor: theme.palette.background.default,
+        borderTop: `2px solid ${theme.palette.primary.main}`,
+        borderLeft: `2px solid ${theme.palette.primary.main}`,
+        borderRight: `2px solid ${theme.palette.primary.main}`,
+        borderBottom: `2px solid ${theme.palette.background.default}`,
+        borderRadius: '10px 10px 0 0',
+      },
+    };
+  }}
+>
+
+  <Tab
+  sx={{ flexGrow: 1 }}
+  label={
+    <Box display="flex" alignItems="center">
+      <PersonIcon sx={{ fontSize: 22 }} />
+      <sup style={{ margin: '-5px 6px 0 -6px' }}>
+        <LockIcon sx={{ fontSize: 11 }} />
+      </sup>
+      {t.myNotes}
+    </Box>
+  }
+/>
+
+<Tab
+  sx={{ flexGrow: 1 }}
+  label={
+    <Box display="flex" alignItems="center">
+      <PublicIcon sx={{ mr: 0.5 }} />
+      {t.comments}
+    </Box>
+  }
+/>
+
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>

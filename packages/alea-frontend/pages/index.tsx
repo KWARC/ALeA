@@ -1,16 +1,8 @@
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import {
-  Box,
-  Button,
-  IconButton,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
-import { Action, CourseInfo, CourseResourceAction } from '@alea/utils';
+import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -84,7 +76,6 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   } = getLocaleObject(router);
   const isSmallScreen = useMediaQuery('(max-width:800px)');
   const { loggedIn } = useIsLoggedIn();
-  const theme = useTheme();
 
   return (
     <>
@@ -108,7 +99,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
       <Box
         sx={{
           margin: '0 auto',
-          maxWidth: '1200px',
+          maxWidth: 1200,
           display: 'flex',
           alignItems: 'center',
           padding: tight ? '20px' : '50px 20px 100px',
@@ -117,78 +108,51 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
       >
         <Box>
           <Typography
-            variant="h2"
+            variant="T1"
             sx={{
               paddingBottom: 2,
-              color: theme.palette.mode === 'dark' ? 'white' : 'primary.main',
-              fontFamily: 'sans-serif,roboto',
+              letterSpacing: -0.5,
+              color: 'text.primary',
             }}
           >
             {n.alea}
           </Typography>
-          <Typography
-            variant="body1"
-            maxWidth="600px"
-            mb="16px"
-            fontFamily={'sans-serif,roboto'}
-            display="flex"
-            color={theme.palette.mode === 'dark' ? 'white' : undefined}
-          >
+          <Typography variant="body1" maxWidth={600} mb={2} display="flex">
             {n.aleaDesc}
           </Typography>
-
-          {!loggedIn && (
+          <Box display="flex" gap={0.75} flexWrap="wrap">
+            {!loggedIn && (
+              <Button variant="contained" color="primary" onClick={() => router.push('/signup')}>
+                {n.signUpNow}
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              onClick={() => {
+                router.push('/course-list');
+              }}
+            >
+              {n.exploreOurCourse}
+            </Button>
             <Button
               variant="contained"
-              color="primary"
-              sx={{ margin: '5px 5px 5px 0px' }}
-              onClick={() => router.push('/signup')}
+              onClick={() => {
+                router.push('/blog');
+              }}
             >
-              {n.signUpNow}
+              <FeedIcon />
+              blog
             </Button>
-          )}
-          <Button
-            sx={{
-              margin: '5px 5px 5px 0px',
-              color: theme.palette.mode === 'dark' ? 'white' : undefined,
-              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
-            }}
-            variant="outlined"
-            onClick={() => {
-              router.push('/course-list');
-            }}
-          >
-            {n.exploreOurCourse}
-          </Button>
-          <Button
-            sx={{
-              margin: '5px 5px 5px 0px',
-              gap: '5px',
-              color: theme.palette.mode === 'dark' ? 'white' : undefined,
-            }}
-            variant="contained"
-            onClick={() => {
-              router.push('/blog');
-            }}
-          >
-            <FeedIcon />
-            blog
-          </Button>
-          <Button
-            sx={{
-              margin: '5px 5px 5px 0px',
-              gap: '5px',
-              color: theme.palette.mode === 'dark' ? 'white' : undefined,
-              borderColor: theme.palette.mode === 'dark' ? 'white' : undefined,
-            }}
-            variant="outlined"
-            onClick={() => {
-              router.push('https://kwarc.github.io/bibs/voll-ki/');
-            }}
-          >
-            <LibraryBooksIcon />
-            {n.publications}
-          </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                router.push('https://kwarc.github.io/bibs/voll-ki/');
+              }}
+            >
+              <LibraryBooksIcon />
+              {n.publications}
+            </Button>
+          </Box>
         </Box>
         {!isSmallScreen && !tight && (
           <Image
@@ -204,8 +168,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
   );
 };
 
-export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
-  const background = bgcolor || 'secondary.main';
+export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string }) {
   const {
     home: { newHome: n },
   } = getLocaleObject(useRouter());
@@ -216,25 +179,29 @@ export function VollKiInfoSection({ bgcolor }: { bgcolor?: string }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        bgcolor: background,
-        padding: '20px',
-        mb: '-10px',
+        bgcolor: 'background.paper',
+        padding: 2.5,
+        mb: -1.25,
       }}
     >
       <Typography
-        style={{
+        sx={{
           textAlign: 'center',
-          marginTop: '20px',
-          fontWeight: '400',
-          fontSize: '20px',
+          marginTop: 2.5,
+          fontWeight: 400,
+          fontSize: 20,
+          maxWidth: 'lg',
+          textWrap: 'wrap',
         }}
       >
         {n.vollKiProjectInfo}
       </Typography>
-      <img
+      <Image
         src="/fau_kwarc.png"
         alt="Explore courses"
-        style={{ padding: '20px', maxWidth: '100%' }}
+        width={400}
+        height={400}
+        style={{ width: '100%', height: 'auto', paddingTop: '20px', paddingBottom: '20px' }}
       />
     </Box>
   );
@@ -248,14 +215,15 @@ export function CourseCard({ course, currentTerm }) {
       <Box
         sx={{
           cursor: 'pointer',
-          boxShadow: shadows[3],
-          width: '220px',
-          margin: '10px',
+          boxShadow: shadows[5],
+          width: 252, //width and height fixed intentionally to maintain uniformity on landing page
+          height: 292,
+          borderRadius: 8,
+          m: 2,
+          p: 2,
           textAlign: 'center',
-          height: '290px',
-          backgroundColor: 'background.paper',
-          borderRadius: '2rem',
-          padding: '1rem',
+          backgroundColor: 'background.card',
+          overflowY: 'scroll',
           transition: 'transform 0.3s',
           '&:hover': {
             transform: 'scale(1.1)',
@@ -263,11 +231,11 @@ export function CourseCard({ course, currentTerm }) {
         }}
       >
         <Image
-          height={110}
+          height={120}
           width={courseId === 'iwgs-1' ? 100 : 200}
           src={courseImage}
           alt="course-image"
-          style={{ borderRadius: '10px' }}
+          style={{ borderRadius: 2.5 }}
         />
         <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
           <Typography
@@ -281,15 +249,7 @@ export function CourseCard({ course, currentTerm }) {
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
           </Typography>
           <Typography sx={{ fontSize: '14px', padding: '5px' }}>{universityId}</Typography>
-          <Typography
-            sx={{
-              fontSize: '14px',
-              padding: '5px',
-              color: (theme) => (theme.palette.mode === 'dark' ? 'white' : undefined),
-            }}
-          >
-            {instructor}
-          </Typography>
+          <Typography sx={{ fontSize: '14px', padding: '5px' }}>{instructor}</Typography>
         </Box>
       </Box>
     </Link>
@@ -302,24 +262,25 @@ function AleaFeatures({ img_url, title, description }) {
       sx={{
         display: 'flex',
         alignItems: 'center',
-        width: '200px',
+        width: 200,
         flexDirection: 'column',
-        margin: '50px 20px',
+        my: 6.25,
+        mx: 2.5,
       }}
     >
       <Image src={img_url} height={80} width={80} alt="University_Credits" />
       <Typography
         sx={{
-          fontSize: '18px',
+          fontSize: 18,
           fontWeight: 'bold',
-          marginTop: '15px',
+          marginTop: 2,
           wordWrap: 'break-word',
           textAlign: 'center',
         }}
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '12px', color: 'text.secondary', textAlign: 'center' }}>
+      <Typography sx={{ fontSize: 12, color: 'grey.700', textAlign: 'center' }}>
         {description}
       </Typography>
     </Box>
@@ -367,19 +328,18 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: 'secondary.main', padding: '80px' }}>
-          <Box sx={{ margin: '0 auto', maxWidth: '1200px' }}>
+        <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
+          <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
             <Typography
-              style={{
-                color: 'text.secondary',
-                fontWeight: '400',
-                fontSize: '20px',
+              sx={{
+                color: 'secondary.700',
+                fontSize: 20,
                 textAlign: 'center',
               }}
             >
               <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
-              <Typography component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                {n.partneredWith.split('+')[2]}
+              <Typography component="span" sx={{ color: 'text.primary', fontSize: 20 }}>
+                <b> {n.partneredWith.split('+')[2]}</b>
               </Typography>
               .
             </Typography>
@@ -390,7 +350,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 justifyContent: 'space-around',
-                gap: '20px',
+                gap: 2.5,
               }}
             >
               {PARTNERED_UNIVERSITIES.map((university, index) => (
@@ -414,7 +374,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
                     width={university.code === 'others' ? 160 : 140}
                     height={140}
                   />
-                  <Typography sx={{ fontWeight: '500' }}>
+                  <Typography sx={{ fontWeight: 500 }}>
                     {router.locale === 'de'
                       ? university.name_de ?? university.name
                       : university.name}
@@ -428,22 +388,22 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '300px',
-            padding: '20px',
-            marginTop: '40px',
+            minHeight: 300,
+            padding: 2.5,
+            marginTop: 5,
             justifyContent: 'center',
             alignItems: 'center',
             margin: '0 auto',
-            maxWidth: '1200px',
+            maxWidth: 1200,
           }}
         >
           <Typography
             sx={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: 'primary.main',
-              fontSize: '24px',
-              marginTop: '30px',
+              color: 'text.primary',
+              fontSize: 24,
+              marginTop: 3,
             }}
           >
             {n.whyAlea}
@@ -470,21 +430,21 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '300px',
-            padding: '20px',
-            marginTop: '40px',
+            minHeight: 300,
+            padding: 5,
+            marginTop: 5,
             justifyContent: 'center',
             alignItems: 'center',
             margin: '0 auto',
-            maxWidth: '1200px',
+            maxWidth: 1200,
           }}
         >
           <Typography
             sx={{
               fontWeight: 'bold',
-              color: 'primary.main',
-              fontSize: '24px',
-              marginTop: '30px',
+              color: 'text.primary',
+              fontSize: 24,
+              marginTop: 3.5,
             }}
           >
             {n.exploreCourses}
@@ -494,7 +454,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
             sx={{
               display: 'flex',
               justifyContent: 'space-around',
-              marginTop: '40px',
+              marginTop: 5,
               flexWrap: 'wrap',
               alignItems: 'center',
             }}

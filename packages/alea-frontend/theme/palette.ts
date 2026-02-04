@@ -68,8 +68,9 @@ export const lightPalette: PaletteOptions = {
     900: '#0d5126',
   },
   background: {
-    default: '#F5F7FB',
-    paper: '#FFFFFF',
+    paper: '#F5F7FB',
+    default: '#FFFFFF',
+    card: '#EDEDED',
   },
   text: {
     primary: '#203360',
@@ -111,6 +112,9 @@ export const lightPalette: PaletteOptions = {
     gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
     rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
     spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+    softHighlight: 'linear-gradient(135deg, #fff3e0, #e8f4fd)',
+    warmHighlight: 'linear-gradient(135deg, rgb(255, 191, 87), #e8f4fd)',
+    fadeBottom: 'linear-gradient(to bottom, #f8f9fa00 0%, #f8f9fa66 35%, #f8f9fabf 100%)',
   },
 };
 
@@ -185,6 +189,7 @@ export const darkPalette: PaletteOptions = {
   background: {
     default: '#020617',
     paper: '#0F172A',
+    card: '#0F172A',
   },
   text: {
     primary: '#ffffff',
@@ -211,7 +216,7 @@ export const darkPalette: PaletteOptions = {
     400: '#38448a',
     500: '#0039C1',
     600: '#0032ad',
-    700: '#002a92', 
+    700: '#002a92',
     800: '#002176',
     900: '#00185a',
   },

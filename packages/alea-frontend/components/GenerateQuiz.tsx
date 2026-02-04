@@ -21,6 +21,7 @@ import { generateQuizProblems } from '@alea/spec';
 import { FlatQuizProblem } from '../pages/quiz-gen';
 import { FeedbackSection } from './quiz-gen/Feedback';
 import { QuestionSidebar } from './quiz-gen/QuizSidebar';
+import shadows from '../theme/shadows';
 
 export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProblem }) => {
   const isCorrectOption = (opt: string) => {
@@ -43,7 +44,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
       const optionLabel = (
         <Box display="flex" flexDirection="column">
           <Typography>{opt}</Typography>
-          <Typography fontSize="0.875rem" mt={0.5}>
+          <Typography fontSize={12} mt={0.5}>
             <Typography color={correct ? 'success' : 'error'}>Insights</Typography> {explanation}
           </Typography>
         </Box>
@@ -58,7 +59,8 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           mb={1.5}
           p={1.5}
           borderRadius={2}
-          border={'0.5px solid rgb(172, 178, 173)'}
+          border={'0.5px solid '}
+          borderColor={'divider'}
         >
           <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
             {problemData.problemType.toLowerCase() === 'mcq' ? (
@@ -81,7 +83,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
     const latestEdit = problemData.manualEdits[problemData.manualEdits.length - 1];
     console.log({ latestEdit });
     return (
-      <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+      <Box my={3} p={2} border="1px solid " borderColor="divider" borderRadius={2}>
         <Typography variant="body2" color="text.secondary" mt={1}>
           This problem is a manually edited variant of an existing problem.
         </Typography>
@@ -100,7 +102,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
   }
 
   return (
-    <Box my={3} p={2} border="1px solid #ccc" borderRadius={2}>
+    <Box my={3} p={2} border="1px solid " borderColor="divider" borderRadius={2}>
       <Box display="flex" justifyContent="space-between" gap={1}>
         <Typography variant="h6" mb={2}>
           {problemData.problem}
@@ -111,7 +113,7 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
             size="small"
             onClick={() => navigator.clipboard.writeText(problemData?.problemStex)}
             sx={{
-              marginRight: '8px',
+              mr: 1,
             }}
             disabled={!problemData.problemStex}
           >
@@ -129,8 +131,9 @@ export const QuizProblemViewer = ({ problemData }: { problemData: FlatQuizProble
           alignItems="center"
           gap={2}
           p={2}
-          bgcolor="#e3f2fd"
-          border="1px solid #64b5f6"
+          bgcolor="background.default"
+          border="1px solid "
+           borderColor="blue.sky"
           borderRadius={2}
         >
           <TextField
@@ -277,11 +280,11 @@ const QuizComponent = ({ courseId, sectionId }: { courseId: string; sectionId: s
                   sx={{
                     p: 3,
                     borderRadius: 3,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                    boxShadow: shadows[2],
                   }}
                 >
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" color="primary.main">
+                    <Typography variant="h5" color="text.primary">
                       Question {currentIdx + 1} of {problems.length}
                     </Typography>
                   </Box>

@@ -1,4 +1,28 @@
+import { Inter } from "next/font/google";
 import { createTheme, TypographyVariantsOptions } from '@mui/material/styles';
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap", // Prevents invisible text during font load
+  preload: true, // Preloads the font for better performance
+  fallback: ["system-ui", "arial"], // Fallback fonts for offline builds
+});
+
+export const FONT_FAMILY = [
+  inter.style.fontFamily,
+  "Cabin",
+  "-apple-system",
+  "BlinkMacSystemFont",
+  "Segoe UI",
+  "Roboto",
+  "Helvetica Neue",
+  "Arial",
+  "sans-serif",
+  "Apple Color Emoji",
+  "Segoe UI Emoji",
+  "Segoe UI Symbol",
+  "Inter",
+].join(",");
 
 const HEADING_LINE_HEIGHT = 1.5;
 const theme = createTheme();
@@ -9,6 +33,11 @@ export const typography: TypographyVariantsOptions = {
   fontWeightRegular: 400,
   fontWeightMedium: 600,
   fontWeightBold: 700,
+  T1: {
+    fontSize: 60,
+    lineHeight: 1.2,
+    fontWeight: 300,
+  },
   h1: {
     fontSize: 48,
     lineHeight: HEADING_LINE_HEIGHT,

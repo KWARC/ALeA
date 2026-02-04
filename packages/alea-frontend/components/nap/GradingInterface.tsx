@@ -577,7 +577,7 @@ export function GradingInterface({
         <b style={{ color: 'red' }}>{selectedGradedItems.length}</b> Grading Items Selected.
       </Typography>
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
-        <Box sx={{ border: '1px solid #ccc' }} flex="1 1 200px" maxWidth={300}>
+        <Box sx={{ border: '1px solid', borderColor: 'divider' }} flex="1 1 200px" maxWidth={300}>
           <GradingItemsList
             gradingItems={selectedGradedItems}
             homeworkMap={homeworkMap.current}

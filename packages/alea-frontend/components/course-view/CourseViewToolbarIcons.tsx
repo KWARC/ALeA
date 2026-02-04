@@ -43,19 +43,19 @@ export default function CourseViewToolbarIcons({
           size={isMobile ? 'small' : 'medium'}
           sx={{
             border: { xs: '1.5px solid', sm: '2px solid' },
-            borderColor: audioOnly ? 'blue.sky' : '#9e9e9e',
+            borderColor: audioOnly ? 'blue.sky' : 'grey.300',
             borderRadius: { xs: 1.5, sm: 2 },
-            bgcolor: audioOnly ? '#e3f2fd' : 'white',
-            color: audioOnly ? 'blue.sky' : '#616161',
+            bgcolor: audioOnly ? 'primary.100' : 'primary.50',
+            color: audioOnly ? 'blue.sky' : 'secondary.700',
             opacity: isVideoHidden ? 0.5 : 1,
-            padding: { xs: '6px', sm: '8px' },
+            padding: { xs: 0.75, sm: 1 },
             '&:hover': {
-              bgcolor: audioOnly ? '#bbdefb' : '#f5f5f5',
+              bgcolor: audioOnly ? 'blue.200' : 'primary.50',
             },
             '&.Mui-disabled': {
-              borderColor: '#9e9e9e',
-              bgcolor: 'white',
-              color: '#9e9e9e',
+              borderColor: 'divider',
+              bgcolor: 'background.default',
+              color: 'seondary.400',
             },
           }}
         >
@@ -76,11 +76,11 @@ export default function CourseViewToolbarIcons({
               sx={{
                 border: { xs: '1.5px solid #9e9e9e', sm: '2px solid #9e9e9e' },
                 borderRadius: { xs: 1.5, sm: 2 },
-                bgcolor: 'white',
-                color: '#616161',
-                padding: { xs: '6px', sm: '8px' },
+                bgcolor: 'background.default',
+                color: 'secondary.700',
+                padding: { xs: 0.75, sm: 1 },
                 '&:hover': {
-                  bgcolor: '#f5f5f5',
+                  bgcolor: 'primary.50',
                 },
               }}
             >
@@ -128,12 +128,12 @@ export default function CourseViewToolbarIcons({
               border: { xs: '1.5px solid', sm: '2px solid' },
               borderColor: 'blue.sky',
               borderRadius: { xs: 1.5, sm: 2 },
-              bgcolor: 'white',
+              bgcolor: 'background.default',
               color: 'blue.sky',
-              padding: { xs: '6px', sm: '8px' },
+              padding: { xs: 0.75, sm: 1 },
               '&:hover': {
-                bgcolor: '#e3f2fd',
-                borderColor: '#1565c0',
+                bgcolor: 'blue.200',
+                borderColor: 'blue.400',
               },
             }}
           >

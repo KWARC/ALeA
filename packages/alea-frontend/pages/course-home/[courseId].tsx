@@ -48,25 +48,12 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
-// import Grid from '@mui/material/Grid';
-import {
-  Article,
-  AssignmentTurnedIn,
-  CalendarMonth,
-  Diversity3,
-  Person,
-  PictureAsPdf,
-  QuestionAnswer,
-  Quiz,
-  School,
-  Search,
-  Slideshow,
-} from '@mui/icons-material';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+import shadows from '../../theme/shadows';
 import InstructorDetails from '../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../components/RecordedSyllabus';
@@ -133,15 +120,6 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
   );
 }
 
-// const BG_COLORS = {
-//   'iwgs-1': 'linear-gradient(to right, #00010e, #060844)',
-//   'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
-//   krmt: 'radial-gradient(circle, white, #f5f5b7)',
-//   gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
-//   rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
-//   spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
-// };
-
 export function CourseHeader({
   courseId,
   courseName,
@@ -155,7 +133,7 @@ export function CourseHeader({
   if (!courseName || !courseId) return <></>;
   if (!imageLink) {
     return (
-      <Box m="20px" textAlign="center" fontWeight="bold" fontSize="32px">
+      <Box m={2.5} textAlign="center" fontWeight="bold" fontSize={32}>
         {courseName}
       </Box>
     );
@@ -168,9 +146,9 @@ export function CourseHeader({
           display="flex"
           position="relative"
           width="100%"
-          maxHeight="200px"
+          maxHeight={200}
           overflow="hidden"
-          borderBottom="2px solid #DDD"
+          borderBottom={`2px solid ${theme.palette.divider}`}
           sx={{ backgroundImage: theme.palette.gradients?.[courseId] }}
         >
           {allowCrop ? (
@@ -189,14 +167,22 @@ export function CourseHeader({
               alt={courseName}
               style={{
                 objectFit: 'contain',
-                maxHeight: '200px',
+                maxHeight: 200,
                 margin: 'auto',
               }}
             />
           )}
         </Box>
       </Link>
-      <Box m="20px 0 32px" fontWeight="bold" fontSize="32px">
+      <Box
+        sx={{
+          mt: 2.5,
+          mx: 0,
+          mb: 4,
+          fontWeight: 'bold',
+          fontSize: 32,
+        }}
+      >
         {courseName}
       </Box>
     </Box>
@@ -307,15 +293,16 @@ function CourseScheduleSection({
       })
     : null;
   const fontColor = 'text.primary';
+  const theme = useTheme();
   return (
     <Box
       sx={{
         mx: 'auto',
-        maxWidth: '850px',
+        maxWidth: 850,
         p: { xs: 0, sm: 1 },
-        borderRadius: '12px',
+        borderRadius: 3,
         backgroundColor: 'background.paper',
-        border: { xs: 'none', sm: '1px solid #e0e0e0' },
+        border: { xs: 'none', sm: `1px solid ${theme.palette.divider}` },
       }}
     >
       <Box
@@ -411,7 +398,7 @@ function CourseScheduleSection({
                         left: 0,
                         right: 0,
                         height: 55,
-                        background: `linear-gradient( to bottom,rgba(248,249,250,0) 0%, rgba(248,249,250,0.4) 35%, rgba(248,249,250,0.75) 100%)`,
+                        background: theme.palette.gradients?.fadeBottom,
                         backdropFilter: 'blur(1.5px)',
                         WebkitBackdropFilter: 'blur(1.5px)',
                         pointerEvents: 'none',
@@ -517,7 +504,7 @@ function CourseScheduleSection({
                         left: 0,
                         right: 0,
                         height: 55,
-                        background: `linear-gradient(to bottom,rgba(248,249,250,0) 0%, rgba(248,249,250,0.4) 35%, rgba(248,249,250,0.75) 100%)`,
+                        background: theme.palette.gradients?.fadeBottom,
                         backdropFilter: 'blur(1.5px)',
                         WebkitBackdropFilter: 'blur(1.5px)',
                         pointerEvents: 'none',
@@ -561,7 +548,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const theme = useTheme();
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
@@ -592,7 +579,7 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
       mt={3}
       sx={{
         mx: 'auto',
-        maxWidth: '650px',
+        maxWidth: 650,
         p: { xs: 0, sm: 1 },
       }}
     >
@@ -602,9 +589,9 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
             <Card
               sx={{
                 padding: 2,
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid blue.sky',
+                borderRadius: 2,
+                boxShadow: shadows[2],
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
               }}
             >
               <Typography variant="body1" fontWeight="bold">
@@ -780,9 +767,9 @@ const CourseHomePage: NextPage = () => {
         fragment-uri={notes}
         fragment-kind="Section"
         sx={{
-          maxWidth: '900px',
+          maxWidth: 900,
           margin: 'auto',
-          px: '1.25',
+          px: 1.25,
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -790,14 +777,14 @@ const CourseHomePage: NextPage = () => {
         <Box
           display="grid"
           gridTemplateColumns="repeat(auto-fill,minmax(185px, 1fr))"
-          gap="10px"
+          gap={1.25}
           ref={containerRef}
         >
-          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: 48 }}>
             <Button
               component={Link}
               href={notesLink}
-              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
+              sx={{ flex: 1, fontSize: 16, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               {t.notes}
               <ArticleIcon fontSize="large" />
@@ -809,18 +796,18 @@ const CourseHomePage: NextPage = () => {
                     const pdfUrl = getCoursePdfUrl(notes);
                     window.open(pdfUrl, '_blank');
                   }}
-                  sx={{ minWidth: '48px', px: 1 }}
+                  sx={{ minWidth: 48, px: 1 }}
                 >
                   <PictureAsPdfIcon fontSize="large" />
                 </Button>
               </Tooltip>
             )}
           </ButtonGroup>
-          <ButtonGroup variant="contained" sx={{ width: '100%', height: '48px' }}>
+          <ButtonGroup variant="contained" sx={{ width: '100%', height: 48 }}>
             <Button
               component={Link}
               href={slidesLink}
-              sx={{ flex: 1, fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}
+              sx={{ flex: 1, fontSize: 16, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               {t.slides}
               <SlideshowIcon fontSize="large" />
@@ -832,7 +819,7 @@ const CourseHomePage: NextPage = () => {
                     const pdfUrl = getCoursePdfUrl(slides);
                     window.open(pdfUrl, '_blank');
                   }}
-                  sx={{ minWidth: '48px', px: 1 }}
+                  sx={{ minWidth: 48, px: 1 }}
                 >
                   <PictureAsPdfIcon fontSize="large" />
                 </Button>
@@ -870,7 +857,7 @@ const CourseHomePage: NextPage = () => {
           {isInstructor && (
             <CourseComponentLink
               href={`/instructor-dash/${courseId}`}
-              sx={{ backgroundColor: '#4565af' }}
+              sx={{ backgroundColor: 'blue.300' }}
             >
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
@@ -884,7 +871,7 @@ const CourseHomePage: NextPage = () => {
               display: 'flex',
               justifyContent: 'center',
               flexDirection: 'column',
-              marginTop: '10px',
+              my: 1.25,
             }}
           >
             <Button
@@ -894,7 +881,7 @@ const CourseHomePage: NextPage = () => {
                 backgroundColor: 'green',
                 width: 'max-content',
                 alignSelf: 'center',
-                marginBottom: '10px',
+                mb: 1.25,
               }}
             >
               {q.getEnrolled}
@@ -925,7 +912,7 @@ const CourseHomePage: NextPage = () => {
                   onClick={unEnrollFromCourse}
                   sx={{
                     cursor: 'pointer',
-                    color: '#b00020',
+                    color: 'error.main',
                     ml: 0.5,
                     textDecoration: 'none',
                     '&:hover': {
@@ -944,90 +931,55 @@ const CourseHomePage: NextPage = () => {
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         {showSearchBar && (
-          //     <Box
-          //       sx={{
-          //         display: 'flex',
-          //         justifyContent: 'center',
-          //         alignItems: 'center',
-          //          width: '100%',
-          //        maxWidth: '600px',
-          //        margin: '0 auto',
-          //        }}
-          //       maxWidth={600} mx="auto" mt={3}
-          //     >
-          //       <TextField
-          //          fullWidth
-          //          variant="outlined"
-          //          placeholder="Search in notes..."
-          //          fullWidth
-          //     placeholder="Search in notes..."
-          //     onChange={(e) => setSearchQuery(e.target.value)}
-          //     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          //         InputProps={{
-          //           startAdornment: (
-          //             <InputAdornment position="start">
-          //                <IconButton>
-          //                 <SearchIcon onClick={() => handleSearch()} />
-          //                 <IconButton onClick={handleSearch}>
-          //                 <Search />
-          //               </IconButton>
-          //             </InputAdornment>
-          //           ),
-          //         }}
-          //         sx={{
-          //           backgroundColor: 'white',
-          //           borderRadius: '30px',
-          //           mt: '10px',
-          //          }}
-          //         onKeyDown={handleKeyDown}
-          //         onChange={(e) => setSearchQuery(e.target.value)}
-          //       />
-          //     </Box>
-          //    )}
-          //  <Box fragment-uri={landing} fragment-kind="Section">
-          <Box maxWidth={600} mx="auto" mt={3}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+              maxWidth: 600,
+              margin: '0 auto',
+              mb:2,
+            }}
+          >
             <TextField
               fullWidth
+              variant="outlined"
               placeholder="Search in notes..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconButton onClick={handleSearch}>
-                      <Search />
+                    <IconButton>
+                      <SearchIcon onClick={() => handleSearch()} />
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 7.5,
+                mt: 1.25,
+              }}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
         )}
-        {/* <Box
-          mt={4}
-          sx={{
-            backgroundColor: 'white',
-            color: 'black',
-            p: 2,
-            borderRadius: 1,
-            '& .stex-document, & .ftml-document, & .omdoc-content, & div': {
-              backgroundColor: 'transparent !important',
-              color: 'black',
-            },
-          }}
-        > */}
-        <SafeFTMLDocument
-          document={{ type: 'FromBackend', uri: landing }}
-          showContent={false}
-          toc="None"
-          pdfLink={false}
-          chooseHighlightStyle={false}
-        />
+        <Box bgcolor={"background.paper"}>
+        <Box fragment-uri={landing} fragment-kind="Section">
+          <SafeFTMLDocument
+            document={{ type: 'FromBackend', uri: landing }}
+            showContent={false}
+            pdfLink={false}
+            chooseHighlightStyle={false}
+            toc="None"
+          />
+        </Box>
+        </Box>
+        <RecordedSyllabus courseId={courseId} />
       </Box>
-
-      <RecordedSyllabus courseId={courseId} />
-      {/* </Box> */}
     </MainLayout>
   );
 };
+
 export default CourseHomePage;

@@ -50,11 +50,12 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
   return (
     <Card
       sx={{
-        backgroundColor: 'hsl(210, 20%, 95%)',
-        border: '1px solid #CCC',
-        p: '10px',
-        m: '10px',
-        width: '200px',
+        bgcolor: 'background.card',
+        border: '1px solid ',
+        borderColor: 'divider',
+        p: 1.25,
+        m: 1.25,
+        maxWidth: 252,
       }}
     >
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
@@ -68,12 +69,13 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
               style={{ display: 'block', margin: 'auto' }}
               priority={true}
             />
-            <span style={{ fontSize: '16px', marginTop: '5px', fontWeight: 'bold' }}>
+            <Typography component="span" sx={{ fontSize: 16, mt: 0.6, fontWeight: 'bold',fontFamily:'Latin Modern' }}>
               {courseName.length > 50 ? courseId.toUpperCase() : courseName}
-            </span>
+            </Typography>
+            
           </Link>
         </Box>
-        <Box display="flex" justifyContent="space-between" mt="5px" gap="5px" flexWrap="wrap">
+        <Box display="flex" justifyContent="space-between" mt={0.6} gap={0.6} flexWrap="wrap">
           <Tooltip title={t.notes}>
             <Link href={notesLink} passHref>
               <Button size="small" variant="contained">
