@@ -27,7 +27,7 @@ const PerSectionQuizPage: React.FC = () => {
 
   return (
     <MainLayout title="PerSection Problems | ALeA">
-      <Box px="10px" bgcolor="white" maxWidth="800px" m="0 auto">
+      <Box px="10px" bgcolor="background.paper" maxWidth="800px" m="0 auto">
         <Box display="flex" mt="10px" gap="10px" alignItems="center" my={2}>
           {courseId && (
             <Tooltip title={t.backToAllCourseProblems}>
@@ -37,19 +37,26 @@ const PerSectionQuizPage: React.FC = () => {
             </Tooltip>
           )}
 
-          <b style={{ color: 'gray', fontSize: '1.5rem', fontWeight: 'bold' }}>
+          <Typography
+            component="span"
+            sx={(theme) => ({
+              color: 'text.secondary',
+              fontSize: 24,
+              fontWeight: 700,
+            })}
+          >
             {t.problemsFor}&nbsp;
             <Typography
               component="span"
               sx={{
-                color: 'primary.main',
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
+                color: 'primary.500',
+                fontSize: 24,
+                fontWeight: 700,
               }}
             >
               {header ? <SafeHtml html={header} /> : <i>Section</i>} ({courseId.toUpperCase()})
             </Typography>
-          </b>
+          </Typography>
         </Box>
         <PerSectionQuiz courseId={courseId} sectionUri={sectionUri} showButtonFirst={false} />
         <br />
