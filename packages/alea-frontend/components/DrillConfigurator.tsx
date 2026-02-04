@@ -175,7 +175,7 @@ function CoverageConfigurator({
   return (
     <>
       <Tooltip title={t.chooseCoverageHover}>
-        <Typography variant="h6" style={{ textAlign: 'center' }}>
+        <Typography variant="h6" color="text.primary" style={{ textAlign: 'center' }}>
           {t.chooseCoverage}
         </Typography>
       </Tooltip>
@@ -290,12 +290,12 @@ function ReviseAndDrillButtons({
   const { flashCards: t } = getLocaleObject(router);
 
   return (
-    <Box textAlign={'center'} mt="20px">
+    <Box textAlign={'center'} mt={2.5}>
       <FormControlLabel
         control={<Checkbox checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} />}
         label={t.shuffleCards}
       />
-      <Box display="flex" gap="10px" justifyContent="center" mb="5px">
+      <Box display="flex" gap={1.25} justifyContent="center" mb={0.5}>
         <Button
           variant="contained"
           disabled={isDisabled}
