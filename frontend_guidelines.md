@@ -153,6 +153,58 @@ For tiny, one-line, self-contained style adjustments, it’s okay to write sx in
 - Use inline sx only for trivial, non-reusable styles.
 
 - For complex or reusable styles, always define a dedicated style object.
+
+### 1.3 Color Palette Usage
+
+#### 1.3.1 Always Use Theme Palette Tokens
+**Examples:**
+```jsx
+<Box sx={{ color: 'text.primary', bgcolor: 'background.paper' }} />
+```
+#### 1.3.2 Use Gradients Defined in the Theme Palette
+
+- Always use gradients defined under palette.gradients.
+
+- Do not define gradient values directly inside components.
+
+- If a required gradient is not available,**add a new gradient to the theme palette with a clear, semantic key.**
+
+## NOTE: 
+- Ensures light/dark mode compatibility for color being used
+
+### 1.4 Typography
+
+#### 1.4.1 Use Theme Typography Variants Only
+
+#### 1.4.2 Font Sizes Should Come From Theme.
+- Prefer MUI typography variants (T1,h1–h6, body1, body2, etc.) instead of defining custom font sizes.
+
+- If a local override is required for typography-related properties (fontSize, lineHeight, fontWeight, etc.), ensure it is responsive across all breakpoints.
+- Always verify typography on small, medium, and large screens.
+❌ Avoid **single-screen overrides**:
+
+#### 1.5 Use Shadows From the Central shadows.ts Array
+- Always use shadow values defined in shadows.ts.
+- Do not define custom boxShadow values inside components.
+- If the required shadow intensity or opacity is not available, add a new entry to the shadows.ts array instead of creating ad-hoc shadows.
+❌ Avoid:
+```tsx
+sx={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}
+```
+✅ Prefer:
+```tsx
+sx={{ boxShadow: theme.shadows[2] }}
+```
+
+
+#### 1.6 Override Common Components in components.ts
+- Commonly used components across the project must have their some of the styles overridden centrally.
+
+## NOTE:
+- Overrides for Button, TextField, and other frequently used components are already defined.
+e.g button, textfield and others are already done.
+
+
 ## 2. State Management
 
 ### 2.1 Derived State Optimization
