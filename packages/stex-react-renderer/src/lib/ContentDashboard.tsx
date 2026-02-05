@@ -1,5 +1,5 @@
 import { getCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { convertHtmlStringToPlain, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -209,14 +209,15 @@ function RenderTree({
             )}
           </IconButton>
         )}
-        <span
+        <Box
+          component="span"
           className={itemClassName}
-          style={{
+          sx={{
             cursor: 'pointer',
-            color: isSelected ? 'white' : undefined,
-            padding: isSelected ? '0 3px' : undefined,
-            backgroundColor: isSelected ? PRIMARY_COL : 'inherit',
-            borderRadius: '3px',
+            color: isSelected ? 'white' : 'undefined',
+            px: isSelected ? 0.5 : 0,
+            backgroundColor: isSelected ? 'primary.main' : 'inherit',
+            borderRadius: 0.5,
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -225,14 +226,17 @@ function RenderTree({
           }}
         >
           {preAdornment ? preAdornment(node.tocElem.id) : null}
+
           {lectureHover ? (
-            <Tooltip title={<span style={{ fontSize: 'medium' }}>{lectureHover}</span>}>
-              <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{lectureHover}</Box>}>
+              <Box component="span">
+                {convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}
+              </Box>
             </Tooltip>
           ) : (
-            <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Box component="span">{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</Box>
           )}
-        </span>
+        </Box>
       </Box>
       {isOpen && node.children.length > 0 && (
         <Box display="flex" ml="3px">
@@ -462,7 +466,7 @@ export function ContentDashboard({
         <>
           <Box display="flex" alignItems="center" sx={{ m: '5px' }}>
             <IconButton sx={{ m: '2px' }} onClick={() => onClose()}>
-              <CloseIcon />
+              <CloseIcon sx={{ bgcolor: 'secondary.100' }} />
             </IconButton>
             <TextField
               id="tree-filter-string"
@@ -477,7 +481,7 @@ export function ContentDashboard({
             <Tooltip title={t.expandCollapseAll}>
               <IconButton
                 onClick={() => setDefaultOpen((v) => !v)}
-                sx={{ border: '1px solid #CCC', borderRadius: '40px' }}
+                sx={{ border: '1px solid ', borderColor: 'divider', borderRadius: '40px',color:'secondary.main' }}
               >
                 {defaultOpen ? <UnfoldLessDoubleIcon /> : <UnfoldMoreDoubleIcon />}
               </IconButton>

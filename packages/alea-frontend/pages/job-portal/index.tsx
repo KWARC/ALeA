@@ -56,11 +56,11 @@ const JobPortal: NextPage = () => {
               left: 0,
               width: '100%',
               height: 5,
-              background: 'linear-gradient(90deg, #4A69E1, #6C8CFF)',
+              background: 'linear-gradient(90deg, blue.400 , #6C8CFF)',
             },
           }}
         >
-          <Typography variant="h4" fontWeight={700} sx={{ color: '#4A69E1', mb: 1 }}>
+          <Typography variant="h4" fontWeight={700} sx={{ color: 'blue.400 ', mb: 1 }}>
             Welcome to Job Portal
           </Typography>
 
@@ -80,7 +80,7 @@ const JobPortal: NextPage = () => {
                   size="large"
                   sx={{
                     mb: 2,
-                    bgcolor: '#4A69E1',
+                    bgcolor: 'blue.400 ',
                     color: 'white',
                     textTransform: 'none',
                     fontSize: '16px',
@@ -131,7 +131,7 @@ const JobPortal: NextPage = () => {
                   size="large"
                   sx={{
                     mb: 2,
-                    bgcolor: '#4A69E1',
+                    bgcolor: 'blue.400 ',
                     color: 'white',
                     textTransform: 'none',
                     fontSize: '16px',
@@ -201,7 +201,7 @@ const JobPortal: NextPage = () => {
                     mt: 2,
                     textTransform: 'none',
                     fontWeight: 500,
-                    color: '#4A69E1',
+                    color: 'blue.400 ',
                   }}
                   onClick={() => setForceFauLogin(true)}
                 >

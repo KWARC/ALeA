@@ -24,7 +24,7 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
     return <CircularProgress />;
   }
 
-  return <FTMLDocument {...props} />;
+  return  <FTMLDocument {...props} />;
 }
 
 export function SafeFTMLSetup(

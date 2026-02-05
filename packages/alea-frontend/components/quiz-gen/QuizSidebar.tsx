@@ -8,7 +8,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { PRIMARY_COL } from '@alea/utils';
 import { useMemo, useState } from 'react';
 import {
   ExistingProblem,
@@ -72,7 +71,7 @@ export const QuestionSidebar = ({
   return (
     <Box
       flex={0.35}
-      bgcolor="#ffffff"
+      bgcolor="background.paper"
       pl={3}
       pr={1}
       borderLeft="1px solid #ddd"
@@ -83,12 +82,12 @@ export const QuestionSidebar = ({
       <Typography
         variant="h6"
         mb={1}
-        color={PRIMARY_COL}
+        color="primary.main"
         fontWeight="bold"
         sx={{
           position: 'sticky',
           top: -10,
-          backgroundColor: '#ffffff',
+          backgroundColor: 'background.paper',
           zIndex: 1,
           py: 1.5,
         }}
@@ -142,7 +141,7 @@ export const QuestionSidebar = ({
             const sectionText = isGenerated(item)
               ? getSectionNameFromIdOrUri(item.sectionId, sections) //TODO check again
               : getSectionNameFromIdOrUri(item.sectionUri, sections);
-              
+
             return (
               <ListItemButton
                 key={isGenerated(item) ? item.problemId : item.uri}

@@ -1,7 +1,6 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { getMyNotesSections } from '@alea/spec';
 import { NotesView } from '@alea/comments';
-import { PRIMARY_COL } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
@@ -58,7 +57,7 @@ const MyNotesPage: NextPage = () => {
           <Box key={courseId} mb={4}>
             {Object.entries(instances).map(([instanceId, sections]) => (
               <Box key={instanceId} mb={3}>
-                <Typography variant="h5" sx={{ mb: 2, color: PRIMARY_COL }}>
+                <Typography variant="h5" sx={{ mb: 2, color: 'primary.main' }}>
                   {courseId.toUpperCase()} ({instanceId})
                 </Typography>
                 {sections.map((section) => (

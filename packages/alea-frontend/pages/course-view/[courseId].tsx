@@ -11,18 +11,40 @@ import {
   Slide,
   SlidesClipInfo,
 } from '@alea/spec';
+import { CommentNoteToggleView } from '@alea/comments';
+import { SafeHtml } from '@alea/react-utils';
 import {
   ContentDashboard,
   LayoutWithFixedMenu,
   SafeFTMLFragment,
   SectionReview,
 } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, localStore, ResourceName, shouldUseDrawer } from '@alea/utils';
+import {
+  Action,
+  CourseInfo,
+  getCoursePdfUrl,
+  getParamFromUri,
+  localStore,
+  ResourceName,
+  shouldUseDrawer,
+} from '@alea/utils';
+
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { VideoCameraBack } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
-import { Box, Button, CircularProgress, Container, Paper, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import shadows from '../../theme/shadows';
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -36,6 +58,8 @@ import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
+import { SearchDialog } from '../course-notes/[courseId]';
+import SearchIcon from '@mui/icons-material/Search';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
   return (
@@ -82,9 +106,9 @@ function ToggleModeButton({
         fontWeight: 500,
         px: { xs: 2, sm: 3 },
         py: 1,
-        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+        fontSize: { xs: 12, sm: 14 },
         whiteSpace: 'nowrap',
-        minWidth: { xs: 'auto', sm: '140px' },
+        minWidth: { xs: 'auto', sm: 140 },
       }}
     >
       {buttonLabel}
@@ -156,6 +180,41 @@ function findSection(
     }
   }
   return { tocElem: undefined, isNotCovered: false };
+}
+
+function resolveSlideFromFragment(
+  fragment: string,
+  slidesUriToIndexMap: SlidesUriToIndexMap
+): { sectionId: string; slideNum: number } | null {
+  const decoded = decodeURIComponent(fragment);
+  const normalizedFragment = getParamFromUri(decoded, 'a') || decoded;
+
+  let bestMatch: { sectionId: string; slideUri: string; slideIndex: number } | null = null;
+
+  for (const [sectionId, slideMap] of Object.entries(slidesUriToIndexMap)) {
+    if (!slideMap) continue;
+    for (const [slideUri, slideIndex] of Object.entries(slideMap)) {
+      if (
+        normalizedFragment.startsWith(slideUri) ||
+        slideUri.startsWith(normalizedFragment) ||
+        normalizedFragment.includes(slideUri) ||
+        slideUri.includes(normalizedFragment)
+      ) {
+        if (!bestMatch || slideUri.length > bestMatch.slideUri.length) {
+          bestMatch = { sectionId, slideUri, slideIndex };
+        }
+      }
+    }
+  }
+
+  if (bestMatch) {
+    return {
+      sectionId: bestMatch.sectionId,
+      slideNum: bestMatch.slideIndex + 1,
+    };
+  }
+
+  return null;
 }
 
 const CourseViewPage: NextPage = () => {
@@ -299,8 +358,50 @@ const CourseViewPage: NextPage = () => {
       injectCss(css);
     });
     getSlideCounts(courseId).then(setSlideCounts);
-    getSlideUriToIndexMapping(courseId).then(setSlidesUriToIndexMap);
+    getSlideUriToIndexMapping(courseId).then((map) => {
+      setSlidesUriToIndexMap(map);
+    });
   }, [router.isReady, courses, courseId]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const fragmentParam = router.query.fragment;
+    if (!fragmentParam || typeof fragmentParam !== 'string') return;
+
+    if (!Object.keys(slidesUriToIndexMap).length) return;
+
+    const fragment = decodeURIComponent(fragmentParam);
+
+    const resolved = resolveSlideFromFragment(fragment, slidesUriToIndexMap);
+
+    if (!resolved) {
+      console.warn('No slide resolved for fragment', fragment);
+      return;
+    }
+
+    const currentSection = router.query.sectionId as string | undefined;
+    const currentSlideNum = Number(router.query.slideNum);
+
+    if (currentSection === resolved.sectionId && currentSlideNum === resolved.slideNum) {
+      return;
+    }
+
+    const { fragment: _ignored, ...restQuery } = router.query;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: {
+          ...restQuery,
+          sectionId: resolved.sectionId,
+          slideNum: String(resolved.slideNum),
+        },
+      },
+      undefined,
+      { shallow: true }
+    );
+  }, [router.isReady, router.query.fragment, slidesUriToIndexMap]);
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
@@ -364,6 +465,9 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
+
+    if (router.query.fragment) return;
+
     if (sectionId && slideNum && viewMode && audioOnlyStr) return;
     const { pathname, query } = router;
     let someParamMissing = false;
@@ -390,7 +494,17 @@ const CourseViewPage: NextPage = () => {
       query.audioOnly = localStore?.getItem('audioOnly') || 'false';
     }
     if (someParamMissing) router.replace({ pathname, query });
-  }, [router, router.isReady, sectionId, slideNum, viewMode, courseId, audioOnlyStr, slideCounts]);
+  }, [
+    router,
+    router.isReady,
+    router.query.fragment,
+    sectionId,
+    slideNum,
+    viewMode,
+    courseId,
+    audioOnlyStr,
+    slideCounts,
+  ]);
 
   function goToPrevSection() {
     const secIdx = courseSections.indexOf(sectionId);
@@ -418,6 +532,7 @@ const CourseViewPage: NextPage = () => {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+  const notes = courses?.[courseId]?.notes;
 
   const onClipChange = (clip: any) => {
     setCurrentClipId(clip.video_id);
@@ -443,7 +558,7 @@ const CourseViewPage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -451,10 +566,10 @@ const CourseViewPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 2002,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            bgcolor: 'primary.50',
             boxShadow: 3,
             '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
+              bgcolor: 'primary.300',
             },
           }}
           onClick={handleSearchClick}
@@ -468,9 +583,10 @@ const CourseViewPage: NextPage = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         courseId={courseId}
+        notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      /> */}
+      />
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
@@ -521,7 +637,7 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+        <Box sx={{ minHeight: '100vh',bgcolor:'background.default' }}>
           <Container
             maxWidth="xl"
             sx={{
@@ -535,8 +651,8 @@ const CourseViewPage: NextPage = () => {
                 p: { xs: 1.5, sm: 2 },
                 mb: { xs: 2, sm: 3 },
                 borderRadius: 2,
-                bgcolor: 'white',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                bgcolor: 'background.paper',
+                boxShadow: shadows[2],
               }}
             >
               <Stack
@@ -589,10 +705,9 @@ const CourseViewPage: NextPage = () => {
                       fontWeight: 500,
                       px: 3,
                       whiteSpace: 'nowrap',
-                      bgcolor: '#1976d2',
-                      color: 'white',
+                      bgcolor: 'blue.sky',
                       '&:hover': {
-                        bgcolor: '#1565c0',
+                        bgcolor: 'blue.sky',
                       },
                     }}
                   >
@@ -624,8 +739,9 @@ const CourseViewPage: NextPage = () => {
                     sx={{
                       borderRadius: 2,
                       overflow: 'hidden',
-                      bgcolor: '#f5f5f5',
-                      border: '1px solid #e0e0e0',
+                      bgcolor: 'background.paper',
+                      border: '1px solid ',
+                      borderColor: 'divider',
                     }}
                   >
                     <VideoDisplay
@@ -673,8 +789,9 @@ const CourseViewPage: NextPage = () => {
                     sx={{
                       borderRadius: 2,
                       overflow: 'hidden',
-                      bgcolor: 'white',
-                      border: '1px solid #e0e0e0',
+                      bgcolor: 'background.paper',
+                      border: '1px solid ',
+                      borderColor: 'divider',
                     }}
                   >
                     <SlideDeck
@@ -705,8 +822,9 @@ const CourseViewPage: NextPage = () => {
                   sx={{
                     borderRadius: 2,
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e0e0e0',
+                    bgcolor: 'background.paper',
+                    border: '1px solid ',
+                    borderColor: 'divider',
                   }}
                 >
                   <SlideDeck
@@ -734,9 +852,10 @@ const CourseViewPage: NextPage = () => {
                   p: { xs: 2, sm: 3 },
                   mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
-                  bgcolor: '#fff9e6',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  border: '1px solid #ffeaa7',
+                  bgcolor: 'warning.50',
+                  boxShadow: shadows[2],
+                  border: '1px solid ',
+                  borderColor: 'divider',
                 }}
               >
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -744,8 +863,6 @@ const CourseViewPage: NextPage = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#1a1a1a',
-                      fontSize: { xs: '1rem', sm: '1.125rem' },
                     }}
                   >
                     {t.instructorNotes}
@@ -762,7 +879,8 @@ const CourseViewPage: NextPage = () => {
                     <Box
                       sx={{
                         my: 2,
-                        borderTop: '2px dashed #fdcb6e',
+                        borderTop: '2px dashed ',
+                        borderColor: 'warning.500',
                       }}
                     />
                   )}

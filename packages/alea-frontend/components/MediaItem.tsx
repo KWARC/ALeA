@@ -329,13 +329,13 @@ export function MediaItem({
                 top: { xs: 1, md: 1.25 },
                 left: '50%',
                 transform: 'translateX(-50%)',
-                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                bgcolor: 'primary.900',
                 color: 'white',
                 px: { xs: 1, md: 1.25 },
                 py: 0.5,
                 borderRadius: 0.5,
                 zIndex: 100,
-                fontSize: { xs: '0.75rem', md: '0.875rem' },
+                fontSize: { xs: 12, md: 14 },
               }}
             >
               {tooltip}
@@ -391,7 +391,6 @@ export function MediaItem({
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  color: '#111827',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -406,10 +405,10 @@ export function MediaItem({
                 size="small"
                 onClick={() => setShowConcepts(true)}
                 sx={{
-                  bgcolor: '#e5e7eb',
-                  color: '#111827',
-                  border: '1px solid rgba(148, 163, 184, 0.7)',
-                  '&:hover': { bgcolor: '#d1d5db' },
+                  bgcolor: 'background.default',
+                  color: 'primary.800',
+                  border: '1px solid divider',
+                  '&:hover': { bgcolor: 'primary.100' },
                 }}
               >
                 <MenuBookIcon fontSize="small" />

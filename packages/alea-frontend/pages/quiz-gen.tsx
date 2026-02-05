@@ -1,10 +1,4 @@
-import {  
-  ProblemJson,
-  QuizProblem,
-  runGraphDbSelectQuery,
-  runGraphDbUpdateQuery,
-} from '@alea/spec';
-import { PRIMARY_COL } from '@alea/utils';
+import { ProblemJson, QuizProblem, runGraphDbSelectQuery, runGraphDbUpdateQuery } from '@alea/spec';
 import { Alert, Box, Button, CircularProgress, Paper, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -130,13 +124,13 @@ const QuizGen = () => {
   const [allIdx, setAllIdx] = useState(0);
   const [viewMode, setViewMode] = useState<QuizViewMode>('all');
   const [sections, setSections] = useState<SecInfo[]>([]);
-  const { user,isUserLoading } = useCurrentUser();
+  const { user, isUserLoading } = useCurrentUser();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
   useEffect(() => {
-    if(isUserLoading) return;
-    if(!user){
+    if (isUserLoading) return;
+    if (!user) {
       router.push('/login');
       return;
     }
@@ -157,11 +151,11 @@ const QuizGen = () => {
     if (viewMode === 'existing') return existingProblems;
     return [...generatedProblems, ...existingProblems];
   }, [viewMode, generatedProblems, existingProblems]);
-  if(isUserLoading) return <CircularProgress />;
+  if (isUserLoading) return <CircularProgress />;
   return (
     <Box display="flex" height="100vh" bgcolor="#f4f6f8">
       <Box flex={1} px={4} py={3} overflow="auto">
-        <Typography variant="h3" fontWeight="bold" textAlign="center" color={PRIMARY_COL} mb={3}>
+        <Typography variant="h3" fontWeight="bold" textAlign="center" color="primary.main" mb={3}>
           Quiz Builder
         </Typography>
         <CourseSectionSelector

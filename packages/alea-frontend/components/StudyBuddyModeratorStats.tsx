@@ -26,7 +26,7 @@ export function StudyBuddyModeratorStats({ courseId, institutionId }: { courseId
 
   return (
     <>
-      <Card sx={{ mt: '20px', mb: '20px' }}>
+      <Card sx={{ my: 2.5}}>
         <CardContent>
           <StudyBuddyModeratorOverview overviewData={overviewData} />
           <hr />

@@ -1,5 +1,5 @@
 import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL } from '@alea/utils';
+import { CourseInfo } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
 import { NextPage } from 'next';
@@ -49,10 +49,10 @@ const CourseList: NextPage = () => {
 
   return (
     <MainLayout title="Course-List | ALeA">
-      <Box m="0 auto" maxWidth="800px">
+      <Box m="0 auto" maxWidth={800}>
         {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
           <Box key={universityId}>
-            <Typography variant="h3">{universityId}</Typography>
+            <Typography variant="h1">{universityId}</Typography>
             {universities.map((uni) => {
               if (uni.acronym !== universityId) return null;
               return (
@@ -60,7 +60,7 @@ const CourseList: NextPage = () => {
                   <Typography display="flex" alignItems="center" fontWeight="bold">
                     {uni.title}{' '}
                     <Link href={uni.url} target="_blank">
-                      <OpenInNewIcon style={{ color: PRIMARY_COL }} />
+                      <OpenInNewIcon sx={{ color: 'primary.main' }} />
                     </Link>
                   </Typography>
                   <Typography>{uni.country + ', ' + uni.place}</Typography>

@@ -31,7 +31,7 @@ import {
   LevelIcon,
   SelfAssessment2,
 } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, getParamFromUri, localStore } from '@alea/utils';
+import { getParamFromUri, localStore } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
@@ -76,9 +76,9 @@ export function FlashCardFooter({
   const { locale } = useRouter();
   const { flashCards: t } = getLocaleObject({ locale });
   return (
-    <Box display="flex" flexDirection="column" width="100%" alignItems="center" margin="5px 15px">
+    <Box display="flex" flexDirection="column" width="100%" alignItems="center" mt={2} mb={1}>
       {loggedIn && (
-        <Box display="flex" alignItems="center" gap="10px" px="10px">
+        <Box display="flex" alignItems="center" gap={1.25} px={1.25}>
           <Typography variant="h6" color="gray" textAlign="right">
             {t.assessYourComptence}:
           </Typography>
@@ -255,12 +255,12 @@ function FlashCard({
   }, []);
 
   return (
-    <Box display="flex" margin="0 5px" alignItems="center" justifyContent="center" flexWrap="wrap">
+    <Box display="flex" mt={0} mb={0.4} alignItems="center" justifyContent="center" flexWrap="wrap">
       <Box
         display="flex"
-        maxWidth="600px"
+        maxWidth={600}
         width="100%"
-        height="800px"
+        height={800}
         maxHeight="calc(100vh - 70px)"
         margin="auto"
         {...handlers}
@@ -315,7 +315,7 @@ export function ItemListWithStatus({
 
   return (
     <table style={{ marginBottom: '20px' }}>
-      <tr style={{ color: PRIMARY_COL }}>
+      <tr style={{ color: 'primary.main' }}>
         <th>{t.concept}</th>
         <th>{t.remember}</th>
         <th>{t.understand}</th>
@@ -560,7 +560,7 @@ function FlashCardsContainer({
     return <SummaryCard items={cards.slice(0, drillCardsSeen)} onFinish={() => onFinish()} />;
   }
   return (
-    <Box mt="10px" display="flex" flexDirection="column">
+    <Box mt={1.25} display="flex" flexDirection="column">
       <FlashCard
         conceptUri={currentItem.conceptUri}
         definitionUri={currentItem.definitionUri}
@@ -575,7 +575,7 @@ function FlashCardsContainer({
         }}
         onPrev={() => setCardNo((prev) => (prev + cards.length - 1) % cards.length)}
       />
-      <Box mt="10px" display="flex" justifyContent="space-between">
+      <Box mt={1.25} display="flex" justifyContent="space-between">
         <IconButton
           onClick={() => {
             if (!isDrill(mode)) {
@@ -585,7 +585,7 @@ function FlashCardsContainer({
               setCardType(CardType.SUMMARY_CARD);
             }
           }}
-          sx={{ minWidth: '90px' }}
+          sx={{ minWidth: 90 }}
         >
           {isDrill(mode) ? <CancelIcon /> : <ArrowBackIcon />}
         </IconButton>
@@ -596,7 +596,7 @@ function FlashCardsContainer({
               onClick={() => setCardNo((prev) => (prev + cards.length - 1) % cards.length)}
               size="small"
               variant="contained"
-              sx={{ mr: '10px' }}
+              sx={{ mr: 1.25 }}
             >
               <NavigateBeforeIcon />
               {t.prev}
@@ -618,7 +618,7 @@ function FlashCardsContainer({
             <NavigateNextIcon />
           </Button>
         </Box>
-        <Box sx={{ m: '10px 20px', color: '#333', minWidth: '60px' }}>
+        <Box sx={{ m: '10px 20px', color: 'grey.700', minWidth: 60 }}>
           <b style={{ fontSize: '18px' }}>
             {cardNo + 1} of {cards.length}
           </b>

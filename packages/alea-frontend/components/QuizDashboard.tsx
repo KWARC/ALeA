@@ -550,7 +550,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
   if (!canAccess) return <>Unauthorized</>;
 
   return (
-    <Box m="auto" maxWidth="800px" p="10px">
+    <Box m="auto" maxWidth={800} p={1.25}>
       <Box mb={2}>
         {quizzes.length > 0 && (
           <EndSemSumAccordion
