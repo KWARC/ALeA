@@ -8,7 +8,11 @@ import {
   Paper,
   Typography,
   useTheme,
+  Autocomplete,
+  Chip,
+  TextField,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { LectureEntry } from '@alea/utils';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
@@ -33,6 +37,24 @@ export function getNoonTimestampOnSameDay(timestamp: number) {
 }
 
 function convertSnapToEntry(snap: LectureEntry): FormData {
+  if (!snap) {
+    return {
+      sectionName: '',
+      sectionUri: '',
+      targetSectionName: '',
+      targetSectionUri: '',
+      clipId: '',
+      timestamp_ms: Date.now(),
+      isQuizScheduled: false,
+      slideUri: '',
+      slideNumber: undefined,
+      venue: '',
+      venueLink: '',
+      lectureEndTimestamp_ms: undefined,
+      sectionCompleted: false,
+    };
+  }
+
   return {
     ...snap,
     sectionName: getSectionNameForUri(snap.sectionUri || '', {}),
@@ -43,17 +65,21 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];
+  notCoveredSections?: string[];
   secInfo: Record<FTML.DocumentUri, SecInfo>;
   handleSaveSingle: (entry: LectureEntry) => void;
   handleDeleteSingle: (timestamp_ms: number) => void;
+  handleSaveNotCoveredSections: (uris: string[]) => void;
 }
 
 export function CoverageUpdater({
   courseId,
   snaps,
+  notCoveredSections: initialNotCoveredSections,
   secInfo,
   handleSaveSingle,
   handleDeleteSingle,
+  handleSaveNotCoveredSections,
 }: CoverageUpdaterProps) {
   const [formData, setFormData] = useState<FormData>({
     sectionName: '',
@@ -73,6 +99,9 @@ export function CoverageUpdater({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
+
+  const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
+
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
   useEffect(() => {
@@ -103,6 +132,12 @@ export function CoverageUpdater({
     }
     loadTimezone();
   }, [courseId]);
+
+  useEffect(() => {
+    if (Array.isArray(initialNotCoveredSections)) {
+      setNotCoveredSections(initialNotCoveredSections);
+    }
+  }, [initialNotCoveredSections]);
 
   const handleDeleteItem = (index: number) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
@@ -186,15 +221,63 @@ export function CoverageUpdater({
     handleEditDialogClose();
   };
 
-  const coverageEntries = snaps.map((snap, index) => {
-    const entry = convertSnapToEntry(snap);
-    entry.sectionName = getSectionNameForUri(snap.sectionUri || '', secInfo);
-    entry.targetSectionName = getSectionNameForUri(snap.targetSectionUri || '', secInfo);
-    return entry;
-  });
+  const coverageEntries = snaps
+    .filter((snap): snap is LectureEntry => Boolean(snap))
+    .map((snap) => {
+      const entry = convertSnapToEntry(snap);
+      entry.sectionName = getSectionNameForUri(snap.sectionUri || '', secInfo);
+      entry.targetSectionName = getSectionNameForUri(snap.targetSectionUri || '', secInfo);
+      return entry;
+    });
 
   return (
     <Box sx={{ width: '100%' }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
+          Skipped Sections
+        </Typography>
+
+        {notCoveredSections.length > 0 && (
+          <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {notCoveredSections.map((uri) => (
+              <Chip
+                key={uri}
+                label={secInfo[uri]?.title}
+                color="warning"
+                onDelete={() => {
+                  const updated = notCoveredSections.filter((u) => u !== uri);
+                  setNotCoveredSections(updated);
+                  handleSaveNotCoveredSections(updated);
+                }}
+                deleteIcon={<CloseIcon />}
+              />
+            ))}
+          </Box>
+        )}
+
+        <Autocomplete
+          multiple
+          renderTags={() => null}
+          options={Object.entries(secInfo).map(([uri, sec]) => ({
+            uri,
+            label: sec.title,
+          }))}
+          value={Object.entries(secInfo)
+            .filter(([uri]) => notCoveredSections.includes(uri))
+            .map(([uri, sec]) => ({ uri, label: sec.title }))}
+          isOptionEqualToValue={(option, value) => option.uri === value.uri}
+          getOptionLabel={(o) => o.label}
+          onChange={(_, newValue) => {
+            const uris = Array.from(new Set(newValue.map((v) => v.uri)));
+            setNotCoveredSections(uris);
+            handleSaveNotCoveredSections(uris);
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Add skipped sections" placeholder="Select sections" />
+          )}
+        />
+      </Box>
+
       {snaps.length > 0 ? (
         <>
           <CoverageTable
@@ -295,6 +378,7 @@ export function CoverageUpdater({
           />
         </DialogContent>
       </Dialog>
+
       <Paper
         elevation={3}
         sx={{
@@ -324,4 +408,5 @@ export function CoverageUpdater({
     </Box>
   );
 }
+
 export default CoverageUpdater;
