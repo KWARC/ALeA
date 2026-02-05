@@ -117,8 +117,11 @@ export const CourseSectionSelector = ({
   }, [courseId, courses]);
 
   useEffect(() => {
-    const timeline = coverageTimeline[courseId];
-    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    const courseData = coverageTimeline[courseId];
+
+    const lectures = Array.isArray(courseData) ? courseData : courseData?.lectures ?? [];
+
+    const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {
       setUpcomingQuizSyllabus(syllabus);
     }
@@ -444,7 +447,7 @@ export const CourseSectionSelector = ({
           </>
         )}
 
-        <Box display="flex"  gap={2}>
+        <Box display="flex" gap={2}>
           <Button
             variant="contained"
             onClick={() => setDialogOpen(true)}
@@ -455,18 +458,18 @@ export const CourseSectionSelector = ({
           <Button
             variant="contained"
             onClick={() => setGoalDialogOpen(true)}
-            disabled={!courseId || !startSectionUri }
+            disabled={!courseId || !startSectionUri}
           >
             Edit Goal Hierarchy
           </Button>
 
-      <GoalHierarchyDialog
-        open={goalDialogOpen}
-        onClose={() => setGoalDialogOpen(false)}
-        courseNotesUri={courses?.[courseId]?.notes}
-        courseId={courseId}
-        sectionUri={startSectionUri}
-      />
+          <GoalHierarchyDialog
+            open={goalDialogOpen}
+            onClose={() => setGoalDialogOpen(false)}
+            courseNotesUri={courses?.[courseId]?.notes}
+            courseId={courseId}
+            sectionUri={startSectionUri}
+          />
         </Box>
         <SectionDetailsDialog
           open={dialogOpen}

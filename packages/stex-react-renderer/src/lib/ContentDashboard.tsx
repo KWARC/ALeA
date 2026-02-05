@@ -14,6 +14,8 @@ import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu } from './LayoutWithFixedMenu';
 import styles from './stex-react-renderer.module.scss';
 
+export const NOT_COVERED_SECTIONS = 'notCoveredSections';
+
 interface SectionTreeNode {
   parentNode?: SectionTreeNode;
   children: SectionTreeNode[];

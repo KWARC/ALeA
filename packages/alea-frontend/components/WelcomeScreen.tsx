@@ -122,7 +122,7 @@ const getResourceIcon = (name: ResourceName) => {
 
 async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');// TODO(M5)
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU'); // TODO(M5)
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -163,7 +163,9 @@ async function getLastUpdatedQuiz(
   try {
     quizList = await getCourseQuizList(courseId);
     const coverageQuizData = await getCoverageTimeline();
-    courseQuizData = coverageQuizData[courseId];
+    const courseData = coverageQuizData[courseId];
+
+    courseQuizData = Array.isArray(courseData) ? courseData : courseData?.lectures ?? [];
   } catch (error) {
     console.error('Error fetching course data:', error);
     return { description: null, timeAgo: null, timestamp: null };
@@ -255,7 +257,11 @@ export async function getLastUpdatedNotes(
   const { resource: r } = getLocaleObject(router);
   try {
     const coverageData = await getCoverageTimeline();
-    const courseData = coverageData[courseId] ?? [];
+    const rawCourseData = coverageData[courseId];
+
+    const courseData: LectureEntry[] = Array.isArray(rawCourseData)
+      ? rawCourseData
+      : rawCourseData?.lectures ?? [];
     const targetUsed = courseData.some((entry) => entry.targetSectionUri);
 
     let progressStatus: string | null = null;

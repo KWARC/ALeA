@@ -270,7 +270,12 @@ function CourseScheduleSection({
       try {
         const timeline = await getCoverageTimeline();
         const now = Date.now();
-        const entries = (timeline[courseId] || [])
+
+        const lectureEntries = Array.isArray(timeline[courseId])
+          ? timeline[courseId]
+          : timeline[courseId]?.lectures ?? [];
+
+        const entries = lectureEntries
           .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
           .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
         setNextLectureStartTime(entries[0]?.timestamp_ms);
