@@ -383,7 +383,7 @@ export function getExamMetaFromExamUri(
 ): ExamMeta {
   const decoded = decodeURIComponent(examUri);
 
-  const courseAcronym = exam?.courseId?.toUpperCase() ?? exam?.number ?? 'UNKNOWN';
+  const courseAcronym = exam?.courseId?.toUpperCase() ?? 'UNKNOWN';
 
   const dParam = getParamFromUri(decoded, 'd') ?? '';
 
