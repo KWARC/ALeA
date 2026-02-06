@@ -20,6 +20,139 @@ Prefer `sx` props over inline styles for better maintainability and theming supp
 + <Box sx={{ bgcolor: "primary.main", p: 2 }}></Box>
 ```
 
+### 1.2 Styling Pattern with sx (Recommended)
+
+To keep components clean, readable, and scalable, follow a **"static styles + local overrides"** pattern.
+
+#### 1.2.1 Centralize Static Styles
+
+Define static styles in a dedicated object **near the bottom of the file**.
+
+```typescript
+const loListStyles = {
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    p: 1.5,
+    mb: 1,
+    borderRadius: 2,
+    '&:hover': {
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    }
+  },
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 1,
+    mb: 2,
+    flexWrap: 'wrap',
+  }
+};
+```
+✅ Keeps JSX clean  
+✅ Improves readability  
+
+
+#### 1.2.2 Prefer sx Composition Over Style Functions
+
+When a small part of the style **depends on local state**, do not convert the entire style into a function.
+
+❌ Avoid:
+
+```typescript
+listItem: (isActive: boolean) => ({
+  backgroundColor: isActive ? 'green' : 'white',
+});
+```
+
+✅ Prefer sx composition :
+
+```jsx
+<Paper
+  sx={{
+    ...loListStyles.listItem,
+    color: isActive ? 'green' : 'white',
+  }}
+/>
+```
+
+
+#### 1.2.3 Use sx Array for Conditional Overrides
+
+MUI allows sx to be an array. Later entries override earlier ones.
+
+```jsx
+<Box
+  sx={[
+    styles.container,
+    isSelected && { borderColor: 'primary.main' },
+    isDisabled && { opacity: 0.5 },
+  ]}
+/>
+```
+
+This pattern is preferred over:
+
+- multiple ternaries
+- deeply nested conditions
+- inline style objects
+
+#### 1.2.4 Component-Level Style Ownership
+
+Each component should own its styles.
+
+❌ Avoid mixing **unrelated component styles**:
+
+```typescript
+// Two unrelated components in the same file, but all styles in one object
+const styles = {
+  navbar: { display: 'flex', p: 2},
+  navbarItem: { color: 'white', ml: 2 },
+  sidebar: { width: 250, bgcolor: '#f5f5f5', p: 2 },
+  sidebarItem: { mb: 1, cursor: 'pointer' },
+};
+```
+- Hard to tell which styles belong to which component
+- Difficult to maintain as the file grows
+- Risk of accidental overrides
+
+✅ Recommended:
+
+```typescript
+// Component 1: Navbar
+const navbarStyles = {
+  root: { display: 'flex', p: 2 },
+  item: { color: 'white', ml: 2, cursor: 'pointer' },
+};
+
+// Component 2: Sidebar
+const sidebarStyles = {
+  root: { width: 250, bgcolor: '#f5f5f5', p: 2 },
+  item: { mb: 1, cursor: 'pointer' },
+};
+```
+
+Benefits:
+- Better encapsulation
+- Easier refactoring
+- Fewer merge conflicts
+- Clear ownership
+
+#### 1.2.5 Inline sx is fine for very simple, one-off styles
+
+For tiny, one-line, self-contained style adjustments, it’s okay to write sx inline.\
+**Examples:**
+```jsx
+<Box sx={{ p: 1, bgcolor: 'primary.light' }}>Hello</Box>
+
+<Button sx={{ ml: 2 }}>Click me</Button>
+```
+#### Notes:
+
+- Use inline sx only for trivial, non-reusable styles.
+
+- For complex or reusable styles, always define a dedicated style object.
 ## 2. State Management
 
 ### 2.1 Derived State Optimization

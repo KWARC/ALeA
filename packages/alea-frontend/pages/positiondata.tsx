@@ -144,7 +144,7 @@ const PositionDataSelector: React.FC = () => {
             title="Concepts Position Info"
             sx={{
               textAlign: 'center',
-              backgroundColor: '#1976d2',
+              backgroundColor: 'blue.sky',
               color: 'white',
               borderRadius: '12px 12px 0 0',
               padding: 2,
@@ -164,7 +164,7 @@ const PositionDataSelector: React.FC = () => {
                     value={selectedDeviceId || ''}
                     onChange={(e) => handleDeviceIdSelect(e.target.value)}
                     sx={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'background.paper',
                       borderRadius: '8px',
                     }}
                   >
@@ -190,7 +190,7 @@ const PositionDataSelector: React.FC = () => {
                       value={selectedRecordingId || ''}
                       onChange={(e) => handleRecordingIdSelect(e.target.value)}
                       sx={{
-                        backgroundColor: '#ffffff',
+                        backgroundColor: 'background.paper',
                         borderRadius: '8px',
                       }}
                     >

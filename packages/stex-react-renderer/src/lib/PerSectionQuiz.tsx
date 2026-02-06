@@ -335,11 +335,12 @@ export function PerSectionQuiz({
     <Box mb={4}>
       <Box
         px={2}
-        maxWidth="800px"
+        maxWidth={800}
         m="auto"
-        bgcolor="white"
-        border="1px solid #CCC"
-        borderRadius="5px"
+        bgcolor="background.paper"
+        border="1px solid"
+        borderColor="primary.main"
+        borderRadius={1}
       >
         <Tabs
           value={tabIndex}
@@ -499,7 +500,7 @@ export function PerSectionQuiz({
                     >
                       <WarningAmberIcon
                         onClick={() => Router.push('/my-profile')}
-                        style={{ ...commonIconStyles, color: '#1976d2' }}
+                        sx={{ ...commonIconStyles, color: 'blue.sky' }}
                       />
                     </Tooltip>
                   )}
@@ -507,7 +508,7 @@ export function PerSectionQuiz({
                     (currentProblem?.outOfSyllabusConcepts?.length ? (
                       <Tooltip
                         title={
-                          <Box sx={{ padding: '8px', maxWidth: 300, whiteSpace: 'normal' }}>
+                          <Box sx={{ p:0.5, maxWidth: 300, whiteSpace: 'normal' }}>
                             <div style={{ marginBottom: '4px' }}>
                               This problem contains concepts that were not covered in the course:
                             </div>
@@ -528,7 +529,7 @@ export function PerSectionQuiz({
                         }
                         slotProps={commonTooltipSlotProps}
                       >
-                        <WarningAmberIcon sx={{ ...commonIconStyles, color: '#f57c00' }} />
+                        <WarningAmberIcon sx={{ ...commonIconStyles, color: 'warning.main' }} />
                       </Tooltip>
                     ) : (
                       <Tooltip
@@ -537,7 +538,7 @@ export function PerSectionQuiz({
                       >
                         <WarningAmberIcon
                           onClick={() => Router.push('/my-profile')}
-                          style={{ ...commonIconStyles, color: '#1976d2' }}
+                          sx={{ ...commonIconStyles, color: 'blue.sky' }}
                         />
                       </Tooltip>
                     ))}
@@ -558,8 +559,7 @@ export function PerSectionQuiz({
                     </Tooltip>
                   </IconButton>
                 </Box>
-
-                <Box mb="14px">
+                <Box mb={1.875}>
                   <UriProblemViewer
                     key={problemUri}
                     uri={problemUri}
@@ -607,7 +607,7 @@ export function PerSectionQuiz({
                   mb={6}
                   sx={{
                     display: 'flex',
-                    gap: '10px',
+                    gap: 1.25,
                     flexDirection: 'column',
                     alignItems: 'flex-start',
                   }}
@@ -618,7 +618,7 @@ export function PerSectionQuiz({
           </Button>
          )}*/}
                   {showSolution && (
-                    <Box mb="10px">
+                    <Box mb={1.25}>
                       {/* solutions.map((solution) => (
               <div style={{ color: '#555' }} dangerouslySetInnerHTML={{__html:solution}}></div>
             ))*/}

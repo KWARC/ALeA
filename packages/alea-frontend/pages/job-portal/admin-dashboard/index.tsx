@@ -32,8 +32,10 @@ import {
 import {
   canAccessResource,
   createJobCategory,
+  deleteJobCategory,
   getJobCategories,
   JobCategoryInfo,
+  updateJobCategory,
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import dayjs from 'dayjs';
@@ -223,7 +225,7 @@ const AdminDashboard = () => {
         formattedEditJob.endDate = null;
         formattedEditJob.internshipPeriod = null;
       }
-      // const response = await updateJobCategory(formattedEditJob);   dont delete it
+      const response = await updateJobCategory(formattedEditJob);  
       setSnackbarOpen(true);
       setJobs((prevJobs) =>
         prevJobs.map((job) => (job.id === editJob.id ? { ...job, ...formattedEditJob } : job))
@@ -238,7 +240,7 @@ const AdminDashboard = () => {
   const deleteJob = async (id: number) => {
     if (id) {
       try {
-        // const response = await deleteJobCategory(id);    dont deletee it
+        await deleteJobCategory(id);   
         setJobs((prevJobs) => prevJobs.filter((job) => job.id !== id));
 
         setSnackbarOpen(true);

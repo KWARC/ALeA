@@ -94,7 +94,7 @@ export function CommentReply({
               color: 'primary.main',
             },
             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              bgcolor: 'primary.light',
+              bgcolor: 'primary.100',
             },
           }}
         />

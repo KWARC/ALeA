@@ -218,6 +218,9 @@ export const en = {
     description2:
       ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in ALeA.',
   },
+  courseNotes: {
+    notCovered: 'This section is not covered in the course',
+  },
   courseView: {
     notes: 'Notes',
     instructorNotes: "Instructor's notes",

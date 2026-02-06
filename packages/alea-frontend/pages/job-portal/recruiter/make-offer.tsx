@@ -26,7 +26,7 @@ import {
 import { Cancel, History, Visibility } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { JobSelect } from './applications';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
@@ -373,7 +373,7 @@ const MakeOffer = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" fontWeight="bold" color={PRIMARY_COL}>
+      <Typography variant="h4" fontWeight="bold" color="primary.main">
         Make Offers
       </Typography>
 
@@ -390,7 +390,15 @@ const MakeOffer = () => {
 };
 
 const MakeOfferPage = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<MakeOffer />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Make Offer | Job Portal - ALeA"
+      description="Send job offers to selected students and manage offer details on the ALeA Job Portal"
+    >
+      {<MakeOffer />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default MakeOfferPage;

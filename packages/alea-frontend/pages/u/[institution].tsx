@@ -4,7 +4,6 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
 import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,15 +14,15 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
+import { CourseInfo, PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
     <IconButton
       sx={{
-        bgcolor: PRIMARY_COL,
-        '&:hover, &.Mui-focusVisible': { bgcolor: PRIMARY_COL_DARK_HOVER },
+        bgcolor: 'primary.main',
+        '&:hover, &.Mui-focusVisible': { bgcolor: 'primary.dark' },
       }}
     >
       {children}
@@ -51,11 +50,12 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
   return (
     <Card
       sx={{
-        backgroundColor: 'hsl(210, 20%, 95%)',
-        border: '1px solid #CCC',
-        p: '10px',
-        m: '10px',
-        width: '200px',
+        bgcolor: 'background.card',
+        border: '1px solid ',
+        borderColor: 'divider',
+        p: 1.25,
+        m: 1.25,
+        maxWidth: 252,
       }}
     >
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
@@ -69,12 +69,13 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
               style={{ display: 'block', margin: 'auto' }}
               priority={true}
             />
-            <span style={{ fontSize: '16px', marginTop: '5px', fontWeight: 'bold' }}>
+            <Typography component="span" sx={{ fontSize: 16, mt: 0.6, fontWeight: 'bold',fontFamily:'Latin Modern' }}>
               {courseName.length > 50 ? courseId.toUpperCase() : courseName}
-            </span>
+            </Typography>
+            
           </Link>
         </Box>
-        <Box display="flex" justifyContent="space-between" mt="5px" gap="5px" flexWrap="wrap">
+        <Box display="flex" justifyContent="space-between" mt={0.6} gap={0.6} flexWrap="wrap">
           <Tooltip title={t.notes}>
             <Link href={notesLink} passHref>
               <Button size="small" variant="contained">
@@ -159,7 +160,7 @@ const StudentHomePage: NextPage = ({
               width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
               height={150}
             />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'#04316a'}>
+            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'blue.800'}>
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>

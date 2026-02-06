@@ -283,12 +283,12 @@ CREATE TABLE studentProfile (
     resumeUrl VARCHAR(2083), 
     email VARCHAR(255) NOT NULL, 
     mobile VARCHAR(15), 
-    programme VARCHAR(255) NOT NULL, 
-    yearOfAdmission YEAR NOT NULL, 
-    yearOfGraduation YEAR, 
+    programme VARCHAR(255), 
+    yearOfAdmission VARCHAR(50) ,
+    yearOfGraduation VARCHAR(50), 
     courses TEXT, 
     about TEXT, 
-    gpa FLOAT,
+    gpa VARCHAR(50),
     location VARCHAR(100),
     altMobile VARCHAR(15),
     socialLinks JSON,
@@ -301,7 +301,7 @@ CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     companyName VARCHAR(255) , 
     domain VARCHAR(255) ,
-    incorporationYear YEAR ,
+    incorporationYear VARCHAR(50) ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
     about TEXT, 
@@ -356,11 +356,11 @@ CREATE TABLE jobPost (
     jobDescription TEXT,                                          
     workLocation VARCHAR(255),                                
     qualification VARCHAR(255),                                   
-    targetYears VARCHAR(255),                                     
+    graduationYears VARCHAR(255),                                     
     openPositions INT,                                            
     compensation JSON,            
     facilities TEXT,                                              
-    applicationDeadline DATETIME,   
+    applicationDeadline TIMESTAMP,   
     workMode VARCHAR(50),
     createdByUserId VARCHAR(50),                              
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
@@ -369,7 +369,6 @@ CREATE TABLE jobPost (
     FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
     FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
 );
-
 
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -425,7 +424,7 @@ CREATE TABLE orgInvitations (
     organizationId int NOT NULL,
     inviteeEmail VARCHAR(255) NOT NULL,
     inviteruserId CHAR(36) NOT NULL,     
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
 );
 

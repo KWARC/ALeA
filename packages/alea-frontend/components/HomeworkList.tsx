@@ -54,15 +54,15 @@ const HomeworkList = ({
           color="primary"
           onClick={() => onCreate()}
           sx={{
-            borderRadius: '25px',
-            marginLeft: '5px',
+            borderRadius: 6,
+           ml:0.75,
           }}
         >
           {t.createHomework}{' '}
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ maxHeight: '500px', overflowY: 'auto' }}>
+      <TableContainer component={Paper} sx={{ maxHeight: 500, overflowY: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>
