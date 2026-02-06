@@ -126,7 +126,6 @@ const UpdateAcl: NextPage = () => {
     }
   };
 
-
   return (
     <MainLayout>
       <Box
@@ -205,7 +204,7 @@ const UpdateAcl: NextPage = () => {
         <Box display="flex" justifyContent="center" gap={2}>
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#203360', color: 'white' }}
+            sx={{ backgroundColor: 'primary.main', color: 'white' }}
             onClick={handleSubmit}
             disabled={isTypingMemberId || isTypingMemberACL}
           >

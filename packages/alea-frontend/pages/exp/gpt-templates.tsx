@@ -1,11 +1,8 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, IconButton, Typography } from '@mui/material';
 import { Template, getTemplateVersions, getTemplates } from '@alea/spec';
-import {
-  FixedPositionMenu,
-  LayoutWithFixedMenu,
-} from '@alea/stex-react-renderer';
-import { PRIMARY_COL, shouldUseDrawer } from '@alea/utils';
+import { FixedPositionMenu, LayoutWithFixedMenu } from '@alea/stex-react-renderer';
+import { shouldUseDrawer } from '@alea/utils';
 import { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
@@ -32,7 +29,7 @@ function TemplateMenu({
             textAlign="center"
             fontWeight="bold"
             fontSize="20px"
-            color={PRIMARY_COL}
+            color="primary.main"
           >
             Template List
           </Typography>
@@ -51,9 +48,7 @@ function TemplateMenu({
             key={template.templateName}
             onClick={() => onSelectTemplate(template)}
             fontWeight={
-              template.templateName === selectedTemplate?.templateName
-                ? 'bold'
-                : undefined
+              template.templateName === selectedTemplate?.templateName ? 'bold' : undefined
             }
           >
             {template.templateName}
@@ -88,11 +83,8 @@ function TemplatePrompt({
     <>
       <Box style={boxStyle}>
         <Typography>
-          <b>
-            Template Description (
-            {templateVersions[templateVersions.length - 1]?.updater})
-          </b>
-          :{templateVersions[templateVersions.length - 1]?.updateMessage}
+          <b>Template Description ({templateVersions[templateVersions.length - 1]?.updater})</b>:
+          {templateVersions[templateVersions.length - 1]?.updateMessage}
         </Typography>
       </Box>
       {selectedTemplate.version !== '0' ? (

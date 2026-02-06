@@ -7,8 +7,10 @@ import {
   getCourseQuizList,
   getCoverageTimeline,
   getHomeworkList,
+  getUserInfo,
   QuestionStatus,
   QuizStubInfo,
+  UserInfo,
 } from '@alea/spec';
 import {
   Action,
@@ -16,7 +18,6 @@ import {
   CourseResourceAction,
   isFauId,
   LectureEntry,
-  PRIMARY_COL,
   ResourceName,
 } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
@@ -29,7 +30,6 @@ import GradingIcon from '@mui/icons-material/Grading';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import QuizIcon from '@mui/icons-material/Quiz';
 import {
-  Alert,
   Avatar,
   Box,
   Button,
@@ -52,7 +52,6 @@ import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
 import SystemAlertBanner from './SystemAlertBanner';
-import { useCurrentUser } from '@alea/react-utils';
 
 interface ColorInfo {
   color: string;
@@ -69,7 +68,7 @@ interface ResourceDisplayInfo {
   colorInfo?: ColorInfo;
 }
 
-const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY];
+const EXCLUDED_RESOURCES = [ResourceName.COURSE_STUDY_BUDDY, ResourceName.COURSE_ACCESS];
 
 const getResourceDisplayText = (name: ResourceName, router: NextRouter) => {
   const { resource: r } = getLocaleObject(router);
@@ -122,7 +121,7 @@ const getResourceIcon = (name: ResourceName) => {
 
 async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');// TODO(M5)
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU');
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -539,7 +538,7 @@ function MyCourses({ enrolledCourseIds }) {
       >
         My Courses
       </Typography>
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap', maxWidth: 'lg' }}>
         {enrolledCourseIds
           .filter((courseId: string) => allCourses[courseId])
           .map((courseId: string) => (
@@ -547,75 +546,6 @@ function MyCourses({ enrolledCourseIds }) {
           ))}
       </Box>
     </>
-  );
-}
-
-function CourseResourceGroup({
-  courseId,
-  resources,
-  descriptions,
-}: {
-  courseId: string;
-  resources: CourseResourceAction[];
-  descriptions: Record<string, ResourceDisplayInfo>;
-}) {
-  const hasOnlyCourseAccess =
-    resources.length === 1 && resources[0].name === ResourceName.COURSE_ACCESS;
-
-  return (
-    <Box sx={{ marginBottom: 4 }}>
-      <Link href={`/course-home/${courseId}`}>
-        <Typography
-          sx={{
-            fontSize: '22px',
-            fontWeight: 'bold',
-            marginBottom: 2,
-            backgroundColor: PRIMARY_COL,
-            color: 'white',
-            padding: '10px',
-            textAlign: 'center',
-            '&:hover': {
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              backgroundColor: 'secondary.main',
-              color: PRIMARY_COL,
-            },
-          }}
-        >
-          {courseId.toUpperCase()}
-        </Typography>
-      </Link>
-      {hasOnlyCourseAccess && (
-        <Alert severity="warning" sx={{ mb: 2, mx: 'auto', maxWidth: 600 }}>
-          All resource setup are not done.{' '}
-          <span style={{ textDecoration: 'underline' }}>
-            <Link href={`/instructor-dash/${courseId}?tab=access-control`}>
-              Move to instructor dash to complete the setup.
-            </Link>
-          </span>
-        </Alert>
-      )}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        {resources
-          .filter((resource) => resource.name !== ResourceName.COURSE_ACCESS)
-          .map((resource, index) => (
-            <ResourceCard
-              resource={resource}
-              key={index}
-              descriptions={descriptions}
-              courseId={courseId}
-            />
-          ))}
-      </Box>
-    </Box>
   );
 }
 
@@ -662,8 +592,9 @@ function ResourceCard({
       key={resource.name}
       sx={{
         flex: '1 1 calc(25% - 16px)',
-        border: '1px solid lightgray',
-        boxShadow: '0px 4px 6px gray',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: 3,
         borderRadius: '8px',
         minHeight: '122px',
         minWidth: '250px',
@@ -671,7 +602,7 @@ function ResourceCard({
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'scale(1.02)',
-          boxShadow: '0px 8px 12px gray',
+          boxShadow: 6,
         },
       }}
     >
@@ -760,12 +691,12 @@ function WelcomeScreen({
   resourcesForInstructor: CourseResourceAction[];
   filteredCourses: CourseInfo[];
 }) {
+  const [userInfo, setUserInfo] = useState<UserInfo>(null);
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];
-  const { user } = useCurrentUser();
 
   const {
     resource: r,
@@ -775,12 +706,15 @@ function WelcomeScreen({
     () => groupByCourseId(resourcesForInstructor),
     [resourcesForInstructor]
   );
+  useEffect(() => {
+    getUserInfo().then((user) => setUserInfo(user));
+  }, []);
 
   useEffect(() => {
     getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
   }, [currentTerm]);
 
-  const isFAUId = isFauId(user?.userId);
+  const isFAUId = isFauId(userInfo?.userId);
 
   useEffect(() => {
     const fetchDescriptions = async () => {
@@ -833,11 +767,9 @@ function WelcomeScreen({
         meantime, you can still access course content.
       </Typography>*/}
       <BannerSection tight={true} />
-      <Box sx={{ px: 4, pt: 4, pb: 8, bgcolor: '#F5F5F5' }}>
-        <Typography
-          sx={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}
-        >
-          {r.welcome}, {user?.fullName}
+      <Box sx={{ px: 4, py: 4, bgcolor: 'background.paper' }}>
+        <Typography variant="h2" textAlign="center" fontWeight="bold">
+          {r.welcome}, {userInfo?.fullName}
         </Typography>
         {isFAUId && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2 }}>
@@ -848,12 +780,47 @@ function WelcomeScreen({
         )}
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
         {Object.entries(groupedResources).map(([courseId, resources]) => (
-          <CourseResourceGroup
-            key={courseId}
-            courseId={courseId}
-            resources={resources}
-            descriptions={descriptions}
-          />
+          <Box key={courseId} sx={{ marginBottom: 4 }}>
+            <Link href={`/course-home/${courseId}`}>
+              <Typography
+                sx={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  marginBottom: 2,
+                  backgroundColor: 'primary.main',
+                  color: 'primary.contrastText',
+                  padding: '10px',
+                  textAlign: 'center',
+                  '&:hover': {
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    backgroundColor: 'secondary.main',
+                    color: 'primary.main',
+                  },
+                }}
+              >
+                {courseId.toUpperCase()}
+              </Typography>
+            </Link>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 1,
+              }}
+            >
+              {resources.map((resource, index) => (
+                <ResourceCard
+                  resource={resource}
+                  key={index}
+                  descriptions={descriptions}
+                  courseId={courseId}
+                />
+              ))}
+            </Box>
+          </Box>
         ))}
       </Box>
       <Box
@@ -864,18 +831,20 @@ function WelcomeScreen({
           marginTop: '40px',
           flexWrap: 'wrap',
           alignItems: 'center',
+          maxWidth: 'lg',
+          mx: 'auto',
         }}
       >
-        {filteredCourses.map((course) => (
-          <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />
-        ))}
+        {filteredCourses.map((course) => {
+          return <CourseCard key={course.courseId} course={course} currentTerm={currentTerm} />;
+        })}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5, mb: 2 }}>
         <Link href="/course-list">
           <Button variant="contained">{n.exploreOurCourse}</Button>
         </Link>
       </Box>
-      <VollKiInfoSection bgcolor="white" />
+      <VollKiInfoSection />
     </MainLayout>
   );
 }

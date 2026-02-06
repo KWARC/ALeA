@@ -62,16 +62,16 @@ function DraggableOverlay({ showOverlay, setShowOverlay, data }) {
       onMouseUp={handleMouseUp}
       style={{
         position: 'fixed',
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        backgroundColor: 'primary.900',
         top: `${position.y}px`,
         left: `${position.x}px`,
-        width: '300px',
-        padding: '10px',
+        width: 300,
+        padding: 1.25,
         cursor: 'grab',
         zIndex: 1000,
       }}
     >
-      <Paper elevation={3} sx={{ p: 2, position: 'relative', bgcolor: 'rgba(255, 255, 255, 0.9)' }}>
+      <Paper elevation={3} sx={{ p: 2, position: 'relative', bgcolor: 'background.paper' }}>
         <IconButton
           onClick={() => setShowOverlay(false)}
           sx={{ position: 'absolute', right: 5, top: 5, zIndex: 1 }}
@@ -219,10 +219,10 @@ export function VideoDisplay({
     }
   }, [isLoading, defaultVideoId, onVideoLoad]);
 
-  if (isLoading) return <CircularProgress sx={{ mb: '15px' }} />;
+  if (isLoading) return <CircularProgress sx={{ mb: 2 }} />;
   if (!defaultVideoId)
     return (
-      <Box sx={{ mb: '25px', position: 'relative' }}>
+      <Box sx={{ mb: 3, position: 'relative' }}>
         <i>Video not available for this section</i>
       </Box>
     );

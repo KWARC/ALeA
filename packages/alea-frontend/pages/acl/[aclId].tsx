@@ -206,8 +206,8 @@ const AclId: NextPage = () => {
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      backgroundColor: '#203360',
-                      color: '#ffffff',
+                      backgroundColor: 'primary.main',
+                      color: 'background.paper',
                       '&:hover': {
                         backgroundColor: '#1a294d',
                       },
@@ -234,7 +234,7 @@ const AclId: NextPage = () => {
                           display: 'flex',
                           alignItems: 'center',
                           backgroundColor: '#d32f2f',
-                          color: '#ffffff',
+                          color: 'background.paper',
                           '&:hover': {
                             backgroundColor: '#b00020',
                           },
@@ -358,8 +358,8 @@ const AclId: NextPage = () => {
               mt: '32px',
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: '#203360',
-              color: '#ffffff',
+              backgroundColor: 'primary.main',
+              color: 'background.paper',
               '&:hover': {
                 backgroundColor: '#1a294d',
               },

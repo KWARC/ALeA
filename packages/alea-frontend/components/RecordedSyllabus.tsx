@@ -13,6 +13,7 @@ import {
   TableHead,
   TableRow,
   Tabs,
+  Typography,
 } from '@mui/material';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -161,7 +162,7 @@ function SyllabusTable({
         <TableBody>
           {rows.map(({ timestamp_ms, topics, clipId }, idx) => (
             <TableRow key={`${timestamp_ms}`}>
-              <TableCell sx={{ textAlign: 'center', minWidth: '110px' }}>
+              <TableCell sx={{ textAlign: 'center', minWidth: 110 }}>
                 <b>{idx + 1}.&nbsp;</b>
                 {dayjs(timestamp_ms).format(showYear ? 'DD-MMM-YY' : 'DD-MMM')}
               </TableCell>
@@ -172,7 +173,7 @@ function SyllabusTable({
                 <TableCell>
                   {clipId?.length > 0 && (
                     <a href={`https://fau.tv/clip/id/${clipId}`} target="_blank" rel="noreferrer">
-                      <IconButton size="large" sx={{ m: '10px' }}>
+                      <IconButton size="large" sx={{ m: 1.25 }}>
                         <OndemandVideoIcon />
                       </IconButton>
                     </a>
@@ -239,9 +240,9 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
   return (
     <Box>
       <Box textAlign="center">
-        <b style={{ fontSize: '24px' }}>{t.recordedSyllabus}</b>
+        <b style={{ fontSize: 24 }}>{t.recordedSyllabus}</b>
       </Box>
-      <Box mt="10px">
+      <Box mt={1.25}>
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
@@ -250,9 +251,24 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
                 setSelectedTabIndex(newValue)
               }
             >
-              {showCurrent && <Tab label={<b>{t.currentSemester}</b>} />}
+              {showCurrent && (
+                <Tab
+                  label={
+                    <Typography sx={{ color: 'text.primary', fontWeight: 'bold' }}>
+                      {t.currentSemester}
+                    </Typography>
+                  }
+                />
+              )}
               {previousSems.map((semester) => (
-                <Tab key={semester} label={<b>{semester}</b>} />
+                <Tab
+                  key={semester}
+                  label={
+                    <Typography sx={{ color: 'text.primary', fontWeight: 'bold' }}>
+                      {semester}
+                    </Typography>
+                  }
+                />
               ))}
             </Tabs>
           </Box>

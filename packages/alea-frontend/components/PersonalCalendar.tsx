@@ -1,5 +1,5 @@
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, IconButton, Snackbar, Tooltip, Typography, useTheme } from '@mui/material';
 import { useState } from 'react';
 
 export function PersonalCalendarSection({
@@ -11,6 +11,7 @@ export function PersonalCalendarSection({
   hintGoogle: string;
   hintApple: string;
 }) {
+  const theme = useTheme();
   const calendarURL = `${window.location.origin}/api/calendar/create-calendar?userId=${userId}`;
   const [calendarLinkCopied, setCalendarLinkCopied] = useState(false);
   if (!userId) return null;
@@ -20,11 +21,11 @@ export function PersonalCalendarSection({
         px: { xs: 1, sm: 2 },
         py: { xs: 1, sm: 1.5 },
         borderRadius: '8px',
-        background: 'linear-gradient(135deg, #fff3e0, #e8f4fd)',
-        border: '1px solid #ffcc02',
+        background: theme.palette.gradients?.softHighlight,
+        border: `1px solid ${theme.palette.warning[400]}`,
         cursor: 'pointer',
         '&:hover': {
-          background: 'linear-gradient(135deg,rgb(255, 191, 87), #e8f4fd)',
+          background: theme.palette.gradients?.warmHighlight,
         },
       }}
       onClick={() => {
@@ -42,8 +43,8 @@ export function PersonalCalendarSection({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CalendarMonthIcon sx={{ fontSize: 20, color: '#1976d2' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1976d2', fontSize: '1rem' }}>
+          <CalendarMonthIcon sx={{ fontSize: 20, color: 'blue.sky' }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'blue.sky', fontSize: '1rem' }}>
             Copy Personal Calendar Link
           </Typography>
         </Box>
@@ -56,12 +57,12 @@ export function PersonalCalendarSection({
               target="_blank"
               rel="noopener noreferrer"
               sx={{
-                backgroundColor: '#fff',
-                border: '1px solid #dadce0',
-                borderRadius: '8px',
+                backgroundColor: 'white',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
                 width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f8f9fa' },
+                '&:hover': { backgroundColor: 'grey.50' },
               }}
             >
               <Box
@@ -75,13 +76,13 @@ export function PersonalCalendarSection({
           <Tooltip title={hintApple}>
             <IconButton
               sx={{
-                backgroundColor: '#fff',
-                border: '1px solid #dadce0',
-                borderRadius: '8px',
+                backgroundColor: 'white',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
                 width: 32,
                 height: 32,
                 cursor: 'auto',
-                '&:hover': { backgroundColor: '#f8f9fa' },
+                '&:hover': { backgroundColor: 'grey.50' },
               }}
             >
               <Box
