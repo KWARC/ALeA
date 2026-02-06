@@ -433,7 +433,7 @@ export const en = {
   practiceProblems: {
     practiceProblems: 'Practice Problems',
     practiceProblemsDescription:
-      'The following problems are meant to aid your learning. They do not cover the course material exhaustively and there are no guarantees that the problems are correct or that they are representative of the kinds of problems that will be on the quizzes or the exam.',
+      'These problems are for learning support only, are not exhaustive or guaranteed correct, and may not reflect the actual quiz or exam questions',
     problems: 'problems',
     practice: 'Practice',
   },

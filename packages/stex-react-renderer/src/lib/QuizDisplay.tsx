@@ -244,6 +244,7 @@ export function QuizDisplay({
   isFrozen,
   homeworkId,
   isExamProblem = false,
+  initialProblemIdx = 0,
 }: {
   quizEndTs?: number;
   showPerProblemTime: boolean;
@@ -258,12 +259,13 @@ export function QuizDisplay({
   ) => void;
   homeworkId?: number;
   isExamProblem?: boolean;
+  initialProblemIdx?: number;
 }) {
   const isHomeWork = homeworkId ? true : false;
   const { quiz: t } = getLocaleObject(useRouter());
   const [points, setPoints] = useState<{ [problemId: string]: number }>({});
   const [responses, setResponses] = useState<Record<string, FTML.ProblemResponse | undefined>>({});
-  const [problemIdx, setProblemIdx] = useState(0);
+  const [problemIdx, setProblemIdx] = useState(initialProblemIdx);
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [events, setEvents] = useState<TimerEvent[]>([]);
   const [showClock, setShowClock] = useState(true);
@@ -272,6 +274,12 @@ export function QuizDisplay({
   const [, forceRerender] = useReducer((x) => x + 1, 0);
   const problemIds = Object.keys(problems ?? {});
   const currentProblemId = problemIds[problemIdx];
+
+  useEffect(() => {
+    if (initialProblemIdx !== undefined && initialProblemIdx !== -1) {
+      setProblemIdx(initialProblemIdx);
+    }
+  }, [initialProblemIdx]);
 
   useEffect(() => {
     const numQ = Object.keys(problems ?? {}).length || 0;
@@ -343,7 +351,6 @@ export function QuizDisplay({
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',
-                // DM: no uri?
                 uri: undefined,
               }}
             />
