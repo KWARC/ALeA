@@ -180,13 +180,13 @@ For tiny, one-line, self-contained style adjustments, it’s okay to write sx in
 - Prefer MUI typography variants (T1,h1–h6, body1, body2, etc.) instead of defining custom font sizes.
 
 - If a local override is required for typography-related properties (fontSize, lineHeight, fontWeight, etc.), ensure it is responsive across all breakpoints.
-- Always verify typography on small, medium, and large screens.
-❌ Avoid **single-screen overrides**:
+- Always verify typography on small, medium, and large screens. ❌ Avoid **single-screen overrides**
 
 #### 1.5 Use Shadows From the Central shadows.ts Array
 - Always use shadow values defined in shadows.ts.
 - Do not define custom boxShadow values inside components.
 - If the required shadow intensity or opacity is not available, add a new entry to the shadows.ts array instead of creating ad-hoc shadows.
+
 ❌ Avoid:
 ```tsx
 sx={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}
