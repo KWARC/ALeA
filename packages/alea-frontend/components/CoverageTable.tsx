@@ -22,7 +22,7 @@ import { getAllQuizzes, QuizWithStatus } from '@alea/spec';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
 import { LectureEntry } from '@alea/utils';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStudentCount } from '../hooks/useStudentCount';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { SecInfo } from '../types';
@@ -33,6 +33,10 @@ import { getSectionHierarchy, getSlideTitle } from './SlideSelector';
 
 interface QuizMatchMap {
   [timestamp_ms: number]: QuizWithStatus | null;
+}
+
+function isValidLectureEntry(entry: LectureEntry | null | undefined): entry is LectureEntry {
+  return Boolean(entry && typeof entry.timestamp_ms === 'number');
 }
 
 interface CoverageRowProps {
@@ -379,6 +383,8 @@ export function calculateLectureProgress(
   entries: LectureEntry[],
   secInfo: Record<FTML.DocumentUri, SecInfo>
 ) {
+  entries = entries.filter(isValidLectureEntry);
+
   const sectionToIndex = new Map(Object.values(secInfo).map((s, i) => [s.uri, i]));
   // This is not post order. I think its simply pre-order. I just added this to get rid of compil errors.
   const targetSectionsWithIndices = entries
@@ -437,14 +443,16 @@ export function calculateLectureProgress(
 }
 
 function isTargetSectionUsed(entries: LectureEntry[]): boolean {
-  return entries.some((entry) => entry.targetSectionUri);
+  return entries.filter(isValidLectureEntry).some((e) => e.targetSectionUri);
 }
 
 function countMissingTargetsInFuture(entries: LectureEntry[]): number {
   const now = dayjs();
-  return entries.filter(
-    (entry) => dayjs(entry.timestamp_ms).isAfter(now, 'day') && !entry.targetSectionUri
-  ).length;
+  return entries
+    .filter(isValidLectureEntry)
+    .filter(
+      (entry) => entry && dayjs(entry.timestamp_ms).isAfter(now, 'day') && !entry.targetSectionUri
+    ).length;
 }
 
 export const getProgressStatusColor = (status: string) => {
@@ -475,10 +483,11 @@ export function CoverageTable({
   onEdit,
   onDelete,
 }: CoverageTableProps) {
-  const targetUsed = isTargetSectionUsed(entries);
-  const status = calculateLectureProgress(entries, secInfo);
-  const missingTargetsCount = countMissingTargetsInFuture(entries);
-  const sortedEntries = [...entries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
+  const safeEntries = useMemo(() => entries.filter(isValidLectureEntry), [entries]);
+  const targetUsed = isTargetSectionUsed(safeEntries);
+  const status = calculateLectureProgress(safeEntries, secInfo);
+  const missingTargetsCount = countMissingTargetsInFuture(safeEntries);
+  const sortedEntries = [...safeEntries].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
   const [quizMatchMap, setQuizMatchMap] = useState<QuizMatchMap>({});
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
@@ -490,7 +499,7 @@ export function CoverageTable({
       try {
         const allQuizzes = await getAllQuizzes(courseId, currentTerm);
         const map: QuizMatchMap = {};
-        entries.forEach((entry) => {
+        safeEntries.forEach((entry) => {
           const match = allQuizzes.find(
             (quiz) => Math.abs(quiz.quizStartTs - entry.timestamp_ms) < 6 * 60 * 60 * 1000
           );
@@ -502,7 +511,7 @@ export function CoverageTable({
       }
     }
     fetchQuizzes();
-  }, [courseId, currentTerm, entries]);
+  }, [courseId, currentTerm, safeEntries]);
 
   return (
     <Box>
@@ -618,20 +627,20 @@ export function CoverageTable({
           </TableHead>
           <TableBody>
             {sortedEntries.map((item, idx) => {
-              const originalIndex = entries.findIndex(
-                (entry) => entry.timestamp_ms === item.timestamp_ms
+              const originalIndex = safeEntries.findIndex(
+                (entry) => entry?.timestamp_ms === item?.timestamp_ms
               );
 
               return (
                 <CoverageRow
-                  key={`${item.timestamp_ms}-${idx}`}
+                  key={`${item?.timestamp_ms}-${idx}`}
                   item={item}
-                  quizMatch={quizMatchMap[item.timestamp_ms] || null}
+                  quizMatch={quizMatchMap[item?.timestamp_ms] || null}
                   originalIndex={originalIndex}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   secInfo={secInfo}
-                  entries={entries}
+                  entries={safeEntries}
                 />
               );
             })}

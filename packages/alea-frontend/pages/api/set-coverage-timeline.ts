@@ -1,9 +1,4 @@
-import {
-  Action,
-  LectureEntry,
-  CoverageTimeline,
-  ResourceName,
-} from '@alea/utils';
+import { Action, LectureEntry, CoverageTimeline, ResourceName } from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
@@ -53,23 +48,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Backup before changing anything
     fs.writeFileSync(backupFileName(), JSON.stringify(existingData, null, 2));
 
-    const currentSnaps = existingData[courseId] || [];
+    const existingCourseData = existingData[courseId];
+
+    const courseData = Array.isArray(existingCourseData)
+      ? {
+          lectures: existingCourseData,
+          notCoveredSections: [],
+        }
+      : existingCourseData ?? {
+          lectures: [],
+          notCoveredSections: [],
+        };
+
+    const currentSnaps = courseData.lectures;
 
     // Replace the row with the same timestamp or add it if new
-    let newSnaps: LectureEntry[];
+    let newSnaps: LectureEntry[] = currentSnaps;
 
-    if (action === 'upsert') {
+    if (action === 'upsert' && req.body.updatedEntry) {
       const updatedEntry = req.body.updatedEntry as LectureEntry;
 
       newSnaps = [
         ...currentSnaps.filter((entry) => entry.timestamp_ms !== updatedEntry.timestamp_ms),
         updatedEntry,
       ].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
-    } else if (action === 'delete') {
+    } else if (action === 'delete' && req.body.timestamp_ms) {
       const timestamp = req.body.timestamp_ms;
       newSnaps = currentSnaps.filter((entry) => entry.timestamp_ms !== timestamp);
     }
-    existingData[courseId] = newSnaps;
+
+    const sanitizedLectures = Array.isArray(newSnaps) ? newSnaps.filter(Boolean) : [];
+
+    existingData[courseId] = {
+      lectures: sanitizedLectures,
+      notCoveredSections: req.body.notCoveredSections ?? courseData.notCoveredSections,
+    };
+
     fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
     return res.status(200).end();
   } catch (error) {

@@ -153,6 +153,16 @@ async function getUserEvents(
   userId: string
 ): Promise<{ events: ICalEventData[]; universityId?: string; instanceId?: string }> {
   const coverageData = getCoverageData();
+
+  const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
+  Object.entries(coverageData).map(([courseId, courseData]) => [
+    courseId,
+    Array.isArray(courseData)
+      ? courseData
+      : courseData?.lectures ?? [],
+  ])
+);
+
   const resourceAndActions = await getAuthorizedCourseResources(userId);
 
   const resourceAccessToInstructor = resourceAndActions
@@ -176,7 +186,7 @@ async function getUserEvents(
   const accessibleCourseIds = isInstructor
     ? accessibleCourseIdsForInstructor
     : accessibleCourseIdsForStudent;
-  const events = generateCalendarEvents(coverageData, accessibleCourseIds);
+  const events = generateCalendarEvents(coverageLecturesByCourseId, accessibleCourseIds);
 
 
   // Get universityId and instanceId from the first accessible course
