@@ -4,5 +4,8 @@ export interface SecInfo {
   id: string;
   title: string;
   uri: FTML.DocumentUri;
-  duration?: number;
+  order?: number;
+  durations?: Record<string, number>;
+  averagePastDuration?: number;
+  latestDuration?: number;
 }

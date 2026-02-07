@@ -17,6 +17,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { LectureEntry } from '@alea/utils';
@@ -25,6 +26,7 @@ import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 're
 import { SecInfo } from '../types';
 import { isLeafSectionId, SlidePicker } from './SlideSelector';
 import { getSlides } from '@alea/spec';
+import { InfoOutlined } from '@mui/icons-material';
 
 export type FormData = LectureEntry & {
   sectionName: string;
@@ -298,24 +300,33 @@ export function CoverageForm({
               <em>None</em>
             </MenuItem>
             {Object.values(secInfo).map((section) => {
-              const duration = section.duration || 0;
-              const roundedMinutes = Math.ceil(duration / 60);
+              const latest = section.latestDuration ? Math.ceil(section.latestDuration / 60) : null;
+              const avgPast = section.averagePastDuration
+                ? Math.ceil(section.averagePastDuration / 60)
+                : null;
 
-              let displayTime = '';
-              if (roundedMinutes >= 60) {
-                const hours = Math.floor(roundedMinutes / 60);
-                const minutes = roundedMinutes % 60;
-                displayTime = ` (${hours} hr${hours > 1 ? 's' : ''}${
-                  minutes ? ` ${minutes} min${minutes > 1 ? 's' : ''}` : ''
-                })`;
-              } else if (roundedMinutes > 0) {
-                displayTime = ` (${roundedMinutes} min${roundedMinutes > 1 ? 's' : ''})`;
+              let displayDurations = '';
+              if (latest != null && avgPast != null) {
+                displayDurations = `Latest: ${latest} min, Avg Past: ${avgPast} min`;
               }
 
               return (
                 <MenuItem key={section.uri} value={section.uri}>
-                  {section.title}
-                  {displayTime}
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <span>{section.title}</span>
+                    {displayDurations && (
+                      <Tooltip title={displayDurations} placement="right">
+                        <InfoOutlined
+                          sx={{
+                            ml: 1,
+                            fontSize: 16,
+                            color: 'text.secondary',
+                            cursor: 'help',
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                  </Box>
                 </MenuItem>
               );
             })}
