@@ -278,36 +278,36 @@ CREATE TABLE homeworkHistory (
 
 -- Job Portal Tables
 CREATE TABLE studentProfile (
-    userId VARCHAR(50) PRIMARY KEY, 
-    name VARCHAR(255) NOT NULL, 
-    resumeUrl VARCHAR(2083), 
-    email VARCHAR(255) NOT NULL, 
-    mobile VARCHAR(15), 
-    programme VARCHAR(255) NOT NULL, 
-    yearOfAdmission YEAR NOT NULL, 
-    yearOfGraduation YEAR, 
-    courses TEXT, 
-    about TEXT, 
+    userId VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    resumeUrl VARCHAR(2083),
+    email VARCHAR(255) NOT NULL,
+    mobile VARCHAR(15),
+    programme VARCHAR(255) NOT NULL,
+    yearOfAdmission YEAR NOT NULL,
+    yearOfGraduation YEAR,
+    courses TEXT,
+    about TEXT,
     gpa FLOAT,
     location VARCHAR(100),
     altMobile VARCHAR(15),
     socialLinks JSON,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
-    CONSTRAINT fk_user FOREIGN KEY (userId) REFERENCES userInfo(userId) 
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user FOREIGN KEY (userId) REFERENCES userInfo(userId)
 );
 
 CREATE TABLE organizationProfile (
-    id INT AUTO_INCREMENT PRIMARY KEY, 
-    companyName VARCHAR(255) , 
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    companyName VARCHAR(255) ,
     domain VARCHAR(255) ,
     incorporationYear YEAR ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
-    about TEXT, 
+    about TEXT,
     companyType VARCHAR(255),
-    officeAddress Text, 
-    officePostalCode VARCHAR(255) 
+    officeAddress Text,
+    officePostalCode VARCHAR(255)
 );
 
 
@@ -315,14 +315,14 @@ CREATE TABLE recruiterProfile (
     userId VARCHAR(50) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    position VARCHAR(255) NOT NULL, 
+    position VARCHAR(255) NOT NULL,
     organizationId INT ,
     mobile VARCHAR(15) ,
     altMobile VARCHAR (15),
     socialLinks JSON,
-    about TEXT, 
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    about TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_recruiter FOREIGN KEY (userId) REFERENCES userInfo(userId) ,
     CONSTRAINT fk_organization FOREIGN KEY (organizationId) REFERENCES organizationProfile(id)
 );
@@ -339,57 +339,57 @@ CREATE TABLE jobCategories (
 );
 
 CREATE TABLE jobPortalAdmin (
-    id SERIAL PRIMARY KEY,                  
-    name VARCHAR(255) NOT NULL,            
-    email VARCHAR(255) UNIQUE NOT NULL,    
-    universityName VARCHAR(255) NOT NULL,  
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP 
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    universityName VARCHAR(255) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE jobPost (
-    id INT AUTO_INCREMENT PRIMARY KEY,                          
-    organizationId INT,                                          
-    jobCategoryId INT,                                               
-    session VARCHAR(255),                                         
-    jobTitle VARCHAR(255),                                        
-    jobDescription TEXT,                                          
-    workLocation VARCHAR(255),                                
-    qualification VARCHAR(255),                                   
-    targetYears VARCHAR(255),                                     
-    openPositions INT,                                            
-    compensation JSON,            
-    facilities TEXT,                                              
-    applicationDeadline DATETIME,   
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organizationId INT,
+    jobCategoryId INT,
+    session VARCHAR(255),
+    jobTitle VARCHAR(255),
+    jobDescription TEXT,
+    workLocation VARCHAR(255),
+    qualification VARCHAR(255),
+    targetYears VARCHAR(255),
+    openPositions INT,
+    compensation JSON,
+    facilities TEXT,
+    applicationDeadline DATETIME,
     workMode VARCHAR(50),
-    createdByUserId VARCHAR(50),                              
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
-    FOREIGN KEY (organizationId) REFERENCES organizationProfile(id),  
+    createdByUserId VARCHAR(50),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizationId) REFERENCES organizationProfile(id),
     FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
-    FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
+    FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)
 );
 
 
 CREATE TABLE jobApplication (
-    id INT AUTO_INCREMENT PRIMARY KEY, 
-    jobPostId INT NOT NULL, 
-    applicantId VARCHAR(50) NOT NULL, 
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    jobPostId INT NOT NULL,
+    applicantId VARCHAR(50) NOT NULL,
     applicationStatus ENUM(
-        'APPLIED', 
-        'APPLICATION_WITHDRAWN', 
-        'SHORTLISTED_FOR_INTERVIEW', 
-        'ON_HOLD', 
-        'REJECTED', 
-        'OFFERED', 
+        'APPLIED',
+        'APPLICATION_WITHDRAWN',
+        'SHORTLISTED_FOR_INTERVIEW',
+        'ON_HOLD',
+        'REJECTED',
+        'OFFERED',
         'OFFER_REVOKED',
-        'OFFER_ACCEPTED', 
+        'OFFER_ACCEPTED',
         'OFFER_REJECTED'
-    ) NOT NULL DEFAULT 'APPLIED', 
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    ) NOT NULL DEFAULT 'APPLIED',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_jobPost FOREIGN KEY (jobPostId) REFERENCES jobPost(id) ,
-    CONSTRAINT fk_applicant FOREIGN KEY (applicantId) REFERENCES studentProfile(userId) 
+    CONSTRAINT fk_applicant FOREIGN KEY (applicantId) REFERENCES studentProfile(userId)
 );
 
 CREATE TABLE jobApplicationAction (
@@ -418,13 +418,13 @@ CREATE TABLE jobApplicationAction (
         FOREIGN KEY (jobApplicationId)
         REFERENCES jobApplication(id)
         ON DELETE CASCADE
-); 
+);
 
 CREATE TABLE orgInvitations (
-    id INT AUTO_INCREMENT PRIMARY KEY, 
+    id INT AUTO_INCREMENT PRIMARY KEY,
     organizationId int NOT NULL,
     inviteeEmail VARCHAR(255) NOT NULL,
-    inviteruserId CHAR(36) NOT NULL,     
+    inviteruserId CHAR(36) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
 );

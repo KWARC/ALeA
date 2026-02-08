@@ -122,7 +122,6 @@ function ForumViewControls({
   const courseId = router.query?.courseId as string;
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
   const { user: userInfo } = useCurrentUser();
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
 
@@ -237,7 +236,6 @@ export function ForumView() {
   const courseId = router.query.courseId as string;
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [showRemarks, setShowRemarks] = useState(false);
   const [showUnanswered, setShowUnanswered] = useState(false);

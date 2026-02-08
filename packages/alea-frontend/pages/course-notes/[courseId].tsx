@@ -1,5 +1,8 @@
 /* eslint-disable react/display-name, react/no-children-prop */
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
+import { CommentButton } from '@alea/comments';
+import { getAllCourses } from '@alea/spec';
+import { SafeFTMLDocument, SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
@@ -11,19 +14,22 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import { getAllCourses } from '@alea/spec';
-import { CommentButton } from '@alea/comments';
-import { SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
-import Tooltip from '@mui/material/Tooltip';
+
+function getSelectedText(): string | undefined {
+  const sel = window.getSelection();
+  const text = sel?.toString();
+  return text && text.trim().length > 0 ? text : undefined;
+}
 
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
@@ -54,6 +60,8 @@ const FragmentWrap: React.FC<{
   children: ReactNode;
   uriToTitle: Record<string, string>;
 }> = ({ uri, fragmentKind, children, uriToTitle }) => {
+  // const { courseNotes: t } = getLocaleObject(useRouter());
+  // const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
   return (
     <Box fragment-uri={uri} fragment-kind={fragmentKind}>
       {fragmentKind === 'Section' ? (
@@ -64,6 +72,16 @@ const FragmentWrap: React.FC<{
       ) : (
         <Box display="flex" justifyContent="space-between">
           <Box flex={1}>{children}</Box>
+          <Box
+            onMouseUp={() => {
+              const text = getSelectedText();
+              if (text) {
+                localStorage.setItem('lastSelectedText', text);
+              }
+            }}
+          >
+            <CommentButton url={uri} fragmentKind={fragmentKind} />
+          </Box>
           <CommentButton url={uri} fragmentKind={fragmentKind} />
         </Box>
       )}
@@ -134,6 +152,23 @@ const CourseNotesPage: NextPage = () => {
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
+    if (!router.asPath.includes('#')) return;
+    if (!toc) return;
+
+    const sectionId = decodeURIComponent(router.asPath.split('#')[1]);
+    if (!sectionId) return;
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }, [toc, router.asPath]);
+
+  //TODO: Improve navigation
+
+  useEffect(() => {
     async function fetchGottos() {
       try {
         const response = await axios.get('/api/get-coverage-timeline');
@@ -165,7 +200,7 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()}>
-      {/* <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
+      <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
           sx={{
@@ -190,9 +225,10 @@ const CourseNotesPage: NextPage = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         courseId={courseId}
+        notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
-      /> */}
+      />
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
@@ -238,9 +274,7 @@ const CourseNotesPage: NextPage = () => {
               );
             }
           }}
-          onSectionTitle={(uri, lvl) => {
-            return <TrafficLightIndicator sectionUri={uri} />;
-          }}
+          onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
         />
       </Box>
     </MainLayout>
