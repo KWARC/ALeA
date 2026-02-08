@@ -2,14 +2,9 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Step,
   StepLabel,
   Stepper,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -38,35 +33,14 @@ export function validateJobPost(data: JobPostFormData, step?: number): Validatio
   const errors: ValidationErrors = {};
 
   if (step === 0 || step === undefined) {
+    if (!data.jobCategoryId) errors.jobCategoryId = 'Job category is required';
     if (!data.jobTitle.trim()) errors.jobTitle = 'Job title is required';
     if (!data.workMode) errors.workMode = 'Work mode is required';
   }
 
-  if (step === 1 || step === undefined) {
-    const c = data.compensation;
-
-    if (c.mode === 'fixed') {
-      if (!c.fixedAmount) errors.compensation = 'Fixed amount is required';
-    }
-
-    if (c.mode === 'range') {
-      const { minAmount, maxAmount } = c;
-
-      if (minAmount == null && maxAmount == null) {
-        errors.compensation = 'Min or Max amount is required';
-      } else if (minAmount != null && maxAmount != null && minAmount > maxAmount) {
-        errors.compensation = 'Min amount must be less than Max amount';
-      }
-    }
-
-    if (!c.currency) errors.compensation = 'Currency is required';
-    if (!c.frequency) errors.compensation = 'Frequency is required';
-  }
-
   if (step === 2 || step === undefined) {
     if (!data.qualification) errors.qualification = 'Qualification is required';
-    if (!data.targetYears) errors.targetYears = 'Target year is required';
-    if (!data.applicationDeadline) errors.applicationDeadline = 'Deadline is required';
+    if (!data.applicationDeadlineTimestamp_ms) errors.applicationDeadlineTimestamp_ms = 'Deadline is required';
   }
 
   return errors;
@@ -78,15 +52,13 @@ const JobPostPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeStep, setActiveStep] = useState(0);
   const [jobCategories, setJobCategories] = useState<JobCategoryInfo[]>([]);
-  const [selectedJobCategory, setSelectedJobCategory] = useState<string>('');
-  const [selectedJobCategoryId, setSelectedJobCategoryId] = useState<number>(null);
-  const [isFormDisabled, setIsFormDisabled] = useState(true);
   const initialJobPostFormData: JobPostFormData = {
+    jobCategoryId: null,
     session: '',
     jobTitle: '',
     workLocation: '',
     workMode: '',
-    applicationDeadline: '',
+    applicationDeadlineTimestamp_ms: null,
     facilities: '',
     compensation: {
       type: 'salary',
@@ -97,7 +69,7 @@ const JobPostPage = () => {
       currency: 'EUR',
       frequency: 'yearly',
     },
-    targetYears: '',
+    graduationYears: '',
     openPositions: null,
     qualification: '',
     jobDescription: '',
@@ -157,28 +129,22 @@ const JobPostPage = () => {
     fetchJobCategoryData();
   }, []);
 
-  const handleJobCategoryChange = (event: any) => {
-    const selectedId = event.target.value;
-    setSelectedJobCategoryId(Number(selectedId));
-    const selectedJobCategory = jobCategories.find((job) => job.id === selectedId);
-    if (selectedJobCategory) {
-      setSelectedJobCategory(selectedJobCategory.jobCategory);
-    }
-  };
   useEffect(() => {
-    if (selectedJobCategory) {
-      setJobPostFormData((prevData) => ({
-        ...prevData,
-        session: `${selectedJobCategory}(${CURRENT_TERM})`,
-        compensation: {
-          ...prevData.compensation,
-          frequency: selectedJobCategory.toLowerCase() === 'full-time' ? 'yearly' : 'monthly',
-          type: selectedJobCategory.toLowerCase() === 'full-time' ? 'salary' : 'stipend',
-        },
-      }));
-      setIsFormDisabled(false);
-    }
-  }, [selectedJobCategory]);
+    const selectedId = jobPostFormData.jobCategoryId;
+    if (!selectedId) return;
+    const selectedJob = jobCategories.find((job) => job.id === selectedId);
+    if (!selectedJob) return;
+    const categoryName = selectedJob.jobCategory; 
+    setJobPostFormData((prevData) => ({
+      ...prevData,
+      session: `${categoryName}(${CURRENT_TERM})`,
+      compensation: {
+        ...prevData.compensation,
+        frequency: categoryName.toLowerCase() === 'full-time' ? 'yearly' : 'monthly',
+        type: categoryName.toLowerCase() === 'full-time' ? 'salary' : 'stipend',
+      },
+    }));
+  }, [jobPostFormData.jobCategoryId, jobCategories]);
 
   const handleNext = async () => {
     const validationErrors = validateJobPost(jobPostFormData, activeStep);
@@ -192,21 +158,17 @@ const JobPostPage = () => {
       setActiveStep((prev) => prev + 1);
       return;
     }
-    if (!recruiter?.organizationId || !selectedJobCategoryId) {
+    if (!recruiter?.organizationId) {
       alert('Missing required data');
       return;
     }
     const jobPostPayload = {
       ...jobPostFormData,
-      jobCategoryId: selectedJobCategoryId,
       organizationId: recruiter.organizationId,
     };
     try {
       setLoading(true);
-      setIsFormDisabled(true);
       await createJobPost(jobPostPayload);
-      setSelectedJobCategory('');
-      setSelectedJobCategoryId(null);
       setJobPostFormData(initialJobPostFormData);
       setActiveStep(0);
       fetchData();
@@ -216,7 +178,6 @@ const JobPostPage = () => {
       alert('Failed to create job. Please try again.');
     } finally {
       setLoading(false);
-      setIsFormDisabled(false);
     }
   };
 
@@ -236,36 +197,6 @@ const JobPostPage = () => {
         mx: 'auto',
       }}
     >
-      <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2, bgcolor: 'white' }}>
-        <InputLabel id="job-category-select-label">Select Job Category</InputLabel>
-        <Select
-          labelId="job-category-select-label"
-          value={selectedJobCategoryId}
-          onChange={handleJobCategoryChange}
-          label="Select Job Category"
-          fullWidth
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '8px',
-            },
-            '& .MuiSelect-icon': {
-              right: 8,
-            },
-          }}
-        >
-          {jobCategories.map((job, index) => (
-            <MenuItem key={index} value={job.id}>
-              {job.jobCategory}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {!jobCategories.length && (
-        <Typography color="error" variant="subtitle2">
-          No job categories available. Please contact job portal admin to create job categories so
-          you can create a job post.
-        </Typography>
-      )}
       <Box
         sx={{
           bgcolor: '#ededed',
@@ -274,36 +205,6 @@ const JobPostPage = () => {
           position: 'relative',
         }}
       >
-        {isFormDisabled && (
-          <Tooltip
-            title={
-              !loading && !jobCategories.length && 'No job Categories available to create job.'
-            }
-            arrow
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(64, 56, 64, 0.2)',
-                borderRadius: '20px',
-                zIndex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              {loading && (
-                <Box>
-                  <CircularProgress />
-                </Box>
-              )}
-            </Box>
-          </Tooltip>
-        )}
         <Typography variant="h4" fontWeight="bold">
           Create a New Job Post
         </Typography>
@@ -320,6 +221,7 @@ const JobPostPage = () => {
               formData={jobPostFormData}
               handleChange={handleChange}
               errors={errors}
+              jobCategories={jobCategories}
             />
           )}
           {activeStep === 1 && (
@@ -342,9 +244,6 @@ const JobPostPage = () => {
             variant="outlined"
             onClick={() => {
               setJobPostFormData(initialJobPostFormData);
-              setSelectedJobCategoryId(null);
-              setSelectedJobCategory('');
-              setIsFormDisabled(true);
               setActiveStep(0);
             }}
           >
@@ -366,12 +265,20 @@ const JobPostPage = () => {
           </Box>
         </Box>
       </Box>
-      <JobList recruiter={recruiter} />
+      <JobList recruiter={recruiter} jobCategories ={jobCategories} />
     </Box>
   );
 };
 const CreateJob = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<JobPostPage />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Create Job | Job Portal - ALeA"
+      description="Create and publish new job openings for students on the ALeA Job Portal"
+    >
+      {<JobPostPage />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default CreateJob;

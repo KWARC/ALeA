@@ -1,5 +1,5 @@
 import { getCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, getParamsFromUri, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { convertHtmlStringToPlain, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,7 +22,28 @@ interface SectionTreeNode {
   lectureIdx?: number;
   started?: Date;
   ended?: Date;
+  notCovered?: boolean;
 }
+
+export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
+  lbs: [
+    'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-qsa&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/LBS/course&p=modalities/sec&d=modalities&l=en&e=section_1',
+    'http://mathhub.info?a=courses/FAU/LBS/course&p=tense/sec&d=tense&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/ComSem&p=nlfrags/sec&d=quantifier-scope-ambiguity&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section',
+  ],
+  'ai-1': [
+    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
+    'http://mathhub.info?a=courses/Jacobs/CompLog&p=kr/sec&d=kr-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=semweb-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
+    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section'
+  ],
+};
 
 function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
   if (!node || node.tocElem.type !== 'Section') return;
@@ -38,32 +59,38 @@ function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
 }
 
 function getTopLevelSections(
+  courseId: string,
   tocElems: FTML.TocElem[],
   parentNode: SectionTreeNode
 ): SectionTreeNode[] {
   return tocElems
-    .map((t) => getSectionTree(t, parentNode))
+    .map((t) => getSectionTree(courseId, t, parentNode))
     .filter(Boolean)
     .map((t) => (Array.isArray(t) ? t : [t as SectionTreeNode]))
     .flat();
 }
 
 function getSectionTree(
+  courseId: string,
   tocElem: FTML.TocElem,
-  parentNode: SectionTreeNode
+  parentNode: SectionTreeNode,
+  parentNotCovered = false
 ): SectionTreeNode | SectionTreeNode[] | undefined {
   if (tocElem.type === 'Paragraph' || tocElem.type === 'Slide') return undefined;
   const isSection = tocElem.type === 'Section';
 
   if (isSection) {
     const children: SectionTreeNode[] = [];
+    const notCovered = parentNotCovered || NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri);
+
     const thisNode = {
       tocElem,
       children,
       parentNode,
+      notCovered,
     } as SectionTreeNode;
     for (const s of tocElem.children || []) {
-      const subNodes = getSectionTree(s, thisNode);
+      const subNodes = getSectionTree(courseId, s, thisNode, notCovered);
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -71,8 +98,8 @@ function getSectionTree(
     return thisNode;
   } else {
     const children: SectionTreeNode[] = [];
-    for (const s of tocElem.children) {
-      const subNodes = getSectionTree(s, parentNode);
+    for (const s of tocElem.children || []) {
+      const subNodes = getSectionTree(courseId, s, parentNode, parentNotCovered);
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -112,7 +139,8 @@ function applyFilter(
   return nodes.map((n) => applyFilterOne(n, searchTerms)).filter((n) => n) as any;
 }
 
-function getLectureHover(info?: SectionLectureInfo) {
+function getLectureHover(info?: SectionLectureInfo, isSkipped?: boolean) {
+  if (isSkipped) return 'Skipped';
   if (!info) return '';
   const { startTime_ms, endTime_ms } = info;
   if (!startTime_ms) return 'Not yet covered';
@@ -151,15 +179,18 @@ function RenderTree({
   const itemClassName = level === 0 ? styles['level0_dashboard_item'] : styles['dashboard_item'];
   const isSelected = selectedSection === node.tocElem.id;
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
-  const lectureHover = getLectureHover(secLectureInfo);
+  const lectureHover = getLectureHover(secLectureInfo, node.notCovered);
 
   const sectionStarted = !!secLectureInfo?.startTime_ms;
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
-  const background = sectionInProgress
+  const background = node.notCovered
+    ? '#fdd'
+    : sectionInProgress
     ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
     : undefined;
   const backgroundColor = sectionCompleted ? '#FFC' : undefined;
+
   return (
     <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
       <Box
@@ -179,14 +210,15 @@ function RenderTree({
             )}
           </IconButton>
         )}
-        <span
+        <Box
+          component="span"
           className={itemClassName}
-          style={{
+          sx={{
             cursor: 'pointer',
-            color: isSelected ? 'white' : undefined,
-            padding: isSelected ? '0 3px' : undefined,
-            backgroundColor: isSelected ? PRIMARY_COL : 'inherit',
-            borderRadius: '3px',
+            color: isSelected ? 'white' : 'undefined',
+            px: isSelected ? 0.5 : 0,
+            backgroundColor: isSelected ? 'primary.main' : 'inherit',
+            borderRadius: 0.5,
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -195,14 +227,17 @@ function RenderTree({
           }}
         >
           {preAdornment ? preAdornment(node.tocElem.id) : null}
+
           {lectureHover ? (
-            <Tooltip title={<span style={{ fontSize: 'medium' }}>{lectureHover}</span>}>
-              <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{lectureHover}</Box>}>
+              <Box component="span">
+                {convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}
+              </Box>
             </Tooltip>
           ) : (
-            <span>{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</span>
+            <Box component="span">{convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}</Box>
           )}
-        </span>
+        </Box>
       </Box>
       {isOpen && node.children.length > 0 && (
         <Box display="flex" ml="3px">
@@ -241,8 +276,8 @@ function RenderTree({
 export function getCoveredSections(endSecUri: string, elem: FTML.TocElem | undefined): string[] {
   const coveredUris: string[] = [];
   if (!elem) return coveredUris;
-  if ('children' in elem && elem.children.length) {
-    for (const child of elem.children) {
+  if ('children' in elem && elem.children?.length) {
+    for (const child of elem.children || []) {
       coveredUris.push(...getCoveredSections(endSecUri, child));
       if (coveredUris.includes(endSecUri)) return coveredUris;
     }
@@ -257,8 +292,8 @@ function getOrderedSections(elem: FTML.TocElem): [FTML.Uri[], FTML.Uri[]] {
   const postOrderedList: FTML.Uri[] = [];
   if (!elem) return [preOrderedList, postOrderedList];
   if (elem.type === 'Section') preOrderedList.push(elem.uri);
-  if ('children' in elem && elem.children.length) {
-    for (const c of elem.children) {
+  if ('children' in elem && elem.children?.length) {
+    for (const c of elem.children || []) {
       const [subPreList, subPostList] = getOrderedSections(c);
       preOrderedList.push(...subPreList);
       postOrderedList.push(...subPostList);
@@ -411,7 +446,7 @@ export function ContentDashboard({
 
   const firstLevelSections = useMemo(() => {
     const shadowTopLevel: SectionTreeNode = { children: [], tocElem: undefined as any };
-    const topLevel = getTopLevelSections(toc, shadowTopLevel);
+    const topLevel = getTopLevelSections(courseId || '', toc, shadowTopLevel);
     shadowTopLevel.children = topLevel;
     return topLevel;
   }, [toc]);
@@ -422,7 +457,7 @@ export function ContentDashboard({
         <>
           <Box display="flex" alignItems="center" sx={{ m: '5px' }}>
             <IconButton sx={{ m: '2px' }} onClick={() => onClose()}>
-              <CloseIcon />
+              <CloseIcon sx={{ bgcolor: 'secondary.100' }} />
             </IconButton>
             <TextField
               id="tree-filter-string"
@@ -437,7 +472,7 @@ export function ContentDashboard({
             <Tooltip title={t.expandCollapseAll}>
               <IconButton
                 onClick={() => setDefaultOpen((v) => !v)}
-                sx={{ border: '1px solid #CCC', borderRadius: '40px' }}
+                sx={{ border: '1px solid ', borderColor: 'divider', borderRadius: '40px',color:'secondary.main' }}
               >
                 {defaultOpen ? <UnfoldLessDoubleIcon /> : <UnfoldMoreDoubleIcon />}
               </IconButton>

@@ -15,7 +15,6 @@ import { IconButton } from '@mui/material';
 import { FileOpen, PersonAdd, Cancel, Pause } from '@mui/icons-material';
 import { Chart } from 'react-google-charts';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
-import { PRIMARY_COL } from '@alea/utils';
 import { JobSelect } from './applications';
 
 const applicantData = [
@@ -294,7 +293,7 @@ function RecruiterStatistics() {
 
   return (
     <Box sx={{ padding: 5, bgcolor: '#f4f6f8', minHeight: '100vh' }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL} pl={20}>
+      <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.main" pl={20}>
         Recruiter Statistics
       </Typography>
       <Grid item xs={12} md={8} sx={{ p: ' 0 180px  50px 160px' }}>
@@ -378,7 +377,13 @@ function RecruiterStatistics() {
 
             <Grid container spacing={3} sx={{ mt: 3 }}>
               <Grid item xs={12} md={6}>
-                <Box sx={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '16px' }}>
+                <Box
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: '16px',
+                    padding: '16px',
+                  }}
+                >
                   <Typography variant="h6" fontWeight="bold" gutterBottom>
                     Job Analytics
                   </Typography>
@@ -402,7 +407,13 @@ function RecruiterStatistics() {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <Box sx={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '16px' }}>
+                <Box
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: '16px',
+                    padding: '16px',
+                  }}
+                >
                   <Typography variant="h6" fontWeight="bold" gutterBottom>
                     Recruitment Funnel
                   </Typography>
@@ -451,7 +462,15 @@ function RecruiterStatistics() {
   );
 }
 const Stats = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<RecruiterStatistics />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Statistics | Job Portal - ALeA"
+      description="View analytics and performance metrics for your job postings on the ALeA Job Portal"
+    >
+      {<RecruiterStatistics />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Stats;

@@ -110,11 +110,12 @@ export function ForMe({
               </Typography>
               <Box
                 px={2}
-                maxWidth="800px"
+                maxWidth={800}
                 m="auto"
-                bgcolor="white"
-                border="1px solid #CCC"
-                borderRadius="5px"
+                bgcolor="background.paper"
+                border="1px solid "
+                borderColor="divider"
+                borderRadius={1}
               ></Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                 <ListStepper
@@ -130,7 +131,7 @@ export function ForMe({
                   </Tooltip>
                 </IconButton>
               </Box>
-              <Box mb="10px">
+              <Box mb={1.25}>
                 <UriProblemViewer
                   key={problemUri}
                   uri={problemUri}
@@ -154,7 +155,7 @@ export function ForMe({
                 mb={2}
                 sx={{
                   display: 'flex',
-                  gap: '10px',
+                  gap: 1.25,
                   flexDirection: 'column',
                   alignItems: 'flex-start',
                 }}
@@ -177,11 +178,12 @@ export function ForMe({
   ) : (
     <Box
       px={2}
-      maxWidth="800px"
+      maxWidth={800}
       m="auto"
-      bgcolor="white"
-      border="1px solid #CCC"
-      borderRadius="5px"
+      bgcolor="background.paper"
+      border="1px solid "
+      borderColor="divider"
+      borderRadius={1}
     >
       {InnerContent()}
     </Box>

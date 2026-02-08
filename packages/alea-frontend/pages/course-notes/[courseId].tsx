@@ -25,6 +25,7 @@ import {
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';

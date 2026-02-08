@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { canAccessResource, getStudentProfile, updateStudentProfile } from '@alea/spec';
-import { Action, CURRENT_TERM, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
@@ -26,8 +26,8 @@ const ProfileForm = () => {
     location: '',
     gpa: '',
     programme: '',
-    yearOfAdmission: null,
-    yearOfGraduation: null,
+    yearOfAdmission: '',
+    yearOfGraduation: '',
     socialLinks: {},
     resumeUrl: '',
   });
@@ -77,8 +77,8 @@ const ProfileForm = () => {
           location: res?.location || '',
           gpa: res?.gpa || '',
           programme: res?.programme || '',
-          yearOfAdmission: res?.yearOfAdmission || null,
-          yearOfGraduation: res?.yearOfGraduation || null,
+          yearOfAdmission: res?.yearOfAdmission || '',
+          yearOfGraduation: res?.yearOfGraduation || '',
           socialLinks: requiredSocialLinks,
           resumeUrl: res?.resumeUrl || '',
         }));
@@ -164,7 +164,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
                 Edit Profile
               </Typography>
 
@@ -307,7 +307,7 @@ const ProfileForm = () => {
                   variant="standard"
                   fullWidth
                   sx={{ maxWidth: '350px', m: '20px 0 0' }}
-                  value={profileData.yearOfAdmission || 'N/A'}
+                  value={profileData.yearOfAdmission}
                   onChange={handleChange}
                   name="yearOfAdmission"
                 />
@@ -319,7 +319,7 @@ const ProfileForm = () => {
                   variant="standard"
                   fullWidth
                   sx={{ maxWidth: '350px', m: '20px 0 0' }}
-                  value={profileData.yearOfGraduation || 'N/A'}
+                  value={profileData.yearOfGraduation}
                   onChange={handleChange}
                   name="yearOfGraduation"
                 />
@@ -389,6 +389,14 @@ const ProfileForm = () => {
   );
 };
 const Profile = () => {
-  return <JpLayoutWithSidebar role="student">{<ProfileForm />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Profile | Job Portal - ALeA"
+      description="View and update your profile details on the ALeA Job Portal"
+    >
+      {<ProfileForm />}
+    </JpLayoutWithSidebar>
+  );
 };
 export default Profile;

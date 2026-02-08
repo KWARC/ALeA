@@ -1,5 +1,5 @@
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
-import { canAccessResource, checkIfUserRegisteredOnJP } from '@alea/spec';
+import { addRemoveMember, canAccessResource, checkIfUserRegisteredOnJP } from '@alea/spec';
 import { Action, CURRENT_TERM, isFauId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -7,11 +7,14 @@ import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
 import MainLayout from '../../layouts/MainLayout';
 import { useCurrentUser } from '@alea/react-utils';
-
+function getJobPortalStudentsAcl() {
+  return `job-portal-students`;
+}
 const JobPortal: NextPage = () => {
   const router = useRouter();
   const [showAdminButton, setShowAdminButton] = useState(false);
   const [forceFauLogin, setForceFauLogin] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user, isUserLoading } = useCurrentUser();
 
   const userId = user?.userId;
@@ -33,7 +36,7 @@ const JobPortal: NextPage = () => {
     );
   }
   return (
-    <MainLayout title="Job-Portal | VoLL-KI">
+    <MainLayout title="Job-Portal | ALeA">
       <Container maxWidth="sm" sx={{ mt: 8 }}>
         <Box
           sx={{
@@ -53,11 +56,11 @@ const JobPortal: NextPage = () => {
               left: 0,
               width: '100%',
               height: 5,
-              background: 'linear-gradient(90deg, #4A69E1, #6C8CFF)',
+              background: 'linear-gradient(90deg, blue.400 , #6C8CFF)',
             },
           }}
         >
-          <Typography variant="h4" fontWeight={700} sx={{ color: '#4A69E1', mb: 1 }}>
+          <Typography variant="h4" fontWeight={700} sx={{ color: 'blue.400 ', mb: 1 }}>
             Welcome to Job Portal
           </Typography>
 
@@ -77,7 +80,7 @@ const JobPortal: NextPage = () => {
                   size="large"
                   sx={{
                     mb: 2,
-                    bgcolor: '#4A69E1',
+                    bgcolor: 'blue.400 ',
                     color: 'white',
                     textTransform: 'none',
                     fontSize: '16px',
@@ -96,15 +99,29 @@ const JobPortal: NextPage = () => {
                       router.push('/login?target=' + encodeURIComponent(window.location.href));
                     } else {
                       const result = await checkIfUserRegisteredOnJP();
-                      router.push(
-                        result?.exists
-                          ? 'job-portal/student/dashboard'
-                          : 'job-portal/register/student'
-                      );
+                      if (result?.exists) {
+                        router.push('job-portal/student/dashboard');
+                      } else {
+                        try {
+                          await addRemoveMember({
+                            memberId: userId,
+                            aclId: getJobPortalStudentsAcl(),
+                            isAclMember: false,
+                            toBeAdded: true,
+                          });
+                        } catch (err) {
+                          console.error('Error adding user to students ACL', err);
+                          alert('Something went wrong. Please try again.');
+                          return;
+                        } finally {
+                          setLoading(false);
+                        }
+                        router.push('job-portal/register/student');
+                      }
                     }
                   }}
                 >
-                  Continue as Student
+                  {loading ? 'Processing...' : 'Continue as Student'}
                 </Button>
               )}
 
@@ -114,7 +131,7 @@ const JobPortal: NextPage = () => {
                   size="large"
                   sx={{
                     mb: 2,
-                    bgcolor: '#4A69E1',
+                    bgcolor: 'blue.400 ',
                     color: 'white',
                     textTransform: 'none',
                     fontSize: '16px',
@@ -184,7 +201,7 @@ const JobPortal: NextPage = () => {
                     mt: 2,
                     textTransform: 'none',
                     fontWeight: 500,
-                    color: '#4A69E1',
+                    color: 'blue.400 ',
                   }}
                   onClick={() => setForceFauLogin(true)}
                 >

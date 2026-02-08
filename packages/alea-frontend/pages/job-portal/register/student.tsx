@@ -71,7 +71,7 @@ export default function StudentRegistration() {
           ...prev,
           name: `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim(),
           email: data?.email ?? '',
-          progamme:data?.studyProgram??''
+          progamme: data?.studyProgram ?? '',
         }));
       } catch (err) {
         console.error('Error fetching profile data:', err);
@@ -153,7 +153,7 @@ export default function StudentRegistration() {
   };
 
   return (
-    <MainLayout title="Register-Student | VoLL-KI">
+    <MainLayout title="Register-Student | Job Portal - ALeA">
       <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
         <Box
           sx={{
@@ -174,7 +174,7 @@ export default function StudentRegistration() {
               left: 0,
               width: '100%',
               height: 6,
-              background: 'linear-gradient(90deg, #4A69E1, #6f86ff)',
+              background: 'linear-gradient(90deg, blue.400 , #6f86ff)',
             }}
           />
 
@@ -182,7 +182,7 @@ export default function StudentRegistration() {
             variant="h5"
             fontWeight={700}
             textAlign="center"
-            color="#4A69E1"
+            color="blue.400 "
             sx={{ mb: 1, mt: 1 }}
           >
             Student Registration
@@ -299,7 +299,7 @@ export default function StudentRegistration() {
                 borderRadius: '14px',
                 fontWeight: 600,
                 textTransform: 'none',
-                background: 'linear-gradient(135deg, #4A69E1, #6f86ff)',
+                background: 'linear-gradient(135deg, blue.400 , #6f86ff)',
                 boxShadow: '0 10px 30px rgba(74,105,225,0.35)',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #3a56c8, #5f75ff)',

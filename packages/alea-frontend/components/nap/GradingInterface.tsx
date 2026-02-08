@@ -337,7 +337,7 @@ function GradingItemsList({
             <ListItemButton
               key={`${homeworkId}-${questionId}-${studentId}`}
               onClick={(e) => onSelectItem(homeworkId, questionId, studentId, answerId)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : '#ffffff' }}
+              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
             >
               <ListItemIcon>
                 {numSubProblemsInstructorGraded === numSubProblemsAnswered ? (
@@ -456,7 +456,6 @@ function GradingItemDisplay({
       <GradingProblem
         answerClasses={answerClasses}
         onNewGrading={async (acs, feedback) => {
-          
           await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
           refreshGradingInfo();
         }}
@@ -578,7 +577,7 @@ export function GradingInterface({
         <b style={{ color: 'red' }}>{selectedGradedItems.length}</b> Grading Items Selected.
       </Typography>
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
-        <Box sx={{ border: '1px solid #ccc' }} flex="1 1 200px" maxWidth={300}>
+        <Box sx={{ border: '1px solid', borderColor: 'divider' }} flex="1 1 200px" maxWidth={300}>
           <GradingItemsList
             gradingItems={selectedGradedItems}
             homeworkMap={homeworkMap.current}

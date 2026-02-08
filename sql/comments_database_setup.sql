@@ -301,7 +301,7 @@ CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY,
     companyName VARCHAR(255) ,
     domain VARCHAR(255) ,
-    incorporationYear YEAR ,
+    incorporationYear VARCHAR(50) ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
     about TEXT,
@@ -369,7 +369,6 @@ CREATE TABLE jobPost (
     FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
     FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)
 );
-
 
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY,

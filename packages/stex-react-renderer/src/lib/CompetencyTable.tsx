@@ -24,7 +24,7 @@ import {
   getProblemsForConcept,
   uriWeightToSmileyLevel,
 } from '@alea/spec';
-import { PRIMARY_COL, PathToTour, PathToTour2 } from '@alea/utils';
+import { PathToTour, PathToTour2 } from '@alea/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -96,7 +96,7 @@ function QuizButton({ uri }: { uri: string }) {
         <Box
           sx={{
             cursor: 'pointer',
-            backgroundColor: PRIMARY_COL,
+            backgroundColor: 'primary.main',
             color: 'white',
             borderRadius: '50%',
             padding: '7px 8px 3px',
@@ -123,7 +123,7 @@ function QuizButton({ uri }: { uri: string }) {
 
 export function ConceptView({ uri }: { uri: string }) {
   const html = getFTMLForConceptView(uri);
-  return <SafeFTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri:undefined }} />;
+  return <SafeFTMLFragment key={uri} fragment={{ type: 'HtmlString', html, uri: undefined }} />;
 }
 
 export function CompetencyTable({
@@ -290,6 +290,7 @@ export function CompetencyTable({
                           dimText={false}
                           selectedLevel={uriWeightToSmileyLevel(Number(row.values[dimension]))}
                           onValueUpdate={onValueUpdate}
+                          eventType="edit-5StepLikertSmileys"
                         />
                       }
                     >
@@ -321,7 +322,8 @@ export function CompetencyTable({
                         style={{ cursor: 'pointer' }}
                         priority={true}
                       />
-                    </Link> <Link
+                    </Link>{' '}
+                    <Link
                       href={PathToTour2(conceptUris[index])}
                       target="_blank"
                       sx={{ marginRight: '10px' }}

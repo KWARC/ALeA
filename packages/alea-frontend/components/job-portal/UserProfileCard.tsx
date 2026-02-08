@@ -132,7 +132,7 @@ export const UserProfileCard = ({
                   rel="noopener noreferrer"
                   style={{ display: 'flex', alignItems: 'center', gap: 5 }}
                 >
-                  <InsertDriveFile sx={{ color: '#1976d2' }} />
+                  <InsertDriveFile sx={{ color: 'blue.sky' }} />
                   Open Resume
                 </Link>
               ) : (
@@ -178,7 +178,7 @@ export const UserProfileCard = ({
             {about.length > 150 && (
               <span
                 onClick={() => setAboutDialog(true)}
-                style={{ color: '#1976d2', cursor: 'pointer', fontWeight: 500 }}
+                style={{ color: 'blue.sky', cursor: 'pointer', fontWeight: 500 }}
               >
                 Read more
               </span>

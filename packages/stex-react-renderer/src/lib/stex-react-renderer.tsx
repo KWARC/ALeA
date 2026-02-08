@@ -6,7 +6,7 @@ import axios from 'axios';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CompetencyTable from './CompetencyTable';
-import { ContentDashboard } from './ContentDashboard';
+import { ContentDashboard, NOT_COVERED_SECTIONS } from './ContentDashboard';
 import { DocProblemBrowser } from './DocProblemBrowser';
 import { ExpandableContextMenu } from './ExpandableContextMenu';
 import { GradingCreator } from './GradingCreator';
@@ -27,6 +27,7 @@ import { GradingContext, GradingDisplay, ShowGradingFor } from './SubProblemAnsw
 import { TourAPIEntry, TourDisplay } from './TourDisplay';
 import TrafficLightIndicator from './TrafficLightIndicator';
 import { DimAndURIListDisplay, URIListDisplay } from './UriListDisplay';
+import { ExamSelect } from './ExamSelect';
 
 import { computePointsFromFeedbackJson, FTMLProblemWithSolution } from '@alea/spec';
 
@@ -153,6 +154,7 @@ export {
   DimAndURIListDisplay,
   DimIcon,
   DocProblemBrowser,
+  ExamSelect,
   ExpandableContextMenu,
   FixedPositionMenu,
   GradingContext,
@@ -163,6 +165,7 @@ export {
   LevelIcon,
   ListStepper,
   NoMaxWidthTooltip,
+  NOT_COVERED_SECTIONS,
   PerSectionQuiz,
   PositionContext,
   PositionProvider,

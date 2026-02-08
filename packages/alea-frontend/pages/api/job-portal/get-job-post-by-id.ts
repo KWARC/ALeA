@@ -14,9 +14,25 @@ export async function getJobPostByIdOrSetError(
     return;
   }
   const results: any = await executeDontEndSet500OnError(
-    `SELECT id,jobCategoryId,organizationId ,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,compensation,facilities,applicationDeadline
-    FROM jobPost 
-    WHERE id = ?`,
+    `
+    SELECT 
+      id,
+      jobCategoryId,
+      organizationId,
+      session,
+      jobTitle,
+      jobDescription,
+      workLocation,
+      workMode,
+      qualification,
+      graduationYears,
+      openPositions,
+      compensation,
+      facilities,
+      UNIX_TIMESTAMP(applicationDeadline) * 1000 AS applicationDeadlineTimestamp_ms
+    FROM jobPost
+    WHERE id = ?
+    `,
     [jobPostId],
     res
   );

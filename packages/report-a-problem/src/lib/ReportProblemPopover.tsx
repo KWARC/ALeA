@@ -3,7 +3,6 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { Box, Button, Dialog, DialogActions, IconButton, Snackbar, Tooltip } from '@mui/material';
 import { CommentNoteToggleView } from '@alea/comments';
-import { SECONDARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -58,7 +57,9 @@ function buttonProps(color: string) {
 
 function isValidContextForComments(context: SelectionContext[]) {
   const nearestFragmentKind = context?.[0]?.fragmentKind;
-  return ['Paragraph', 'Section', 'Slide'].includes(nearestFragmentKind) && !!context[0].fragmentUri;
+  return (
+    ['Paragraph', 'Section', 'Slide'].includes(nearestFragmentKind) && !!context[0].fragmentUri
+  );
 }
 
 export function ReportProblemPopover(props: Props) {
@@ -92,7 +93,7 @@ export function ReportProblemPopover(props: Props) {
             {validContextForComments && (
               <Tooltip title={t.notesAndComments}>
                 <IconButton
-                  sx={{ ...buttonProps(SECONDARY_COL), ml: '5px' }}
+                  sx={{ ...buttonProps('secondary.main'), ml: '5px' }}
                   onClick={() => {
                     setIsPrivate(false);
                     setSelectedText(textContent.trim());
