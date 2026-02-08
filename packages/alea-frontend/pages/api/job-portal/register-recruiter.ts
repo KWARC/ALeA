@@ -1,5 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfPostOrSetError, executeAndEndSet500OnError, executeDontEndSet500OnError, getUserIdOrSetError } from '../comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  executeDontEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
 import { createAclOrSetError } from '../access-control/create-acl';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
@@ -82,7 +87,6 @@ async function deleteRecruiterProfileOrSetError(userId: string, res: NextApiResp
   return true;
 }
 
-
 export async function deleteOrganizationProfileOrSetError(id: number, res: NextApiResponse) {
   if (!id) return res.status(422).send('Organization id is missing');
   const orgProfile = await getOrganizationProfileByIdOrSet500OnError(id, res);
@@ -100,23 +104,23 @@ async function createOrganizationProfileOrSet500OnError(
   {
     companyName,
     domain,
-    incorporationYear = null,
-    isStartup = null,
-    website = null,
-    about = null,
-    companyType = null,
-    officeAddress = null,
-    officePostalCode = null,
+    incorporationYear,
+    isStartup,
+    website,
+    about,
+    companyType,
+    officeAddress,
+    officePostalCode,
   }: {
     companyName: string;
     domain: string;
-    incorporationYear?: string | null;
-    isStartup?: boolean | null;
-    website?: string | null;
-    about?: string | null;
-    companyType?: string | null;
-    officeAddress?: string | null;
-    officePostalCode?: string | null;
+    incorporationYear?: string;
+    isStartup?: boolean;
+    website?: string;
+    about?: string;
+    companyType?: string;
+    officeAddress?: string;
+    officePostalCode?: string;
   },
   res: NextApiResponse
 ) {
@@ -236,12 +240,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!hasInvite) {
       return res.status(200).json({ message: 'No invite found', showInviteDialog: true });
     }
-    const result = await createRecruiterOrSetError(
-      { name, email, position },
-      orgId,
-      userId,
-      res
-    );
+    const result = await createRecruiterOrSetError({ name, email, position }, orgId, userId, res);
     if (!result) return;
     return res
       .status(200)

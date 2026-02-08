@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   IconButton,
+  Link,
   Paper,
   Table,
   TableBody,
@@ -160,19 +161,20 @@ function CoverageRow({
                     Venue:
                   </Typography>
                   {item.venueLink ? (
-                    <a
+                    <Link
+                      component="a"
                       href={item.venueLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        color: '#1976d2',
+                      sx={{
+                        color: 'blue.sky',
                         textDecoration: 'underline',
                         fontWeight: 'bold',
                         fontSize: '0.85rem',
                       }}
                     >
                       {item.venue}
-                    </a>
+                    </Link>
                   ) : (
                     <Typography display="inline">{item.venue}</Typography>
                   )}

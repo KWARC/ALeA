@@ -20,6 +20,191 @@ Prefer `sx` props over inline styles for better maintainability and theming supp
 + <Box sx={{ bgcolor: "primary.main", p: 2 }}></Box>
 ```
 
+### 1.2 Styling Pattern with sx (Recommended)
+
+To keep components clean, readable, and scalable, follow a **"static styles + local overrides"** pattern.
+
+#### 1.2.1 Centralize Static Styles
+
+Define static styles in a dedicated object **near the bottom of the file**.
+
+```typescript
+const loListStyles = {
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    p: 1.5,
+    mb: 1,
+    borderRadius: 2,
+    '&:hover': {
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    }
+  },
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 1,
+    mb: 2,
+    flexWrap: 'wrap',
+  }
+};
+```
+✅ Keeps JSX clean  
+✅ Improves readability  
+
+
+#### 1.2.2 Prefer sx Composition Over Style Functions
+
+When a small part of the style **depends on local state**, do not convert the entire style into a function.
+
+❌ Avoid:
+
+```typescript
+listItem: (isActive: boolean) => ({
+  backgroundColor: isActive ? 'green' : 'white',
+});
+```
+
+✅ Prefer sx composition :
+
+```jsx
+<Paper
+  sx={{
+    ...loListStyles.listItem,
+    color: isActive ? 'green' : 'white',
+  }}
+/>
+```
+
+
+#### 1.2.3 Use sx Array for Conditional Overrides
+
+MUI allows sx to be an array. Later entries override earlier ones.
+
+```jsx
+<Box
+  sx={[
+    styles.container,
+    isSelected && { borderColor: 'primary.main' },
+    isDisabled && { opacity: 0.5 },
+  ]}
+/>
+```
+
+This pattern is preferred over:
+
+- multiple ternaries
+- deeply nested conditions
+- inline style objects
+
+#### 1.2.4 Component-Level Style Ownership
+
+Each component should own its styles.
+
+❌ Avoid mixing **unrelated component styles**:
+
+```typescript
+// Two unrelated components in the same file, but all styles in one object
+const styles = {
+  navbar: { display: 'flex', p: 2},
+  navbarItem: { color: 'white', ml: 2 },
+  sidebar: { width: 250, bgcolor: '#f5f5f5', p: 2 },
+  sidebarItem: { mb: 1, cursor: 'pointer' },
+};
+```
+- Hard to tell which styles belong to which component
+- Difficult to maintain as the file grows
+- Risk of accidental overrides
+
+✅ Recommended:
+
+```typescript
+// Component 1: Navbar
+const navbarStyles = {
+  root: { display: 'flex', p: 2 },
+  item: { color: 'white', ml: 2, cursor: 'pointer' },
+};
+
+// Component 2: Sidebar
+const sidebarStyles = {
+  root: { width: 250, bgcolor: '#f5f5f5', p: 2 },
+  item: { mb: 1, cursor: 'pointer' },
+};
+```
+
+Benefits:
+- Better encapsulation
+- Easier refactoring
+- Fewer merge conflicts
+- Clear ownership
+
+#### 1.2.5 Inline sx is fine for very simple, one-off styles
+
+For tiny, one-line, self-contained style adjustments, it’s okay to write sx inline.\
+**Examples:**
+```jsx
+<Box sx={{ p: 1, bgcolor: 'primary.light' }}>Hello</Box>
+
+<Button sx={{ ml: 2 }}>Click me</Button>
+```
+#### Notes:
+
+- Use inline sx only for trivial, non-reusable styles.
+
+- For complex or reusable styles, always define a dedicated style object.
+
+### 1.3 Color Palette Usage
+
+#### 1.3.1 Always Use Theme Palette Tokens
+**Examples:**
+```jsx
+<Box sx={{ color: 'text.primary', bgcolor: 'background.paper' }} />
+```
+#### 1.3.2 Use Gradients Defined in the Theme Palette
+
+- Always use gradients defined under palette.gradients.
+
+- Do not define gradient values directly inside components.
+
+- If a required gradient is not available,**add a new gradient to the theme palette with a clear, semantic key.**
+
+## NOTE: 
+- Ensures light/dark mode compatibility for color being used
+
+### 1.4 Typography
+
+#### 1.4.1 Use Theme Typography Variants Only
+
+#### 1.4.2 Font Sizes Should Come From Theme.
+- Prefer MUI typography variants (T1,h1–h6, body1, body2, etc.) instead of defining custom font sizes.
+
+- If a local override is required for typography-related properties (fontSize, lineHeight, fontWeight, etc.), ensure it is responsive across all breakpoints.
+- Always verify typography on small, medium, and large screens. ❌ Avoid **single-screen overrides**
+
+#### 1.5 Use Shadows From the Central shadows.ts Array
+- Always use shadow values defined in shadows.ts.
+- Do not define custom boxShadow values inside components.
+- If the required shadow intensity or opacity is not available, add a new entry to the shadows.ts array instead of creating ad-hoc shadows.
+
+❌ Avoid:
+```tsx
+sx={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}
+```
+✅ Prefer:
+```tsx
+sx={{ boxShadow: theme.shadows[2] }}
+```
+
+
+#### 1.6 Override Common Components in components.ts
+- Commonly used components across the project must have their some of the styles overridden centrally.
+
+## NOTE:
+- Overrides for Button, TextField, and other frequently used components are already defined.
+e.g button, textfield and others are already done.
+
+
 ## 2. State Management
 
 ### 2.1 Derived State Optimization

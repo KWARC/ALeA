@@ -1,6 +1,7 @@
 .deck-box {
   display: flex;
   justify-content: space-between;
+  background-color:"paper.default"
 }
 
 .deck-box > :nth-child(2) { /* The 'frame' or 'text-frame' */

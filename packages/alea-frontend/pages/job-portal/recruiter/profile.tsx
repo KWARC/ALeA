@@ -14,7 +14,7 @@ import {
   RecruiterData,
   updateRecruiterProfile,
 } from '@alea/spec';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { OrganizationDetails } from '../../../components/job-portal/OrganizationDetails';
@@ -37,7 +37,7 @@ const ProfileForm = () => {
       companyName: '',
       isStartup: false,
       companyType: '',
-      incorporationYear: null,
+      incorporationYear: '',
       website: '',
       about: '',
       officeAddress: '',
@@ -47,81 +47,80 @@ const ProfileForm = () => {
   const [loading, setLoading] = useState(true);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const router = useRouter();
-useEffect(() => {
-  const initialize = async () => {
-    setLoading(true);
-    let recruiterProfile: RecruiterData | null = null;
-    try {
-      recruiterProfile = await getRecruiterProfile();
-      if (!recruiterProfile) {
-        router.push('/job-portal'); 
-        return;
-      }
-      setRecruiter(recruiterProfile);
-    } catch (error) {
-      console.error('Failed to fetch recruiter profile:', error);
-      router.push('/job-portal'); 
-      return;
-    }
-    try {
-      const hasAccess = await canAccessResource(
-        ResourceName.JOB_PORTAL_ORG,
-        Action.MANAGE_JOB_POSTS,
-        { orgId: String(recruiterProfile.organizationId) }
-      );
-      if (!hasAccess) {
-        alert('You do not have access to this page.');
+  useEffect(() => {
+    const initialize = async () => {
+      setLoading(true);
+      let recruiterProfile: RecruiterData | null = null;
+      try {
+        recruiterProfile = await getRecruiterProfile();
+        if (!recruiterProfile) {
+          router.push('/job-portal');
+          return;
+        }
+        setRecruiter(recruiterProfile);
+      } catch (error) {
+        console.error('Failed to fetch recruiter profile:', error);
         router.push('/job-portal');
         return;
       }
-    } catch (error) {
-      console.error('Error checking access:', error);
-      router.push('/job-portal'); 
-      return;
-    }
-    try {
-      const organizationDetail = await getOrganizationProfile(recruiterProfile.organizationId);
-      const parsedSocialLinks = recruiterProfile?.socialLinks || {};
-      const requiredSocialLinks = {
-        linkedin: parsedSocialLinks.linkedin || 'N/A',
-        github: parsedSocialLinks.github || 'N/A',
-        twitter: parsedSocialLinks.twitter || 'N/A',
-        ...parsedSocialLinks,
-      };
+      try {
+        const hasAccess = await canAccessResource(
+          ResourceName.JOB_PORTAL_ORG,
+          Action.MANAGE_JOB_POSTS,
+          { orgId: String(recruiterProfile.organizationId) }
+        );
+        if (!hasAccess) {
+          alert('You do not have access to this page.');
+          router.push('/job-portal');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking access:', error);
+        router.push('/job-portal');
+        return;
+      }
+      try {
+        const organizationDetail = await getOrganizationProfile(recruiterProfile.organizationId);
+        const parsedSocialLinks = recruiterProfile?.socialLinks || {};
+        const requiredSocialLinks = {
+          linkedin: parsedSocialLinks.linkedin || 'N/A',
+          github: parsedSocialLinks.github || 'N/A',
+          twitter: parsedSocialLinks.twitter || 'N/A',
+          ...parsedSocialLinks,
+        };
 
-      setProfileData((prevData) => ({
-        ...prevData,
-        name: recruiterProfile?.name || '',
-        userId: recruiterProfile?.userId || '',
-        position: recruiterProfile?.position || '',
-        email: recruiterProfile?.email || '',
-        mobile: recruiterProfile?.mobile || '',
-        altMobile: recruiterProfile?.altMobile || '',
-        about: recruiterProfile.about,
-        socialLinks: requiredSocialLinks,
-        organization: {
-          id: organizationDetail?.id,
-          domain: organizationDetail?.domain,
-          companyName: organizationDetail?.companyName || '',
-          isStartup: organizationDetail?.isStartup ?? false,
-          companyType: organizationDetail?.companyType || '',
-          incorporationYear: organizationDetail?.incorporationYear ?? null,
-          website: organizationDetail?.website || '',
-          about: organizationDetail?.about || '',
-          officeAddress: organizationDetail?.officeAddress || '',
-          officePostalCode: organizationDetail?.officePostalCode || '',
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching organization details:', error);
-    }
+        setProfileData((prevData) => ({
+          ...prevData,
+          name: recruiterProfile?.name || '',
+          userId: recruiterProfile?.userId || '',
+          position: recruiterProfile?.position || '',
+          email: recruiterProfile?.email || '',
+          mobile: recruiterProfile?.mobile || '',
+          altMobile: recruiterProfile?.altMobile || '',
+          about: recruiterProfile.about,
+          socialLinks: requiredSocialLinks,
+          organization: {
+            id: organizationDetail?.id,
+            domain: organizationDetail?.domain,
+            companyName: organizationDetail?.companyName || '',
+            isStartup: organizationDetail?.isStartup ?? false,
+            companyType: organizationDetail?.companyType || '',
+            incorporationYear: organizationDetail?.incorporationYear || '',
+            website: organizationDetail?.website || '',
+            about: organizationDetail?.about || '',
+            officeAddress: organizationDetail?.officeAddress || '',
+            officePostalCode: organizationDetail?.officePostalCode || '',
+          },
+        }));
+      } catch (error) {
+        console.error('Error fetching organization details:', error);
+      }
 
-    setLoading(false); 
-  };
+      setLoading(false);
+    };
 
-  initialize();
-}, []);
-
+    initialize();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -187,7 +186,7 @@ useEffect(() => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
                 Edit Profile
               </Typography>
 
@@ -353,7 +352,15 @@ useEffect(() => {
 };
 
 const Profile = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<ProfileForm />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Profile | Job Portal - ALeA"
+      description="View and update your recruiter profile details on the ALeA Job Portal"
+    >
+      {<ProfileForm />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Profile;

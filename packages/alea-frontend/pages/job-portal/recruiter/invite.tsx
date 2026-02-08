@@ -54,7 +54,7 @@ const InviteRecruiterPage = () => {
     checkAccess();
   }, []);
   const handleInvite = async () => {
-    if (!email||!recruiter.organizationId) return;
+    if (!email || !recruiter.organizationId) return;
     try {
       setLoading(true);
       const isSuccess = await inviteRecruiterToOrg(email, recruiter.organizationId);
@@ -129,7 +129,15 @@ const InviteRecruiterPage = () => {
 };
 
 const InviteRecruiter = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<InviteRecruiterPage />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Invite Recruiter | Job Portal - ALeA"
+      description="Invite new recruiters to access and manage the ALeA Job Portal"
+    >
+      {<InviteRecruiterPage />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default InviteRecruiter;

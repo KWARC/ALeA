@@ -191,6 +191,9 @@ export const de = {
     description2:
       ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch Lernenden-Modell) wird in allen semantischen Diensten in ALeA verwendet.',
   },
+  courseNotes: {
+    notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
+  },
   courseView: {
     notes: 'Notizen',
     instructorNotes: 'Notizen der Lehrenden',
@@ -404,7 +407,7 @@ export const de = {
   practiceProblems: {
     practiceProblems: 'Übungsaufgaben',
     practiceProblemsDescription:
-      'Die folgenden Aufgaben sollen Ihnen beim Lernen helfen. Sie decken den Kursstoff nicht erschöpfend ab und es gibt keine Garantie dafür, dass die Aufgaben richtig sind oder dass sie repräsentativ für die Aufgabentypen sind, die in den Tests oder der Prüfung vorkommen werden.',
+      'Diese Aufgaben dienen nur zur Unterstützung beim Lernen, sind nicht vollständig oder garantiert korrekt und spiegeln möglicherweise nicht die tatsächlichen Quiz- oder Prüfungsfragen wider.',
     problems: 'Probleme',
     practice: 'Üben',
   },

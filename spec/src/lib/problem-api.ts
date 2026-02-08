@@ -1,9 +1,15 @@
 import axios from 'axios';
 
+export interface ExamRef {
+  examUri: string;
+  examLabel: string;
+}
+
 export interface ProblemData {
   problemId: string;
   category: string;
   labels: string[];
+  examRefs?: ExamRef[];
   showForeignLanguageNotice?: boolean;
   matchedLanguage?: string;
   outOfSyllabusConcepts?: string[];

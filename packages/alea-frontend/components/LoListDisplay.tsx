@@ -4,7 +4,17 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import SchoolIcon from '@mui/icons-material/School';
-import { alpha, Box, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  alpha,
+  Box,
+  IconButton,
+  Paper,
+  SxProps,
+  TextField,
+  Theme,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { LoType } from '@alea/spec';
 import { UriProblemViewer } from '@alea/stex-react-renderer';
 import { capitalizeFirstLetter, getParamsFromUri } from '@alea/utils';
@@ -114,16 +124,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = memo(
   ({ uriType, selectedUri, displayReverseRelation }) => {
     return (
       <Box
-        sx={{
-          flex: 2,
-          minWidth: '250px',
-          background: 'rgba(240, 255, 240, 0.9)',
-          borderRadius: '8px',
-          padding: '16px',
-          height: '90vh',
-          overflowY: 'auto',
-          boxShadow: 'inset 0 4px 8px rgba(0, 0, 0, 0.1)',
-        }}
+        sx={detailsPanelStyles.container}
       >
         <Typography color="secondary" variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           <Tooltip title={selectedUri} arrow placement="top">
@@ -181,7 +182,7 @@ const LoListDisplay = ({
     );
   });
   return (
-    <Box sx={{ display: 'flex', gap: '16px', marginTop: '20px', flexWrap: 'wrap' }}>
+    <Box sx={loListStyles.pageContainer}>
       {showReverseRelation && (
         <LoReverseRelations
           concept={reverseRelationConcept}
@@ -192,29 +193,8 @@ const LoListDisplay = ({
           handleCloseDialog={() => setShowReverseRelation(false)}
         />
       )}
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: '250px',
-          background: 'rgba(240, 240, 255, 0.9)',
-          borderRadius: '8px',
-          padding: '16px',
-          overflowY: 'auto',
-          maxHeight: '90vh',
-          boxShadow: 'inset 0 4px 8px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-            marginBottom: '16px',
-            width: '100%',
-          }}
-        >
+      <Box sx={loListStyles.listPanel}>
+        <Box sx={loListStyles.listHeader}>
           <Typography variant="h6" color="primary">
             {filteredUris.length} {capitalizeFirstLetter(loType)}s
           </Typography>
@@ -231,33 +211,22 @@ const LoListDisplay = ({
 
         {filteredUris.map((uri, index) => {
           const isInCart = cart.some((item) => item.uri === uri && item.uriType === loType);
+          const isSelected = selectedUri === uri;
           return (
             <Paper
               key={index}
               elevation={3}
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                background: isInCart ? 'rgba(220, 255, 220, 0.9)' : 'white',
-                '&:hover': { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' },
+                ...loListStyles.listItem,
+                background: isInCart ? 'rgba(220,255,220,0.9)' : 'white',
               }}
             >
               <Tooltip title={uri} arrow placement="right-start">
                 <Typography
                   sx={{
-                    cursor: 'pointer',
-                    flex: 1,
-                    wordBreak: 'break-word',
-                    color: selectedUri === uri ? '#096dd9' : '#333',
-                    fontWeight: selectedUri === uri ? 'bold' : 'normal',
-                    fontSize: '0.875rem',
-                    '&:hover': {
-                      color: alpha('#096dd9', 0.7),
-                    },
+                    ...loListStyles.uriText,
+                    color: isSelected ? '#096dd9' : '#333',
+                    fontWeight: isSelected ? 'bold' : 'normal',
                   }}
                   onClick={() => setSelectedUri(uri)}
                 >
@@ -300,3 +269,67 @@ const LoListDisplay = ({
 };
 
 export default LoListDisplay;
+
+const loListStyles: Record<string, SxProps<Theme>> = {
+  pageContainer: {
+    display: 'flex',
+    gap: 2,
+    mt: 2,
+    flexWrap: 'wrap',
+  },
+
+  listPanel: {
+    flex: 1,
+    minWidth: 250,
+    background: 'rgba(240,240,255,0.9)',
+    borderRadius: 2,
+    p: 2,
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
+  },
+
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 1,
+    mb: 2,
+    flexWrap: 'wrap',
+  },
+
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    p: 1.5,
+    mb: 1,
+    borderRadius: 2,
+    '&:hover': {
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    },
+  },
+
+  uriText: {
+    cursor: 'pointer',
+    flex: 1,
+    wordBreak: 'break-word',
+    fontSize: '0.875rem',
+    '&:hover': {
+      color: alpha('#096dd9', 0.7),
+    },
+  },
+};
+
+const detailsPanelStyles: Record<string, SxProps<Theme>> = {
+  container: {
+    flex: 2,
+    minWidth: 250,
+    background: 'rgba(240, 255, 240, 0.9)',
+    borderRadius: 2,
+    p: 2,
+    height: '90vh',
+    overflowY: 'auto',
+    boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
+  },
+};
+
