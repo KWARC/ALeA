@@ -30,13 +30,6 @@ export default async function handler(req, res) {
   const isOwner = existing.userId === userId;
   const isModerator = await canUserModerateComments(userId, existing.courseId, existing.courseTerm);
 
-  console.log('DEBUG REOPEN', {
-    userId,
-    existingUserId: existing.userId,
-    courseId: existing.courseId,
-    courseTerm: existing.courseTerm,
-  });
-
   if (!isOwner && !isModerator) {
     res.status(403).json({ message: 'Unauthorized' });
     return;
