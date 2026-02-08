@@ -1,8 +1,13 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
 import { getAllCourses } from '@alea/spec';
-import { SafeFTMLDocument, SectionReview, TrafficLightIndicator } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import {
+  NOT_COVERED_SECTIONS,
+  SafeFTMLDocument,
+  SectionReview,
+  TrafficLightIndicator,
+} from '@alea/stex-react-renderer';
+import { CourseInfo, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
@@ -28,13 +33,13 @@ import MainLayout from '../../layouts/MainLayout';
 function getSelectedText(): string | undefined {
   const sel = window.getSelection();
   const text = sel?.toString();
-  return text && text.trim().length > 0 ? text : undefined;
+  return text && text.trim().length > 0 ? text.trim() : undefined;
 }
 
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: PRIMARY_COL }}>
+      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
         {courseId.toUpperCase()}
       </DialogTitle>
       <DialogContent sx={{ p: 1 }}>
@@ -60,10 +65,15 @@ const FragmentWrap: React.FC<{
   children: ReactNode;
   uriToTitle: Record<string, string>;
 }> = ({ uri, fragmentKind, children, uriToTitle }) => {
-  // const { courseNotes: t } = getLocaleObject(useRouter());
-  // const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
+  const notCovered = Object.values(NOT_COVERED_SECTIONS).flat().includes(uri);
+
   return (
-    <Box fragment-uri={uri} fragment-kind={fragmentKind}>
+    <Box
+      fragment-uri={uri}
+      fragment-kind={fragmentKind}
+      bgcolor={notCovered ? '#fdd' : undefined}
+      title={notCovered ? 'Not Covered' : undefined}
+    >
       {fragmentKind === 'Section' ? (
         <>
           {children}
@@ -72,6 +82,7 @@ const FragmentWrap: React.FC<{
       ) : (
         <Box display="flex" justifyContent="space-between">
           <Box flex={1}>{children}</Box>
+
           <Box
             onMouseUp={() => {
               const text = getSelectedText();
@@ -82,7 +93,6 @@ const FragmentWrap: React.FC<{
           >
             <CommentButton url={uri} fragmentKind={fragmentKind} />
           </Box>
-          <CommentButton url={uri} fragmentKind={fragmentKind} />
         </Box>
       )}
     </Box>
@@ -103,12 +113,16 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
+
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
+
   const uriToTitle = useRef<Record<string, string>>({});
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -117,6 +131,7 @@ const CourseNotesPage: NextPage = () => {
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           (target as HTMLElement).isContentEditable);
+
       if (isEditableTarget) return;
 
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -124,17 +139,10 @@ const CourseNotesPage: NextPage = () => {
         setDialogOpen(true);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-  const handleSearchClick = () => {
-    setDialogOpen(true);
-  };
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-  };
 
   useEffect(() => {
     getAllCourses().then(setCourses);
@@ -143,7 +151,9 @@ const CourseNotesPage: NextPage = () => {
   useEffect(() => {
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
+
     setToc(undefined);
+
     contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
       setToc(toc);
       uriToTitle.current = {};
@@ -166,36 +176,39 @@ const CourseNotesPage: NextPage = () => {
     });
   }, [toc, router.asPath]);
 
-  //TODO: Improve navigation
-
   useEffect(() => {
     async function fetchGottos() {
       try {
         const response = await axios.get('/api/get-coverage-timeline');
         const currentSemData: LectureEntry[] = response.data[courseId] || [];
+
         const coverageData = currentSemData
           .filter((item) => item.sectionUri)
           .map((item) => ({
             uri: item.sectionUri,
             timestamp: item.timestamp_ms,
           }));
+
         setGottos(coverageData);
       } catch (error) {
         setGottos([]);
         console.error('Error fetching gottos:', error);
       }
     }
+
     if (courseId) fetchGottos();
   }, [courseId]);
 
   if (!router.isReady || !courses || !gottos || !toc) {
     return <CircularProgress />;
   }
+
   const courseInfo = courses[courseId];
   if (!courseInfo) {
     router.replace('/');
     return <>Course Not Found!</>;
   }
+
   const { notes } = courseInfo;
 
   return (
@@ -208,27 +221,27 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'rgba(255, 255, 255, 0.15)',
+            bgcolor: 'primary.50',
             boxShadow: 3,
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.3)',
-            },
+            '&:hover': { bgcolor: 'primary.300' },
           }}
-          onClick={handleSearchClick}
+          onClick={() => setDialogOpen(true)}
           size="large"
           aria-label="Open search dialog"
         >
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
+
       <SearchDialog
         open={dialogOpen}
-        onClose={handleDialogClose}
+        onClose={() => setDialogOpen(false)}
         courseId={courseId}
         notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
       />
+
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
