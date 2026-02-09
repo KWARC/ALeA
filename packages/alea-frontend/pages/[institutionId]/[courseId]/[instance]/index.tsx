@@ -1,5 +1,4 @@
 import {
-  addRemoveMember,
   Announcement,
   canAccessResource,
   CourseInfoMetadata,
@@ -19,6 +18,13 @@ import {
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
   isFauId,
+  pathToCourseResource,
+  pathToCourseNotes,
+  pathToCourseView,
+  pathToStudyBuddy,
+  pathToHomework,
+  pathToPracticeProblems,
+  pathToInstructorDash,
   ResourceName,
 } from '@alea/utils';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
@@ -48,67 +54,23 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
-import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import shadows from '../../theme/shadows';
-import InstructorDetails from '../../components/InstructorDetails';
-import { PersonalCalendarSection } from '../../components/PersonalCalendar';
-import { RecordedSyllabus } from '../../components/RecordedSyllabus';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import { useStudentCount } from '../../hooks/useStudentCount';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-
-export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
-  return `${courseId}-${instanceId}-enrollments`;
-}
-export async function handleEnrollment(userId: string, courseId: string, currentTerm: string) {
-  if (!userId || !isFauId(userId)) {
-    alert('Please Login Using FAU Id.');
-    return false;
-  }
-
-  try {
-    await addRemoveMember({
-      memberId: userId,
-      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
-      isAclMember: false,
-      toBeAdded: true,
-    });
-    alert('Enrollment successful!');
-    return true;
-  } catch (error) {
-    console.error('Error during enrollment:', error);
-    alert('Enrollment failed. Please try again.');
-    return false;
-  }
-}
-
-export async function handleUnEnrollment(userId: string, courseId: string, currentTerm: string) {
-  if (!userId || !isFauId(userId)) {
-    alert('Please Login Using FAU Id.');
-    return false;
-  }
-
-  try {
-    await addRemoveMember({
-      memberId: userId,
-      aclId: getCourseEnrollmentAcl(courseId, currentTerm),
-      isAclMember: false,
-      toBeAdded: false,
-    });
-
-    alert('You have been unenrolled.');
-    return true;
-  } catch (error) {
-    console.error('Error during unenrollment:', error);
-    alert('Unable to unenroll. Please try again.');
-    return false;
-  }
-}
+import shadows from '../../../../theme/shadows';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import InstructorDetails from '../../../../components/InstructorDetails';
+import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
+import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
+import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { useStudentCount } from '../../../../hooks/useStudentCount';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
+import type { NextPage } from 'next';
 
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
@@ -117,75 +79,6 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
         {children}
       </Button>
     </Link>
-  );
-}
-
-export function CourseHeader({
-  courseId,
-  courseName,
-  imageLink,
-}: {
-  courseId: string;
-  courseName: string;
-  imageLink?: string;
-}) {
-  const theme = useTheme();
-  if (!courseName || !courseId) return <></>;
-  if (!imageLink) {
-    return (
-      <Box m={2.5} textAlign="center" fontWeight="bold" fontSize={32}>
-        {courseName}
-      </Box>
-    );
-  }
-  const allowCrop = ['ai-1', 'ai-2', 'lbs', 'smai'].includes(courseId);
-  return (
-    <Box textAlign="center">
-      <Link href={`/course-home/${courseId}`}>
-        <Box
-          display="flex"
-          position="relative"
-          width="100%"
-          maxHeight={200}
-          overflow="hidden"
-          borderBottom={`2px solid ${theme.palette.divider}`}
-          sx={{ backgroundImage: theme.palette.gradients?.[courseId] }}
-        >
-          {allowCrop ? (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'cover',
-                width: '100%',
-                aspectRatio: '16/9',
-              }}
-            />
-          ) : (
-            <img
-              src={imageLink}
-              alt={courseName}
-              style={{
-                objectFit: 'contain',
-                maxHeight: 200,
-                margin: 'auto',
-              }}
-            />
-          )}
-        </Box>
-      </Link>
-      <Box
-        sx={{
-          mt: 2.5,
-          mx: 0,
-          mb: 4,
-          fontWeight: 'bold',
-          fontSize: 32,
-        }}
-      >
-        {courseName}
-      </Box>
-    </Box>
   );
 }
 
@@ -610,16 +503,23 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
 
 const CourseHomePage: NextPage = () => {
   const router = useRouter();
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('');
+  const instanceId = resolvedInstanceId;
+  const currentTerm = instanceId;
   const containerRef = useRef<HTMLDivElement>(null);
-  const courseId = router.query.courseId as string;
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInstructor, setIsInstructor] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string>('');
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
   const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
@@ -694,11 +594,23 @@ const CourseHomePage: NextPage = () => {
     loadMetadata();
   }, [courseId, currentTerm]);
 
+  if (isValidating) return null;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+    return <CourseNotFound />;
   }
   const instructorDetails =
     courseMetadata?.instructors?.map((ins) => ({
@@ -706,17 +618,16 @@ const CourseHomePage: NextPage = () => {
       url: ins.url,
     })) ?? [];
 
-  const {
-    notesLink,
-    slidesLink,
-    cardsLink,
-    forumLink,
-    quizzesLink,
-    hasQuiz,
-    notes,
-    landing,
-    slides,
-  } = courseInfo;
+  const { hasQuiz, notes, landing, slides } = courseInfo;
+  const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
+  const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
+  const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
+  const forumLink = pathToCourseResource(institutionId, courseId, instanceId, '/forum');
+  const quizzesLink = pathToCourseResource(institutionId, courseId, instanceId, '/quiz-dash');
+  const homeworkLink = pathToHomework(institutionId, courseId, instanceId);
+  const studyBuddyLink = pathToStudyBuddy(institutionId, courseId, instanceId);
+  const practiceProblemsLink = pathToPracticeProblems(institutionId, courseId, instanceId);
+  const instructorDashLink = pathToInstructorDash(institutionId, courseId, instanceId);
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
@@ -761,6 +672,8 @@ const CourseHomePage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={instanceId}
       />
 
       <Box
@@ -841,24 +754,21 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
           {['lbs', 'ai-1', 'smai'].includes(courseId) && (
-            <CourseComponentLink href={`/homework/${courseId}`}>
+            <CourseComponentLink href={homeworkLink}>
               {t.homeworks}&nbsp;
               <AssignmentTurnedInIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={`/study-buddy/${courseId}`}>
+          <CourseComponentLink href={studyBuddyLink}>
             {t.studyBuddy}&nbsp;
             <Diversity3Icon fontSize="large" />
           </CourseComponentLink>
-          <CourseComponentLink href={`/practice-problems/${courseId}`}>
+          <CourseComponentLink href={practiceProblemsLink}>
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
           {isInstructor && (
-            <CourseComponentLink
-              href={`/instructor-dash/${courseId}`}
-              sx={{ backgroundColor: 'blue.300' }}
-            >
+            <CourseComponentLink href={instructorDashLink} sx={{ backgroundColor: 'blue.300' }}>
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
             </CourseComponentLink>

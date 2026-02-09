@@ -3,23 +3,33 @@ import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import { canAccessResource, getAllCourses } from '@alea/spec';
 import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
-import { NextPage } from 'next';
+import { useCurrentUser } from '@alea/react-utils';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import { useCurrentUser } from '@alea/react-utils';
-import { ForceFauLogin } from '../../components/ForceFAULogin';
-import HomeworkPerformanceTable from '../../components/HomeworkPerformanceTable';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { ForceFauLogin } from '../../../../components/ForceFAULogin';
+import HomeworkPerformanceTable from '../../../../components/HomeworkPerformanceTable';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { handleEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
 
 const HomeworkPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.id as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('homework');
+
+  const currentTerm = resolvedInstanceId;
   const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [forceFauLogin, setForceFauLogin] = useState(false);
@@ -27,6 +37,7 @@ const HomeworkPage: NextPage = () => {
 
   const { user } = useCurrentUser();
   const userId = user?.userId;
+
   useEffect(() => {
     const uid = user?.userId;
     if (!uid) return;
@@ -49,29 +60,34 @@ const HomeworkPage: NextPage = () => {
     getAllCourses().then(setCourses);
   }, []);
 
+  if (isValidating) return null;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+
   if (!router.isReady || !courses) return <CircularProgress />;
 
   const courseInfo = courses[courseId];
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
-  }
+  if (!courseInfo) return <CourseNotFound />;
 
   if (forceFauLogin) {
     return (
-
-      <MainLayout
-        title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}
-      >
-        <ForceFauLogin content={"homework"} />
-
+      <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}>
+        <ForceFauLogin content="homework" />
       </MainLayout>
     );
   }
+
   const enrollInCourse = async () => {
-    if (!userId || !courseId || !currentTerm) {
-      return router.push('/login');
-    }
+    if (!userId || !courseId || !currentTerm) return router.push('/login');
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     if (enrollmentSuccess) setIsEnrolled(true);
   };
@@ -82,6 +98,8 @@ const HomeworkPage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
       <Box maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{q.enrollmentMessage}</Alert>}

@@ -2,20 +2,23 @@ import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
 import { canAccessResource, getAllCourses } from '@alea/spec';
 import { updateRouterQuery } from '@alea/react-utils';
 import { Action, CourseInfo, ResourceName } from '@alea/utils';
-import { NextPage } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import CourseAccessControlDashboard from '../../components/CourseAccessControlDashboard';
-import CoverageUpdateTab from '../../components/coverage-update';
-import HomeworkManager from '../../components/HomeworkManager';
-import { GradingInterface } from '../../components/nap/GradingInterface';
-import InstructorPeerReviewViewing from '../../components/peer-review/InstructorPeerReviewViewing';
-import QuizDashboard from '../../components/QuizDashboard';
-import { StudyBuddyModeratorStats } from '../../components/StudyBuddyModeratorStats';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader } from '../course-home/[courseId]';
-import CourseMetadata from '../../components/instructor-panel/CourseMetadata';
+import CourseAccessControlDashboard from '../../../../components/CourseAccessControlDashboard';
+import CoverageUpdateTab from '../../../../components/coverage-update';
+import HomeworkManager from '../../../../components/HomeworkManager';
+import { GradingInterface } from '../../../../components/nap/GradingInterface';
+import InstructorPeerReviewViewing from '../../../../components/peer-review/InstructorPeerReviewViewing';
+import QuizDashboard from '../../../../components/QuizDashboard';
+import { StudyBuddyModeratorStats } from '../../../../components/StudyBuddyModeratorStats';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import MainLayout from '../../../../layouts/MainLayout';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -48,6 +51,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
   'course-metadata': { resource: ResourceName.COURSE_METADATA, actions: [Action.MUTATE] },
 };
+
 function ChosenTab({
   tabName,
   courseId,
@@ -71,11 +75,18 @@ function ChosenTab({
     case 'homework-grading':
       return <GradingInterface isPeerGrading={false} courseId={courseId} />;
     case 'quiz-dashboard':
-      return <QuizDashboard courseId={courseId} institutionId={institutionId} quizId={quizId} onQuizIdChange={onQuizIdChange} />;
+      return (
+        <QuizDashboard
+          courseId={courseId}
+          institutionId={institutionId}
+          quizId={quizId}
+          onQuizIdChange={onQuizIdChange}
+        />
+      );
     case 'study-buddy':
       return <StudyBuddyModeratorStats courseId={courseId} institutionId={institutionId} />;
     case 'peer-review':
-      return <InstructorPeerReviewViewing courseId={courseId}></InstructorPeerReviewViewing>;
+      return <InstructorPeerReviewViewing courseId={courseId} />;
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':
@@ -91,7 +102,6 @@ const toUserFriendlyName = (tabName: string) => {
 
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
-
   return (
     <Box
       role="tabpanel"
@@ -117,26 +127,28 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'course-metadata': '1200px',
 };
 
-const InstructorDash: NextPage = () => {
+const InstructorDashPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
-  const institutionId = 'FAU';// TODO(M5)
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('instructor-dash');
 
-  const instanceId = (router.query.instanceId as string) ?? currentTerm;
+  const instanceId = resolvedInstanceId;
   const tab = router.query.tab as TabName;
 
   const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
-
   const [accessibleTabs, setAccessibleTabs] = useState<TabName[] | undefined>(undefined);
   const [currentTabIdx, setCurrentTabIdx] = useState<number>(0);
-
   const [quizId, setQuizId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (typeof router.query.quizId === 'string')  {
+    if (typeof router.query.quizId === 'string') {
       setQuizId(router.query.quizId);
     }
   }, [router.isReady, router.query.quizId]);
@@ -149,24 +161,25 @@ const InstructorDash: NextPage = () => {
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTabIdx(newValue);
-    const selectedTab = accessibleTabs[newValue];
+    const selectedTab = accessibleTabs![newValue];
     const newQuery = { ...router.query, tab: selectedTab } as Record<string, string>;
     if (selectedTab !== 'quiz-dashboard') {
       delete newQuery.quizId;
     }
     updateRouterQuery(router, newQuery, false);
   };
+
   useEffect(() => {
     getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !instanceId) return;
     async function checkTabAccess() {
       const tabAccessPromises$ = Object.entries(TAB_ACCESS_REQUIREMENTS).map(
         async ([tabName, { resource, actions }]) => {
           for (const action of actions) {
-            if (await canAccessResource(resource, action, { courseId, instanceId: currentTerm })) {
+            if (await canAccessResource(resource, action, { courseId, instanceId })) {
               return tabName as TabName;
             }
           }
@@ -174,7 +187,6 @@ const InstructorDash: NextPage = () => {
         }
       );
       const tabs = (await Promise.all(tabAccessPromises$)).filter((t): t is TabName => !!t);
-
       const tabOrder: TabName[] = [
         'syllabus',
         'quiz-dashboard',
@@ -185,12 +197,11 @@ const InstructorDash: NextPage = () => {
         'access-control',
         'course-metadata',
       ];
-
       const sortedTabs = tabOrder.filter((tab) => tabs.includes(tab));
       setAccessibleTabs(sortedTabs);
     }
     checkTabAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     if (accessibleTabs === undefined) return;
@@ -208,15 +219,31 @@ const InstructorDash: NextPage = () => {
     }
   }, [tab, router]);
 
+  if (isValidating) return null;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+
   const courseInfo = courses?.[courseId];
   if (!accessibleTabs) return <CircularProgress />;
+  if (!courseInfo) return <CourseNotFound />;
 
   return (
     <MainLayout>
       <CourseHeader
-        courseName={courseInfo?.courseName}
-        imageLink={courseInfo?.imageLink}
+        courseName={courseInfo.courseName}
+        imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={instanceId}
       />
       <Box
         sx={{
@@ -234,10 +261,7 @@ const InstructorDash: NextPage = () => {
           sx={{
             overflowX: 'auto',
             '& .MuiTabs-flexContainer': {
-              justifyContent: {
-                xs: 'flex-start',
-                md: 'center',
-              },
+              justifyContent: { xs: 'flex-start', md: 'center' },
             },
             '& .MuiTab-root': {
               fontSize: '14px',
@@ -246,7 +270,7 @@ const InstructorDash: NextPage = () => {
             },
           }}
         >
-          {accessibleTabs.map((tabName, index) => (
+          {accessibleTabs.map((tabName) => (
             <Tab key={tabName} label={toUserFriendlyName(tabName)} />
           ))}
         </Tabs>
@@ -267,4 +291,4 @@ const InstructorDash: NextPage = () => {
   );
 };
 
-export default InstructorDash;
+export default InstructorDashPage;

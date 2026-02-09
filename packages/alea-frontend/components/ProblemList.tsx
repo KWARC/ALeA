@@ -69,7 +69,12 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
   });
 };
 
-const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
+const ProblemList: FC<ProblemListProps> = ({
+  courseSections,
+  courseId,
+  institutionId = 'FAU',
+  instance = 'latest',
+}) => {
   const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
@@ -147,7 +152,8 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   };
 
   const goToSection = (sectionId?: string) => {
-    window.location.href = `/course-notes/${courseId}#${sectionId}`;
+    const base = pathToCourseNotes(institutionId, courseId, instance);
+    window.location.href = `${base}#${sectionId}`;
   };
 const theme = useTheme();
   return (

@@ -48,6 +48,7 @@ import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
+import { pathToCourseHome } from '@alea/utils';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
@@ -781,7 +782,7 @@ function WelcomeScreen({
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
         {Object.entries(groupedResources).map(([courseId, resources]) => (
           <Box key={courseId} sx={{ marginBottom: 4 }}>
-            <Link href={`/course-home/${courseId}`}>
+            <Link href={pathToCourseHome('FAU', courseId, 'latest')}>
               <Typography
                 sx={{
                   fontSize: '22px',
