@@ -119,7 +119,7 @@ export const CourseSectionSelector = ({
   useEffect(() => {
     const courseData = coverageTimeline[courseId];
 
-    const lectures = Array.isArray(courseData) ? courseData : courseData?.lectures ?? [];
+    const lectures = courseData?.lectures ?? [];
 
     const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {

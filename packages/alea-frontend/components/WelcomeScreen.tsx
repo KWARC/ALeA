@@ -164,7 +164,7 @@ async function getLastUpdatedQuiz(
     const coverageQuizData = await getCoverageTimeline();
     const courseData = coverageQuizData[courseId];
 
-    courseQuizData = Array.isArray(courseData) ? courseData : courseData?.lectures ?? [];
+    courseQuizData = courseData?.lectures ?? [];
   } catch (error) {
     console.error('Error fetching course data:', error);
     return { description: null, timeAgo: null, timestamp: null };
