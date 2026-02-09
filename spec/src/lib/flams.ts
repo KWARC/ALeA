@@ -190,7 +190,6 @@ export async function getDefiniedaInSections(
   const sparqlResponse = await getParameterizedQueryResults(TEMPL_GET_DEFINITIONS_IN_SECTIONS, {
     _multiuri_section_uris: sectionUris,
   });
-
   // Group results by URI to create 2D array
   const resultsByUri = new Map<string, ConceptAndDefinition[]>();
 
@@ -204,7 +203,6 @@ export async function getDefiniedaInSections(
       definitionUri: binding['q'].value,
     });
   }
-
   // Return results in the same order as input URIs
   return sectionUris.map((uri) => resultsByUri.get(uri) || []);
 }
@@ -267,7 +265,6 @@ export async function getDependenciesForSections(sectionUris: string[]): Promise
     _multiuri_section_uris: sectionUris,
   });
 
-  // Group results by URI to create 2D array
   const resultsByUri = new Map<string, string[]>();
 
   for (const binding of sparqlResponse?.results?.bindings || []) {
@@ -278,7 +275,6 @@ export async function getDependenciesForSections(sectionUris: string[]): Promise
     resultsByUri.get(uri)!.push(binding['s'].value);
   }
 
-  // Return results in the same order as input URIs
   return sectionUris.map((uri) => resultsByUri.get(uri) || []);
 }
 
@@ -368,6 +364,90 @@ export const TEMPL_GET_PROBLEM_OBJECTS_BY_SUBSTR = `
       FILTER(CONTAINS(STR(?learningObject), "_uri_problem_id_substr"))
     }
   `;
+
+export interface ExamMeta {
+  courseAcronym: string;
+  cleanedD: string;
+  formattedTerm: string;
+  formattedDate?: string;
+}
+
+export function getExamMetaFromExamUri(
+  examUri: string,
+  exam?: {
+    term?: string;
+    number?: string;
+    date?: string;
+    courseId?: string;
+  }
+): ExamMeta {
+  const decoded = decodeURIComponent(examUri);
+
+  const courseAcronym = exam?.courseId?.toUpperCase() ?? 'UNKNOWN';
+
+  const dParam = getParamFromUri(decoded, 'd') ?? '';
+
+  const cleanedD = dParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const rawTerm = exam?.term ?? '';
+  const formattedTerm = rawTerm.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
+
+  const formattedDate = exam?.date ? new Date(exam.date).toLocaleDateString('en-GB') : undefined;
+
+  return {
+    courseAcronym,
+    cleanedD,
+    formattedTerm,
+    formattedDate,
+  };
+}
+
+export function formatExamLabelShortFromUri(examUri: string, exam?: any) {
+  const meta = getExamMetaFromExamUri(examUri, exam);
+  return [meta.courseAcronym, meta.cleanedD, meta.formattedTerm].filter(Boolean).join(' ');
+}
+
+export function formatExamLabelFullFromUri(examUri: string, exam?: any) {
+  const meta = getExamMetaFromExamUri(examUri, exam);
+  return [
+    meta.courseAcronym,
+    meta.cleanedD,
+    meta.formattedTerm,
+    meta.formattedDate ? `from ${meta.formattedDate}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+export async function getExamMetadataByUri(examUri: string) {
+  if (!examUri) return null;
+
+  const query = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?courseId ?term ?number ?date
+WHERE {
+  <${examUri}> rdf:type ulo:exam .
+  OPTIONAL { <${examUri}> ulo:has-course ?courseId }
+  OPTIONAL { <${examUri}> ulo:has-course-term ?term }
+  OPTIONAL { <${examUri}> ulo:is-number ?number }
+  OPTIONAL { <${examUri}> ulo:has-date ?date }
+}
+  `;
+
+  const results = await getParameterizedQueryResults(query);
+  const b = results?.results?.bindings?.[0];
+
+  if (!b) return null;
+
+  return {
+    courseId: b['courseId']?.value,
+    term: b['term']?.value,
+    number: b['number']?.value,
+    date: b['date']?.value,
+  };
+}
 
 export function buildGetExamsForCourseQuery(courseId: string): string {
   return `

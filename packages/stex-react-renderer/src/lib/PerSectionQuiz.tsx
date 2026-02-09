@@ -10,19 +10,39 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  Chip,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getProblemsPerSection, getUserProfile, ProblemData } from '@alea/spec';
+import {
+  formatExamLabelDropdown,
+  getProblemsPerSection,
+  getUserProfile,
+  ProblemData,
+} from '@alea/spec';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
-import { getProblemState } from './ProblemDisplay';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
+import { getProblemState } from './ProblemDisplay';
+import { ExamSelect } from './ExamSelect';
 
+export interface ExamRef {
+  examUri: string;
+  examLabel: string;
+}
+
+interface ExamInfoLite {
+  uri: string;
+}
+
+function isValidExamRef(uri?: string) {
+  if (!uri) return false;
+  return Boolean(getParamFromUri(uri, 'd'));
+}
 const commonTooltipSlotProps = {
   popper: {
     sx: {
@@ -50,9 +70,12 @@ export function handleViewSource(problemUri: string) {
 }
 
 export function getProblemType(uri: string): 'quiz' | 'homework' | 'exam' | 'uncategorized' {
-  if (uri.includes('/assignments')) return 'homework';
-  if (uri.includes('/hwexam')) return 'exam';
+  const dParam = getParamFromUri(uri, 'd');
   if (uri.includes('/quiz') || uri.includes('&e=quiz')) return 'quiz';
+  if (uri.includes('/assignments')) return 'homework';
+  if (dParam) {
+    return 'exam';
+  }
   return 'uncategorized';
 }
 
@@ -149,11 +172,55 @@ export function PerSectionQuiz({
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
+
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
-    const rest = Object.keys(categoryMap).filter((cat) => !knownOrder.includes(cat));
-    return [...knownOrder, ...rest];
+
+    const rest = Object.keys(categoryMap).filter(
+      (cat) => !knownOrder.includes(cat) && cat !== 'exam'
+    );
+
+    return [...knownOrder, ...rest].filter(
+      (cat) => cat === 'syllabus' || cat === 'adventurous' || categoryMap[cat]?.length
+    );
   }, [categoryMap]);
+
+  const examProblemIds = useMemo(
+    () =>
+      problems
+        .filter((p) => p.examRefs?.some((e) => isValidExamRef(e.examUri)))
+        .map((p) => p.problemId),
+    [problems]
+  );
+
+  const problemUri = problemUris[problemIdx];
+
+  const currentProblem = useMemo(() => {
+    if (!problemUri) return undefined;
+    return problems.find((p) => p.problemId === problemUri);
+  }, [problems, problemUri]);
+
+  const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedExamUri(null);
+  }, [problemUri]);
+
+  const examOptions = useMemo<ExamInfoLite[]>(() => {
+    if (!currentProblem?.examRefs) return [];
+
+    const seen = new Map<string, ExamInfoLite>();
+
+    currentProblem.examRefs
+      .filter((e) => isValidExamRef(e.examUri))
+      .forEach((e) => {
+        if (!seen.has(e.examUri)) {
+          seen.set(e.examUri, { uri: e.examUri });
+        }
+      });
+
+    return Array.from(seen.values());
+  }, [currentProblem]);
 
   useEffect(() => {
     if (cachedProblemUris?.length) {
@@ -176,6 +243,9 @@ export function PerSectionQuiz({
             if (!map[p.category]) map[p.category] = [];
             map[p.category].push(p.problemId);
           }
+          if (!map['syllabus']) map['syllabus'] = [];
+          if (!map['adventurous']) map['adventurous'] = [];
+
           setCategoryMap(map);
           setProblems(problems);
 
@@ -245,11 +315,21 @@ export function PerSectionQuiz({
     );
   }
 
-  const problemUri = problemUris[problemIdx];
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  const currentProblem = problems.find((p) => p.problemId === problemUris[problemIdx]);
+  if (!problemUri) return null;
+  const handleApplyFilter = (filtered: string[], type: string) => {
+    let finalUris = filtered;
+    if (type === 'exam') {
+      finalUris = examProblemIds;
+    }
+    setProblemUris(finalUris);
+    setAllProblemUris(finalUris);
+    setIsSubmitted(finalUris.map(() => false));
+    setResponses(finalUris.map(() => undefined));
+    setProblemIdx(0);
+  };
 
   return (
     <Box mb={4}>
@@ -348,13 +428,10 @@ export function PerSectionQuiz({
           <>
             <ProblemFilter
               allProblemUris={allProblemUris}
-              onApply={(filtered, type) => {
-                setProblemUris(filtered);
-                setIsSubmitted(filtered.map(() => false));
-                setResponses(filtered.map(() => undefined));
-                setProblemIdx(0);
-              }}
+              problems={problems}
+              onApply={handleApplyFilter}
             />
+
             {!problemUris.length ? (
               <Typography
                 variant="body2"
@@ -364,8 +441,58 @@ export function PerSectionQuiz({
               </Typography>
             ) : (
               <>
-                <Typography fontWeight="bold" textAlign="left">
-                  {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length} `}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                    mt: 2,
+                  }}
+                >
+                  <Typography fontWeight="bold">
+                    {`${t.problem} ${problemIdx + 1} ${t.of} ${problemUris.length}`}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      my: 2,
+                    }}
+                  >
+                    {examOptions.length > 0 && !selectedExamUri && (
+                      <Box sx={{ minWidth: 150 }}>
+                        <ExamSelect
+                          exams={examOptions}
+                          courseId={courseId}
+                          value=""
+                          onChange={(uri) => setSelectedExamUri(uri)}
+                          label="Appeared in exams"
+                          size="small"
+                        />
+                      </Box>
+                    )}
+
+                    {selectedExamUri && (
+                      <Chip
+                        label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
+                        color="error"
+                        onDelete={() => setSelectedExamUri(null)}
+                        onClick={() =>
+                          window.open(
+                            `/exam-problems?examUri=${encodeURIComponent(selectedExamUri)}`,
+                            '_blank'
+                          )
+                        }
+                      />
+                    )}
+                  </Box>
+                </Box>
+
+                <Box mb={1}>
                   {currentProblem?.showForeignLanguageNotice && (
                     <Tooltip
                       title={`This problem is shown because you have ${currentProblem.matchedLanguage} in your language preferences.`}
@@ -415,17 +542,8 @@ export function PerSectionQuiz({
                         />
                       </Tooltip>
                     ))}
-                </Typography>
+                </Box>
 
-                <Box
-                  px={2}
-                  maxWidth={800}
-                  m="auto"
-                  bgcolor="background.paper"
-                  border="1px solid "
-                  borderColor="divider"
-                  borderRadius={1}
-                ></Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                   <ListStepper
                     idx={problemIdx}
@@ -435,7 +553,7 @@ export function PerSectionQuiz({
                       setShowSolution(false);
                     }}
                   />
-                  <IconButton onClick={() => handleViewSource(problemUri)} sx={{ float: 'right' }}>
+                  <IconButton onClick={() => handleViewSource(problemUri)}>
                     <Tooltip title="view source">
                       <OpenInNewIcon />
                     </Tooltip>
@@ -448,15 +566,17 @@ export function PerSectionQuiz({
                     isSubmitted={isSubmitted[problemIdx]}
                     setIsSubmitted={(v) =>
                       setIsSubmitted((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
+                        const next = [...prev];
+                        next[problemIdx] = v;
+                        return next;
                       })
                     }
                     response={responses[problemIdx]}
                     setResponse={(v) =>
                       setResponses((prev) => {
-                        prev[problemIdx] = v;
-                        return [...prev];
+                        const next = [...prev];
+                        next[problemIdx] = v;
+                        return next;
                       })
                     }
                   />
@@ -482,6 +602,7 @@ export function PerSectionQuiz({
           }
          />*/}
                 </Box>
+
                 <Box
                   mb={6}
                   sx={{
