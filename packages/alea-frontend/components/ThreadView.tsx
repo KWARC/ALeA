@@ -180,9 +180,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   if (isLoading || loadingTermByCourseId) return <CircularProgress />;
 
   const isModerator = isUserAuthorized;
-  const isOwner = loggedInUser?.userId === rootComment.userId;
   const canReopen =
-    (isModerator || isOwner) &&
     rootComment.commentType === CommentType.QUESTION &&
     rootComment.questionStatus === QuestionStatus.ANSWERED;
 
@@ -231,10 +229,9 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
           {canReopen && (
             <Button
               variant="contained"
-              color="warning"
+              color="primary"
               sx={{ ml: '5px' }}
               onClick={async () => {
-                // await reopenQuestion(threadId);
                 await reopenQuestion(rootComment.commentId);
                 doUpdate();
               }}
@@ -259,7 +256,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
             <Box display="flex" justifyContent="flex-end" mb="10px">
               <Button
                 variant="contained"
-                color="secondary"
+                color="primary"
                 onClick={() => {
                   const pdfUrl = getCoursePdfUrl(uri);
                   window.open(pdfUrl, '_blank');
