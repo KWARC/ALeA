@@ -63,12 +63,7 @@ const PracticeProblemsPage: NextPage = () => {
 
   return (
     <MainLayout title={`${(courseId || '').toUpperCase()} Problems | ALeA`}>
-      <ProblemList
-        courseSections={sectionsData}
-        courseId={courseId}
-        institutionId={institutionId}
-        instance={resolvedInstanceId}
-      />
+      <ProblemList courseSections={sectionsData} courseId={courseId} />
     </MainLayout>
   );
 };
