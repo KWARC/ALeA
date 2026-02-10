@@ -49,7 +49,7 @@ export const DashboardJobSection = ({
         p: 3,
         borderRadius: 2,
         boxShadow: 3,
-        backgroundColor: '#fff',
+        backgroundColor: 'background.paper',
         display: 'flex',
         flexDirection: 'column',
         minHeight: 350,
@@ -139,7 +139,7 @@ export const StatsSection = ({
                 fontSize: 80,
                 mr: 2,
                 color: 'white',
-                border: '1px solid #fff',
+                border: '1px solid background.paper',
                 borderRadius: '15px',
                 pb: '20px',
               }}
@@ -149,11 +149,11 @@ export const StatsSection = ({
             <Box sx={{ flexGrow: 1 }}>
               <Typography
                 variant="h6"
-                sx={{ color: '#FFFFFF', fontWeight: '500', fontSize: '1.5rem' }}
+                sx={{ color: 'background.paper', fontWeight: '500', fontSize: '1.5rem' }}
               >
                 {stat.label}
               </Typography>
-              <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: '600' }}>
+              <Typography variant="h3" sx={{ color: 'background.paper', fontWeight: '600' }}>
                 {statusState[stat.key] ?? 0}
               </Typography>
             </Box>

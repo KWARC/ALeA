@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { canAccessResource, getStudentProfile, updateStudentProfile } from '@alea/spec';
-import { Action, CURRENT_TERM, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
@@ -164,7 +164,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
                 Edit Profile
               </Typography>
 

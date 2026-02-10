@@ -41,7 +41,7 @@ export function NotesView({
 
   if (!userId)
     return (
-      <Box m="10px">
+      <Box m={1.25}>
         <i>
           <a
             href={'/login?target=' + encodeURIComponent(window.location.href)}

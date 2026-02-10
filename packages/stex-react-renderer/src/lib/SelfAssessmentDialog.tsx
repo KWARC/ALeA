@@ -13,7 +13,6 @@ import {
   smileyToLevel,
 } from '@alea/spec';
 import { SafeHtml } from '@alea/react-utils';
-import { BG_COLOR, PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
@@ -85,12 +84,13 @@ function SelfAssessmentPopup({
   return (
     <Box
       sx={{
-        background: SECONDARY_COL,
-        border: `1px solid ${PRIMARY_COL}`,
+        bgcolor: 'secondary.main',
+        border: 1,
+        borderColor: 'primary.main',
         userSelect: 'none',
+        p: '5px 3px',
+        borderRadius: '5px',
       }}
-      p="5px 3px"
-      borderRadius="5px"
     >
       {dims.map((dim, idx) => (
         <Box key={dim} mt={idx ? '5px' : '0'}>
@@ -307,10 +307,11 @@ export function SelfAssessmentDialog({
         <Box
           display="flex"
           p="0"
-          border="1px solid #AAA"
+          border="1px solid"
+          borderColor="divider"
           borderRadius="10px"
           width="fit-content"
-          bgcolor={BG_COLOR}
+          bgcolor="background.paper"
           sx={{ cursor: 'pointer' }}
           onClick={() => setOpen(true)}
         >

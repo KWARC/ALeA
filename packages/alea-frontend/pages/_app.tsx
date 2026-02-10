@@ -1,15 +1,16 @@
 import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { initialize } from '@flexiformal/ftml-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material';
+import { getTheme } from '../theme';
 import { AppProps } from 'next/app';
 import { UserContextProvider, CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
+import { ColorModeContext } from '../contexts/ColorModeContext';
 import './styles.scss';
 
 const instance = createInstance({
@@ -34,26 +35,6 @@ const instance = createInstance({
   },
 });
 
-const theme = createTheme({
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 450,
-      md: 800,
-      lg: 1200,
-      xl: 1536,
-    },
-  },
-  palette: {
-    primary: {
-      main: PRIMARY_COL,
-    },
-    secondary: {
-      main: SECONDARY_COL,
-    },
-  },
-});
-
 let flamsInitialized = false;
 const initStartTime = Date.now();
 initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
@@ -69,6 +50,58 @@ const queryClient = new QueryClient();
 
 function CustomApp({ Component, pageProps }: AppProps) {
   const [readyToRender, setReadyToRender] = useState(flamsInitialized);
+  const [mode, setMode] = useState<'light' | 'dark' | 'system'>('light');
+  const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem('colorMode') as 'light' | 'dark' | 'system';
+    if (savedMode) {
+      setMode(savedMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'system') {
+      const matchMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        setResolvedMode(e.matches ? 'dark' : 'light');
+      };
+
+      setResolvedMode(matchMedia.matches ? 'dark' : 'light');
+      matchMedia.addEventListener('change', handleChange);
+      return () => matchMedia.removeEventListener('change', handleChange);
+    } else {
+      setResolvedMode(mode);
+    }
+  }, [mode]);
+
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        const targetMode = resolvedMode === 'light' ? 'dark' : 'light';
+        const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+
+        if (targetMode === systemMode) {
+          setMode('system');
+          localStorage.setItem('colorMode', 'system');
+        } else {
+          setMode(targetMode);
+          localStorage.setItem('colorMode', targetMode);
+        }
+      },
+      setMode: (targetMode: 'light' | 'dark' | 'system') => {
+        setMode(targetMode);
+        localStorage.setItem('colorMode', targetMode);
+      },
+      mode: mode,
+    }),
+    [mode, resolvedMode]
+  );
+
+  const theme = useMemo(() => getTheme(resolvedMode), [resolvedMode]);
+
   useEffect(() => {
     if (readyToRender) return;
 
@@ -110,30 +143,32 @@ function CustomApp({ Component, pageProps }: AppProps) {
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
         <MatomoProvider value={instance}>
-          <ThemeProvider theme={theme}>
-            <MathJaxContext>
-              <FTMLReadyContext.Provider value={readyToRender}>
-                <PositionProvider>
-                  <UserContextProvider>
-                    <IsLoggedInProvider>
-                      <CurrentTermProvider>
-                        <div
-                          style={{
-                            width: '100vw',
-                            height: '100vh',
-                            overflowY: 'auto',
-                            overflowX: 'hidden',
-                          }}
-                        >
-                          <Component {...pageProps} />
-                        </div>
-                      </CurrentTermProvider>
-                    </IsLoggedInProvider>
-                  </UserContextProvider>
-                </PositionProvider>
-              </FTMLReadyContext.Provider>
-            </MathJaxContext>
-          </ThemeProvider>
+          <ColorModeContext.Provider value={colorMode}>
+            <ThemeProvider theme={theme}>
+              <MathJaxContext>
+                <FTMLReadyContext.Provider value={readyToRender}>
+                  <PositionProvider>
+                    <UserContextProvider>
+                      <IsLoggedInProvider>
+                        <CurrentTermProvider>
+                          <div
+                            style={{
+                              width: '100vw',
+                              height: '100vh',
+                              overflowY: 'auto',
+                              overflowX: 'hidden',
+                            }}
+                          >
+                            <Component {...pageProps} />
+                          </div>
+                        </CurrentTermProvider>
+                      </IsLoggedInProvider>
+                    </UserContextProvider>
+                  </PositionProvider>
+                </FTMLReadyContext.Provider>
+              </MathJaxContext>
+            </ThemeProvider>
+          </ColorModeContext.Provider>
         </MatomoProvider>
       </ServerLinksContext.Provider>
     </CommentRefreshProvider>

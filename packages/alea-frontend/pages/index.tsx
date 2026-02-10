@@ -1,10 +1,7 @@
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import {
-  getResourcesForUser,
-  updateUserInfoFromToken,
-} from '@alea/spec';
+import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
 import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -18,11 +15,8 @@ import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 import { getAllCoursesFromDb } from './api/get-all-courses';
 import { useIsLoggedIn } from '@alea/react-utils';
-<<<<<<< Updated upstream
-=======
-import shadows from '../theme/shadows';
 import { useQuery } from '@tanstack/react-query';
->>>>>>> Stashed changes
+import shadows from '../theme/shadows';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -106,7 +100,7 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
       <Box
         sx={{
           margin: '0 auto',
-          maxWidth: '1200px',
+          maxWidth: 1200,
           display: 'flex',
           alignItems: 'center',
           padding: tight ? '20px' : '50px 20px 100px',
@@ -115,64 +109,51 @@ export const BannerSection = ({ tight = false }: { tight?: boolean }) => {
       >
         <Box>
           <Typography
-            variant="h2"
+            variant="T1"
             sx={{
               paddingBottom: 2,
-              color: PRIMARY_COL,
-              fontFamily: 'sans-serif,roboto',
+              letterSpacing: -0.5,
+              color: 'text.primary',
             }}
           >
             {n.alea}
           </Typography>
-          <Typography
-            variant="body1"
-            maxWidth="600px"
-            mb="16px"
-            fontFamily={'sans-serif,roboto'}
-            display="flex"
-          >
+          <Typography variant="body1" maxWidth={600} mb={2} display="flex">
             {n.aleaDesc}
           </Typography>
-
-          {!loggedIn && (
+          <Box display="flex" gap={0.75} flexWrap="wrap">
+            {!loggedIn && (
+              <Button variant="contained" color="primary" onClick={() => router.push('/signup')}>
+                {n.signUpNow}
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              onClick={() => {
+                router.push('/course-list');
+              }}
+            >
+              {n.exploreOurCourse}
+            </Button>
             <Button
               variant="contained"
-              color="primary"
-              sx={{ margin: '5px 5px 5px 0px' }}
-              onClick={() => router.push('/signup')}
+              onClick={() => {
+                router.push('/blog');
+              }}
             >
-              {n.signUpNow}
+              <FeedIcon />
+              blog
             </Button>
-          )}
-          <Button
-            sx={{ margin: '5px 5px 5px 0px' }}
-            variant="outlined"
-            onClick={() => {
-              router.push('/course-list');
-            }}
-          >
-            {n.exploreOurCourse}
-          </Button>
-          <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
-            variant="contained"
-            onClick={() => {
-              router.push('/blog');
-            }}
-          >
-            <FeedIcon />
-            blog
-          </Button>
-          <Button
-            sx={{ margin: '5px 5px 5px 0px', gap: '5px' }}
-            variant="outlined"
-            onClick={() => {
-              router.push('https://kwarc.github.io/bibs/voll-ki/');
-            }}
-          >
-            <LibraryBooksIcon />
-            {n.publications}
-          </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                router.push('https://kwarc.github.io/bibs/voll-ki/');
+              }}
+            >
+              <LibraryBooksIcon />
+              {n.publications}
+            </Button>
+          </Box>
         </Box>
         {!isSmallScreen && !tight && (
           <Image
@@ -199,25 +180,29 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        bgcolor,
-        padding: '20px',
-        mb: '-10px',
+        bgcolor: 'background.paper',
+        padding: 2.5,
+        mb: -1.25,
       }}
     >
       <Typography
-        style={{
+        sx={{
           textAlign: 'center',
-          marginTop: '20px',
-          fontWeight: '400',
-          fontSize: '20px',
+          marginTop: 2.5,
+          fontWeight: 400,
+          fontSize: 20,
+          maxWidth: 'lg',
+          textWrap: 'wrap',
         }}
       >
         {n.vollKiProjectInfo}
       </Typography>
-      <img
+      <Image
         src="/fau_kwarc.png"
         alt="Explore courses"
-        style={{ padding: '20px', maxWidth: '100%' }}
+        width={400}
+        height={400}
+        style={{ width: '100%', height: 'auto', paddingTop: '20px', paddingBottom: '20px' }}
       />
     </Box>
   );
@@ -231,14 +216,15 @@ export function CourseCard({ course, currentTerm }) {
       <Box
         sx={{
           cursor: 'pointer',
-          boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
-          width: '220px',
-          margin: '15px',
+          boxShadow: shadows[5],
+          width: 252, //width and height fixed intentionally to maintain uniformity on landing page
+          height: 292,
+          borderRadius: 8,
+          m: 2,
+          p: 2,
           textAlign: 'center',
-          height: '260px',
-          backgroundColor: 'rgb(237, 237, 237)',
-          borderRadius: '2rem',
-          padding: '1rem',
+          backgroundColor: 'background.card',
+          overflowY: 'scroll',
           transition: 'transform 0.3s',
           '&:hover': {
             transform: 'scale(1.1)',
@@ -250,7 +236,7 @@ export function CourseCard({ course, currentTerm }) {
           width={courseId === 'iwgs-1' ? 100 : 200}
           src={courseImage}
           alt="course-image"
-          style={{ borderRadius: '10px' }}
+          style={{ borderRadius: 2.5 }}
         />
         <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
           <Typography
@@ -258,7 +244,7 @@ export function CourseCard({ course, currentTerm }) {
               fontSize: '18px',
               fontWeight: 'bold',
               padding: '10px',
-              color: '#003786',
+              color: 'text.primary',
             }}
           >
             {courseName.length > 45 ? courseId.toUpperCase() : courseName}
@@ -277,24 +263,25 @@ function AleaFeatures({ img_url, title, description }) {
       sx={{
         display: 'flex',
         alignItems: 'center',
-        width: '200px',
+        width: 200,
         flexDirection: 'column',
-        margin: '50px 20px',
+        my: 6.25,
+        mx: 2.5,
       }}
     >
       <Image src={img_url} height={80} width={80} alt="University_Credits" />
       <Typography
         sx={{
-          fontSize: '18px',
+          fontSize: 18,
           fontWeight: 'bold',
-          marginTop: '15px',
+          marginTop: 2,
           wordWrap: 'break-word',
           textAlign: 'center',
         }}
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '12px', color: '#696969', textAlign: 'center' }}>
+      <Typography sx={{ fontSize: 12, color: 'grey.700', textAlign: 'center' }}>
         {description}
       </Typography>
     </Box>
@@ -341,20 +328,19 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: '#F5F5F5', padding: '80px' }}>
-          <Box sx={{ margin: '0 auto', maxWidth: '1200px' }}>
+        <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
+          <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
             <Typography
-              style={{
-                color: '#757575',
-                fontWeight: '400',
-                fontSize: '20px',
+              sx={{
+                color: 'secondary.700',
+                fontSize: 20,
                 textAlign: 'center',
               }}
             >
               <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
-              <span style={{ color: PRIMARY_COL }}>
+              <Typography component="span" sx={{ color: 'text.primary', fontSize: 20 }}>
                 <b> {n.partneredWith.split('+')[2]}</b>
-              </span>
+              </Typography>
               .
             </Typography>
             <br />
@@ -364,7 +350,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 justifyContent: 'space-around',
-                gap: '20px',
+                gap: 2.5,
               }}
             >
               {PARTNERED_UNIVERSITIES.map((university, index) => (
@@ -388,7 +374,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
                     width={university.code === 'others' ? 160 : 140}
                     height={140}
                   />
-                  <Typography sx={{ fontWeight: '500' }}>
+                  <Typography sx={{ fontWeight: 500 }}>
                     {router.locale === 'de'
                       ? university.name_de ?? university.name
                       : university.name}
@@ -402,22 +388,22 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '300px',
-            padding: '20px',
-            marginTop: '40px',
+            minHeight: 300,
+            padding: 2.5,
+            marginTop: 5,
             justifyContent: 'center',
             alignItems: 'center',
             margin: '0 auto',
-            maxWidth: '1200px',
+            maxWidth: 1200,
           }}
         >
           <Typography
             sx={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: PRIMARY_COL,
-              fontSize: '24px',
-              marginTop: '30px',
+              color: 'text.primary',
+              fontSize: 24,
+              marginTop: 3,
             }}
           >
             {n.whyAlea}
@@ -444,21 +430,21 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '300px',
-            padding: '20px',
-            marginTop: '40px',
+            minHeight: 300,
+            padding: 5,
+            marginTop: 5,
             justifyContent: 'center',
             alignItems: 'center',
             margin: '0 auto',
-            maxWidth: '1200px',
+            maxWidth: 1200,
           }}
         >
           <Typography
             sx={{
               fontWeight: 'bold',
-              color: PRIMARY_COL,
-              fontSize: '24px',
-              marginTop: '30px',
+              color: 'text.primary',
+              fontSize: 24,
+              marginTop: 3.5,
             }}
           >
             {n.exploreCourses}
@@ -468,7 +454,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
             sx={{
               display: 'flex',
               justifyContent: 'space-around',
-              marginTop: '40px',
+              marginTop: 5,
               flexWrap: 'wrap',
               alignItems: 'center',
             }}

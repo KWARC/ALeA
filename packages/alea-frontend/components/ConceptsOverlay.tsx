@@ -66,7 +66,7 @@ export function ConceptsOverlay({
             Loading concepts...
           </Typography>
         </Box>
-     ) : conceptsUri?.length ?  (
+      ) : conceptsUri?.length ? (
         <Box display="flex" flexDirection="column" gap={1}>
           {conceptsUri.map((uri, index) => (
             <Box
@@ -104,7 +104,7 @@ export function ConceptsOverlay({
                 <Tooltip title="Take a guided tour" arrow>
                   <IconButton
                     sx={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'background.paper',
                       borderRadius: '50%',
                       padding: '2px',
                       '&:hover': {

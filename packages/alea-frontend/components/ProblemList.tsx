@@ -6,12 +6,10 @@ import {
   ListItemText,
   Paper,
   Typography,
-  Select,
-  MenuItem,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
-import { getParamFromUri, PRIMARY_COL } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -20,13 +18,14 @@ import { FTML } from '@flexiformal/ftml';
 import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
 
+import { ExamSelect } from '@alea/stex-react-renderer';
+
 interface TitleMetadata {
   uri?: string;
   id?: string;
   chapterTitle: string;
   sectionTitle: string;
 }
-
 interface ExamInfo {
   uri: string;
   term?: string;
@@ -62,20 +61,31 @@ interface ProblemListProps {
   courseId: string;
 }
 
+const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
+  return [...exams].sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : 0;
+    const db = b.date ? new Date(b.date).getTime() : 0;
+    return db - da;
+  });
+};
+
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
   const [loading, setLoading] = useState(true);
-
   const router = useRouter();
-
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
 
   useEffect(() => {
     if (!courseId) return;
 
-    getExamsForCourse(courseId).then(setExams).catch(console.error);
+    getExamsForCourse(courseId)
+      .then((data) => {
+        const sorted = sortExamsByDateDesc(data);
+        setExams(sorted);
+      })
+      .catch(console.error);
   }, [courseId]);
 
   useEffect(() => {
@@ -139,60 +149,71 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const goToSection = (sectionId?: string) => {
     window.location.href = `/course-notes/${courseId}#${sectionId}`;
   };
-
+  const theme = useTheme();
   return (
-    <Box maxWidth="800px" px={{ xs: 1, sm: 2 }} m="0 auto">
-      <Typography variant="h4" my={3} textAlign="center">
+    <Box maxWidth={800} px={{ xs: 1, sm: 2 }} m="0 auto">
+      <Typography variant="h2" my={3} textAlign="center">
         {t.practiceProblems}
       </Typography>
+
+      <Box sx={{ marginLeft: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+        <Link href={`/peer-grading/${courseId}`} passHref>
+          <Button
+            variant="contained"
+            fullWidth={true}
+            sx={{ height: '56px', px: 4, fontSize: '16px', fontWeight: 'bold' }}
+          >
+            {g.peerGrading}
+          </Button>
+        </Link>
+      </Box>
+
+      <Box
+        sx={{
+          my: 4,
+          p: 3,
+          bgcolor: '#fafafa',
+          borderRadius: '12px',
+          border: '1px solid #eee',
+          boxShadow: '0px 2px 8px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Typography
+          variant="body1"
+          sx={{ color: '#555', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
+        >
+          Old exams are great practice resources, but since exam styles evolve, recent exams are
+          better models, and any course topic even if not asked before can still appear in upcoming
+          exams
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          }}
+        >
+          <ExamSelect
+            exams={exams}
+            courseId={courseId}
+            value={selectedExam}
+            onChange={(examUri) => {
+              setSelectedExam(examUri);
+              router.push({
+                pathname: '/exam-problems',
+                query: { examUri, courseId },
+              });
+            }}
+            label="Select Exam"
+          />
+        </Box>
+      </Box>
+
       <Typography variant="body1" my={3}>
         {t.practiceProblemsDescription}
       </Typography>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 3, gap: 2 }}>
-        <Select
-          displayEmpty
-          size="small"
-          value={selectedExam}
-          sx={{ minWidth: 220 }}
-          onChange={(e) => {
-            const examUri = e.target.value as string;
-
-            if (!examUri) return;
-            setSelectedExam(examUri);
-            router.push({
-              pathname: '/exam-problems',
-              query: { examUri },
-            });
-          }}
-        >
-          <MenuItem disabled value="">
-            Select Exam
-          </MenuItem>
-
-          {exams.map((exam) => {
-            const examUri = exam.uri;
-            const dParam = getParamFromUri(examUri, 'd');
-            const examLabel = exam.number
-              ? `Exam ${exam.number} ${exam.term ?? ''} ${dParam ? ` ${dParam}` : ''}`
-              : `Exam (${exam.term ?? 'General'}) ${dParam}`;
-
-            return (
-              <MenuItem key={exam.uri} value={exam.uri}>
-                {examLabel}
-              </MenuItem>
-            );
-          })}
-        </Select>
-
-        <Box sx={{ marginLeft: 'auto' }}>
-          <Link href={`/peer-grading/${courseId}`} passHref>
-            <Button variant="contained" sx={{ height: '48px', fontSize: '16px' }}>
-              {g.peerGrading}
-            </Button>
-          </Link>
-        </Box>
-      </Box>
 
       <Paper
         sx={{
@@ -201,14 +222,14 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           boxShadow: 3,
           overflowY: 'auto',
           textAlign: 'left',
-          backgroundColor: '#ffffff',
-          borderLeft: `3px solid ${PRIMARY_COL}`,
+          backgroundColor: 'background.paper',
+          borderLeft: `3px solid ${'primary.main'}`,
         }}
       >
         {Object.entries(groupedByChapter).map(([chapter, sections]) => (
           <Box key={chapter} mb={3}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h3" sx={{ mb: 1, fontWeight: 'bold', fontSize: 20 }}>
                 <SafeHtml html={chapter} />
               </Typography>
             </Box>
@@ -226,13 +247,16 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      backgroundColor: '#f0f4f8',
+                      backgroundColor: 'background.paper',
                       borderRadius: '8px',
                       py: 2,
                       px: 2,
                       transition: 'background-color 0.3s ease, transform 0.2s ease',
                       '&:hover': {
-                        background: 'linear-gradient(90deg, #e0f7fa 0%, #d1c4e9 100%)',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(90deg, #0f2a33 0%, #2b2140 100%)'
+                            : 'linear-gradient(90deg, #e0f7fa 0%, #d1c4e9 100%)',
                       },
                     }}
                   >
@@ -265,8 +289,8 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                       <Button
                         variant="contained"
                         sx={{
-                          minWidth: '127px',
-                          borderRadius: '20px',
+                          minWidth: 127,
+                          borderRadius: 5,
                           textTransform: 'none',
                           boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
                           transition: 'background-color 0.3s ease, transform 0.2s ease',
@@ -282,7 +306,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                         color="text.secondary"
                         sx={{
                           textAlign: 'right',
-                          minWidth: '127px',
+                          minWidth: 127,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'flex-end',
