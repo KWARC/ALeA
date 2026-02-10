@@ -59,6 +59,9 @@ import { useCurrentUser } from '@alea/react-utils';
 import { useStudentCount } from '../../hooks/useStudentCount';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
+import { useCurrentUser } from '@alea/react-utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCheckAccess } from '../../hooks/auth/useCheckAccess';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -201,7 +204,6 @@ function CourseScheduleSection({
   courseId: string;
   currentTerm: string;
 }) {
-  const [nextLectureStartTime, setNextLectureStartTime] = useState<number | null>(null);
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
   const [showAllLectures, setShowAllLectures] = useState(false);
@@ -265,22 +267,22 @@ function CourseScheduleSection({
     fetchSchedule();
   }, [courseId, currentTerm]);
 
-  useEffect(() => {
-    async function fetchNextLectureDates() {
-      try {
-        const timeline = await getCoverageTimeline();
-        const now = Date.now();
-        const entries = (timeline[courseId] || [])
-          .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
-          .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
-        setNextLectureStartTime(entries[0]?.timestamp_ms);
-      } catch (error) {
-        console.error('Failed to fetch lecture timeline:', error);
-      }
-    }
+  const { data: nextLectureStartTime } = useQuery({
+    queryKey: ['next-lecture-time', courseId, lectureSchedule, currentTerm],
+    enabled: Boolean(courseId),
+    retry: false,
+    queryFn: () => getCoverageTimeline(),
+    select: (timeline) => {
+      const now = Date.now();
 
-    if (courseId) fetchNextLectureDates();
-  }, [courseId, lectureSchedule, currentTerm]);
+      const entries = (timeline[courseId!] || [])
+        .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
+        .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
+
+      return entries[0]?.timestamp_ms;
+    },
+  });
+
   const nextLectureDateFormatted = nextLectureStartTime
     ? new Date(nextLectureStartTime).toLocaleDateString(undefined, {
         day: 'numeric',
@@ -529,6 +531,7 @@ function CourseScheduleSection({
 }
 
 function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
+<<<<<<< Updated upstream
   const [announcements, setAnnouncements] = useState<Announcement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -547,6 +550,14 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
     }
     fetchAnnouncements();
   }, [courseId, instanceId]);
+=======
+  const theme = useTheme();
+  const { data: announcements, isLoading: loading } = useQuery({
+    queryKey: ['announcements', courseId, instanceId],
+    enabled: Boolean(courseId && instanceId),
+    queryFn: () => getActiveAnnouncements(courseId!, instanceId!, 'FAU'), // TODO(M5)
+  });
+>>>>>>> Stashed changes
 
   if (loading) {
     return (
@@ -595,17 +606,18 @@ const CourseHomePage: NextPage = () => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const courseId = router.query.courseId as string;
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+<<<<<<< Updated upstream
   const [isInstructor, setIsInstructor] = useState(false);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
+=======
+>>>>>>> Stashed changes
   const [seriesId, setSeriesId] = useState<string>('');
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
 
   const studentCount = useStudentCount(courseId, currentTerm);
-  const [courseMetadata, setCourseMetadata] = useState<CourseInfoMetadata | null>(null);
-
+  const queryClient = useQueryClient();
   useEffect(() => {
     if (!courseId || !currentTerm) return;
 
@@ -620,59 +632,51 @@ const CourseHomePage: NextPage = () => {
 
     fetchSeries();
   }, [courseId, currentTerm]);
-
   const { user } = useCurrentUser();
   const userId = user?.userId;
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+<<<<<<< Updated upstream
+  const { user } = useCurrentUser();
+  const userId = user?.userId;
+=======
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => getAllCourses(),
+  });
+  const { data: isEnrolled, isFetching } = useCheckAccess({
+    resource: ResourceName.COURSE_QUIZ,
+    action: Action.TAKE,
+    variables: {
+      courseId,
+      instanceId: currentTerm,
+    },
+  });
+  const enrolled = !isFetching && isEnrolled === true;
+>>>>>>> Stashed changes
 
-  useEffect(() => {
-    if (!courseId || !currentTerm) return;
-    const checkAccess = async () => {
-      const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
-        courseId,
-        instanceId: currentTerm,
-      });
-      setIsEnrolled(hasAccess);
-    };
-    checkAccess();
-  }, [courseId, currentTerm]);
-
-  useEffect(() => {
-    if (!courseId || !currentTerm) return;
-
-    async function checkAccess() {
+  const { data: hasInstructorAccess, isFetching: isInstructorFetching } = useQuery({
+    queryKey: ['is-instructor', courseId, currentTerm],
+    enabled: Boolean(courseId && currentTerm),
+    retry: false,
+    queryFn: async () => {
       for (const { resource, action } of INSTRUCTOR_RESOURCE_AND_ACTION) {
         const hasAccess = await canAccessResource(resource, action, {
           courseId,
           instanceId: currentTerm,
         });
-        if (hasAccess) {
-          setIsInstructor(true);
-          return;
-        }
+        if (hasAccess) return true;
       }
-    }
-    checkAccess();
-  }, [courseId, currentTerm]);
+      return false;
+    },
+  });
 
-  useEffect(() => {
-    if (!courseId || !currentTerm) return;
+  const isInstructor = !isInstructorFetching && hasInstructorAccess === true;
 
-    async function loadMetadata() {
-      try {
-        const info = await getCourseInfoMetadata(courseId, currentTerm);
-        setCourseMetadata(info);
-      } catch (e) {
-        console.error('filled to load metadata', e);
-        setCourseMetadata(null);
-      }
-    }
-    loadMetadata();
-  }, [courseId, currentTerm]);
-
+  const { data: courseMetadata } = useQuery({
+    queryKey: ['course-metadata', courseId, currentTerm],
+    enabled: Boolean(courseId && currentTerm),
+    queryFn: () => getCourseInfoMetadata(courseId!, currentTerm!),
+  });
   if (!router.isReady || !courses) return <CircularProgress />;
   const courseInfo = courses[courseId];
   if (!courseInfo) {
@@ -717,7 +721,11 @@ const CourseHomePage: NextPage = () => {
       return router.push('/login');
     }
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
-    setIsEnrolled(enrollmentSuccess);
+    if (enrollmentSuccess) {
+      queryClient.invalidateQueries({
+        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
+      });
+    }
   };
 
   const unEnrollFromCourse = async () => {
@@ -730,7 +738,9 @@ const CourseHomePage: NextPage = () => {
 
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
-      setIsEnrolled(false);
+      queryClient.invalidateQueries({
+        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
+      });
     }
   };
 
@@ -921,6 +931,10 @@ const CourseHomePage: NextPage = () => {
               width: '100%',
               maxWidth: '600px',
               margin: '0 auto',
+<<<<<<< Updated upstream
+=======
+              mb: 2,
+>>>>>>> Stashed changes
             }}
           >
             <TextField
@@ -946,6 +960,7 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         )}
+<<<<<<< Updated upstream
         <Box fragment-uri={landing} fragment-kind="Section">
           <SafeFTMLDocument
             document={{ type: 'FromBackend', uri: landing }}
@@ -954,6 +969,18 @@ const CourseHomePage: NextPage = () => {
             chooseHighlightStyle={false}
             toc="None"
           />
+=======
+        <Box bgcolor={'background.paper'}>
+          <Box fragment-uri={landing} fragment-kind="Section">
+            <SafeFTMLDocument
+              document={{ type: 'FromBackend', uri: landing }}
+              showContent={false}
+              pdfLink={false}
+              chooseHighlightStyle={false}
+              toc="None"
+            />
+          </Box>
+>>>>>>> Stashed changes
         </Box>
         <RecordedSyllabus courseId={courseId} />
       </Box>

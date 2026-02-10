@@ -2,6 +2,8 @@ import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
 import { PRIMARY_COL, SECONDARY_COL } from '@alea/utils';
 import { initialize } from '@flexiformal/ftml-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
@@ -63,6 +65,8 @@ initialize(process.env.NEXT_PUBLIC_FLAMS_URL, 'WARN')
     console.error(`FTML initialization failed: [${process.env.NEXT_PUBLIC_FLAMS_URL}]`, err);
   });
 
+const queryClient = new QueryClient();
+
 function CustomApp({ Component, pageProps }: AppProps) {
   const [readyToRender, setReadyToRender] = useState(flamsInitialized);
   useEffect(() => {
@@ -102,6 +106,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
+      <QueryClientProvider client={queryClient}>
     <CommentRefreshProvider>
       <ServerLinksContext.Provider value={{ gptUrl: process.env.NEXT_PUBLIC_GPT_URL }}>
         <MatomoProvider value={instance}>
@@ -132,6 +137,10 @@ function CustomApp({ Component, pageProps }: AppProps) {
         </MatomoProvider>
       </ServerLinksContext.Provider>
     </CommentRefreshProvider>
+       { process.env.NEXT_PUBLIC_SITE_VERSION === 'development' && (
+      <ReactQueryDevtools initialIsOpen={false} />
+    )}
+    </QueryClientProvider>
   );
 }
 
