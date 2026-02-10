@@ -502,7 +502,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
   useEffect(() => {
     const courseData = coverageTimeline[courseId];
 
-   const lectures = courseData?.lectures ?? [];
+    const lectures = courseData?.lectures ?? [];
 
     const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {

@@ -204,11 +204,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (Array.isArray(elemSections)) allSections.push(...elemSections);
     else if (elemSections) allSections.push(elemSections);
   }
-  const courseCoverage = getCoverageData()[courseId];
 
-  const coverageSnaps = Array.isArray(courseCoverage)
-    ? courseCoverage
-    : courseCoverage?.lectures ?? [];
+  const coverageSnaps = getCoverageData()[courseId]?.lectures ?? [];
 
   const coverageData = coverageSnaps.filter((snap): snap is LectureEntry =>
     Boolean(snap && snap.sectionUri)

@@ -14,7 +14,7 @@ import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu } from './LayoutWithFixedMenu';
 import styles from './stex-react-renderer.module.scss';
 
-// export const NOT_COVERED_SECTIONS = 'notCoveredSections';
+export const NOT_COVERED_SECTIONS = 'notCoveredSections';
 
 interface SectionTreeNode {
   parentNode?: SectionTreeNode;
@@ -26,26 +26,6 @@ interface SectionTreeNode {
   ended?: Date;
   notCovered?: boolean;
 }
-
-export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
-  lbs: [
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-qsa&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=modalities/sec&d=modalities&l=en&e=section_1',
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=tense/sec&d=tense&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/ComSem&p=nlfrags/sec&d=quantifier-scope-ambiguity&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section',
-  ],
-  'ai-1': [
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/CompLog&p=kr/sec&d=kr-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=semweb-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section',
-  ],
-};
 
 function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
   if (!node || node.tocElem.type !== 'Section') return;

@@ -637,7 +637,7 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box sx={{ minHeight: '100vh',bgcolor:'background.default' }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
           <Container
             maxWidth="xl"
             sx={{

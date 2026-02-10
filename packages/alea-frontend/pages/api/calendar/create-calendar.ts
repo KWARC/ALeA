@@ -22,7 +22,6 @@ function parseDateDDMMYYYY(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-
 async function getSemesterInfoFromDb(
   universityId: string,
   instanceId: string
@@ -155,13 +154,11 @@ async function getUserEvents(
   const coverageData = getCoverageData();
 
   const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
-  Object.entries(coverageData).map(([courseId, courseData]) => [
-    courseId,
-    Array.isArray(courseData)
-      ? courseData
-      : courseData?.lectures ?? [],
-  ])
-);
+    Object.entries(coverageData).map(([courseId, courseData]) => [
+      courseId,
+      courseData?.lectures ?? [],
+    ])
+  );
 
   const resourceAndActions = await getAuthorizedCourseResources(userId);
 
@@ -187,7 +184,6 @@ async function getUserEvents(
     ? accessibleCourseIdsForInstructor
     : accessibleCourseIdsForStudent;
   const events = generateCalendarEvents(coverageLecturesByCourseId, accessibleCourseIds);
-
 
   // Get universityId and instanceId from the first accessible course
   let universityId: string | undefined;

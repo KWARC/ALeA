@@ -48,17 +48,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Backup before changing anything
     fs.writeFileSync(backupFileName(), JSON.stringify(existingData, null, 2));
 
-    const existingCourseData = existingData[courseId];
-
-    const courseData = Array.isArray(existingCourseData)
-      ? {
-          lectures: existingCourseData,
-          notCoveredSections: [],
-        }
-      : existingCourseData ?? {
-          lectures: [],
-          notCoveredSections: [],
-        };
+    const courseData = existingData[courseId] ?? {
+      lectures: [],
+      notCoveredSections: [],
+    };
 
     const currentSnaps = courseData.lectures;
 
@@ -77,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       newSnaps = currentSnaps.filter((entry) => entry.timestamp_ms !== timestamp);
     }
 
-    const sanitizedLectures = Array.isArray(newSnaps) ? newSnaps.filter(Boolean) : [];
+    const sanitizedLectures = newSnaps.filter(Boolean);
 
     existingData[courseId] = {
       lectures: sanitizedLectures,

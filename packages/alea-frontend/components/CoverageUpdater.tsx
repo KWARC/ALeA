@@ -134,9 +134,7 @@ export function CoverageUpdater({
   }, [courseId]);
 
   useEffect(() => {
-    if (Array.isArray(initialNotCoveredSections)) {
-      setNotCoveredSections(initialNotCoveredSections);
-    }
+    setNotCoveredSections(initialNotCoveredSections);
   }, [initialNotCoveredSections]);
 
   const handleDeleteItem = (index: number) => {

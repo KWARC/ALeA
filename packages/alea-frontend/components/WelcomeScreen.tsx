@@ -256,11 +256,8 @@ export async function getLastUpdatedNotes(
   const { resource: r } = getLocaleObject(router);
   try {
     const coverageData = await getCoverageTimeline();
-    const rawCourseData = coverageData[courseId];
+    const courseData = coverageData[courseId]?.lectures ?? [];
 
-    const courseData: LectureEntry[] = Array.isArray(rawCourseData)
-      ? rawCourseData
-      : rawCourseData?.lectures ?? [];
     const targetUsed = courseData.some((entry) => entry.targetSectionUri);
 
     let progressStatus: string | null = null;
