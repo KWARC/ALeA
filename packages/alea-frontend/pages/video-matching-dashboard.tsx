@@ -22,15 +22,20 @@ import {
   AccordionSummary,
   AccordionDetails,
   Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import SchoolIcon from '@mui/icons-material/School';
 import MainLayout from '../layouts/MainLayout';
 import { getVideoMatchingData, MatchReportData, VideoData } from '@alea/spec';
-import { get } from 'http';
 
 interface VideoWithMetadata extends VideoData {
   videoId: string;
@@ -45,7 +50,9 @@ const VideoMatchingDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedVideo, setExpandedVideo] = useState<string | false>(false);
+  const [videoSegmentFilters, setVideoSegmentFilters] = useState<{[key: string]: 'all' | 'matched' | 'unmatched'}>({});
   const itemsPerPage = 10;
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -119,6 +126,13 @@ const VideoMatchingDashboard = () => {
     setExpandedVideo(false);
   };
 
+  const handleVideoSegmentFilterChange = (videoId: string, filter: 'all' | 'matched' | 'unmatched') => {
+    setVideoSegmentFilters(prev => ({
+      ...prev,
+      [videoId]: filter
+    }));
+  };
+
   const handleAccordionChange =
     (videoId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       setExpandedVideo(isExpanded ? videoId : false);
@@ -143,7 +157,6 @@ const VideoMatchingDashboard = () => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
-  // Loading state
   if (!matchReportData) {
     return (
       <Container maxWidth="lg" sx={videoMatchingStyles.container}>
@@ -157,7 +170,6 @@ const VideoMatchingDashboard = () => {
   return (
     <MainLayout>
       <Container maxWidth="lg" sx={videoMatchingStyles.container}>
-        {/* Header */}
         <Box sx={videoMatchingStyles.header}>
           <Box sx={videoMatchingStyles.headerContent}>
             <VideoLibraryIcon sx={videoMatchingStyles.headerIcon} />
@@ -172,30 +184,39 @@ const VideoMatchingDashboard = () => {
           </Box>
         </Box>
 
-        {/* Course Selection */}
         <Paper sx={videoMatchingStyles.courseSection}>
-          <Typography variant="h6" sx={videoMatchingStyles.sectionTitle}>
-            Select Course
-          </Typography>
-          <Box sx={videoMatchingStyles.courseChipsContainer}>
-            {courses.map((courseKey) => {
-              const courseData = matchReportData[courseKey];
-              const isSelected = selectedCourse === courseKey;
-
-              return (
-                <Chip
-                  key={courseKey}
-                  label={`${courseData.subject} - ${courseData.semester}`}
-                  onClick={() => handleCourseChange(courseKey)}
-                  color={isSelected ? 'primary' : 'default'}
-                  sx={videoMatchingStyles.courseChip}
-                />
-              );
-            })}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <SchoolIcon color="primary" />
+            <Typography variant="h6" sx={videoMatchingStyles.sectionTitle}>
+              Select Course
+            </Typography>
           </Box>
+          
+          <FormControl fullWidth>
+            <InputLabel id="course-select-label">Course</InputLabel>
+            <Select
+              labelId="course-select-label"
+              value={selectedCourse}
+              label="Course"
+              onChange={(e) => handleCourseChange(e.target.value)}
+              startAdornment={
+                <InputAdornment position="start">
+                  <FilterListIcon />
+                </InputAdornment>
+              }
+            >
+              {courses.map((courseKey) => {
+                const courseData = matchReportData[courseKey];
+                return (
+                  <MenuItem key={courseKey} value={courseKey}>
+                    {courseData.subject} - {courseData.semester}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
         </Paper>
 
-        {/* Statistics Cards */}
         <Grid container spacing={2} sx={videoMatchingStyles.statsGrid}>
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={videoMatchingStyles.statCard}>
@@ -281,6 +302,9 @@ const VideoMatchingDashboard = () => {
                 const matchedCount = video.stats?.matched || 0;
                 const unmatchedCount = video.stats?.unmatched || 0;
                 const matchPercent = video.stats?.match_percent || 0;
+                const currentFilter = videoSegmentFilters[video.videoId] || 'all';              
+                const showMatched = currentFilter === 'all' || currentFilter === 'matched';
+                const showUnmatched = currentFilter === 'all' || currentFilter === 'unmatched';
 
                 return (
                   <Accordion
@@ -294,26 +318,26 @@ const VideoMatchingDashboard = () => {
                       sx={videoMatchingStyles.accordionSummary}
                     >
                       <Box sx={videoMatchingStyles.accordionHeader}>
-                        <Typography sx={videoMatchingStyles.videoIdText}>
-                          Video ID: {video.videoId}
+                        <Typography variant="body1" sx={videoMatchingStyles.videoIdText}>
+                          {video.videoId}
                         </Typography>
 
                         <Box sx={videoMatchingStyles.accordionStats}>
                           <Chip
                             icon={<CheckCircleIcon />}
-                            label={`${matchedCount} matched`}
-                            size="small"
+                            label={`Matched: ${matchedCount}`}
                             color="success"
+                            size="small"
                             variant="outlined"
                           />
                           <Chip
                             icon={<CancelIcon />}
-                            label={`${unmatchedCount} unmatched`}
-                            size="small"
+                            label={`Unmatched: ${unmatchedCount}`}
                             color="error"
+                            size="small"
                             variant="outlined"
                           />
-                          <Typography sx={videoMatchingStyles.matchPercentText}>
+                          <Typography variant="body2" sx={videoMatchingStyles.matchPercentText}>
                             {matchPercent.toFixed(1)}%
                           </Typography>
                         </Box>
@@ -322,42 +346,46 @@ const VideoMatchingDashboard = () => {
 
                     <AccordionDetails sx={videoMatchingStyles.accordionDetails}>
                       <Box sx={{ mb: 3 }}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={4}>
-                            <Typography variant="caption" color="text.secondary">
-                              Subject
-                            </Typography>
-                            <Typography variant="body1" fontWeight={500}>
-                              {video.subject}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} sm={4}>
-                            <Typography variant="caption" color="text.secondary">
-                              Semester
-                            </Typography>
-                            <Typography variant="body1" fontWeight={500}>
-                              {video.semester}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} sm={4}>
-                            <Typography variant="caption" color="text.secondary">
-                              Match Rate
-                            </Typography>
-                            <Typography variant="body1" fontWeight={500} color="primary.main">
-                              {matchPercent.toFixed(1)}%
-                            </Typography>
-                          </Grid>
-                        </Grid>
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                          <InputLabel id={`filter-${video.videoId}`}>Filter Segments</InputLabel>
+                          <Select
+                            labelId={`filter-${video.videoId}`}
+                            value={currentFilter}
+                            label="Filter Segments"
+                            onChange={(e) => handleVideoSegmentFilterChange(video.videoId, e.target.value as 'all' | 'matched' | 'unmatched')}
+                            startAdornment={
+                              <InputAdornment position="start">
+                                <FilterListIcon fontSize="small" />
+                              </InputAdornment>
+                            }
+                          >
+                            <MenuItem value="all">All Segments</MenuItem>
+                            <MenuItem value="matched">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CheckCircleIcon fontSize="small" color="success" />
+                                Matched Only
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="unmatched">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CancelIcon fontSize="small" color="error" />
+                                Unmatched Only
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
                       </Box>
 
-                      {video.matched && video.matched.length > 0 && (
+                      {showMatched && video.matched && video.matched.length > 0 && (
                         <Box sx={videoMatchingStyles.segmentSection}>
                           <Box sx={videoMatchingStyles.segmentHeader}>
                             <CheckCircleIcon color="success" />
-                            <Typography variant="h6">Matched Segments ({matchedCount})</Typography>
+                            <Typography variant="h6">
+                              Matched Segments ({matchedCount})
+                            </Typography>
                           </Box>
 
-                          <TableContainer>
+                          <TableContainer sx={videoMatchingStyles.tableContainer}>
                             <Table size="small">
                               <TableHead>
                                 <TableRow sx={videoMatchingStyles.tableHeaderRow}>
@@ -368,7 +396,10 @@ const VideoMatchingDashboard = () => {
                                     OCR Text
                                   </TableCell>
                                   <TableCell sx={videoMatchingStyles.tableHeaderCell}>
-                                    Matched Slide
+                                    Section
+                                  </TableCell>
+                                  <TableCell sx={videoMatchingStyles.tableHeaderCell}>
+                                    Slide Content
                                   </TableCell>
                                 </TableRow>
                               </TableHead>
@@ -387,7 +418,19 @@ const VideoMatchingDashboard = () => {
 
                                     <TableCell>
                                       <Typography variant="body2" color="text.secondary">
-                                        {truncateText(match.ocr_text, 100)}
+                                        {match.ocr_text}
+                                      </Typography>
+                                    </TableCell>
+
+                                    <TableCell>
+                                      <Typography
+                                        variant="body2"
+                                        sx={videoMatchingStyles.sectionTitleText}
+                                      >
+                                        {match.slide_matched.sectionTitle}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        ID: {match.slide_matched.sectionId}
                                       </Typography>
                                     </TableCell>
 
@@ -415,8 +458,7 @@ const VideoMatchingDashboard = () => {
                           </TableContainer>
                         </Box>
                       )}
-
-                      {video.unmatched && video.unmatched.length > 0 && (
+                      {showUnmatched && video.unmatched && video.unmatched.length > 0 && (
                         <Box sx={videoMatchingStyles.segmentSection}>
                           <Box sx={videoMatchingStyles.segmentHeader}>
                             <CancelIcon color="error" />
@@ -425,7 +467,7 @@ const VideoMatchingDashboard = () => {
                             </Typography>
                           </Box>
 
-                          <TableContainer>
+                          <TableContainer sx={videoMatchingStyles.tableContainer}>
                             <Table size="small">
                               <TableHead>
                                 <TableRow sx={videoMatchingStyles.tableHeaderRow}>
