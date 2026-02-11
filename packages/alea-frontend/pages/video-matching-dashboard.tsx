@@ -29,51 +29,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import MainLayout from '../layouts/MainLayout';
-
-interface MatchedSlide {
-  timestamp: string;
-  ocr_text: string;
-  start_time: number;
-  end_time: number;
-  slide_matched: {
-    sectionId: string;
-    sectionTitle: string;
-    slideUri: string;
-    slideContent: string;
-  };
-}
-
-interface UnmatchedSlide {
-  timestamp: string;
-  ocr_text: string;
-  start_time: number;
-  end_time: number;
-}
-
-interface VideoStats {
-  total: number;
-  matched: number;
-  unmatched: number;
-  match_percent: number;
-}
-
-interface VideoData {
-  matched: MatchedSlide[];
-  unmatched: UnmatchedSlide[];
-  stats: VideoStats;
-}
-
-interface CourseData {
-  subject: string;
-  semester: string;
-  videos: {
-    [videoId: string]: VideoData;
-  };
-}
-
-interface MatchReportData {
-  [courseKey: string]: CourseData;
-}
+import { getVideoMatchingData, MatchReportData, VideoData } from '@alea/spec';
+import { get } from 'http';
 
 interface VideoWithMetadata extends VideoData {
   videoId: string;
@@ -92,12 +49,10 @@ const VideoMatchingDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/api/get-video-matching');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.statusText}`);
+        const data = await getVideoMatchingData();
+        if (!data) {
+          throw new Error('Failed to fetch video matching data');
         }
-
-        const data = await response.json();
         setMatchReportData(data);
 
         const firstCourse = Object.keys(data)[0];
@@ -112,9 +67,7 @@ const VideoMatchingDashboard = () => {
     loadData();
   }, []);
 
-  const courses = useMemo(() => {
-    return matchReportData ? Object.keys(matchReportData) : [];
-  }, [matchReportData]);
+  const courses = matchReportData ? Object.keys(matchReportData) : [];
   const videos = useMemo((): VideoWithMetadata[] => {
     if (!matchReportData || !selectedCourse) return [];
 
@@ -129,19 +82,18 @@ const VideoMatchingDashboard = () => {
     }));
   }, [matchReportData, selectedCourse]);
 
-  const filteredVideos = useMemo(() => {
-    return videos.filter(
-      (video) =>
-        video.videoId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.semester.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [videos, searchQuery]);
+  const filteredVideos = videos.filter(
+    (video) =>
+      video.videoId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.semester.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
-  const paginatedVideos = useMemo(() => {
-    return filteredVideos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  }, [filteredVideos, currentPage]);
+  const paginatedVideos = filteredVideos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const statistics = useMemo(() => {
     const totalVideos = videos.length;
@@ -298,7 +250,6 @@ const VideoMatchingDashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Search Bar */}
         <Box sx={videoMatchingStyles.searchSection}>
           <TextField
             fullWidth
@@ -317,7 +268,6 @@ const VideoMatchingDashboard = () => {
           />
         </Box>
 
-        {/* Videos List */}
         <Paper sx={videoMatchingStyles.videosSection}>
           <Box sx={videoMatchingStyles.videosSectionHeader}>
             <Typography variant="h6" sx={videoMatchingStyles.sectionTitle}>
@@ -371,7 +321,6 @@ const VideoMatchingDashboard = () => {
                     </AccordionSummary>
 
                     <AccordionDetails sx={videoMatchingStyles.accordionDetails}>
-                      {/* Video Metadata */}
                       <Box sx={{ mb: 3 }}>
                         <Grid container spacing={2}>
                           <Grid item xs={12} sm={4}>
@@ -401,7 +350,6 @@ const VideoMatchingDashboard = () => {
                         </Grid>
                       </Box>
 
-                      {/* Matched Segments */}
                       {video.matched && video.matched.length > 0 && (
                         <Box sx={videoMatchingStyles.segmentSection}>
                           <Box sx={videoMatchingStyles.segmentHeader}>
@@ -468,7 +416,6 @@ const VideoMatchingDashboard = () => {
                         </Box>
                       )}
 
-                      {/* Unmatched Segments */}
                       {video.unmatched && video.unmatched.length > 0 && (
                         <Box sx={videoMatchingStyles.segmentSection}>
                           <Box sx={videoMatchingStyles.segmentHeader}>
@@ -528,7 +475,6 @@ const VideoMatchingDashboard = () => {
             </Box>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <Box sx={videoMatchingStyles.paginationContainer}>
               <Pagination
@@ -545,10 +491,10 @@ const VideoMatchingDashboard = () => {
   );
 };
 
-
 const videoMatchingStyles = {
   container: {
-    py: 4,
+    py: { xs: 2, sm: 4 },
+    px: { xs: 1, sm: 2, md: 3 },
     minHeight: '100vh',
   },
   loadingBox: {
@@ -558,35 +504,40 @@ const videoMatchingStyles = {
     minHeight: 400,
   },
   header: {
-    mb: 4,
+    mb: { xs: 2, sm: 4 },
   },
   headerContent: {
     display: 'flex',
     alignItems: 'center',
-    gap: 2,
+    gap: { xs: 1, sm: 2 },
+    flexDirection: { xs: 'column', sm: 'row' },
+    textAlign: { xs: 'center', sm: 'left' },
   },
   headerIcon: {
-    fontSize: 48,
+    fontSize: { xs: 32, sm: 40, md: 48 },
     color: 'primary.main',
   },
   headerTitle: {
     fontWeight: 600,
     color: 'text.primary',
+    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
   },
   courseSection: {
     mb: 3,
-    p: 2,
+    p: { xs: 1.5, sm: 2 },
     bgcolor: 'background.paper',
   },
   sectionTitle: {
     fontWeight: 600,
     color: 'text.primary',
     mb: 2,
+    fontSize: { xs: '1rem', sm: '1.25rem' },
   },
   courseChipsContainer: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: 1,
+    justifyContent: { xs: 'center', sm: 'flex-start' },
   },
   courseChip: {
     cursor: 'pointer',
@@ -604,23 +555,26 @@ const videoMatchingStyles = {
   statValue: {
     fontWeight: 700,
     mt: 1,
+    fontSize: { xs: '1.75rem', sm: '2.125rem' },
   },
   statValueSuccess: {
     fontWeight: 700,
     mt: 1,
     color: 'success.main',
+    fontSize: { xs: '1.75rem', sm: '2.125rem' },
   },
   statValueError: {
     fontWeight: 700,
     mt: 1,
     color: 'error.main',
+    fontSize: { xs: '1.75rem', sm: '2.125rem' },
   },
   searchSection: {
     mb: 3,
   },
   searchField: {
     width: '100%',
-    maxWidth: 600,
+    maxWidth: { xs: '100%', sm: 600 },
     bgcolor: 'background.paper',
   },
   videosSection: {
@@ -628,15 +582,17 @@ const videoMatchingStyles = {
     overflow: 'hidden',
   },
   videosSectionHeader: {
-    p: 2,
+    p: { xs: 1.5, sm: 2 },
     borderBottom: 1,
     borderColor: 'divider',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 1,
   },
   accordionsContainer: {
-    p: 2,
+    p: { xs: 1, sm: 2 },
   },
   accordion: {
     mb: 2,
@@ -646,6 +602,7 @@ const videoMatchingStyles = {
   },
   accordionSummary: {
     bgcolor: 'action.hover',
+    px: { xs: 1, sm: 2 },
     '&:hover': {
       bgcolor: 'action.selected',
     },
@@ -655,25 +612,30 @@ const videoMatchingStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    pr: 2,
+    pr: { xs: 1, sm: 2 },
+    flexWrap: 'wrap',
+    gap: 1,
   },
   videoIdText: {
     fontWeight: 600,
     color: 'text.primary',
+    fontSize: { xs: '0.9rem', sm: '1rem' },
   },
   accordionStats: {
     display: 'flex',
     alignItems: 'center',
     gap: 1,
+    flexWrap: 'wrap',
   },
   matchPercentText: {
     fontWeight: 600,
     color: 'primary.main',
     ml: 1,
+    fontSize: { xs: '0.875rem', sm: '1rem' },
   },
   accordionDetails: {
     bgcolor: 'background.default',
-    p: 3,
+    p: { xs: 1.5, sm: 2, md: 3 },
   },
   segmentSection: {
     mb: 3,
@@ -686,12 +648,14 @@ const videoMatchingStyles = {
     alignItems: 'center',
     gap: 1,
     mb: 2,
+    flexWrap: 'wrap',
   },
   tableHeaderRow: {
     bgcolor: 'action.hover',
   },
   tableHeaderCell: {
     fontWeight: 600,
+    fontSize: { xs: '0.75rem', sm: '0.875rem' },
   },
   tableRow: {
     '&:hover': {
@@ -702,21 +666,29 @@ const videoMatchingStyles = {
     fontFamily: 'monospace',
     fontWeight: 600,
     color: 'primary.main',
+    fontSize: { xs: '0.75rem', sm: '0.875rem' },
   },
   sectionTitleText: {
     fontWeight: 500,
     mb: 0.5,
+    fontSize: { xs: '0.875rem', sm: '1rem' },
   },
   paginationContainer: {
-    p: 2,
+    p: { xs: 1.5, sm: 2 },
     display: 'flex',
     justifyContent: 'center',
     borderTop: 1,
     borderColor: 'divider',
   },
   emptyState: {
-    p: 4,
+    p: { xs: 2, sm: 4 },
     textAlign: 'center',
+  },
+  tableContainer: {
+    overflowX: 'auto',
+    '& table': {
+      minWidth: { xs: 500, sm: 'auto' },
+    },
   },
 };
 
