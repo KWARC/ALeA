@@ -1,4 +1,3 @@
-// hooks/useCheckAccess.ts
 import { canAccessResource } from '@alea/spec';
 import { Action, ResourceName } from '@alea/utils';
 import { useQuery } from '@tanstack/react-query';

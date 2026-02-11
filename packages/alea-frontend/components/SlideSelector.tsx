@@ -1,10 +1,11 @@
-import { getSlides, Slide } from '@alea/spec';
+import { getSlides, Slide, SlidesWithCSS } from '@alea/spec';
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { getParamsFromUri } from '@alea/utils';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { Alert, Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
+import { useSlides } from '../hooks/useSlide';
 
 type SlideData = Slide & {
   title: string;
@@ -51,12 +52,10 @@ export function getSectionHierarchy(sectionId: string, secInfo: Record<string, S
 }
 
 const getRelevantSlides = async (
-  courseId: string,
-  sectionId: string,
+  slidesWithCSS: SlidesWithCSS,
   sectionUri: string
 ): Promise<SlideDataWithCSS> => {
-  const { slides, css } = await getSlides(courseId, sectionId);
-  const relevantSlides = slides
+  const relevantSlides = slidesWithCSS.slides
     .map((slide, index) => ({
       ...slide,
       uri: slide.slide?.uri,
@@ -66,7 +65,7 @@ const getRelevantSlides = async (
     }))
     .filter((slide) => slide.uri); // filters out 'TEXT' slides
   console.log('relevantSlides', relevantSlides);
-  return { slides: relevantSlides, css };
+  return { slides: relevantSlides, css: slidesWithCSS.css };
 };
 
 interface SlidePickerProps {
@@ -93,10 +92,10 @@ export function SlidePicker({
     slides: [],
     css: [],
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const section = secInfo[sectionUri];
   const sectionDisplayName = section ? section.title.trim() : 'Unknown Section';
+  const { data: slidesData, isLoading } = useSlides(courseId, section.id);
 
   const resetSlideState = (): void => {
     setLocalAvailableSlides(EMPTY_SLIDE_DATA);
@@ -115,26 +114,18 @@ export function SlidePicker({
 
   useEffect(() => {
     const fetchSlides = async () => {
-      console.log('1');
       if (!sectionUri) {
-        console.log('2');
         resetSlideState();
         return;
       }
-      console.log('3');
       if (!section?.uri) {
-        console.log('4');
-        setIsLoading(false);
         setError('Section not found');
         setLocalAvailableSlides(EMPTY_SLIDE_DATA);
         return;
       }
-      console.log('5');
-      setIsLoading(true);
       setError(null);
       try {
-        const processedSlides = await getRelevantSlides(courseId, section.id, section.uri);
-        console.log('6');
+        const processedSlides = await getRelevantSlides(slidesData, section.uri);
         setLocalAvailableSlides(processedSlides);
         if (!slideUri && processedSlides.slides.length > 0) {
           const lastSlide = processedSlides.slides[processedSlides.slides.length - 1];
@@ -147,11 +138,7 @@ export function SlidePicker({
           setSlideUri(lastSlide.uri, lastSlide.index + 1, true, isLeaf);
         }
       } catch (error) {
-        console.log('7');
         handleFetchError(error);
-      } finally {
-        console.log('8');
-        setIsLoading(false);
       }
     };
     fetchSlides();

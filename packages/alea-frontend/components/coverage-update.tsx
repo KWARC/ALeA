@@ -11,8 +11,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getAllCourses, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, CourseInfo, CoverageTimeline, LectureEntry } from '@alea/utils';
+import { getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
@@ -20,6 +20,7 @@ import { CoverageUpdater } from './CoverageUpdater';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { ContentDashboard } from '@alea/stex-react-renderer';
 import { MenuBook } from '@mui/icons-material';
+import { useAllCourses } from '../hooks/useAllCourses';
 
 export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
@@ -46,7 +47,6 @@ const CoverageUpdateTab = () => {
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
@@ -59,9 +59,7 @@ const CoverageUpdateTab = () => {
     getCoverageTimeline(true).then(setCoverageTimeline);
   }, []);
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  const { data: courses = {} } = useAllCourses();
 
   useEffect(() => {
     const getSections = async () => {

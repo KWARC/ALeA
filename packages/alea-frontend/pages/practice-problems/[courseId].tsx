@@ -1,42 +1,27 @@
 import { CircularProgress } from '@mui/material';
-import { getAllCourses } from '@alea/spec';
-import { FTML } from '@flexiformal/ftml';
-import { CourseInfo } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import ProblemList from '../../components/ProblemList';
 import MainLayout from '../../layouts/MainLayout';
-import { contentToc } from '@flexiformal/ftml-backend';
+import { useContentToc } from '../../hooks/useContentToc';
+import { useAllCourses } from '../../hooks/useAllCourses';
 
 const CourseProblemsPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
-  const [sectionsData, setSectionsData] = useState<FTML.TocElem[] | undefined>(undefined);
-
+  const { data: courses = {}, isLoading: isCourseLoading } = useAllCourses();
+  const courseInfo = courses?.[courseId];
   useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
-
-  useEffect(() => {
-    async function fetchSectionData() {
-      if (!courses || !courseId) return;
-      const courseInfo = courses?.[courseId];
-      if (!courseInfo) {
-        router.replace('/');
-        return;
-      }
-      const { notes } = courseInfo;
-      const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
-      setSectionsData(tocContent);
+    if (courseId && !courseInfo) {
+      router.replace('/');
     }
-    fetchSectionData();
-  }, [courses, courseId, router]);
+  }, [courseId, courseInfo, router]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
-  if (!sectionsData) return <CircularProgress />;
+  const { data: sectionsData = [], isLoading: sectionDataLoading } = useContentToc(
+    courseInfo?.notes
+  );
+  if (!router.isReady || isCourseLoading || sectionDataLoading) return <CircularProgress />;
 
   return (
     <MainLayout title={`${(courseId || '').toUpperCase()} Problems | ALeA`}>

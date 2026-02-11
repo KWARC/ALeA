@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import {
   connectionRequest,
-  getAllCourses,
   GetStudyBuddiesResponse,
   getStudyBuddyList,
   getStudyBuddyUserInfo,
@@ -25,7 +24,7 @@ import {
   StudyBuddy,
   updateStudyBuddyInfo,
 } from '@alea/spec';
-import {CourseInfo, MaAI_COURSES } from '@alea/utils';
+import {  MaAI_COURSES } from '@alea/utils';
 import { useTheme } from '@mui/material/styles';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -36,6 +35,7 @@ import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { CourseHeader } from '../course-home/[courseId]';
 import { useIsLoggedIn } from '@alea/react-utils';
+import { useAllCourses } from '../../hooks/useAllCourses';
 
 function OptOutButton({ studyBuddy, courseId, institutionId, instanceId }: { studyBuddy: StudyBuddy; courseId: string; institutionId: string; instanceId: string }) {
   const { studyBuddy: t } = getLocaleObject(useRouter());
@@ -81,17 +81,14 @@ const StudyBuddyPage: NextPage = () => {
   });
   const [agreed, setAgreed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const masterCourses = MaAI_COURSES;
   const refetchStudyBuddyLists = useCallback(() => {
     if (!courseId || !fromServer?.active) return;
     if (courseId) getStudyBuddyList(courseId, institutionId, instanceId).then(setAllBuddies);
   }, [courseId, fromServer?.active, institutionId, instanceId]);
-      
+
   const { loggedIn } = useIsLoggedIn();
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  const { data: courses = {} ,isLoading:courseLoading} = useAllCourses();
 
   useEffect(() => {
     refetchStudyBuddyLists();
@@ -106,7 +103,7 @@ const StudyBuddyPage: NextPage = () => {
     });
   }, [courseId, institutionId, instanceId, loggedIn]);
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (!router.isReady || courseLoading) return <CircularProgress />;
   const courseInfo = courses[courseId];
   const courseName = courseInfo?.courseName || masterCourses[courseId]?.courseName;
   if (!courseName) {
@@ -232,8 +229,8 @@ const StudyBuddyPage: NextPage = () => {
           subText={t.requestSentSubtext}
           onAction={(buddy) => {
             removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
-              refetchStudyBuddyLists();
-              alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
+                refetchStudyBuddyLists();
+                alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
             });
           }}
         />

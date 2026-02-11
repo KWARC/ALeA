@@ -1,9 +1,7 @@
 import { updateRouterQuery } from '@alea/react-utils';
 import {
   fetchGeneratedProblems,
-  getCourseGeneratedProblemsCountBySection,
   getAllCourses,
-  getCourseProblemCounts,
   getCoverageTimeline,
   getProblemsPerSection,
 } from '@alea/spec';
@@ -29,6 +27,8 @@ import { getSecInfo } from '../coverage-update';
 import { getUpcomingQuizSyllabus } from '../QuizDashboard';
 import { SectionDetailsDialog } from './SectionDetailsDialog';
 import GoalHierarchyDialog from './goal-hierarchy/GoalHierarchyDialog';
+import { useCourseProblemCounts } from '../../hooks/useCourseProblemCount';
+import { useGeneratedProblemsCount } from '../../hooks/useGeneratedProblemCount';
 
 export function getSectionRange(startUri: string, endUri: string, sections: SecInfo[]) {
   if (!sections?.length) return;
@@ -62,10 +62,7 @@ export const CourseSectionSelector = ({
   const endSectionUri = (router.query.endSectionUri as string) || '';
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
   const existingProblemsCache = useRef<Record<string, ExistingProblem[]>>({});
-  const [generatedProblemsCount, setGeneratedProblemsCount] = useState<Record<string, number>>({});
-  const [existingProblemsCount, setExistingProblemsCount] = useState<Record<string, number>>({});
   const [loadingSections, setLoadingSections] = useState(false);
-  const [loadingProblemCount, setLoadingProblemCount] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
@@ -74,6 +71,11 @@ export const CourseSectionSelector = ({
     endSecUri: string;
   }>({ startSecUri: '', endSecUri: '' });
   // const [useQuizSyllabus, setUseQuizSyllabus] = useState(false);
+  const { data: existingProblemsCount = {}, isLoading: isCourseProblemCountsLoading } =
+    useCourseProblemCounts(courseId);
+  const { data: generatedProblemsCount = {}, isLoading: isGeneratedProblemsLoading } =
+    useGeneratedProblemsCount(courseId);
+  const loadingProblemCount = isCourseProblemCountsLoading || isGeneratedProblemsLoading;
 
   useEffect(() => {
     getAllCourses().then(setCourses);
@@ -123,23 +125,6 @@ export const CourseSectionSelector = ({
       setUpcomingQuizSyllabus(syllabus);
     }
   }, [coverageTimeline, courseId, sections]);
-  useEffect(() => {
-    const fetchCounts = async () => {
-      setLoadingProblemCount(true);
-      try {
-        if (!courseId) return;
-        const generatedCounts = await getCourseGeneratedProblemsCountBySection(courseId);
-        const existingCountsResp = await getCourseProblemCounts(courseId);
-        setGeneratedProblemsCount(generatedCounts);
-        setExistingProblemsCount(existingCountsResp);
-      } catch (err) {
-        console.error('Error in fetch Problem Count', err);
-      } finally {
-        setLoadingProblemCount(false);
-      }
-    };
-    fetchCounts();
-  }, [courseId]);
 
   useEffect(() => {
     if (!startSectionUri || !endSectionUri || !courseId || !sections.length) return;
