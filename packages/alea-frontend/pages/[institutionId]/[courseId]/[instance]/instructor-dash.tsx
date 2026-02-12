@@ -79,6 +79,7 @@ function ChosenTab({
         <QuizDashboard
           courseId={courseId}
           institutionId={institutionId}
+          instanceId={instanceId}
           quizId={quizId}
           onQuizIdChange={onQuizIdChange}
         />
