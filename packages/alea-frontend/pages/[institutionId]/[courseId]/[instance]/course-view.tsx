@@ -22,13 +22,13 @@ import {
 import {
   Action,
   CourseInfo,
-  getCoursePdfUrl,
   getParamFromUri,
   localStore,
+  pathToCourseNotes,
   ResourceName,
   shouldUseDrawer,
 } from '@alea/utils';
-
+import { setSlideNumAndSectionId, ViewMode } from '../../../../utils/courseViewUtils';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { VideoCameraBack } from '@mui/icons-material';
@@ -38,27 +38,33 @@ import {
   Button,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
   Stack,
   Tooltip,
   Typography,
 } from '@mui/material';
-import shadows from '../../theme/shadows';
+import shadows from '../../../../theme/shadows';
 import axios from 'axios';
-import { NextPage } from 'next';
+import type { NextPage } from 'next';
 import Link from 'next/link';
-import { NextRouter, useRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import CourseViewToolbarIcons from '../../components/course-view/CourseViewToolbarIcons';
-import NotesAndCommentsSection from '../../components/course-view/NotesAndCommentsSection';
-import QuizComponent from '../../components/GenerateQuiz';
-import { getSlideUri, SlideDeck } from '../../components/SlideDeck';
-import { SlidesUriToIndexMap, VideoDisplay } from '../../components/VideoDisplay';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import { SearchDialog } from '../course-notes/[courseId]';
+import CourseViewToolbarIcons from '../../../../components/course-view/CourseViewToolbarIcons';
+import NotesAndCommentsSection from '../../../../components/course-view/NotesAndCommentsSection';
+import QuizComponent from '../../../../components/GenerateQuiz';
+import { getSlideUri, SlideDeck } from '../../../../components/SlideDeck';
+import { SlidesUriToIndexMap, VideoDisplay } from '../../../../components/VideoDisplay';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import SearchCourseNotes from '../../../../components/SearchCourseNotes';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
 import SearchIcon from '@mui/icons-material/Search';
 // DM: if possible, this should use the *actual* uri; uri:undefined should be avoided
 function RenderElements({ elements }: { elements: string[] }) {
@@ -72,11 +78,6 @@ function RenderElements({ elements }: { elements: string[] }) {
       ))}
     </>
   );
-}
-
-export enum ViewMode {
-  SLIDE_MODE = 'SLIDE_MODE',
-  COMBINED_MODE = 'COMBINED_MODE',
 }
 
 function ToggleModeButton({
@@ -128,18 +129,6 @@ function populateSlidesClipInfos(sections: SectionInfo[], slidesClipInfo: Slides
     slidesClipInfo[section.id] = section.clipInfo;
     populateSlidesClipInfos(section.children, slidesClipInfo);
   }
-}
-
-export function setSlideNumAndSectionId(router: NextRouter, slideNum: number, sectionId?: string) {
-  const { pathname, query } = router;
-  const courseId = query.courseId as string;
-  if (sectionId) {
-    query.sectionId = sectionId;
-    localStore?.setItem(`lastReadSectionId-${courseId}`, sectionId);
-  }
-  query.slideNum = `${slideNum}`;
-  localStore?.setItem(`lastReadSlideNum-${courseId}`, `${slideNum}`);
-  router.push({ pathname, query });
 }
 
 function getSections(tocElems: FTML.TocElem[]): string[] {
@@ -212,7 +201,16 @@ function resolveSlideFromFragment(
 
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('course-view');
+
+  const instanceId = resolvedInstanceId;
   const sectionId = router.query.sectionId as string;
   const slideNum = +((router.query.slideNum as string) || 0);
   const viewModeStr = router.query.viewMode as string;
@@ -220,8 +218,7 @@ const CourseViewPage: NextPage = () => {
   const isVideoVisible = viewMode === ViewMode.COMBINED_MODE;
   const audioOnlyStr = router.query.audioOnly as string;
   const audioOnly = audioOnlyStr === 'true';
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [preNotes, setPreNotes] = useState([] as string[]);
   const [postNotes, setPostNotes] = useState([] as string[]);
@@ -324,16 +321,16 @@ const CourseViewPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !instanceId) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.MUTATE, {
         courseId,
-        instanceId: currentTerm,
+        instanceId,
       });
       setIsQUizMaker(hasAccess);
     };
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     getAllCourses().then(setCourses);
@@ -505,6 +502,19 @@ const CourseViewPage: NextPage = () => {
     setSlideNumAndSectionId(router, 1, secId);
   }
 
+  if (isValidating) return null;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+
   if (!router.isReady || !courses) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -514,8 +524,7 @@ const CourseViewPage: NextPage = () => {
   }
 
   if (!courses[courseId]) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+    return <CourseNotFound />;
   }
   const notes = courses?.[courseId]?.notes;
 
@@ -564,14 +573,26 @@ const CourseViewPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-      <SearchDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        courseId={courseId}
-        notesUri={notes}
-        hasResults={hasResults}
-        setHasResults={setHasResults}
-      />
+      <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
+          {courseId.toUpperCase()}
+        </DialogTitle>
+        <DialogContent sx={{ p: 1 }}>
+          <SearchCourseNotes
+            courseId={courseId || ''}
+            notesUri={notes}
+            onClose={handleDialogClose}
+            setHasResults={setHasResults}
+            institutionId={institutionId}
+            instance={instanceId}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
       <LayoutWithFixedMenu
         menu={
           toc?.length > 0 && (
@@ -680,7 +701,7 @@ const CourseViewPage: NextPage = () => {
                   />
                 </Stack>
 
-                <Link href={courses[courseId]?.notesLink ?? ''} passHref>
+                <Link href={pathToCourseNotes(institutionId, courseId, instanceId)} passHref>
                   <Button
                     variant="contained"
                     startIcon={<ArticleIcon />}

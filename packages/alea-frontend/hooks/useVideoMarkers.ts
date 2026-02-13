@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Marker } from '../components/MediaItem';
 import { SlidesUriToIndexMap } from '../components/VideoDisplay';
 import { NextRouter } from 'next/router';
-import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
+import { setSlideNumAndSectionId } from '../utils/courseViewUtils';
 
 export interface UseVideoMarkersOptions {
   videoPlayer: React.MutableRefObject<any>;

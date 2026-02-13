@@ -7,51 +7,21 @@ import {
   SectionReview,
   TrafficLightIndicator,
 } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry, PRIMARY_COL } from '@alea/utils';
+import { CourseInfo, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { getLocaleObject } from '../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import SearchCourseNotes from '../../components/SearchCourseNotes';
-import MainLayout from '../../layouts/MainLayout';
-
-export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
-        {courseId.toUpperCase()}
-      </DialogTitle>
-      <DialogContent sx={{ p: 1 }}>
-        <SearchCourseNotes
-          courseId={courseId || ''}
-          notesUri={notesUri}
-          onClose={onClose}
-          setHasResults={setHasResults}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import SearchCourseNotes from '../../../../components/SearchCourseNotes';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
 
 const FragmentWrap: React.FC<{
   uri: string;
@@ -96,13 +66,22 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('course-notes');
+
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -123,19 +102,13 @@ const CourseNotesPage: NextPage = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-  const handleSearchClick = () => {
-    setDialogOpen(true);
-  };
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-  };
 
   useEffect(() => {
     getAllCourses().then(setCourses);
   }, []);
 
   useEffect(() => {
-    const notes = courses?.[courseId]?.notes;
+    const notes = courses?.[courseId ?? '']?.notes;
     if (!notes) return;
     setToc(undefined);
     contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
@@ -160,13 +133,11 @@ const CourseNotesPage: NextPage = () => {
     });
   }, [toc, router.asPath]);
 
-  //TODO: Improve navigation
-
   useEffect(() => {
     async function fetchGottos() {
       try {
         const response = await axios.get('/api/get-coverage-timeline');
-        const currentSemData: LectureEntry[] = response.data[courseId] || [];
+        const currentSemData: LectureEntry[] = response.data[courseId ?? ''] || [];
         const coverageData = currentSemData
           .filter((item) => item.sectionUri)
           .map((item) => ({
@@ -182,13 +153,32 @@ const CourseNotesPage: NextPage = () => {
     if (courseId) fetchGottos();
   }, [courseId]);
 
+  if (isValidating) {
+    return null;
+  }
+
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
+  if (!institutionId || !courseId || !resolvedInstanceId) {
+    return <CourseNotFound />;
+  }
+
   if (!router.isReady || !courses || !gottos || !toc) {
     return <CircularProgress />;
   }
+
   const courseInfo = courses[courseId];
   if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+    return <CourseNotFound />;
   }
   const { notes } = courseInfo;
 
@@ -208,21 +198,33 @@ const CourseNotesPage: NextPage = () => {
               bgcolor: 'primary.300',
             },
           }}
-          onClick={handleSearchClick}
+          onClick={() => setDialogOpen(true)}
           size="large"
           aria-label="Open search dialog"
         >
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-      <SearchDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        courseId={courseId}
-        notesUri={notes}
-        hasResults={hasResults}
-        setHasResults={setHasResults}
-      />
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
+          {courseId.toUpperCase()}
+        </DialogTitle>
+        <DialogContent sx={{ p: 1 }}>
+          <SearchCourseNotes
+            courseId={courseId || ''}
+            notesUri={notes}
+            onClose={() => setDialogOpen(false)}
+            setHasResults={setHasResults}
+            institutionId={institutionId}
+            instance={resolvedInstanceId}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Box
         sx={{
           height: 'calc(100vh - 120px)',

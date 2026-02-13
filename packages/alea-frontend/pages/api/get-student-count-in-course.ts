@@ -1,4 +1,4 @@
-import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
+import { getCourseEnrollmentAcl } from '../../components/courseHelpers';
 import { getAclMembers } from './acl-utils/acl-common-utils';
 
 export default async function handler(req, res) {
