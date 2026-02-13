@@ -17,7 +17,7 @@ import {
 import { useRouter } from 'next/router';
 import { memo, useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
-import { setSlideNumAndSectionId } from '../pages/course-view/[courseId]';
+import { setSlideNumAndSectionId } from '../utils/courseViewUtils';
 import styles from '../styles/slide-deck.module.scss';
 import { PresentationToggleButton } from './PresentationToggleButton';
 import shadows from '../theme/shadows';

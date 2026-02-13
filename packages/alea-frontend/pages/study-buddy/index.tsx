@@ -37,7 +37,7 @@ import {
   getStudyBuddyCoursesSortedbyConnections,
   getStudyBuddyUsersStats,
 } from '@alea/spec';
-import { MaAI_COURSES, localStore } from '@alea/utils';
+import { MaAI_COURSES, localStore, pathToStudyBuddy } from '@alea/utils';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -191,7 +191,7 @@ function CourseStub({ courseCode, onCancel }: { courseCode: string; onCancel?: (
     <Button
       sx={{ display: 'flex', alignItems: 'center' }}
       variant="contained"
-      onClick={() => router.push(`/study-buddy/${courseCode}`)}
+      onClick={() => router.push(pathToStudyBuddy('FAU', courseCode, 'latest'))}
     >
       {MaAI_COURSES[courseCode]?.courseName ?? courseCode}
       {onCancel && (
@@ -331,7 +331,7 @@ const Courses: NextPage = () => {
               addRecentCourse(courseCode);
               forceRerender();
               await new Promise((r) => setTimeout(r, 500));
-              router.push(`/study-buddy/${courseCode}`);
+              router.push(pathToStudyBuddy('FAU', courseCode, 'latest'));
             }
           }}
         />
@@ -348,7 +348,7 @@ const Courses: NextPage = () => {
                 <TableRow key={courseCode}>
                   <TableCell>
                     <Link
-                      href={`/study-buddy/${courseCode}`}
+                      href={pathToStudyBuddy('FAU', courseCode, 'latest')}
                       onClick={() => addRecentCourse(courseCode)}
                     >
                       {courseList[courseCode]?.courseName}
