@@ -14,6 +14,8 @@ import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu } from './LayoutWithFixedMenu';
 import styles from './stex-react-renderer.module.scss';
 
+export const NOT_COVERED_SECTIONS = 'notCoveredSections';
+
 interface SectionTreeNode {
   parentNode?: SectionTreeNode;
   children: SectionTreeNode[];
@@ -24,26 +26,6 @@ interface SectionTreeNode {
   ended?: Date;
   notCovered?: boolean;
 }
-
-export const NOT_COVERED_SECTIONS: Record<string, string[]> = {
-  lbs: [
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=nlfrags/sec&d=frag4-qsa&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=modalities/sec&d=modalities&l=en&e=section_1',
-    'http://mathhub.info?a=courses/FAU/LBS/course&p=tense/sec&d=tense&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/ComSem&p=nlfrags/sec&d=quantifier-scope-ambiguity&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/ComSem&p=hou/sec&d=hounl&l=en&e=section',
-  ],
-  'ai-1': [
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=resolution&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=prolog/sec&d=prolog-inference&l=en&e=section',
-    'http://mathhub.info?a=courses/Jacobs/CompLog&p=kr/sec&d=kr-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=semweb-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=logic/sec&d=kr-other&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=fluents&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=framework-intro&l=en&e=section',
-    'http://mathhub.info?a=courses/FAU/AI/course&p=planning/sec&d=planning-history&l=en&e=section'
-  ],
-};
 
 function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
   if (!node || node.tocElem.type !== 'Section') return;
@@ -58,13 +40,23 @@ function fillCoverage(node: SectionTreeNode, coveredSectionUris: string[]) {
   //node.ended = node.started
 }
 
+function isValidLectureEntry(snap: LectureEntry | null | undefined): snap is LectureEntry {
+  return Boolean(
+    snap &&
+      typeof snap.timestamp_ms === 'number' &&
+      typeof snap.sectionUri === 'string' &&
+      snap.sectionUri.length > 0
+  );
+}
+
 function getTopLevelSections(
   courseId: string,
   tocElems: FTML.TocElem[],
-  parentNode: SectionTreeNode
+  parentNode: SectionTreeNode,
+  notCoveredSections: string[]
 ): SectionTreeNode[] {
   return tocElems
-    .map((t) => getSectionTree(courseId, t, parentNode))
+    .map((t) => getSectionTree(courseId, t, parentNode, notCoveredSections))
     .filter(Boolean)
     .map((t) => (Array.isArray(t) ? t : [t as SectionTreeNode]))
     .flat();
@@ -74,6 +66,7 @@ function getSectionTree(
   courseId: string,
   tocElem: FTML.TocElem,
   parentNode: SectionTreeNode,
+  notCoveredSections: string[],
   parentNotCovered = false
 ): SectionTreeNode | SectionTreeNode[] | undefined {
   if (tocElem.type === 'Paragraph' || tocElem.type === 'Slide') return undefined;
@@ -81,7 +74,7 @@ function getSectionTree(
 
   if (isSection) {
     const children: SectionTreeNode[] = [];
-    const notCovered = parentNotCovered || NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri);
+    const notCovered = parentNotCovered || notCoveredSections.includes(tocElem.uri);
 
     const thisNode = {
       tocElem,
@@ -90,7 +83,7 @@ function getSectionTree(
       notCovered,
     } as SectionTreeNode;
     for (const s of tocElem.children || []) {
-      const subNodes = getSectionTree(courseId, s, thisNode, notCovered);
+      const subNodes = getSectionTree(courseId, s, thisNode, notCoveredSections, notCovered);
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -99,7 +92,13 @@ function getSectionTree(
   } else {
     const children: SectionTreeNode[] = [];
     for (const s of tocElem.children || []) {
-      const subNodes = getSectionTree(courseId, s, parentNode, parentNotCovered);
+      const subNodes = getSectionTree(
+        courseId,
+        s,
+        parentNode,
+        notCoveredSections,
+        parentNotCovered
+      );
       if (!subNodes) continue;
       if (Array.isArray(subNodes)) children.push(...subNodes);
       else children.push(subNodes);
@@ -357,7 +356,13 @@ interface SectionLectureInfo {
 
 function getPerSectionLectureInfo(topLevel: FTML.TocElem, lectureData: LectureEntry[]) {
   const perSectionLectureInfo: Record<FTML.Uri, SectionLectureInfo> = {};
-  lectureData = lectureData?.filter((snap) => snap.sectionUri);
+
+  lectureData = (lectureData || []).filter(isValidLectureEntry);
+
+  lectureData = lectureData.filter((snap): snap is LectureEntry =>
+    Boolean(snap && snap.sectionUri)
+  );
+
   if (!lectureData?.length) return perSectionLectureInfo;
   const [preOrdered, postOrdered] = getOrderedSections(topLevel);
   const firstSectionNotStarted = lectureData.map((snap) => {
@@ -425,6 +430,7 @@ export function ContentDashboard({
 }) {
   const t = getLocaleObject(useRouter());
   const [filterStr, setFilterStr] = useState('');
+  const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
   const [defaultOpen, setDefaultOpen] = useState(true);
   const [perSectionLectureInfo, setPerSectionLectureInfo] = useState<
     Record<FTML.Uri, SectionLectureInfo>
@@ -437,7 +443,10 @@ export function ContentDashboard({
         return;
       }
       const timeline = await getCoverageTimeline();
-      const snaps = timeline?.[courseId];
+      const courseData = timeline?.[courseId];
+      const snaps = courseData?.lectures ?? [];
+      setNotCoveredSections(courseData?.notCoveredSections ?? []);
+
       const shadowTopLevel: FTML.TocElem = { type: 'SkippedSection', children: toc };
       setPerSectionLectureInfo(getPerSectionLectureInfo(shadowTopLevel, snaps));
     }
@@ -446,10 +455,10 @@ export function ContentDashboard({
 
   const firstLevelSections = useMemo(() => {
     const shadowTopLevel: SectionTreeNode = { children: [], tocElem: undefined as any };
-    const topLevel = getTopLevelSections(courseId || '', toc, shadowTopLevel);
+    const topLevel = getTopLevelSections(courseId || '', toc, shadowTopLevel, notCoveredSections);
     shadowTopLevel.children = topLevel;
     return topLevel;
-  }, [toc]);
+  }, [toc, notCoveredSections]);
 
   return (
     <FixedPositionMenu
@@ -472,7 +481,12 @@ export function ContentDashboard({
             <Tooltip title={t.expandCollapseAll}>
               <IconButton
                 onClick={() => setDefaultOpen((v) => !v)}
-                sx={{ border: '1px solid ', borderColor: 'divider', borderRadius: '40px',color:'secondary.main' }}
+                sx={{
+                  border: '1px solid ',
+                  borderColor: 'divider',
+                  borderRadius: '40px',
+                  color: 'secondary.main',
+                }}
               >
                 {defaultOpen ? <UnfoldLessDoubleIcon /> : <UnfoldMoreDoubleIcon />}
               </IconButton>

@@ -5,6 +5,7 @@ interface CoverageUpdatePayload {
   updatedEntry?: LectureEntry;
   timestamp_ms?: number;
   action?: 'upsert' | 'delete';
+  notCoveredSections?: string[];
 }
 
 let coverageTimelineCache: CoverageTimeline | undefined = undefined;
@@ -34,6 +35,7 @@ export async function updateCoverageTimeline(payload: CoverageUpdatePayload) {
     courseId: payload.courseId,
     ...(payload.updatedEntry && { updatedEntry: payload.updatedEntry }),
     ...(payload.timestamp_ms && { timestamp_ms: payload.timestamp_ms }),
+    ...(payload.notCoveredSections && { notCoveredSections: payload.notCoveredSections }),
   };
   return axios.post('/api/set-coverage-timeline', finalPayload);
 }

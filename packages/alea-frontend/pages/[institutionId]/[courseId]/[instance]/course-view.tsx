@@ -3,6 +3,7 @@ import {
   ClipInfo,
   ClipMetadata,
   getAllCourses,
+  getCoverageTimeline,
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
@@ -15,7 +16,6 @@ import { SafeHtml } from '@alea/react-utils';
 import {
   ContentDashboard,
   LayoutWithFixedMenu,
-  NOT_COVERED_SECTIONS,
   SafeFTMLFragment,
   SectionReview,
 } from '@alea/stex-react-renderer';
@@ -148,16 +148,23 @@ function findSection(
   toc: FTML.TocElem[],
   courseId: string,
   sectionId: string,
+  notCoveredSections: string[],
   isParentNotCovered = false
 ): { tocElem: Extract<FTML.TocElem, { type: 'Section' }>; isNotCovered: boolean } {
   for (const tocElem of toc) {
     const isNotCovered =
       isParentNotCovered ||
-      (tocElem.type === 'Section' && NOT_COVERED_SECTIONS[courseId]?.includes(tocElem.uri));
+      (tocElem.type === 'Section' && notCoveredSections.includes(tocElem.uri));
     if (tocElem.type === 'Section' && tocElem.id === sectionId) {
       return { tocElem, isNotCovered };
     } else if ('children' in tocElem) {
-      const result = findSection(tocElem.children, courseId, sectionId, isNotCovered);
+      const result = findSection(
+        tocElem.children,
+        courseId,
+        sectionId,
+        notCoveredSections,
+        isNotCovered
+      );
       if (result.tocElem) return result;
     }
   }
@@ -256,11 +263,12 @@ const CourseViewPage: NextPage = () => {
     if (saved === 'presenter' || saved === 'presentation') return saved;
     return null;
   });
+  const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
   const [showPresentationVideo, setShowPresentationVideo] = useState(false);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
   const { tocElem: selectedSectionTOC, isNotCovered: sectionIsNotCovered } = useMemo(() => {
-    return findSection(toc, courseId, sectionId);
-  }, [toc, courseId, sectionId]);
+    return findSection(toc, courseId, sectionId, notCoveredSections);
+  }, [toc, courseId, sectionId, notCoveredSections]);
 
   const handleVideoLoad = (status) => {
     setVideoLoaded(status);
@@ -444,6 +452,13 @@ const CourseViewPage: NextPage = () => {
         console.error(err);
       });
   }, [courseId, currentClipId, router.isReady]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    getCoverageTimeline().then((timeline) => {
+      setNotCoveredSections(timeline?.[courseId]?.notCoveredSections ?? []);
+    });
+  }, [courseId]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -643,7 +658,7 @@ const CourseViewPage: NextPage = () => {
         setShowDashboard={setShowDashboard}
         drawerAnchor="left"
       >
-        <Box sx={{ minHeight: '100vh',bgcolor:'background.default' }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
           <Container
             maxWidth="xl"
             sx={{

@@ -251,10 +251,10 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
     if (!justCreatedQuizIdRef.current) return;
 
     const id = justCreatedQuizIdRef.current;
-    if (!quizzes.find(q => q.id === id)) return;
+    if (!quizzes.find((q) => q.id === id)) return;
 
-      justCreatedQuizIdRef.current = null;
-      onQuizIdChange?.(id);
+    justCreatedQuizIdRef.current = null;
+    onQuizIdChange?.(id);
   }, [quizzes, onQuizIdChange]);
 
   useEffect(() => {
@@ -496,8 +496,11 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
   }, [courseId]);
 
   useEffect(() => {
-    const timeline = coverageTimeline[courseId];
-    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    const courseData = coverageTimeline[courseId];
+
+    const lectures = courseData?.lectures ?? [];
+
+    const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {
       setUpcomingQuizSyllabus(syllabus);
     }

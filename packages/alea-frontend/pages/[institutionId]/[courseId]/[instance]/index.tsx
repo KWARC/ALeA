@@ -165,7 +165,10 @@ function CourseScheduleSection({
       try {
         const timeline = await getCoverageTimeline();
         const now = Date.now();
-        const entries = (timeline[courseId] || [])
+
+        const lectureEntries = timeline[courseId]?.lectures ?? [];
+
+        const entries = lectureEntries
           .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
           .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
         setNextLectureStartTime(entries[0]?.timestamp_ms);
@@ -849,7 +852,7 @@ const CourseHomePage: NextPage = () => {
               width: '100%',
               maxWidth: 600,
               margin: '0 auto',
-              mb:2,
+              mb: 2,
             }}
           >
             <TextField
@@ -875,16 +878,16 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         )}
-        <Box bgcolor={"background.paper"}>
-        <Box fragment-uri={landing} fragment-kind="Section">
-          <SafeFTMLDocument
-            document={{ type: 'FromBackend', uri: landing }}
-            showContent={false}
-            pdfLink={false}
-            chooseHighlightStyle={false}
-            toc="None"
-          />
-        </Box>
+        <Box bgcolor={'background.paper'}>
+          <Box fragment-uri={landing} fragment-kind="Section">
+            <SafeFTMLDocument
+              document={{ type: 'FromBackend', uri: landing }}
+              showContent={false}
+              pdfLink={false}
+              chooseHighlightStyle={false}
+              toc="None"
+            />
+          </Box>
         </Box>
         <RecordedSyllabus courseId={courseId} />
       </Box>
