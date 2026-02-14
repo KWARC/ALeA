@@ -1,7 +1,6 @@
 import { FTML } from '@flexiformal/ftml';
 import axios from 'axios';
 import { SmileyCognitiveValues } from './lmp';
-// import { LectureEntry } from '@alea/utils';
 
 export interface CardsWithSmileys {
   conceptUri: string;
@@ -78,12 +77,7 @@ export interface GetSlidesResponse {
   [sectionId: string]: SlidesWithCSS;
 }
 
-// export interface CourseCoverageData {
-//   lectures: LectureEntry[];
-//   notCoveredSections: string[];
-// }
 
-// export type GetCoverageTimelineResponse = Record<string, CourseCoverageData>;
 
 // Can use for 'https://alea.education' for faster debugging and/or to get latest server data.
 // However, you will need some use CORS unblocker. eg https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino
