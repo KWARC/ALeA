@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
-import { getAllCourses } from '@alea/spec';
+import { getAllCourses, getCoverageTimeline } from '@alea/spec';
 import {
   NOT_COVERED_SECTIONS,
   SafeFTMLDocument,
@@ -11,7 +11,17 @@ import { CourseInfo, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -66,14 +76,8 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('course-notes');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('course-notes');
 
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
@@ -136,8 +140,10 @@ const CourseNotesPage: NextPage = () => {
   useEffect(() => {
     async function fetchGottos() {
       try {
-        const response = await axios.get('/api/get-coverage-timeline');
-        const currentSemData: LectureEntry[] = response.data[courseId ?? ''] || [];
+        const timeline = await getCoverageTimeline();
+
+        const currentSemData: LectureEntry[] = timeline?.[courseId ?? '']?.lectures ?? [];
+
         const coverageData = currentSemData
           .filter((item) => item.sectionUri)
           .map((item) => ({
@@ -205,7 +211,12 @@ const CourseNotesPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth={hasResults ? 'lg' : 'md'}
+      >
         <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
           {courseId.toUpperCase()}
         </DialogTitle>

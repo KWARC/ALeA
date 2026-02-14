@@ -1,5 +1,6 @@
 import { CoverageTimeline, LectureEntry } from '@alea/utils';
 import axios from 'axios';
+import { fetchCoverageTimeline } from './next-api';
 interface CoverageUpdatePayload {
   courseId: string;
   updatedEntry?: LectureEntry;
@@ -22,8 +23,7 @@ export async function getCoverageTimeline(forceRefresh = false): Promise<Coverag
     return coverageTimelineCache!;
   }
 
-  const response = await axios.get('/api/get-coverage-timeline');
-  const coverageTimeline = response.data as CoverageTimeline;
+  const coverageTimeline = await fetchCoverageTimeline();
   coverageTimelineCache = coverageTimeline;
   coverageTimelineCacheTS = Date.now();
   return coverageTimeline;
