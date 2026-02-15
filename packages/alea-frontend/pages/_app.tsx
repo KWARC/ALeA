@@ -2,7 +2,7 @@ import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import { getTheme } from '../theme';
 import { AppProps } from 'next/app';
 import {
@@ -145,6 +145,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
         <MatomoProvider value={instance}>
           <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
+              <CssBaseline/>
               <MathJaxContext>
                 <FTMLReadyContext.Provider value={readyToRender}>
                   <PositionProvider>

@@ -157,7 +157,7 @@ For tiny, one-line, self-contained style adjustments, it’s okay to write sx in
 ### 1.3 Color Palette Usage
 
 #### 1.3.1 Always Use Theme Palette Tokens
-**Examples:**
+**Example:**
 ```jsx
 <Box sx={{ color: 'text.primary', bgcolor: 'background.paper' }} />
 ```
@@ -168,6 +168,11 @@ For tiny, one-line, self-contained style adjustments, it’s okay to write sx in
 - Do not define gradient values directly inside components.
 
 - If a required gradient is not available,**add a new gradient to the theme palette with a clear, semantic key.**
+**Example:**
+```jsx
+<Box sx={{ background: theme.palette.gradients?.softHighlight
+}} />
+```
 
 ## NOTE: 
 - Ensures light/dark mode compatibility for color being used
@@ -180,13 +185,13 @@ For tiny, one-line, self-contained style adjustments, it’s okay to write sx in
 - Prefer MUI typography variants (T1,h1–h6, body1, body2, etc.) instead of defining custom font sizes.
 
 - If a local override is required for typography-related properties (fontSize, lineHeight, fontWeight, etc.), ensure it is responsive across all breakpoints.
-- Always verify typography on small, medium, and large screens. ❌ Avoid **single-screen overrides**
+- Always verify typography on small, medium, and large screens.
+❌ Avoid **single-screen overrides**:
 
 #### 1.5 Use Shadows From the Central shadows.ts Array
 - Always use shadow values defined in shadows.ts.
 - Do not define custom boxShadow values inside components.
 - If the required shadow intensity or opacity is not available, add a new entry to the shadows.ts array instead of creating ad-hoc shadows.
-
 ❌ Avoid:
 ```tsx
 sx={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}

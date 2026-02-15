@@ -1,5 +1,5 @@
 import { FTMLDocument, FTMLFragment, FTMLSetup } from '@flexiformal/ftml-react';
-import { CircularProgress } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import React, { useContext } from 'react';
 import { FTMLReadyContext } from './stex-react-renderer';
 
@@ -14,7 +14,11 @@ export function SafeFTMLFragment(props: React.ComponentProps<typeof FTMLFragment
     return <CircularProgress />;
   }
 
-  return <FTMLFragment {...props} />;
+  return (
+    <Box className="ftml-reset">
+      <FTMLFragment {...props} />
+     </Box>
+  );
 }
 
 export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument>) {
@@ -24,7 +28,11 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
     return <CircularProgress />;
   }
 
-  return  <FTMLDocument {...props} />;
+  return (
+    <Box className="ftml-reset">
+      <FTMLDocument {...props} />
+     </Box>
+  );
 }
 
 export function SafeFTMLSetup(

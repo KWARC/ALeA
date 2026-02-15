@@ -178,6 +178,7 @@ function FlashCardBack({
             m: '10px 5px 0',
             '& *': { fontSize: 'large !important' },
           }}
+          bgcolor={"white"}
         >
           {definitionUri && (
             <Box fragment-uri={definitionUri} fragment-kind="Section">

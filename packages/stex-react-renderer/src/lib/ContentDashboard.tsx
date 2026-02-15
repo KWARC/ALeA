@@ -6,7 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import IndeterminateCheckBoxOutlinedIcon from '@mui/icons-material/IndeterminateCheckBoxOutlined';
 import UnfoldLessDoubleIcon from '@mui/icons-material/UnfoldLessDouble';
 import UnfoldMoreDoubleIcon from '@mui/icons-material/UnfoldMoreDouble';
-import { Box, IconButton, TextField, Tooltip } from '@mui/material';
+import { Box, IconButton, TextField, Tooltip, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -175,6 +175,8 @@ function RenderTree({
     setIsOpen(defaultOpen);
   }, [defaultOpen]);
 
+  const theme = useTheme();
+  const primary = theme.palette.background.default;
   const itemClassName = level === 0 ? styles['level0_dashboard_item'] : styles['dashboard_item'];
   const isSelected = selectedSection === node.tocElem.id;
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
@@ -184,11 +186,20 @@ function RenderTree({
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
   const background = node.notCovered
-    ? '#fdd'
+    ? `color-mix(in srgb, ${primary} 30%, #fdd 70%)`
     : sectionInProgress
-    ? `repeating-linear-gradient(45deg, #FFE, #FFE 10px, #FFF 10px, #FFF 20px)`
+    ? `repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, ${primary} 30%, #ffe 70%),
+      color-mix(in srgb, ${primary} 30%, #ffe 70%) 10px,
+      color-mix(in srgb, ${primary} 30%, #fff 70%) 10px,
+      color-mix(in srgb, ${primary} 30%, #fff 70%) 20px
+    )`
     : undefined;
-  const backgroundColor = sectionCompleted ? '#FFC' : undefined;
+
+  const backgroundColor = sectionCompleted
+    ? `color-mix(in srgb, ${primary} 30%, #ffc 70%)`
+    : primary;
 
   return (
     <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
@@ -214,7 +225,7 @@ function RenderTree({
           className={itemClassName}
           sx={{
             cursor: 'pointer',
-            color: isSelected ? 'white' : 'undefined',
+            color: isSelected ? 'text.secondary' : 'text.primary',
             px: isSelected ? 0.5 : 0,
             backgroundColor: isSelected ? 'primary.main' : 'inherit',
             borderRadius: 0.5,

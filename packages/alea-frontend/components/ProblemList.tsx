@@ -19,6 +19,7 @@ import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
 
 import { ExamSelect } from '@alea/stex-react-renderer';
+import shadows from '../theme/shadows';
 
 interface TitleMetadata {
   uri?: string;
@@ -172,15 +173,16 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
         sx={{
           my: 4,
           p: 3,
-          bgcolor: '#fafafa',
+          bgcolor: 'bacground.paper',
           borderRadius: '12px',
-          border: '1px solid #eee',
-          boxShadow: '0px 2px 8px rgba(0,0,0,0.05)',
+          border: '1px solid ',
+          borderColor:'divider',
+          boxShadow: shadows[2],
         }}
       >
         <Typography
           variant="body1"
-          sx={{ color: '#555', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
+          sx={{ color: 'secondary.main', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
         >
           Old exams are great practice resources, but since exam styles evolve, recent exams are
           better models, and any course topic even if not asked before can still appear in upcoming
