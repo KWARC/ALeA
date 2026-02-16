@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
-import { getAllCourses, getCoverageTimeline } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import {
   NOT_COVERED_SECTIONS,
   SafeFTMLDocument,
@@ -25,18 +25,34 @@ import {
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import SearchCourseNotes from '../../../../components/SearchCourseNotes';
-import MainLayout from '../../../../layouts/MainLayout';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-// import SearchCourseNotes from '../../components/SearchCourseNotes';
-// import MainLayout from '../../layouts/MainLayout';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import SearchCourseNotes from '../../../../components/SearchCourseNotes';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import MainLayout from '../../../../layouts/MainLayout';
 
-export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
+export const SearchDialog = ({
+  open,
+  onClose,
+  courseId,
+  notesUri,
+  hasResults,
+  setHasResults,
+}: {
+  open: boolean;
+  onClose: () => void;
+  courseId: string;
+  notesUri: string;
+  hasResults: boolean;
+  setHasResults: (v: boolean) => void;
+}) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
       <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
         {courseId.toUpperCase()}
       </DialogTitle>
+
       <DialogContent sx={{ p: 1 }}>
         <SearchCourseNotes
           courseId={courseId || ''}
@@ -45,6 +61,7 @@ export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, se
           setHasResults={setHasResults}
         />
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose} variant="contained">
           Close
@@ -87,9 +104,7 @@ const FragmentWrap: React.FC<{
           <Box
             onMouseUp={() => {
               const text = getSelectedText();
-              if (text) {
-                localStorage.setItem('lastSelectedText', text);
-              }
+              if (text) localStorage.setItem('lastSelectedText', text);
             }}
           >
             <CommentButton url={uri} fragmentKind={fragmentKind} />
@@ -113,8 +128,13 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
+
+  const { isValidating, validationError, institutionId, instance, resolvedInstanceId } =
+    useRouteValidation('/[institutionId]/[courseId]/[instance]/course-notes');
+
   const courseId = router.query.courseId as string;
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
+
+  const [courses, setCourses] = useState<Record<string, CourseInfo> | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
 
@@ -122,6 +142,11 @@ const CourseNotesPage: NextPage = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setHasResults(false);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,7 +179,7 @@ const CourseNotesPage: NextPage = () => {
 
     setToc(undefined);
 
-    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+    contentToc({ uri: notes }).then(([, toc] = [[], []]) => {
       setToc(toc);
       uriToTitle.current = {};
       getSectionUriToTitle(toc, uriToTitle.current);
@@ -170,9 +195,7 @@ const CourseNotesPage: NextPage = () => {
 
     requestAnimationFrame(() => {
       const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [toc, router.asPath]);
 
@@ -198,9 +221,7 @@ const CourseNotesPage: NextPage = () => {
     if (courseId) fetchGottos();
   }, [courseId]);
 
-  if (isValidating) {
-    return null;
-  }
+  if (isValidating) return null;
 
   if (validationError) {
     return (
@@ -222,14 +243,12 @@ const CourseNotesPage: NextPage = () => {
   }
 
   const courseInfo = courses[courseId];
-  if (!courseInfo) {
-    return <CourseNotFound />;
-  }
+  if (!courseInfo) return <CourseNotFound />;
 
   const { notes } = courseInfo;
 
   return (
-    <MainLayoutayout title={courseId.toUpperCase()}>
+    <MainLayout title={courseId.toUpperCase()}>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
@@ -238,7 +257,7 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             boxShadow: 3,
             '&:hover': {
               bgcolor: 'primary.300',
@@ -251,6 +270,7 @@ const CourseNotesPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
+
       <SearchDialog
         open={dialogOpen}
         onClose={handleDialogClose}
@@ -259,12 +279,13 @@ const CourseNotesPage: NextPage = () => {
         hasResults={hasResults}
         setHasResults={setHasResults}
       />
+
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
         }}
       >
         <SafeFTMLDocument
@@ -273,11 +294,11 @@ const CourseNotesPage: NextPage = () => {
           document={{ type: 'FromBackend', uri: notes }}
           toc={{ Ready: toc }}
           tocProgress={gottos}
-          sectionWrap={(uri, _) => {
+          sectionWrap={(uri) => {
             return (ch) => (
               <FragmentWrap
                 uri={uri}
-                fragmentKind={'Section'}
+                fragmentKind="Section"
                 children={ch}
                 uriToTitle={uriToTitle.current}
               />
@@ -287,28 +308,27 @@ const CourseNotesPage: NextPage = () => {
             return (ch) => (
               <FragmentWrap
                 uri={uri}
-                fragmentKind={'Slide'}
+                fragmentKind="Slide"
                 children={ch}
                 uriToTitle={uriToTitle.current}
               />
             );
           }}
           paragraphWrap={(uri, kind) => {
-            if (kind === 'Paragraph') {
-              return (ch) => (
-                <FragmentWrap
-                  uri={uri}
-                  fragmentKind={'Paragraph'}
-                  children={ch}
-                  uriToTitle={uriToTitle.current}
-                />
-              );
-            }
+            if (kind !== 'Paragraph') return;
+            return (ch) => (
+              <FragmentWrap
+                uri={uri}
+                fragmentKind="Paragraph"
+                children={ch}
+                uriToTitle={uriToTitle.current}
+              />
+            );
           }}
-          onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
+          onSectionTitle={(uri) => <TrafficLightIndicator sectionUri={uri} />}
         />
       </Box>
-    </MainLayoutayout>
+    </MainLayout>
   );
 };
 
