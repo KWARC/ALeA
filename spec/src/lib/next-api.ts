@@ -77,8 +77,6 @@ export interface GetSlidesResponse {
   [sectionId: string]: SlidesWithCSS;
 }
 
-
-
 // Can use for 'https://alea.education' for faster debugging and/or to get latest server data.
 // However, you will need some use CORS unblocker. eg https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino
 const BASE_SLIDES_DATA_URL = '';
@@ -116,9 +114,4 @@ export async function getSlideDetails(courseId: string, clipId: string) {
     `${BASE_SLIDES_DATA_URL}/api/get-slide-details/${courseId}/${clipId}`
   );
   return resp.data as { [timestampSec: number]: ClipMetadata };
-}
-
-export async function fetchCoverageTimeline(): Promise<any> {
-  const response = await axios.get('/api/get-coverage-timeline');
-  return response.data;
 }
