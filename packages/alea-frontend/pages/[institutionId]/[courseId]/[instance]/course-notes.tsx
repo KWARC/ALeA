@@ -198,11 +198,8 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'primary.50',
+            bgcolor: 'white',
             boxShadow: 3,
-            '&:hover': {
-              bgcolor: 'primary.300',
-            },
           }}
           onClick={() => setDialogOpen(true)}
           size="large"
@@ -241,6 +238,7 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
+          bgcolor:'white'
         }}
       >
         <SafeFTMLDocument

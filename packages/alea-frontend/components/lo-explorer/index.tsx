@@ -7,6 +7,7 @@ import styles from '../../styles/lo-explorer.module.scss';
 import LoListDisplay, { getUrlInfo } from '../LoListDisplay';
 import LoCartModal, { CartItem } from './LoCartModal';
 import LoFilterAndSearch from './LoFilterAndSearch';
+import { bgcolor } from '@mui/system';
 
 export interface ArchiveMap {
   archive: string;
@@ -34,12 +35,11 @@ function LoExplorerHeader({
 }) {
   return (
     <Box className={styles.titleBox}>
-      <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+      <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
         Learning Objects Explorer
       </Typography>
       <Button
         variant="contained"
-        color="primary"
         startIcon={<ShoppingCartIcon />}
         onClick={() => setShowCart(true)}
         sx={{
@@ -133,7 +133,7 @@ export function LoExplorer() {
   };
 
   return (
-    <Box className={styles.outerBox}>
+    <Box className={styles.outerBox} >
       <LoExplorerHeader setShowCart={setShowCart} />
       <LoFilterAndSearch
         uniqueArchivesMap={uniqueArchivesMap}

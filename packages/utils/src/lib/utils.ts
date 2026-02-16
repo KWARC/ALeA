@@ -11,6 +11,14 @@ export const Window = IS_SERVER ? undefined : window;
 export const PRIMARY_COL = '#203360';
 export const PRIMARY_COL_DARK_HOVER = '#162343';
 export const SECONDARY_COL = '#8c9fb1';
+export const getAdaptiveColor = (
+  baseColor: string,
+  defaultBg:string,
+  basePercent = 30,
+  defaultBgPercent = 70,
+) => {
+  return `color-mix(in srgb, ${defaultBg} ${defaultBgPercent}%, ${baseColor} ${basePercent}%)`;
+};
 export enum Language {
   Deutsch = 'Deutsch',
   English = 'English',

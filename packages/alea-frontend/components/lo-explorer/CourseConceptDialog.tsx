@@ -202,7 +202,7 @@ export const CourseConceptsDialog = ({
                         label={conceptUriToName(option.value)}
                         {...getTagProps({ index })}
                         key={index}
-                        color="primary"
+                        // color="primary"
                       />
                     ))
                   }
