@@ -21,7 +21,6 @@ export async function getCoverageTimeline(forceRefresh = false): Promise<Coverag
   if (!forceRefresh && isCacheValid()) {
     return coverageTimelineCache!;
   }
-
   const response = await axios.get('/api/get-coverage-timeline');
   const coverageTimeline = response.data as CoverageTimeline;
   coverageTimelineCache = coverageTimeline;
