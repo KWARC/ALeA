@@ -25,9 +25,11 @@ import {
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import SearchCourseNotes from '../../../../components/SearchCourseNotes';
+import MainLayout from '../../../../layouts/MainLayout';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import SearchCourseNotes from '../../components/SearchCourseNotes';
-import MainLayout from '../../layouts/MainLayout';
+// import SearchCourseNotes from '../../components/SearchCourseNotes';
+// import MainLayout from '../../layouts/MainLayout';
 
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
@@ -221,7 +223,7 @@ const CourseNotesPage: NextPage = () => {
   const { notes } = courseInfo;
 
   return (
-    <MainLayout title={courseId.toUpperCase()}>
+    <MainLayoutayout title={courseId.toUpperCase()}>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
@@ -256,7 +258,7 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
-          bgcolor:'white'
+          bgcolor: 'white',
         }}
       >
         <SafeFTMLDocument
@@ -300,7 +302,7 @@ const CourseNotesPage: NextPage = () => {
           onSectionTitle={(uri, lvl) => <TrafficLightIndicator sectionUri={uri} />}
         />
       </Box>
-    </MainLayout>
+    </MainLayoutayout>
   );
 };
 

@@ -47,6 +47,7 @@
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^14.1.0",
     "mathjax-full": "^3.2.2",
+    "myst-to-react": "^1.1.2",
     "next": "^15.2.0",
     "next-plugin-preval": "^1.2.6",
     "nodemailer": "^7.0.11",
