@@ -79,7 +79,7 @@ export interface GetSlidesResponse {
 
 // Can use for 'https://alea.education' for faster debugging and/or to get latest server data.
 // However, you will need some use CORS unblocker. eg https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino
-const BASE_SLIDES_DATA_URL = 'https://alea.education';
+const BASE_SLIDES_DATA_URL = '';
 
 export async function getSlides(
   courseId: string,
