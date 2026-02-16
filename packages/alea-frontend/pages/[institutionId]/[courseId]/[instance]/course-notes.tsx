@@ -54,6 +54,12 @@ export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, se
   );
 };
 
+function getSelectedText(): string | undefined {
+  const sel = window.getSelection();
+  const text = sel?.toString();
+  return text && text.trim().length > 0 ? text.trim() : undefined;
+}
+
 const FragmentWrap: React.FC<{
   uri: string;
   fragmentKind: 'Section' | 'Slide' | 'Paragraph';
