@@ -1,5 +1,5 @@
 import { getCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, LectureEntry } from '@alea/utils';
+import { convertHtmlStringToPlain, getAdaptiveColor, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -176,7 +176,7 @@ function RenderTree({
   }, [defaultOpen]);
 
   const theme = useTheme();
-  const primary = theme.palette.background.default;
+  const bgDefault = theme.palette.background.default;
   const itemClassName = level === 0 ? styles['level0_dashboard_item'] : styles['dashboard_item'];
   const isSelected = selectedSection === node.tocElem.id;
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
@@ -186,20 +186,20 @@ function RenderTree({
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
   const background = node.notCovered
-    ? `color-mix(in srgb, ${primary} 30%, #fdd 70%)`
+    ? getAdaptiveColor("#fdd",bgDefault)
     : sectionInProgress
     ? `repeating-linear-gradient(
       45deg,
-      color-mix(in srgb, ${primary} 30%, #ffe 70%),
-      color-mix(in srgb, ${primary} 30%, #ffe 70%) 10px,
-      color-mix(in srgb, ${primary} 30%, #fff 70%) 10px,
-      color-mix(in srgb, ${primary} 30%, #fff 70%) 20px
+      color-mix(in srgb, ${bgDefault} 30%, #ffe 70%),
+      color-mix(in srgb, ${bgDefault} 30%, #ffe 70%) 10px,
+      color-mix(in srgb, ${bgDefault} 30%, #fff 70%) 10px,
+      color-mix(in srgb, ${bgDefault} 30%, #fff 70%) 20px
     )`
     : undefined;
 
   const backgroundColor = sectionCompleted
-    ? `color-mix(in srgb, ${primary} 30%, #ffc 70%)`
-    : primary;
+    ? getAdaptiveColor("#ffc",bgDefault)
+    : bgDefault;
 
   return (
     <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>

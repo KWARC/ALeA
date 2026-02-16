@@ -266,8 +266,8 @@ function FlashCard({
         margin="auto"
         {...handlers}
       >
-        <Box display="flex" justifyContent="center" alignItems="center" width="100%">
-          <Box className={`${styles['card-container']} ${isFlipped ? styles['flipped'] : ''}`}>
+        <Box display="flex" justifyContent="center" alignItems="center" width="100%" bgcolor="background.paper">
+          <Box className={`${styles['card-container']} ${isFlipped ? styles['flipped'] : ''}` }>
             <FlashCardFront
               conceptUri={conceptUri}
               onFlip={() => setIsFlipped(true)}

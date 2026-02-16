@@ -873,10 +873,9 @@ const CourseViewPage: NextPage = () => {
                   p: { xs: 2, sm: 3 },
                   mb: { xs: 2, sm: 3 },
                   borderRadius: 2,
-                  bgcolor: 'warning.50',
                   boxShadow: shadows[2],
-                  border: '1px solid ',
-                  borderColor: 'divider',
+                  border: '2px solid ',
+                  borderColor: 'warning.100',
                 }}
               >
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>

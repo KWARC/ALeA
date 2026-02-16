@@ -284,7 +284,7 @@ function SlideRenderer({ slide }: { slide: Slide }) {
     );
   } else if (slide.slideType === SlideType.TEXT) {
     return (
-      <Box className={styles['text-frame']} bgcolor="whitesmoke">
+      <Box className={styles['text-frame']} >
         {slide.paragraphs?.map((p, idx) => (
           <Box key={p.uri} fragment-uri={p.uri} fragment-kind="Paragraph">
             <SafeFTMLFragment
