@@ -14,14 +14,12 @@ export default async function handler(req, res) {
   if (!userId) return;
 
   const { commentId } = req.body as ReopenQuestionRequest;
-
   if (!commentId) {
-    res.status(401).json({ message: 'Invalid comment id' });
+    res.status(422).send('Invalid commentid');
     return;
   }
 
   const { existing, error } = await getExistingCommentDontEnd(commentId);
-
   if (!existing || existing.isPrivate) {
     res.status(error || 404).json({ message: 'Comment not found' });
     return;
@@ -31,7 +29,7 @@ export default async function handler(req, res) {
   const isModerator = await canUserModerateComments(userId, existing.courseId, existing.courseTerm);
 
   if (!isOwner && !isModerator) {
-    res.status(403).json({ message: 'Unauthorized' });
+    res.status(403).send('Unauthorized');
     return;
   }
 
@@ -39,7 +37,7 @@ export default async function handler(req, res) {
     existing.commentType !== CommentType.QUESTION ||
     existing.questionStatus !== QuestionStatus.ANSWERED
   ) {
-    res.status(400).json({ message: 'This comment cannot be reopened' });
+    res.status(422).json({ message: 'This comment cannot be reopened' });
     return;
   }
 
@@ -62,6 +60,5 @@ export default async function handler(req, res) {
   );
 
   if (!results) return;
-
   res.status(204).end();
 }
