@@ -112,8 +112,12 @@ export interface LectureEntry {
   venueLink?: string;
 }
 
+export interface CourseCoverageData {
+  lectures: LectureEntry[];
+  notCoveredSections?: string[];
+}
 export interface CoverageTimeline {
-  [courseId: string]: LectureEntry[];
+  [courseId: string]: CourseCoverageData;
 }
 
 export const COURSES_INFO: { [courseId: string]: CourseInfo } = {

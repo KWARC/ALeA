@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
-import { getAllCourses } from '@alea/spec';
+import { getAllCourses, getCoverageTimeline } from '@alea/spec';
 import {
   NOT_COVERED_SECTIONS,
   SafeFTMLDocument,
@@ -25,16 +25,9 @@ import {
 import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { getLocaleObject } from '../../lang/utils';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
-
-function getSelectedText(): string | undefined {
-  const sel = window.getSelection();
-  const text = sel?.toString();
-  return text && text.trim().length > 0 ? text.trim() : undefined;
-}
 
 export const SearchDialog = ({ open, onClose, courseId, notesUri, hasResults, setHasResults }) => {
   return (
@@ -113,7 +106,6 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
@@ -149,7 +141,7 @@ const CourseNotesPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    const notes = courses?.[courseId]?.notes;
+    const notes = courses?.[courseId ?? '']?.notes;
     if (!notes) return;
 
     setToc(undefined);
@@ -181,7 +173,6 @@ const CourseNotesPage: NextPage = () => {
       try {
         const response = await axios.get('/api/get-coverage-timeline');
         const currentSemData: LectureEntry[] = response.data[courseId] || [];
-
         const coverageData = currentSemData
           .filter((item) => item.sectionUri)
           .map((item) => ({
@@ -199,14 +190,32 @@ const CourseNotesPage: NextPage = () => {
     if (courseId) fetchGottos();
   }, [courseId]);
 
+  if (isValidating) {
+    return null;
+  }
+
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+
+  if (!institutionId || !courseId || !resolvedInstanceId) {
+    return <CourseNotFound />;
+  }
+
   if (!router.isReady || !courses || !gottos || !toc) {
     return <CircularProgress />;
   }
 
   const courseInfo = courses[courseId];
   if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
+    return <CourseNotFound />;
   }
 
   const { notes } = courseInfo;
@@ -221,9 +230,11 @@ const CourseNotesPage: NextPage = () => {
             bottom: 64,
             right: 24,
             zIndex: 1000,
-            bgcolor: 'primary.50',
+            bgcolor: 'white',
             boxShadow: 3,
-            '&:hover': { bgcolor: 'primary.300' },
+            '&:hover': {
+              bgcolor: 'primary.300',
+            },
           }}
           onClick={() => setDialogOpen(true)}
           size="large"
@@ -232,21 +243,20 @@ const CourseNotesPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-
       <SearchDialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleDialogClose}
         courseId={courseId}
         notesUri={notes}
         hasResults={hasResults}
         setHasResults={setHasResults}
       />
-
       <Box
         sx={{
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
+          bgcolor:'white'
         }}
       >
         <SafeFTMLDocument

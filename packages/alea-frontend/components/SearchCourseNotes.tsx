@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { searchDocs, type SearchResult, contentToc, TocElem } from '@flexiformal/ftml-backend';
 import { getSecInfo } from '../components/coverage-update';
 import { getAllCourses, getSlideUriToIndexMapping } from '@alea/spec';
-import { getParamFromUri } from '@alea/utils';
+import { getParamFromUri, pathToCourseHome, pathToCourseNotes, pathToCourseView } from '@alea/utils';
 import type { CourseInfo } from '@alea/utils';
 
 function findImmediateParentSection(
@@ -72,12 +72,16 @@ const SearchCourseNotes = ({
   query,
   onClose,
   setHasResults,
+  institutionId = 'FAU',
+  instance = 'latest',
 }: {
   courseId: string;
   notesUri: string;
   query?: string;
   onClose?: any;
   setHasResults?: (val: boolean) => void;
+  institutionId?: string;
+  instance?: string;
 }) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>(query || '');
@@ -184,7 +188,11 @@ const SearchCourseNotes = ({
 
       const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
       if (!parentSlideUri) {
-        router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
+        router.push(
+          `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
+            targetUri
+          )}`
+        );
         return;
       }
 
@@ -200,17 +208,25 @@ const SearchCourseNotes = ({
 
       if (foundSectionId && foundSlideNum !== undefined) {
         router.push(
-          `/course-view/${foundCourseId}?sectionId=${encodeURIComponent(
+          `${pathToCourseView(institutionId, foundCourseId, instance)}?sectionId=${encodeURIComponent(
             foundSectionId
           )}&slideNum=${encodeURIComponent(String(foundSlideNum))}`
         );
         return;
       }
 
-      router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
+      router.push(
+        `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
+          targetUri
+        )}`
+      );
     } catch (err) {
       console.error('Failed to resolve slide via mapping, falling back to fragment route', err);
-      router.push(`/course-view/${foundCourseId}?fragment=${encodeURIComponent(targetUri)}`);
+      router.push(
+        `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
+          targetUri
+        )}`
+      );
     }
   }
 
@@ -244,7 +260,7 @@ const SearchCourseNotes = ({
             src={`/${courseId}.jpg`}
             alt={courseId}
             style={{ borderRadius: '5px', cursor: 'pointer' }}
-            onClick={() => router.push(`/course-home/${courseId}`)}
+            onClick={() => router.push(pathToCourseHome(institutionId, courseId, instance))}
           />
         </Tooltip>
         <TextField
@@ -305,7 +321,11 @@ const SearchCourseNotes = ({
                         <IconButton
                           size="small"
                           onClick={async () => {
-                            window.location.href = `/course-notes/${foundCourseId}#${id}`;
+                            window.location.href = `${pathToCourseNotes(
+                              institutionId,
+                              foundCourseId,
+                              instance
+                            )}#${id}`;
                           }}
                         >
                           Notes
@@ -361,7 +381,11 @@ const SearchCourseNotes = ({
                         <IconButton
                           size="small"
                           onClick={async () => {
-                            window.location.href = `/course-notes/${foundCourseId}#${id}`;
+                            window.location.href = `${pathToCourseNotes(
+                              institutionId,
+                              foundCourseId,
+                              instance
+                            )}#${id}`;
                           }}
                         >
                           Notes
