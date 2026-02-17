@@ -47,7 +47,8 @@ export function DocProblemBrowser({
 
   useEffect(() => {
     if (!notesDocUri) return;
-    contentToc({ uri: notesDocUri }).then(([_, toc] = [[], []]) => {
+    contentToc({ uri: notesDocUri }).then((result) => {
+      const toc = result?.[2] ?? [];
       setToc(toc);
     });
   }, [notesDocUri]);

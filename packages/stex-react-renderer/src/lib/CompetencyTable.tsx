@@ -97,7 +97,7 @@ function QuizButton({ uri }: { uri: string }) {
           sx={{
             cursor: 'pointer',
             backgroundColor: 'primary.main',
-            color: 'white',
+            color: 'text.primary',
             borderRadius: '50%',
             padding: '7px 8px 3px',
           }}

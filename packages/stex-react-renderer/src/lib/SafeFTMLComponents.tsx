@@ -39,9 +39,9 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
   }
 
   return (
-    <Box className="ftml-reset">
+    // <Box className="ftml-reset">
       <FTMLDocument {...props} />
-    </Box>
+    // </Box>
   );
 }
 

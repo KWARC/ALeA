@@ -197,7 +197,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { notes } = courses[courseId];
 
-  const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notes }))?.[2] ?? [];
   const allSections: SectionInfo[] = [];
   for (const elem of tocContent) {
     const elemSections = getAllSections(elem);

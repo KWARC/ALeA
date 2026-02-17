@@ -58,7 +58,7 @@ export const CourseConceptsDialog = ({
       for (const courseId of Object.keys(courses)) {
         const notesUri = courses?.[courseId]?.notes;
         if (!notesUri) continue;
-        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: notesUri }))?.[2] ?? [];
         secDetails[courseId] = toc.flatMap((entry) => getSecInfo(entry));
       }
       setAllSectionDetails(secDetails);

@@ -95,7 +95,7 @@ export const CourseSectionSelector = ({
       const notesUri = courseInfo.notes;
       setLoadingSections(true);
       try {
-        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: notesUri }))?.[2] ?? [];
         const formattedSections = toc.flatMap((entry) =>
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );

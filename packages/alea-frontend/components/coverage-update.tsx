@@ -71,7 +71,7 @@ const CoverageUpdateTab = () => {
       const { notes: notesUri } = courseInfo;
       setLoading(true);
       try {
-        const docSections = (await contentToc({ uri: notesUri }))?.[1] ?? [];
+        const docSections = (await contentToc({ uri: notesUri }))?.[2] ?? [];
         setToc(docSections);
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const baseSecInfo = sections.reduce((acc, s) => {

@@ -36,7 +36,7 @@ const PracticeProblemsPage: NextPage = () => {
       const courseInfo = courses[courseId];
       if (!courseInfo) return;
       const { notes } = courseInfo;
-      const tocContent = (await contentToc({ uri: notes }))?.[1] ?? [];
+      const tocContent = (await contentToc({ uri: notes }))?.[2] ?? [];
       setSectionsData(tocContent);
     }
     fetchSectionData();

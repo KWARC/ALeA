@@ -478,7 +478,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
         setCoverageTimeline(timelineData);
         const courseInfo = courseData?.[courseId];
         if (courseInfo?.notes) {
-          const toc = (await contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
+          const toc = (await contentToc({ uri: courseInfo.notes }))?.[2] ?? [];
           const formattedSections = toc.flatMap((entry) =>
             getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
           );
