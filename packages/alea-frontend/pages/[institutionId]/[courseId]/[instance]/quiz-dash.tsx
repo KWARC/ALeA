@@ -1,5 +1,5 @@
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
-import { FTML, injectCss } from '@flexiformal/ftml';
+import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
@@ -11,19 +11,21 @@ import {
 } from '@alea/spec';
 import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
-import { NextPage } from 'next';
+import type { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { useCurrentUser } from '@alea/react-utils';
-import { ForceFauLogin } from '../../components/ForceFAULogin';
-import QuizPerformanceTable from '../../components/QuizPerformanceTable';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader, handleEnrollment } from '../course-home/[courseId]';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
+import { CourseNotFound } from '../../../../components/CourseNotFound';
+import { CourseHeader } from '../../../../components/CourseHeader';
+import { ForceFauLogin } from '../../../../components/ForceFAULogin';
+import QuizPerformanceTable from '../../../../components/QuizPerformanceTable';
+import { handleEnrollment } from '../../../../components/courseHelpers';
+import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { getLocaleObject } from '../../../../lang/utils';
+import MainLayout from '../../../../layouts/MainLayout';
 
-//DM: uri:undefined should be discouraged
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
   return (
@@ -131,7 +133,10 @@ function UpcomingQuizList({
   );
 }
 
-const PRACTICE_QUIZ_INFO = {
+const PRACTICE_QUIZ_INFO: Record<
+  string,
+  { startSecNameExcl: string; endSecNameIncl: string } | undefined
+> = {
   'ai-1': {
     startSecNameExcl: 'Description Logics and the Semantic Web',
     endSecNameIncl: 'Partial Order Planning',
@@ -140,10 +145,17 @@ const PRACTICE_QUIZ_INFO = {
 
 const QuizDashPage: NextPage = () => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
+  const {
+    institutionId,
+    courseId,
+    instance,
+    resolvedInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation('quiz-dash');
+
+  const currentTerm = resolvedInstanceId;
   const { quiz: t, home: tHome } = getLocaleObject(router);
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
   const [quizList, setQuizList] = useState<QuizStubInfo[]>([]);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
 
@@ -176,33 +188,41 @@ const QuizDashPage: NextPage = () => {
       setQuizList(quizzes);
     });
   }, [courseId]);
+
   useEffect(() => {
     if (!courseId || !currentTerm) return;
-    const enrolledStudentActions = [{ resource: ResourceName.COURSE_QUIZ, action: Action.TAKE }];
     async function checkAccess() {
-      for (const { resource, action } of enrolledStudentActions) {
-        const hasAccess = await canAccessResource(resource, action, {
-          courseId,
-          instanceId: currentTerm,
-        });
-        setIsEnrolled(hasAccess);
-      }
+      const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
+        courseId,
+        instanceId: currentTerm,
+      });
+      setIsEnrolled(hasAccess);
     }
     checkAccess();
   }, [courseId, currentTerm]);
 
+  if (isValidating) return null;
+  if (validationError) {
+    return (
+      <RouteErrorDisplay
+        validationError={validationError}
+        institutionId={institutionId}
+        courseId={courseId}
+        instance={instance}
+      />
+    );
+  }
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+
   if (!router.isReady || !courses) return <CircularProgress />;
+
   const courseInfo = courses[courseId];
   const notes = courseInfo?.notes;
 
-  if (!courseInfo) {
-    router.replace('/');
-    return <>Course Not Found!</>;
-  }
+  if (!courseInfo) return <CourseNotFound />;
+
   const enrollInCourse = async () => {
-    if (!userId || !courseId) {
-      return router.push('/login');
-    }
+    if (!userId || !courseId) return router.push('/login');
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     setIsEnrolled(enrollmentSuccess);
   };
@@ -212,7 +232,7 @@ const QuizDashPage: NextPage = () => {
       <MainLayout
         title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.quizzes} | VoLL-KI`}
       >
-        <ForceFauLogin content={"quizzes"}/>
+        <ForceFauLogin content="quizzes" />
       </MainLayout>
     );
   }
@@ -223,6 +243,8 @@ const QuizDashPage: NextPage = () => {
         courseName={courseInfo.courseName}
         imageLink={courseInfo.imageLink}
         courseId={courseId}
+        institutionId={institutionId}
+        instanceId={resolvedInstanceId}
       />
       <Box fragment-uri={notes} fragment-kind="Section" maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{t.enrollmentMessage}</Alert>}
@@ -238,21 +260,17 @@ const QuizDashPage: NextPage = () => {
         <Typography variant="body1" sx={{ color: '#333' }}>
           {t.onTimeWarning.replace('{courseId}', courseId.toUpperCase())}
         </Typography>
-
         <Typography variant="h5" sx={{ m: '30px 0 10px' }}>
           {t.demoQuiz}
         </Typography>
-
         <Typography variant="body1" sx={{ color: '#333' }}>
           <a href="/quiz/quiz-a7175e81" target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
             {t.this}
           </a>
           &nbsp;{t.demoQuizText}
         </Typography>
-
         {enrolled && (
           <>
-            {' '}
             <QuizList header={t.ongoingQuizzes} quizList={ongoingQuizzes} />
             <UpcomingQuizList
               header={t.upcomingQuizzes}

@@ -14,7 +14,16 @@ import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { CourseInfo, PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
+import {
+  CourseInfo,
+  PARTNERED_UNIVERSITIES,
+  UniversityDetail,
+  pathToCourseHome,
+  pathToCourseNotes,
+  pathToCourseView,
+  pathToCourseResource,
+  pathToStudyBuddy,
+} from '@alea/utils';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
@@ -30,22 +39,26 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
   );
 }
 
-export function CourseThumb({ course }: { course: CourseInfo }) {
+export function CourseThumb({
+  course,
+  institutionId,
+}: {
+  course: CourseInfo;
+  institutionId?: string;
+}) {
   const router = useRouter();
   const { home } = getLocaleObject(router);
   const t = home.courseThumb;
-  const {
-    courseId,
-    courseName,
-    courseHome,
-    imageLink,
-    notesLink,
-    slidesLink,
-    cardsLink,
-    forumLink,
-    quizzesLink,
-    hasQuiz,
-  } = course;
+  const { courseId, courseName, imageLink, hasQuiz } = course;
+  const inst = institutionId ?? course.universityId ?? 'FAU';
+  const instance = 'latest';
+  const homeHref = pathToCourseHome(inst, courseId, instance);
+  const notesLink = pathToCourseNotes(inst, courseId, instance);
+  const slidesLink = pathToCourseView(inst, courseId, instance);
+  const cardsLink = pathToCourseResource(inst, courseId, instance, '/flash-cards');
+  const forumLink = pathToCourseResource(inst, courseId, instance, '/forum');
+  const quizzesLink = pathToCourseResource(inst, courseId, instance, '/quiz-dash');
+  const studyBuddyLink = pathToStudyBuddy(inst, courseId, instance);
   const width = courseId === 'iwgs-1' ? 83 : courseId === 'iwgs-2' ? 165 : 200;
   return (
     <Card
@@ -60,7 +73,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
     >
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
         <Box display="flex" flexDirection="column" alignItems="center">
-          <Link href={courseHome} style={{ textAlign: 'center' }}>
+          <Link href={homeHref} style={{ textAlign: 'center' }}>
             <Image
               src={imageLink}
               width={width}
@@ -69,10 +82,12 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
               style={{ display: 'block', margin: 'auto' }}
               priority={true}
             />
-            <Typography component="span" sx={{ fontSize: 16, mt: 0.6, fontWeight: 'bold',fontFamily:'Latin Modern' }}>
+            <Typography
+              component="span"
+              sx={{ fontSize: 16, mt: 0.6, fontWeight: 'bold', fontFamily: 'Latin Modern' }}
+            >
               {courseName.length > 50 ? courseId.toUpperCase() : courseName}
             </Typography>
-            
           </Link>
         </Box>
         <Box display="flex" justifyContent="space-between" mt={0.6} gap={0.6} flexWrap="wrap">
@@ -121,7 +136,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           }
 
           <Tooltip title={t.studyBuddy}>
-            <Link href={`/study-buddy/${courseId}`} passHref>
+            <Link href={studyBuddyLink} passHref>
               <ColoredIconButton>
                 <Diversity3 htmlColor="white" />
               </ColoredIconButton>
@@ -176,7 +191,7 @@ const StudentHomePage: NextPage = ({
             {Object.values(courses)
               .filter((course) => course.isCurrent)
               .map((c) => (
-                <CourseThumb key={c.courseId} course={c} />
+                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
               ))}
           </Box>
           <h2>{t.otherCourses}</h2>
@@ -184,7 +199,7 @@ const StudentHomePage: NextPage = ({
             {Object.values(courses)
               .filter((course) => !course.isCurrent)
               .map((c) => (
-                <CourseThumb key={c.courseId} course={c} />
+                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
               ))}
           </Box>
           <hr style={{ width: '90%' }} />

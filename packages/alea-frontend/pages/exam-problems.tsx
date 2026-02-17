@@ -151,7 +151,7 @@ const ExamProblemsPage = () => {
             <QuizDisplay
               problems={problems}
               existingResponses={{}}
-              isFrozen={true}
+              isFrozen={false}
               showPerProblemTime={false}
               isExamProblem={true}
               initialProblemIdx={initialIndex}

@@ -2,10 +2,15 @@ import { MathJaxContext } from '@alea/mathjax';
 import { PositionProvider, ServerLinksContext, FTMLReadyContext } from '@alea/stex-react-renderer';
 import { initialize } from '@flexiformal/ftml-react';
 import { createInstance, MatomoProvider } from '@jonkoops/matomo-tracker-react';
-import { ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import { getTheme } from '../theme';
 import { AppProps } from 'next/app';
-import { UserContextProvider, CommentRefreshProvider, IsLoggedInProvider } from '@alea/react-utils';
+import {
+  UserContextProvider,
+  CommentRefreshProvider,
+  IsLoggedInProvider,
+  CourseProvider,
+} from '@alea/react-utils';
 import { useEffect, useState, useMemo } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import { ColorModeContext } from '../contexts/ColorModeContext';
@@ -140,23 +145,26 @@ function CustomApp({ Component, pageProps }: AppProps) {
         <MatomoProvider value={instance}>
           <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
+              <CssBaseline/>
               <MathJaxContext>
                 <FTMLReadyContext.Provider value={readyToRender}>
                   <PositionProvider>
                     <UserContextProvider>
                       <IsLoggedInProvider>
-                        <CurrentTermProvider>
-                          <div
-                            style={{
-                              width: '100vw',
-                              height: '100vh',
-                              overflowY: 'auto',
-                              overflowX: 'hidden',
-                            }}
-                          >
-                            <Component {...pageProps} />
-                          </div>
-                        </CurrentTermProvider>
+                        <CourseProvider>
+                          <CurrentTermProvider>
+                            <div
+                              style={{
+                                width: '100vw',
+                                height: '100vh',
+                                overflowY: 'auto',
+                                overflowX: 'hidden',
+                              }}
+                            >
+                              <Component {...pageProps} />
+                            </div>
+                          </CurrentTermProvider>
+                        </CourseProvider>
                       </IsLoggedInProvider>
                     </UserContextProvider>
                   </PositionProvider>

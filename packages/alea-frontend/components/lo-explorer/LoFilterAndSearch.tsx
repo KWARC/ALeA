@@ -217,7 +217,7 @@ function ArchivesAutocomplete({
                   </Box>
                 }
                 {...getTagProps({ index })}
-                sx={{ backgroundColor: '#b3e5fc' }}
+                // sx={{ backgroundColor: 'blue.400',color:'text.primary' }}
               />
             );
           })

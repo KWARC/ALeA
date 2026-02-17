@@ -19,6 +19,7 @@ import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
 
 import { ExamSelect } from '@alea/stex-react-renderer';
+import shadows from '../theme/shadows';
 
 interface TitleMetadata {
   uri?: string;
@@ -149,7 +150,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const goToSection = (sectionId?: string) => {
     window.location.href = `/course-notes/${courseId}#${sectionId}`;
   };
-const theme = useTheme();
+  const theme = useTheme();
   return (
     <Box maxWidth={800} px={{ xs: 1, sm: 2 }} m="0 auto">
       <Typography variant="h2" my={3} textAlign="center">
@@ -172,15 +173,16 @@ const theme = useTheme();
         sx={{
           my: 4,
           p: 3,
-          bgcolor: '#fafafa',
+          bgcolor: 'bacground.paper',
           borderRadius: '12px',
-          border: '1px solid #eee',
-          boxShadow: '0px 2px 8px rgba(0,0,0,0.05)',
+          border: '1px solid ',
+          borderColor:'divider',
+          boxShadow: shadows[2],
         }}
       >
         <Typography
           variant="body1"
-          sx={{ color: '#555', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
+          sx={{ color: 'secondary.main', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
         >
           Old exams are great practice resources, but since exam styles evolve, recent exams are
           better models, and any course topic even if not asked before can still appear in upcoming
@@ -203,7 +205,7 @@ const theme = useTheme();
               setSelectedExam(examUri);
               router.push({
                 pathname: '/exam-problems',
-                query: { examUri },
+                query: { examUri, courseId },
               });
             }}
             label="Select Exam"
@@ -229,7 +231,7 @@ const theme = useTheme();
         {Object.entries(groupedByChapter).map(([chapter, sections]) => (
           <Box key={chapter} mb={3}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="h3" sx={{ mb: 1, fontWeight: 'bold',fontSize:20 }}>
+              <Typography variant="h3" sx={{ mb: 1, fontWeight: 'bold', fontSize: 20 }}>
                 <SafeHtml html={chapter} />
               </Typography>
             </Box>
@@ -252,12 +254,12 @@ const theme = useTheme();
                       py: 2,
                       px: 2,
                       transition: 'background-color 0.3s ease, transform 0.2s ease',
-                     '&:hover': {
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(90deg, #0f2a33 0%, #2b2140 100%)'
-      : 'linear-gradient(90deg, #e0f7fa 0%, #d1c4e9 100%)',
-},
+                      '&:hover': {
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(90deg, #0f2a33 0%, #2b2140 100%)'
+                            : 'linear-gradient(90deg, #e0f7fa 0%, #d1c4e9 100%)',
+                      },
                     }}
                   >
                     <ListItemText
