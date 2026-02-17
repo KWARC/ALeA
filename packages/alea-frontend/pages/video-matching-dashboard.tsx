@@ -35,6 +35,7 @@ import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SchoolIcon from '@mui/icons-material/School';
 import MainLayout from '../layouts/MainLayout';
+import { UnmatchedSegments } from '../components/UnmatchedSegments';
 import { getVideoMatchingData, MatchReportData, VideoData } from '@alea/spec';
 
 interface VideoWithMetadata extends VideoData {
@@ -467,41 +468,14 @@ const VideoMatchingDashboard = () => {
                             </Typography>
                           </Box>
 
-                          <TableContainer sx={videoMatchingStyles.tableContainer}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow sx={videoMatchingStyles.tableHeaderRow}>
-                                  <TableCell sx={videoMatchingStyles.tableHeaderCell}>
-                                    Time Range
-                                  </TableCell>
-                                  <TableCell sx={videoMatchingStyles.tableHeaderCell}>
-                                    OCR Text
-                                  </TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {video.unmatched.map((unmatch, idx) => (
-                                  <TableRow key={idx} sx={videoMatchingStyles.tableRow}>
-                                    <TableCell>
-                                      <Typography
-                                        variant="caption"
-                                        sx={videoMatchingStyles.timeText}
-                                      >
-                                        {formatTime(unmatch.start_time)} -{' '}
-                                        {formatTime(unmatch.end_time)}
-                                      </Typography>
-                                    </TableCell>
+                          <UnmatchedSegments
+                            segments={video.unmatched}
+                            clipId={video.videoId}
+                            onSegmentSelect={(segment) => {
+                              console.log('Selected segment:', segment);
 
-                                    <TableCell>
-                                      <Typography variant="body2" color="text.secondary">
-                                        {unmatch.ocr_text}
-                                      </Typography>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
+                            }}
+                          />
                         </Box>
                       )}
                     </AccordionDetails>
