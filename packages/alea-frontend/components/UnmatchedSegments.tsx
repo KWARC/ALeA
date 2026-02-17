@@ -39,7 +39,6 @@ interface UnmatchedSegmentsProps {
   onPlaySegment?: (segment: UnmatchedSegment) => void;
 }
 
-// ─── Grouped video-playback state ────────────────────────────────────────────
 interface PlaybackState {
   isPlaying: boolean;
   currentTime: number;
@@ -56,7 +55,6 @@ const initialPlaybackState: PlaybackState = {
 
 const VOLUME_STEP = 0.1;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -73,7 +71,6 @@ function getSegmentDuration(startTime: number, endTime: number): string {
   return `${Math.round(duration)}s`;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export function UnmatchedSegments({
   segments,
   clipId,
@@ -84,21 +81,14 @@ export function UnmatchedSegments({
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [videoInfo, setVideoInfo] = useState<ClipDetails | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
-
-  // §2.2 — interdependent playback fields grouped into a single state object
   const [playback, setPlayback] = useState<PlaybackState>(initialPlaybackState);
-
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // §2.1 / §5.1 — simple string concatenation; not expensive enough to warrant useMemo
   const videoSource: string | null = (() => {
     if (!videoInfo) return null;
     const base = videoInfo.compositeUrl || null;
     if (!base || !selectedSegment) return base;
     return `${base}#t=${selectedSegment.start_time},${selectedSegment.end_time}`;
   })();
-
-  // §5.1 — useMemo justified: reduce over the full segments array on every render
   const stats = useMemo(() => {
     const totalDuration = segments.reduce(
       (sum, seg) => sum + (seg.end_time - seg.start_time),
@@ -113,7 +103,6 @@ export function UnmatchedSegments({
     };
   }, [segments]);
 
-  // §3.4 — defined before the useEffect that depends on it; wrapped in useCallback
   const fetchVideoInfo = useCallback(async () => {
     setIsLoadingVideo(true);
     setVideoError(null);
@@ -128,14 +117,12 @@ export function UnmatchedSegments({
     }
   }, [clipId]);
 
-  // Fetch video info when dialog opens
   useEffect(() => {
     if (openDialog && !videoInfo && clipId) {
       fetchVideoInfo();
     }
   }, [openDialog, clipId, videoInfo, fetchVideoInfo]);
 
-  // Seek to segment start time when video info is loaded
   useEffect(() => {
     if (videoRef.current && selectedSegment && videoInfo) {
       videoRef.current.currentTime = selectedSegment.start_time;
@@ -148,7 +135,6 @@ export function UnmatchedSegments({
     }
   }, [videoInfo, selectedSegment]);
 
-  // Enforce segment boundary and drive custom progress bar
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !selectedSegment) return;
@@ -251,7 +237,7 @@ export function UnmatchedSegments({
   if (!segments || segments.length === 0) {
     return (
       <Box sx={unmatchedSegmentsStyles.emptyState}>
-        <Typography variant="body2" color="success.dark">
+        <Typography variant="body2" color="success.700">
           ✓ All video segments are matched with slides!
         </Typography>
       </Box>
@@ -260,7 +246,6 @@ export function UnmatchedSegments({
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Stats Header */}
       <Box sx={unmatchedSegmentsStyles.statsHeader}>
         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
           <Box>
@@ -285,8 +270,6 @@ export function UnmatchedSegments({
           sx={unmatchedSegmentsStyles.progressBar}
         />
       </Box>
-
-      {/* Segments List */}
       <Stack spacing={1.5}>
         {segments.map((segment, index) => (
           <Card
@@ -339,8 +322,6 @@ export function UnmatchedSegments({
           </Card>
         ))}
       </Stack>
-
-      {/* Video Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={segmentDialogStyles.titleRow}>
@@ -368,9 +349,7 @@ export function UnmatchedSegments({
             </Alert>
           ) : selectedSegment ? (
             <Stack spacing={2}>
-              {/* Custom Video Player */}
               <Box sx={segmentDialogStyles.videoContainer}>
-                {/* Raw video — no native controls so user can't access full timeline */}
                 <Box
                   component="video"
                   ref={videoRef}
@@ -388,10 +367,7 @@ export function UnmatchedSegments({
                   <source src={videoSource} type="video/mp4" />
                   Your browser does not support the video tag.
                 </Box>
-
-                {/* Custom Controls Bar */}
                 <Box sx={segmentDialogStyles.controlsBar}>
-                  {/* Progress slider scoped to [0, segmentDuration] */}
                   <Slider
                     size="small"
                     min={0}
@@ -401,10 +377,7 @@ export function UnmatchedSegments({
                     onChange={handleSliderChange}
                     sx={segmentDialogStyles.slider}
                   />
-
-                  {/* Play / Replay · timestamp · volume */}
                   <Box sx={segmentDialogStyles.controlsRow}>
-                    {/* Play / Pause / Replay */}
                     <IconButton
                       size="small"
                       onClick={playback.isEnded ? handleReplay : handleTogglePlay}
@@ -418,15 +391,11 @@ export function UnmatchedSegments({
                         <PlayArrowIcon fontSize="small" />
                       )}
                     </IconButton>
-
-                    {/* Timestamp */}
                     <Typography variant="caption" sx={segmentDialogStyles.timeDisplay}>
                       {`${formatTime(playback.currentTime)} / ${formatTime(selectedSegment.end_time)}`}
                     </Typography>
 
                     <Box flex={1} />
-
-                    {/* Volume controls */}
                     <Box sx={segmentDialogStyles.volumeGroup}>
                       <IconButton
                         size="small"
@@ -459,8 +428,6 @@ export function UnmatchedSegments({
                   </Box>
                 </Box>
               </Box>
-
-              {/* Segment Details */}
               <Box sx={segmentDialogStyles.detailsBox}>
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                   Segment Details
@@ -491,9 +458,7 @@ export function UnmatchedSegments({
                     </Typography>
                   </Box>
                 </Stack>
-              </Box>
-
-              {/* OCR Text */}
+              </Box>         
               <Box>
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                   OCR Text
@@ -513,13 +478,13 @@ export function UnmatchedSegments({
 const unmatchedSegmentsStyles = {
   emptyState: {
     p: 2,
-    bgcolor: 'success.light',
+    bgcolor: 'success.50',
     borderRadius: 1,
   },
   statsHeader: {
     mb: 2,
     p: 2,
-    bgcolor: 'warning.light',
+    bgcolor: 'warning.100',
     borderRadius: 1,
     border: '1px solid',
     borderColor: 'warning.main',
@@ -533,9 +498,9 @@ const unmatchedSegmentsStyles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     '&:hover': {
-      boxShadow: 3,
+      boxShadow: (theme: any) => theme.shadows[3],
       transform: 'translateY(-2px)',
-      bgcolor: 'action.hover',
+      bgcolor: 'grey.50',
     },
   },
   ocrText: {
@@ -562,7 +527,7 @@ const segmentDialogStyles = {
   },
   videoContainer: {
     width: '100%',
-    bgcolor: 'common.black',
+    bgcolor: 'grey.900',
     borderRadius: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -576,7 +541,7 @@ const segmentDialogStyles = {
   controlsBar: {
     px: 1.5,
     py: 1,
-    bgcolor: 'action.disabledBackground',
+    bgcolor: 'grey.800',
     display: 'flex',
     flexDirection: 'column',
     gap: 0.5,
@@ -592,14 +557,14 @@ const segmentDialogStyles = {
     gap: 1,
   },
   controlButton: {
-    color: 'common.white',
+    color: 'primary.contrastText',
     p: 0.5,
     '&.Mui-disabled': {
       color: 'text.disabled',
     },
   },
   timeDisplay: {
-    color: 'common.white',
+    color: 'primary.contrastText',
     fontFamily: 'monospace',
   },
   volumeGroup: {
@@ -608,7 +573,7 @@ const segmentDialogStyles = {
     gap: 0.5,
   },
   volumeLabel: {
-    color: 'common.white',
+    color: 'primary.contrastText',
     fontFamily: 'monospace',
     minWidth: 30,
     textAlign: 'center' as const,
@@ -617,7 +582,7 @@ const segmentDialogStyles = {
     color: 'text.disabled',
   },
   detailsBox: {
-    bgcolor: 'action.hover',
+    bgcolor: 'background.paper',
     p: 2,
     borderRadius: 1,
   },
@@ -627,7 +592,7 @@ const segmentDialogStyles = {
   },
   ocrBox: {
     p: 1.5,
-    bgcolor: 'action.hover',
+    bgcolor: 'background.paper',
     borderRadius: 1,
     whiteSpace: 'pre-wrap',
   },
