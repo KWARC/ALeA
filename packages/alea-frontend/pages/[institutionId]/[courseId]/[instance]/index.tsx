@@ -169,9 +169,8 @@ function CourseScheduleSection({
     queryFn: () => getCoverageTimeline(),
     select: (timeline) => {
       const now = Date.now();
-
-      const entries = (timeline[courseId!] || [])
-        .filter((e) => e.timestamp_ms && e.timestamp_ms > now)
+      const entries = (timeline[courseId!]?.lectures ?? [])
+        .filter((e) => e.timestamp_ms > now)
         .sort((a, b) => a.timestamp_ms - b.timestamp_ms);
 
       return entries[0]?.timestamp_ms;
@@ -493,14 +492,8 @@ function AnnouncementsSection({ courseId, instanceId }: { courseId: string; inst
 
 const CourseHomePage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('');
   const instanceId = resolvedInstanceId;
   const currentTerm = instanceId;
   const containerRef = useRef<HTMLDivElement>(null);
