@@ -8,6 +8,36 @@ export const SYSTEM_UPDATES = [
     postedTimestamp: '2023-02-11T00:20:00+05:30',
     }*/
   {
+    id: 'dark-theme',
+    header: 'Dark Theme',
+    content:
+      'ALeA now features a dark theme with improved visual design and user experience across the platform. Users can now switch between light, dark and system theme modes to customize their viewing experience.',
+    header_de: 'Dunkles Design',
+    content_de:
+      'ALeA verfügt jetzt über ein dunkles Design mit verbesserter visueller Gestaltung und Benutzerfreundlichkeit auf der gesamten Plattform. Nutzer können jetzt zwischen Hell-, Dunkel- und Systemmodus wechseln, um ihre Ansicht anzupassen.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
+    id: 'not-covered-sections',
+    header: 'Omitted Sections',
+    content:
+      'Sections that have not been covered in lectures are now clearly marked, helping students identify which content is still pending.',
+    header_de: 'Ausgelassene Abschnitte',
+    content_de:
+      'Abschnitte, die in Vorlesungen nicht behandelt wurden, sind jetzt klar gekennzeichnet und helfen Studierenden dabei, zu identifizieren, welche Inhalte noch ausstehen.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
+    id: 'new-url-structure',
+    header: 'New URL Structure',
+    content:
+      'ALeA now features a new URL structure that supports multiple course instances with unique course IDs at the university level. The enhanced URI mapping system includes special cases like "latest" and "legacy" routes for flexible navigation and backward compatibility.',
+    header_de: 'Neue URL-Struktur',
+    content_de:
+      'ALeA verfügt jetzt über eine neue URL-Struktur, die mehrere Kursinstanzen mit eindeutigen Kurs-IDs auf Universitätsebene unterstützt. Das verbesserte URI-Zuordnungssystem umfasst Sonderfälle wie "latest" und "legacy" Routen für flexible Navigation und Rückwärtskompatibilität.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
     id: 'exam-problems-page',
     header: 'Exam Problems Page Introduced',
     content:
@@ -122,7 +152,6 @@ export const SYSTEM_UPDATES = [
       'Dozenten können nun Quiz mit verbesserter Automatisierung und Kontrolle erstellen.',
     postedTimestamp: '2025-06-10T00:20:00+05:30',
   },
-
 
   {
     id: 'auto-lecture-progress',
