@@ -204,7 +204,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (Array.isArray(elemSections)) allSections.push(...elemSections);
     else if (elemSections) allSections.push(elemSections);
   }
-  const coverageData = (getCoverageData()[courseId] ?? []).filter((snap) => snap.sectionUri);
+
+  const coverageSnaps = getCoverageData()[courseId]?.lectures ?? [];
+
+  const coverageData = coverageSnaps.filter((snap): snap is LectureEntry =>
+    Boolean(snap && snap.sectionUri)
+  );
+
   if (coverageData?.length) addCoverageInfo(allSections, coverageData);
   const videoSlides = await getVideoToSlidesMap(courseId);
   const currentTermVideoSlides = videoSlides?.[currentTerm];

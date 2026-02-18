@@ -119,8 +119,11 @@ export const CourseSectionSelector = ({
   }, [courseId, courses]);
 
   useEffect(() => {
-    const timeline = coverageTimeline[courseId];
-    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    const courseData = coverageTimeline[courseId];
+
+    const lectures = courseData?.lectures ?? [];
+
+    const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {
       setUpcomingQuizSyllabus(syllabus);
     }

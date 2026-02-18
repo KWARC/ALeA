@@ -14,6 +14,7 @@ import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 import { getAllCoursesFromDb } from './api/get-all-courses';
+import { pathToCourseHome } from '@alea/utils';
 import { useIsLoggedIn } from '@alea/react-utils';
 import { useQuery } from '@tanstack/react-query';
 import shadows from '../theme/shadows';
@@ -211,8 +212,9 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
 export function CourseCard({ course, currentTerm }) {
   const { imageLink: courseImage, courseName, courseId, universityId, instructors } = course;
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
+  const institutionId = universityId || 'FAU';
   return (
-    <Link href={`/course-home/${courseId}`}>
+    <Link href={pathToCourseHome(institutionId, courseId, 'latest')}>
       <Box
         sx={{
           cursor: 'pointer',

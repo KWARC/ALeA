@@ -21,7 +21,7 @@ import { ForceFauLogin } from '../../components/ForceFAULogin';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { handleEnrollment } from '../course-home/[courseId]';
+import { handleEnrollment } from '../../components/courseHelpers';
 import { useCurrentUser } from '@alea/react-utils';
 
 function ToBeStarted({ quizStartTs }: { quizStartTs?: number }) {

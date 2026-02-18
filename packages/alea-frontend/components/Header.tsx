@@ -204,7 +204,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
         <Box>
           <Box display="flex" alignItems="center">
             <NotificationButton bgColor="primary.400" />
-            {/* <ThemeToggleButton /> */}
+            <ThemeToggleButton />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
                 <IconButton sx={{ bgcolor: "primary.main", ml: '5px' }}>

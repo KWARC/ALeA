@@ -1,5 +1,5 @@
 import { FTMLDocument, FTMLFragment, FTMLSetup } from '@flexiformal/ftml-react';
-import { CircularProgress } from '@mui/material';
+import { Box, CircularProgress, useTheme } from '@mui/material';
 import React, { useContext } from 'react';
 import { FTMLReadyContext } from './stex-react-renderer';
 
@@ -8,13 +8,27 @@ function useFTMLReady(): boolean {
 }
 
 export function SafeFTMLFragment(props: React.ComponentProps<typeof FTMLFragment>) {
+  const theme = useTheme();
+  const bgDefault = theme.palette.background.paper;
   const isReady = useFTMLReady();
 
   if (!isReady) {
     return <CircularProgress />;
   }
-
-  return <FTMLFragment {...props} />;
+  return (
+    <Box
+      className="ftml-reset"
+      bgcolor="background.paper"
+      color="text.primary"
+      sx={{
+        '& .ftml-slide': {
+          backgroundColor: `${bgDefault}`,
+        },
+      }}
+    >
+      <FTMLFragment {...props} />
+    </Box>
+  );
 }
 
 export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument>) {
@@ -24,7 +38,11 @@ export function SafeFTMLDocument(props: React.ComponentProps<typeof FTMLDocument
     return <CircularProgress />;
   }
 
-  return  <FTMLDocument {...props} />;
+  return (
+    <Box className="ftml-reset">
+      <FTMLDocument {...props} />
+    </Box>
+  );
 }
 
 export function SafeFTMLSetup(

@@ -11,6 +11,14 @@ export const Window = IS_SERVER ? undefined : window;
 export const PRIMARY_COL = '#203360';
 export const PRIMARY_COL_DARK_HOVER = '#162343';
 export const SECONDARY_COL = '#8c9fb1';
+export const getAdaptiveColor = (
+  baseColor: string,
+  defaultBg:string,
+  basePercent = 30,
+  defaultBgPercent = 70,
+) => {
+  return `color-mix(in srgb, ${defaultBg} ${defaultBgPercent}%, ${baseColor} ${basePercent}%)`;
+};
 export enum Language {
   Deutsch = 'Deutsch',
   English = 'English',
@@ -306,7 +314,7 @@ export function isBusinessDomain(domain?: string) {
 }
 export function getDomainFromEmail(email: string): string | undefined {
   if (!email) return undefined;
-  const parts = email.split("@");
+  const parts = email.split('@');
   return parts.length === 2 ? parts[1] : undefined;
 }
 export function truncateText(text: string, maxLength: number) {
@@ -337,4 +345,76 @@ export function epochMsToDateInput(epochMs?: number) {
 
 export function epochMsToCivilDate(epochMs?: number) {
   return epochMs ? dayjs(epochMs).format('LL') : '';
+}
+
+export function pathToCourseResource(
+  institutionId: string,
+  courseId: string,
+  instance: string,
+  resourceName: string
+): string {
+  const normalizedResource =
+    resourceName && resourceName !== '/'
+      ? resourceName.startsWith('/')
+        ? resourceName
+        : `/${resourceName}`
+      : '';
+
+  return `/${institutionId}/${courseId}/${instance}${normalizedResource}`;
+}
+
+export function pathToCourseHome(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '');
+}
+
+export function pathToCourseView(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/course-view');
+}
+
+export function pathToCourseNotes(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/course-notes');
+}
+
+export function pathToStudyBuddy(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/study-buddy');
+}
+
+export function pathToHomework(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/homework');
+}
+
+export function pathToPracticeProblems(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/practice-problems');
+}
+
+export function pathToInstructorDash(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/instructor-dash');
 }
