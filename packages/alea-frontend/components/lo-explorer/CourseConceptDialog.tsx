@@ -1,5 +1,4 @@
-import { conceptUriToName, getAllCourses, getDefiniedaInSectionAgg } from '@alea/spec';
-import { CourseInfo } from '@alea/utils';
+import { conceptUriToName } from '@alea/spec';
 import { contentToc } from '@flexiformal/ftml-backend';
 import {
   Autocomplete,
@@ -22,9 +21,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { SecInfo } from 'packages/alea-frontend/types';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { SecInfo } from '../../types';
 import { getSecInfo } from '../coverage-update';
+import { useDefiniedaInSectionAgg } from '../../hooks/useDefinedConceptsInSection';
+import { useAllCourses } from '../../hooks/useAllCourses';
+import { useQueries } from '@tanstack/react-query';
 
 export const CourseConceptsDialog = ({
   open,
@@ -35,65 +37,60 @@ export const CourseConceptsDialog = ({
   onClose: () => void;
   setChosenConcepts: React.Dispatch<React.SetStateAction<string[]>>;
 }) => {
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
-  const [allSectionDetails, setAllSectionDetails] = useState<{
-    [courseId: string]: SecInfo[];
-  }>({});
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedCourseSections, setSelectedCourseSections] = useState<SecInfo[]>([]);
   const [selectedSection, setSelectedSection] = useState<SecInfo | null>(null);
   const [sectionConcepts, setSectionConcepts] = useState<{ label: string; value: string }[]>([]);
-  const [processedOptions, setProcessedOptions] = useState<{ label: string; value: string }[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { data: conceptsAndDefinitions = [], isFetching: loading } = useDefiniedaInSectionAgg(
+    selectedSection?.uri ?? null
+  );
+
+  const processedOptions = useMemo(() => {
+    const uniqueUris = [...new Set(conceptsAndDefinitions.map((c) => c.conceptUri))];
+
+    return uniqueUris.map((uri) => ({
+      label: `${conceptUriToName(uri)} (${uri})`,
+      value: uri,
+    }));
+  }, [conceptsAndDefinitions]);
 
   const selectAllKey = 'Select All';
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  const { data: courses = {} } = useAllCourses();
 
-  useEffect(() => {
-    async function getCourseSections() {
-      const secDetails: Record<string, SecInfo[]> = {};
-      for (const courseId of Object.keys(courses)) {
-        const notesUri = courses?.[courseId]?.notes;
-        if (!notesUri) continue;
-        const toc = (await contentToc({ uri: notesUri }))?.[1] ?? [];
-        secDetails[courseId] = toc.flatMap((entry) => getSecInfo(entry));
-      }
-      setAllSectionDetails(secDetails);
-    }
-    getCourseSections();
-  }, [courses]);
+  const courseQueries = useQueries({
+    queries: Object.entries(courses)
+      .filter(([_, info]) => info.notes)
+      .map(([courseId, info]) => ({
+        queryKey: ['content-toc', info.notes],
+        queryFn: () => contentToc({ uri: info.notes }).then(([, toc]) => toc ?? []),
+        enabled: Boolean(info.notes),
+        staleTime: Infinity,
+      })),
+  });
+  const allSectionDetails: {
+    [courseId: string]: SecInfo[];
+  } = Object.fromEntries(
+    Object.keys(courses)
+      .filter((courseId, index) => courseQueries[index]?.data)
+      .map((courseId, index) => [
+        courseId,
+        courseQueries[index].data.flatMap((entry) => getSecInfo(entry)),
+      ])
+  );
 
   const handleCourseChange = (event: SelectChangeEvent) => {
     const courseId: string = event.target.value;
     setSelectedCourse(courseId);
     setSelectedCourseSections(allSectionDetails[courseId]);
   };
-
-  const handleSectionChange = async (event: SelectChangeEvent) => {
+  const handleSectionChange = (event: SelectChangeEvent) => {
     const sectionTitle = event.target.value;
-    const selectedSection = selectedCourseSections.find(
-      (section) => section.title === sectionTitle
-    );
-    if (selectedSection) {
-      setSelectedSection(selectedSection);
-    }
-    setLoading(true);
-    try {
-      const concepts = await getDefiniedaInSectionAgg(selectedSection?.uri);
-      const uniqueConceptUris = [...new Set(concepts.map((c) => c.conceptUri))];
-      setProcessedOptions(
-        uniqueConceptUris.map((uri) => ({
-          label: `${conceptUriToName(uri)} (${uri})`,
-          value: uri,
-        }))
-      );
-    } catch (error) {
-      console.error('Error fetching concepts:', error);
-    } finally {
-      setLoading(false);
+
+    const section = selectedCourseSections.find((s) => s.title === sectionTitle);
+
+    if (section) {
+      setSelectedSection(section);
     }
   };
 
