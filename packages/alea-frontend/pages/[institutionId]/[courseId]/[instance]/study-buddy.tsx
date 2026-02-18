@@ -12,10 +12,8 @@ import {
   FormControlLabel,
   Typography,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import {
   connectionRequest,
-  getAllCourses,
   GetStudyBuddiesResponse,
   getStudyBuddyList,
   getStudyBuddyUserInfo,
@@ -26,9 +24,9 @@ import {
   StudyBuddy,
   updateStudyBuddyInfo,
 } from '@alea/spec';
-import { CourseInfo, MaAI_COURSES } from '@alea/utils';
-import { useIsLoggedIn } from '@alea/react-utils';
 import type { NextPage } from 'next';
+import { useTheme } from '@mui/material/styles';
+import { MaAI_COURSES } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
@@ -37,6 +35,8 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import { StudyBuddyForm } from '../../../../components/StudyBuddyForm';
 import { StudyBuddyListing, StudyBuddyListingTable } from '../../../../components/StudyBuddyListingTable';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { useAllCourses } from '../../../../hooks/useAllCourses';
+import { useIsLoggedIn } from '@alea/react-utils';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 
@@ -100,7 +100,6 @@ const StudyBuddyPage: NextPage = () => {
   });
   const [agreed, setAgreed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const masterCourses = MaAI_COURSES;
 
   const refetchStudyBuddyLists = useCallback(() => {
@@ -109,10 +108,7 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, fromServer?.active, institutionId, instanceId]);
 
   const { loggedIn } = useIsLoggedIn();
-
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  const { data: courses = {} ,isLoading:courseLoading} = useAllCourses();
 
   useEffect(() => {
     refetchStudyBuddyLists();
@@ -140,7 +136,7 @@ const StudyBuddyPage: NextPage = () => {
   }
   if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
 
-  if (!router.isReady || !courses) return <CircularProgress />;
+  if (!router.isReady || courseLoading) return <CircularProgress />;
 
   const courseInfo = courses[courseId];
   const courseName = courseInfo?.courseName || masterCourses[courseId]?.courseName;
@@ -278,8 +274,8 @@ const StudyBuddyPage: NextPage = () => {
           subText={t.requestSentSubtext}
           onAction={(buddy) => {
             removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
-              refetchStudyBuddyLists();
-              alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
+                refetchStudyBuddyLists();
+                alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
             });
           }}
         />

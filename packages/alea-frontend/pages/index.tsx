@@ -16,6 +16,7 @@ import { PARTNERED_UNIVERSITIES } from '@alea/utils';
 import { getAllCoursesFromDb } from './api/get-all-courses';
 import { pathToCourseHome } from '@alea/utils';
 import { useIsLoggedIn } from '@alea/react-utils';
+import { useQuery } from '@tanstack/react-query';
 import shadows from '../theme/shadows';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
@@ -295,7 +296,6 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId['FAU'];
 
-  const [resourcesForInstructor, setResourcesForInstructor] = useState<CourseResourceAction[]>([]);
   useEffect(() => {
     updateUserInfoFromToken();
   }, []);
@@ -304,19 +304,19 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     home: { newHome: n },
   } = getLocaleObject(router);
 
-  useEffect(() => {
-    async function resourcesAccessToUser() {
+  const { data: resourcesForInstructor = [] } = useQuery({
+    queryKey: ['instructorResources'],
+    queryFn: async () => {
       const resources = await getResourcesForUser();
-      const resourceAccessToInstructor = resources
+      return resources
         .map((item) => ({
           ...item,
           actions: item.actions.filter((action) => action !== Action.TAKE),
         }))
         .filter((resource) => resource.actions.length > 0);
-      setResourcesForInstructor(resourceAccessToInstructor);
-    }
-    resourcesAccessToUser();
-  }, []);
+    },
+    enabled: loggedIn,
+  });
 
   if (loggedIn) {
     return (

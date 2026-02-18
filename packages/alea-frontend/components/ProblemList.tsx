@@ -15,10 +15,9 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { FTML } from '@flexiformal/ftml';
-import { getCourseProblemCounts } from '@alea/spec';
 import { getExamsForCourse } from '@alea/spec';
-
 import { ExamSelect } from '@alea/stex-react-renderer';
+import { useCourseProblemCounts } from '../hooks/useCourseProblemCount';
 import shadows from '../theme/shadows';
 
 interface TitleMetadata {
@@ -71,12 +70,11 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
 };
 
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
-  const [problemCounts, setProblemCounts] = useState<Record<string, number> | null>(null);
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
+  const theme = useTheme();
 
   useEffect(() => {
     if (!courseId) return;
@@ -89,16 +87,9 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       .catch(console.error);
   }, [courseId]);
 
-  useEffect(() => {
-    if (!courseId) return;
-    setLoading(true);
-    getCourseProblemCounts(courseId)
-      .then((data) => setProblemCounts(data))
-      .catch((err) => console.error('Error fetching problem counts:', err))
-      .finally(() => setLoading(false));
-  }, [courseId]);
+  const { data: problemCounts = {}, isLoading } = useCourseProblemCounts(courseId);
 
-  if (problemCounts === null) {
+  if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
@@ -150,7 +141,6 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const goToSection = (sectionId?: string) => {
     window.location.href = `/course-notes/${courseId}#${sectionId}`;
   };
-  const theme = useTheme();
   return (
     <Box maxWidth={800} px={{ xs: 1, sm: 2 }} m="0 auto">
       <Typography variant="h2" my={3} textAlign="center">
