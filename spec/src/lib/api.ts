@@ -37,3 +37,4 @@ export * from './study-buddy';
 export * from './study-buddy-api';
 export * from './system-alert';
 export * from './university-admin-dashboard';
+export * from './video-matching';
