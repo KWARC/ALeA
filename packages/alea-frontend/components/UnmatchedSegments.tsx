@@ -1,5 +1,6 @@
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import ErrorIcon from '@mui/icons-material/Error';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -71,18 +72,27 @@ function getSegmentDuration(startTime: number, endTime: number): string {
   return `${Math.round(duration)}s`;
 }
 
-export function UnmatchedSegments({
-  segments,
-  clipId,
-  onSegmentSelect,
-}: UnmatchedSegmentsProps) {
+export function UnmatchedSegments({ segments, clipId, onSegmentSelect }: UnmatchedSegmentsProps) {
   const [selectedSegment, setSelectedSegment] = useState<UnmatchedSegment | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [isLoadingVideo, setIsLoadingVideo] = useState(false);
-  const [videoInfo, setVideoInfo] = useState<ClipDetails | null>(null);
-  const [videoError, setVideoError] = useState<string | null>(null);
   const [playback, setPlayback] = useState<PlaybackState>(initialPlaybackState);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const {
+    data: videoInfo = null,
+    isFetching: isLoadingVideo,
+    error: videoQueryError,
+  } = useQuery<ClipDetails>({
+    queryKey: ['clipInfo', clipId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/get-fau-clip-info/${clipId}`);
+      return response.data;
+    },
+    enabled: openDialog && !!clipId,
+    staleTime: Infinity,
+  });
+
+  const videoError = videoQueryError ? 'Failed to load video. Please try again.' : null;
   const videoSource: string | null = (() => {
     if (!videoInfo) return null;
     const base = videoInfo.compositeUrl || null;
@@ -90,38 +100,13 @@ export function UnmatchedSegments({
     return `${base}#t=${selectedSegment.start_time},${selectedSegment.end_time}`;
   })();
   const stats = useMemo(() => {
-    const totalDuration = segments.reduce(
-      (sum, seg) => sum + (seg.end_time - seg.start_time),
-      0,
-    );
+    const totalDuration = segments.reduce((sum, seg) => sum + (seg.end_time - seg.start_time), 0);
     return {
       totalDuration: formatTime(totalDuration),
       percentage:
-        segments.length > 0
-          ? Math.round((segments.length / (segments.length + 1)) * 100)
-          : 0,
+        segments.length > 0 ? Math.round((segments.length / (segments.length + 1)) * 100) : 0,
     };
   }, [segments]);
-
-  const fetchVideoInfo = useCallback(async () => {
-    setIsLoadingVideo(true);
-    setVideoError(null);
-    try {
-      const response = await axios.get(`/api/get-fau-clip-info/${clipId}`);
-      setVideoInfo(response.data);
-    } catch (error) {
-      console.error('Failed to fetch video info:', error);
-      setVideoError('Failed to load video. Please try again.');
-    } finally {
-      setIsLoadingVideo(false);
-    }
-  }, [clipId]);
-
-  useEffect(() => {
-    if (openDialog && !videoInfo && clipId) {
-      fetchVideoInfo();
-    }
-  }, [openDialog, clipId, videoInfo, fetchVideoInfo]);
 
   useEffect(() => {
     if (videoRef.current && selectedSegment && videoInfo) {
@@ -154,10 +139,8 @@ export function UnmatchedSegments({
       }
     };
 
-    const handlePlay = () =>
-      setPlayback((prev) => ({ ...prev, isPlaying: true, isEnded: false }));
-    const handlePause = () =>
-      setPlayback((prev) => ({ ...prev, isPlaying: false }));
+    const handlePlay = () => setPlayback((prev) => ({ ...prev, isPlaying: true, isEnded: false }));
+    const handlePause = () => setPlayback((prev) => ({ ...prev, isPlaying: false }));
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('play', handlePlay);
@@ -180,8 +163,6 @@ export function UnmatchedSegments({
     videoRef.current?.pause();
     setOpenDialog(false);
     setSelectedSegment(null);
-    setVideoInfo(null);
-    setVideoError(null);
     setPlayback(initialPlaybackState);
   };
 
@@ -215,7 +196,7 @@ export function UnmatchedSegments({
       video.currentTime = newTime;
       setPlayback((prev) => ({ ...prev, currentTime: newTime, isEnded: false }));
     },
-    [selectedSegment],
+    [selectedSegment]
   );
 
   const handleVolumeUp = useCallback(() => {
@@ -392,7 +373,9 @@ export function UnmatchedSegments({
                       )}
                     </IconButton>
                     <Typography variant="caption" sx={segmentDialogStyles.timeDisplay}>
-                      {`${formatTime(playback.currentTime)} / ${formatTime(selectedSegment.end_time)}`}
+                      {`${formatTime(playback.currentTime)} / ${formatTime(
+                        selectedSegment.end_time
+                      )}`}
                     </Typography>
 
                     <Box flex={1} />
@@ -458,7 +441,7 @@ export function UnmatchedSegments({
                     </Typography>
                   </Box>
                 </Stack>
-              </Box>         
+              </Box>
               <Box>
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                   OCR Text

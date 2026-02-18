@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Container,
@@ -34,8 +34,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SchoolIcon from '@mui/icons-material/School';
-import MainLayout from '../layouts/MainLayout';
-import { UnmatchedSegments } from '../components/UnmatchedSegments';
+import MainLayout from '../../layouts/MainLayout';
+import { UnmatchedSegments } from '../../components/UnmatchedSegments';
 import { getVideoMatchingData, MatchReportData, VideoData } from '@alea/spec';
 
 interface VideoWithMetadata extends VideoData {
@@ -45,49 +45,43 @@ interface VideoWithMetadata extends VideoData {
 }
 
 const VideoMatchingDashboard = () => {
-  const router = useRouter();
-  const [matchReportData, setMatchReportData] = useState<MatchReportData | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [selectedCourseOverride, setSelectedCourseOverride] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedVideo, setExpandedVideo] = useState<string | false>(false);
-  const [videoSegmentFilters, setVideoSegmentFilters] = useState<{[key: string]: 'all' | 'matched' | 'unmatched'}>({});
+  const [videoSegmentFilters, setVideoSegmentFilters] = useState<{
+    [key: string]: 'all' | 'matched' | 'unmatched';
+  }>({});
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await getVideoMatchingData();
-        if (!data) {
-          throw new Error('Failed to fetch video matching data');
-        }
-        setMatchReportData(data);
-
-        const firstCourse = Object.keys(data)[0];
-        if (firstCourse) {
-          setSelectedCourse(firstCourse);
-        }
-      } catch (error) {
-        console.error('Error loading match report data:', error);
+  const {
+    data: matchReportData,
+    isLoading,
+    isError,
+  } = useQuery<MatchReportData>({
+    queryKey: ['videoMatchingData'],
+    queryFn: async () => {
+      const data = await getVideoMatchingData();
+      if (!data) {
+        throw new Error('Failed to fetch video matching data');
       }
-    };
-
-    loadData();
-  }, []);
+      return data;
+    },
+  });
 
   const courses = matchReportData ? Object.keys(matchReportData) : [];
+  const selectedCourse = selectedCourseOverride ?? courses[0] ?? '';
+  const setSelectedCourse = setSelectedCourseOverride;
   const videos = useMemo((): VideoWithMetadata[] => {
     if (!matchReportData || !selectedCourse) return [];
-
     const courseData = matchReportData[selectedCourse];
     if (!courseData) return [];
-
     return Object.entries(courseData.videos).map(([videoId, videoData]) => ({
       videoId,
-      ...videoData,
+      ...(videoData as object),
       subject: courseData.subject,
       semester: courseData.semester,
-    }));
+    })) as VideoWithMetadata[];
   }, [matchReportData, selectedCourse]);
 
   const filteredVideos = videos.filter(
@@ -127,10 +121,13 @@ const VideoMatchingDashboard = () => {
     setExpandedVideo(false);
   };
 
-  const handleVideoSegmentFilterChange = (videoId: string, filter: 'all' | 'matched' | 'unmatched') => {
-    setVideoSegmentFilters(prev => ({
+  const handleVideoSegmentFilterChange = (
+    videoId: string,
+    filter: 'all' | 'matched' | 'unmatched'
+  ) => {
+    setVideoSegmentFilters((prev) => ({
       ...prev,
-      [videoId]: filter
+      [videoId]: filter,
     }));
   };
 
@@ -158,11 +155,16 @@ const VideoMatchingDashboard = () => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
-  if (!matchReportData) {
+  if (isLoading || isError || !matchReportData) {
+    const isFailure = !isLoading && (isError || !matchReportData);
     return (
       <Container maxWidth="lg" sx={videoMatchingStyles.container}>
         <Box sx={videoMatchingStyles.loadingBox}>
-          <Typography variant="h6">Loading match report data...</Typography>
+          <Typography variant="h6" color={isFailure ? 'error' : undefined}>
+            {isLoading
+              ? 'Loading video match report data...'
+              : 'Failed to load match report data. Please try again.'}
+          </Typography>
         </Box>
       </Container>
     );
@@ -192,7 +194,7 @@ const VideoMatchingDashboard = () => {
               Select Course
             </Typography>
           </Box>
-          
+
           <FormControl fullWidth>
             <InputLabel id="course-select-label">Course</InputLabel>
             <Select
@@ -303,7 +305,7 @@ const VideoMatchingDashboard = () => {
                 const matchedCount = video.stats?.matched || 0;
                 const unmatchedCount = video.stats?.unmatched || 0;
                 const matchPercent = video.stats?.match_percent || 0;
-                const currentFilter = videoSegmentFilters[video.videoId] || 'all';              
+                const currentFilter = videoSegmentFilters[video.videoId] || 'all';
                 const showMatched = currentFilter === 'all' || currentFilter === 'matched';
                 const showUnmatched = currentFilter === 'all' || currentFilter === 'unmatched';
 
@@ -353,7 +355,12 @@ const VideoMatchingDashboard = () => {
                             labelId={`filter-${video.videoId}`}
                             value={currentFilter}
                             label="Filter Segments"
-                            onChange={(e) => handleVideoSegmentFilterChange(video.videoId, e.target.value as 'all' | 'matched' | 'unmatched')}
+                            onChange={(e) =>
+                              handleVideoSegmentFilterChange(
+                                video.videoId,
+                                e.target.value as 'all' | 'matched' | 'unmatched'
+                              )
+                            }
                             startAdornment={
                               <InputAdornment position="start">
                                 <FilterListIcon fontSize="small" />
@@ -381,9 +388,7 @@ const VideoMatchingDashboard = () => {
                         <Box sx={videoMatchingStyles.segmentSection}>
                           <Box sx={videoMatchingStyles.segmentHeader}>
                             <CheckCircleIcon color="success" />
-                            <Typography variant="h6">
-                              Matched Segments ({matchedCount})
-                            </Typography>
+                            <Typography variant="h6">Matched Segments ({matchedCount})</Typography>
                           </Box>
 
                           <TableContainer sx={videoMatchingStyles.tableContainer}>
@@ -473,7 +478,6 @@ const VideoMatchingDashboard = () => {
                             clipId={video.videoId}
                             onSegmentSelect={(segment) => {
                               console.log('Selected segment:', segment);
-
                             }}
                           />
                         </Box>
