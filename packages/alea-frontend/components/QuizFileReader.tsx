@@ -1,8 +1,23 @@
 import { FTML } from '@flexiformal/ftml';
-import { Box } from '@mui/material';
+import { Box, Alert } from '@mui/material';
 import { FTMLProblemWithSolution, FTMLProblemWithSubProblems } from '@alea/spec';
-import React from 'react';
-
+import React, { useState } from 'react';
+function quizHasSubProblems(quiz: FTML.Quiz): boolean {
+  let found = false;
+  function checkElement(element: FTML.QuizElement) {
+    if (element.type === 'Problem') {
+      const problem = element as FTMLProblemWithSubProblems;
+      if (problem.subProblems && problem.subProblems.length > 0) {
+        found = true;
+      }
+    }
+    if (element.type === 'Section') {
+      element.elements?.forEach(checkElement);
+    }
+  }
+  quiz.elements.forEach(checkElement);
+  return found;
+}
 function getProblemsFromQuiz(quiz: FTML.Quiz): Record<string, FTMLProblemWithSolution> {
   const result: Record<string, FTMLProblemWithSolution> = {};
   function findSubProblem(str1: string, str2: string) {
@@ -46,6 +61,7 @@ export function QuizFileReader({
   setProblems: (problems: Record<string, FTMLProblemWithSolution>) => void;
   setCss: (css: FTML.Css[]) => void;
 }) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -58,14 +74,19 @@ export function QuizFileReader({
         console.log(parsedJson);
         // Check if the parsed content is a valid JSON object before updating the state
         if (typeof parsedJson === 'object' && parsedJson !== null) {
-          setProblems(getProblemsFromQuiz(parsedJson));
+          if (quizHasSubProblems(parsedJson)) {
+            setErrorMessage('Subproblems are not supported in this quiz.');
+            return;
+          }
+          const extractedProblems = getProblemsFromQuiz(parsedJson);
+          setProblems(extractedProblems);
           setTitle(parsedJson.title);
           setCss(parsedJson.css);
         } else {
-          alert('Invalid JSON file.');
+          setErrorMessage('Invalid JSON file.');
         }
       } catch (error) {
-        alert('Error parsing JSON: ' + error);
+        setErrorMessage('Error parsing JSON: ' + error);
       }
     };
     reader.readAsText(file);
@@ -74,6 +95,11 @@ export function QuizFileReader({
   return (
     <Box>
       <input type="file" accept=".json" onChange={handleFileChange} />
+      {errorMessage && (
+        <Alert severity="error" sx={{ marginTop: '8px', fontSize: '13px' }}>
+          {errorMessage}
+        </Alert>
+      )}
     </Box>
   );
 }
