@@ -559,6 +559,7 @@ export const en = {
     lectureEntryFailed: 'Lecture entry generation failed: {{error}}',
 
     generateLectureEntry: 'Generate Lecture Entry',
+    lectureEntriesAlreadyGenerated: 'Lecture Entries Already Generated',
 
     lectureScheduleTab: 'Lecture Schedule',
     tutorialScheduleTab: 'Tutorial Schedule',
