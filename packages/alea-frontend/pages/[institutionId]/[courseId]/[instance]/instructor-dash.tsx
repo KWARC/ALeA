@@ -69,7 +69,7 @@ function ChosenTab({
 }) {
   switch (tabName) {
     case 'access-control':
-      return <CourseAccessControlDashboard courseId={courseId} />;
+      return <CourseAccessControlDashboard courseId={courseId} instanceId={instanceId} />;
     case 'homework-manager':
       return <HomeworkManager courseId={courseId} institutionId={institutionId} />;
     case 'homework-grading':
