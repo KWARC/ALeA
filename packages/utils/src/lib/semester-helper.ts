@@ -9,8 +9,8 @@ import { Action, CURRENT_TERM } from '@alea/utils';
 
 const ROLES = ['instructors', 'tas', 'staff', 'enrollments'];
 
-function getUpdaterAclId(courseId: string, role: string): string {
-  return role === 'instructors' ? 'sys-admin' : `${courseId}-${CURRENT_TERM}-instructors`;
+function getUpdaterAclId(courseId: string, role: string, term: string): string {
+  return role === 'instructors' ? 'sys-admin' : `${courseId}-${term}-instructors`;
 }
 
 function isAclOpen(role: string): boolean {
@@ -26,9 +26,10 @@ export async function aclExists(aclId: string): Promise<boolean> {
   }
 }
 
-export async function createSemesterAclsForCourse(courseId: string) {
+export async function createSemesterAclsForCourse(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
   for (const role of ROLES) {
-    const aclId = `${courseId}-${CURRENT_TERM}-${role}`;
+    const aclId = `${courseId}-${term}-${role}`;
     if (await aclExists(aclId)) {
       console.log(`${aclId} already exists. Skipping.`);
       continue;
@@ -36,15 +37,13 @@ export async function createSemesterAclsForCourse(courseId: string) {
 
     // For staff ACL, include TAs and instructors as members
     const memberACLIds: string[] =
-      role === 'staff'
-        ? [`${courseId}-${CURRENT_TERM}-tas`, `${courseId}-${CURRENT_TERM}-instructors`]
-        : [];
+      role === 'staff' ? [`${courseId}-${term}-tas`, `${courseId}-${term}-instructors`] : [];
 
     const acl: CreateACLRequest = {
       id: aclId,
-      description: `${courseId} ${CURRENT_TERM} ${role}`,
+      description: `${courseId} ${term} ${role}`,
       isOpen: isAclOpen(role),
-      updaterACLId: getUpdaterAclId(courseId, role),
+      updaterACLId: getUpdaterAclId(courseId, role, term),
       memberUserIds: [],
       memberACLIds,
     };
@@ -57,11 +56,12 @@ export async function createSemesterAclsForCourse(courseId: string) {
   }
 }
 
-export async function createInstructorResourceActions(courseId: string) {
-  const aclId = `${courseId}-${CURRENT_TERM}-instructors`;
+export async function createInstructorResourceActions(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
+  const aclId = `${courseId}-${term}-instructors`;
   try {
     await createResourceAction({
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/**`,
+      resourceId: `/course/${courseId}/instance/${term}/**`,
       actionId: Action.ACCESS_CONTROL,
       aclId,
     });
@@ -71,15 +71,16 @@ export async function createInstructorResourceActions(courseId: string) {
   }
 }
 
-export async function createStudentResourceActions(courseId: string) {
-  const aclId = `${courseId}-${CURRENT_TERM}-enrollments`;
+export async function createStudentResourceActions(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
+  const aclId = `${courseId}-${term}-enrollments`;
   const resources = [
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.TAKE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.TAKE,
     },
   ];
@@ -93,39 +94,40 @@ export async function createStudentResourceActions(courseId: string) {
   }
 }
 
-export async function createStaffResourceActions(courseId: string) {
-  const aclId = `${courseId}-${CURRENT_TERM}-staff`;
+export async function createStaffResourceActions(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
+  const aclId = `${courseId}-${term}-staff`;
   const actions = [
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.MUTATE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.PREVIEW,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.MUTATE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.INSTRUCTOR_GRADING,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/notes`,
+      resourceId: `/course/${courseId}/instance/${term}/notes`,
       actionId: Action.MUTATE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/study-buddy`,
+      resourceId: `/course/${courseId}/instance/${term}/study-buddy`,
       actionId: Action.MODERATE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
+      resourceId: `/course/${courseId}/instance/${term}/comments`,
       actionId: Action.MODERATE,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
+      resourceId: `/course/${courseId}/instance/${term}/syllabus`,
       actionId: Action.MUTATE,
     },
   ];
@@ -140,11 +142,12 @@ export async function createStaffResourceActions(courseId: string) {
     }
   }
 }
-export async function createMetadataResourceActions(courseId: string) {
-  const aclId = `${courseId}-${CURRENT_TERM}-instructors`;
+export async function createMetadataResourceActions(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
+  const aclId = `${courseId}-${term}-instructors`;
   try {
     await createResourceAction({
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      resourceId: `/course/${courseId}/instance/${term}/metadata`,
       actionId: Action.MUTATE,
       aclId,
     });
@@ -156,86 +159,91 @@ export async function createMetadataResourceActions(courseId: string) {
   }
 }
 
-export function getExpectedResourceActions(courseId: string) {
+export function getExpectedResourceActions(courseId: string, instanceId?: string) {
+  const term = instanceId ?? CURRENT_TERM;
   return [
     // Instructors
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/**`,
+      resourceId: `/course/${courseId}/instance/${term}/**`,
       actionId: Action.ACCESS_CONTROL,
-      aclId: `${courseId}-${CURRENT_TERM}-instructors`,
+      aclId: `${courseId}-${term}-instructors`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/metadata`,
+      resourceId: `/course/${courseId}/instance/${term}/metadata`,
       actionId: Action.MUTATE,
-      aclId: `${courseId}-${CURRENT_TERM}-instructors`,
+      aclId: `${courseId}-${term}-instructors`,
     },
     // Students
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.TAKE,
-      aclId: `${courseId}-${CURRENT_TERM}-enrollments`,
+      aclId: `${courseId}-${term}-enrollments`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.TAKE,
-      aclId: `${courseId}-${CURRENT_TERM}-enrollments`,
+      aclId: `${courseId}-${term}-enrollments`,
     },
     // Staff
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.MUTATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/quiz`,
+      resourceId: `/course/${courseId}/instance/${term}/quiz`,
       actionId: Action.PREVIEW,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.MUTATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/homework`,
+      resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.INSTRUCTOR_GRADING,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/notes`,
+      resourceId: `/course/${courseId}/instance/${term}/notes`,
       actionId: Action.MUTATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/study-buddy`,
+      resourceId: `/course/${courseId}/instance/${term}/study-buddy`,
       actionId: Action.MODERATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/comments`,
+      resourceId: `/course/${courseId}/instance/${term}/comments`,
       actionId: Action.MODERATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
     {
-      resourceId: `/course/${courseId}/instance/${CURRENT_TERM}/syllabus`,
+      resourceId: `/course/${courseId}/instance/${term}/syllabus`,
       actionId: Action.MUTATE,
-      aclId: `${courseId}-${CURRENT_TERM}-staff`,
+      aclId: `${courseId}-${term}-staff`,
     },
   ];
 }
 
-export async function isCourseSemesterSetupComplete(courseId: string): Promise<boolean> {
+export async function isCourseSemesterSetupComplete(
+  courseId: string,
+  instanceId?: string
+): Promise<boolean> {
+  const term = instanceId ?? CURRENT_TERM;
   try {
     // Check ACLs
-    const aclIds = ROLES.map((role) => `${courseId}-${CURRENT_TERM}-${role}`);
+    const aclIds = ROLES.map((role) => `${courseId}-${term}-${role}`);
     const aclPresence = await Promise.all(aclIds.map((id) => aclExists(id)));
     const allAclsPresent = aclPresence.every(Boolean);
 
     if (!allAclsPresent) return false;
 
     // Check resource actions
-    const expected = getExpectedResourceActions(courseId);
-    const allResourceActions = await getInstructorResourceActions(courseId, CURRENT_TERM);
+    const expected = getExpectedResourceActions(courseId, term);
+    const allResourceActions = await getInstructorResourceActions(courseId, term);
     const hasAllResourceActions = expected.every((exp) =>
       allResourceActions.some(
         (ra) =>
