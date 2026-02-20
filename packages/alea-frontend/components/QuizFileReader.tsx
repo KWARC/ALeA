@@ -63,14 +63,16 @@ export function QuizFileReader({
   setProblems: (problems: Record<string, FTMLProblemWithSolution>) => void;
   setCss: (css: FTML.Css[]) => void;
   allowSubproblems?: boolean;
-  setHasSubproblemError: (hasError: boolean) => void;
+  setHasSubproblemError?: (hasError: boolean) => void;
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setErrorMessage(null);
-    setHasSubproblemError(false);
+    if (setHasSubproblemError) {
+      setHasSubproblemError(false);
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       console.log(e.target?.result);
@@ -82,7 +84,9 @@ export function QuizFileReader({
         if (typeof parsedJson === 'object' && parsedJson !== null) {
           if (quizHasSubProblems(parsedJson) && !allowSubproblems) {
             setErrorMessage('Subproblems are not supported in this quiz.');
-            setHasSubproblemError(true);
+            if (setHasSubproblemError) {
+              setHasSubproblemError(true);
+            }
             return;
           }
           const extractedProblems = getProblemsFromQuiz(parsedJson);
