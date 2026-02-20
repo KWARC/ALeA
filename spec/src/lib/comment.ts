@@ -89,6 +89,7 @@ export interface UpdateQuestionStateRequest {
 }
 
 export interface UserInformation {
+  userId: string;
   showTrafficLight: boolean;
   showSectionReview: boolean;
   notificationSeenTs: number;
