@@ -94,7 +94,6 @@ export function SlidePicker({
   });
   const [error, setError] = useState<string | null>(null);
   const section = secInfo[sectionUri];
-  console.log('sectionUri', sectionUri, 'section', section);
   const sectionDisplayName = section ? section.title.trim() : 'Unknown Section';
   const { data: slidesData, isLoading } = useSlides(courseId, section?.id);
 
