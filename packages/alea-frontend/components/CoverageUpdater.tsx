@@ -123,8 +123,8 @@ export function CoverageUpdater({
   const [isTimingDialogOpen, setIsTimingDialogOpen] = useState(false);
   const [selectedSectionForTiming, setSelectedSectionForTiming] = useState<string | null>(null);
 
-  const [manualStartTime, setManualStartTime] = useState('');
-  const [manualEndTime, setManualEndTime] = useState('');
+  const [manualStartTime, setManualStartTime] = useState<number | null>(null);
+  const [manualEndTime, setManualEndTime] = useState<number | null>(null);
 
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
@@ -132,8 +132,8 @@ export function CoverageUpdater({
   const formatDateTime = (timestamp?: number) => {
     if (!timestamp) return '—';
     return new Date(timestamp).toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -264,6 +264,24 @@ export function CoverageUpdater({
       entry.targetSectionName = getSectionNameForUri(snap.targetSectionUri || '', secInfo);
       return entry;
     });
+
+  const allLectureOptions = snaps
+    .slice()
+    .sort((a, b) => a.timestamp_ms - b.timestamp_ms)
+    .map((snap) => ({
+      startLabel: new Date(snap.timestamp_ms).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+      }),
+      endLabel: snap.lectureEndTimestamp_ms
+        ? new Date(snap.lectureEndTimestamp_ms).toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+          })
+        : '—',
+      start: snap.timestamp_ms,
+      end: snap.lectureEndTimestamp_ms,
+    }));
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -507,24 +525,42 @@ export function CoverageUpdater({
           </Typography>
 
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Start Time
+            Start Date
           </Typography>
 
-          <TextField
-            fullWidth
-            type="datetime-local"
+          <Autocomplete
+            options={allLectureOptions}
+            value={allLectureOptions.find((o) => o.start === manualStartTime) || null}
+            isOptionEqualToValue={(option, value) => option.start === value.start}
+            getOptionLabel={(o) => o.startLabel}
             sx={{ mb: 2 }}
-            onChange={(e) => setManualStartTime(e.target.value)}
+            onChange={(_, value) => {
+              if (!value) return;
+
+              setManualStartTime(value.start);
+
+              setManualEndTime(value.end ?? null);
+            }}
+            renderInput={(params) => <TextField {...params} label="Select Start Date" />}
           />
 
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            End Time
+            End Date
           </Typography>
 
-          <TextField
-            fullWidth
-            type="datetime-local"
-            onChange={(e) => setManualEndTime(e.target.value)}
+          <Autocomplete
+            options={allLectureOptions.filter((o) => o.end)}
+            value={
+              allLectureOptions.filter((o) => o.end).find((o) => o.end === manualEndTime) || null
+            }
+            isOptionEqualToValue={(option, value) => option.end === value.end}
+            getOptionLabel={(o) => o.endLabel}
+            onChange={(_, value) => {
+              if (!value || !value.end) return;
+
+              setManualEndTime(value.end);
+            }}
+            renderInput={(params) => <TextField {...params} label="Select End Date" />}
           />
         </DialogContent>
 
@@ -534,6 +570,8 @@ export function CoverageUpdater({
             onClick={() => {
               setIsTimingDialogOpen(false);
               setSelectedSectionForTiming(null);
+              setManualStartTime(null);
+              setManualEndTime(null);
             }}
           />
 
@@ -543,8 +581,10 @@ export function CoverageUpdater({
             onClick={() => {
               if (!selectedSectionForTiming || !manualStartTime || !manualEndTime) return;
 
-              const start = new Date(manualStartTime).getTime();
-              const end = new Date(manualEndTime).getTime();
+              const start = manualStartTime;
+              const end = manualEndTime;
+
+              if (!start || !end) return;
 
               if (end <= start) return;
 
@@ -561,8 +601,8 @@ export function CoverageUpdater({
 
               setIsTimingDialogOpen(false);
               setSelectedSectionForTiming(null);
-              setManualStartTime('');
-              setManualEndTime('');
+              setManualStartTime(null);
+              setManualEndTime(null);
             }}
           />
         </Box>
