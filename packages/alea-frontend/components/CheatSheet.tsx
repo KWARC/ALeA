@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -11,14 +11,43 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PrintIcon from '@mui/icons-material/Print';
 import { useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
+const PRINT_STYLE_ID = 'cheatsheet-print-styles';
+if (typeof document !== 'undefined' && !document.getElementById(PRINT_STYLE_ID)) {
+  const style = document.createElement('style');
+  style.id = PRINT_STYLE_ID;
+  style.textContent = `
+    @media print {
+      /* Hide everything on the page */
+      body * {
+        visibility: hidden !important;
+      }
+
+      /* Show only the cheat-sheet document and all its children */
+      #cheatsheet-print-area,
+      #cheatsheet-print-area * {
+        visibility: visible !important;
+      }
+
+      /* Position the cheat-sheet so it fills the printed page */
+      #cheatsheet-print-area {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 export interface CheatSheetProps {
   userId: string;
   userEmail: string;
@@ -173,7 +202,22 @@ function CheatSheetViewerDialog({
   onClose: () => void;
   sheetProps: CheatSheetProps;
 }) {
-  const handlePrint = () => window.print();
+  const scaleRef = useRef<HTMLDivElement>(null);
+  const handlePrint = () => {
+    const el = document.getElementById('cheatsheet-print-area');
+    const wrapper = scaleRef.current;
+    if (el && wrapper) {
+      document.body.appendChild(el);
+      wrapper.style.visibility = 'hidden';
+      window.print();
+      setTimeout(() => {
+        wrapper.appendChild(el);
+        wrapper.style.visibility = '';
+      }, 1000);
+    } else {
+      window.print();
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -191,7 +235,7 @@ function CheatSheetViewerDialog({
         </Box>
       </DialogTitle>
       <DialogContent sx={dialogStyles.content}>
-        <Box sx={dialogStyles.scaleWrapper}>
+        <Box ref={scaleRef} sx={dialogStyles.scaleWrapper}>
           <CheatSheetDocument {...sheetProps} />
         </Box>
       </DialogContent>
@@ -199,51 +243,8 @@ function CheatSheetViewerDialog({
   );
 }
 
-async function downloadAsPdf(sheetProps: CheatSheetProps) {
-  const el = document.getElementById('cheatsheet-print-area');
-  if (!el) {
-    console.error('cheatsheet-print-area not found in DOM');
-    return;
-  }
-  const scaleWrapper = el.closest('[style*="scale"]') as HTMLElement | null;
-  const originalTransform = scaleWrapper?.style.transform;
-  if (scaleWrapper) scaleWrapper.style.transform = 'none';
-  try {
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`CheatSheet_${sheetProps.courseId}_${sheetProps.userId}.pdf`);
-  } finally {
-    if (scaleWrapper && originalTransform !== undefined) {
-      scaleWrapper.style.transform = originalTransform ?? '';
-    }
-  }
-}
-
 export function CheatSheetActions({ sheetProps }: { sheetProps: CheatSheetProps }) {
   const [viewOpen, setViewOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-
-  const handleDownload = async () => {
-    if (!viewOpen) setViewOpen(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setDownloading(true);
-    try {
-      await downloadAsPdf(sheetProps);
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   return (
     <>
@@ -256,17 +257,6 @@ export function CheatSheetActions({ sheetProps }: { sheetProps: CheatSheetProps 
           sx={actionsStyles.viewButton}
         >
           View Cheat Sheet
-        </Button>
-
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<DownloadIcon />}
-          onClick={handleDownload}
-          disabled={downloading}
-          sx={actionsStyles.downloadButton}
-        >
-          {downloading ? 'Generating PDF…' : 'Download PDF'}
         </Button>
       </Box>
 
@@ -445,11 +435,5 @@ const actionsStyles = {
     fontFamily: '"Courier Prime", monospace',
     textTransform: 'none',
     '&:hover': { bgcolor: 'primary.50' },
-  },
-  downloadButton: {
-    bgcolor: 'primary.main',
-    fontFamily: '"Courier Prime", monospace',
-    textTransform: 'none',
-    '&:hover': { bgcolor: 'primary.600' },
   },
 };
