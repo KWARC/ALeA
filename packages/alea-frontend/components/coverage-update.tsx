@@ -47,6 +47,10 @@ const CoverageUpdateTab = () => {
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
+  const [outOfOrderSections, setOutOfOrderSections] = useState<
+    Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  >({});
+
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -113,6 +117,7 @@ const CoverageUpdateTab = () => {
     const courseData = coverageTimeline[courseId];
     setSnaps(courseData?.lectures ?? []);
     setNotCoveredSections(courseData?.notCoveredSections ?? []);
+    setOutOfOrderSections(courseData?.outOfOrderSections ?? {});
   }, [coverageTimeline, courseId, router.isReady]);
 
   const handleSaveSingle = async (updatedEntry: LectureEntry) => {
@@ -164,6 +169,33 @@ const CoverageUpdateTab = () => {
       setSaveMessage({
         type: 'error',
         message: 'Failed to save skipped sections.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveOutOfOrderSections = async (
+    data: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  ) => {
+    setLoading(true);
+    try {
+      await updateCoverageTimeline({
+        courseId,
+        outOfOrderSections: data,
+      });
+
+      setOutOfOrderSections(data);
+
+      setSaveMessage({
+        type: 'success',
+        message: 'Out of order sections saved successfully!',
+      });
+    } catch (error) {
+      console.error('Error saving out of order sections:', error);
+      setSaveMessage({
+        type: 'error',
+        message: 'Failed to save out of order sections.',
       });
     } finally {
       setLoading(false);
@@ -268,10 +300,12 @@ const CoverageUpdateTab = () => {
               courseId={courseId}
               snaps={snaps}
               notCoveredSections={notCoveredSections}
+              outOfOrderSections={outOfOrderSections}
               secInfo={secInfo}
               handleSaveSingle={handleSaveSingle}
               handleDeleteSingle={handleDeleteSingle}
               handleSaveNotCoveredSections={handleSaveNotCoveredSections}
+              handleSaveOutOfOrderSections={handleSaveOutOfOrderSections}
             />
           </Box>
         </Paper>
