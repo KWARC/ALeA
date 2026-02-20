@@ -1,7 +1,7 @@
 import { SafeFTMLFragment } from '@alea/stex-react-renderer';
 import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
-import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, Card, CircularProgress, Divider, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import {
   QuizStubInfo,
@@ -25,6 +25,7 @@ import { handleEnrollment } from '../../../../components/courseHelpers';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
+import { CheatSheetActions } from '../../../../components/CheatSheet';
 
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
@@ -143,6 +144,51 @@ const PRACTICE_QUIZ_INFO: Record<
   },
 };
 
+// ── CheatSheet section ──────────────────────────────────────────────────────
+
+interface CheatSheetSectionProps {
+  userId: string;
+  userEmail: string;
+  firstName: string;
+  lastName: string;
+  courseId: string;
+  courseName: string;
+}
+
+function CheatSheetSection({
+  userId,
+  userEmail,
+  firstName,
+  lastName,
+  courseId,
+  courseName,
+}: CheatSheetSectionProps) {
+  return (
+    <Box sx={{ mt: '36px', mb: '20px' }}>
+      <Divider sx={{ mb: '20px' }} />
+      <Typography variant="h5" sx={{ mb: '6px' }}>
+        Cheat Sheet
+      </Typography>
+      <Typography variant="body2" sx={{ color: '#555', mb: '12px' }}>
+        Download your personalised, tamper-evident cheat sheet for this course. Each sheet carries
+        a unique QR code and your identity watermark — do not share or reproduce it.
+      </Typography>
+      <CheatSheetActions
+        sheetProps={{
+          userId,
+          userEmail,
+          firstName,
+          lastName,
+          courseId,
+          courseName,
+        }}
+      />
+    </Box>
+  );
+}
+
+// ── Page ────────────────────────────────────────────────────────────────────
+
 const QuizDashPage: NextPage = () => {
   const router = useRouter();
   const {
@@ -166,6 +212,12 @@ const QuizDashPage: NextPage = () => {
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
   const [enrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
+  const [userProfile, setUserProfile] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
+
   const { user } = useCurrentUser();
   const userId = user?.userId;
 
@@ -177,6 +229,16 @@ const QuizDashPage: NextPage = () => {
   useEffect(() => {
     getAllCourses().then(setCourses);
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch('/api/get-user-profile', { method: 'GET', credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.firstName) setUserProfile(data);
+      })
+      .catch(console.error);
+  }, [userId]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -283,6 +345,16 @@ const QuizDashPage: NextPage = () => {
               quizList={previousQuizzes}
               header={t.previousQuizzes}
             />
+            {userId && userProfile && (
+              <CheatSheetSection
+                userId={userId}
+                userEmail={userProfile.email}
+                firstName={userProfile.firstName}
+                lastName={userProfile.lastName}
+                courseId={courseId}
+                courseName={courseInfo.courseName}
+              />
+            )}
           </>
         )}
       </Box>
