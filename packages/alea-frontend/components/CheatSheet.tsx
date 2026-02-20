@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -8,11 +8,13 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PrintIcon from '@mui/icons-material/Print';
+import { useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -25,6 +27,12 @@ export interface CheatSheetProps {
   courseId: string;
   courseName: string;
   examDate?: string;
+}
+
+interface QrImageProps {
+  data: string;
+  size?: number;
+  alt?: string;
 }
 
 function buildQrPayload(props: CheatSheetProps, nonce: string) {
@@ -44,111 +52,48 @@ function useNonce() {
   return nonce;
 }
 
-interface QrImageProps {
-  data: string;
-  size?: number;
-  alt?: string;
-}
-
 function QrImage({ data, size = 96, alt = 'QR code' }: QrImageProps) {
-  const [src, setSrc] = useState<string>('');
-
-  useEffect(() => {
-    let cancelled = false;
-    QRCode.toDataURL(data, {
-      width: size,
-      margin: 2,
-      color: { dark: '#1a1a2e', light: '#ffffff' },
-    })
-      .then((url) => { if (!cancelled) setSrc(url); })
-      .catch(console.error);
-    return () => { cancelled = true; };
-  }, [data, size]);
+  const { data: src } = useQuery({
+    queryKey: ['qr-dataurl', data, size],
+    queryFn: () =>
+      QRCode.toDataURL(data, {
+        width: size,
+        margin: 2,
+        color: { dark: '#1a1a2e', light: '#ffffff' },
+      }),
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
 
   if (!src) {
-    return (
-      <Box
-        sx={{
-          width: size,
-          height: size,
-          background: '#eee',
-          border: '1px solid #ccc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 9,
-          color: '#999',
-        }}
-      >
-        QR…
-      </Box>
-    );
+    return <Box sx={{ ...qrImageStyles.placeholder, width: size, height: size }}>QR…</Box>;
   }
-  return <img src={src} alt={alt} width={size} height={size} style={{ display: 'block' }} />;
+
+  return (
+    <Box component="img" src={src} alt={alt} sx={{ display: 'block', width: size, height: size }} />
+  );
 }
 
 function DotCorner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
-  const corners: Record<string, React.CSSProperties> = {
-    tl: { top: 0, left: 0, borderTopColor: '#1a1a2e', borderLeftColor: '#1a1a2e' },
-    tr: { top: 0, right: 0, borderTopColor: '#1a1a2e', borderRightColor: '#1a1a2e' },
-    bl: { bottom: 0, left: 0, borderBottomColor: '#1a1a2e', borderLeftColor: '#1a1a2e' },
-    br: { bottom: 0, right: 0, borderBottomColor: '#1a1a2e', borderRightColor: '#1a1a2e' },
-  };
   return (
     <Box
-      sx={{
-        position: 'absolute',
-        width: 18,
-        height: 18,
-        borderStyle: 'solid',
-        borderWidth: 3,
-        borderColor: 'transparent',
-        ...corners[position],
-      }}
+      sx={[
+        dotCornerStyles.base,
+        position === 'tl' && dotCornerStyles.tl,
+        position === 'tr' && dotCornerStyles.tr,
+        position === 'bl' && dotCornerStyles.bl,
+        position === 'br' && dotCornerStyles.br,
+      ]}
     />
   );
 }
 
-const MicroDotBg = () => (
-  <Box
-    sx={{
-      position: 'absolute',
-      inset: 0,
-      pointerEvents: 'none',
-      backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.10) 1px, transparent 1px)',
-      backgroundSize: '8px 8px',
-      zIndex: 0,
-    }}
-  />
-);
+const MicroDotBg = () => <Box sx={microDotBgStyles.root} />;
 
 function Watermark({ text }: { text: string }) {
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        pointerEvents: 'none',
-        overflow: 'hidden',
-        zIndex: 1,
-      }}
-    >
-      <Typography
-        sx={{
-          transform: 'rotate(-35deg)',
-          fontSize: '22px',
-          fontFamily: '"Courier Prime", monospace',
-          fontWeight: 700,
-          color: 'rgba(0,0,0,0.055)',
-          whiteSpace: 'nowrap',
-          letterSpacing: '2px',
-          userSelect: 'none',
-          textTransform: 'uppercase',
-        }}
-      >
+    <Box sx={watermarkStyles.root}>
+      <Typography sx={watermarkStyles.text}>
         {text} &nbsp;&nbsp; {text} &nbsp;&nbsp; {text}
       </Typography>
     </Box>
@@ -161,108 +106,55 @@ export function CheatSheetDocument(props: CheatSheetProps) {
   const qrPayload = buildQrPayload(props, nonce);
   const displayName = `${firstName} ${lastName}`;
   const watermarkText = `${displayName} · ${userEmail}`;
+  const theme = useTheme();
 
   return (
-    <Box
-      id="cheatsheet-print-area"
-      sx={{
-        width: '210mm',
-        minHeight: '297mm',
-        background: '#fff',
-        fontFamily: '"Courier Prime", monospace',
-        fontSize: '11px',
-        color: '#1a1a2e',
-        position: 'relative',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
-        mx: 'auto',
-        '@media print': {
-          boxShadow: 'none',
-          width: '100%',
-          minHeight: '100vh',
-        },
-      }}
-    >
-      <Box
-        sx={{
-          borderBottom: '2px dashed #1a1a2e',
-          p: '10px 14px 8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'linear-gradient(90deg,#f0f4ff 0%,#fff 100%)',
-          position: 'relative',
-          zIndex: 2,
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <Typography sx={{ fontSize: '13px', fontWeight: 800, letterSpacing: 1 }}>
-            {courseId.toUpperCase()} · Cheat Sheet
+    <Box id="cheatsheet-print-area" sx={{ ...documentStyles.root, boxShadow: theme.shadows[4] }}>
+      <Box sx={documentStyles.header}>
+        <Box sx={documentStyles.headerInfo}>
+          <Typography variant="h6">{courseId.toUpperCase()} · Cheat Sheet</Typography>
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+            {courseName}
           </Typography>
-          <Typography sx={{ fontSize: '10px', color: '#555' }}>{courseName}</Typography>
           {examDate && (
-            <Typography sx={{ fontSize: '10px', color: '#555' }}>Exam: {examDate}</Typography>
+            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+              Exam: {examDate}
+            </Typography>
           )}
-          <Typography sx={{ fontSize: '10px', mt: '2px' }}>
+          <Typography variant="subtitle1" sx={{ mt: 0.25 }}>
             <b>Name:</b> {displayName}
           </Typography>
-          <Typography sx={{ fontSize: '10px' }}>
+          <Typography variant="subtitle1">
             <b>ID:</b> {userId}
           </Typography>
-          <Typography sx={{ fontSize: '10px' }}>
+          <Typography variant="subtitle1">
             <b>Email:</b> {userEmail}
           </Typography>
         </Box>
-        <Box sx={{ textAlign: 'center' }}>
+        <Box sx={documentStyles.headerQr}>
           <QrImage data={qrPayload} size={100} alt="verification QR" />
-          <Typography sx={{ fontSize: '8px', color: '#777', mt: '2px' }}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', mt: 0.25 }}>
             Scan to verify
           </Typography>
         </Box>
       </Box>
-      <Box
-        sx={{
-          position: 'relative',
-          mx: '14px',
-          my: '10px',
-          border: '1.5px solid #1a1a2e',
-          minHeight: '218mm',
-          borderRadius: '2px',
-          overflow: 'hidden',
-        }}
-      >
+      <Box sx={documentStyles.writingArea}>
         <MicroDotBg />
         <Watermark text={watermarkText} />
         <DotCorner position="tl" />
         <DotCorner position="tr" />
         <DotCorner position="bl" />
         <DotCorner position="br" />
-        <Box
-          sx={{
-            position: 'relative',
-            zIndex: 2,
-            p: '10px 12px',
-            backgroundImage:
-              'repeating-linear-gradient(transparent, transparent 23px, rgba(0,0,100,0.07) 23px, rgba(0,0,100,0.07) 24px)',
-            minHeight: '218mm',
-          }}
-        />
+        <Box sx={documentStyles.writingInner} />
       </Box>
-      <Box
-        sx={{
-          borderTop: '2px dashed #1a1a2e',
-          p: '8px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
+      <Box sx={documentStyles.footer}>
+        <Box sx={documentStyles.footerQr}>
           <QrImage data={qrPayload} size={72} alt="verification QR" />
-          <Typography sx={{ fontSize: '8px', color: '#777', mt: '2px' }}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', mt: 0.25 }}>
             Nonce: {nonce}
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: '9px', color: '#aaa', textAlign: 'right' }}>
+        <Typography variant="subtitle2" sx={{ color: 'text.disabled', textAlign: 'right' }}>
           This document is uniquely identified and tamper-evident.
           <br />
           Any reproduction or alteration voids authenticity.
@@ -281,36 +173,25 @@ function CheatSheetViewerDialog({
   onClose: () => void;
   sheetProps: CheatSheetProps;
 }) {
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#1a1a2e',
-          color: '#fff',
-          fontFamily: '"Courier Prime", monospace',
-        }}
-      >
+      <DialogTitle sx={dialogStyles.title}>
         Cheat Sheet Preview
         <Box>
           <Tooltip title="Print / Save as PDF">
-            <IconButton onClick={handlePrint} sx={{ color: '#fff', mr: 1 }}>
+            <IconButton onClick={handlePrint} sx={dialogStyles.iconButton}>
               <PrintIcon />
             </IconButton>
           </Tooltip>
-          <IconButton onClick={onClose} sx={{ color: '#fff' }}>
+          <IconButton onClick={onClose} sx={dialogStyles.iconButton}>
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ background: '#e8eaf0', p: '24px', overflowX: 'auto' }}>
-        <Box sx={{ transform: 'scale(0.72)', transformOrigin: 'top center', mb: '-80px' }}>
+      <DialogContent sx={dialogStyles.content}>
+        <Box sx={dialogStyles.scaleWrapper}>
           <CheatSheetDocument {...sheetProps} />
         </Box>
       </DialogContent>
@@ -324,14 +205,12 @@ async function downloadAsPdf(sheetProps: CheatSheetProps) {
     console.error('cheatsheet-print-area not found in DOM');
     return;
   }
-
-  const originalTransform = (el.closest('[style*="scale"]') as HTMLElement | null)?.style.transform;
   const scaleWrapper = el.closest('[style*="scale"]') as HTMLElement | null;
+  const originalTransform = scaleWrapper?.style.transform;
   if (scaleWrapper) scaleWrapper.style.transform = 'none';
-
   try {
     const canvas = await html2canvas(el, {
-      scale: 2,      
+      scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
@@ -368,19 +247,13 @@ export function CheatSheetActions({ sheetProps }: { sheetProps: CheatSheetProps 
 
   return (
     <>
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
+      <Box sx={actionsStyles.root}>
         <Button
           variant="outlined"
           size="small"
           startIcon={<VisibilityIcon />}
           onClick={() => setViewOpen(true)}
-          sx={{
-            borderColor: '#1a1a2e',
-            color: '#1a1a2e',
-            fontFamily: '"Courier Prime", monospace',
-            textTransform: 'none',
-            '&:hover': { background: '#f0f4ff' },
-          }}
+          sx={actionsStyles.viewButton}
         >
           View Cheat Sheet
         </Button>
@@ -391,12 +264,7 @@ export function CheatSheetActions({ sheetProps }: { sheetProps: CheatSheetProps 
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
           disabled={downloading}
-          sx={{
-            background: '#1a1a2e',
-            fontFamily: '"Courier Prime", monospace',
-            textTransform: 'none',
-            '&:hover': { background: '#2d2d5e' },
-          }}
+          sx={actionsStyles.downloadButton}
         >
           {downloading ? 'Generating PDF…' : 'Download PDF'}
         </Button>
@@ -410,3 +278,178 @@ export function CheatSheetActions({ sheetProps }: { sheetProps: CheatSheetProps 
     </>
   );
 }
+
+const documentStyles = {
+  root: {
+    width: '210mm',
+    minHeight: '297mm',
+    bgcolor: 'background.default',
+    fontFamily: '"Courier Prime", monospace',
+    color: 'text.primary',
+    position: 'relative',
+    mx: 'auto',
+    '@media print': {
+      boxShadow: 'none',
+      width: '100%',
+      minHeight: '100vh',
+    },
+  },
+  header: {
+    borderBottom: '2px dashed',
+    borderColor: 'text.primary',
+    p: '10px 14px 8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    background: 'linear-gradient(90deg,#f0f4ff 0%,#fff 100%)',
+    position: 'relative',
+    zIndex: 2,
+  },
+  headerInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.25,
+  },
+  headerQr: {
+    textAlign: 'center',
+  },
+  writingArea: {
+    position: 'relative',
+    mx: 1.75,
+    my: 1.25,
+    border: '1.5px solid',
+    borderColor: 'text.primary',
+    minHeight: '218mm',
+    borderRadius: '2px',
+    overflow: 'hidden',
+  },
+  writingInner: {
+    position: 'relative',
+    zIndex: 2,
+    p: '10px 12px',
+    backgroundImage:
+      'repeating-linear-gradient(transparent, transparent 23px, rgba(0,0,100,0.07) 23px, rgba(0,0,100,0.07) 24px)',
+    minHeight: '218mm',
+  },
+  footer: {
+    borderTop: '2px dashed',
+    borderColor: 'text.primary',
+    p: 1,
+    px: 1.75,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  footerQr: {
+    textAlign: 'center',
+  },
+};
+
+const dotCornerStyles = {
+  base: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderStyle: 'solid',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  tl: { top: 0, left: 0, borderTopColor: 'text.primary', borderLeftColor: 'text.primary' },
+  tr: { top: 0, right: 0, borderTopColor: 'text.primary', borderRightColor: 'text.primary' },
+  bl: { bottom: 0, left: 0, borderBottomColor: 'text.primary', borderLeftColor: 'text.primary' },
+  br: { bottom: 0, right: 0, borderBottomColor: 'text.primary', borderRightColor: 'text.primary' },
+};
+
+const microDotBgStyles = {
+  root: {
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.10) 1px, transparent 1px)',
+    backgroundSize: '8px 8px',
+    zIndex: 0,
+  },
+};
+
+const watermarkStyles = {
+  root: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  text: {
+    transform: 'rotate(-35deg)',
+    fontFamily: '"Courier Prime", monospace',
+    fontWeight: 700,
+    color: 'rgba(0,0,0,0.055)',
+    whiteSpace: 'nowrap',
+    letterSpacing: '2px',
+    userSelect: 'none',
+    textTransform: 'uppercase',
+    fontSize: '22px',
+  },
+};
+
+const qrImageStyles = {
+  placeholder: {
+    bgcolor: 'background.paper',
+    border: '1px solid',
+    borderColor: 'divider',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'text.disabled',
+  },
+};
+
+const dialogStyles = {
+  title: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    bgcolor: 'primary.main',
+    color: 'primary.contrastText',
+    fontFamily: '"Courier Prime", monospace',
+  },
+  iconButton: {
+    color: 'primary.contrastText',
+    mr: 1,
+  },
+  content: {
+    bgcolor: 'background.paper',
+    p: 3,
+    overflowX: 'auto',
+  },
+  scaleWrapper: {
+    transform: 'scale(0.72)',
+    transformOrigin: 'top center',
+    mb: '-80px',
+  },
+};
+
+const actionsStyles = {
+  root: {
+    display: 'flex',
+    gap: 1,
+    alignItems: 'center',
+    mt: 1,
+  },
+  viewButton: {
+    borderColor: 'primary.main',
+    color: 'primary.main',
+    fontFamily: '"Courier Prime", monospace',
+    textTransform: 'none',
+    '&:hover': { bgcolor: 'primary.50' },
+  },
+  downloadButton: {
+    bgcolor: 'primary.main',
+    fontFamily: '"Courier Prime", monospace',
+    textTransform: 'none',
+    '&:hover': { bgcolor: 'primary.600' },
+  },
+};

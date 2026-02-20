@@ -3,12 +3,7 @@ import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Divider, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import {
-  QuizStubInfo,
-  canAccessResource,
-  getAllCourses,
-  getCourseQuizList,
-} from '@alea/spec';
+import { QuizStubInfo, canAccessResource, getAllCourses, getCourseQuizList } from '@alea/spec';
 import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -26,6 +21,15 @@ import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import { CheatSheetActions } from '../../../../components/CheatSheet';
+
+interface CheatSheetSectionProps {
+  userId: string;
+  userEmail: string;
+  firstName: string;
+  lastName: string;
+  courseId: string;
+  courseName: string;
+}
 
 function QuizThumbnail({ quiz }: { quiz: QuizStubInfo }) {
   const { quizId, quizStartTs, quizEndTs, title } = quiz;
@@ -144,17 +148,6 @@ const PRACTICE_QUIZ_INFO: Record<
   },
 };
 
-// ── CheatSheet section ──────────────────────────────────────────────────────
-
-interface CheatSheetSectionProps {
-  userId: string;
-  userEmail: string;
-  firstName: string;
-  lastName: string;
-  courseId: string;
-  courseName: string;
-}
-
 function CheatSheetSection({
   userId,
   userEmail,
@@ -170,8 +163,8 @@ function CheatSheetSection({
         Cheat Sheet
       </Typography>
       <Typography variant="body2" sx={{ color: '#555', mb: '12px' }}>
-        Download your personalised, tamper-evident cheat sheet for this course. Each sheet carries
-        a unique QR code and your identity watermark — do not share or reproduce it.
+        Download your personalised, tamper-evident cheat sheet for this course. Each sheet carries a
+        unique QR code and your identity watermark — do not share or reproduce it.
       </Typography>
       <CheatSheetActions
         sheetProps={{
@@ -187,18 +180,10 @@ function CheatSheetSection({
   );
 }
 
-// ── Page ────────────────────────────────────────────────────────────────────
-
 const QuizDashPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('quiz-dash');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('quiz-dash');
 
   const currentTerm = resolvedInstanceId;
   const { quiz: t, home: tHome } = getLocaleObject(router);
