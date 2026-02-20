@@ -1,4 +1,4 @@
-import { ReopenQuestionRequest, CommentType, QuestionStatus } from '@alea/spec';
+import { CommentType, QuestionStatus } from '@alea/spec';
 import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
 
-  const { commentId } = req.body as ReopenQuestionRequest;
+  const { commentId } = req.body as { commentId: number };
   if (!commentId) {
     res.status(422).send('Invalid commentid');
     return;

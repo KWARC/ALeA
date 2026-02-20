@@ -88,10 +88,6 @@ export interface UpdateQuestionStateRequest {
   commentType: CommentType;
 }
 
-export interface ReopenQuestionRequest {
-  commentId: number;
-}
-
 export interface UserInformation {
   userId: string;
   showTrafficLight: boolean;

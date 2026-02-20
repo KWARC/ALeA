@@ -206,7 +206,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
 
   const canReopen =
     !!rootComment &&
-    (isModerator || !!isOwner) &&
+    !!isOwner &&
     rootComment.commentType === CommentType.QUESTION &&
     rootComment.questionStatus === QuestionStatus.ANSWERED;
 
