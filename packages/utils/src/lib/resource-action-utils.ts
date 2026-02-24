@@ -16,6 +16,7 @@ export enum Action {
   MANAGE_JOB_POSTS = 'MANAGE_JOB_POSTS',
   MANAGE_JOB_TYPES = 'MANAGE_JOB_TYPES',
   TAKE = 'TAKE',
+  UPLOAD= 'UPLOAD',
 }
 
 export enum ResourceName {
@@ -31,7 +32,7 @@ export enum ResourceName {
   COURSE_STUDY_BUDDY = 'COURSE_STUDY_BUDDY',
   COURSE_HOMEWORK = 'COURSE_HOMEWORK',
   COURSE_PEERREVIEW = 'COURSE_PEERREVIEW',
-  CHEATSHEET = 'CHEATSHEET',
+  COURSE_CHEATSHEET = 'COURSE_CHEATSHEET',
   // Resources related to all courses.
   ALL_COMMENTS = 'ALL_COMMENTS',
   ALL_STUDY_BUDDY = 'ALL_STUDY_BUDDY',
@@ -65,6 +66,7 @@ export const COURSE_SPECIFIC_RESOURCENAMES = [
   ResourceName.COURSE_STUDY_BUDDY,
   ResourceName.COURSE_HOMEWORK,
   ResourceName.COURSE_ACCESS,
+  ResourceName.COURSE_CHEATSHEET
 ];
 export interface CourseResourceAction {
   courseId: string;
@@ -95,6 +97,7 @@ export const INSTRUCTOR_RESOURCE_AND_ACTION = [
   { resource: ResourceName.COURSE_HOMEWORK, action: Action.MUTATE },
   { resource: ResourceName.COURSE_ACCESS, action: Action.ACCESS_CONTROL },
   { resource: ResourceName.COURSE_METADATA, action: Action.MUTATE },
+  { resource: ResourceName.COURSE_CHEATSHEET, action: Action.MUTATE },
 ];
 
 export const ALL_RESOURCE_TYPES: ResourceType[] = [
@@ -128,6 +131,17 @@ export const ALL_RESOURCE_TYPES: ResourceType[] = [
       { type: ComponentType.FIXED, value: 'instance' },
       { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
       { type: ComponentType.FIXED, value: 'quiz' },
+    ],
+  },
+  {
+    name: ResourceName.COURSE_CHEATSHEET,
+    possibleActions: [Action.MUTATE, Action.UPLOAD],
+    components: [
+      { type: ComponentType.FIXED, value: 'course' },
+      { name: 'courseId', type: ComponentType.VARIABLE },
+      { type: ComponentType.FIXED, value: 'instance' },
+      { name: 'instanceId', type: ComponentType.VARIABLE, value: CURRENT_TERM },
+      { type: ComponentType.FIXED, value: 'cheatsheet' },
     ],
   },
   {
