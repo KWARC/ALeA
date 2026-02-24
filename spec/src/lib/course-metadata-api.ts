@@ -27,6 +27,10 @@ export interface InstructorInfo {
   url?: string;
 }
 
+export interface CourseResourceLink {
+  label: string;
+  url: string;
+}
 export interface CourseInfoMetadata extends CourseMetadata {
   courseName: string;
   notes: string;
@@ -37,6 +41,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   hasQuiz: boolean;
   updaterId?: string;
   universityId: string;
+  resourseLinks?: CourseResourceLink[];
 }
 
 export interface GenerateLectureEntryResponse {

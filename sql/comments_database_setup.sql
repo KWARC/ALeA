@@ -485,10 +485,27 @@ CREATE TABLE courseMetadata (
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
 );
-
+   CREATE TABLE CourseMaterials (
+    id VARCHAR(36) PRIMARY KEY,
+    materialName VARCHAR(255) NOT NULL,
+    materialType ENUM('FILE', 'LINK') NOT NULL,
+    storageFileName TEXT,
+    mimeType VARCHAR(100),
+    sizeBytes BIGINT,
+    universityId VARCHAR(100) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+    semesterId VARCHAR(100) NOT NULL,
+    uploadedBy VARCHAR(100) NOT NULL,
+    filePath TEXT,
+    url TEXT,
+    checksum VARCHAR(64),
+    createdAt BIGINT NOT NULL,
+    updatedAt BIGINT NOT NULL
+);
 CREATE TABLE CrossDomainAuthTokens (
     otpToken VARCHAR(255) PRIMARY KEY,
     jwtToken TEXT NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     used BOOLEAN DEFAULT FALSE
 );
+   
