@@ -30,13 +30,125 @@ import { getAllCourses } from '@alea/spec';
 import type { CheatSheetFile } from '../../../api/get-cheatsheets';
 import type { NextPage } from 'next';
 
-// ─── API ─────────────────────────────────────────────────────────────────────
+interface MyCheatSheetsPageProps {
+  courseId?: string;
+  instanceId?: string;
+}
 
-/**
- * Fetches cheatsheets for a given instance.
- * - Student view: pass `userId` to scope results to that user only.
- * - Instructor view: omit `userId` to retrieve all files for the instance.
- */
+function CheatSheetsContent({
+  files,
+  isLoading,
+  isError,
+  isEmbedded,
+  uniqueUserIds,
+  selectedUserId,
+  onUserIdChange,
+  previewFile,
+  onPreview,
+  onClosePreview,
+}: {
+  files: CheatSheetFile[];
+  isLoading: boolean;
+  isError: boolean;
+  isEmbedded: boolean;
+  uniqueUserIds: string[];
+  selectedUserId: string | null;
+  onUserIdChange: (id: string | null) => void;
+  previewFile: CheatSheetFile | null;
+  onPreview: (file: CheatSheetFile) => void;
+  onClosePreview: () => void;
+}) {
+  return (
+    <Box sx={pageStyles.container}>
+      <Box sx={pageStyles.titleBar}>
+        <Box sx={pageStyles.titleLeft}>
+          <Box sx={pageStyles.titleIconWrap}>
+            <FolderOpenIcon sx={pageStyles.titleIcon} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={pageStyles.heading}>
+              {isEmbedded ? 'Student Cheat Sheets' : 'My Cheat Sheets'}
+            </Typography>
+            <Typography variant="body2" sx={pageStyles.subheading}>
+              {isEmbedded
+                ? 'Browse all cheat sheets generated for this course instance'
+                : 'All your generated cheat sheet files in one place'}
+            </Typography>
+          </Box>
+        </Box>
+        {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
+          <Chip
+            label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
+            color="primary"
+            size="small"
+            sx={pageStyles.countChip}
+          />
+        )}
+      </Box>
+
+      {isEmbedded && uniqueUserIds.length > 0 && (
+        <UserFilterBar
+          userIds={uniqueUserIds}
+          selectedUserId={selectedUserId}
+          onChange={onUserIdChange}
+        />
+      )}
+
+      <Box sx={pageStyles.divider} />
+
+      {isLoading && (
+        <Box sx={pageStyles.centered}>
+          <CircularProgress size={36} thickness={4} />
+        </Box>
+      )}
+
+      {isError && (
+        <Box sx={pageStyles.centered}>
+          <Typography variant="body1" color="error.main">
+            Failed to load cheat sheets. Please try again later.
+          </Typography>
+        </Box>
+      )}
+
+      {isEmbedded && !selectedUserId && !isLoading && !isError && (
+        <EmptyState
+          title="Select a student"
+          subtitle="Choose a student from the dropdown above to view their cheat sheets."
+        />
+      )}
+
+      {isEmbedded && selectedUserId && !isLoading && !isError && files.length === 0 && (
+        <EmptyState
+          title="No cheat sheets found"
+          subtitle="This student hasn't generated any cheat sheets for this course instance."
+        />
+      )}
+
+      {!isEmbedded && !isLoading && !isError && files.length === 0 && (
+        <EmptyState
+          title="No cheat sheets found"
+          subtitle="Cheat sheets you generate during quizzes will appear here."
+        />
+      )}
+
+      {!isLoading && !isError && files.length > 0 && (
+        <Box sx={pageStyles.list}>
+          {files.map((file) => (
+            <CheatSheetRow
+              key={file.filename}
+              file={file}
+              onPreview={onPreview}
+              showUserId={false}
+            />
+          ))}
+        </Box>
+      )}
+
+      <PdfPreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
+    </Box>
+  );
+}
+
 async function fetchCheatsheets(instanceId: string, userId?: string): Promise<CheatSheetFile[]> {
   const params = new URLSearchParams({ instanceId });
   if (userId) params.set('userId', userId);
@@ -45,8 +157,6 @@ async function fetchCheatsheets(instanceId: string, userId?: string): Promise<Ch
   const data = await res.json();
   return data.files as CheatSheetFile[];
 }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PdfPreviewDialog({
   file,
@@ -144,8 +254,6 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
-// ─── Instructor filter bar ────────────────────────────────────────────────────
-
 function UserFilterBar({
   userIds,
   selectedUserId,
@@ -183,47 +291,29 @@ function UserFilterBar({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-interface MyCheatSheetsPageProps {
-  /** When embedded inside instructor-dash, pass courseId + instanceId directly. */
-  courseId?: string;
-  instanceId?: string;
-}
-
-/**
- * Works in two modes:
- *  - **Student** (standalone page): reads route params, fetches only the
- *    current user's files by passing `userId` to the API.
- *  - **Instructor** (embedded in instructor-dash): receives `courseId` and
- *    `instanceId` as props, fetches ALL files for the instance, and shows a
- *    student-filter dropdown so the instructor can narrow down by user.
- */
 const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
   courseId: propCourseId,
   instanceId: propInstanceId,
 }) => {
   const router = useRouter();
   const isEmbedded = Boolean(propCourseId && propInstanceId);
-
-  // Route validation is only needed for the standalone (student) page.
-  const { institutionId, courseId: routeCourseId, instance, resolvedInstanceId: routeInstanceId, validationError, isValidating } =
-    useRouteValidation(isEmbedded ? null : '');
-
+  const {
+    institutionId,
+    courseId: routeCourseId,
+    instance,
+    resolvedInstanceId: routeInstanceId,
+    validationError,
+    isValidating,
+  } = useRouteValidation(isEmbedded ? null : '');
   const courseId = propCourseId ?? routeCourseId;
   const instanceId = propInstanceId ?? routeInstanceId;
-
   const { user } = useCurrentUser();
   const userId = user?.userId;
-
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
     queryFn: () => getAllCourses(),
-    enabled: !isEmbedded, // instructor-dash already loads courses itself
+    enabled: !isEmbedded,
   });
-
-  // Instructor mode: fetch all files for the instance (no userId filter).
-  // Student mode: fetch only the current user's files.
   const {
     data: allFiles = [],
     isLoading,
@@ -233,24 +323,19 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
     enabled: Boolean(instanceId) && (isEmbedded || Boolean(userId)),
     queryFn: () => fetchCheatsheets(instanceId!, isEmbedded ? undefined : userId),
   });
-
-  // Instructor-only: dropdown state for filtering by student userId.
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-
   const uniqueUserIds = useMemo(
     () => [...new Set(allFiles.map((f) => f.userId))].sort(),
     [allFiles]
   );
-
   const visibleFiles = useMemo(() => {
     if (!isEmbedded) return allFiles;
-    if (!selectedUserId) return []; // instructor must pick a student first
+    if (!selectedUserId) return [];
     return allFiles.filter((f) => f.userId === selectedUserId);
   }, [allFiles, isEmbedded, selectedUserId]);
 
   const [previewFile, setPreviewFile] = useState<CheatSheetFile | null>(null);
 
-  // ── Route guards (standalone / student only) ──
   if (!isEmbedded) {
     if (isValidating) return null;
     if (validationError) {
@@ -264,10 +349,8 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
       );
     }
     if (!institutionId || !courseId || !instanceId) return <CourseNotFound />;
-
     const courseInfo = (courses as any)[courseId];
     if (!courseInfo) return <CourseNotFound />;
-
     return (
       <MainLayout title={`${courseId.toUpperCase()} · My Cheat Sheets | ALeA`}>
         <CourseHeader
@@ -293,7 +376,6 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
     );
   }
 
-  // ── Embedded / instructor view ──
   return (
     <CheatSheetsContent
       files={visibleFiles}
@@ -311,129 +393,6 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
 };
 
 export default MyCheatSheetsPage;
-
-// ─── Shared content component ─────────────────────────────────────────────────
-
-function CheatSheetsContent({
-  files,
-  isLoading,
-  isError,
-  isEmbedded,
-  uniqueUserIds,
-  selectedUserId,
-  onUserIdChange,
-  previewFile,
-  onPreview,
-  onClosePreview,
-}: {
-  files: CheatSheetFile[];
-  isLoading: boolean;
-  isError: boolean;
-  isEmbedded: boolean;
-  uniqueUserIds: string[];
-  selectedUserId: string | null;
-  onUserIdChange: (id: string | null) => void;
-  previewFile: CheatSheetFile | null;
-  onPreview: (file: CheatSheetFile) => void;
-  onClosePreview: () => void;
-}) {
-  return (
-    <Box sx={pageStyles.container}>
-      <Box sx={pageStyles.titleBar}>
-        <Box sx={pageStyles.titleLeft}>
-          <Box sx={pageStyles.titleIconWrap}>
-            <FolderOpenIcon sx={pageStyles.titleIcon} />
-          </Box>
-          <Box>
-            <Typography variant="h5" sx={pageStyles.heading}>
-              {isEmbedded ? 'Student Cheat Sheets' : 'My Cheat Sheets'}
-            </Typography>
-            <Typography variant="body2" sx={pageStyles.subheading}>
-              {isEmbedded
-                ? 'Browse all cheat sheets generated for this course instance'
-                : 'All your generated cheat sheet files in one place'}
-            </Typography>
-          </Box>
-        </Box>
-        {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
-          <Chip
-            label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
-            color="primary"
-            size="small"
-            sx={pageStyles.countChip}
-          />
-        )}
-      </Box>
-
-      {/* Instructor filter */}
-      {isEmbedded && uniqueUserIds.length > 0 && (
-        <UserFilterBar
-          userIds={uniqueUserIds}
-          selectedUserId={selectedUserId}
-          onChange={onUserIdChange}
-        />
-      )}
-
-      <Box sx={pageStyles.divider} />
-
-      {/* States */}
-      {isLoading && (
-        <Box sx={pageStyles.centered}>
-          <CircularProgress size={36} thickness={4} />
-        </Box>
-      )}
-
-      {isError && (
-        <Box sx={pageStyles.centered}>
-          <Typography variant="body1" color="error.main">
-            Failed to load cheat sheets. Please try again later.
-          </Typography>
-        </Box>
-      )}
-
-      {/* Instructor: prompt to pick a student before showing anything */}
-      {isEmbedded && !selectedUserId && !isLoading && !isError && (
-        <EmptyState
-          title="Select a student"
-          subtitle="Choose a student from the dropdown above to view their cheat sheets."
-        />
-      )}
-
-      {/* Instructor: student selected but has no files */}
-      {isEmbedded && selectedUserId && !isLoading && !isError && files.length === 0 && (
-        <EmptyState
-          title="No cheat sheets found"
-          subtitle="This student hasn't generated any cheat sheets for this course instance."
-        />
-      )}
-
-      {/* Student: no files at all */}
-      {!isEmbedded && !isLoading && !isError && files.length === 0 && (
-        <EmptyState
-          title="No cheat sheets found"
-          subtitle="Cheat sheets you generate during quizzes will appear here."
-        />
-      )}
-
-      {!isLoading && !isError && files.length > 0 && (
-        <Box sx={pageStyles.list}>
-          {files.map((file) => (
-            <CheatSheetRow
-              key={file.filename}
-              file={file}
-              onPreview={onPreview}
-              showUserId={false}
-            />
-          ))}
-        </Box>
-      )}
-
-      <PdfPreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
-    </Box>
-  );
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const pageStyles = {
   container: {
