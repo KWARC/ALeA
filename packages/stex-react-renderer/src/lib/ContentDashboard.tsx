@@ -153,6 +153,29 @@ function getLectureHover(info?: SectionLectureInfo, isSkipped?: boolean) {
   return `Covered: ${startTimeDisplay} to ${endTimeDisplay}`;
 }
 
+function getMaxOutOfOrderEnd(
+  node: SectionTreeNode,
+  outOfOrderSections: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+): number | undefined {
+  let maxEnd: number | undefined;
+
+  function traverse(n: SectionTreeNode) {
+    const out = outOfOrderSections[n.tocElem.uri];
+    if (out) {
+      const end = out.endTimestamp_ms ?? out.startTimestamp_ms;
+      if (!maxEnd || end > maxEnd) {
+        maxEnd = end;
+      }
+    }
+
+    n.children.forEach(traverse);
+  }
+
+  node.children.forEach(traverse);
+
+  return maxEnd;
+}
+
 function RenderTree({
   node,
   level,
@@ -161,6 +184,7 @@ function RenderTree({
   perSectionLectureInfo,
   preAdornment,
   onSectionClick,
+  outOfOrderSections,
 }: {
   node: SectionTreeNode;
   level: number;
@@ -169,6 +193,7 @@ function RenderTree({
   perSectionLectureInfo: Record<FTML.Uri, SectionLectureInfo>;
   preAdornment?: (sectionId: string) => React.ReactElement;
   onSectionClick?: (sectionId: string, sectionUri: string) => void;
+  outOfOrderSections?: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   useEffect(() => {
@@ -180,13 +205,37 @@ function RenderTree({
   const itemClassName = level === 0 ? styles['level0_dashboard_item'] : styles['dashboard_item'];
   const isSelected = selectedSection === node.tocElem.id;
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
+  const outOfOrderInfo = outOfOrderSections?.[node.tocElem.uri];
+  const isOutOfOrder = !!outOfOrderInfo;
   const lectureHover = getLectureHover(secLectureInfo, node.notCovered);
+  const maxChildOutOfOrderEnd = getMaxOutOfOrderEnd(node, outOfOrderSections ?? {});
+
+  let finalLectureHover = lectureHover;
+
+  if (isOutOfOrder && outOfOrderInfo) {
+    finalLectureHover = `Out of Order: ${dayjs(outOfOrderInfo.startTimestamp_ms).format(
+      'DD MMM'
+    )} to ${
+      outOfOrderInfo.endTimestamp_ms ? dayjs(outOfOrderInfo.endTimestamp_ms).format('DD MMM') : '-'
+    }`;
+  } else if (secLectureInfo?.startTime_ms && maxChildOutOfOrderEnd) {
+    const parentEnd = secLectureInfo.endTime_ms ?? secLectureInfo.startTime_ms;
+
+    const finalEnd = Math.max(parentEnd, maxChildOutOfOrderEnd);
+
+    finalLectureHover = `Covered: ${dayjs(secLectureInfo.startTime_ms).format('DD MMM')} to ${dayjs(
+      finalEnd
+    ).format('DD MMM')}`;
+  }
 
   const sectionStarted = !!secLectureInfo?.startTime_ms;
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
-  const background = node.notCovered
-    ? getAdaptiveColor("#fdd",bgDefault)
+  const isActuallyNotCovered = node.notCovered && !isOutOfOrder;
+  const background = isOutOfOrder
+    ? getAdaptiveColor('#fde2ff', bgDefault)
+    : isActuallyNotCovered
+    ? getAdaptiveColor('#fdd', bgDefault)
     : sectionInProgress
     ? `repeating-linear-gradient(
       45deg,
@@ -197,9 +246,7 @@ function RenderTree({
     )`
     : undefined;
 
-  const backgroundColor = sectionCompleted
-    ? getAdaptiveColor("#ffc",bgDefault)
-    : bgDefault;
+  const backgroundColor = sectionCompleted ? getAdaptiveColor('#ffc', bgDefault) : bgDefault;
 
   return (
     <Box key={(node.tocElem as any).id} sx={{ py: '6px', backgroundColor, background }}>
@@ -238,8 +285,8 @@ function RenderTree({
         >
           {preAdornment ? preAdornment(node.tocElem.id) : null}
 
-          {lectureHover ? (
-            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{lectureHover}</Box>}>
+          {finalLectureHover ? (
+            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{finalLectureHover}</Box>}>
               <Box component="span">
                 {convertHtmlStringToPlain(node.tocElem.title || 'Untitled')}
               </Box>
@@ -274,6 +321,7 @@ function RenderTree({
                 selectedSection={selectedSection}
                 preAdornment={preAdornment}
                 onSectionClick={onSectionClick}
+                outOfOrderSections={outOfOrderSections ?? {}}
               />
             ))}
           </Box>
@@ -431,6 +479,7 @@ export function ContentDashboard({
   preAdornment,
   onClose,
   onSectionClick,
+  outOfOrderSections,
 }: {
   toc: FTML.TocElem[];
   selectedSection: string;
@@ -438,6 +487,7 @@ export function ContentDashboard({
   preAdornment?: (sectionId: string) => React.ReactElement;
   onClose: () => void;
   onSectionClick?: (sectionId: string, sectionUri: string) => void;
+  outOfOrderSections?: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>;
 }) {
   const t = getLocaleObject(useRouter());
   const [filterStr, setFilterStr] = useState('');
@@ -516,6 +566,7 @@ export function ContentDashboard({
           perSectionLectureInfo={perSectionLectureInfo}
           preAdornment={preAdornment}
           onSectionClick={onSectionClick}
+          outOfOrderSections={outOfOrderSections ?? {}}
         />
       ))}
     </FixedPositionMenu>

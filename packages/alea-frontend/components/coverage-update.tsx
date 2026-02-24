@@ -282,6 +282,7 @@ const CoverageUpdateTab = () => {
                     onSectionClick={(sectionId: string) => {
                       setShowDashboard(false);
                     }}
+                    outOfOrderSections={outOfOrderSections}
                   />
                 </Box>
               )}

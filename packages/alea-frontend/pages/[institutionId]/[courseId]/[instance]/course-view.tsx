@@ -259,7 +259,6 @@ const CourseViewPage: NextPage = () => {
   });
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
 
-
   const [showPresentationVideo, setShowPresentationVideo] = useState(false);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
   const { tocElem: selectedSectionTOC, isNotCovered: sectionIsNotCovered } = useMemo(() => {
@@ -449,10 +448,18 @@ const CourseViewPage: NextPage = () => {
       });
   }, [courseId, currentClipId, router.isReady]);
 
+  const [outOfOrderSections, setOutOfOrderSections] = useState<
+    Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  >({});
+
   useEffect(() => {
     if (!courseId) return;
+
     getCoverageTimeline().then((timeline) => {
-      setNotCoveredSections(timeline?.[courseId]?.notCoveredSections ?? []);
+      const courseData = timeline?.[courseId];
+
+      setNotCoveredSections(courseData?.notCoveredSections ?? []);
+      setOutOfOrderSections(courseData?.outOfOrderSections ?? {});
     });
   }, [courseId]);
 
@@ -651,6 +658,7 @@ const CourseViewPage: NextPage = () => {
 
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
+              outOfOrderSections={outOfOrderSections}
             />
           )
         }
