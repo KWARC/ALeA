@@ -188,7 +188,13 @@ interface QuizDashboardProps {
   onQuizIdChange?: (quizId: string) => void;
 }
 
-const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, instanceId, quizId, onQuizIdChange }) => {
+const QuizDashboard: NextPage<QuizDashboardProps> = ({
+  courseId,
+  institutionId,
+  instanceId,
+  quizId,
+  onQuizIdChange,
+}) => {
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = instanceId ?? currentTermByCourseId[courseId];
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
@@ -222,6 +228,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
   });
   const [accessType, setAccessType] = useState<'PREVIEW_ONLY' | 'MUTATE'>();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasSubproblemError, setHasSubproblemError] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
   const [syllabusLoading, setSyllabusLoading] = useState(false);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
@@ -671,7 +678,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
             </Select>
           </FormControl>
           {accessType == 'MUTATE' && (
-            <QuizFileReader setCss={setCss} setTitle={setTitle} setProblems={setProblems} />
+            <QuizFileReader
+              setCss={setCss}
+              setTitle={setTitle}
+              setProblems={setProblems}
+              setHasSubproblemError={setHasSubproblemError}
+              allowSubproblems={false}
+            />
           )}
         </>
       )}
@@ -693,7 +706,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
       <Box display="flex" gap={2} alignItems="center" mt={2} mb={2}>
         {accessType == 'MUTATE' && (
           <Button
-            disabled={!!formErrorReason || isUpdating}
+            disabled={!!formErrorReason || isUpdating || hasSubproblemError}
             variant="contained"
             startIcon={<UpdateIcon />}
             onClick={async (e) => {

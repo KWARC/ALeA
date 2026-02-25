@@ -127,7 +127,7 @@ export default async function handler(req, res) {
       courseId,
       courseTerm,
       institutionId,
-      selectedText,
+      selectedText ?? null,
       isPrivate ? 1 : 0,
       commentType,
       questionStatus,
