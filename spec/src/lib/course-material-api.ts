@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 export type CourseMaterialType = 'FILE' | 'LINK';
 
 export interface CourseMaterial {
@@ -24,15 +23,8 @@ export interface PostMaterialRequest {
   expectedSize?: number;
 }
 
-export interface DeleteMaterialRequest {
-  id: string;
-  courseId: string;
-  instanceId: string;
-}
-
 export async function postMaterial(data: PostMaterialRequest) {
-  const resp = await axios.post('/api/course-material/post-material', data);
-  return resp.data as { id: string };
+  await axios.post('/api/course-material/post-material', data);
 }
 
 export async function getMaterials(universityId: string, courseId: string, semesterId: string) {
@@ -50,6 +42,6 @@ export async function getMaterialById(id: string) {
   return resp.data;
 }
 
-export async function deleteMaterial(data: DeleteMaterialRequest) {
-  await axios.post('/api/course-material/delete-material', data);
+export async function deleteMaterial(id: string) {
+  await axios.post('/api/course-material/delete-material', { id });
 }

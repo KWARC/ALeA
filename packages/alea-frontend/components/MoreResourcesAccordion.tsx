@@ -162,7 +162,7 @@ export function MoreResourcesAccordion({
                           <IconButton
                             size="small"
                             onClick={() => {
-                              const cleanUrl = `/api/course-material/get-material-by-id?id=${resource.id}`;
+                              const cleanUrl = `/api/course-material/get-material-by-id?id=${resource.id}&download=true`;
 
                               const link = document.createElement('a');
                               link.href = cleanUrl;
@@ -210,14 +210,14 @@ export function MoreResourcesAccordion({
                   variant="outlined"
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page === 0}
-                  sx={{ 
+                  sx={{
                     color: page === 0 ? 'action.disabled' : 'primary.main',
                     borderColor: page === 0 ? 'action.disabled' : 'primary.main',
                     '&:hover:not(:disabled)': {
                       color: 'primary.dark',
                       borderColor: 'primary.dark',
-                      backgroundColor: 'primary.light'
-                    }
+                      backgroundColor: 'primary.light',
+                    },
                   }}
                 >
                   ←
@@ -230,14 +230,14 @@ export function MoreResourcesAccordion({
                   variant="outlined"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page === totalPages - 1}
-                  sx={{ 
+                  sx={{
                     color: page === totalPages - 1 ? 'action.disabled' : 'primary.main',
                     borderColor: page === totalPages - 1 ? 'action.disabled' : 'primary.main',
                     '&:hover:not(:disabled)': {
                       color: 'primary.dark',
                       borderColor: 'primary.dark',
-                      backgroundColor: 'primary.light'
-                    }
+                      backgroundColor: 'primary.light',
+                    },
                   }}
                 >
                   →

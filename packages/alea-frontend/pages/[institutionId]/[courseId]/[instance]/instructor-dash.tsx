@@ -90,7 +90,7 @@ function ChosenTab({
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':
-      return <CourseMetadata courseId={courseId} instanceId={instanceId} institutionId={institutionId} />;
+      return <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />;
     default:
       return null;
   }

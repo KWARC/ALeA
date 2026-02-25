@@ -31,13 +31,13 @@ import { deleteMaterial, getMaterials, postMaterial, CourseMaterial } from '@ale
 interface CourseResourcesTabProps {
   courseId: string;
   instanceId: string;
-  institutionId: string;
+  universityId: string;
 }
 
 export default function CourseResourcesTab({
   courseId,
   instanceId,
-  institutionId,
+  universityId,
 }: CourseResourcesTabProps) {
   const [resources, setResources] = useState<CourseMaterial[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -61,7 +61,7 @@ export default function CourseResourcesTab({
   const fetchResources = async () => {
     setLoadingList(true);
     try {
-      const data = await getMaterials(institutionId, courseId, instanceId);
+      const data = await getMaterials(universityId, courseId, instanceId);
       setResources(data);
       setCurrentPage(0);
     } catch (error) {
@@ -87,7 +87,7 @@ export default function CourseResourcesTab({
 
     try {
       let body: any = {
-        universityId: institutionId,
+        universityId,
         courseId,
         instanceId,
         type,
@@ -130,11 +130,7 @@ export default function CourseResourcesTab({
 
   const handleDelete = async (resourceId: string) => {
     try {
-      await deleteMaterial({
-        id: resourceId,
-        courseId,
-        instanceId,
-      });
+      await deleteMaterial(resourceId);
 
       setConfirmDeleteId(null);
       setToast({ type: 'success', text: 'Resource deleted' });

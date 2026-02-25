@@ -14,11 +14,23 @@ const BASE_PATH = process.env.MATERIALS_DIR || path.join(process.cwd(), 'materia
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { id, courseId, instanceId } = req.body;
+  const { id } = req.body;
 
-  if (!id || !courseId || !instanceId) {
-    return res.status(422).send('Missing required fields: id, courseId, instanceId');
+  if (!id) {
+    return res.status(422).send('Missing required field: id');
   }
+
+  const materials = (await executeDontEndSet500OnError(
+    `SELECT courseId, semesterId, materialType, storageFileName FROM CourseMaterials WHERE id = ?`,
+    [id],
+    res
+  )) as any[];
+
+  if (!materials || materials.length === 0) {
+    return res.status(404).send('Material not found');
+  }
+
+  const { courseId, semesterId: instanceId, materialType, storageFileName } = materials[0];
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
@@ -29,12 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   if (!userId) return;
-
-  const materials = (await executeDontEndSet500OnError(
-    `SELECT materialType, storageFileName FROM CourseMaterials WHERE id = ?`,
-    [id],
-    res
-  )) as any[];
 
   if (!materials || materials.length === 0) {
     return res.status(404).send('Material not found');
