@@ -176,6 +176,26 @@ function getMaxOutOfOrderEnd(
   return maxEnd;
 }
 
+function getHighestOutOfOrderAncestor(
+  node: SectionTreeNode,
+  outOfOrderSections: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+): { startTimestamp_ms: number; endTimestamp_ms?: number } | undefined {
+  let current: SectionTreeNode | undefined = node;
+  let highestMatch: { startTimestamp_ms: number; endTimestamp_ms?: number } | undefined;
+
+  while (current) {
+    const found = current.tocElem?.uri ? outOfOrderSections[current.tocElem.uri] : undefined;
+
+    if (found) {
+      highestMatch = found;
+    }
+
+    current = current.parentNode;
+  }
+
+  return highestMatch;
+}
+
 function RenderTree({
   node,
   level,
@@ -205,18 +225,20 @@ function RenderTree({
   const itemClassName = level === 0 ? styles['level0_dashboard_item'] : styles['dashboard_item'];
   const isSelected = selectedSection === node.tocElem.id;
   const secLectureInfo = perSectionLectureInfo[node.tocElem.uri];
-  const outOfOrderInfo = outOfOrderSections?.[node.tocElem.uri];
-  const isOutOfOrder = !!outOfOrderInfo;
+  const highestOutOfOrder = getHighestOutOfOrderAncestor(node, outOfOrderSections ?? {});
+
   const lectureHover = getLectureHover(secLectureInfo, node.notCovered);
   const maxChildOutOfOrderEnd = getMaxOutOfOrderEnd(node, outOfOrderSections ?? {});
 
   let finalLectureHover = lectureHover;
 
-  if (isOutOfOrder && outOfOrderInfo) {
-    finalLectureHover = `Out of Order: ${dayjs(outOfOrderInfo.startTimestamp_ms).format(
+  if (highestOutOfOrder) {
+    finalLectureHover = `Out of Order: ${dayjs(highestOutOfOrder.startTimestamp_ms).format(
       'DD MMM'
     )} to ${
-      outOfOrderInfo.endTimestamp_ms ? dayjs(outOfOrderInfo.endTimestamp_ms).format('DD MMM') : '-'
+      highestOutOfOrder.endTimestamp_ms
+        ? dayjs(highestOutOfOrder.endTimestamp_ms).format('DD MMM')
+        : '-'
     }`;
   } else if (secLectureInfo?.startTime_ms && maxChildOutOfOrderEnd) {
     const parentEnd = secLectureInfo.endTime_ms ?? secLectureInfo.startTime_ms;
@@ -231,10 +253,7 @@ function RenderTree({
   const sectionStarted = !!secLectureInfo?.startTime_ms;
   const sectionCompleted = !!secLectureInfo?.endTime_ms;
   const sectionInProgress = sectionStarted && !sectionCompleted;
-  const isActuallyNotCovered = node.notCovered && !isOutOfOrder;
-  const background = isOutOfOrder
-    ? getAdaptiveColor('#fde2ff', bgDefault)
-    : isActuallyNotCovered
+  const background = node.notCovered
     ? getAdaptiveColor('#fdd', bgDefault)
     : sectionInProgress
     ? `repeating-linear-gradient(

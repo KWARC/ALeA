@@ -529,6 +529,7 @@ export function CoverageUpdater({
           </Typography>
 
           <Autocomplete
+            disableClearable
             options={allLectureOptions}
             value={allLectureOptions.find((o) => o.start === manualStartTime) || null}
             isOptionEqualToValue={(option, value) => option.start === value.start}
@@ -549,6 +550,7 @@ export function CoverageUpdater({
           </Typography>
 
           <Autocomplete
+            disableClearable
             options={allLectureOptions.filter((o) => o.end)}
             value={
               allLectureOptions.filter((o) => o.end).find((o) => o.end === manualEndTime) || null
