@@ -494,7 +494,7 @@ CREATE TABLE CourseMaterials (
     sizeBytes BIGINT,
     universityId VARCHAR(100) NOT NULL,
     courseId VARCHAR(100) NOT NULL,
-    semesterId VARCHAR(100) NOT NULL,
+     instanceId VARCHAR(100) NOT NULL,
     uploadedBy VARCHAR(100) NOT NULL,
     url TEXT,
     checksum VARCHAR(64),

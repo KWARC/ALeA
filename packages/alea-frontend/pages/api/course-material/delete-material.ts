@@ -21,16 +21,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const materials = (await executeDontEndSet500OnError(
-    `SELECT courseId, semesterId, materialType, storageFileName FROM CourseMaterials WHERE id = ?`,
+    `SELECT courseId,  instanceId, materialType, storageFileName FROM CourseMaterials WHERE id = ?`,
     [id],
     res
   )) as any[];
 
-  if (!materials || materials.length === 0) {
-    return res.status(404).send('Material not found');
-  }
+  if (!materials) return;
+  if (materials.length === 0) return res.status(404).send('Material not found');
 
-  const { courseId, semesterId: instanceId, materialType, storageFileName } = materials[0];
+  const { courseId, instanceId: instanceId, materialType, storageFileName } = materials[0];
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
@@ -41,11 +40,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   if (!userId) return;
-
-  if (!materials || materials.length === 0) {
-    return res.status(404).send('Material not found');
+  if (materialType === 'FILE' && storageFileName) {
+    const filePath = path.join(BASE_PATH, String(storageFileName).trim());
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (deleteError) {
+      console.error('Error deleting file from storage:', deleteError);
+      return res.status(500).send('Failed to delete file from storage. DB record preserved.');
+    }
   }
-
   const dbResult = await executeAndEndSet500OnError(
     `DELETE FROM CourseMaterials WHERE id = ?`,
     [id],
@@ -53,21 +58,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   if (!dbResult) return;
-
-  const material = materials[0];
-  if (material.materialType === 'FILE' && material.storageFileName) {
-    const filePath = path.join(BASE_PATH, material.storageFileName);
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log('Deleted file:', filePath);
-      } else {
-        console.log('File not found for deletion:', filePath);
-      }
-    } catch (deleteError) {
-      console.error('Error deleting file:', deleteError);
-    }
-  }
 
   return res.status(200).end();
 }

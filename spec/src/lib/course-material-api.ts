@@ -27,15 +27,15 @@ export async function postMaterial(data: PostMaterialRequest) {
   await axios.post('/api/course-material/post-material', data);
 }
 
-export async function getMaterials(universityId: string, courseId: string, semesterId: string) {
+export async function getMaterials(universityId: string, courseId: string, instanceId: string) {
   const resp = await axios.get('/api/course-material/get-materials', {
-    params: { universityId, courseId, semesterId },
+    params: { universityId, courseId, instanceId },
   });
   return resp.data as CourseMaterial[];
 }
 
-export async function getMaterialById(id: string) {
-  const resp = await axios.get('/api/course-material/get-material-by-id', {
+export async function getMaterialFileById(id: string) {
+  const resp = await axios.get('/api/course-material/get-material-file-by-id', {
     params: { id },
     responseType: 'blob',
   });

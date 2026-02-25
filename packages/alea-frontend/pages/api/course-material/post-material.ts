@@ -98,7 +98,7 @@ async function handleFileMaterial(
     const dbResult = await executeAndEndSet500OnError(
       `INSERT INTO CourseMaterials 
        (id, materialName, materialType, storageFileName, mimeType, sizeBytes,
-        universityId, courseId, semesterId, uploadedBy)
+        universityId, courseId,  instanceId, uploadedBy)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
       [
@@ -149,7 +149,7 @@ async function handleLinkMaterial(
 
   const dbResult = await executeAndEndSet500OnError(
     `INSERT INTO CourseMaterials 
-     (id, materialName, materialType, universityId, courseId, semesterId, uploadedBy, url)
+     (id, materialName, materialType, universityId, courseId,  instanceId, uploadedBy, url)
      VALUES (?, ?, 'LINK', ?, ?, ?, ?, ?)`,
     [materialId, materialName, universityId, courseId, instanceId, userId, url],
     res

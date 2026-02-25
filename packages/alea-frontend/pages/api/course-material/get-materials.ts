@@ -4,18 +4,18 @@ import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-uti
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
 
-  const { universityId, courseId, semesterId } = req.query;
+  const { universityId, courseId, instanceId } = req.query;
 
-  if (!universityId || !courseId || !semesterId) {
-    return res.status(422).send('Missing universityId, courseId, or semesterId');
+  if (!universityId || !courseId || !instanceId) {
+    return res.status(422).send('Missing universityId, courseId, or  instanceId');
   }
 
   const results = await executeAndEndSet500OnError(
     `SELECT id, materialName, materialType as type, storageFileName, mimeType, sizeBytes, url
      FROM CourseMaterials 
-     WHERE universityId = ? AND courseId = ? AND semesterId = ? 
+     WHERE universityId = ? AND courseId = ? AND  instanceId = ? 
      ORDER BY createdAt DESC`,
-    [universityId, courseId, semesterId],
+    [universityId, courseId, instanceId],
     res
   );
 

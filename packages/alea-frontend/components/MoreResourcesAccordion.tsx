@@ -150,7 +150,7 @@ export function MoreResourcesAccordion({
                           <IconButton
                             size="small"
                             onClick={() => {
-                              const cleanUrl = `/api/course-material/get-material-by-id?id=${resource.id}`;
+                              const cleanUrl = `/api/course-material/get-material-file-by-id?id=${resource.id}`;
                               window.open(cleanUrl, '_blank');
                             }}
                             sx={{ color: 'palette.secondary.main' }}
@@ -162,7 +162,7 @@ export function MoreResourcesAccordion({
                           <IconButton
                             size="small"
                             onClick={() => {
-                              const cleanUrl = `/api/course-material/get-material-by-id?id=${resource.id}&download=true`;
+                              const cleanUrl = `/api/course-material/get-material-file-by-id?id=${resource.id}&download=true`;
 
                               const link = document.createElement('a');
                               link.href = cleanUrl;
