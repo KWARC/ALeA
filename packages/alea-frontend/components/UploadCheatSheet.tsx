@@ -18,13 +18,20 @@ import { useRef, useState, DragEvent, ChangeEvent } from 'react';
 export interface UploadCheatSheetProps {
   open: boolean;
   onClose: () => void;
-  /** Called on successful upload so parent can refetch */
   onUploaded: () => void;
   instanceId: string;
   courseId: string;
   universityId: string;
   userId: string;
+  isInstructor?: boolean;
 }
+
+function isWithinUploadWindow(): boolean {
+  const day = new Date().getDay();
+  return day >= 1 || day === 0;
+}
+
+const UPLOAD_WINDOW_LABEL = 'Monday 12:00 AM – Sunday 11:59:59 PM';
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -36,7 +43,9 @@ export function UploadCheatSheet({
   courseId,
   universityId,
   userId,
+  isInstructor = false,
 }: UploadCheatSheetProps) {
+  const uploadAllowed = isInstructor || isWithinUploadWindow();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -90,9 +99,11 @@ export function UploadCheatSheet({
       const res = await fetch('/api/uploadpdf', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          ...(isInstructor ? { 'x-is-instructor': 'true' } : {}),
+        },
         body: formData,
       });
-
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || 'Upload failed');
@@ -106,7 +117,7 @@ export function UploadCheatSheet({
     }
   }
 
-  const canUpload = Boolean(file) && status !== 'uploading';
+  const canUpload = Boolean(file) && status !== 'uploading' && uploadAllowed;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -123,14 +134,16 @@ export function UploadCheatSheet({
       </DialogTitle>
 
       <DialogContent sx={styles.content}>
-        {/* Drop zone */}
         <Box
           sx={{
             ...styles.dropZone,
             ...(dragging ? styles.dropZoneActive : {}),
             ...(file ? styles.dropZoneHasFile : {}),
           }}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
@@ -165,7 +178,12 @@ export function UploadCheatSheet({
           )}
         </Box>
 
-        {/* Status feedback */}
+        {!isInstructor && !uploadAllowed && (
+          <Alert severity="warning" sx={{ mt: 1.5 }}>
+            Uploads are only accepted during the active week ({UPLOAD_WINDOW_LABEL}). The upload
+            window is currently closed.
+          </Alert>
+        )}
         {errorMsg && (
           <Alert severity="error" sx={{ mt: 1.5 }}>
             {errorMsg}
@@ -176,8 +194,6 @@ export function UploadCheatSheet({
             Cheat sheet uploaded successfully!
           </Alert>
         )}
-
-        {/* Actions */}
         <Box sx={styles.actions}>
           <Button variant="outlined" onClick={handleClose} disabled={status === 'uploading'}>
             Cancel
@@ -187,7 +203,11 @@ export function UploadCheatSheet({
             onClick={handleUpload}
             disabled={!canUpload}
             startIcon={
-              status === 'uploading' ? <CircularProgress size={16} color="inherit" /> : <UploadFileIcon />
+              status === 'uploading' ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <UploadFileIcon />
+              )
             }
           >
             {status === 'uploading' ? 'Uploading…' : 'Upload'}
@@ -197,8 +217,6 @@ export function UploadCheatSheet({
     </Dialog>
   );
 }
-
-// ─── styles ──────────────────────────────────────────────────────────────────
 
 const styles = {
   title: {

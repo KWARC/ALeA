@@ -1,6 +1,7 @@
 import {
   Autocomplete,
   Box,
+  Button,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -17,8 +18,9 @@ import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useRouter } from 'next/router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useCurrentUser } from '@alea/react-utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
@@ -29,6 +31,7 @@ import MainLayout from '../../../../layouts/MainLayout';
 import { getAllCourses } from '@alea/spec';
 import type { CheatSheetFile } from '../../../api/get-cheatsheets';
 import type { NextPage } from 'next';
+import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 
 interface MyCheatSheetsPageProps {
   courseId?: string;
@@ -46,6 +49,10 @@ function CheatSheetsContent({
   previewFile,
   onPreview,
   onClosePreview,
+  instanceId,
+  courseId,
+  universityId,
+  userId,
 }: {
   files: CheatSheetFile[];
   isLoading: boolean;
@@ -57,7 +64,18 @@ function CheatSheetsContent({
   previewFile: CheatSheetFile | null;
   onPreview: (file: CheatSheetFile) => void;
   onClosePreview: () => void;
+  instanceId: string;
+  courseId: string;
+  universityId: string;
+  userId: string;
 }) {
+  const queryClient = useQueryClient();
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  function handleUploaded() {
+    queryClient.invalidateQueries({ queryKey: ['cheatsheets', instanceId] });
+  }
+
   return (
     <Box sx={pageStyles.container}>
       <Box sx={pageStyles.titleBar}>
@@ -76,14 +94,26 @@ function CheatSheetsContent({
             </Typography>
           </Box>
         </Box>
-        {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
-          <Chip
-            label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
-            color="primary"
+
+        <Box sx={pageStyles.titleRight}>
+          {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
+            <Chip
+              label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
+              color="primary"
+              size="small"
+              sx={pageStyles.countChip}
+            />
+          )}
+          <Button
+            variant="contained"
             size="small"
-            sx={pageStyles.countChip}
-          />
-        )}
+            startIcon={<UploadFileIcon />}
+            onClick={() => setUploadOpen(true)}
+            sx={pageStyles.uploadBtn}
+          >
+            Upload PDF
+          </Button>
+        </Box>
       </Box>
 
       {isEmbedded && uniqueUserIds.length > 0 && (
@@ -145,6 +175,17 @@ function CheatSheetsContent({
       )}
 
       <PdfPreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
+
+      <UploadCheatSheet
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={handleUploaded}
+        instanceId={instanceId}
+        courseId={courseId}
+        universityId={universityId}
+        userId={userId}
+        isInstructor={isEmbedded}
+      />
     </Box>
   );
 }
@@ -305,10 +346,10 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
     validationError,
     isValidating,
   } = useRouteValidation(isEmbedded ? null : '');
-  const courseId = propCourseId ?? routeCourseId;
-  const instanceId = propInstanceId ?? routeInstanceId;
+  const courseId = propCourseId ?? routeCourseId ?? '';
+  const instanceId = propInstanceId ?? routeInstanceId ?? '';
   const { user } = useCurrentUser();
-  const userId = user?.userId;
+  const userId = user?.userId ?? '';
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
     queryFn: () => getAllCourses(),
@@ -321,7 +362,7 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
   } = useQuery({
     queryKey: ['cheatsheets', instanceId, isEmbedded ? 'all' : userId],
     enabled: Boolean(instanceId) && (isEmbedded || Boolean(userId)),
-    queryFn: () => fetchCheatsheets(instanceId!, isEmbedded ? undefined : userId),
+    queryFn: () => fetchCheatsheets(instanceId, isEmbedded ? undefined : userId),
   });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const uniqueUserIds = useMemo(
@@ -335,6 +376,21 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
   }, [allFiles, isEmbedded, selectedUserId]);
 
   const [previewFile, setPreviewFile] = useState<CheatSheetFile | null>(null);
+
+  const sharedContentProps = {
+    files: visibleFiles,
+    isLoading,
+    isError,
+    uniqueUserIds,
+    selectedUserId,
+    onUserIdChange: setSelectedUserId,
+    previewFile,
+    onPreview: setPreviewFile,
+    onClosePreview: () => setPreviewFile(null),
+    instanceId,
+    courseId,
+    userId,
+  };
 
   if (!isEmbedded) {
     if (isValidating) return null;
@@ -361,38 +417,19 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
           instanceId={instanceId}
         />
         <CheatSheetsContent
-          files={visibleFiles}
-          isLoading={isLoading}
-          isError={isError}
+          {...sharedContentProps}
           isEmbedded={false}
-          uniqueUserIds={uniqueUserIds}
-          selectedUserId={selectedUserId}
-          onUserIdChange={setSelectedUserId}
-          previewFile={previewFile}
-          onPreview={setPreviewFile}
-          onClosePreview={() => setPreviewFile(null)}
+          universityId={institutionId ?? ''}
         />
       </MainLayout>
     );
   }
 
-  return (
-    <CheatSheetsContent
-      files={visibleFiles}
-      isLoading={isLoading}
-      isError={isError}
-      isEmbedded
-      uniqueUserIds={uniqueUserIds}
-      selectedUserId={selectedUserId}
-      onUserIdChange={setSelectedUserId}
-      previewFile={previewFile}
-      onPreview={setPreviewFile}
-      onClosePreview={() => setPreviewFile(null)}
-    />
-  );
+  return <CheatSheetsContent {...sharedContentProps} isEmbedded universityId="" />;
 };
 
 export default MyCheatSheetsPage;
+
 
 const pageStyles = {
   container: {
@@ -413,6 +450,11 @@ const pageStyles = {
     display: 'flex',
     alignItems: 'center',
     gap: 2,
+  },
+  titleRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1.5,
   },
   titleIconWrap: {
     display: 'flex',
@@ -441,6 +483,11 @@ const pageStyles = {
   countChip: {
     fontWeight: 600,
     px: 0.5,
+  },
+  uploadBtn: {
+    fontWeight: 600,
+    textTransform: 'none',
+    borderRadius: 2,
   },
   divider: {
     height: '1px',

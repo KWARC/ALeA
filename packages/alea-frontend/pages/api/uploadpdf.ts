@@ -1,130 +1,326 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { v4 as uuidv4 } from 'uuid';
-import { checkIfPostOrSetError, executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from './comment-utils';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { PdfReader, Item } from 'pdfreader';
+import sharp from 'sharp';
+import * as pdfjsLib from 'pdfjs-dist';
+import jsQR from 'jsqr';
 
-// Disable Next.js default body parser so formidable can handle multipart
-export const config = {
-  api: { bodyParser: false },
-};
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
-// Extracts a field value from PDF text using a label like "Course Id: CS201"
-function extractField(text: string, label: string): string | null {
-  const match = text.match(new RegExp(`${label}:\\s*(.+)`));
-  return match ? match[1].trim() : null;
+export const config = { api: { bodyParser: false } };
+
+interface QRData {
+  courseId?: string;
+  downloadDate?: string;
 }
 
-// Extract text from PDF buffer using pdfreader
-function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const lines: string[] = [];
-    new PdfReader().parseBuffer(buffer, (err, item: Item | null) => {
-      if (err) return reject(err);
-      if (!item) return resolve(lines.join('\n'));
-      if ((item as any).text) lines.push((item as any).text);
-    });
-  });
+interface WatermarkFields {
+  studentName?: string;
+  weekId?: string;
+  instanceId?: string;
+  courseId?: string;
+  universityId?: string;
+  dateOfDownload?: string;
 }
 
-// Generate checksum from file buffer (first 8 hex chars of SHA256)
+interface ExtractedFields {
+  studentName?: string;
+  weekId?: string;
+  instanceId?: string;
+  courseId?: string;
+  universityId?: string;
+  dateOfDownload?: string;
+}
+
 function generateChecksum(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 8);
 }
 
-// Sanitize a value for use in filename (lowercase, replace spaces/special chars with -)
 function sanitize(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function buildFileName(fields: ExtractedFields, userId: string, checksum: string): string {
+  return (
+    [
+      sanitize(fields.universityId as string),
+      sanitize(fields.courseId as string),
+      sanitize(fields.instanceId as string),
+      sanitize(userId),
+      sanitize(fields.weekId as string),
+      `&${checksum}`,
+    ].join('_') + '.pdf'
+  );
+}
+
+async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
+  return new Promise((resolve, reject) => {
+    formidable({ keepExtensions: true }).parse(req, (err, _fields, files) => {
+      if (err) return reject(err);
+      const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
+      if (!uploaded) return reject(new Error('No file uploaded.'));
+      resolve(uploaded);
+    });
+  });
+}
+
+async function extractFields(
+  buffer: Buffer
+): Promise<{ fields: ExtractedFields; diagnostics: string }> {
+  const [qrResult, wmResult] = await Promise.allSettled([
+    extractQRFromPDF(buffer),
+    extractPDFText(buffer).then(parseWatermark),
+  ]);
+
+  const qr: QRData = qrResult.status === 'fulfilled' ? qrResult.value : {};
+  const wm: WatermarkFields = wmResult.status === 'fulfilled' ? wmResult.value : {};
+
+  const fields: ExtractedFields = {
+    courseId: qr.courseId ?? wm.courseId,
+    instanceId: wm.instanceId,
+    universityId: wm.universityId,
+    studentName: wm.studentName,
+    weekId: wm.weekId,
+    dateOfDownload: qr.downloadDate ?? wm.dateOfDownload,
+  };
+
+  const diagnostics = [
+    qrResult.status === 'rejected' ? `QR error: ${(qrResult.reason as Error)?.message}` : 'QR: ok',
+    wmResult.status === 'rejected'
+      ? `Watermark error: ${(wmResult.reason as Error)?.message}`
+      : 'Watermark: ok',
+  ].join(' | ');
+
+  return { fields, diagnostics };
+}
+
+function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boolean {
+  const dest = path.join(cheatsheetDir, fileName);
+  const prefix = fileName.replace(/_&[^.]+\.pdf$/, '');
+  const existing = fs.readdirSync(cheatsheetDir).find((f) => f.startsWith(prefix));
+  if (existing) fs.unlinkSync(path.join(cheatsheetDir, existing));
+  fs.renameSync(filepath, dest);
+  return !!existing;
+}
+
+async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
+  const page = await pdf.getPage(1);
+  const opList = await page.getOperatorList();
+  const objs: any = (page as any).objs;
+  const imgNames: string[] = [];
+  for (let i = 0; i < opList.fnArray.length; i++) {
+    if (opList.fnArray[i] === 85 || opList.fnArray[i] === 86) {
+      const name = opList.argsArray[i]?.[0];
+      if (name && !imgNames.includes(name)) imgNames.push(name);
+    }
+  }
+
+  for (const name of imgNames) {
+    const img: any = await new Promise((resolve) => objs.get(name, resolve));
+    if (!img?.width || !img?.height || !img?.data) continue;
+
+    try {
+      const { width, height, data } = img;
+      const pixelCount = width * height;
+      const naiveCh = data.length / pixelCount;
+
+      let ch = 0,
+        hasPad = false;
+      if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
+        ch = naiveCh;
+      } else {
+        for (const c of [1, 3, 4]) {
+          if (data.length === height * (width * c + 1)) {
+            ch = c;
+            hasPad = true;
+            break;
+          }
+        }
+        if (!ch) ch = Math.max(1, Math.round(naiveCh));
+      }
+
+      let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
+      if (hasPad) {
+        const stride = width * ch + 1;
+        const stripped = Buffer.alloc(pixelCount * ch);
+        for (let row = 0; row < height; row++) {
+          raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+        }
+        raw = stripped;
+      }
+
+      const rgba =
+        ch === 4
+          ? raw
+          : await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 } })
+              .ensureAlpha()
+              .raw()
+              .toBuffer();
+
+      for (const scale of [1, 2, 4]) {
+        let buf = rgba,
+          w = width,
+          h = height;
+        if (scale > 1) {
+          buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
+            .resize(width * scale, height * scale, { kernel: 'nearest' })
+            .raw()
+            .toBuffer();
+          w = width * scale;
+          h = height * scale;
+        }
+        const result = jsQR(
+          new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
+          w,
+          h
+        );
+        if (result) {
+          const json = JSON.parse(result.data) as Record<string, string>;
+          return {
+            courseId: json['courseId'] ?? undefined,
+            downloadDate: json['downloadDate'] ?? json['downloadedAt'] ?? undefined,
+          };
+        }
+      }
+    } catch {
+      /* try next image */
+    }
+  }
+
+  throw new Error(`No QR code found among ${imgNames.length} image(s) on page 1.`);
+}
+
+interface PDFTextItem {
+  str: string;
+}
+
+async function extractPDFText(buffer: Buffer): Promise<string> {
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const texts: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const content = await (await pdf.getPage(i)).getTextContent();
+    texts.push(content.items.map((item) => (item as PDFTextItem).str).join(' '));
+  }
+  return texts.join('\n');
+}
+
+function extractLabeledField(text: string, label: string): string | undefined {
+  const match = text.match(
+    new RegExp(`${label}\\s*:\\s*([^\\n\\r]+?)(?=\\s{2,}|\\s*[A-Z][a-z]+ (?:Name|Id|At):|$)`, 'im')
+  );
+  return match?.[1].trim();
+}
+
+function parseWatermark(text: string): WatermarkFields {
+  return {
+    studentName: extractLabeledField(text, 'Student Name'),
+    weekId: extractLabeledField(text, 'Quiz Id'),
+    instanceId: extractLabeledField(text, 'Instance Id'),
+    courseId: extractLabeledField(text, 'Course Id'),
+    universityId: extractLabeledField(text, 'University Id'),
+    dateOfDownload: extractLabeledField(text, 'Downloaded At'),
+  };
+}
+
+const WINDOW_START_DAY = 1;
+const WINDOW_END_DAY = 0;
+
+function isWithinUploadWindow(): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  const inWindow =
+    WINDOW_START_DAY <= WINDOW_END_DAY
+      ? day >= WINDOW_START_DAY && day <= WINDOW_END_DAY
+      : day >= WINDOW_START_DAY || day <= WINDOW_END_DAY;
+
+  return inWindow;
+}
+
+function uploadWindowDescription(): string {
+  return 'Monday 12:00 AM - Sunday 11:59:59 PM';
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
+  const isInstructor = req.headers['x-is-instructor'] === 'true';
+  if (!isInstructor && !isWithinUploadWindow()) {
+    return res
+      .status(403)
+      .send(
+        `Cheat sheet uploads are only accepted during the active week (${uploadWindowDescription()}). ` +
+          `The upload window is currently closed.`
+      );
+  }
 
   const cheatsheetDir = process.env.CHEATSHEETS_DIR;
-  if (!cheatsheetDir) {
-    return res.status(500).send('CHEATSHEETS_DIR is not configured.');
-  }
+  if (!cheatsheetDir) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
 
   fs.mkdirSync(cheatsheetDir, { recursive: true });
 
-  // Parse multipart form
-  const form = formidable({ keepExtensions: true });
-
-  const parsed = await new Promise<{ file: formidable.File } | null>((resolve) => {
-    form.parse(req, (err, _fields, files) => {
-      if (err) {
-        res.status(400).send(err?.message ?? 'Failed to parse form.');
-        return resolve(null);
-      }
-      const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
-      if (!uploaded) {
-        res.status(400).send('No file uploaded.');
-        return resolve(null);
-      }
-      resolve({ file: uploaded });
-    });
-  });
-
-  if (!parsed) return;
-  const { file } = parsed;
-
-  // Read buffer once — used for both text extraction and checksum
-  let buffer: Buffer;
+  let file: formidable.File;
   try {
-    buffer = fs.readFileSync(file.filepath);
-  } catch (err: any) {
-    return res.status(500).send('Failed to read uploaded file: ' + (err?.message ?? 'Unknown error'));
+    file = await parseUpload(req);
+  } catch (err: unknown) {
+    return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
 
-  // Extract text from PDF and parse metadata
-  let pdfText: string;
-  try {
-    pdfText = await extractTextFromPDF(buffer);
-  } catch (err: any) {
-    return res.status(400).send('Failed to parse PDF: ' + (err?.message ?? 'Unknown error'));
+  const buffer = fs.readFileSync(file.filepath);
+  const { fields, diagnostics } = await extractFields(buffer);
+  const missing = (['courseId', 'instanceId', 'universityId', 'weekId'] as const).filter(
+    (k) => !fields[k]
+  );
+
+  if (missing.length > 0) {
+    return res
+      .status(400)
+      .send(`Could not extract required fields (${missing.join(', ')}). ${diagnostics}`);
   }
 
-  const courseId      = extractField(pdfText, 'Course Id');
-  const instanceId    = extractField(pdfText, 'Instance Id');
-  const universityId  = extractField(pdfText, 'University Id');
-  const studentName   = extractField(pdfText, 'Student Name');
-  const weekId        = extractField(pdfText, 'Quiz Id');
-  const dateOfDownload = extractField(pdfText, 'Downloaded At');
-
-  if (!courseId || !instanceId || !universityId || !weekId) {
-    return res.status(400).send(
-      'Could not extract required fields from PDF. Make sure it contains Course Id, Instance Id, University Id, and Quiz Id.'
-    );
-  }
-
-  // Generate checksum from file content
   const checksum = generateChecksum(buffer);
+  const fileName = buildFileName(fields, userId, checksum);
 
-  // Build filename: {universityId}_{courseId}_{instanceId}_{userId}_{weekId}_&{checksum}.pdf
-  // e.g. fau_ai-1_WS24-26_fake_joy_week1_&5617889.pdf
-  const fileName = `${sanitize(universityId)}_${sanitize(courseId)}_${sanitize(instanceId)}_${sanitize(userId)}_${sanitize(weekId)}_&${checksum}.pdf`;
-  const filePath = path.join(cheatsheetDir, fileName);
-
-  // Save file to disk
+  let isReplacement: boolean;
   try {
-    fs.renameSync(file.filepath, filePath);
-  } catch (err: any) {
-    return res.status(500).send(err?.message ?? 'Failed to save PDF file.');
+    isReplacement = savePDF(file.filepath, cheatsheetDir, fileName);
+  } catch (err: unknown) {
+    return res.status(500).send((err as Error)?.message ?? 'Failed to save PDF file.');
   }
-
-  const id = uuidv4();
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO CheatSheets (id, userId, studentName, weekId, instanceId, courseId, universityId, dateOfDownload, checksum)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, userId, studentName ?? null, weekId, instanceId, courseId, universityId, dateOfDownload ?? null, checksum],
+    `INSERT INTO CheatSheets (id, userId, studentName, weekId, instanceId, courseId, universityId, checksum, dateOfDownload)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       studentName    = VALUES(studentName),
+       checksum       = VALUES(checksum),
+       dateOfDownload = VALUES(dateOfDownload)`,
+    [
+      uuidv4(),
+      userId,
+      fields.studentName ?? null,
+      fields.weekId,
+      fields.instanceId,
+      fields.courseId,
+      fields.universityId,
+      checksum,
+      fields.dateOfDownload ?? null,
+    ],
     res
   );
   if (!result) return;
-  res.status(204).end();
+  res.status(isReplacement ? 200 : 201).end();
 }
