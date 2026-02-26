@@ -28,12 +28,12 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
-import { getAllCourses } from '@alea/spec';
-import type { CheatSheetFile } from '../../../api/get-cheatsheets';
+import { getAllCourses, getCheatSheets } from '@alea/spec';
 import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
+import { PostAdd } from '@mui/icons-material';
 
-interface MyCheatSheetsPageProps {
+interface CheatsheetsPageProps {
   courseId?: string;
   instanceId?: string;
 }
@@ -54,15 +54,15 @@ function CheatSheetsContent({
   universityId,
   userId,
 }: {
-  files: CheatSheetFile[];
+  files: any[];
   isLoading: boolean;
   isError: boolean;
   isEmbedded: boolean;
   uniqueUserIds: string[];
   selectedUserId: string | null;
   onUserIdChange: (id: string | null) => void;
-  previewFile: CheatSheetFile | null;
-  onPreview: (file: CheatSheetFile) => void;
+  previewFile: any | null;
+  onPreview: (file: any) => void;
   onClosePreview: () => void;
   instanceId: string;
   courseId: string;
@@ -75,9 +75,58 @@ function CheatSheetsContent({
   function handleUploaded() {
     queryClient.invalidateQueries({ queryKey: ['cheatsheets', instanceId] });
   }
+  const downloadCheatsheet = async () => {
+    const res = await fetch('/api/cheatsheet/create-cheatsheet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        courseName: 'Artificial Intelligence',
+        courseId: 'AI-1',
+        instanceId: 'WS25-26',
+        universityId: 'FAU',
+        studentName: 'Abhishek Kumar',
+        studentId: 'fake_joy',
+        quizId: '#qz23gfa23',
+        downloadDate: new Date().toISOString(),
+      }),
+    });
 
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fau_ai-1_WS25-26_fake_joy_#qz23gfa23.pdf';
+    a.click();
+  };
   return (
     <Box sx={pageStyles.container}>
+      <Box display="flex" justifyContent="end" gap={2}>
+        <Tooltip title="Generate Empty CheatSheet">
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PostAdd />}
+            onClick={downloadCheatsheet}
+            sx={pageStyles.uploadBtn}
+          >
+            Generate
+          </Button>
+        </Tooltip>
+        <Tooltip title="Upload Scanned PDF">
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadFileIcon />}
+            onClick={() => setUploadOpen(true)}
+            sx={pageStyles.uploadBtn}
+          >
+            Upload
+          </Button>
+        </Tooltip>
+      </Box>
       <Box sx={pageStyles.titleBar}>
         <Box sx={pageStyles.titleLeft}>
           <Box sx={pageStyles.titleIconWrap}>
@@ -85,7 +134,7 @@ function CheatSheetsContent({
           </Box>
           <Box>
             <Typography variant="h5" sx={pageStyles.heading}>
-              {isEmbedded ? 'Student Cheat Sheets' : 'My Cheat Sheets'}
+              {isEmbedded ? 'Student CheatSheets' : 'CheatSheets'}
             </Typography>
             <Typography variant="body2" sx={pageStyles.subheading}>
               {isEmbedded
@@ -104,15 +153,6 @@ function CheatSheetsContent({
               sx={pageStyles.countChip}
             />
           )}
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<UploadFileIcon />}
-            onClick={() => setUploadOpen(true)}
-            sx={pageStyles.uploadBtn}
-          >
-            Upload PDF
-          </Button>
         </Box>
       </Box>
 
@@ -190,13 +230,19 @@ function CheatSheetsContent({
   );
 }
 
-async function fetchCheatsheets(instanceId: string, userId?: string): Promise<CheatSheetFile[]> {
+async function fetchCheatsheets(
+  courseId: string,
+  instanceId: string,
+  userId?: string
+): Promise<any[]> {
   const params = new URLSearchParams({ instanceId });
   if (userId) params.set('userId', userId);
-  const res = await fetch(`/api/get-cheatsheets?${params.toString()}`);
-  if (!res.ok) throw new Error('Failed to fetch cheatsheets');
-  const data = await res.json();
-  return data.files as CheatSheetFile[];
+  const data = await getCheatSheets(courseId, instanceId, userId);
+  return data;
+  // // const res = await fetch(`/api/get-cheatsheets?${params.toString()}`);
+  // if (!res.ok) throw new Error('Failed to fetch cheatsheets');
+  // const data = await res.json();
+  // return data.files as any[];
 }
 
 function PdfPreviewDialog({
@@ -204,7 +250,7 @@ function PdfPreviewDialog({
   open,
   onClose,
 }: {
-  file: CheatSheetFile | null;
+  file: any | null;
   open: boolean;
   onClose: () => void;
 }) {
@@ -240,8 +286,8 @@ function CheatSheetRow({
   onPreview,
   showUserId,
 }: {
-  file: CheatSheetFile;
-  onPreview: (file: CheatSheetFile) => void;
+  file: any;
+  onPreview: (file: any) => void;
   showUserId?: boolean;
 }) {
   return (
@@ -332,9 +378,12 @@ function UserFilterBar({
   );
 }
 
-const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
+const CheatsheetsPage= ({
   courseId: propCourseId,
   instanceId: propInstanceId,
+}:{
+  courseId:string,
+  instanceId:string,
 }) => {
   const router = useRouter();
   const isEmbedded = Boolean(propCourseId && propInstanceId);
@@ -362,7 +411,7 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
   } = useQuery({
     queryKey: ['cheatsheets', instanceId, isEmbedded ? 'all' : userId],
     enabled: Boolean(instanceId) && (isEmbedded || Boolean(userId)),
-    queryFn: () => fetchCheatsheets(instanceId, isEmbedded ? undefined : userId),
+    queryFn: () => fetchCheatsheets(courseId, instanceId, isEmbedded ? undefined : userId),
   });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const uniqueUserIds = useMemo(
@@ -375,7 +424,7 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
     return allFiles.filter((f) => f.userId === selectedUserId);
   }, [allFiles, isEmbedded, selectedUserId]);
 
-  const [previewFile, setPreviewFile] = useState<CheatSheetFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<any | null>(null);
 
   const sharedContentProps = {
     files: visibleFiles,
@@ -408,7 +457,7 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
     const courseInfo = (courses as any)[courseId];
     if (!courseInfo) return <CourseNotFound />;
     return (
-      <MainLayout title={`${courseId.toUpperCase()} · My Cheat Sheets | ALeA`}>
+      <MainLayout title={`${courseId.toUpperCase()} · CheatSheets | ALeA`}>
         <CourseHeader
           courseName={courseInfo.courseName}
           imageLink={courseInfo.imageLink}
@@ -428,8 +477,7 @@ const MyCheatSheetsPage: NextPage<MyCheatSheetsPageProps> = ({
   return <CheatSheetsContent {...sharedContentProps} isEmbedded universityId="" />;
 };
 
-export default MyCheatSheetsPage;
-
+export default CheatsheetsPage;
 
 const pageStyles = {
   container: {

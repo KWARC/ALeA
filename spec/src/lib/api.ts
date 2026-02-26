@@ -3,6 +3,7 @@ export * from './access-control-api';
 export * from './aggregated-flams-fetcher';
 export * from './aggregated-weight-fetcher';
 export * from './announcements';
+export * from './cheatsheet-api';
 export * from './comment';
 export * from './comments-api';
 export * from './course-grade-info';

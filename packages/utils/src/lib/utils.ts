@@ -418,3 +418,11 @@ export function pathToInstructorDash(
 ): string {
   return pathToCourseResource(institutionId, courseId, instance, '/instructor-dash');
 }
+
+export function pathToCheatSheet(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/cheatsheet');
+}

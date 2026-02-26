@@ -18,7 +18,7 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
-import MyCheatSheetsPage from './my-cheatsheets';
+import CheatSheetsPage from './cheatsheet';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -50,7 +50,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  'cheatsheet': { resource: ResourceName.COURSE_QUIZ, actions: [Action.PREVIEW] },
+  'cheatsheet': { resource: ResourceName.COURSE_CHEATSHEET, actions: [Action.MUTATE] },
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
   'course-metadata': { resource: ResourceName.COURSE_METADATA, actions: [Action.MUTATE] },
 };
@@ -92,7 +92,7 @@ function ChosenTab({
     case 'peer-review':
       return <InstructorPeerReviewViewing courseId={courseId} />;
     case 'cheatsheet':
-      return <MyCheatSheetsPage courseId={courseId} instanceId={instanceId} />;
+      return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':

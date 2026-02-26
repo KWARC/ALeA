@@ -492,3 +492,17 @@ CREATE TABLE CrossDomainAuthTokens (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     used BOOLEAN DEFAULT FALSE
 );
+
+CREATE TABLE CheatSheet (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    userId VARCHAR(255) NOT NULL,
+    studentName VARCHAR(255), 
+    universityId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(255) NOT NULL, 
+    instanceId VARCHAR(255) NOT NULL, 
+    weekId VARCHAR(255) NOT NULL,    
+    checksum VARCHAR(255),
+    fileName VARCHAR(255),
+    dateOfDownload VARCHAR(255) ,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+);

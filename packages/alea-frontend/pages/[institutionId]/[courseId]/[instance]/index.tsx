@@ -26,6 +26,7 @@ import {
   pathToPracticeProblems,
   pathToInstructorDash,
   ResourceName,
+  pathToCheatSheet,
 } from '@alea/utils';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -591,7 +592,7 @@ const CourseHomePage: NextPage = () => {
   const studyBuddyLink = pathToStudyBuddy(institutionId, courseId, instanceId);
   const practiceProblemsLink = pathToPracticeProblems(institutionId, courseId, instanceId);
   const instructorDashLink = pathToInstructorDash(institutionId, courseId, instanceId);
-  const myCheatSheetsLink = `/${institutionId}/${courseId}/${instanceId}/my-cheatsheets`;
+  const cheatSheetsLink = pathToCheatSheet(institutionId, courseId, instanceId);
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
@@ -742,8 +743,8 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={myCheatSheetsLink}>
-            My Cheat Sheets&nbsp;
+          <CourseComponentLink href={cheatSheetsLink}>
+            CheatSheet&nbsp;
             <FolderOpenIcon fontSize="large" />
           </CourseComponentLink>
         </Box>
