@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { v4 as uuidv4 } from 'uuid';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
@@ -10,10 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import sharp from 'sharp';
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import jsQR from 'jsqr';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
 
 export const config = { api: { bodyParser: false } };
 
@@ -302,14 +301,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeAndEndSet500OnError(
-    `INSERT INTO CheatSheets (id, userId, studentName, weekId, instanceId, courseId, universityId, checksum, dateOfDownload)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       studentName    = VALUES(studentName),
-       checksum       = VALUES(checksum),
-       dateOfDownload = VALUES(dateOfDownload)`,
+    `INSERT INTO CheatSheet (userId, studentName, weekId, instanceId, courseId, universityId, checksum, dateOfDownload)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+   ON DUPLICATE KEY UPDATE
+     studentName    = VALUES(studentName),
+     checksum       = VALUES(checksum),
+     dateOfDownload = VALUES(dateOfDownload)`,
     [
-      uuidv4(),
       userId,
       fields.studentName ?? null,
       fields.weekId,

@@ -504,5 +504,5 @@ CREATE TABLE CheatSheet (
     checksum VARCHAR(255),
     fileName VARCHAR(255),
     dateOfDownload VARCHAR(255) ,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -61,7 +61,7 @@
     "openai": "^5.8.2",
     "path": "^0.12.7",
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^5.4.624",
+    "pdfjs-dist": "^3.11.174",
     "pdfkit": "^0.17.2",
     "pdfreader": "^3.0.8",
     "qrcode": "^1.5.4",

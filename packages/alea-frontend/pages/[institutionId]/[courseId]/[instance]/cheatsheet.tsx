@@ -28,15 +28,10 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
-import { getAllCourses, getCheatSheets } from '@alea/spec';
+import { createCheatSheet, getAllCourses, getCheatSheets, getCheatSheetFile } from '@alea/spec';
 import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
-
-interface CheatsheetsPageProps {
-  courseId?: string;
-  instanceId?: string;
-}
 
 function CheatSheetsContent({
   files,
@@ -51,6 +46,7 @@ function CheatSheetsContent({
   onClosePreview,
   instanceId,
   courseId,
+  courseName,
   universityId,
   userId,
 }: {
@@ -66,6 +62,7 @@ function CheatSheetsContent({
   onClosePreview: () => void;
   instanceId: string;
   courseId: string;
+  courseName: string;
   universityId: string;
   userId: string;
 }) {
@@ -76,30 +73,21 @@ function CheatSheetsContent({
     queryClient.invalidateQueries({ queryKey: ['cheatsheets', instanceId] });
   }
   const downloadCheatsheet = async () => {
-    const res = await fetch('/api/cheatsheet/create-cheatsheet', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        courseName: 'Artificial Intelligence',
-        courseId: 'AI-1',
-        instanceId: 'WS25-26',
-        universityId: 'FAU',
-        studentName: 'Abhishek Kumar',
-        studentId: 'fake_joy',
-        quizId: '#qz23gfa23',
-        downloadDate: new Date().toISOString(),
-      }),
+    const { blob, filename } = await createCheatSheet({
+      courseName,
+      courseId,
+      instanceId,
+      universityId,
     });
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-
+    const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(safeBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'fau_ai-1_WS25-26_fake_joy_#qz23gfa23.pdf';
+    a.download = filename ?? 'cheatsheet.pdf';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
   return (
     <Box sx={pageStyles.container}>
@@ -290,12 +278,44 @@ function CheatSheetRow({
   onPreview: (file: any) => void;
   showUserId?: boolean;
 }) {
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [loadingDownload, setLoadingDownload] = useState(false);
+
+  const handlePreview = async () => {
+    setLoadingPreview(true);
+    try {
+      const { blob, filename } = await getCheatSheetFile(file.checksum);
+      const url = window.URL.createObjectURL(blob);
+      onPreview({ ...file, url, filename: filename ?? file.checksum });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setLoadingDownload(true);
+    try {
+      const { blob, filename } = await getCheatSheetFile(file.checksum);
+      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(safeBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename ?? `${file.checksum}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setLoadingDownload(false);
+    }
+  };
+
   return (
     <Box sx={rowStyles.root}>
       <DescriptionIcon sx={rowStyles.icon} />
       <Box sx={rowStyles.meta}>
         <Typography variant="body2" sx={rowStyles.filename} noWrap>
-          {file.filename}
+          {file.checksum}
         </Typography>
         {showUserId && (
           <Typography variant="caption" sx={rowStyles.userId}>
@@ -305,19 +325,13 @@ function CheatSheetRow({
       </Box>
       <Box sx={rowStyles.actions}>
         <Tooltip title="Preview">
-          <IconButton size="small" onClick={() => onPreview(file)} sx={rowStyles.iconBtn}>
-            <OpenInNewIcon fontSize="small" />
+          <IconButton size="small" onClick={handlePreview} sx={rowStyles.iconBtn} disabled={loadingPreview}>
+            {loadingPreview ? <CircularProgress size={14} /> : <OpenInNewIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Download">
-          <IconButton
-            size="small"
-            component="a"
-            href={file.url}
-            download={file.filename}
-            sx={rowStyles.iconBtn}
-          >
-            <DownloadIcon fontSize="small" />
+          <IconButton size="small" onClick={handleDownload} sx={rowStyles.iconBtn} disabled={loadingDownload}>
+            {loadingDownload ? <CircularProgress size={14} /> : <DownloadIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
       </Box>
@@ -381,9 +395,11 @@ function UserFilterBar({
 const CheatsheetsPage= ({
   courseId: propCourseId,
   instanceId: propInstanceId,
+  courseName: propCourseName,
 }:{
   courseId:string,
   instanceId:string,
+  courseName?: string,
 }) => {
   const router = useRouter();
   const isEmbedded = Boolean(propCourseId && propInstanceId);
@@ -438,6 +454,7 @@ const CheatsheetsPage= ({
     onClosePreview: () => setPreviewFile(null),
     instanceId,
     courseId,
+    courseName: propCourseName ?? '',
     userId,
   };
 
@@ -469,6 +486,7 @@ const CheatsheetsPage= ({
           {...sharedContentProps}
           isEmbedded={false}
           universityId={institutionId ?? ''}
+          courseName={courseInfo.courseName}
         />
       </MainLayout>
     );
