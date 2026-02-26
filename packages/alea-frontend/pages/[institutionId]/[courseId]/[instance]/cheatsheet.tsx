@@ -92,17 +92,19 @@ function CheatSheetsContent({
   return (
     <Box sx={pageStyles.container}>
       <Box display="flex" justifyContent="end" gap={2}>
-        <Tooltip title="Generate Empty CheatSheet">
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<PostAdd />}
-            onClick={downloadCheatsheet}
-            sx={pageStyles.uploadBtn}
-          >
-            Generate
-          </Button>
-        </Tooltip>
+        {!isEmbedded && (
+          <Tooltip title="Generate Empty CheatSheet">
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PostAdd />}
+              onClick={downloadCheatsheet}
+              sx={pageStyles.uploadBtn}
+            >
+              Generate
+            </Button>
+          </Tooltip>
+        )}
         <Tooltip title="Upload Scanned PDF">
           <Button
             variant="contained"

@@ -54,12 +54,10 @@ function sanitize(value: string): string {
 function buildFileName(fields: ExtractedFields, userId: string, checksum: string): string {
   return (
     [
-      sanitize(fields.universityId as string),
-      sanitize(fields.courseId as string),
       sanitize(fields.instanceId as string),
       sanitize(userId),
       sanitize(fields.weekId as string),
-      `&${checksum}`,
+      checksum,
     ].join('_') + '.pdf'
   );
 }
@@ -300,13 +298,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).send((err as Error)?.message ?? 'Failed to save PDF file.');
   }
 
-  const result = await executeAndEndSet500OnError(
-    `INSERT INTO CheatSheet (userId, studentName, weekId, instanceId, courseId, universityId, checksum, dateOfDownload)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-   ON DUPLICATE KEY UPDATE
-     studentName    = VALUES(studentName),
-     checksum       = VALUES(checksum),
-     dateOfDownload = VALUES(dateOfDownload)`,
+  const existing = await executeAndEndSet500OnError(
+    `SELECT id, checksum , fileName FROM CheatSheet
+     WHERE userId = ? AND instanceId = ? AND courseId = ? AND universityId = ? AND weekId = ?
+     LIMIT 1`,
+    [userId, fields.instanceId, fields.courseId, fields.universityId, fields.weekId],
+    res
+  );
+  if (!existing) return;
+  const rows = existing as { id: number; checksum: string; fileName: string }[];
+  const existingRow = rows[0];
+
+  if (existingRow) {
+    if (existingRow.checksum === checksum) {
+      return res.status(200).send('Already uploaded.');
+    }
+    const baseDir = path.resolve(cheatsheetDir);
+    const targetPath = path.resolve(baseDir, existingRow.fileName);
+    if (!targetPath.startsWith(baseDir + path.sep)) {
+      console.error('Path traversal attempt detected:', targetPath);
+      return res.status(400).send('Invalid file path.');
+    }
+    
+    if (fs.existsSync(targetPath)) {
+      fs.unlinkSync(targetPath);
+    }
+    const updated = await executeAndEndSet500OnError(
+      `UPDATE CheatSheet SET checksum = ?,fileName = ? WHERE id = ?`,
+      [checksum, fileName, existingRow.id],
+      res
+    );
+    if (!updated) return;
+    return res.status(200).end();
+  }
+
+  const inserted = await executeAndEndSet500OnError(
+    `INSERT INTO CheatSheet
+       (userId, studentName, weekId, instanceId, courseId, universityId, checksum, fileName, dateOfDownload)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       userId,
       fields.studentName ?? null,
@@ -315,10 +344,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fields.courseId,
       fields.universityId,
       checksum,
+      fileName,
       fields.dateOfDownload ?? null,
     ],
     res
   );
-  if (!result) return;
-  res.status(isReplacement ? 200 : 201).end();
+  if (!inserted) return;
+  res.status(201).end();
 }
