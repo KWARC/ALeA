@@ -33,6 +33,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   landing: string;
   slides: string;
   teaser?: string | null;
+  livestreamUrl?: string;
   instructors: InstructorInfo[];
   hasQuiz: boolean;
   updaterId?: string;
