@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import formidable from 'formidable';
 
 import {
   checkIfPostOrSetError,
@@ -11,12 +12,11 @@ import {
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 
-const BASE_PATH = process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials');
+const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
+
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
+    bodyParser: false,
   },
 };
 
@@ -27,9 +27,13 @@ function getMimeType(fileName: string): string {
     '.json': 'application/json',
     '.md': 'text/markdown',
     '.txt': 'text/plain',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
   return mimeMap[ext] || 'application/octet-stream';
 }
+
 async function computeChecksumStreaming(filePath: string): Promise<string> {
   const hash = createHash('sha256');
   const stream = fs.createReadStream(filePath);
@@ -40,38 +44,45 @@ async function computeChecksumStreaming(filePath: string): Promise<string> {
   });
 }
 
+function parseForm(
+  req: NextApiRequest
+): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
+  const form = formidable({ maxFileSize: 100 * 1024 * 1024 });
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
+}
+
+function getField(fields: formidable.Fields, key: string): string | undefined {
+  const val = fields[key];
+  if (Array.isArray(val)) return val[0];
+  return val as string | undefined;
+}
+
 async function handleFileMaterial(
-  req: NextApiRequest,
   res: NextApiResponse,
   materialId: string,
   userId: string,
-  { universityId, courseId, instanceId, materialName, fileBase64, fileName, expectedSize }: any
+  universityId: string,
+  courseId: string,
+  instanceId: string,
+  materialName: string,
+  file: formidable.File
 ) {
-  if (!fileBase64 || !fileName) {
-    return res.status(422).send('Missing file data');
-  }
-
-  const fileBuffer = Buffer.from(fileBase64, 'base64');
-
-  if (expectedSize !== undefined && fileBuffer.length !== expectedSize) {
-    return res
-      .status(400)
-      .send(
-        `Partial upload detected: expected ${expectedSize} bytes, received ${fileBuffer.length} bytes`
-      );
-  }
-
-  const ext = path.extname(fileName).toLowerCase();
-  const mimeType = getMimeType(fileName);
-  const tempFileName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}${ext}`;
-  const tempFilePath = path.join(BASE_PATH, tempFileName);
+  const tempFilePath = file.filepath;
+  const originalFileName = file.originalFilename || 'unknown';
+  const ext = path.extname(originalFileName).toLowerCase();
+  const mimeType = getMimeType(originalFileName);
+  const fileSize = file.size;
 
   if (!fs.existsSync(BASE_PATH)) {
     fs.mkdirSync(BASE_PATH, { recursive: true });
   }
 
   try {
-    fs.writeFileSync(tempFilePath, fileBuffer);
     const checksum = await computeChecksumStreaming(tempFilePath);
     const duplicateCheck = (await executeDontEndSet500OnError(
       `SELECT id FROM CourseMaterials WHERE checksum = ?`,
@@ -79,27 +90,29 @@ async function handleFileMaterial(
       res
     )) as any[];
     if (!duplicateCheck) {
-      fs.unlinkSync(tempFilePath);
       return;
     }
     if (duplicateCheck.length > 0) {
-      fs.unlinkSync(tempFilePath);
       return res.status(409).send('Duplicate file already exists');
     }
     const storageFileName = `${checksum}${ext}`;
-    const filePath = path.join(BASE_PATH, storageFileName);
+    const filePath = path.resolve(BASE_PATH, storageFileName);
     try {
       fs.renameSync(tempFilePath, filePath);
     } catch (renameError) {
-      fs.unlinkSync(tempFilePath);
-      console.error('File rename error:', renameError);
-      return res.status(500).send(`File rename error: ${renameError.message}`);
+      try {
+        fs.copyFileSync(tempFilePath, filePath);
+        fs.unlinkSync(tempFilePath);
+      } catch (copyError) {
+        console.error('File move error:', copyError);
+        return res.status(500).send(`File move error: ${copyError.message}`);
+      }
     }
     const dbResult = await executeAndEndSet500OnError(
       `INSERT INTO CourseMaterials 
        (id, materialName, materialType, storageFileName, mimeType, sizeBytes,
-        universityId, courseId,  instanceId, uploadedBy)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        universityId, courseId, instanceId, uploadedBy, checksum)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
       [
         materialId,
@@ -107,11 +120,12 @@ async function handleFileMaterial(
         'FILE',
         storageFileName,
         mimeType,
-        fileBuffer.length,
+        fileSize,
         universityId,
         courseId,
         instanceId,
         userId,
+        checksum,
       ],
       res
     );
@@ -149,7 +163,7 @@ async function handleLinkMaterial(
 
   const dbResult = await executeAndEndSet500OnError(
     `INSERT INTO CourseMaterials 
-     (id, materialName, materialType, universityId, courseId,  instanceId, uploadedBy, url)
+     (id, materialName, materialType, universityId, courseId, instanceId, uploadedBy, url)
      VALUES (?, ?, 'LINK', ?, ?, ?, ?, ?)`,
     [materialId, materialName, universityId, courseId, instanceId, userId, url],
     res
@@ -163,17 +177,24 @@ async function handleLinkMaterial(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const {
-    universityId,
-    courseId,
-    instanceId,
-    type,
-    materialName,
-    url,
-    fileBase64,
-    fileName,
-    expectedSize,
-  } = req.body;
+  let fields: formidable.Fields;
+  let files: formidable.Files;
+
+  try {
+    const parsed = await parseForm(req);
+    fields = parsed.fields;
+    files = parsed.files;
+  } catch (err) {
+    console.error('Form parse error:', err);
+    return res.status(400).send('Failed to parse form data');
+  }
+
+  const universityId = getField(fields, 'universityId');
+  const courseId = getField(fields, 'courseId');
+  const instanceId = getField(fields, 'instanceId');
+  const type = getField(fields, 'type');
+  const materialName = getField(fields, 'materialName');
+  const url = getField(fields, 'url');
 
   if (!universityId || !courseId || !instanceId || !type || !materialName) {
     return res.status(422).send('Missing required fields');
@@ -192,15 +213,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const materialId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 
   if (type === 'FILE') {
-    return handleFileMaterial(req, res, materialId, userId, {
+    const fileArray = files.file;
+    const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+    if (!file) {
+      return res.status(422).send('Missing file upload');
+    }
+    return handleFileMaterial(
+      res,
+      materialId,
+      userId,
       universityId,
       courseId,
       instanceId,
       materialName,
-      fileBase64,
-      fileName,
-      expectedSize,
-    });
+      file
+    );
   } else if (type === 'LINK') {
     return handleLinkMaterial(res, materialId, userId, {
       universityId,

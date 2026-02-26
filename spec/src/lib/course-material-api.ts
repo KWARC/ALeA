@@ -18,12 +18,9 @@ export interface PostMaterialRequest {
   type: CourseMaterialType;
   materialName: string;
   url?: string;
-  fileBase64?: string;
-  fileName?: string;
-  expectedSize?: number;
 }
 
-export async function postMaterial(data: PostMaterialRequest) {
+export async function postMaterial(data: FormData) {
   await axios.post('/api/course-material/post-material', data);
 }
 
@@ -32,6 +29,14 @@ export async function getMaterials(universityId: string, courseId: string, insta
     params: { universityId, courseId, instanceId },
   });
   return resp.data as CourseMaterial[];
+}
+
+export function getMaterialFileUrl(id: string): string {
+  return `/api/course-material/get-material-file-by-id?id=${id}`;
+}
+
+export function getMaterialFileDownloadUrl(id: string): string {
+  return `/api/course-material/get-material-file-by-id?id=${id}&download=true`;
 }
 
 export async function getMaterialFileById(id: string) {

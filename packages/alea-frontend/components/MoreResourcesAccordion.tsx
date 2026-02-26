@@ -1,9 +1,9 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LinkIcon from '@mui/icons-material/Link';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import LinkIcon from '@mui/icons-material/Link';
 
 import {
   Alert,
@@ -17,8 +17,14 @@ import {
 } from '@mui/material';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { getMaterials, CourseMaterial } from '@alea/spec';
+import {
+  getMaterials,
+  getMaterialFileUrl,
+  getMaterialFileDownloadUrl,
+  CourseMaterial,
+} from '@alea/spec';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
@@ -33,77 +39,44 @@ export function MoreResourcesAccordion({
   semester,
   institutionId,
 }: MoreResourcesAccordionProps) {
-  console.log('MoreResourcesAccordion rendered with:', { courseId, semester, institutionId });
-
-  const [resources, setResources] = useState<CourseMaterial[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
 
-  const handleExpand = async () => {
-    const newExpanded = !expanded;
-    setExpanded(newExpanded);
+  const {
+    data: resources = [],
+    isLoading: loading,
+    isError,
+    error,
+  } = useQuery<CourseMaterial[]>({
+    queryKey: ['materials', institutionId, courseId, semester],
+    queryFn: () => getMaterials(institutionId, courseId, semester),
+    enabled: expanded,
+  });
 
-    if (!newExpanded || resources.length > 0) return;
-
-    setLoading(true);
-    setError(null);
-
-    console.log(' Fetching resources for courseId:', courseId, 'semester:', semester);
-
-    try {
-      const data = await getMaterials(institutionId, courseId, semester);
-      console.log(' API Response data:', data);
-      setResources(data);
-    } catch (error) {
-      console.error('Error fetching resources:', error);
-      setError('Could not load resources. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleExpand = () => {
+    setExpanded((prev) => !prev);
   };
 
   const filtered = resources;
-
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
   return (
-    <Box sx={{ mt: 4, mx: { xs: 2, sm: 3, md: 4 } }}>
-      <Card
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          padding: 2,
-          boxShadow: 1,
-        }}
-      >
-        <Button
-          variant="contained"
-          onClick={handleExpand}
-          sx={{
-            width: '100%',
-            height: '48px',
-            fontSize: '16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            textTransform: 'none',
-          }}
-        >
-          <Typography variant="h6" sx={{ margin: 0 }}>
+    <Box sx={styles.wrapper}>
+      <Card sx={styles.card}>
+        <Button variant="contained" onClick={handleExpand} sx={styles.expandButton}>
+          <Typography variant="h6" sx={styles.typographyTitle}>
             More Resources
           </Typography>
           <ExpandMoreIcon />
         </Button>
 
         {expanded && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={styles.expandedContent}>
             {/* Error */}
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
+            {isError && (
+              <Alert severity="error" sx={styles.errorAlert}>
+                {(error as Error)?.message || 'Could not load resources. Please try again.'}
               </Alert>
             )}
 
@@ -117,23 +90,10 @@ export function MoreResourcesAccordion({
                 No resources available for this course.
               </Typography>
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={styles.resourceList}>
                 {visibleResources.map((resource) => (
-                  <Box
-                    key={resource.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 1,
-                      borderRadius: 2,
-                      bgcolor: 'background.paper',
-                      boxShadow: 1,
-                      transition: 'box-shadow 0.2s',
-                      '&:hover': { boxShadow: 3 },
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box key={resource.id} sx={styles.resourceRow}>
+                    <Box sx={styles.resourceInfo}>
                       {resource.type === 'FILE' ? (
                         <PictureAsPdfIcon color="error" fontSize="small" />
                       ) : (
@@ -145,15 +105,12 @@ export function MoreResourcesAccordion({
                     </Box>
 
                     {resource.type === 'FILE' ? (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={styles.actionButtons}>
                         <Tooltip title="View in browser">
                           <IconButton
                             size="small"
-                            onClick={() => {
-                              const cleanUrl = `/api/course-material/get-material-file-by-id?id=${resource.id}`;
-                              window.open(cleanUrl, '_blank');
-                            }}
-                            sx={{ color: 'palette.secondary.main' }}
+                            onClick={() => window.open(getMaterialFileUrl(resource.id), '_blank')}
+                            sx={styles.viewButton}
                           >
                             <VisibilityIcon />
                           </IconButton>
@@ -162,17 +119,14 @@ export function MoreResourcesAccordion({
                           <IconButton
                             size="small"
                             onClick={() => {
-                              const cleanUrl = `/api/course-material/get-material-file-by-id?id=${resource.id}&download=true`;
-
                               const link = document.createElement('a');
-                              link.href = cleanUrl;
-                              const downloadFileName = resource.materialName;
-                              link.download = downloadFileName;
+                              link.href = getMaterialFileDownloadUrl(resource.id);
+                              link.download = resource.materialName;
                               document.body.appendChild(link);
                               link.click();
                               document.body.removeChild(link);
                             }}
-                            sx={{ color: 'palette.success.main' }}
+                            sx={styles.downloadButton}
                           >
                             <DownloadIcon />
                           </IconButton>
@@ -185,7 +139,7 @@ export function MoreResourcesAccordion({
                           href={resource.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          sx={{ color: 'palette.info.main' }}
+                          sx={styles.linkButton}
                         >
                           <LinkIcon />
                         </IconButton>
@@ -196,29 +150,13 @@ export function MoreResourcesAccordion({
               </Box>
             )}
             {totalPages > 1 && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 2,
-                  mt: 2,
-                }}
-              >
+              <Box sx={styles.pagination}>
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page === 0}
-                  sx={{
-                    color: page === 0 ? 'action.disabled' : 'primary.main',
-                    borderColor: page === 0 ? 'action.disabled' : 'primary.main',
-                    '&:hover:not(:disabled)': {
-                      color: 'primary.dark',
-                      borderColor: 'primary.dark',
-                      backgroundColor: 'primary.light',
-                    },
-                  }}
+                  sx={styles.paginationButton(page === 0)}
                 >
                   ←
                 </Button>
@@ -230,15 +168,7 @@ export function MoreResourcesAccordion({
                   variant="outlined"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page === totalPages - 1}
-                  sx={{
-                    color: page === totalPages - 1 ? 'action.disabled' : 'primary.main',
-                    borderColor: page === totalPages - 1 ? 'action.disabled' : 'primary.main',
-                    '&:hover:not(:disabled)': {
-                      color: 'primary.dark',
-                      borderColor: 'primary.dark',
-                      backgroundColor: 'primary.light',
-                    },
-                  }}
+                  sx={styles.paginationButton(page === totalPages - 1)}
                 >
                   →
                 </Button>
@@ -250,3 +180,84 @@ export function MoreResourcesAccordion({
     </Box>
   );
 }
+const styles = {
+  wrapper: {
+    mt: 4,
+    mx: { xs: 2, sm: 3, md: 4 },
+  },
+  card: {
+    bgcolor: 'background.paper',
+    borderRadius: 2,
+    padding: 2,
+    boxShadow: 1,
+  },
+  expandButton: {
+    width: '100%',
+    height: '48px',
+    fontSize: '16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    textTransform: 'none',
+  },
+  typographyTitle: {
+    margin: 0,
+  },
+  expandedContent: {
+    mt: 2,
+  },
+  errorAlert: {
+    mb: 2,
+  },
+  resourceList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1.5,
+  },
+  resourceRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    p: 1,
+    borderRadius: 2,
+    bgcolor: 'background.paper',
+    boxShadow: 1,
+    transition: 'box-shadow 0.2s',
+    '&:hover': { boxShadow: 3 },
+  },
+  resourceInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1.5,
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: 1,
+  },
+  viewButton: {
+    color: 'palette.success.main',
+  },
+  downloadButton: {
+    color: 'palette.success.main',
+  },
+  linkButton: {
+    color: 'palette.info.main',
+  },
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+    mt: 2,
+  },
+  paginationButton: (disabled: boolean) => ({
+    color: disabled ? 'action.disabled' : 'primary.main',
+    borderColor: disabled ? 'action.disabled' : 'primary.main',
+    '&:hover:not(:disabled)': {
+      color: 'primary.dark',
+      borderColor: 'primary.dark',
+      backgroundColor: 'primary.light',
+    },
+  }),
+};
+

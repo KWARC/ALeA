@@ -24,9 +24,16 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { deleteMaterial, getMaterials, postMaterial, CourseMaterial } from '@alea/spec';
+import {
+  deleteMaterial,
+  getMaterials,
+  postMaterial,
+  getMaterialFileUrl,
+  CourseMaterial,
+} from '@alea/spec';
 
 interface CourseResourcesTabProps {
   courseId: string;
@@ -39,8 +46,6 @@ export default function CourseResourcesTab({
   instanceId,
   universityId,
 }: CourseResourcesTabProps) {
-  const [resources, setResources] = useState<CourseMaterial[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [materialName, setMaterialName] = useState('');
@@ -52,30 +57,21 @@ export default function CourseResourcesTab({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    data: resources = [],
+    isLoading: loadingList,
+    refetch: fetchResources,
+  } = useQuery<CourseMaterial[]>({
+    queryKey: ['materials', universityId, courseId, instanceId],
+    queryFn: () => getMaterials(universityId, courseId, instanceId),
+    enabled: !!courseId && !!instanceId,
+  });
+
   const filteredResources = resources;
   const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const displayResources = filteredResources.slice(startIndex, endIndex);
-
-  const fetchResources = async () => {
-    setLoadingList(true);
-    try {
-      const data = await getMaterials(universityId, courseId, instanceId);
-      setResources(data);
-      setCurrentPage(0);
-    } catch (error) {
-      console.error('Fetch resources error:', error);
-      setToast({ type: 'error', text: error.message || 'Failed to load resources' });
-    } finally {
-      setLoadingList(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!courseId || !instanceId) return;
-    fetchResources();
-  }, [courseId, instanceId]);
 
   const handleUpload = async () => {
     if (!materialName.trim()) {
@@ -86,13 +82,12 @@ export default function CourseResourcesTab({
     setUploading(true);
 
     try {
-      let body: any = {
-        universityId,
-        courseId,
-        instanceId,
-        type,
-        materialName,
-      };
+      const formData = new FormData();
+      formData.append('universityId', universityId);
+      formData.append('courseId', courseId);
+      formData.append('instanceId', instanceId);
+      formData.append('type', type);
+      formData.append('materialName', materialName);
 
       if (type === 'FILE') {
         const file = fileInputRef.current?.files?.[0];
@@ -101,19 +96,17 @@ export default function CourseResourcesTab({
           setUploading(false);
           return;
         }
-
-        const fileBase64 = await toBase64(file);
-        body = { ...body, fileBase64, fileName: file.name, expectedSize: file.size };
+        formData.append('file', file);
       } else {
         if (!url.trim()) {
           setToast({ type: 'error', text: 'Please enter a URL' });
           setUploading(false);
           return;
         }
-        body = { ...body, url };
+        formData.append('url', url);
       }
 
-      await postMaterial(body);
+      await postMaterial(formData);
 
       setToast({ type: 'success', text: 'Resource uploaded successfully!' });
       setMaterialName('');
@@ -230,8 +223,7 @@ export default function CourseResourcesTab({
                   <IconButton
                     size="small"
                     onClick={() => {
-                      const cleanUrl = `/api/course-material/get-material-file-by-id?id=${resource.id}`;
-                      window.open(cleanUrl, '_blank');
+                      window.open(getMaterialFileUrl(resource.id), '_blank');
                     }}
                     sx={{ color: 'palette.secondary.main' }}
                   >
@@ -323,14 +315,3 @@ export default function CourseResourcesTab({
   );
 }
 
-function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1]);
-    };
-    reader.onerror = reject;
-  });
-}

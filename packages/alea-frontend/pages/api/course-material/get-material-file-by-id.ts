@@ -26,8 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { storageFileName, mimeType, materialName } = results[0];
 
-    const BASE_PATH = process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials');
-    const absoluteFilePath = path.join(BASE_PATH, String(storageFileName).trim());
+    const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
+    const absoluteFilePath = path.resolve(BASE_PATH, String(storageFileName).trim());
+
+    if (!absoluteFilePath.startsWith(BASE_PATH)) {
+      return res.status(403).send('Forbidden');
+    }
 
     if (!fs.existsSync(absoluteFilePath)) {
       return res.status(404).send('File not found on server');
