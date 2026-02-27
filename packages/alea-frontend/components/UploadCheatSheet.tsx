@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  TextField,
   Typography,
   Alert,
 } from '@mui/material';
@@ -14,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useRef, useState, DragEvent, ChangeEvent } from 'react';
+import { postScannedCheatSheet } from '@alea/spec';
 
 export interface UploadCheatSheetProps {
   open: boolean;
@@ -95,20 +95,7 @@ export function UploadCheatSheet({
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      const res = await fetch('/api/uploadpdf', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          ...(isInstructor ? { 'x-is-instructor': 'true' } : {}),
-        },
-        body: formData,
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || 'Upload failed');
-      }
-
+      await postScannedCheatSheet(formData);
       setStatus('success');
       onUploaded();
     } catch (err: any) {

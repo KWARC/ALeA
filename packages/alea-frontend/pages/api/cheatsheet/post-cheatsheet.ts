@@ -3,7 +3,7 @@ import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
   getUserIdOrSetError,
-} from './comment-utils';
+} from '../comment-utils';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
@@ -265,6 +265,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
+  console.log({userId})
   const isInstructor = req.headers['x-is-instructor'] === 'true';
   if (!isInstructor && !isWithinUploadWindow()) {
     return res
@@ -276,15 +277,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
-
+console.log("he")
   let file: formidable.File;
   try {
     file = await parseUpload(req);
+    console.log({file})
   } catch (err: unknown) {
     return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
   const buffer = fs.readFileSync(file.filepath);
   const { fields, diagnostics } = await extractFields(buffer);
+  console.log({ fields, diagnostics });
   const missing = (
     ['courseId', 'instanceId', 'universityId', 'weekId', 'studentId', 'downloadDate'] as const
   ).filter((k) => !fields[k]);
@@ -296,7 +299,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const checksum = generateChecksum(buffer);
+  console.log({checksum})
   const fileName = buildFileName(fields, userId, checksum);
+  console.log({fileName})
 
   let isReplacement: boolean;
   try {
@@ -312,6 +317,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [userId, fields.instanceId, fields.courseId, fields.universityId, fields.weekId],
     res
   );
+  console.log({existing});
   if (!existing) return;
   const rows = existing as { id: number; checksum: string; fileName: string }[];
   const existingRow = rows[0];
@@ -343,7 +349,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     return res.status(200).end();
   }
-
+console.log("hey")
   const inserted = await executeAndEndSet500OnError(
     `INSERT INTO CheatSheet
        (userId, studentName, weekId, instanceId, courseId, universityId, checksum, fileName, dateOfDownload)
