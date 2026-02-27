@@ -482,6 +482,7 @@ CREATE TABLE courseMetadata (
     landing VARCHAR(255) NOT NULL,
     slides VARCHAR(255) NOT NULL,
     teaser TEXT,
+    livestreamUrl VARCHAR(2048) NULL,
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
 );
