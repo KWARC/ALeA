@@ -347,6 +347,17 @@ export function epochMsToCivilDate(epochMs?: number) {
   return epochMs ? dayjs(epochMs).format('LL') : '';
 }
 
+export function getCurrentWeekNoFromStartDate(startDate: string | Date): number {
+  const start = new Date(startDate);
+  const today = new Date();
+  start.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffInMs = today.getTime() - start.getTime();
+  if (diffInMs < 0) return 0;
+  const MS_IN_WEEK = 1000 * 60 * 60 * 24 * 7;
+  return Math.floor(diffInMs / MS_IN_WEEK) + 1;
+}
+
 export function pathToCourseResource(
   institutionId: string,
   courseId: string,

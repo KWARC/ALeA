@@ -22,7 +22,7 @@ function parseDateDDMMYYYY(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-async function getSemesterInfoFromDb(
+export async function getSemesterInfoFromDb(
   universityId: string,
   instanceId: string
 ): Promise<SemesterInfo | null> {

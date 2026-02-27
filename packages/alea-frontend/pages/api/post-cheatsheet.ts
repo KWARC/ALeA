@@ -13,12 +13,18 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import jsQR from 'jsqr';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
+const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
 
 export const config = { api: { bodyParser: false } };
 
 interface QRData {
-  courseId?: string;
-  downloadDate?: string;
+  courseId: string;
+  downloadDate: string;
+  instanceId: string;
+  universityId: string;
+  studentId: string;
+  studentName?: string;
+  weekId: string;
 }
 
 interface WatermarkFields {
@@ -49,13 +55,13 @@ function sanitize(value: string): string {
     .replace(/[^a-z0-9]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
-}
+} // convert to lowercase, replace non-alphanumerics with "-", collapse duplicates, trim edge "-"
 
 function buildFileName(fields: ExtractedFields, userId: string, checksum: string): string {
   return (
     [
       sanitize(fields.instanceId as string),
-      sanitize(userId),
+      userId,
       sanitize(fields.weekId as string),
       checksum,
     ].join('_') + '.pdf'
@@ -81,15 +87,15 @@ async function extractFields(
     extractPDFText(buffer).then(parseWatermark),
   ]);
 
-  const qr: QRData = qrResult.status === 'fulfilled' ? qrResult.value : {};
+  const qr = qrResult.status === 'fulfilled' ? qrResult.value : ({} as QRData);
   const wm: WatermarkFields = wmResult.status === 'fulfilled' ? wmResult.value : {};
 
   const fields: ExtractedFields = {
     courseId: qr.courseId ?? wm.courseId,
-    instanceId: wm.instanceId,
-    universityId: wm.universityId,
-    studentName: wm.studentName,
-    weekId: wm.weekId,
+    instanceId: qr.instanceId ?? wm.instanceId,
+    universityId: qr.universityId ?? wm.universityId,
+    studentName: qr.studentName ?? wm.studentName,
+    weekId: qr.weekId ?? wm.weekId,
     dateOfDownload: qr.downloadDate ?? wm.dateOfDownload,
   };
 
@@ -105,7 +111,7 @@ async function extractFields(
 
 function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boolean {
   const dest = path.join(cheatsheetDir, fileName);
-  const prefix = fileName.replace(/_&[^.]+\.pdf$/, '');
+  const prefix = fileName.replace(/_&[^.]+\.pdf$/, ''); //Remove a trailing _&<text>.pdf suffix from the filename.
   const existing = fs.readdirSync(cheatsheetDir).find((f) => f.startsWith(prefix));
   if (existing) fs.unlinkSync(path.join(cheatsheetDir, existing));
   fs.renameSync(filepath, dest);
@@ -189,11 +195,16 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
           return {
             courseId: json['courseId'] ?? undefined,
             downloadDate: json['downloadDate'] ?? json['downloadedAt'] ?? undefined,
+            instanceId: json['instanceId'] ?? undefined,
+            universityId: json['universityId'] ?? undefined,
+            studentId: json['studentId'] ?? undefined,
+            studentName: json['studentName'] ?? undefined,
+            weekId: json['weekId'] ?? json['quizId'] ?? undefined,
           };
         }
       }
-    } catch {
-      /* try next image */
+    } catch (err) {
+      console.warn(`Failed to decode QR code from image ${name}, trying next if available.`, err);
     }
   }
 
@@ -217,7 +228,7 @@ async function extractPDFText(buffer: Buffer): Promise<string> {
 function extractLabeledField(text: string, label: string): string | undefined {
   const match = text.match(
     new RegExp(`${label}\\s*:\\s*([^\\n\\r]+?)(?=\\s{2,}|\\s*[A-Z][a-z]+ (?:Name|Id|At):|$)`, 'im')
-  );
+  ); //extracts the value of a labeled field (like "Course Id: ...") and stops before the next label or line break.
   return match?.[1].trim();
 }
 
@@ -263,11 +274,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           `The upload window is currently closed.`
       );
   }
-
-  const cheatsheetDir = process.env.CHEATSHEETS_DIR;
-  if (!cheatsheetDir) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
-
-  fs.mkdirSync(cheatsheetDir, { recursive: true });
+  if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
+  fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
 
   let file: formidable.File;
   try {
@@ -275,12 +283,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (err: unknown) {
     return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
-
   const buffer = fs.readFileSync(file.filepath);
   const { fields, diagnostics } = await extractFields(buffer);
-  const missing = (['courseId', 'instanceId', 'universityId', 'weekId'] as const).filter(
-    (k) => !fields[k]
-  );
+  const missing = (
+    ['courseId', 'instanceId', 'universityId', 'weekId', 'studentId', 'downloadDate'] as const
+  ).filter((k) => !fields[k]);
 
   if (missing.length > 0) {
     return res
@@ -293,11 +300,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let isReplacement: boolean;
   try {
-    isReplacement = savePDF(file.filepath, cheatsheetDir, fileName);
+    isReplacement = savePDF(file.filepath, CHEATSHEETS_DIR, fileName);
   } catch (err: unknown) {
     return res.status(500).send((err as Error)?.message ?? 'Failed to save PDF file.');
   }
-
+  const finalPath = path.join(CHEATSHEETS_DIR, fileName);
   const existing = await executeAndEndSet500OnError(
     `SELECT id, checksum , fileName FROM CheatSheet
      WHERE userId = ? AND instanceId = ? AND courseId = ? AND universityId = ? AND weekId = ?
@@ -313,13 +320,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (existingRow.checksum === checksum) {
       return res.status(200).send('Already uploaded.');
     }
-    const baseDir = path.resolve(cheatsheetDir);
+    const baseDir = path.resolve(CHEATSHEETS_DIR);
     const targetPath = path.resolve(baseDir, existingRow.fileName);
     if (!targetPath.startsWith(baseDir + path.sep)) {
       console.error('Path traversal attempt detected:', targetPath);
       return res.status(400).send('Invalid file path.');
     }
-    
+
     if (fs.existsSync(targetPath)) {
       fs.unlinkSync(targetPath);
     }
@@ -328,7 +335,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [checksum, fileName, existingRow.id],
       res
     );
-    if (!updated) return;
+    if (!updated) {
+      if (fs.existsSync(finalPath)) {
+        fs.unlinkSync(finalPath);
+        return;
+      }
+    }
     return res.status(200).end();
   }
 
@@ -349,6 +361,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ],
     res
   );
-  if (!inserted) return;
+
+  if (!inserted) {
+    if (fs.existsSync(finalPath)) {
+      fs.unlinkSync(finalPath);
+      return;
+    }
+  }
   res.status(201).end();
 }
