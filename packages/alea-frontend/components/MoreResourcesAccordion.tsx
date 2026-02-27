@@ -22,7 +22,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getMaterials,
   getMaterialFileUrl,
-  getMaterialFileDownloadUrl,
   CourseMaterial,
 } from '@alea/spec';
 
@@ -120,7 +119,7 @@ export function MoreResourcesAccordion({
                             size="small"
                             onClick={() => {
                               const link = document.createElement('a');
-                              link.href = getMaterialFileDownloadUrl(resource.id);
+                              link.href = getMaterialFileUrl(resource.id, true);
                               link.download = resource.materialName;
                               document.body.appendChild(link);
                               link.click();
