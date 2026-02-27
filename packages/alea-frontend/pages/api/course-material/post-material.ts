@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import formidable from 'formidable';
+import os from 'os';
 
 import {
   checkIfPostOrSetError,
@@ -13,6 +14,7 @@ import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-util
 import { Action, ResourceName } from '@alea/utils';
 
 const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
+const MAX_FILE_SIZE = Number(process.env.MAX_MATERIAL_FILE_SIZE) || 2 * 1024 * 1024 * 1024; //2GB default
 
 export const config = {
   api: {
@@ -20,7 +22,7 @@ export const config = {
   },
 };
 
-function getMimeType(fileName: string): string {
+export function getMimeType(fileName: string): string {
   const ext = path.extname(fileName).toLowerCase();
   const mimeMap: Record<string, string> = {
     '.pdf': 'application/pdf',
@@ -30,6 +32,7 @@ function getMimeType(fileName: string): string {
     '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     '.ppt': 'application/vnd.ms-powerpoint',
     '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.doc': 'application/msword',
   };
   return mimeMap[ext] || 'application/octet-stream';
 }
@@ -47,11 +50,22 @@ async function computeChecksumStreaming(filePath: string): Promise<string> {
 function parseForm(
   req: NextApiRequest
 ): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
-  const form = formidable({ maxFileSize: 100 * 1024 * 1024 });
+  const form = formidable({
+    maxFileSize: MAX_FILE_SIZE,
+    maxTotalFileSize: MAX_FILE_SIZE,
+    uploadDir: os.tmpdir(),
+    keepExtensions: true,
+    multiples: false,
+  });
+
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
+      if (err) {
+        console.error('Form parse error:', err);
+        reject(err);
+      } else {
+        resolve({ fields, files });
+      }
     });
   });
 }
@@ -113,7 +127,6 @@ async function handleFileMaterial(
        (id, materialName, materialType, storageFileName, mimeType, sizeBytes,
         universityId, courseId, instanceId, uploadedBy, checksum)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-
       [
         materialId,
         materialName,
@@ -186,7 +199,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     files = parsed.files;
   } catch (err) {
     console.error('Form parse error:', err);
-    return res.status(400).send('Failed to parse form data');
+    return res.status(400).send(`Failed to parse form data: ${err.message}`);
   }
 
   const universityId = getField(fields, 'universityId');
@@ -213,11 +226,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const materialId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 
   if (type === 'FILE') {
-    const fileArray = files.file;
-    const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+    const fileData = files.file;
+    if (!fileData) {
+      return res.status(422).send('Missing file upload');
+    }
+
+    // Handle both single file and array of files
+    const file = Array.isArray(fileData) ? fileData[0] : fileData;
     if (!file) {
       return res.status(422).send('Missing file upload');
     }
+
     return handleFileMaterial(
       res,
       materialId,

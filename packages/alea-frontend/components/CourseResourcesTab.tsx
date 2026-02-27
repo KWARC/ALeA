@@ -27,13 +27,7 @@ import {
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import {
-  deleteMaterial,
-  getMaterials,
-  postMaterial,
-  getMaterialFileUrl,
-  CourseMaterial,
-} from '@alea/spec';
+import { deleteMaterial, getMaterials, postMaterial, CourseMaterial } from '@alea/spec';
 
 interface CourseResourcesTabProps {
   courseId: string;
@@ -161,7 +155,11 @@ export default function CourseResourcesTab({
         </FormControl>
 
         {type === 'FILE' ? (
-          <input type="file" accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif" ref={fileInputRef} />
+          <input
+            type="file"
+            accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif"
+            ref={fileInputRef}
+          />
         ) : (
           <TextField
             label="URL"
@@ -222,9 +220,9 @@ export default function CourseResourcesTab({
                 {resource.type === 'FILE' ? (
                   <IconButton
                     size="small"
-                    onClick={() => {
-                      window.open(getMaterialFileUrl(resource.id), '_blank');
-                    }}
+                    // onClick={() => {
+                    //   window.open(getMaterialFileUrl(resource.id), '_blank');
+                    // }}
                     sx={{ color: 'palette.secondary.main' }}
                   >
                     <VisibilityIcon />
@@ -314,4 +312,3 @@ export default function CourseResourcesTab({
     </Paper>
   );
 }
-

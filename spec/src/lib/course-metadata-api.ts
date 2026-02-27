@@ -27,10 +27,6 @@ export interface InstructorInfo {
   url?: string;
 }
 
-export interface CourseResourceLink {
-  label: string;
-  url: string;
-}
 export interface CourseInfoMetadata extends CourseMetadata {
   courseName: string;
   notes: string;
@@ -41,7 +37,6 @@ export interface CourseInfoMetadata extends CourseMetadata {
   hasQuiz: boolean;
   updaterId?: string;
   universityId: string;
-  resourseLinks?: CourseResourceLink[];
 }
 
 export interface GenerateLectureEntryResponse {
@@ -122,7 +117,9 @@ export async function updateHasQuiz(
   return response.data;
 }
 
-export async function checkLectureEntriesExist(courseId: string): Promise<{ hasEntries: boolean; count: number }> {
+export async function checkLectureEntriesExist(
+  courseId: string
+): Promise<{ hasEntries: boolean; count: number }> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
     params: { courseId },
   });

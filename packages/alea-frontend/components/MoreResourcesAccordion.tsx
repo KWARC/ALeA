@@ -19,11 +19,7 @@ import {
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import {
-  getMaterials,
-  getMaterialFileUrl,
-  CourseMaterial,
-} from '@alea/spec';
+import { getMaterials, CourseMaterial } from '@alea/spec';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
@@ -108,7 +104,7 @@ export function MoreResourcesAccordion({
                         <Tooltip title="View in browser">
                           <IconButton
                             size="small"
-                            onClick={() => window.open(getMaterialFileUrl(resource.id), '_blank')}
+                            // onClick={() => window.open(getMaterialFileUrl(resource.id), '_blank')}
                             sx={styles.viewButton}
                           >
                             <VisibilityIcon />
@@ -119,7 +115,7 @@ export function MoreResourcesAccordion({
                             size="small"
                             onClick={() => {
                               const link = document.createElement('a');
-                              link.href = getMaterialFileUrl(resource.id, true);
+                              //  link.href = getMaterialFileUrl(resource.id, true);
                               link.download = resource.materialName;
                               document.body.appendChild(link);
                               link.click();
@@ -259,4 +255,3 @@ const styles = {
     },
   }),
 };
-

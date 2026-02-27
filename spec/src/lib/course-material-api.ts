@@ -5,7 +5,6 @@ export interface CourseMaterial {
   id: string;
   materialName: string;
   type: CourseMaterialType;
-  storageFileName?: string;
   mimeType?: string;
   sizeBytes?: number;
   url?: string;
@@ -31,19 +30,13 @@ export async function getMaterials(universityId: string, courseId: string, insta
   return resp.data as CourseMaterial[];
 }
 
-export function getMaterialFileUrl(id: string, download?: boolean): string {
-  const baseUrl = `/api/course-material/get-material-file-by-id?id=${id}`;
-  return download ? `${baseUrl}&download=true` : baseUrl;
-}
-
-export async function getMaterialFileById(id: string) {
+export async function getMaterialFileById(id: string, download?: boolean) {
   const resp = await axios.get('/api/course-material/get-material-file-by-id', {
-    params: { id },
+    params: { id, download },
     responseType: 'blob',
   });
   return resp.data;
 }
-
 export async function deleteMaterial(id: string) {
   await axios.post('/api/course-material/delete-material', { id });
 }
