@@ -20,7 +20,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res
     );
 
-    if (!results || results.length === 0) {
+    if (!results) return;
+
+    if (results.length === 0) {
       return res.status(404).send('Resource not found');
     }
 
@@ -44,13 +46,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isPdf = String(mimeType).toLowerCase() === 'application/pdf';
     const disposition =
       !forceDownload && isPdf
-        ? `inline; filename="${downloadFileName}"` //open in browser
-        : `attachment; filename="${downloadFileName}"`; // download
+        ? `inline; filename="${downloadFileName}"`
+        : `attachment; filename="${downloadFileName}"`;
 
     res.setHeader('Content-Type', String(mimeType || 'application/octet-stream'));
-    res.setHeader('Content-Disposition', disposition); //open in browser or download
-    res.setHeader('Content-Length', stat.size); // browser can show download progres
-    res.setHeader('Cache-Control', 'public, max-age=86400'); //browser can cache this file for 1 day
+    res.setHeader('Content-Disposition', disposition);
+    res.setHeader('Content-Length', stat.size);
 
     const readStream = fs.createReadStream(absoluteFilePath);
     readStream.pipe(res);

@@ -31,12 +31,9 @@ export async function getMaterials(universityId: string, courseId: string, insta
   return resp.data as CourseMaterial[];
 }
 
-export function getMaterialFileUrl(id: string): string {
-  return `/api/course-material/get-material-file-by-id?id=${id}`;
-}
-
-export function getMaterialFileDownloadUrl(id: string): string {
-  return `/api/course-material/get-material-file-by-id?id=${id}&download=true`;
+export function getMaterialFileUrl(id: string, download?: boolean): string {
+  const baseUrl = `/api/course-material/get-material-file-by-id?id=${id}`;
+  return download ? `${baseUrl}&download=true` : baseUrl;
 }
 
 export async function getMaterialFileById(id: string) {

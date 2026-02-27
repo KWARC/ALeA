@@ -161,7 +161,7 @@ export default function CourseResourcesTab({
         </FormControl>
 
         {type === 'FILE' ? (
-          <input type="file" accept=".pdf,.txt,.json,.md" ref={fileInputRef} />
+          <input type="file" accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif" ref={fileInputRef} />
         ) : (
           <TextField
             label="URL"

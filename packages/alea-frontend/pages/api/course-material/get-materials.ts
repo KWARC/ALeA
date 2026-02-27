@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const results = await executeAndEndSet500OnError(
-    `SELECT id, materialName, materialType as type, storageFileName, mimeType, sizeBytes, url
+    `SELECT id, materialName, materialType as type, mimeType, sizeBytes, url
      FROM CourseMaterials 
      WHERE universityId = ? AND courseId = ? AND  instanceId = ? 
      ORDER BY createdAt DESC`,
