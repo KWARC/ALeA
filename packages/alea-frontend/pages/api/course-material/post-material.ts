@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import formidable from 'formidable';
-import os from 'os';
 
 import {
   checkIfPostOrSetError,
@@ -14,7 +13,12 @@ import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-util
 import { Action, ResourceName } from '@alea/utils';
 
 const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
+const TEMP_PATH = path.resolve(process.env.TEMP_DIR || path.join(process.cwd(), 'materials_temp'));
 const MAX_FILE_SIZE = Number(process.env.MAX_MATERIAL_FILE_SIZE) || 2 * 1024 * 1024 * 1024; //2GB default
+
+if (!fs.existsSync(TEMP_PATH)) {
+  fs.mkdirSync(TEMP_PATH, { recursive: true });
+}
 
 export const config = {
   api: {
@@ -53,7 +57,7 @@ function parseForm(
   const form = formidable({
     maxFileSize: MAX_FILE_SIZE,
     maxTotalFileSize: MAX_FILE_SIZE,
-    uploadDir: os.tmpdir(),
+    uploadDir: TEMP_PATH,
     keepExtensions: true,
     multiples: false,
   });
@@ -107,6 +111,7 @@ async function handleFileMaterial(
       return;
     }
     if (duplicateCheck.length > 0) {
+      if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
       return res.status(409).send('Duplicate file already exists');
     }
     const storageFileName = `${checksum}${ext}`;

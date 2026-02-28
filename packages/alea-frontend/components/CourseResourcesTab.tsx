@@ -27,7 +27,7 @@ import {
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { deleteMaterial, getMaterials, postMaterial, CourseMaterial } from '@alea/spec';
+import { deleteMaterial, getMaterials, getMaterialFileUrl, postMaterial, CourseMaterial } from '@alea/spec';
 
 interface CourseResourcesTabProps {
   courseId: string;
@@ -46,6 +46,7 @@ export default function CourseResourcesTab({
   const [type, setType] = useState<'FILE' | 'LINK'>('FILE');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [url, setUrl] = useState('');
+  const [duplicateError, setDuplicateError] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
@@ -59,6 +60,7 @@ export default function CourseResourcesTab({
     queryKey: ['materials', universityId, courseId, instanceId],
     queryFn: () => getMaterials(universityId, courseId, instanceId),
     enabled: !!courseId && !!instanceId,
+     staleTime: 5 * 60 * 1000,
   });
 
   const filteredResources = resources;
@@ -102,6 +104,7 @@ export default function CourseResourcesTab({
 
       await postMaterial(formData);
 
+      setDuplicateError('');
       setToast({ type: 'success', text: 'Resource uploaded successfully!' });
       setMaterialName('');
       setUrl('');
@@ -109,7 +112,11 @@ export default function CourseResourcesTab({
       await fetchResources();
     } catch (error) {
       console.error('Upload error:', error);
-      setToast({ type: 'error', text: error.message || 'Failed to upload resource' });
+      if (error?.response?.status === 409) {
+        setDuplicateError('This file has already been uploaded. Please choose a different file.');
+      } else {
+        setToast({ type: 'error', text: error?.response?.data || error.message || 'Failed to upload resource' });
+      }
     } finally {
       setUploading(false);
     }
@@ -155,11 +162,19 @@ export default function CourseResourcesTab({
         </FormControl>
 
         {type === 'FILE' ? (
-          <input
-            type="file"
-            accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif"
-            ref={fileInputRef}
-          />
+          <>
+            <input
+              type="file"
+              accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif"
+              ref={fileInputRef}
+              onChange={() => setDuplicateError('')}
+            />
+            {duplicateError && (
+              <Typography variant="body2" color="error" sx={{ mt: 0.5 }}>
+                {duplicateError}
+              </Typography>
+            )}
+          </>
         ) : (
           <TextField
             label="URL"
@@ -220,9 +235,9 @@ export default function CourseResourcesTab({
                 {resource.type === 'FILE' ? (
                   <IconButton
                     size="small"
-                    // onClick={() => {
-                    //   window.open(getMaterialFileUrl(resource.id), '_blank');
-                    // }}
+                    onClick={() => {
+                      window.open(getMaterialFileUrl(resource.id), '_blank');
+                    }}
                     sx={{ color: 'palette.secondary.main' }}
                   >
                     <VisibilityIcon />

@@ -8,6 +8,7 @@ export interface CourseMaterial {
   mimeType?: string;
   sizeBytes?: number;
   url?: string;
+  createdAt?: string;
 }
 
 export interface PostMaterialRequest {
@@ -39,4 +40,10 @@ export async function getMaterialFileById(id: string, download?: boolean) {
 }
 export async function deleteMaterial(id: string) {
   await axios.post('/api/course-material/delete-material', { id });
+}
+
+export function getMaterialFileUrl(id: string, download?: boolean): string {
+  const params = new URLSearchParams({ id });
+  if (download) params.set('download', 'true');
+  return `/api/course-material/get-material-file-by-id?${params.toString()}`;
 }
