@@ -107,9 +107,7 @@ async function handleFileMaterial(
       [checksum],
       res
     )) as any[];
-    if (!duplicateCheck) {
-      return;
-    }
+    if (!duplicateCheck) return;
     if (duplicateCheck.length > 0) {
       if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
       return res.status(409).send('Duplicate file already exists');
@@ -236,7 +234,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(422).send('Missing file upload');
     }
 
-    // Handle both single file and array of files
     const file = Array.isArray(fileData) ? fileData[0] : fileData;
     if (!file) {
       return res.status(422).send('Missing file upload');
