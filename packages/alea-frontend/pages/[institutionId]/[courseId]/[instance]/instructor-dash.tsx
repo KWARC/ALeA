@@ -18,7 +18,6 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
-
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -91,7 +90,7 @@ function ChosenTab({
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':
-      return <CourseMetadata courseId={courseId} instanceId={instanceId} />;
+      return <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />;
     default:
       return null;
   }
@@ -130,14 +129,8 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 
 const InstructorDashPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('instructor-dash');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('instructor-dash');
 
   const instanceId = resolvedInstanceId;
   const tab = router.query.tab as TabName;

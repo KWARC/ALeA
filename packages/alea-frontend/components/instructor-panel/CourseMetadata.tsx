@@ -6,13 +6,14 @@ import LectureScheduleTab from './LectureSchedule';
 import CourseInfoTab from './CourseInfo';
 import { getLocaleObject } from '../../lang/utils';
 import { useRouter } from 'next/router';
-
+import CourseResourcesTab from '../CourseResourcesTab';
 interface CourseMetadataProps {
   courseId: string;
   instanceId: string;
+  universityId: string;
 }
 
-const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
+const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, universityId }) => {
   const [generateLoading, setGenerateLoading] = useState(false);
   const [generateMessage, setGenerateMessage] = useState('');
   const [hasEntries, setHasEntries] = useState(false);
@@ -106,6 +107,9 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
         <LectureScheduleTab courseId={courseId} instanceId={instanceId} />
+      </Box>
+      <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
+        <CourseResourcesTab courseId={courseId} instanceId={instanceId} universityId={universityId} />
       </Box>
     </Box>
   );

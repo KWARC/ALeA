@@ -118,7 +118,9 @@ export async function updateHasQuiz(
   return response.data;
 }
 
-export async function checkLectureEntriesExist(courseId: string): Promise<{ hasEntries: boolean; count: number }> {
+export async function checkLectureEntriesExist(
+  courseId: string
+): Promise<{ hasEntries: boolean; count: number }> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
     params: { courseId },
   });

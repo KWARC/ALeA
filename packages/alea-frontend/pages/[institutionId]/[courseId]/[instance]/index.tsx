@@ -74,7 +74,7 @@ import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import shadows from '../../../../theme/shadows';
 import type { NextPage } from 'next';
-
+import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -104,7 +104,6 @@ function CourseScheduleSection({
   const [showAllLectures, setShowAllLectures] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
-
   const hasMoreLectures = lectureSchedule.length > 3;
   const hasMoreTutorials = tutorialSchedule.length > 3;
 
@@ -625,7 +624,6 @@ const CourseHomePage: NextPage = () => {
 
     const confirmed = window.confirm('Are you sure you want to un-enroll?');
     if (!confirmed) return;
-
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
       queryClient.invalidateQueries({
@@ -835,7 +833,9 @@ const CourseHomePage: NextPage = () => {
               }}
               sx={{
                 bgcolor: 'background.paper',
+
                 borderRadius: 7.5,
+
                 mt: 1.25,
               }}
               onKeyDown={handleKeyDown}
@@ -843,6 +843,7 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         )}
+
         <Box bgcolor={'background.paper'}>
           <Box fragment-uri={landing} fragment-kind="Section">
             <SafeFTMLDocument
@@ -854,6 +855,11 @@ const CourseHomePage: NextPage = () => {
             />
           </Box>
         </Box>
+        <MoreResourcesAccordion
+          courseId={courseId}
+          semester={instance}
+          institutionId={institutionId}
+        />
         <RecordedSyllabus courseId={courseId} />
       </Box>
     </MainLayout>
