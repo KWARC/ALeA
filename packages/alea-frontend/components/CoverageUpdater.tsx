@@ -11,6 +11,7 @@ import {
   Autocomplete,
   Chip,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { LectureEntry } from '@alea/utils';
@@ -66,20 +67,26 @@ interface CoverageUpdaterProps {
   courseId: string;
   snaps: LectureEntry[];
   notCoveredSections?: string[];
+  outOfOrderSections?: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>;
   secInfo: Record<FTML.DocumentUri, SecInfo>;
   handleSaveSingle: (entry: LectureEntry) => void;
   handleDeleteSingle: (timestamp_ms: number) => void;
   handleSaveNotCoveredSections: (uris: string[]) => void;
+  handleSaveOutOfOrderSections: (
+    data: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  ) => void;
 }
 
 export function CoverageUpdater({
   courseId,
   snaps,
   notCoveredSections: initialNotCoveredSections,
+  outOfOrderSections: initialOutOfOrderSections,
   secInfo,
   handleSaveSingle,
   handleDeleteSingle,
   handleSaveNotCoveredSections,
+  handleSaveOutOfOrderSections,
 }: CoverageUpdaterProps) {
   const [formData, setFormData] = useState<FormData>({
     sectionName: '',
@@ -102,8 +109,34 @@ export function CoverageUpdater({
 
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
 
+  const [outOfOrderSections, setOutOfOrderSections] = useState<
+    Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  >({});
+
+  const [selectedOutOfOrderOption, setSelectedOutOfOrderOption] = useState<{
+    uri: string;
+    label: string;
+  } | null>(null);
+
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
+
+  const [isTimingDialogOpen, setIsTimingDialogOpen] = useState(false);
+  const [selectedSectionForTiming, setSelectedSectionForTiming] = useState<string | null>(null);
+
+  const [manualStartTime, setManualStartTime] = useState<number | null>(null);
+  const [manualEndTime, setManualEndTime] = useState<number | null>(null);
+
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
+
+  const formatDateTime = (timestamp?: number) => {
+    if (!timestamp) return '—';
+    return new Date(timestamp).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   useEffect(() => {
     if (snaps.length > 0) {
       const lastSnapUri = snaps[snaps.length - 1]?.sectionUri;
@@ -136,6 +169,10 @@ export function CoverageUpdater({
   useEffect(() => {
     setNotCoveredSections(initialNotCoveredSections);
   }, [initialNotCoveredSections]);
+
+  useEffect(() => {
+    setOutOfOrderSections(initialOutOfOrderSections ?? {});
+  }, [initialOutOfOrderSections]);
 
   const handleDeleteItem = (index: number) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
@@ -228,6 +265,24 @@ export function CoverageUpdater({
       return entry;
     });
 
+  const allLectureOptions = snaps
+    .slice()
+    .sort((a, b) => a.timestamp_ms - b.timestamp_ms)
+    .map((snap) => ({
+      startLabel: new Date(snap.timestamp_ms).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+      }),
+      endLabel: snap.lectureEndTimestamp_ms
+        ? new Date(snap.lectureEndTimestamp_ms).toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+          })
+        : '—',
+      start: snap.timestamp_ms,
+      end: snap.lectureEndTimestamp_ms,
+    }));
+
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ mb: 3 }}>
@@ -275,6 +330,55 @@ export function CoverageUpdater({
           )}
         />
       </Box>
+
+      <Typography variant="h6" fontWeight="bold" gutterBottom>
+        Out of Order Sections
+      </Typography>
+
+      {Object.keys(outOfOrderSections).length > 0 && (
+        <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {Object.entries(outOfOrderSections).map(([uri, value]) => (
+            <Tooltip
+              key={uri}
+              arrow
+              title={
+                <Box>
+                  <Typography variant="body2">
+                    <strong>Start:</strong> {formatDateTime(value.startTimestamp_ms)}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>End:</strong> {formatDateTime(value.endTimestamp_ms)}
+                  </Typography>
+                </Box>
+              }
+            >
+              <Chip
+                key={uri}
+                label={secInfo[uri]?.title}
+                color="error"
+                onDelete={() => setSectionToDelete(uri)}
+              />
+            </Tooltip>
+          ))}
+        </Box>
+      )}
+
+      <Autocomplete
+        value={selectedOutOfOrderOption}
+        options={Object.entries(secInfo).map(([uri, sec]) => ({
+          uri,
+          label: sec.title,
+        }))}
+        getOptionLabel={(o) => o.label}
+        onChange={(_, value) => {
+          if (!value) return;
+
+          setSelectedOutOfOrderOption(null);
+          setSelectedSectionForTiming(value.uri);
+          setIsTimingDialogOpen(true);
+        }}
+        renderInput={(params) => <TextField {...params} label="Add out of order section" />}
+      />
 
       {snaps.length > 0 ? (
         <>
@@ -403,6 +507,139 @@ export function CoverageUpdater({
           />
         )}
       </Paper>
+
+      <Dialog
+        open={isTimingDialogOpen}
+        onClose={() => setIsTimingDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Teaching Duration</DialogTitle>
+
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Section:{' '}
+            <strong>
+              {selectedSectionForTiming ? secInfo[selectedSectionForTiming]?.title : ''}
+            </strong>
+          </Typography>
+
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+            Start Date
+          </Typography>
+
+          <Autocomplete
+            disableClearable
+            options={allLectureOptions}
+            value={allLectureOptions.find((o) => o.start === manualStartTime) || null}
+            isOptionEqualToValue={(option, value) => option.start === value.start}
+            getOptionLabel={(o) => o.startLabel}
+            sx={{ mb: 2 }}
+            onChange={(_, value) => {
+              if (!value) return;
+
+              setManualStartTime(value.start);
+
+              setManualEndTime(value.end ?? null);
+            }}
+            renderInput={(params) => <TextField {...params} label="Select Start Date" />}
+          />
+
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+            End Date
+          </Typography>
+
+          <Autocomplete
+            disableClearable
+            options={allLectureOptions.filter((o) => o.end)}
+            value={
+              allLectureOptions.filter((o) => o.end).find((o) => o.end === manualEndTime) || null
+            }
+            isOptionEqualToValue={(option, value) => option.end === value.end}
+            getOptionLabel={(o) => o.endLabel}
+            onChange={(_, value) => {
+              if (!value || !value.end) return;
+
+              setManualEndTime(value.end);
+            }}
+            renderInput={(params) => <TextField {...params} label="Select End Date" />}
+          />
+        </DialogContent>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, p: 2 }}>
+          <Chip
+            label="Cancel"
+            onClick={() => {
+              setIsTimingDialogOpen(false);
+              setSelectedSectionForTiming(null);
+              setManualStartTime(null);
+              setManualEndTime(null);
+            }}
+          />
+
+          <Chip
+            color="primary"
+            label="Save"
+            onClick={() => {
+              if (!selectedSectionForTiming || !manualStartTime || !manualEndTime) return;
+
+              const start = manualStartTime;
+              const end = manualEndTime;
+
+              if (!start || !end) return;
+
+              if (end <= start) return;
+
+              const updated = {
+                ...outOfOrderSections,
+                [selectedSectionForTiming]: {
+                  startTimestamp_ms: start,
+                  endTimestamp_ms: end,
+                },
+              };
+
+              setOutOfOrderSections(updated);
+              handleSaveOutOfOrderSections(updated);
+
+              setIsTimingDialogOpen(false);
+              setSelectedSectionForTiming(null);
+              setManualStartTime(null);
+              setManualEndTime(null);
+            }}
+          />
+        </Box>
+      </Dialog>
+
+      <Dialog open={sectionToDelete !== null} onClose={() => setSectionToDelete(null)}>
+        <DialogTitle>Remove Out of Order Section?</DialogTitle>
+
+        <DialogContent>
+          <Typography>
+            Are you sure you want to remove{' '}
+            <strong>{sectionToDelete ? secInfo[sectionToDelete]?.title : ''}</strong>?
+          </Typography>
+        </DialogContent>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, p: 2 }}>
+          <Chip label="Cancel" onClick={() => setSectionToDelete(null)} />
+
+          <Chip
+            color="error"
+            label="Remove"
+            onClick={() => {
+              if (!sectionToDelete) return;
+
+              const updated = { ...outOfOrderSections };
+              delete updated[sectionToDelete];
+
+              setOutOfOrderSections(updated);
+              handleSaveOutOfOrderSections(updated);
+
+              setSectionToDelete(null);
+            }}
+          />
+        </Box>
+      </Dialog>
     </Box>
   );
 }

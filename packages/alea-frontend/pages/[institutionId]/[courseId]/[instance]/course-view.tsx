@@ -208,14 +208,8 @@ function resolveSlideFromFragment(
 
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('course-view');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('course-view');
 
   const instanceId = resolvedInstanceId;
   const sectionId = router.query.sectionId as string;
@@ -264,6 +258,7 @@ const CourseViewPage: NextPage = () => {
     return null;
   });
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
+
   const [showPresentationVideo, setShowPresentationVideo] = useState(false);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(true);
   const { tocElem: selectedSectionTOC, isNotCovered: sectionIsNotCovered } = useMemo(() => {
@@ -453,10 +448,18 @@ const CourseViewPage: NextPage = () => {
       });
   }, [courseId, currentClipId, router.isReady]);
 
+  const [outOfOrderSections, setOutOfOrderSections] = useState<
+    Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>
+  >({});
+
   useEffect(() => {
     if (!courseId) return;
+
     getCoverageTimeline().then((timeline) => {
-      setNotCoveredSections(timeline?.[courseId]?.notCoveredSections ?? []);
+      const courseData = timeline?.[courseId];
+
+      setNotCoveredSections(courseData?.notCoveredSections ?? []);
+      setOutOfOrderSections(courseData?.outOfOrderSections ?? {});
     });
   }, [courseId]);
 
@@ -588,7 +591,12 @@ const CourseViewPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-      <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth={hasResults ? 'lg' : 'md'}
+      >
         <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
           {courseId.toUpperCase()}
         </DialogTitle>
@@ -650,6 +658,7 @@ const CourseViewPage: NextPage = () => {
 
                 setSlideNumAndSectionId(router, 1, sectionId);
               }}
+              outOfOrderSections={outOfOrderSections}
             />
           )
         }
