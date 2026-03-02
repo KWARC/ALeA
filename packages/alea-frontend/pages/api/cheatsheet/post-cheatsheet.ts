@@ -88,12 +88,37 @@ async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
 }
 
 async function extractFields(
-  buffer: Buffer
+  buffer: Buffer,
+  fileType: 'pdf' | 'image'
 ): Promise<{ fields: ExtractedFields; diagnostics: string }> {
+  if (fileType === 'image') {
+    // Images only have a QR code — no text watermark to parse
+    const qr = await extractQRFromImage(buffer);
+    const fields: ExtractedFields = {
+      courseId: qr.courseId,
+      instanceId: qr.instanceId,
+      universityId: qr.universityId,
+      studentName: qr.studentName,
+      studentId: qr.studentId,
+      weekId: qr.weekId,
+      dateOfDownload: qr.dateOfDownload,
+    };
+    return { fields, diagnostics: 'QR: ok | Watermark: skipped (image upload)' };
+  }
+
+  // PDF: try both QR and watermark text, merge results
   const [qrResult, wmResult] = await Promise.allSettled([
     extractQRFromPDF(buffer),
     extractPDFText(buffer).then(parseWatermark),
   ]);
+
+  // Rethrow signature errors immediately — do not silently fall back
+  if (
+    qrResult.status === 'rejected' &&
+    (qrResult.reason as Error)?.message?.includes('signature')
+  ) {
+    throw qrResult.reason;
+  }
 
   const qr = qrResult.status === 'fulfilled' ? qrResult.value : ({} as QRData);
   const wm: WatermarkFields = wmResult.status === 'fulfilled' ? wmResult.value : {};
@@ -116,6 +141,129 @@ async function extractFields(
   ].join(' | ');
 
   return { fields, diagnostics };
+}
+
+const IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/tiff',
+  'image/heic',
+  'image/heif',
+]);
+const IMAGE_MAGIC: { bytes: number[]; mime: string }[] = [
+  { bytes: [0xff, 0xd8, 0xff], mime: 'image/jpeg' },
+  { bytes: [0x89, 0x50, 0x4e, 0x47], mime: 'image/png' },
+  { bytes: [0x52, 0x49, 0x46, 0x46], mime: 'image/webp' }, // RIFF....WEBP
+];
+
+function detectFileType(buffer: Buffer, mimeType?: string): 'pdf' | 'image' | 'unknown' {
+  if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46)
+    return 'pdf'; 
+  for (const sig of IMAGE_MAGIC) {
+    if (sig.bytes.every((b, i) => buffer[i] === b)) return 'image';
+  }
+  if (mimeType) {
+    if (mimeType === 'application/pdf') return 'pdf';
+    if (IMAGE_MIME_TYPES.has(mimeType)) return 'image';
+  }
+  return 'unknown';
+}
+
+async function extractQRFromImage(buffer: Buffer): Promise<QRData> {
+  for (const scale of [1, 2, 4]) {
+    let imgBuffer: Buffer;
+    let metadata: { width: number; height: number };
+
+    if (scale === 1) {
+      const img = sharp(buffer).toColorspace('srgb').ensureAlpha();
+      const meta = await img.metadata();
+      imgBuffer = await img.raw().toBuffer();
+      metadata = { width: meta.width!, height: meta.height! };
+    } else {
+      const baseMeta = await sharp(buffer).metadata();
+      const w = baseMeta.width! * scale;
+      const h = baseMeta.height! * scale;
+      imgBuffer = await sharp(buffer)
+        .resize(w, h, { kernel: 'nearest' })
+        .toColorspace('srgb')
+        .ensureAlpha()
+        .raw()
+        .toBuffer();
+      metadata = { width: w, height: h };
+    }
+
+    const result = jsQR(
+      new Uint8ClampedArray(imgBuffer.buffer, imgBuffer.byteOffset, imgBuffer.byteLength),
+      metadata.width,
+      metadata.height
+    );
+
+    if (result) {
+      console.log(`QR found in image at scale ${scale}`);
+      const outer = JSON.parse(result.data) as { payload: string; signature: string };
+      if (!verifyQRSignature(outer.payload, outer.signature)) {
+        throw new Error('QR signature verification failed — file may be tampered.');
+      }
+      const json = JSON.parse(outer.payload) as Record<string, string>;
+      return {
+        courseId: json['courseId'] ?? undefined,
+        dateOfDownload: json['dateOfDownload'] ?? json['downloadDate'] ?? undefined,
+        instanceId: json['instanceId'] ?? undefined,
+        universityId: json['universityId'] ?? undefined,
+        studentId: json['studentId'] ?? undefined,
+        studentName: json['studentName'] ?? undefined,
+        weekId: json['weekId'] ?? json['quizId'] ?? undefined,
+      };
+    }
+  }
+  throw new Error('No QR code found in image.');
+}
+
+async function convertImageToPDF(imageBuffer: Buffer): Promise<Buffer> {
+  const { width, height } = await sharp(imageBuffer).metadata();
+  const jpegBuffer = await sharp(imageBuffer).jpeg({ quality: 92 }).toBuffer();
+
+  const w = width!;
+  const h = height!;
+  const imgLen = jpegBuffer.length;
+  const xobj = Buffer.from(
+    `1 0 obj\n<</Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgLen}>>\nstream\n`
+  );
+  const xobjEnd = Buffer.from('\nendstream\nendobj\n');
+
+  const page = `2 0 obj\n<</Type /Page /Parent 3 0 R /MediaBox [0 0 ${w} ${h}] /Contents 4 0 R /Resources <</XObject <</Im1 1 0 R>>>>>>\nendobj\n`;
+  const pages = `3 0 obj\n<</Type /Pages /Kids [2 0 R] /Count 1>>\nendobj\n`;
+  const content = `q ${w} 0 0 ${h} 0 0 cm /Im1 Do Q`;
+  const contentStream = `4 0 obj\n<</Length ${content.length}>>\nstream\n${content}\nendstream\nendobj\n`;
+  const catalog = `5 0 obj\n<</Type /Catalog /Pages 3 0 R>>\nendobj\n`;
+
+  const header = Buffer.from('%PDF-1.4\n');
+  const obj1Start = header.length;
+  const obj1 = Buffer.concat([xobj, jpegBuffer, xobjEnd]);
+  const obj2Start = obj1Start + obj1.length;
+  const obj2 = Buffer.from(page);
+  const obj3Start = obj2Start + obj2.length;
+  const obj3 = Buffer.from(pages);
+  const obj4Start = obj3Start + obj3.length;
+  const obj4 = Buffer.from(contentStream);
+  const obj5Start = obj4Start + obj4.length;
+  const obj5 = Buffer.from(catalog);
+  const xrefStart = obj5Start + obj5.length;
+
+  const xref = Buffer.from(
+    `xref\n0 6\n0000000000 65535 f \n${String(obj1Start).padStart(10, '0')} 00000 n \n${String(
+      obj2Start
+    ).padStart(10, '0')} 00000 n \n${String(obj3Start).padStart(10, '0')} 00000 n \n${String(
+      obj4Start
+    ).padStart(10, '0')} 00000 n \n${String(obj5Start).padStart(
+      10,
+      '0'
+    )} 00000 n \ntrailer\n<</Size 6 /Root 5 0 R>>\nstartxref\n${xrefStart}\n%%EOF\n`
+  );
+
+  return Buffer.concat([header, obj1, obj2, obj3, obj4, obj5, xref]);
 }
 
 function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boolean {
@@ -428,9 +576,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
   const buffer = fs.readFileSync(file.filepath);
+
+  const fileType = detectFileType(buffer, file.mimetype ?? undefined);
+  if (fileType === 'unknown') {
+    return res
+      .status(400)
+      .send('Unsupported file type. Only PDF and image files (JPEG, PNG, WebP) are accepted.');
+  }
+  console.log({ fileType });
+
   let fields: ExtractedFields, diagnostics: string;
   try {
-    ({ fields, diagnostics } = await extractFields(buffer));
+    ({ fields, diagnostics } = await extractFields(buffer, fileType));
   } catch (err) {
     console.error('Error extracting fields:', err);
     return res.status(500).send('Failed to extract fields.');
@@ -450,6 +607,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log({ checksum });
   const fileName = buildFileName(fields, userId, checksum);
   console.log({ fileName });
+
+  // For image uploads: convert to PDF and write the converted PDF to the temp filepath
+  // so savePDF can rename it into place as a .pdf file
+  if (fileType === 'image') {
+    const pdfBuffer = await convertImageToPDF(buffer);
+    fs.writeFileSync(file.filepath, pdfBuffer);
+  }
 
   let isReplacement: boolean;
   try {

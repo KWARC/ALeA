@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DescriptionIcon from '@mui/icons-material/Description';
+import ImageIcon from '@mui/icons-material/Image';
 import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
@@ -204,7 +205,7 @@ function CheatSheetsContent({
         </Box>
       )}
 
-      <PdfPreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
+      <FilePreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
 
       <UploadCheatSheet
         open={uploadOpen}
@@ -229,13 +230,13 @@ async function fetchCheatsheets(
   if (userId) params.set('userId', userId);
   const data = await getCheatSheets(courseId, instanceId, userId);
   return data;
-  // // const res = await fetch(`/api/get-cheatsheets?${params.toString()}`);
-  // if (!res.ok) throw new Error('Failed to fetch cheatsheets');
-  // const data = await res.json();
-  // return data.files as any[];
 }
 
-function PdfPreviewDialog({
+function isImageMime(mime?: string) {
+  return typeof mime === 'string' && mime.startsWith('image/');
+}
+
+function FilePreviewDialog({
   file,
   open,
   onClose,
@@ -245,11 +246,12 @@ function PdfPreviewDialog({
   onClose: () => void;
 }) {
   if (!file) return null;
+  const isImage = isImageMime(file.mimeType);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={previewDialogStyles.title}>
         <Box sx={previewDialogStyles.titleInner}>
-          <DescriptionIcon fontSize="small" />
+          {isImage ? <ImageIcon fontSize="small" /> : <DescriptionIcon fontSize="small" />}
           <Typography variant="subtitle1" sx={previewDialogStyles.titleText}>
             {file.filename}
           </Typography>
@@ -259,13 +261,22 @@ function PdfPreviewDialog({
         </IconButton>
       </DialogTitle>
       <DialogContent sx={previewDialogStyles.content}>
-        <iframe
-          src={file.url}
-          title={file.filename}
-          width="100%"
-          height="100%"
-          style={{ border: 'none' }}
-        />
+        {isImage ? (
+          <Box
+            component="img"
+            src={file.url}
+            alt={file.filename}
+            sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+          />
+        ) : (
+          <iframe
+            src={file.url}
+            title={file.filename}
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -287,8 +298,9 @@ function CheatSheetRow({
     setLoadingPreview(true);
     try {
       const { blob, filename } = await getCheatSheetFile(file.checksum);
+      const mimeType = blob.type || 'application/pdf';
       const url = window.URL.createObjectURL(blob);
-      onPreview({ ...file, url, filename: filename ?? file.checksum });
+      onPreview({ ...file, url, mimeType, filename: filename ?? file.weekId });
     } finally {
       setLoadingPreview(false);
     }
@@ -298,11 +310,12 @@ function CheatSheetRow({
     setLoadingDownload(true);
     try {
       const { blob, filename } = await getCheatSheetFile(file.checksum);
-      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' });
+      const mimeType = blob.type || 'application/pdf';
+      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: mimeType });
       const url = window.URL.createObjectURL(safeBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename ?? `${file.checksum}.pdf`;
+      a.download = filename ?? `${file.weekId}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -311,13 +324,14 @@ function CheatSheetRow({
       setLoadingDownload(false);
     }
   };
+  const isImage = isImageMime(file.mimeType);
 
   return (
     <Box sx={rowStyles.root}>
-      <DescriptionIcon sx={rowStyles.icon} />
+      {isImage ? <ImageIcon sx={rowStyles.icon} /> : <DescriptionIcon sx={rowStyles.icon} />}
       <Box sx={rowStyles.meta}>
         <Typography variant="body2" sx={rowStyles.filename} noWrap>
-          {file.checksum}
+          {file.weekId}
         </Typography>
         {showUserId && (
           <Typography variant="caption" sx={rowStyles.userId}>
@@ -327,12 +341,22 @@ function CheatSheetRow({
       </Box>
       <Box sx={rowStyles.actions}>
         <Tooltip title="Preview">
-          <IconButton size="small" onClick={handlePreview} sx={rowStyles.iconBtn} disabled={loadingPreview}>
+          <IconButton
+            size="small"
+            onClick={handlePreview}
+            sx={rowStyles.iconBtn}
+            disabled={loadingPreview}
+          >
             {loadingPreview ? <CircularProgress size={14} /> : <OpenInNewIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Download">
-          <IconButton size="small" onClick={handleDownload} sx={rowStyles.iconBtn} disabled={loadingDownload}>
+          <IconButton
+            size="small"
+            onClick={handleDownload}
+            sx={rowStyles.iconBtn}
+            disabled={loadingDownload}
+          >
             {loadingDownload ? <CircularProgress size={14} /> : <DownloadIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
@@ -394,14 +418,14 @@ function UserFilterBar({
   );
 }
 
-const CheatsheetsPage= ({
+const CheatsheetsPage = ({
   courseId: propCourseId,
   instanceId: propInstanceId,
   courseName: propCourseName,
-}:{
-  courseId:string,
-  instanceId:string,
-  courseName?: string,
+}: {
+  courseId: string;
+  instanceId: string;
+  courseName?: string;
 }) => {
   const router = useRouter();
   const isEmbedded = Boolean(propCourseId && propInstanceId);
