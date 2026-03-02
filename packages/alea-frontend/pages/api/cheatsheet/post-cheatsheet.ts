@@ -19,7 +19,7 @@ export const config = { api: { bodyParser: false } };
 
 interface QRData {
   courseId: string;
-  downloadDate: string;
+  dateOfDownload: string;
   instanceId: string;
   universityId: string;
   studentId: string;
@@ -38,6 +38,7 @@ interface WatermarkFields {
 
 interface ExtractedFields {
   studentName?: string;
+  studentId?: string;
   weekId?: string;
   instanceId?: string;
   courseId?: string;
@@ -47,6 +48,13 @@ interface ExtractedFields {
 
 function generateChecksum(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 8);
+}
+
+function verifyQRSignature(payload: string, signature: string): boolean {
+  const SECRET_KEY = process.env.CHEATSHEET_QR_SECRET;
+  if (!SECRET_KEY) throw new Error('CHEATSHEET_QR_SECRET is not configured.');
+  const expected = crypto.createHmac('sha256', SECRET_KEY).update(payload).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
 }
 
 function sanitize(value: string): string {
@@ -91,12 +99,13 @@ async function extractFields(
   const wm: WatermarkFields = wmResult.status === 'fulfilled' ? wmResult.value : {};
 
   const fields: ExtractedFields = {
-    courseId: qr.courseId ?? wm.courseId,
-    instanceId: qr.instanceId ?? wm.instanceId,
-    universityId: qr.universityId ?? wm.universityId,
-    studentName: qr.studentName ?? wm.studentName,
-    weekId: qr.weekId ?? wm.weekId,
-    dateOfDownload: qr.downloadDate ?? wm.dateOfDownload,
+    courseId: qr.courseId,
+    instanceId: qr.instanceId,
+    universityId: qr.universityId,
+    studentName: qr.studentName,
+    studentId: qr.studentId,
+    weekId: qr.weekId,
+    dateOfDownload: qr.dateOfDownload,
   };
 
   const diagnostics = [
@@ -118,97 +127,230 @@ function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boo
   return !!existing;
 }
 
+// async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
+//   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
+//   const page = await pdf.getPage(1);
+//   const opList = await page.getOperatorList();
+//   const objs: any = (page as any).objs;
+//   const imgNames: string[] = [];
+//   for (let i = 0; i < opList.fnArray.length; i++) {
+//     if (opList.fnArray[i] === 85 || opList.fnArray[i] === 86) {
+//       const name = opList.argsArray[i]?.[0];
+//       if (name && !imgNames.includes(name)) imgNames.push(name);
+//     }
+//   }
+
+//   for (const name of imgNames) {
+//     const img: any = await new Promise((resolve) => objs.get(name, resolve));
+//     if (!img?.width || !img?.height || !img?.data) continue;
+
+//     try {
+//       const { width, height, data } = img;
+//       const pixelCount = width * height;
+//       const naiveCh = data.length / pixelCount;
+
+//       let ch = 0,
+//         hasPad = false;
+//       if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
+//         ch = naiveCh;
+//       } else {
+//         for (const c of [1, 3, 4]) {
+//           if (data.length === height * (width * c + 1)) {
+//             ch = c;
+//             hasPad = true;
+//             break;
+//           }
+//         }
+//         if (!ch) ch = Math.max(1, Math.round(naiveCh));
+//       }
+
+//       let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
+//       if (hasPad) {
+//         const stride = width * ch + 1;
+//         const stripped = Buffer.alloc(pixelCount * ch);
+//         for (let row = 0; row < height; row++) {
+//           raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+//         }
+//         raw = stripped;
+//       }
+
+//       const rgba =
+//         ch === 4
+//           ? raw
+//           : await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 } })
+//               .ensureAlpha()
+//               .raw()
+//               .toBuffer();
+
+//       for (const scale of [1, 2, 4]) {
+//         let buf = rgba,
+//           w = width,
+//           h = height;
+//         if (scale > 1) {
+//           buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
+//             .resize(width * scale, height * scale, { kernel: 'nearest' })
+//             .raw()
+//             .toBuffer();
+//           w = width * scale;
+//           h = height * scale;
+//         }
+//         const result = jsQR(
+//           new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
+//           w,
+//           h
+//         );
+//         if (result) {
+//           const json = JSON.parse(result.data) as Record<string, string>;
+//           return {
+//             courseId: json['courseId'] ?? undefined,
+//             dateOfDownload: json['dateOfDownload'] ?? json['downloadedAt'] ?? undefined,
+//             instanceId: json['instanceId'] ?? undefined,
+//             universityId: json['universityId'] ?? undefined,
+//             studentId: json['studentId'] ?? undefined,
+//             studentName: json['studentName'] ?? undefined,
+//             weekId: json['weekId'] ?? json['quizId'] ?? undefined,
+//           };
+//         }
+//       }
+//     } catch (err) {
+//       console.warn(`Failed to decode QR code from image ${name}, trying next if available.`, err);
+//     }
+//   }
+
+//   throw new Error(`No QR code found among ${imgNames.length} image(s) on page 1.`);
+// }
+
 async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
-  const page = await pdf.getPage(1);
-  const opList = await page.getOperatorList();
-  const objs: any = (page as any).objs;
-  const imgNames: string[] = [];
-  for (let i = 0; i < opList.fnArray.length; i++) {
-    if (opList.fnArray[i] === 85 || opList.fnArray[i] === 86) {
-      const name = opList.argsArray[i]?.[0];
-      if (name && !imgNames.includes(name)) imgNames.push(name);
+
+  for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 3); pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const opList = await page.getOperatorList();
+    const objs: any = (page as any).objs;
+    const imgNames: string[] = [];
+
+    for (let i = 0; i < opList.fnArray.length; i++) {
+      const op = opList.fnArray[i];
+      if (
+        op === pdfjsLib.OPS.paintImageXObject ||
+        op === pdfjsLib.OPS.paintImageXObjectRepeat ||
+        op === pdfjsLib.OPS.paintInlineImageXObject
+      ) {
+        const name = opList.argsArray[i]?.[0];
+        if (name && !imgNames.includes(name)) imgNames.push(name);
+      }
     }
-  }
 
-  for (const name of imgNames) {
-    const img: any = await new Promise((resolve) => objs.get(name, resolve));
-    if (!img?.width || !img?.height || !img?.data) continue;
+    console.log(`Page ${pageNum}: found ${imgNames.length} image(s):`, imgNames);
 
-    try {
-      const { width, height, data } = img;
-      const pixelCount = width * height;
-      const naiveCh = data.length / pixelCount;
+    for (const name of imgNames) {
+      const img: any = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error(`Timeout waiting for image obj: ${name}`)),
+          5000
+        );
+        try {
+          objs.get(name, (obj: any) => {
+            clearTimeout(timeout);
+            resolve(obj);
+          });
+        } catch (e) {
+          clearTimeout(timeout);
+          reject(e);
+        }
+      }).catch((err) => {
+        console.warn(`Could not get image obj "${name}":`, err);
+        return null;
+      });
 
-      let ch = 0,
-        hasPad = false;
-      if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
-        ch = naiveCh;
-      } else {
-        for (const c of [1, 3, 4]) {
-          if (data.length === height * (width * c + 1)) {
-            ch = c;
-            hasPad = true;
-            break;
+      if (!img?.width || !img?.height || !img?.data) {
+        console.warn(`Skipping image "${name}": missing width/height/data`);
+        continue;
+      }
+
+      try {
+        const { width, height, data } = img;
+        const pixelCount = width * height;
+        const naiveCh = data.length / pixelCount;
+
+        let ch = 0,
+          hasPad = false;
+        if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
+          ch = naiveCh;
+        } else {
+          for (const c of [1, 3, 4]) {
+            if (data.length === height * (width * c + 1)) {
+              ch = c;
+              hasPad = true;
+              break;
+            }
           }
+          if (!ch) ch = Math.max(1, Math.round(naiveCh));
         }
-        if (!ch) ch = Math.max(1, Math.round(naiveCh));
-      }
 
-      let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
-      if (hasPad) {
-        const stride = width * ch + 1;
-        const stripped = Buffer.alloc(pixelCount * ch);
-        for (let row = 0; row < height; row++) {
-          raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+        let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
+
+        if (hasPad) {
+          const stride = width * ch + 1;
+          const stripped = Buffer.alloc(pixelCount * ch);
+          for (let row = 0; row < height; row++) {
+            raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+          }
+          raw = stripped;
         }
-        raw = stripped;
-      }
 
-      const rgba =
-        ch === 4
-          ? raw
-          : await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 } })
-              .ensureAlpha()
+        const rgba = await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 | 4 } })
+          .toColorspace('srgb')
+          .ensureAlpha()
+          .raw()
+          .toBuffer();
+
+        for (const scale of [1, 2, 4]) {
+          let buf = rgba,
+            w = width,
+            h = height;
+          if (scale > 1) {
+            buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
+              .resize(width * scale, height * scale, { kernel: 'nearest' })
               .raw()
               .toBuffer();
+            w = width * scale;
+            h = height * scale;
+          }
 
-      for (const scale of [1, 2, 4]) {
-        let buf = rgba,
-          w = width,
-          h = height;
-        if (scale > 1) {
-          buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
-            .resize(width * scale, height * scale, { kernel: 'nearest' })
-            .raw()
-            .toBuffer();
-          w = width * scale;
-          h = height * scale;
+          const result = jsQR(
+            new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
+            w,
+            h
+          );
+
+          if (result) {
+            console.log(`QR found on page ${pageNum}, image "${name}", scale ${scale}`);
+            const outer = JSON.parse(result.data) as { payload: string; signature: string };
+            if (!verifyQRSignature(outer.payload, outer.signature)) {
+              throw new Error('QR signature verification failed — file may be tampered.');
+            }
+            const json = JSON.parse(outer.payload) as Record<string, string>;
+            return {
+              courseId: json['courseId'] ?? undefined,
+              dateOfDownload: json['dateOfDownload'] ?? json['downloadDate'] ?? undefined,
+              instanceId: json['instanceId'] ?? undefined,
+              universityId: json['universityId'] ?? undefined,
+              studentId: json['studentId'] ?? undefined,
+              studentName: json['studentName'] ?? undefined,
+              weekId: json['weekId'] ?? json['quizId'] ?? undefined,
+            };
+          }
         }
-        const result = jsQR(
-          new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
-          w,
-          h
-        );
-        if (result) {
-          const json = JSON.parse(result.data) as Record<string, string>;
-          return {
-            courseId: json['courseId'] ?? undefined,
-            downloadDate: json['downloadDate'] ?? json['downloadedAt'] ?? undefined,
-            instanceId: json['instanceId'] ?? undefined,
-            universityId: json['universityId'] ?? undefined,
-            studentId: json['studentId'] ?? undefined,
-            studentName: json['studentName'] ?? undefined,
-            weekId: json['weekId'] ?? json['quizId'] ?? undefined,
-          };
-        }
+
+        console.warn(`No QR detected in image "${name}" on page ${pageNum} at any scale.`);
+      } catch (err) {
+        console.warn(`Failed to decode QR from image "${name}" on page ${pageNum}:`, err);
       }
-    } catch (err) {
-      console.warn(`Failed to decode QR code from image ${name}, trying next if available.`, err);
     }
   }
 
-  throw new Error(`No QR code found among ${imgNames.length} image(s) on page 1.`);
+  throw new Error(`No QR code found across first ${Math.min(pdf.numPages, 3)} page(s).`);
 }
 
 interface PDFTextItem {
@@ -265,7 +407,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  console.log({userId})
+  console.log({ userId });
   const isInstructor = req.headers['x-is-instructor'] === 'true';
   if (!isInstructor && !isWithinUploadWindow()) {
     return res
@@ -277,19 +419,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
-console.log("he")
+  console.log('he');
   let file: formidable.File;
   try {
     file = await parseUpload(req);
-    console.log({file})
+    console.log({ file });
   } catch (err: unknown) {
     return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
   const buffer = fs.readFileSync(file.filepath);
-  const { fields, diagnostics } = await extractFields(buffer);
+  let fields: ExtractedFields, diagnostics: string;
+  try {
+    ({ fields, diagnostics } = await extractFields(buffer));
+  } catch (err) {
+    console.error('Error extracting fields:', err);
+    return res.status(500).send('Failed to extract fields.');
+  }
   console.log({ fields, diagnostics });
   const missing = (
-    ['courseId', 'instanceId', 'universityId', 'weekId', 'studentId', 'downloadDate'] as const
+    ['courseId', 'instanceId', 'universityId', 'weekId', 'studentId', 'dateOfDownload'] as const
   ).filter((k) => !fields[k]);
 
   if (missing.length > 0) {
@@ -299,9 +447,9 @@ console.log("he")
   }
 
   const checksum = generateChecksum(buffer);
-  console.log({checksum})
+  console.log({ checksum });
   const fileName = buildFileName(fields, userId, checksum);
-  console.log({fileName})
+  console.log({ fileName });
 
   let isReplacement: boolean;
   try {
@@ -317,7 +465,7 @@ console.log("he")
     [userId, fields.instanceId, fields.courseId, fields.universityId, fields.weekId],
     res
   );
-  console.log({existing});
+  console.log({ existing });
   if (!existing) return;
   const rows = existing as { id: number; checksum: string; fileName: string }[];
   const existingRow = rows[0];
@@ -349,7 +497,7 @@ console.log("he")
     }
     return res.status(200).end();
   }
-console.log("hey")
+  console.log('hey');
   const inserted = await executeAndEndSet500OnError(
     `INSERT INTO CheatSheet
        (userId, studentName, weekId, instanceId, courseId, universityId, checksum, fileName, dateOfDownload)

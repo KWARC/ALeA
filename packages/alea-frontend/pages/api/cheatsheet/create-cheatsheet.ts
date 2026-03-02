@@ -20,7 +20,7 @@ interface CheatsheetFields {
   studentName: string;
   studentId: string;
   weekId: string;
-  downloadDate: string;
+  dateOfDownload: string;
 }
 
 function validateBody(body: Partial<CheatsheetFields>) {
@@ -54,7 +54,7 @@ async function buildQrCodeSecure(
     studentId: fields.studentId,
     studentName: fields.studentName,
     weekId: fields.weekId,
-    downloadDate: fields.downloadDate,
+    dateOfDownload: fields.dateOfDownload,
   });
 
   const signature = signPayload(payload, QR_SECRET);
@@ -117,7 +117,7 @@ function drawHeader(
     ['Student Name', fields.studentName],
     ['Student Id', fields.studentId],
     ['Week Id', fields.weekId],
-    ['Downloaded At', new Date(fields.downloadDate).toLocaleString()],
+    ['Downloaded At', new Date(fields.dateOfDownload).toLocaleString()],
   ];
   doc.fontSize(12);
   rows.forEach(([label, value], i) => {
@@ -195,7 +195,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fields = req.body as CheatsheetFields;
     fields.studentName = studentName;
     fields.studentId = userId;
-    fields.downloadDate = new Date().toISOString();
+    fields.dateOfDownload = new Date().toISOString();
 
     const semesterInfo = { semesterStart: '2025-10-01' };
     // const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
