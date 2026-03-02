@@ -19,6 +19,7 @@ import { getExamsForCourse } from '@alea/spec';
 import { ExamSelect } from '@alea/stex-react-renderer';
 import { useCourseProblemCounts } from '../hooks/useCourseProblemCount';
 import shadows from '../theme/shadows';
+import { getQuizzesForCourse } from '@alea/spec';
 
 interface TitleMetadata {
   uri?: string;
@@ -72,6 +73,9 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
+
+  const [quizzes, setQuizzes] = useState<ExamInfo[]>([]);
+  const [selectedQuiz, setSelectedQuiz] = useState('');
   const router = useRouter();
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
   const theme = useTheme();
@@ -83,6 +87,18 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       .then((data) => {
         const sorted = sortExamsByDateDesc(data);
         setExams(sorted);
+      })
+      .catch(console.error);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    getQuizzesForCourse(courseId)
+      .then((data) => {
+        console.log("QUIZ DATA:", data);
+        const sorted = sortExamsByDateDesc(data);
+        setQuizzes(sorted);
       })
       .catch(console.error);
   }, [courseId]);
@@ -166,7 +182,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
           bgcolor: 'bacground.paper',
           borderRadius: '12px',
           border: '1px solid ',
-          borderColor:'divider',
+          borderColor: 'divider',
           boxShadow: shadows[2],
         }}
       >
@@ -199,6 +215,21 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
               });
             }}
             label="Select Exam"
+          />
+
+          <ExamSelect
+            exams={quizzes}
+            courseId={courseId}
+            value={selectedQuiz}
+            onChange={(quizUri) => {
+              setSelectedQuiz(quizUri);
+
+              router.push({
+                pathname: '/quiz-problems',
+                query: { quizUri, courseId },
+              });
+            }}
+            label="Select Quiz"
           />
         </Box>
       </Box>

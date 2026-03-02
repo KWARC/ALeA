@@ -69,3 +69,44 @@ export function formatExamLabelFull(examUri?: string, exam?: any, courseId?: str
     .filter(Boolean)
     .join(' ');
 }
+
+export function getQuizMeta(
+  quizUri?: string,
+  quiz?: { term?: string; number?: string; date?: string },
+  courseId?: string
+) {
+  if (!quizUri) return null;
+
+  const decodedUri = decodeURIComponent(quizUri);
+
+  let courseAcronym = '';
+  if (courseId) {
+    const normalized = courseId.toLowerCase();
+    courseAcronym = normalized === 'ai' ? 'AI-1' : normalized.toUpperCase();
+  }
+
+  const rawTerm = quiz?.term || '';
+  const formattedTerm = rawTerm?.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
+
+  const quizNumber = quiz?.number ? `Quiz ${quiz.number}` : 'Quiz';
+
+  return {
+    courseAcronym,
+    quizNumber,
+    formattedTerm,
+  };
+}
+
+export function formatQuizLabelDropdown(quizUri?: string, quiz?: any, courseId?: string) {
+  const meta = getQuizMeta(quizUri, quiz, courseId);
+  if (!meta) return '';
+
+  return [meta.quizNumber, meta.formattedTerm].filter(Boolean).join(' ');
+}
+
+export function formatQuizLabelFull(quizUri?: string, quiz?: any, courseId?: string) {
+  const meta = getQuizMeta(quizUri, quiz, courseId);
+  if (!meta) return '';
+
+  return [meta.courseAcronym, meta.quizNumber, meta.formattedTerm].filter(Boolean).join(' ');
+}

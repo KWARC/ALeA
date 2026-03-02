@@ -19,6 +19,7 @@ import {
   getProblemsPerSection,
   getUserProfile,
   ProblemData,
+  formatQuizLabelDropdown,
 } from '@alea/spec';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
@@ -202,8 +203,11 @@ export function PerSectionQuiz({
 
   const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
 
+  const [selectedQuizUri, setSelectedQuizUri] = useState<string | null>(null);
+
   useEffect(() => {
     setSelectedExamUri(null);
+    setSelectedQuizUri(null);
   }, [problemUri]);
 
   const examOptions = useMemo<ExamInfoLite[]>(() => {
@@ -218,6 +222,20 @@ export function PerSectionQuiz({
           seen.set(e.examUri, { uri: e.examUri });
         }
       });
+
+    return Array.from(seen.values());
+  }, [currentProblem]);
+
+  const quizOptions = useMemo<{ uri: string }[]>(() => {
+    if (!currentProblem?.quizRefs) return [];
+
+    const seen = new Map<string, { uri: string }>();
+
+    currentProblem.quizRefs.forEach((q) => {
+      if (!seen.has(q.quizUri)) {
+        seen.set(q.quizUri, { uri: q.quizUri });
+      }
+    });
 
     return Array.from(seen.values());
   }, [currentProblem]);
@@ -481,6 +499,19 @@ export function PerSectionQuiz({
                       </Box>
                     )}
 
+                    {quizOptions.length > 0 && !selectedQuizUri && (
+                      <Box sx={{ minWidth: 150 }}>
+                        <ExamSelect
+                          exams={quizOptions}
+                          courseId={courseId}
+                          value=""
+                          onChange={(uri) => setSelectedQuizUri(uri)}
+                          label="Appeared in quizzes"
+                          size="small"
+                        />
+                      </Box>
+                    )}
+
                     {selectedExamUri && (
                       <Chip
                         label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
@@ -489,6 +520,20 @@ export function PerSectionQuiz({
                         onClick={() =>
                           window.open(
                             `/exam-problems?examUri=${encodeURIComponent(selectedExamUri)}`,
+                            '_blank'
+                          )
+                        }
+                      />
+                    )}
+
+                    {selectedQuizUri && (
+                      <Chip
+                        label={formatQuizLabelDropdown(selectedQuizUri, undefined, courseId)}
+                        color="primary"
+                        onDelete={() => setSelectedQuizUri(null)}
+                        onClick={() =>
+                          window.open(
+                            `/quiz-problems?quizUri=${encodeURIComponent(selectedQuizUri)}`,
                             '_blank'
                           )
                         }
@@ -513,7 +558,7 @@ export function PerSectionQuiz({
                     (currentProblem?.outOfSyllabusConcepts?.length ? (
                       <Tooltip
                         title={
-                          <Box sx={{ p:0.5, maxWidth: 300, whiteSpace: 'normal' }}>
+                          <Box sx={{ p: 0.5, maxWidth: 300, whiteSpace: 'normal' }}>
                             <div style={{ marginBottom: '4px' }}>
                               This problem contains concepts that were not covered in the course:
                             </div>
