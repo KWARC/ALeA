@@ -32,15 +32,6 @@ interface QRData {
   weekId: string;
 }
 
-interface WatermarkFields {
-  studentName?: string;
-  weekId?: string;
-  instanceId?: string;
-  courseId?: string;
-  universityId?: string;
-  dateOfDownload?: string;
-}
-
 interface ExtractedFields {
   studentName?: string;
   studentId?: string;
@@ -96,37 +87,9 @@ async function extractFields(
   buffer: Buffer,
   fileType: 'pdf' | 'image'
 ): Promise<{ fields: ExtractedFields; diagnostics: string }> {
-  if (fileType === 'image') {
-    // Images only have a QR code — no text watermark to parse
-    const qr = await extractQRFromImage(buffer);
-    const fields: ExtractedFields = {
-      courseId: qr.courseId,
-      instanceId: qr.instanceId,
-      universityId: qr.universityId,
-      studentName: qr.studentName,
-      studentId: qr.studentId,
-      weekId: qr.weekId,
-      dateOfDownload: qr.dateOfDownload,
-    };
-    return { fields, diagnostics: 'QR: ok | Watermark: skipped (image upload)' };
-  }
-
-  // PDF: try both QR and watermark text, merge results
-  const [qrResult, wmResult] = await Promise.allSettled([
-    extractQRFromPDF(buffer),
-    extractPDFText(buffer).then(parseWatermark),
-  ]);
-
-  // Rethrow signature errors immediately — do not silently fall back
-  if (
-    qrResult.status === 'rejected' &&
-    (qrResult.reason as Error)?.message?.includes('signature')
-  ) {
-    throw qrResult.reason;
-  }
-
-  const qr = qrResult.status === 'fulfilled' ? qrResult.value : ({} as QRData);
-  const wm: WatermarkFields = wmResult.status === 'fulfilled' ? wmResult.value : {};
+  const qr = fileType === 'image'
+    ? await extractQRFromImage(buffer)
+    : await extractQRFromPDF(buffer);
 
   const fields: ExtractedFields = {
     courseId: qr.courseId,
@@ -138,14 +101,7 @@ async function extractFields(
     dateOfDownload: qr.dateOfDownload,
   };
 
-  const diagnostics = [
-    qrResult.status === 'rejected' ? `QR error: ${(qrResult.reason as Error)?.message}` : 'QR: ok',
-    wmResult.status === 'rejected'
-      ? `Watermark error: ${(wmResult.reason as Error)?.message}`
-      : 'Watermark: ok',
-  ].join(' | ');
-
-  return { fields, diagnostics };
+  return { fields, diagnostics: 'QR: ok' };
 }
 
 const IMAGE_MIME_TYPES = new Set([
@@ -414,37 +370,7 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   throw new Error(`No QR code found across first ${Math.min(pdf.numPages, 3)} page(s).`);
 }
 
-interface PDFTextItem {
-  str: string;
-}
 
-async function extractPDFText(buffer: Buffer): Promise<string> {
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
-  const texts: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const content = await (await pdf.getPage(i)).getTextContent();
-    texts.push(content.items.map((item) => (item as PDFTextItem).str).join(' '));
-  }
-  return texts.join('\n');
-}
-
-function extractLabeledField(text: string, label: string): string | undefined {
-  const match = text.match(
-    new RegExp(`${label}\\s*:\\s*([^\\n\\r]+?)(?=\\s{2,}|\\s*[A-Z][a-z]+ (?:Name|Id|At):|$)`, 'im')
-  ); //extracts the value of a labeled field (like "Course Id: ...") and stops before the next label or line break.
-  return match?.[1].trim();
-}
-
-function parseWatermark(text: string): WatermarkFields {
-  return {
-    studentName: extractLabeledField(text, 'Student Name'),
-    weekId: extractLabeledField(text, 'Week Id'),
-    instanceId: extractLabeledField(text, 'Instance Id'),
-    courseId: extractLabeledField(text, 'Course Id'),
-    universityId: extractLabeledField(text, 'University Id'),
-    dateOfDownload: extractLabeledField(text, 'Downloaded At'),
-  };
-}
 
 const WINDOW_START_DAY = 1;
 const WINDOW_END_DAY = 0;

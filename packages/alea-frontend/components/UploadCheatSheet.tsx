@@ -19,6 +19,8 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FlipCameraIosIcon from '@mui/icons-material/FlipCameraIos';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useRef, useState, DragEvent, ChangeEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { postScannedCheatSheet } from '@alea/spec';
@@ -43,6 +45,11 @@ const UPLOAD_WINDOW_LABEL = 'Monday 12:00 AM – Sunday 11:59:59 PM';
 
 type UploadTab = 'file' | 'camera' | 'gallery';
 
+interface ImageEntry {
+  file: File;
+  preview: string;
+}
+
 export function UploadCheatSheet({
   open,
   onClose,
@@ -63,10 +70,12 @@ export function UploadCheatSheet({
   const [tab, setTab] = useState<UploadTab>('file');
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageEntry[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
   const [cameraReady, setCameraReady] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [cameraPreview, setCameraPreview] = useState<string | null>(null);
+
   const cameraMutation = useMutation({
     mutationFn: async (facing: 'environment' | 'user') => {
       if (streamRef.current) {
@@ -99,14 +108,24 @@ export function UploadCheatSheet({
   }
 
   const uploadMutation = useMutation({
-    mutationFn: async (f: File) => {
-      const formData = new FormData();
-      formData.append('file', f);
-      await postScannedCheatSheet(formData);
+    mutationFn: async () => {
+      if (tab === 'file' && file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await postScannedCheatSheet(formData);
+      } else if (images.length > 0) {
+        // Upload all images sequentially
+        for (const img of images) {
+          const formData = new FormData();
+          formData.append('file', img.file);
+          await postScannedCheatSheet(formData);
+        }
+      }
     },
     onSuccess: () => {
       setFile(null);
-      setPreview(null);
+      setImages([]);
+      setCameraPreview(null);
       onUploaded();
     },
     onError: (err: Error) => {
@@ -116,7 +135,8 @@ export function UploadCheatSheet({
 
   function resetState() {
     setFile(null);
-    setPreview(null);
+    setImages([]);
+    setCameraPreview(null);
     setErrorMsg('');
     setTab('file');
     uploadMutation.reset();
@@ -132,7 +152,8 @@ export function UploadCheatSheet({
   function handleTabChange(v: UploadTab) {
     setTab(v);
     setFile(null);
-    setPreview(null);
+    setImages([]);
+    setCameraPreview(null);
     setErrorMsg('');
     uploadMutation.reset();
     if (v === 'camera') {
@@ -149,18 +170,25 @@ export function UploadCheatSheet({
     }
     setErrorMsg('');
     setFile(f);
-    setPreview(null);
   }
 
-  function acceptImageFile(f: File) {
+  function addImageFile(f: File) {
     if (!f.type.startsWith('image/')) {
       setErrorMsg('Only image files are accepted from gallery/camera.');
       return;
     }
     setErrorMsg('');
-    setFile(f);
     const url = URL.createObjectURL(f);
-    setPreview(url);
+    setImages((prev) => [...prev, { file: f, preview: url }]);
+  }
+
+  function removeImage(index: number) {
+    setImages((prev) => {
+      const next = [...prev];
+      URL.revokeObjectURL(next[index].preview);
+      next.splice(index, 1);
+      return next;
+    });
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
@@ -177,8 +205,10 @@ export function UploadCheatSheet({
   }
 
   function handleGalleryChange(e: ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0];
-    if (selected) acceptImageFile(selected);
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((f) => addImageFile(f));
+    }
     e.target.value = '';
   }
 
@@ -193,8 +223,8 @@ export function UploadCheatSheet({
       (blob) => {
         if (!blob) return;
         const captured = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        acceptImageFile(captured);
-        stopCamera();
+        addImageFile(captured);
+        // Don't stop camera — allow taking more photos
       },
       'image/jpeg',
       0.92
@@ -207,20 +237,13 @@ export function UploadCheatSheet({
     cameraMutation.mutate(next);
   }
 
-  function handleRetake() {
-    setFile(null);
-    setPreview(null);
-    uploadMutation.reset();
-    cameraMutation.mutate(facingMode);
-  }
-
   function handleUpload() {
-    if (!file) return;
     setErrorMsg('');
-    uploadMutation.mutate(file);
+    uploadMutation.mutate();
   }
 
-  const canUpload = Boolean(file) && !uploadMutation.isPending && uploadAllowed;
+  const hasContent = tab === 'file' ? Boolean(file) : images.length > 0;
+  const canUpload = hasContent && !uploadMutation.isPending && uploadAllowed;
 
   return (
     <Dialog
@@ -271,6 +294,8 @@ export function UploadCheatSheet({
             sx={styles.tab}
           />
         </Tabs>
+
+        {/* ── PDF FILE TAB ── */}
         {tab === 'file' && (
           <Fade in>
             <Box>
@@ -322,78 +347,90 @@ export function UploadCheatSheet({
             </Box>
           </Fade>
         )}
+
+        {/* ── CAMERA TAB ── */}
         {tab === 'camera' && (
           <Fade in>
             <Box sx={styles.cameraContainer}>
-              {preview ? (
-                <Box sx={styles.previewWrapper}>
-                  <Box component="img" src={preview} sx={styles.previewImg} />
-                  <Box sx={styles.previewOverlay}>
-                    <CheckCircleOutlineIcon sx={{ color: '#fff', fontSize: 32 }} />
-                    <Typography variant="caption" sx={{ color: '#fff', fontWeight: 600 }}>
-                      Photo captured
-                    </Typography>
-                  </Box>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    sx={styles.retakeBtn}
-                    onClick={handleRetake}
-                  >
-                    Retake
-                  </Button>
+              {/* Live viewfinder — always visible until camera errors */}
+              {cameraMutation.isError ? (
+                <Box sx={styles.cameraPlaceholder}>
+                  <CameraAltIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Camera access denied or unavailable.
+                  </Typography>
                 </Box>
               ) : (
-                <>
-                  {cameraMutation.isError ? (
-                    <Box sx={styles.cameraPlaceholder}>
-                      <CameraAltIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        Camera access denied or unavailable.
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={styles.videoWrapper}>
-                      <Box
-                        component="video"
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        sx={styles.video}
-                      />
-                      {!cameraReady && (
-                        <Box sx={styles.videoLoading}>
-                          <CircularProgress size={28} sx={{ color: '#fff' }} />
-                        </Box>
-                      )}
-                      <IconButton sx={styles.flipBtn} onClick={handleFlipCamera}>
-                        <FlipCameraIosIcon />
-                      </IconButton>
+                <Box sx={styles.videoWrapper}>
+                  <Box
+                    component="video"
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    sx={styles.video}
+                  />
+                  {!cameraReady && (
+                    <Box sx={styles.videoLoading}>
+                      <CircularProgress size={28} sx={{ color: '#fff' }} />
                     </Box>
                   )}
-                  <canvas ref={canvasRef} style={{ display: 'none' }} />
-                  <Button
-                    variant="contained"
-                    onClick={handleCapture}
-                    disabled={!cameraReady || cameraMutation.isError}
-                    sx={styles.captureBtn}
-                    startIcon={<CameraAltIcon />}
+                  <IconButton sx={styles.flipBtn} onClick={handleFlipCamera}>
+                    <FlipCameraIosIcon />
+                  </IconButton>
+                </Box>
+              )}
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+              <Button
+                variant="contained"
+                onClick={handleCapture}
+                disabled={!cameraReady || cameraMutation.isError}
+                sx={styles.captureBtn}
+                startIcon={<CameraAltIcon />}
+              >
+                {images.length === 0 ? 'Capture Photo' : 'Capture Another'}
+              </Button>
+
+              {/* Captured images grid */}
+              {images.length > 0 && (
+                <Box sx={styles.capturedSection}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 0.5, display: 'block' }}
                   >
-                    Capture
-                  </Button>
-                </>
+                    {images.length} photo{images.length > 1 ? 's' : ''} captured
+                  </Typography>
+                  <Box sx={styles.imageGrid}>
+                    {images.map((img, i) => (
+                      <Box key={i} sx={styles.imageTile}>
+                        <Box component="img" src={img.preview} sx={styles.imageTileImg} />
+                        <IconButton
+                          size="small"
+                          sx={styles.removeTileBtn}
+                          onClick={() => removeImage(i)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
               )}
             </Box>
           </Fade>
         )}
+
+        {/* ── GALLERY TAB ── */}
         {tab === 'gallery' && (
           <Fade in>
-            <Box>
+            <Box sx={styles.cameraContainer}>
+              {/* Always-visible add button */}
               <Box
                 sx={{
                   ...styles.dropZone,
-                  ...(file ? styles.dropZoneHasFile : {}),
+                  ...(images.length > 0 ? styles.dropZoneSecondary : {}),
                 }}
                 onClick={() => galleryInputRef.current?.click()}
               >
@@ -401,49 +438,51 @@ export function UploadCheatSheet({
                   ref={galleryInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   style={{ display: 'none' }}
                   onChange={handleGalleryChange}
                 />
-                {file && preview ? (
-                  <Box sx={styles.galleryPreview}>
-                    <Box component="img" src={preview} sx={styles.galleryThumb} />
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-                        <CheckCircleOutlineIcon sx={{ color: 'success.main', fontSize: 18 }} />
-                        <Typography variant="body2" fontWeight={600} color="success.main">
-                          Image selected
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        sx={{ maxWidth: 180, display: 'block' }}
-                      >
-                        {file.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {(file.size / 1024).toFixed(1)} KB · Click to replace
-                      </Typography>
-                    </Box>
-                  </Box>
-                ) : (
-                  <>
-                    <Box sx={styles.dropIconWrapper}>
-                      <PhotoLibraryIcon sx={styles.dropIcon} />
-                    </Box>
-                    <Typography variant="body2" fontWeight={600}>
-                      Choose from Gallery
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Tap to open your photo library
-                    </Typography>
-                  </>
-                )}
+                <Box sx={styles.dropIconWrapper}>
+                  <AddPhotoAlternateIcon sx={styles.dropIcon} />
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {images.length === 0 ? 'Choose from Gallery' : 'Add More Photos'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Tap to open your photo library
+                </Typography>
               </Box>
+
+              {/* Selected images grid */}
+              {images.length > 0 && (
+                <Box sx={styles.capturedSection}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 0.5, display: 'block' }}
+                  >
+                    {images.length} image{images.length > 1 ? 's' : ''} selected
+                  </Typography>
+                  <Box sx={styles.imageGrid}>
+                    {images.map((img, i) => (
+                      <Box key={i} sx={styles.imageTile}>
+                        <Box component="img" src={img.preview} sx={styles.imageTileImg} />
+                        <IconButton
+                          size="small"
+                          sx={styles.removeTileBtn}
+                          onClick={() => removeImage(i)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Box>
           </Fade>
         )}
+
         {!isInstructor && !uploadAllowed && (
           <Alert severity="warning" sx={{ mt: 1.5 }}>
             Uploads are only accepted during the active week ({UPLOAD_WINDOW_LABEL}).
@@ -475,7 +514,11 @@ export function UploadCheatSheet({
               )
             }
           >
-            {uploadMutation.isPending ? 'Uploading…' : 'Upload'}
+            {uploadMutation.isPending
+              ? 'Uploading…'
+              : images.length > 1
+              ? `Upload ${images.length} Images`
+              : 'Upload'}
           </Button>
         </Box>
       </DialogContent>
@@ -551,6 +594,15 @@ const styles = {
     borderColor: 'success.main',
     bgcolor: 'success.50',
   },
+  dropZoneSecondary: {
+    py: 2.5,
+    borderColor: 'primary.light',
+    bgcolor: 'primary.50',
+    '&:hover': {
+      borderColor: 'primary.main',
+      bgcolor: 'primary.100',
+    },
+  },
   dropIconWrapper: {
     width: 56,
     height: 56,
@@ -624,53 +676,38 @@ const styles = {
     justifyContent: 'center',
     bgcolor: 'background.default',
   },
-  previewWrapper: {
-    position: 'relative',
+  // Multi-image grid
+  capturedSection: {
     width: '100%',
-    borderRadius: 2.5,
-    overflow: 'hidden',
   },
-  previewImg: {
+  imageGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 1,
     width: '100%',
-    aspectRatio: '4/3',
+  },
+  imageTile: {
+    position: 'relative',
+    borderRadius: 2,
+    overflow: 'hidden',
+    aspectRatio: '1',
+    border: '2px solid',
+    borderColor: 'success.main',
+  },
+  imageTileImg: {
+    width: '100%',
+    height: '100%',
     objectFit: 'cover',
     display: 'block',
   },
-  previewOverlay: {
+  removeTileBtn: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-    py: 1,
-    bgcolor: 'rgba(0,0,0,0.45)',
-  },
-  retakeBtn: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    bgcolor: 'rgba(255,255,255,0.9)',
-    borderColor: 'rgba(255,255,255,0.9)',
-    fontSize: '0.75rem',
-  },
-  galleryPreview: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 2,
-    py: 1,
-    px: 0.5,
-  },
-  galleryThumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 2,
-    objectFit: 'cover',
-    border: '2px solid',
-    borderColor: 'success.main',
-    flexShrink: 0,
+    top: 3,
+    right: 3,
+    bgcolor: 'rgba(0,0,0,0.55)',
+    color: '#fff',
+    padding: '3px',
+    '&:hover': { bgcolor: 'rgba(200,0,0,0.75)' },
   },
   actions: {
     display: 'flex',
