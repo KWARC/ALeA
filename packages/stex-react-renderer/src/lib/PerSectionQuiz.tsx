@@ -377,7 +377,6 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  if (!problemUri) return null;
   const handleApplyFilter = (filtered: string[], type: string) => {
     let finalUris = filtered;
     if (type === 'exam') {
