@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
-import { checkIfPostOrSetError } from '../comment-utils';
+import { checkIfPostOrSetError, executeDontEndSet500OnError } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, getCurrentWeekNoFromStartDate, ResourceName } from '@alea/utils';
 import { getUserProfileOrSet500OnError } from '../get-user-profile';
@@ -138,7 +138,8 @@ function drawHeader(
     }
   }
 
-  const note = 'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
+  const note =
+    'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
   doc.fontSize(10).fillColor('red');
   doc.text(note, 20, headerTop + headerHeight - 40, { width: width - 40, align: 'center' });
 }
@@ -171,6 +172,49 @@ function buildPdf(fields: CheatsheetFields, qrImage: string) {
 
   return doc;
 }
+export async function getCheatSheetConfigOrSet500OnError(
+  universityId: string,
+  courseId: string,
+  instanceId: string,
+  weekId: string,
+  res: NextApiResponse
+) {
+  const result: any[] = await executeDontEndSet500OnError(
+    `SELECT generationStartAt, generationEndAt, uploadStartAt, uploadEndAt FROM CheatSheetConfig
+    WHERE universityId = ? AND courseId = ? AND instanceId = ? AND weekId = ?`,
+    [universityId, courseId, instanceId, weekId],
+    res
+  );
+  if (!result) return;
+  return result;
+}
+
+async function validateGenerationWindowOrSetError(
+  universityId: string,
+  courseId: string,
+  instanceId: string,
+  weekId: string,
+  res: NextApiResponse
+): Promise<boolean> {
+  const result = await getCheatSheetConfigOrSet500OnError(
+    universityId,
+    courseId,
+    instanceId,
+    weekId,
+    res
+  );
+  if (!result) return false;
+  if (result.length) {
+    const now = new Date();
+    const start = new Date(result[0].generationStartAt);
+    const end = new Date(result[0].generationEndAt);
+    if (now < start || now > end) {
+      res.status(403).send('Empty cheatsheet generation window is closed');
+      return false;
+    }
+  }
+  return true;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -202,7 +246,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // if (!semesterInfo?.semesterStart) {
     //   return res.status(400).send('Semester start date not found, cannot generate week id');
     // }
-    fields.weekId = generateWeekIdFromSemesterStart(semesterInfo.semesterStart);
+    const weekId = generateWeekIdFromSemesterStart(semesterInfo.semesterStart);
+    fields.weekId = weekId;
+    const allowed = await validateGenerationWindowOrSetError(
+      universityId,
+      courseId,
+      instanceId,
+      weekId,
+      res
+    );
+    if (!allowed) return;
     const generationId = uuidv4();
     const qrImage = await buildQrCodeSecure(fields, generationId);
     if (!qrImage) {

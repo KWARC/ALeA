@@ -1,7 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
-import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
+import {
+  checkIfGetOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
+import { resolveTargetUserIdOrsetError } from './get-cheatsheets';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Buffer | string>) {
   try {
@@ -10,15 +15,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!checksum || typeof checksum !== 'string') {
       return res.status(422).send('Missing or invalid checksum');
     }
-
+    const userId = await getUserIdOrSetError(req, res);
+    if (!userId) return;
     const result = await executeAndEndSet500OnError(
-      ` SELECT fileName,weekId FROM CheatSheet WHERE checksum = ? LIMIT 1`,
+      ` SELECT fileName,weekId,userId,courseId,instanceId FROM CheatSheet WHERE checksum = ? LIMIT 1`,
       [checksum],
       res
     );
     if (!result) return;
     if (result.length === 0) return res.status(404).send('Checksum not found');
-    const { fileName, weekId } = result[0];
+    const { fileName, weekId, userId: targetUserId, courseId, instanceId } = result[0];
+    let resolvedTargetUserId;
+    if (targetUserId !== userId) {
+      resolvedTargetUserId = await resolveTargetUserIdOrsetError(
+        req,
+        res,
+        courseId,
+        instanceId,
+        targetUserId
+      );
+    } else {
+      resolvedTargetUserId = await resolveTargetUserIdOrsetError(req, res, courseId, instanceId);
+    }
+    if (!resolvedTargetUserId) return;
 
     const cheatsheetsDir = process.env.CHEATSHEETS_DIR;
     if (!cheatsheetsDir) {

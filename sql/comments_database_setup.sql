@@ -506,3 +506,16 @@ CREATE TABLE CheatSheet (
     dateOfDownload VARCHAR(255) ,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE CheatSheetConfig (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    universityId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(255) NOT NULL,
+    instanceId VARCHAR(255) NOT NULL,
+    weekId VARCHAR(255) NOT NULL,
+    generationStartAt TIMESTAMP NOT NULL,
+    generationEndAt TIMESTAMP NOT NULL,
+    uploadStartAt TIMESTAMP NOT NULL,
+    uploadEndAt TIMESTAMP NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

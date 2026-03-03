@@ -11,6 +11,11 @@ import crypto from 'crypto';
 import sharp from 'sharp';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import jsQR from 'jsqr';
+import {
+  isUserIdAuthorizedForAny,
+} from '../access-control/resource-utils';
+import { Action, ResourceName } from '@alea/utils';
+import { getCheatSheetConfigOrSet500OnError } from './create-cheatsheet';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
 const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
@@ -160,7 +165,7 @@ const IMAGE_MAGIC: { bytes: number[]; mime: string }[] = [
 
 function detectFileType(buffer: Buffer, mimeType?: string): 'pdf' | 'image' | 'unknown' {
   if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46)
-    return 'pdf'; 
+    return 'pdf';
   for (const sig of IMAGE_MAGIC) {
     if (sig.bytes.every((b, i) => buffer[i] === b)) return 'image';
   }
@@ -270,103 +275,11 @@ function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boo
   const dest = path.join(cheatsheetDir, fileName);
   const prefix = fileName.replace(/_&[^.]+\.pdf$/, ''); //Remove a trailing _&<text>.pdf suffix from the filename.
   const existing = fs.readdirSync(cheatsheetDir).find((f) => f.startsWith(prefix));
+  console.log({ existing });
   if (existing) fs.unlinkSync(path.join(cheatsheetDir, existing));
   fs.renameSync(filepath, dest);
   return !!existing;
 }
-
-// async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
-//   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
-//   const page = await pdf.getPage(1);
-//   const opList = await page.getOperatorList();
-//   const objs: any = (page as any).objs;
-//   const imgNames: string[] = [];
-//   for (let i = 0; i < opList.fnArray.length; i++) {
-//     if (opList.fnArray[i] === 85 || opList.fnArray[i] === 86) {
-//       const name = opList.argsArray[i]?.[0];
-//       if (name && !imgNames.includes(name)) imgNames.push(name);
-//     }
-//   }
-
-//   for (const name of imgNames) {
-//     const img: any = await new Promise((resolve) => objs.get(name, resolve));
-//     if (!img?.width || !img?.height || !img?.data) continue;
-
-//     try {
-//       const { width, height, data } = img;
-//       const pixelCount = width * height;
-//       const naiveCh = data.length / pixelCount;
-
-//       let ch = 0,
-//         hasPad = false;
-//       if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
-//         ch = naiveCh;
-//       } else {
-//         for (const c of [1, 3, 4]) {
-//           if (data.length === height * (width * c + 1)) {
-//             ch = c;
-//             hasPad = true;
-//             break;
-//           }
-//         }
-//         if (!ch) ch = Math.max(1, Math.round(naiveCh));
-//       }
-
-//       let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
-//       if (hasPad) {
-//         const stride = width * ch + 1;
-//         const stripped = Buffer.alloc(pixelCount * ch);
-//         for (let row = 0; row < height; row++) {
-//           raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
-//         }
-//         raw = stripped;
-//       }
-
-//       const rgba =
-//         ch === 4
-//           ? raw
-//           : await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 } })
-//               .ensureAlpha()
-//               .raw()
-//               .toBuffer();
-
-//       for (const scale of [1, 2, 4]) {
-//         let buf = rgba,
-//           w = width,
-//           h = height;
-//         if (scale > 1) {
-//           buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
-//             .resize(width * scale, height * scale, { kernel: 'nearest' })
-//             .raw()
-//             .toBuffer();
-//           w = width * scale;
-//           h = height * scale;
-//         }
-//         const result = jsQR(
-//           new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
-//           w,
-//           h
-//         );
-//         if (result) {
-//           const json = JSON.parse(result.data) as Record<string, string>;
-//           return {
-//             courseId: json['courseId'] ?? undefined,
-//             dateOfDownload: json['dateOfDownload'] ?? json['downloadedAt'] ?? undefined,
-//             instanceId: json['instanceId'] ?? undefined,
-//             universityId: json['universityId'] ?? undefined,
-//             studentId: json['studentId'] ?? undefined,
-//             studentName: json['studentName'] ?? undefined,
-//             weekId: json['weekId'] ?? json['quizId'] ?? undefined,
-//           };
-//         }
-//       }
-//     } catch (err) {
-//       console.warn(`Failed to decode QR code from image ${name}, trying next if available.`, err);
-//     }
-//   }
-
-//   throw new Error(`No QR code found among ${imgNames.length} image(s) on page 1.`);
-// }
 
 async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
@@ -525,7 +438,7 @@ function extractLabeledField(text: string, label: string): string | undefined {
 function parseWatermark(text: string): WatermarkFields {
   return {
     studentName: extractLabeledField(text, 'Student Name'),
-    weekId: extractLabeledField(text, 'Quiz Id'),
+    weekId: extractLabeledField(text, 'Week Id'),
     instanceId: extractLabeledField(text, 'Instance Id'),
     courseId: extractLabeledField(text, 'Course Id'),
     universityId: extractLabeledField(text, 'University Id'),
@@ -535,8 +448,8 @@ function parseWatermark(text: string): WatermarkFields {
 
 const WINDOW_START_DAY = 1;
 const WINDOW_END_DAY = 0;
-
-function isWithinUploadWindow(): boolean {
+//allowing on all days by default
+function isWithinDefaultUploadWindow(): boolean {
   const now = new Date();
   const day = now.getDay();
   const inWindow =
@@ -547,8 +460,36 @@ function isWithinUploadWindow(): boolean {
   return inWindow;
 }
 
-function uploadWindowDescription(): string {
-  return 'Monday 12:00 AM - Sunday 11:59:59 PM';
+async function validateUploadWindowOrSetError(
+  universityId: string,
+  courseId: string,
+  instanceId: string,
+  weekId: string,
+  res: NextApiResponse
+): Promise<boolean> {
+  const result = await getCheatSheetConfigOrSet500OnError(
+    universityId,
+    courseId,
+    instanceId,
+    weekId,
+    res
+  );
+  if (!result) return false;
+  if (result.length) {
+    const now = new Date();
+    const start = new Date(result[0].uploadStartAt);
+    const end = new Date(result[0].uploadEndAt);
+    if (now < start || now > end) {
+      res.status(403).send('Empty cheatsheet generation window is closed');
+      return false;
+    }
+    return true;
+  }
+  if (!isWithinDefaultUploadWindow()) {
+    res.status(403).send('Upload window is closed');
+    return false;
+  }
+  return true;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -556,15 +497,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   console.log({ userId });
-  const isInstructor = req.headers['x-is-instructor'] === 'true';
-  if (!isInstructor && !isWithinUploadWindow()) {
-    return res
-      .status(403)
-      .send(
-        `Cheat sheet uploads are only accepted during the active week (${uploadWindowDescription()}). ` +
-          `The upload window is currently closed.`
-      );
-  }
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
   console.log('he');
@@ -602,7 +534,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .status(400)
       .send(`Could not extract required fields (${missing.join(', ')}). ${diagnostics}`);
   }
+  const { courseId, instanceId, universityId, weekId, studentId } = fields;
+  const isInstructor = await isUserIdAuthorizedForAny(userId, [
+    {
+      name: ResourceName.COURSE_CHEATSHEET,
+      action: Action.MUTATE,
+      variables: { courseId, instanceId },
+    },
+  ]);
+  const isStudent = await isUserIdAuthorizedForAny(userId, [
+    {
+      name: ResourceName.COURSE_CHEATSHEET,
+      action: Action.UPLOAD,
+      variables: { courseId, instanceId, studentId: userId },
+    },
+  ]);
+  if (isStudent) {
+    const isValid = await validateUploadWindowOrSetError(
+      universityId,
+      courseId,
+      instanceId,
+      weekId,
+      res
+    );
 
+    if (!isValid) return;
+  }
+  if (isStudent && studentId !== userId) {
+    return res.status(403).send('You cannot upload a cheat sheet for another student.');
+  }
+  if (!isInstructor && !isStudent) {
+    return res
+      .status(403)
+      .send('You do not have permission to upload cheat sheets for this course.');
+  }
   const checksum = generateChecksum(buffer);
   console.log({ checksum });
   const fileName = buildFileName(fields, userId, checksum);
@@ -615,9 +580,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fs.writeFileSync(file.filepath, pdfBuffer);
   }
 
-  let isReplacement: boolean;
   try {
-    isReplacement = savePDF(file.filepath, CHEATSHEETS_DIR, fileName);
+    const isReplacement = savePDF(file.filepath, CHEATSHEETS_DIR, fileName);
   } catch (err: unknown) {
     return res.status(500).send((err as Error)?.message ?? 'Failed to save PDF file.');
   }
@@ -648,6 +612,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (fs.existsSync(targetPath)) {
       fs.unlinkSync(targetPath);
     }
+    //multiple uploads when upload window is open 
     const updated = await executeAndEndSet500OnError(
       `UPDATE CheatSheet SET checksum = ?,fileName = ? WHERE id = ?`,
       [checksum, fileName, existingRow.id],
@@ -661,13 +626,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     return res.status(200).end();
   }
-  console.log('hey');
+  const ownerId = isInstructor ? fields.studentId : userId;
   const inserted = await executeAndEndSet500OnError(
     `INSERT INTO CheatSheet
        (userId, studentName, weekId, instanceId, courseId, universityId, checksum, fileName, dateOfDownload)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      userId,
+      ownerId,
       fields.studentName ?? null,
       fields.weekId,
       fields.instanceId,
