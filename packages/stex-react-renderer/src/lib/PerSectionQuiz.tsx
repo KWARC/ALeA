@@ -201,13 +201,22 @@ export function PerSectionQuiz({
     return problems.find((p) => p.problemId === problemUri);
   }, [problems, problemUri]);
 
-  const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
+  // const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
 
-  const [selectedQuizUri, setSelectedQuizUri] = useState<string | null>(null);
+  // const [selectedQuizUri, setSelectedQuizUri] = useState<string | null>(null);
+
+  const [selectedRef, setSelectedRef] = useState<{
+    uri: string;
+    type: 'exam' | 'quiz';
+  } | null>(null);
+
+  // useEffect(() => {
+  //   setSelectedExamUri(null);
+  //   setSelectedQuizUri(null);
+  // }, [problemUri]);
 
   useEffect(() => {
-    setSelectedExamUri(null);
-    setSelectedQuizUri(null);
+    setSelectedRef(null);
   }, [problemUri]);
 
   const examOptions = useMemo<ExamInfoLite[]>(() => {
@@ -239,6 +248,33 @@ export function PerSectionQuiz({
 
     return Array.from(seen.values());
   }, [currentProblem]);
+
+  const combinedOptions = useMemo(() => {
+    const exams = examOptions.map((e) => ({
+      uri: e.uri,
+      type: 'exam' as const,
+    }));
+
+    const quizzes = quizOptions.map((q) => ({
+      uri: q.uri,
+      type: 'quiz' as const,
+    }));
+
+    return [...exams, ...quizzes];
+  }, [examOptions, quizOptions]);
+
+  const dropdownLabel = useMemo(() => {
+    if (examOptions.length > 0 && quizOptions.length > 0) {
+      return 'Appeared in exams & quizzes';
+    }
+    if (examOptions.length > 0) {
+      return 'Appeared in exams';
+    }
+    if (quizOptions.length > 0) {
+      return 'Appeared in quizzes';
+    }
+    return '';
+  }, [examOptions, quizOptions]);
 
   useEffect(() => {
     if (cachedProblemUris?.length) {
@@ -486,7 +522,7 @@ export function PerSectionQuiz({
                       my: 2,
                     }}
                   >
-                    {examOptions.length > 0 && !selectedExamUri && (
+                    {/* {examOptions.length > 0 && !selectedExamUri && (
                       <Box sx={{ minWidth: 150 }}>
                         <ExamSelect
                           exams={examOptions}
@@ -534,6 +570,44 @@ export function PerSectionQuiz({
                         onClick={() =>
                           window.open(
                             `/quiz-problems?quizUri=${encodeURIComponent(selectedQuizUri)}`,
+                            '_blank'
+                          )
+                        }
+                      />
+                    )} */}
+
+                    {combinedOptions.length > 0 && !selectedRef && (
+                      <Box sx={{ minWidth: 180 }}>
+                        <ExamSelect
+                          exams={combinedOptions.map((o) => ({ uri: o.uri }))}
+                          courseId={courseId}
+                          value=""
+                          onChange={(uri) => {
+                            const found = combinedOptions.find((o) => o.uri === uri);
+                            if (found) {
+                              setSelectedRef(found);
+                            }
+                          }}
+                          label={dropdownLabel}
+                          size="small"
+                        />
+                      </Box>
+                    )}
+
+                    {selectedRef && (
+                      <Chip
+                        label={
+                          selectedRef.type === 'exam'
+                            ? formatExamLabelDropdown(selectedRef.uri, undefined, courseId)
+                            : formatQuizLabelDropdown(selectedRef.uri, undefined, courseId)
+                        }
+                        color={selectedRef.type === 'exam' ? 'error' : 'primary'}
+                        onDelete={() => setSelectedRef(null)}
+                        onClick={() =>
+                          window.open(
+                            selectedRef.type === 'exam'
+                              ? `/exam-problems?examUri=${encodeURIComponent(selectedRef.uri)}`
+                              : `/quiz-problems?quizUri=${encodeURIComponent(selectedRef.uri)}`,
                             '_blank'
                           )
                         }
