@@ -384,7 +384,7 @@ export function PerSectionQuiz({
       finalUris = examProblemIds;
     }
     setProblemUris(finalUris);
-    setAllProblemUris(finalUris);
+    // setAllProblemUris(finalUris);
     setIsSubmitted(finalUris.map(() => false));
     setResponses(finalUris.map(() => undefined));
     setProblemIdx(0);
