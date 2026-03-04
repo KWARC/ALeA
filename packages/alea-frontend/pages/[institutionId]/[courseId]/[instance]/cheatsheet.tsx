@@ -84,9 +84,7 @@ export function InstructorDateRangeFields({
             type="datetime-local"
             size="small"
             value={generationWindow.end}
-            onChange={(e) =>
-              onGenerationWindowChange({ ...generationWindow, end: e.target.value })
-            }
+            onChange={(e) => onGenerationWindowChange({ ...generationWindow, end: e.target.value })}
             disabled={disabled}
             InputLabelProps={{ shrink: true }}
             sx={dateRangeStyles.field}
@@ -105,9 +103,7 @@ export function InstructorDateRangeFields({
             type="datetime-local"
             size="small"
             value={uploadWindow.start}
-            onChange={(e) =>
-              onUploadWindowChange({ ...uploadWindow, start: e.target.value })
-            }
+            onChange={(e) => onUploadWindowChange({ ...uploadWindow, start: e.target.value })}
             disabled={disabled}
             InputLabelProps={{ shrink: true }}
             sx={dateRangeStyles.field}
@@ -117,9 +113,7 @@ export function InstructorDateRangeFields({
             type="datetime-local"
             size="small"
             value={uploadWindow.end}
-            onChange={(e) =>
-              onUploadWindowChange({ ...uploadWindow, end: e.target.value })
-            }
+            onChange={(e) => onUploadWindowChange({ ...uploadWindow, end: e.target.value })}
             disabled={disabled}
             InputLabelProps={{ shrink: true }}
             sx={dateRangeStyles.field}
@@ -211,8 +205,6 @@ function CheatSheetsContent({
 }) {
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
-
-  // Instructor date-window state
   const [generationWindow, setGenerationWindow] = useState<DateRangeValue>({ start: '', end: '' });
   const [uploadWindow, setUploadWindow] = useState<DateRangeValue>({ start: '', end: '' });
 
@@ -246,7 +238,6 @@ function CheatSheetsContent({
         onUpload={() => setUploadOpen(true)}
       />
 
-      {/* Instructor-only date range configuration */}
       {isEmbedded && (
         <InstructorDateRangeFields
           generationWindow={generationWindow}
@@ -359,10 +350,6 @@ function CheatSheetsContent({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 async function fetchCheatsheets(
   courseId: string,
   instanceId: string,
@@ -377,10 +364,6 @@ async function fetchCheatsheets(
 function isImageMime(mime?: string) {
   return typeof mime === 'string' && mime.startsWith('image/');
 }
-
-// ---------------------------------------------------------------------------
-// FilePreviewDialog
-// ---------------------------------------------------------------------------
 
 function FilePreviewDialog({
   file,
@@ -427,10 +410,6 @@ function FilePreviewDialog({
     </Dialog>
   );
 }
-
-// ---------------------------------------------------------------------------
-// CheatSheetRow
-// ---------------------------------------------------------------------------
 
 function CheatSheetRow({
   file,
@@ -516,10 +495,6 @@ function CheatSheetRow({
   );
 }
 
-// ---------------------------------------------------------------------------
-// EmptyState
-// ---------------------------------------------------------------------------
-
 function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <Box sx={emptyStateStyles.root}>
@@ -535,10 +510,6 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
     </Box>
   );
 }
-
-// ---------------------------------------------------------------------------
-// UserFilterBar
-// ---------------------------------------------------------------------------
 
 function UserFilterBar({
   userIds,
@@ -576,10 +547,6 @@ function UserFilterBar({
     </Box>
   );
 }
-
-// ---------------------------------------------------------------------------
-// CheatsheetsPage (page entry point)
-// ---------------------------------------------------------------------------
 
 const CheatsheetsPage = ({
   courseId: propCourseId,
@@ -685,10 +652,6 @@ const CheatsheetsPage = ({
 };
 
 export default CheatsheetsPage;
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 
 const pageStyles = {
   container: {
