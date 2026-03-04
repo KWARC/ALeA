@@ -34,6 +34,148 @@ import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
 
+// ---------------------------------------------------------------------------
+// InstructorDateRangeFields
+// Reusable component for generation/upload window configuration (instructor only)
+// ---------------------------------------------------------------------------
+
+export interface DateRangeValue {
+  start: string;
+  end: string;
+}
+
+interface InstructorDateRangeFieldsProps {
+  generationWindow: DateRangeValue;
+  uploadWindow: DateRangeValue;
+  onGenerationWindowChange: (value: DateRangeValue) => void;
+  onUploadWindowChange: (value: DateRangeValue) => void;
+  disabled?: boolean;
+}
+
+export function InstructorDateRangeFields({
+  generationWindow,
+  uploadWindow,
+  onGenerationWindowChange,
+  onUploadWindowChange,
+  disabled = false,
+}: InstructorDateRangeFieldsProps) {
+  return (
+    <Box sx={dateRangeStyles.root}>
+      {/* Generation window */}
+      <Box sx={dateRangeStyles.group}>
+        <Typography variant="caption" sx={dateRangeStyles.groupLabel}>
+          Generation Window
+        </Typography>
+        <Box sx={dateRangeStyles.fields}>
+          <TextField
+            label="Generation Start"
+            type="datetime-local"
+            size="small"
+            value={generationWindow.start}
+            onChange={(e) =>
+              onGenerationWindowChange({ ...generationWindow, start: e.target.value })
+            }
+            disabled={disabled}
+            InputLabelProps={{ shrink: true }}
+            sx={dateRangeStyles.field}
+          />
+          <TextField
+            label="Generation End"
+            type="datetime-local"
+            size="small"
+            value={generationWindow.end}
+            onChange={(e) =>
+              onGenerationWindowChange({ ...generationWindow, end: e.target.value })
+            }
+            disabled={disabled}
+            InputLabelProps={{ shrink: true }}
+            sx={dateRangeStyles.field}
+          />
+        </Box>
+      </Box>
+
+      {/* Upload window */}
+      <Box sx={dateRangeStyles.group}>
+        <Typography variant="caption" sx={dateRangeStyles.groupLabel}>
+          Upload Window
+        </Typography>
+        <Box sx={dateRangeStyles.fields}>
+          <TextField
+            label="Upload Start"
+            type="datetime-local"
+            size="small"
+            value={uploadWindow.start}
+            onChange={(e) =>
+              onUploadWindowChange({ ...uploadWindow, start: e.target.value })
+            }
+            disabled={disabled}
+            InputLabelProps={{ shrink: true }}
+            sx={dateRangeStyles.field}
+          />
+          <TextField
+            label="Upload End"
+            type="datetime-local"
+            size="small"
+            value={uploadWindow.end}
+            onChange={(e) =>
+              onUploadWindowChange({ ...uploadWindow, end: e.target.value })
+            }
+            disabled={disabled}
+            InputLabelProps={{ shrink: true }}
+            sx={dateRangeStyles.field}
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CheatSheetActions
+// Consolidates Generate + Upload buttons into one component
+// ---------------------------------------------------------------------------
+
+interface CheatSheetActionsProps {
+  isEmbedded: boolean;
+  onGenerate: () => void;
+  onUpload: () => void;
+}
+
+function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActionsProps) {
+  return (
+    <Box display="flex" justifyContent="end" gap={2}>
+      {!isEmbedded && (
+        <Tooltip title="Generate Empty CheatSheet">
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PostAdd />}
+            onClick={onGenerate}
+            sx={pageStyles.uploadBtn}
+          >
+            Generate
+          </Button>
+        </Tooltip>
+      )}
+      <Tooltip title="Upload Scanned PDF">
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<UploadFileIcon />}
+          onClick={onUpload}
+          sx={pageStyles.uploadBtn}
+        >
+          Upload
+        </Button>
+      </Tooltip>
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CheatSheetsContent
+// ---------------------------------------------------------------------------
+
 function CheatSheetsContent({
   files,
   isLoading,
@@ -70,9 +212,14 @@ function CheatSheetsContent({
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
 
+  // Instructor date-window state
+  const [generationWindow, setGenerationWindow] = useState<DateRangeValue>({ start: '', end: '' });
+  const [uploadWindow, setUploadWindow] = useState<DateRangeValue>({ start: '', end: '' });
+
   function handleUploaded() {
     queryClient.invalidateQueries({ queryKey: ['cheatsheets', instanceId] });
   }
+
   const downloadCheatsheet = async () => {
     const { blob, filename } = await createCheatSheet({
       courseName,
@@ -90,34 +237,25 @@ function CheatSheetsContent({
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   };
+
   return (
     <Box sx={pageStyles.container}>
-      <Box display="flex" justifyContent="end" gap={2}>
-        {!isEmbedded && (
-          <Tooltip title="Generate Empty CheatSheet">
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<PostAdd />}
-              onClick={downloadCheatsheet}
-              sx={pageStyles.uploadBtn}
-            >
-              Generate
-            </Button>
-          </Tooltip>
-        )}
-        <Tooltip title="Upload Scanned PDF">
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<UploadFileIcon />}
-            onClick={() => setUploadOpen(true)}
-            sx={pageStyles.uploadBtn}
-          >
-            Upload
-          </Button>
-        </Tooltip>
-      </Box>
+      <CheatSheetActions
+        isEmbedded={isEmbedded}
+        onGenerate={downloadCheatsheet}
+        onUpload={() => setUploadOpen(true)}
+      />
+
+      {/* Instructor-only date range configuration */}
+      {isEmbedded && (
+        <InstructorDateRangeFields
+          generationWindow={generationWindow}
+          uploadWindow={uploadWindow}
+          onGenerationWindowChange={setGenerationWindow}
+          onUploadWindowChange={setUploadWindow}
+        />
+      )}
+
       <Box sx={pageStyles.titleBar}>
         <Box sx={pageStyles.titleLeft}>
           <Box sx={pageStyles.titleIconWrap}>
@@ -221,6 +359,10 @@ function CheatSheetsContent({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 async function fetchCheatsheets(
   courseId: string,
   instanceId: string,
@@ -235,6 +377,10 @@ async function fetchCheatsheets(
 function isImageMime(mime?: string) {
   return typeof mime === 'string' && mime.startsWith('image/');
 }
+
+// ---------------------------------------------------------------------------
+// FilePreviewDialog
+// ---------------------------------------------------------------------------
 
 function FilePreviewDialog({
   file,
@@ -282,6 +428,10 @@ function FilePreviewDialog({
   );
 }
 
+// ---------------------------------------------------------------------------
+// CheatSheetRow
+// ---------------------------------------------------------------------------
+
 function CheatSheetRow({
   file,
   onPreview,
@@ -324,6 +474,7 @@ function CheatSheetRow({
       setLoadingDownload(false);
     }
   };
+
   const isImage = isImageMime(file.mimeType);
 
   return (
@@ -365,6 +516,10 @@ function CheatSheetRow({
   );
 }
 
+// ---------------------------------------------------------------------------
+// EmptyState
+// ---------------------------------------------------------------------------
+
 function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <Box sx={emptyStateStyles.root}>
@@ -380,6 +535,10 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
     </Box>
   );
 }
+
+// ---------------------------------------------------------------------------
+// UserFilterBar
+// ---------------------------------------------------------------------------
 
 function UserFilterBar({
   userIds,
@@ -417,6 +576,10 @@ function UserFilterBar({
     </Box>
   );
 }
+
+// ---------------------------------------------------------------------------
+// CheatsheetsPage (page entry point)
+// ---------------------------------------------------------------------------
 
 const CheatsheetsPage = ({
   courseId: propCourseId,
@@ -522,6 +685,10 @@ const CheatsheetsPage = ({
 };
 
 export default CheatsheetsPage;
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
 const pageStyles = {
   container: {
@@ -755,5 +922,40 @@ const filterBarStyles = {
     '& .MuiInputBase-root': {
       bgcolor: 'background.default',
     },
+  },
+};
+
+const dateRangeStyles = {
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    my: 2,
+    p: 2,
+    borderRadius: 2,
+    border: '1px solid',
+    borderColor: 'divider',
+    bgcolor: 'background.paper',
+  },
+  group: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1,
+  },
+  groupLabel: {
+    fontWeight: 600,
+    color: 'text.secondary',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontSize: 11,
+  },
+  fields: {
+    display: 'flex',
+    gap: 2,
+    flexWrap: 'wrap',
+  },
+  field: {
+    flex: '1 1 200px',
+    minWidth: 200,
   },
 };
