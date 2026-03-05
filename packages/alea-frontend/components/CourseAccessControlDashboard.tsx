@@ -120,27 +120,34 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
     },
   } as Record<ShortId, ResourceActionPair>);
 
-const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
+const CourseAccessControlDashboard = ({
+  courseId,
+  instanceId,
+}: {
+  courseId: string;
+  instanceId?: string;
+}) => {
   const router = useRouter();
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
-  const currentTerm = currentTermByCourseId[courseId];
+  const currentTerm = instanceId ?? currentTermByCourseId[courseId];
   async function checkIfAlreadySetup() {
-    const complete = await isCourseSemesterSetupComplete(courseId);
+    const complete = await isCourseSemesterSetupComplete(courseId, currentTerm);
     setIsAlreadySetup(!!complete);
   }
 
   const handleCreateCourseACL = async () => {
+    if (!currentTerm) return;
     setSemesterSetupLoading(true);
     setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
     try {
-      await createSemesterAclsForCourse(courseId);
-      await createInstructorResourceActions(courseId);
-      await createStudentResourceActions(courseId);
-      await createStaffResourceActions(courseId);
-      await createMetadataResourceActions(courseId);
+      await createSemesterAclsForCourse(courseId, currentTerm);
+      await createInstructorResourceActions(courseId, currentTerm);
+      await createStudentResourceActions(courseId, currentTerm);
+      await createStaffResourceActions(courseId, currentTerm);
+      await createMetadataResourceActions(courseId, currentTerm);
       setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
       window.location.reload();
       await checkIfAlreadySetup();
@@ -298,7 +305,7 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
         <Button
           variant="contained"
           onClick={handleCreateCourseACL}
-          disabled={semesterSetupLoading || isAlreadySetup}
+          disabled={semesterSetupLoading || isAlreadySetup || !currentTerm}
           startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
         >
           {isAlreadySetup ? 'Resource-Action already created' : 'Default Resource-Action Setup'}

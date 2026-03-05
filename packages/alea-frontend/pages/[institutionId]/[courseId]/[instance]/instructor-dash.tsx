@@ -72,7 +72,7 @@ function ChosenTab({
 }) {
   switch (tabName) {
     case 'access-control':
-      return <CourseAccessControlDashboard courseId={courseId} />;
+      return <CourseAccessControlDashboard courseId={courseId} instanceId={instanceId} />;
     case 'homework-manager':
       return <HomeworkManager courseId={courseId} institutionId={institutionId} />;
     case 'homework-grading':
@@ -96,7 +96,7 @@ function ChosenTab({
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':
-      return <CourseMetadata courseId={courseId} instanceId={instanceId} />;
+      return <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />;
     default:
       return null;
   }
@@ -136,14 +136,8 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
 
 const InstructorDashPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('instructor-dash');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('instructor-dash');
 
   const instanceId = resolvedInstanceId;
   const tab = router.query.tab as TabName;

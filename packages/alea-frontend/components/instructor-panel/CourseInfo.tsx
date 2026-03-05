@@ -51,6 +51,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [seriesId, setSeriesIdState] = useState('');
+  const [livestreamUrl, setLivestreamUrl] = useState('');
 
   const [isNew, setIsNew] = useState(false);
 
@@ -69,6 +70,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         const info = await getCourseInfoMetadata(courseId, instanceId);
         resolvedInfo = info;
         setSeriesIdState(info.seriesId || '');
+        setLivestreamUrl(info.livestreamUrl || '');
         setCourseInfo(info);
         setIsNew(false);
       } catch (err: any) {
@@ -83,6 +85,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             landing: '',
             slides: '',
             teaser: '',
+            livestreamUrl: '',
 
             instructors: [],
 
@@ -95,6 +98,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           };
           setCourseInfo(resolvedInfo);
           setSeriesIdState('');
+          setLivestreamUrl('');
           setIsNew(true);
         } else {
           console.error('Failed to load course info', err);
@@ -219,6 +223,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         ...courseInfo,
         instructors: instructorsToSave,
         seriesId,
+        livestreamUrl: (livestreamUrl ?? '').trim() || null,
         courseId,
         instanceId,
       };
@@ -356,6 +361,14 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           sx={{ width: 140 }}
           placeholder="4334"
           onChange={(e) => setSeriesIdState(e.target.value)}
+        />
+        <TextField
+          label="Livestream URL"
+          value={livestreamUrl}
+          onChange={(e) => setLivestreamUrl(e.target.value)}
+          size="small"
+          sx={{ minWidth: 280 }}
+          placeholder="https://..."
         />
       </Box>
 

@@ -525,6 +525,7 @@ export const de = {
     lectureEntryFailed: 'Erzeugung der Vortragseinträge fehlgeschlagen: {{error}}',
 
     generateLectureEntry: 'Vortragseintrag erstellen',
+    lectureEntriesAlreadyGenerated: 'Vortragseinträge bereits erstellt',
 
     lectureScheduleTab: 'Vorlesungsplan',
     tutorialScheduleTab: 'Tutorienplan',

@@ -33,6 +33,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   landing: string;
   slides: string;
   teaser?: string | null;
+  livestreamUrl?: string;
   instructors: InstructorInfo[];
   hasQuiz: boolean;
   updaterId?: string;
@@ -114,6 +115,15 @@ export async function updateHasQuiz(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasQuiz: boolean }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-quiz`, data);
+  return response.data;
+}
+
+export async function checkLectureEntriesExist(
+  courseId: string
+): Promise<{ hasEntries: boolean; count: number }> {
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
+    params: { courseId },
+  });
   return response.data;
 }
 

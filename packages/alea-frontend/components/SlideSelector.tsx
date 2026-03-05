@@ -95,7 +95,7 @@ export function SlidePicker({
   const [error, setError] = useState<string | null>(null);
   const section = secInfo[sectionUri];
   const sectionDisplayName = section ? section.title.trim() : 'Unknown Section';
-  const { data: slidesData, isLoading } = useSlides(courseId, section.id);
+  const { data: slidesData, isLoading } = useSlides(courseId, section?.id);
 
   const resetSlideState = (): void => {
     setLocalAvailableSlides(EMPTY_SLIDE_DATA);

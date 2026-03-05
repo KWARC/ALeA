@@ -233,8 +233,13 @@ export function PerSectionQuiz({
 
     const fetchProblems = async () => {
       setIsLoadingProblemUris(true);
-      const userInfo = await getUserProfile();
-      const languages = userInfo?.languages;
+      let languages;
+      try {
+        const userInfo = await getUserProfile();
+        languages = userInfo?.languages;
+      } catch (err) {
+        languages = undefined;
+      }
       let selected: string[] = [];
       getProblemsPerSection(sectionUri, courseId, languages)
         .then((problems) => {

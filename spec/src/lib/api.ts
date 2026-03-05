@@ -8,6 +8,7 @@ export * from './comment';
 export * from './comments-api';
 export * from './course-grade-info';
 export * from './coverage-timeline';
+export * from './course-material-api';
 export * from './course-metadata-api';
 export * from './didactic-api';
 export * from './exam-utils';

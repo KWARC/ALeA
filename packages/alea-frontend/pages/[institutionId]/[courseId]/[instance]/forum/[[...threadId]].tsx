@@ -24,7 +24,8 @@ const ForumPage: NextPage = () => {
     isValidating,
   } = useRouteValidation('forum');
 
-  const threadId = +(router?.query?.threadId?.[0] as string);
+  const raw = router?.query?.threadId;
+  const threadId = +(Array.isArray(raw) ? raw[0] : raw ?? 0);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const { home } = getLocaleObject(router);
   const t = home.courseThumb;

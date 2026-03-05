@@ -1,34 +1,52 @@
 import { Box, Typography, Button, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
 import AnnouncementsTab from './Announcements';
-import { generateLectureEntry } from '@alea/spec';
+import { generateLectureEntry, checkLectureEntriesExist } from '@alea/spec';
 import LectureScheduleTab from './LectureSchedule';
 import CourseInfoTab from './CourseInfo';
 import { getLocaleObject } from '../../lang/utils';
 import { useRouter } from 'next/router';
-
+import CourseResourcesTab from '../CourseResourcesTab';
 interface CourseMetadataProps {
   courseId: string;
   instanceId: string;
+  universityId: string;
 }
 
-const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId }) => {
+const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, universityId }) => {
   const [generateLoading, setGenerateLoading] = useState(false);
   const [generateMessage, setGenerateMessage] = useState('');
+  const [hasEntries, setHasEntries] = useState(false);
   const router = useRouter();
   const { courseMetadata: tm } = getLocaleObject(router);
 
+  useEffect(() => {
+    const checkEntries = async () => {
+      try {
+        const result = await checkLectureEntriesExist(courseId);
+        setHasEntries(result.hasEntries);
+      } catch (e) {
+        console.error('Failed to check lecture entries:', e);
+      }
+    };
+    checkEntries();
+  }, [courseId]);
+
   const handleGenerateLectureEntry = async () => {
+    if (hasEntries) return;
+    
     setGenerateLoading(true);
     setGenerateMessage('Generating lecture entries...');
     try {
       const data = await generateLectureEntry(courseId, instanceId);
       if (data && !data.error) {
         if (data.alreadyExists) {
+          setHasEntries(true);
           setGenerateMessage(
             `Lecture entries already exist for courseId ${courseId} (${data.count} entries)`
           );
         } else {
+          setHasEntries(true);
           setGenerateMessage(
             `Lecture entry generation successful for courseId ${courseId} (${data.count} entries)`
           );
@@ -52,10 +70,10 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
         <Button
           variant="contained"
           onClick={handleGenerateLectureEntry}
-          disabled={generateLoading}
+          disabled={generateLoading || hasEntries}
           startIcon={generateLoading ? <CircularProgress size={20} /> : null}
         >
-          {tm.generateLectureEntry}
+          {hasEntries ? tm.lectureEntriesAlreadyGenerated : tm.generateLectureEntry}
         </Button>
       </Box>
       <Snackbar
@@ -89,6 +107,9 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId })
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
         <LectureScheduleTab courseId={courseId} instanceId={instanceId} />
+      </Box>
+      <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
+        <CourseResourcesTab courseId={courseId} instanceId={instanceId} universityId={universityId} />
       </Box>
     </Box>
   );

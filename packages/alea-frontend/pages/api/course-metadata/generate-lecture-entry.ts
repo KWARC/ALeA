@@ -186,18 +186,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fs.mkdirSync(syllabusDir, { recursive: true });
     }
 
-    let existing: Record<string, any[]> = {};
+    let existing: Record<string, { lectures: any[]; notCoveredSections?: any[] }> = {};
     let alreadyExists = false;
     try {
       if (fs.existsSync(filePath)) {
         existing = JSON.parse(fs.readFileSync(filePath, 'utf8')) || {};
-        alreadyExists = !!existing[courseId] && existing[courseId].length > 0;
+        const courseData = existing[courseId];
+        alreadyExists =
+          !!courseData?.lectures &&
+          Array.isArray(courseData.lectures) &&
+          courseData.lectures.length > 0;
       }
     } catch (e) {
       console.error('Failed to read existing file:', e);
       existing = {};
     }
-    existing[courseId] = generatedEntries;
+
+    if (alreadyExists) {
+      return res.status(200).json({
+        courseId,
+        count: existing[courseId].lectures.length,
+        filePath,
+        alreadyExists: true,
+      });
+    }
+
+    existing[courseId] = {
+      lectures: generatedEntries,
+      notCoveredSections: existing[courseId]?.notCoveredSections || [],
+    };
 
     fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
 
