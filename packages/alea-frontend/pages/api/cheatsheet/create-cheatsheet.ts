@@ -179,14 +179,15 @@ export async function getCheatSheetConfigOrSet500OnError(
   weekId: string,
   res: NextApiResponse
 ) {
-  const result: any[] = await executeDontEndSet500OnError(
-    `SELECT generationStartAt, generationEndAt, uploadStartAt, uploadEndAt FROM CheatSheetConfig
-    WHERE universityId = ? AND courseId = ? AND instanceId = ? AND weekId = ?`,
-    [universityId, courseId, instanceId, weekId],
-    res
-  );
-  if (!result) return;
-  return result;
+  // const result: any[] = await executeDontEndSet500OnError(
+  //   `SELECT generationStartAt, generationEndAt, uploadStartAt, uploadEndAt FROM CheatSheetConfig
+  //   WHERE universityId = ? AND courseId = ? AND instanceId = ? AND weekId = ?`,
+  //   [universityId, courseId, instanceId, weekId],
+  //   res
+  // );
+  // if (!result) return;
+  // return result;
+  return [];
 }
 
 async function validateGenerationWindowOrSetError(
@@ -241,11 +242,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fields.studentId = userId;
     fields.dateOfDownload = new Date().toISOString();
 
-    const semesterInfo = { semesterStart: '2025-10-01' };
-    // const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
-    // if (!semesterInfo?.semesterStart) {
-    //   return res.status(400).send('Semester start date not found, cannot generate week id');
-    // }
+    const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
+    if (!semesterInfo?.semesterStart) {
+      return res.status(400).send('Semester start date not found, cannot generate week id');
+    }
     const weekId = generateWeekIdFromSemesterStart(semesterInfo.semesterStart);
     fields.weekId = weekId;
     const allowed = await validateGenerationWindowOrSetError(

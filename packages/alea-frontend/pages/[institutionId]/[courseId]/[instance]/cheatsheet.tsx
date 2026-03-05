@@ -127,7 +127,7 @@ function CheatSheetsContent({
         onGenerate={downloadCheatsheet}
         onUpload={() => setUploadOpen(true)}
       />
-
+{/* 
       {isEmbedded && (
         <InstructorDateRangeFields
           generationWindow={generationWindow}
@@ -135,7 +135,7 @@ function CheatSheetsContent({
           onGenerationWindowChange={setGenerationWindow}
           onUploadWindowChange={setUploadWindow}
         />
-      )}
+      )} */}
 
       <Box sx={pageStyles.titleBar}>
         <Box sx={pageStyles.titleLeft}>
