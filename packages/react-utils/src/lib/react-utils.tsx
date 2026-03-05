@@ -8,13 +8,14 @@ import { updateRouterQuery } from './routerHelpers';
 import { SafeHtml } from './SafeHtml';
 import { useScrollDirection } from './useScrollDirection';
 import { CourseProvider, useCourses } from './CourseContext';
-
+import { getIconByExtension } from './utils';
 export {
   CommentRefreshProvider,
   CourseProvider,
   ConfirmDialogContent,
   CountryFlag,
   DateView,
+  getIconByExtension,
   IsLoggedInProvider,
   UserContextProvider,
   useCurrentUser,

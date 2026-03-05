@@ -13,9 +13,9 @@ export const PRIMARY_COL_DARK_HOVER = '#162343';
 export const SECONDARY_COL = '#8c9fb1';
 export const getAdaptiveColor = (
   baseColor: string,
-  defaultBg:string,
+  defaultBg: string,
   basePercent = 30,
-  defaultBgPercent = 70,
+  defaultBgPercent = 70
 ) => {
   return `color-mix(in srgb, ${defaultBg} ${defaultBgPercent}%, ${baseColor} ${basePercent}%)`;
 };
@@ -63,6 +63,30 @@ export const languageUrlMap: Record<string, Language> = {
   ur: Language.Urdu,
   vi: Language.Vietnamese,
 };
+export const MIME_MAP: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.txt': 'text/plain',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.csv': 'text/csv',
+  '.zip': 'application/zip',
+};
+export const MIME_TO_EXTENSION: Record<string, string> = Object.fromEntries(
+  Object.entries(MIME_MAP).map(([ext, mime]) => [mime, ext])
+);
+
+export const getExtensionFromMime = (mime: string): string | undefined => MIME_TO_EXTENSION[mime];
 
 export async function waitForNSeconds(n_sec: number) {
   return new Promise((resolve) => setTimeout(resolve, n_sec * 1000));

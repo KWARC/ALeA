@@ -10,7 +10,7 @@ import {
   executeDontEndSet500OnError,
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, ResourceName } from '@alea/utils';
+import { Action, MIME_MAP, ResourceName } from '@alea/utils';
 
 const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
 const TEMP_PATH = path.resolve(process.env.TEMP_DIR || path.join(process.cwd(), 'materials_temp'));
@@ -28,17 +28,8 @@ export const config = {
 
 export function getMimeType(fileName: string): string {
   const ext = path.extname(fileName).toLowerCase();
-  const mimeMap: Record<string, string> = {
-    '.pdf': 'application/pdf',
-    '.json': 'application/json',
-    '.md': 'text/markdown',
-    '.txt': 'text/plain',
-    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    '.ppt': 'application/vnd.ms-powerpoint',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    '.doc': 'application/msword',
-  };
-  return mimeMap[ext] || 'application/octet-stream';
+
+  return MIME_MAP[ext] || 'application/octet-stream';
 }
 
 async function computeChecksumStreaming(filePath: string): Promise<string> {
@@ -112,7 +103,7 @@ async function handleFileMaterial(
       if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
       return res.status(409).send('Duplicate file already exists');
     }
-    const storageFileName = `${checksum}${ext}`;
+    const storageFileName = `${universityId}_${courseId}_${instanceId}_${checksum}${ext}`;
     const filePath = path.resolve(BASE_PATH, storageFileName);
     try {
       fs.renameSync(tempFilePath, filePath);
