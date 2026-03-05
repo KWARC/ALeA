@@ -201,19 +201,10 @@ export function PerSectionQuiz({
     return problems.find((p) => p.problemId === problemUri);
   }, [problems, problemUri]);
 
-  // const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
-
-  // const [selectedQuizUri, setSelectedQuizUri] = useState<string | null>(null);
-
   const [selectedRef, setSelectedRef] = useState<{
     uri: string;
     type: 'exam' | 'quiz';
   } | null>(null);
-
-  // useEffect(() => {
-  //   setSelectedExamUri(null);
-  //   setSelectedQuizUri(null);
-  // }, [problemUri]);
 
   useEffect(() => {
     setSelectedRef(null);
@@ -383,7 +374,6 @@ export function PerSectionQuiz({
       finalUris = examProblemIds;
     }
     setProblemUris(finalUris);
-    // setAllProblemUris(finalUris);
     setIsSubmitted(finalUris.map(() => false));
     setResponses(finalUris.map(() => undefined));
     setProblemIdx(0);
@@ -521,60 +511,6 @@ export function PerSectionQuiz({
                       my: 2,
                     }}
                   >
-                    {/* {examOptions.length > 0 && !selectedExamUri && (
-                      <Box sx={{ minWidth: 150 }}>
-                        <ExamSelect
-                          exams={examOptions}
-                          courseId={courseId}
-                          value=""
-                          onChange={(uri) => setSelectedExamUri(uri)}
-                          label="Appeared in exams"
-                          size="small"
-                        />
-                      </Box>
-                    )}
-
-                    {quizOptions.length > 0 && !selectedQuizUri && (
-                      <Box sx={{ minWidth: 150 }}>
-                        <ExamSelect
-                          exams={quizOptions}
-                          courseId={courseId}
-                          value=""
-                          onChange={(uri) => setSelectedQuizUri(uri)}
-                          label="Appeared in quizzes"
-                          size="small"
-                        />
-                      </Box>
-                    )}
-
-                    {selectedExamUri && (
-                      <Chip
-                        label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
-                        color="error"
-                        onDelete={() => setSelectedExamUri(null)}
-                        onClick={() =>
-                          window.open(
-                            `/exam-problems?examUri=${encodeURIComponent(selectedExamUri)}`,
-                            '_blank'
-                          )
-                        }
-                      />
-                    )}
-
-                    {selectedQuizUri && (
-                      <Chip
-                        label={formatQuizLabelDropdown(selectedQuizUri, undefined, courseId)}
-                        color="primary"
-                        onDelete={() => setSelectedQuizUri(null)}
-                        onClick={() =>
-                          window.open(
-                            `/quiz-problems?quizUri=${encodeURIComponent(selectedQuizUri)}`,
-                            '_blank'
-                          )
-                        }
-                      />
-                    )} */}
-
                     {combinedOptions.length > 0 && !selectedRef && (
                       <Box sx={{ minWidth: 180 }}>
                         <ExamSelect
