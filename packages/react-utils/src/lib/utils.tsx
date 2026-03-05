@@ -11,32 +11,32 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 
 export const getIconByExtension = (ext: string, props?: SvgIconProps) => {
   switch (ext) {
-    case 'pdf':
+    case '.pdf':
       return <PictureAsPdfIcon color="error" {...props} />;
-    case 'doc':
-    case 'docx':
+    case '.doc':
+    case '.docx':
       return <DescriptionIcon color="primary" {...props} />;
-    case 'xls':
-    case 'xlsx':
-    case 'csv':
+    case '.xls':
+    case '.xlsx':
+    case '.csv':
       return <TableChartIcon color="success" {...props} />;
-    case 'ppt':
-    case 'pptx':
+    case '.ppt':
+    case '.pptx':
       return <SlideshowIcon color="warning" {...props} />;
-    case 'zip':
-    case 'rar':
-    case '7z':
+    case '.zip':
+    case '.rar':
+    case '.7z':
       return <FolderZipIcon {...props} />;
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-    case 'webp':
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.gif':
+    case '.webp':
       return <ImageIcon {...props} />;
-    case 'txt':
-    case 'md':
+    case '.txt':
+    case '.md':
       return <TextSnippetIcon {...props} />;
-    case 'json':
+    case '.json':
       return <DataObjectIcon {...props} />;
     default:
       return <InsertDriveFileIcon {...props} />;
