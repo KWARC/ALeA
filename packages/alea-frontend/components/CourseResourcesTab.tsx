@@ -1,6 +1,5 @@
 import DeleteIcon from '@mui/icons-material/Delete';
 import UploadIcon from '@mui/icons-material/Upload';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LinkIcon from '@mui/icons-material/Link';
@@ -26,8 +25,16 @@ import {
 
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-
-import { deleteMaterial, getMaterials, getMaterialFileUrl, postMaterial, CourseMaterial } from '@alea/spec';
+import {
+  deleteMaterial,
+  getMaterials,
+  getMaterialFileUrl,
+  postMaterial,
+  CourseMaterial,
+} from '@alea/spec';
+import { getExtensionFromMime } from '@alea/utils';
+import { getIconByExtension } from '@alea/react-utils';
+import { InsertDriveFile } from '@mui/icons-material';
 
 interface CourseResourcesTabProps {
   courseId: string;
@@ -60,7 +67,7 @@ export default function CourseResourcesTab({
     queryKey: ['materials', universityId, courseId, instanceId],
     queryFn: () => getMaterials(universityId, courseId, instanceId),
     enabled: !!courseId && !!instanceId,
-     staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const filteredResources = resources;
@@ -115,7 +122,10 @@ export default function CourseResourcesTab({
       if (error?.response?.status === 409) {
         setDuplicateError('This file has already been uploaded. Please choose a different file.');
       } else {
-        setToast({ type: 'error', text: error?.response?.data || error.message || 'Failed to upload resource' });
+        setToast({
+          type: 'error',
+          text: error?.response?.data || error.message || 'Failed to upload resource',
+        });
       }
     } finally {
       setUploading(false);
@@ -222,7 +232,9 @@ export default function CourseResourcesTab({
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 {resource.type === 'FILE' ? (
-                  <PictureAsPdfIcon color="error" fontSize="small" />
+                  getIconByExtension(getExtensionFromMime(resource?.mimeType), {
+                    fontSize: 'small',
+                  }) ?? <InsertDriveFile color="primary" fontSize="small" />
                 ) : (
                   <InsertLinkIcon color="primary" fontSize="small" />
                 )}

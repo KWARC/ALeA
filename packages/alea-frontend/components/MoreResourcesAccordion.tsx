@@ -18,8 +18,10 @@ import {
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-
 import { getMaterials, getMaterialFileUrl, CourseMaterial } from '@alea/spec';
+import { getExtensionFromMime } from '@alea/utils';
+import { getIconByExtension } from '@alea/react-utils';
+import { InsertDriveFile } from '@mui/icons-material';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
@@ -46,7 +48,7 @@ export function MoreResourcesAccordion({
     queryKey: ['materials', institutionId, courseId, semester],
     queryFn: () => getMaterials(institutionId, courseId, semester),
     enabled: expanded,
-     staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleExpand = () => {
@@ -91,7 +93,9 @@ export function MoreResourcesAccordion({
                   <Box key={resource.id} sx={styles.resourceRow}>
                     <Box sx={styles.resourceInfo}>
                       {resource.type === 'FILE' ? (
-                        <PictureAsPdfIcon color="error" fontSize="small" />
+                        getIconByExtension(getExtensionFromMime(resource?.mimeType), {
+                          fontSize: 'small',
+                        }) ?? <InsertDriveFile color="primary" fontSize="small" />
                       ) : (
                         <InsertLinkIcon color="primary" fontSize="small" />
                       )}
