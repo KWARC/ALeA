@@ -1,7 +1,6 @@
 import { CircularProgress } from '@mui/material';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 import ProblemList from '../../../../components/ProblemList';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
@@ -19,11 +18,6 @@ const PracticeProblemsPage: NextPage = () => {
   const { data: sectionsData = [], isLoading: sectionDataLoading } = useContentToc(
     courseInfo?.notes
   );
-  useEffect(() => {
-    if (courseId && !courseInfo) {
-      router.replace('/');
-    }
-  }, [courseId, courseInfo, router]);
   if (isValidating) return null;
   if (validationError) {
     return (
@@ -35,8 +29,10 @@ const PracticeProblemsPage: NextPage = () => {
       />
     );
   }
-  if (!institutionId || !courseId || !resolvedInstanceId || !courseInfo) return <CourseNotFound />;
-  if (!router.isReady || isCourseLoading || sectionDataLoading) return <CircularProgress />;
+  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
+  if (!router.isReady || isCourseLoading) return <CircularProgress />;
+  if (!courseInfo) return <CourseNotFound />;
+  if (sectionDataLoading) return <CircularProgress />;
 
   return (
     <MainLayout title={`${(courseId || '').toUpperCase()} Problems | ALeA`}>
