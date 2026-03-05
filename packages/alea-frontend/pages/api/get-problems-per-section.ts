@@ -1,7 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllCoursesFromDb } from './get-all-courses';
 import { getCategorizedProblems } from './get-categorized-problem';
-import { getExamsForCourse, getProblemsForExam } from '@alea/spec';
+import {
+  getExamsForCourse,
+  getProblemsForExam,
+  getProblemsForQuiz,
+  getQuizzesForCourse,
+} from '@alea/spec';
 import { Language } from '@alea/utils';
 
 function normalizeProblemUri(uri: string) {
@@ -34,6 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const sectionProblemSet = new Set(practiceProblems.map((p) => normalizeProblemUri(p.problemId)));
 
+  const quizzes = await getQuizzesForCourse(courseId);
+  const quizProblemMap = new Map<string, { quizUri: string; quizLabel: string }[]>();
+
   for (const exam of exams) {
     const examProblems = await getProblemsForExam(exam.uri);
 
@@ -54,6 +62,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  for (const quiz of quizzes) {
+    const quizProblems = await getProblemsForQuiz(quiz.uri);
+
+    for (const problemUri of quizProblems) {
+      const normalized = normalizeProblemUri(problemUri);
+
+      if (!sectionProblemSet.has(normalized)) continue;
+
+      const existing = quizProblemMap.get(normalized) ?? [];
+
+      existing.push({
+        quizUri: quiz.uri,
+        quizLabel: quiz.number ? `Quiz ${quiz.number}` : 'Quiz',
+      });
+
+      quizProblemMap.set(normalized, existing);
+    }
+  }
+
   const practiceProblemSet = new Set(practiceProblems.map((p) => normalizeProblemUri(p.problemId)));
 
   const examOnlyProblems = Array.from(examOnlyProblemSet)
@@ -69,6 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const enrichedProblems = allProblems.map((p) => ({
     ...p,
     examRefs: examProblemMap.get(normalizeProblemUri(p.problemId)) ?? [],
+    quizRefs: quizProblemMap.get(normalizeProblemUri(p.problemId)) ?? [],
   }));
 
   return res.status(200).json(enrichedProblems);
