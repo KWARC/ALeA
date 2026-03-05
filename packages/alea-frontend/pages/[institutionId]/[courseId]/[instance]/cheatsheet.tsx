@@ -34,11 +34,6 @@ import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
 
-// ---------------------------------------------------------------------------
-// InstructorDateRangeFields
-// Reusable component for generation/upload window configuration (instructor only)
-// ---------------------------------------------------------------------------
-
 export interface DateRangeValue {
   start: string;
   end: string;
@@ -61,7 +56,6 @@ export function InstructorDateRangeFields({
 }: InstructorDateRangeFieldsProps) {
   return (
     <Box sx={dateRangeStyles.root}>
-      {/* Generation window */}
       <Box sx={dateRangeStyles.group}>
         <Typography variant="caption" sx={dateRangeStyles.groupLabel}>
           Generation Window
@@ -92,7 +86,6 @@ export function InstructorDateRangeFields({
         </Box>
       </Box>
 
-      {/* Upload window */}
       <Box sx={dateRangeStyles.group}>
         <Typography variant="caption" sx={dateRangeStyles.groupLabel}>
           Upload Window
@@ -123,11 +116,6 @@ export function InstructorDateRangeFields({
     </Box>
   );
 }
-
-// ---------------------------------------------------------------------------
-// CheatSheetActions
-// Consolidates Generate + Upload buttons into one component
-// ---------------------------------------------------------------------------
 
 interface CheatSheetActionsProps {
   isEmbedded: boolean;
@@ -165,10 +153,6 @@ function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActio
     </Box>
   );
 }
-
-// ---------------------------------------------------------------------------
-// CheatSheetsContent
-// ---------------------------------------------------------------------------
 
 function CheatSheetsContent({
   files,
