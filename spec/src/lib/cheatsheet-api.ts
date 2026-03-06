@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 export interface CheatSheet {
-  id: number;
+  cheatsheetId: number;
   userId: string;
   universityId: string;
   courseId: string;
   instanceId: string;
   weekId: string;
   checksum: string;
-  dateOfDownload: string;
+  uploadedAt: string;
   createdAt: string;
 }
 

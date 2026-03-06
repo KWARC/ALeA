@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
+  executeTxnAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
 import formidable from 'formidable';
@@ -21,23 +22,16 @@ const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
 export const config = { api: { bodyParser: false } };
 
 interface QRData {
-  courseId: string;
-  dateOfDownload: string;
-  instanceId: string;
-  universityId: string;
-  studentId: string;
-  studentName?: string;
-  weekId: string;
+  cheatsheetId: string;
 }
-
 interface ExtractedFields {
+  cheatsheetId?: string;
   studentName?: string;
   studentId?: string;
   weekId?: string;
   instanceId?: string;
   courseId?: string;
   universityId?: string;
-  dateOfDownload?: string;
 }
 
 function generateChecksum(buffer: Buffer): string {
@@ -62,11 +56,13 @@ function sanitize(value: string): string {
 function buildFileName(fields: ExtractedFields, userId: string, checksum: string): string {
   return (
     [
+      sanitize(fields.universityId as string),
+      sanitize(fields.courseId as string),
       sanitize(fields.instanceId as string),
-      userId,
+      fields.studentId,
       sanitize(fields.weekId as string),
       checksum,
-    ].join('_') + '.pdf'
+    ].join('-') + '.pdf'
   );
 }
 
@@ -87,28 +83,19 @@ async function extractFields(
   const qr = await extractQRFromPDF(buffer);
 
   const fields: ExtractedFields = {
-    courseId: qr.courseId,
-    instanceId: qr.instanceId,
-    universityId: qr.universityId,
-    studentName: qr.studentName,
-    studentId: qr.studentId,
-    weekId: qr.weekId,
-    dateOfDownload: qr.dateOfDownload,
+    cheatsheetId: qr.cheatsheetId,
   };
 
   return { fields, diagnostics: 'QR: ok' };
 }
 
-function savePDF(filepath: string, cheatsheetDir: string, fileName: string): boolean {
+function savePDF(filepath: string, cheatsheetDir: string, fileName: string): void {
   const dest = path.join(cheatsheetDir, fileName);
-  const prefix = fileName.replace(/_&[^.]+\.pdf$/, ''); //Remove a trailing _&<text>.pdf suffix from the filename.
-  const existing = fs.readdirSync(cheatsheetDir).find((f) => f.startsWith(prefix));
-  console.log({ existing });
-  if (existing) fs.unlinkSync(path.join(cheatsheetDir, existing));
+  if (fs.existsSync(dest)) {
+    fs.unlinkSync(dest);
+  }
   fs.renameSync(filepath, dest);
-  return !!existing;
 }
-
 async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
 
@@ -129,8 +116,6 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
         if (name && !imgNames.includes(name)) imgNames.push(name);
       }
     }
-
-    console.log(`Page ${pageNum}: found ${imgNames.length} image(s):`, imgNames);
 
     for (const name of imgNames) {
       const img: any = await new Promise((resolve, reject) => {
@@ -214,20 +199,13 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
           );
 
           if (result) {
-            console.log(`QR found on page ${pageNum}, image "${name}", scale ${scale}`);
             const outer = JSON.parse(result.data) as { payload: string; signature: string };
             if (!verifyQRSignature(outer.payload, outer.signature)) {
               throw new Error('QR signature verification failed — file may be tampered.');
             }
             const json = JSON.parse(outer.payload) as Record<string, string>;
             return {
-              courseId: json['courseId'] ?? undefined,
-              dateOfDownload: json['dateOfDownload'] ?? json['downloadDate'] ?? undefined,
-              instanceId: json['instanceId'] ?? undefined,
-              universityId: json['universityId'] ?? undefined,
-              studentId: json['studentId'] ?? undefined,
-              studentName: json['studentName'] ?? undefined,
-              weekId: json['weekId'] ?? json['quizId'] ?? undefined,
+              cheatsheetId: json['cheatsheetId'] ?? undefined,
             };
           }
         }
@@ -292,14 +270,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  console.log({ userId });
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
-  console.log('he');
   let file: formidable.File;
   try {
     file = await parseUpload(req);
-    console.log({ file });
   } catch (err: unknown) {
     return res.status(400).send((err as Error)?.message ?? 'Failed to parse form.');
   }
@@ -312,17 +287,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error extracting fields:', err);
     return res.status(500).send('Failed to extract fields.');
   }
-  console.log({ fields, diagnostics });
-  const missing = (
-    ['courseId', 'instanceId', 'universityId', 'weekId', 'studentId', 'dateOfDownload'] as const
-  ).filter((k) => !fields[k]);
-
-  if (missing.length > 0) {
-    return res
-      .status(400)
-      .send(`Could not extract required fields (${missing.join(', ')}). ${diagnostics}`);
+  const cheatsheetId = fields.cheatsheetId;
+  if (!cheatsheetId) {
+    return res.status(422).send('Cheatsheet ID not found in QR code.');
   }
-  const { courseId, instanceId, universityId, weekId, studentId } = fields;
+  const cheatSheetData = await executeAndEndSet500OnError(
+    `SELECT * FROM CheatSheet WHERE cheatsheetId = ?`,
+    [cheatsheetId],
+    res
+  );
+  if (!cheatSheetData) return;
+  if (!cheatSheetData.length)
+    return res.status(404).send('Cheatsheet record not found for extracted cheatsheetId.');
+  const existingRow = cheatSheetData[0];
+
+  const { userId: studentId, courseId, instanceId, universityId, weekId } = existingRow;
+  fields.studentId = studentId;
+  fields.courseId = courseId;
+  fields.instanceId = instanceId;
+  fields.universityId = universityId;
+  fields.weekId = weekId;
   const isInstructor = await isUserIdAuthorizedForAny(userId, [
     {
       name: ResourceName.COURSE_CHEATSHEET,
@@ -357,76 +341,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .send('You do not have permission to upload cheat sheets for this course.');
   }
   const checksum = generateChecksum(buffer);
-  console.log({ checksum });
   const fileName = buildFileName(fields, userId, checksum);
-  console.log({ fileName });
 
   try {
-    const isReplacement = savePDF(file.filepath, CHEATSHEETS_DIR, fileName);
+    savePDF(file.filepath, CHEATSHEETS_DIR, fileName);
   } catch (err: unknown) {
     return res.status(500).send((err as Error)?.message ?? 'Failed to save PDF file.');
   }
   const finalPath = path.join(CHEATSHEETS_DIR, fileName);
-  const existing = await executeAndEndSet500OnError(
-    `SELECT id, checksum , fileName FROM CheatSheet
-     WHERE userId = ? AND instanceId = ? AND courseId = ? AND universityId = ? AND weekId = ?
-     LIMIT 1`,
-    [userId, fields.instanceId, fields.courseId, fields.universityId, fields.weekId],
-    res
-  );
-  console.log({ existing });
-  if (!existing) return;
-  const rows = existing as { id: number; checksum: string; fileName: string }[];
-  const existingRow = rows[0];
-
-  if (existingRow) {
+  if (existingRow?.uploadedAt) {
     if (existingRow.checksum === checksum) {
       return res.status(200).send('Already uploaded.');
     }
-    const baseDir = path.resolve(CHEATSHEETS_DIR);
-    const targetPath = path.resolve(baseDir, existingRow.fileName);
-    if (!targetPath.startsWith(baseDir + path.sep)) {
-      console.error('Path traversal attempt detected:', targetPath);
-      return res.status(400).send('Invalid file path.');
-    }
-
-    if (fs.existsSync(targetPath)) {
-      fs.unlinkSync(targetPath);
-    }
-    //multiple uploads when upload window is open
-    const updated = await executeAndEndSet500OnError(
-      `UPDATE CheatSheet SET checksum = ?,fileName = ? WHERE id = ?`,
-      [checksum, fileName, existingRow.id],
-      res
+    const txnResult = await executeTxnAndEndSet500OnError(
+      res,
+      `INSERT INTO CheatSheetHistory
+   (cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt)
+   SELECT cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt
+   FROM CheatSheet
+   WHERE cheatsheetId = ?`,
+      [existingRow.cheatsheetId],
+      `UPDATE CheatSheet
+   SET checksum = ?, fileName = ?, uploadedVersionNumber = uploadedVersionNumber + 1,
+       uploadedByUserId = ?, uploadedAt = NOW()
+   WHERE cheatsheetId = ?`,
+      [checksum, fileName, userId, existingRow.cheatsheetId]
     );
-    if (!updated) {
-      if (fs.existsSync(finalPath)) {
-        fs.unlinkSync(finalPath);
-        return;
-      }
-    }
+
+    if (!txnResult) return;
     return res.status(200).end();
   }
-  const ownerId = isInstructor ? fields.studentId : userId;
-  const inserted = await executeAndEndSet500OnError(
-    `INSERT INTO CheatSheet
-       (userId, studentName, weekId, instanceId, courseId, universityId, checksum, fileName, dateOfDownload)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      ownerId,
-      fields.studentName ?? null,
-      fields.weekId,
-      fields.instanceId,
-      fields.courseId,
-      fields.universityId,
-      checksum,
-      fileName,
-      fields.dateOfDownload ?? null,
-    ],
+  const result = await executeAndEndSet500OnError(
+    `UPDATE CheatSheet
+   SET checksum = ?,
+       fileName = ?,
+       uploadedVersionNumber = ?,
+       uploadedByUserId = ?,
+       uploadedAt = NOW()
+   WHERE cheatsheetId = ?`,
+    [checksum, fileName, 1, userId, cheatsheetId],
     res
   );
 
-  if (!inserted) {
+  if (!result) {
     if (fs.existsSync(finalPath)) {
       fs.unlinkSync(finalPath);
       return;

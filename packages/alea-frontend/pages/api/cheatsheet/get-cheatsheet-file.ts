@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!fs.existsSync(filePath)) return res.status(404).send('File not found');
 
     const stat = fs.statSync(filePath);
-    const downloadName = `cheatsheet-${weekId}.pdf`;
+    const downloadName = `cheatsheet-${weekId}-${courseId}.pdf`;
     const isDownload = req.query.download === 'true';
     const stream = fs.createReadStream(filePath);
 

@@ -215,7 +215,7 @@ function CheatSheetsContent({
         <Box sx={pageStyles.list}>
           {files.map((file) => (
             <CheatSheetRow
-              key={file.filename}
+              key={file.cheatsheetId}
               file={file}
               onPreview={onPreview}
               showUserId={false}

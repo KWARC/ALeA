@@ -50,9 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   if (!targetUserId) return;
-  console.log({ targetUserId, courseId, instanceId });
   const results = await executeAndEndSet500OnError(
-    `SELECT id, userId, universityId, courseId, instanceId, weekId, checksum, dateOfDownload, createdAt
+    `SELECT cheatsheetId, userId, universityId, courseId, instanceId, weekId, checksum,  createdAt,uploadedAt
       FROM CheatSheet
       WHERE courseId = ? AND instanceId = ? AND userId = ?
       ORDER BY createdAt DESC`,

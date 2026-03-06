@@ -4,7 +4,11 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
-import { checkIfPostOrSetError, executeDontEndSet500OnError } from '../comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  executeDontEndSet500OnError,
+} from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, getCurrentWeekNoFromStartDate, ResourceName } from '@alea/utils';
 import { getUserProfileOrSet500OnError } from '../get-user-profile';
@@ -20,7 +24,7 @@ interface CheatsheetFields {
   studentName: string;
   studentId: string;
   weekId: string;
-  dateOfDownload: string;
+  createdAt: string;
 }
 
 function validateBody(body: Partial<CheatsheetFields>) {
@@ -37,26 +41,14 @@ function signPayload(payload: string, secret: string) {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-async function buildQrCodeSecure(
-  fields: CheatsheetFields,
-  generationId: string
-): Promise<string | null> {
+async function buildQrCodeSecure(cheatsheetId: string): Promise<string | null> {
   if (!QR_SECRET) {
     console.error('CHEATSHEET_QR_SECRET is not set');
     return null;
   }
-
   const payload = JSON.stringify({
-    generationId,
-    universityId: fields.universityId,
-    instanceId: fields.instanceId,
-    courseId: fields.courseId,
-    studentId: fields.studentId,
-    studentName: fields.studentName,
-    weekId: fields.weekId,
-    dateOfDownload: fields.dateOfDownload,
+    cheatsheetId,
   });
-
   const signature = signPayload(payload, QR_SECRET);
   const finalPayload = JSON.stringify({ payload, signature });
   return QRCode.toDataURL(finalPayload);
@@ -117,14 +109,19 @@ function drawHeader(
     ['Student Name', fields.studentName],
     ['Student Id', fields.studentId],
     ['Week Id', fields.weekId],
-    ['Downloaded At', new Date(fields.dateOfDownload).toLocaleString()],
+    [
+      'Generated At',
+      new Date(fields.createdAt).toLocaleString('en-IN', {
+        timeZoneName: 'short', 
+      }),
+    ],
   ];
-  doc.fontSize(12);
+  doc.fontSize(16);
   rows.forEach(([label, value], i) => {
     doc.text(`${label}: ${value}`, LEFT_X, headerTop + 35 + i * LINE_HEIGHT);
   });
 
-  const QR_SIZE = 160;
+  const QR_SIZE = 275;
   const qrX = width - QR_SIZE - 20;
   const qrY = headerTop + 20;
 
@@ -155,23 +152,22 @@ function drawWriteArea(doc: PDFKit.PDFDocument, startY: number, margin: number) 
 
 function buildPdf(fields: CheatsheetFields, qrImage: string) {
   const PAGE_MARGIN = 10;
-  const HEADER_HEIGHT = 320;
-  const HEADER_TOP = PAGE_MARGIN;
-  const WRITE_AREA_TOP = HEADER_TOP + HEADER_HEIGHT + 10;
-
   const doc = new PDFDocument({
     size: 'A4',
     margin: PAGE_MARGIN,
     autoFirstPage: false,
   });
-
   doc.addPage();
+  const { height } = doc.page;
+  const HEADER_TOP = PAGE_MARGIN;
+  const HEADER_HEIGHT = (height - PAGE_MARGIN * 2) / 2;
+  const WRITE_AREA_TOP = HEADER_TOP + HEADER_HEIGHT + 10;
   drawHeader(doc, fields, qrImage, HEADER_TOP, HEADER_HEIGHT);
   drawWatermark(doc, fields);
   drawWriteArea(doc, WRITE_AREA_TOP, PAGE_MARGIN);
-
   return doc;
 }
+
 export async function getCheatSheetConfigOrSet500OnError(
   universityId: string,
   courseId: string,
@@ -216,7 +212,14 @@ async function validateGenerationWindowOrSetError(
   }
   return true;
 }
-
+function generateId() {
+  const time = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 6);
+  return (time + random).slice(-8);
+}
+function toMySQLDatetime(date: Date = new Date()) {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   if (!validateBody(req.body)) {
@@ -240,7 +243,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fields = req.body as CheatsheetFields;
     fields.studentName = studentName;
     fields.studentId = userId;
-    fields.dateOfDownload = new Date().toISOString();
 
     const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
     if (!semesterInfo?.semesterStart) {
@@ -256,14 +258,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res
     );
     if (!allowed) return;
-    const generationId = uuidv4();
-    const qrImage = await buildQrCodeSecure(fields, generationId);
+    const existing = await executeAndEndSet500OnError(
+      `SELECT cheatsheetId, createdAt
+   FROM CheatSheet
+   WHERE userId=? AND courseId=? AND instanceId=? AND universityId=? AND weekId=?
+   LIMIT 1`,
+      [userId, courseId, instanceId, universityId, weekId],
+      res
+    );
+    if (!existing) return;
+
+    let cheatsheetId;
+    let createdAt;
+
+    if (existing.length > 0) {
+      cheatsheetId = existing[0].cheatsheetId;
+      createdAt = existing[0].createdAt;
+    } else {
+      cheatsheetId = generateId();
+      createdAt = new Date();
+
+      const result = await executeDontEndSet500OnError(
+        `INSERT INTO CheatSheet
+    (cheatsheetId, userId, studentName, universityId, courseId, instanceId, weekId, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          cheatsheetId,
+          userId,
+          studentName,
+          universityId,
+          courseId,
+          instanceId,
+          weekId,
+          toMySQLDatetime(createdAt),
+        ],
+        res
+      );
+      if (!result) return;
+    }
+    fields.createdAt = createdAt;
+    const qrImage = await buildQrCodeSecure(cheatsheetId);
     if (!qrImage) {
       return res.status(500).send('QR generation failed');
     }
     const doc = buildPdf(fields, qrImage);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="cheatsheet-${fields.weekId}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="cheatsheet-${fields.weekId}-${fields.courseId}.pdf"`);
     doc.pipe(res);
     doc.end();
   } catch (error) {
