@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 import {
@@ -59,7 +58,7 @@ export function generateWeekIdFromSemesterStart(semesterStart: string) {
   return `W${weekNumber}`;
 }
 
-function drawWatermark(doc: PDFKit.PDFDocument, fields: CheatsheetFields) {
+function drawWatermark(doc: PDFDocument, fields: CheatsheetFields) {
   const { width, height } = doc.page;
   const text = `${fields.studentName} | ${fields.studentId} | ${fields.weekId}`;
 
@@ -89,18 +88,22 @@ function drawWatermark(doc: PDFKit.PDFDocument, fields: CheatsheetFields) {
 }
 
 function drawHeader(
-  doc: PDFKit.PDFDocument,
+  doc: PDFDocument,
   fields: CheatsheetFields,
   qrImage: string,
   headerTop: number,
   headerHeight: number
 ) {
   const { width } = doc.page;
-  const LEFT_X = 50;
-  const LINE_HEIGHT = 18;
 
+  const LEFT_X = 25;
+  const CONTENT_TOP = headerTop + 30;
+  const ROW_GAP = 8;
+
+  const QR_SIZE = 275;
+  const qrX = width - QR_SIZE - 15;
+  const qrY = CONTENT_TOP - 20;
   doc.rect(10, headerTop, width - 20, headerHeight).stroke();
-
   const rows: [string, string][] = [
     ['Course Name', fields.courseName],
     ['Course Id', fields.courseId],
@@ -116,14 +119,19 @@ function drawHeader(
       }),
     ],
   ];
+  const textWidth = qrX - LEFT_X - 20;
   doc.fontSize(16);
-  rows.forEach(([label, value], i) => {
-    doc.text(`${label}: ${value}`, LEFT_X, headerTop + 35 + i * LINE_HEIGHT);
+  let y = CONTENT_TOP;
+  rows.forEach(([label, value]) => {
+    const text = `${label}: ${value}`;
+    const textHeight = doc.heightOfString(text, {
+      width: textWidth,
+    });
+    doc.text(text, LEFT_X, y, {
+      width: textWidth,
+    });
+    y += textHeight + ROW_GAP;
   });
-
-  const QR_SIZE = 275;
-  const qrX = width - QR_SIZE - 20;
-  const qrY = headerTop + 20;
 
   if (qrImage) {
     try {
@@ -137,10 +145,15 @@ function drawHeader(
 
   const note =
     'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
+
   doc.fontSize(10).fillColor('red');
-  doc.text(note, 20, headerTop + headerHeight - 40, { width: width - 40, align: 'center' });
+
+  doc.text(note, 20, headerTop + headerHeight - 40, {
+    width: width - 40,
+    align: 'center',
+  });
 }
-function drawWriteArea(doc: PDFKit.PDFDocument, startY: number, margin: number) {
+function drawWriteArea(doc: PDFDocument, startY: number, margin: number) {
   const { width, height } = doc.page;
   const areaHeight = height - startY - margin;
   const areaWidth = width - 2 * margin;
