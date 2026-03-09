@@ -1,11 +1,4 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Chip,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Chip, Tooltip, Typography } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useRouter } from 'next/router';
@@ -21,7 +14,14 @@ import { createCheatSheet, getAllCourses, getCheatSheets } from '@alea/spec';
 import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
-import { CheatSheetRow, DateRangeValue, EmptyState, FilePreviewDialog, InstructorDateRangeFields, UserFilterBar } from '../../../../components/CheatSheetComponents';
+import {
+  CheatSheetRow,
+  DateRangeValue,
+  EmptyState,
+  FilePreviewDialog,
+  InstructorDateRangeFields,
+  UserFilterBar,
+} from '../../../../components/CheatSheetComponents';
 
 interface CheatSheetActionsProps {
   isEmbedded: boolean;
@@ -29,9 +29,13 @@ interface CheatSheetActionsProps {
   onUpload: () => void;
 }
 
-function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActionsProps) {
+function CheatSheetActions({
+  isEmbedded,
+  onGenerate,
+  onUpload,
+}: CheatSheetActionsProps) {
   return (
-    <Box display="flex" justifyContent="end" gap={2}>
+    <Box display="flex" justifyContent="end" gap={2} alignItems="flex-start">
       {!isEmbedded && (
         <Tooltip title="Generate Empty CheatSheet">
           <Button
@@ -127,15 +131,6 @@ function CheatSheetsContent({
         onGenerate={downloadCheatsheet}
         onUpload={() => setUploadOpen(true)}
       />
-{/* 
-      {isEmbedded && (
-        <InstructorDateRangeFields
-          generationWindow={generationWindow}
-          uploadWindow={uploadWindow}
-          onGenerationWindowChange={setGenerationWindow}
-          onUploadWindowChange={setUploadWindow}
-        />
-      )} */}
 
       <Box sx={pageStyles.titleBar}>
         <Box sx={pageStyles.titleLeft}>
@@ -171,6 +166,8 @@ function CheatSheetsContent({
           userIds={uniqueUserIds}
           selectedUserId={selectedUserId}
           onChange={onUserIdChange}
+          // Pass merge props so the Merge button appears inline when a student is selected
+          mergeProps={{ courseId, instanceId, courseName }}
         />
       )}
 

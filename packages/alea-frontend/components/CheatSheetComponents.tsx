@@ -1,11 +1,13 @@
 import {
   Autocomplete,
   Box,
+  Button,
   CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
+  LinearProgress,
   TextField,
   Tooltip,
   Typography,
@@ -17,6 +19,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import MergeTypeIcon from '@mui/icons-material/MergeType';
 import { useState } from 'react';
 import { getCheatSheetFile } from '@alea/spec';
 
@@ -253,14 +256,27 @@ export function EmptyState({ title, subtitle }: { title: string; subtitle: strin
   );
 }
 
+/**
+ * UserFilterBar
+ *
+ * When a student is selected AND the caller provides merge props,
+ * a "Merge" button appears inline — scoped to that student only.
+ */
 export function UserFilterBar({
   userIds,
   selectedUserId,
   onChange,
+  // Optional merge props — only rendered when provided (instructor view)
+  mergeProps,
 }: {
   userIds: string[];
   selectedUserId: string | null;
   onChange: (userId: string | null) => void;
+  mergeProps?: {
+    courseId: string;
+    instanceId: string;
+    courseName: string;
+  };
 }) {
   return (
     <Box sx={filterBarStyles.root}>
@@ -270,6 +286,7 @@ export function UserFilterBar({
           Filter by student
         </Typography>
       </Box>
+
       <Autocomplete<string>
         options={userIds}
         value={selectedUserId}
@@ -286,9 +303,114 @@ export function UserFilterBar({
         clearOnEscape
         blurOnSelect
       />
+
+      {/* Merge button — visible only when a student is selected and mergeProps provided */}
+      {mergeProps && selectedUserId && (
+        <InlineStudentMergeButton
+          courseId={mergeProps.courseId}
+          instanceId={mergeProps.instanceId}
+          courseName={mergeProps.courseName}
+          userId={selectedUserId}
+        />
+      )}
     </Box>
   );
 }
+
+function InlineStudentMergeButton({
+  courseId,
+  instanceId,
+  courseName,
+  userId,
+}: {
+  courseId: string;
+  instanceId: string;
+  courseName: string;
+  userId: string;
+}) {
+  const [merging, setMerging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleMerge = async () => {
+    setMerging(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/cheatsheet/merge-cheatsheet?courseId=${encodeURIComponent(
+          courseId
+        )}&instanceId=${encodeURIComponent(instanceId)}&userId=${encodeURIComponent(userId)}`
+      );
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `Server error ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `merged-${courseName.replace(/\s+/g, '_')}-${userId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Merge failed:', err);
+      setError(err?.message ?? 'Merge failed');
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  return (
+    <Box sx={mergeStyles.root}>
+      <Tooltip title={`Merge all cheat sheets for student ${userId} into one PDF`}>
+        <span>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={merging ? <CircularProgress size={14} thickness={5} /> : <MergeTypeIcon />}
+            onClick={handleMerge}
+            disabled={merging}
+            sx={mergeStyles.btn}
+          >
+            {merging ? 'Merging…' : 'Merge All'}
+          </Button>
+        </span>
+      </Tooltip>
+
+      {merging && <LinearProgress sx={mergeStyles.progress} />}
+
+      {error && (
+        <Typography variant="caption" color="error" sx={mergeStyles.error}>
+          {error}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+const mergeStyles = {
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.5,
+    flexShrink: 0,
+  },
+  btn: {
+    fontWeight: 600,
+    textTransform: 'none',
+    borderRadius: 2,
+    whiteSpace: 'nowrap',
+  },
+  progress: {
+    borderRadius: 4,
+    height: 3,
+  },
+  error: {
+    fontSize: 10,
+    lineHeight: 1.3,
+  },
+};
 
 const rowStyles = {
   root: {
@@ -423,6 +545,7 @@ const filterBarStyles = {
     bgcolor: 'background.paper',
     border: '1px solid',
     borderColor: 'divider',
+    flexWrap: 'wrap',
   },
   labelWrap: {
     display: 'flex',
