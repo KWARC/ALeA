@@ -19,6 +19,7 @@ import {
   DateRangeValue,
   EmptyState,
   FilePreviewDialog,
+  InlineStudentMergeButton,
   InstructorDateRangeFields,
   UserFilterBar,
 } from '../../../../components/CheatSheetComponents';
@@ -29,11 +30,7 @@ interface CheatSheetActionsProps {
   onUpload: () => void;
 }
 
-function CheatSheetActions({
-  isEmbedded,
-  onGenerate,
-  onUpload,
-}: CheatSheetActionsProps) {
+function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActionsProps) {
   return (
     <Box display="flex" justifyContent="end" gap={2} alignItems="flex-start">
       {!isEmbedded && (
@@ -143,13 +140,13 @@ function CheatSheetsContent({
             </Typography>
             <Typography variant="body2" sx={pageStyles.subheading}>
               {isEmbedded
-                ? 'Browse all cheat sheets generated for this course instance'
-                : 'All your generated cheat sheet files in one place'}
+                ? 'Browse all cheat sheets uploaded for this course instance'
+                : 'All your uploaded cheat sheet files in one place'}
             </Typography>
           </Box>
         </Box>
-
-        <Box sx={pageStyles.titleRight}>
+        <Box display={"flex"} gap={2}>
+               <Box sx={pageStyles.titleRight}>
           {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
             <Chip
               label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
@@ -159,15 +156,25 @@ function CheatSheetsContent({
             />
           )}
         </Box>
+        {!isEmbedded && userId && (
+          <InlineStudentMergeButton
+            courseId={courseId}
+            instanceId={instanceId}
+            universityId={universityId}
+            userId={userId}
+          />
+        )}
+   
+      </Box>
       </Box>
 
       {isEmbedded && uniqueUserIds.length > 0 && (
         <UserFilterBar
+          universityId={universityId}
           userIds={uniqueUserIds}
           selectedUserId={selectedUserId}
           onChange={onUserIdChange}
-          // Pass merge props so the Merge button appears inline when a student is selected
-          mergeProps={{ courseId, instanceId, courseName }}
+          mergeProps={{ courseId, instanceId, courseName, universityId }}
         />
       )}
 

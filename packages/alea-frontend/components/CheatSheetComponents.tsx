@@ -256,25 +256,20 @@ export function EmptyState({ title, subtitle }: { title: string; subtitle: strin
   );
 }
 
-/**
- * UserFilterBar
- *
- * When a student is selected AND the caller provides merge props,
- * a "Merge" button appears inline — scoped to that student only.
- */
 export function UserFilterBar({
   userIds,
   selectedUserId,
   onChange,
-  // Optional merge props — only rendered when provided (instructor view)
   mergeProps,
 }: {
   userIds: string[];
   selectedUserId: string | null;
+  universityId: string;
   onChange: (userId: string | null) => void;
   mergeProps?: {
     courseId: string;
     instanceId: string;
+    universityId:string;
     courseName: string;
   };
 }) {
@@ -304,88 +299,151 @@ export function UserFilterBar({
         blurOnSelect
       />
 
-      {/* Merge button — visible only when a student is selected and mergeProps provided */}
       {mergeProps && selectedUserId && (
         <InlineStudentMergeButton
           courseId={mergeProps.courseId}
           instanceId={mergeProps.instanceId}
-          courseName={mergeProps.courseName}
+          universityId={mergeProps.universityId}
           userId={selectedUserId}
         />
       )}
     </Box>
   );
 }
-
-function InlineStudentMergeButton({
+export function InlineStudentMergeButton({
   courseId,
   instanceId,
-  courseName,
+  universityId,
   userId,
 }: {
   courseId: string;
   instanceId: string;
-  courseName: string;
+  universityId: string;
   userId: string;
 }) {
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleMerge = async () => {
+  const buildUrl = () =>
+    `/api/cheatsheet/merge-cheatsheet?courseId=${encodeURIComponent(
+      courseId
+    )}&instanceId=${encodeURIComponent(instanceId)}&userId=${encodeURIComponent(
+      userId
+    )}&universityId=${encodeURIComponent(universityId)}`;
+
+  const handleDownload = async () => {
     setMerging(true);
     setError(null);
+
     try {
-      const res = await fetch(
-        `/api/cheatsheet/merge-cheatsheet?courseId=${encodeURIComponent(
-          courseId
-        )}&instanceId=${encodeURIComponent(instanceId)}&userId=${encodeURIComponent(userId)}`
-      );
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || `Server error ${res.status}`);
-      }
+      const res = await fetch(buildUrl());
+      if (!res.ok) throw new Error(await res.text());
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `merged-${courseName.replace(/\s+/g, '_')}-${userId}.pdf`;
-      document.body.appendChild(a);
+      a.download = `cheatsheets-${courseId.replace(/\s+/g, "_")}-${userId}.pdf`;
       a.click();
-      document.body.removeChild(a);
+
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      console.error('Merge failed:', err);
-      setError(err?.message ?? 'Merge failed');
+      setError(err?.message ?? "Merge failed");
     } finally {
       setMerging(false);
     }
   };
 
-  return (
-    <Box sx={mergeStyles.root}>
-      <Tooltip title={`Merge all cheat sheets for student ${userId} into one PDF`}>
-        <span>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={merging ? <CircularProgress size={14} thickness={5} /> : <MergeTypeIcon />}
-            onClick={handleMerge}
-            disabled={merging}
-            sx={mergeStyles.btn}
-          >
-            {merging ? 'Merging…' : 'Merge All'}
-          </Button>
-        </span>
-      </Tooltip>
+  const handlePreview = async () => {
+    setMerging(true);
+    setError(null);
+    try {
+      const res = await fetch(buildUrl());
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setPreviewOpen(true);
+    } catch (err: any) {
+      setError(err?.message ?? "Preview failed");
+    } finally {
+      setMerging(false);
+    }
+  };
 
-      {merging && <LinearProgress sx={mergeStyles.progress} />}
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
+
+  return (
+    <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1
+        }}
+      >
+        <Tooltip title="Preview merged cheatsheets">
+          <span>
+            <IconButton
+              size="small"
+              onClick={handlePreview}
+              disabled={merging}
+            >
+              <OpenInNewIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={
+            merging ? (
+              <CircularProgress size={14} thickness={5} />
+            ) : (
+              <MergeTypeIcon />
+            )
+          }
+          onClick={handleDownload}
+          disabled={merging}
+        >
+          {merging ? "Merging…" : "Merge & Download"}
+        </Button>
+      </Box>
 
       {error && (
-        <Typography variant="caption" color="error" sx={mergeStyles.error}>
+        <Typography variant="caption" color="error">
           {error}
         </Typography>
       )}
-    </Box>
+
+      <Dialog
+        open={previewOpen}
+        onClose={handleClosePreview}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Merged Cheatsheet Preview</DialogTitle>
+
+        <DialogContent sx={{ height: "80vh", p: 0 }}>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              width="100%"
+              height="100%"
+              style={{ border: "none" }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

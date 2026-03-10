@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const results = await executeAndEndSet500OnError(
     `SELECT cheatsheetId, userId, universityId, courseId, instanceId, weekId, checksum,  createdAt,uploadedAt
       FROM CheatSheet
-      WHERE courseId = ? AND instanceId = ? AND userId = ?
+      WHERE courseId = ? AND instanceId = ? AND userId = ? AND uploadedAt IS NOT NULL
       ORDER BY createdAt DESC`,
     [courseId, instanceId, targetUserId],
     res

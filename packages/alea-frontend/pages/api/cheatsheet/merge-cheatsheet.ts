@@ -1,180 +1,217 @@
+import PDFKit from 'pdfkit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import { PDFDocument } from 'pdf-lib';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, ResourceName } from '@alea/utils';
+import { CheatsheetFields, drawHeader, drawWatermark } from './create-cheatsheet';
+import { buildQrCodeSecure } from './create-cheatsheet';
+import { resolveTargetUserIdOrsetError } from './get-cheatsheets';
 
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
-};
+export async function mergeCheatsheets(
+  fields: CheatsheetFields,
+  qrImage: string,
+  pdfBuffers: Buffer[]
+): Promise<Buffer> {
+  const headerBuffer = await new Promise<Buffer>((resolve) => {
+    const buffers: Buffer[] = [];
+    const PAGE_MARGIN = 10;
+    const doc = new PDFKit({
+      size: 'A4',
+      margin: PAGE_MARGIN,
+      autoFirstPage: false,
+    });
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+    doc.addPage();
+    const { height } = doc.page;
+    const HEADER_TOP = PAGE_MARGIN;
+    const HEADER_HEIGHT = (height - PAGE_MARGIN * 2) / 2;
+    const rows: [string, string][] = [
+      ['Course Name', fields.courseName],
+      ['Course Id', fields.courseId],
+      ['Instance Id', fields.instanceId],
+      ['University Id', fields.universityId],
+      ['Student Name', fields.studentName],
+      ['Student Id', fields.studentId],
+      ['Upto Week Id', fields.weekId],
+      [
+        'Generated At',
+        new Date(fields.createdAt).toLocaleString('en-IN', {
+          timeZoneName: 'short',
+        }),
+      ],
+    ];
+    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
+    drawWatermark(doc, fields);
+    doc.end();
+  });
+
+  const finalDoc = await PDFDocument.create();
+  const headerPdf = await PDFDocument.load(headerBuffer);
+  const headerPage = headerPdf.getPages()[0];
+  const { width, height } = headerPage.getSize();
+  const embeddedHeader = await finalDoc.embedPage(headerPage, {
+    left: 0,
+    bottom: height / 2,
+    right: width,
+    top: height,
+  });
+  let halves: any[] = [];
+  let isFirstBottomPlaced = false;
+  for (const buffer of pdfBuffers) {
+    const src = await PDFDocument.load(buffer);
+    for (const page of src.getPages()) {
+      const { width, height } = page.getSize();
+      const bottomHalf = await finalDoc.embedPage(page, {
+        left: 0,
+        bottom: 0,
+        right: width,
+        top: height / 2,
+      });
+      if (!isFirstBottomPlaced) {
+        const firstPage = finalDoc.addPage([width, height]);
+        firstPage.drawPage(embeddedHeader, {
+          x: 0,
+          y: height / 2,
+          width,
+          height: height / 2,
+        });
+        firstPage.drawPage(bottomHalf, {
+          x: 0,
+          y: 0,
+          width,
+          height: height / 2,
+        });
+        isFirstBottomPlaced = true;
+        continue;
+      }
+      halves.push({
+        bottomHalf,
+        width,
+        height: height / 2,
+      });
+      if (halves.length === 2) {
+        const newPage = finalDoc.addPage([width, height]);
+        newPage.drawPage(halves[0].bottomHalf, {
+          x: 0,
+          y: height / 2,
+          width,
+          height: height / 2,
+        });
+        newPage.drawPage(halves[1].bottomHalf, {
+          x: 0,
+          y: 0,
+          width,
+          height: height / 2,
+        });
+        halves = [];
+      }
+    }
+  }
+
+  if (halves.length === 1) {
+    const { width, height } = halves[0];
+    const page = finalDoc.addPage([width, height * 2]);
+    page.drawPage(halves[0].bottomHalf, {
+      x: 0,
+      y: height,
+      width,
+      height,
+    });
+  }
+  const bytes = await finalDoc.save();
+  return Buffer.from(bytes);
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!checkIfGetOrSetError(req, res)) return;
-
-    const { courseId, instanceId, userId: filterUserId } = req.query;
-
-    if (!courseId || !instanceId) {
-      return res.status(422).send('Missing courseId or instanceId');
+    const { universityId, courseId, courseName,instanceId, userId: filterUserId } = req.query;
+    if (!universityId || !courseId || !instanceId) {
+      return res.status(422).send('Missing parameters');
     }
-    if (typeof courseId !== 'string' || typeof instanceId !== 'string') {
-      return res.status(422).send('Invalid params');
-    }
-    if (!filterUserId || typeof filterUserId !== 'string') {
-      return res.status(422).send('Missing userId – please select a student to merge');
+    if (
+      typeof universityId !== 'string' ||
+      typeof courseId !== 'string' ||
+      typeof instanceId !== 'string'
+    ) {
+      return res.status(422).send('Invalid parameters');
     }
 
-    const authUserId = await getUserIdIfAuthorizedOrSetError(
+    const targetUserId = await resolveTargetUserIdOrsetError(
       req,
       res,
-      ResourceName.COURSE_CHEATSHEET,
-      Action.MUTATE,
-      { courseId, instanceId }
+      courseId,
+      instanceId,
+      req.query.userId
     );
-    if (!authUserId) return;
-
+    if (!targetUserId) return;
     const cheatsheetsDir = process.env.CHEATSHEETS_DIR;
     if (!cheatsheetsDir) {
-      console.error('CHEATSHEETS_DIR not configured');
-      return res.status(500).send('Internal server error');
+      return res.status(500).send('CHEATSHEETS_DIR not configured');
     }
     const baseDir = path.resolve(cheatsheetsDir);
     const rows = await executeAndEndSet500OnError(
-      `SELECT userId, fileName, weekId, createdAt
+      `SELECT userId, fileName, weekId, createdAt, studentName
        FROM CheatSheet
-       WHERE courseId = ? AND instanceId = ? AND userId = ?
+       WHERE courseId=? AND instanceId=? AND userId=?
        ORDER BY createdAt ASC`,
       [courseId, instanceId, filterUserId],
       res
     );
     if (!rows) return;
     if (rows.length === 0) {
-      return res.status(404).send('No cheat sheets found for this student in this course instance');
+      return res.status(404).send('No cheat sheets found');
     }
-
-    const validFiles: { userId: string; filePath: string }[] = [];
-
+    const validFiles: string[] = [];
     for (const row of rows) {
+      if (!row.fileName) {
+        console.warn('Skipping row with missing fileName:', row);
+        continue;
+      }
       const filePath = path.isAbsolute(row.fileName)
         ? row.fileName
         : path.resolve(baseDir, row.fileName);
-
-      if (!filePath.startsWith(baseDir + path.sep) && filePath !== baseDir) {
-        console.warn(`[merge] Path traversal blocked for ${row.userId}: ${filePath}`);
-        continue;
-      }
-      if (!fs.existsSync(filePath)) {
-        console.warn(`[merge] File not found for ${row.userId}: ${filePath}`);
-        continue;
-      }
-      validFiles.push({ userId: row.userId, filePath });
+      if (!filePath.startsWith(baseDir + path.sep)) continue;
+      if (!fs.existsSync(filePath)) continue;
+      validFiles.push(filePath);
     }
-
     if (validFiles.length === 0) {
-      return res.status(404).send('No readable cheat sheet files found on disk');
+      return res.status(404).send('No cheat sheet files found on disk');
+    }
+    const pdfBuffers: Buffer[] = [];
+    for (const filePath of validFiles) {
+      const buffer = fs.readFileSync(filePath);
+      pdfBuffers.push(buffer);
     }
 
-    interface LoadedPage {
-      page: import('pdf-lib').PDFPage;
-      width: number;
-      height: number;
+    const firstRow = rows[0];
+    const lastRow = rows[rows.length - 1];
+    const fields = {
+      courseName: courseName as string || courseId,
+      courseId,
+      instanceId,
+      universityId,
+      studentName: firstRow.studentName,
+      studentId: firstRow.userId,
+      createdAt: firstRow.createdAt,
+      weekId:lastRow.weekId,
+    };
+    const mergeId = `${universityId}|${courseId}|${instanceId}|${filterUserId}|upto${lastRow.weekId}`;
+    const qrImage = await buildQrCodeSecure({ mergeId });
+    if (!qrImage) {
+      return res.status(500).send('Failed to generate QR code');
     }
-
-    const loadedPages: LoadedPage[] = [];
-
-    for (const { userId, filePath } of validFiles) {
-      try {
-        const pdfBytes = fs.readFileSync(filePath);
-        const srcDoc = await PDFDocument.load(pdfBytes);
-        const [srcPage] = srcDoc.getPages();
-        const { width, height } = srcPage.getSize();
-        loadedPages.push({ page: srcPage, width, height });
-      } catch (err) {
-        console.warn(`[merge] Failed to load PDF for ${userId}:`, err);
-      }
-    }
-
-    if (loadedPages.length === 0) {
-      return res.status(404).send('No readable cheat sheet files found on disk');
-    }
-
-    const PAGE_MARGIN = 10;
-    const merged = await PDFDocument.create();
-
-    for (let i = 0; i < loadedPages.length; i += 2) {
-      const top = loadedPages[i];
-
-      if (i + 1 >= loadedPages.length) {
-        const [embedded] = await merged.embedPages([top.page]);
-        const newPage = merged.addPage([top.width, top.height]);
-        newPage.drawPage(embedded, { x: 0, y: 0, width: top.width, height: top.height });
-        continue;
-      }
-
-      const bottom = loadedPages[i + 1];
-      const pageW = top.width;
-      const pageH = top.height;
-      const halfH = pageH / 2;
-      const topCropBottom = halfH;
-      const topCropTop = pageH;
-      const topCropHeight = topCropTop - topCropBottom; // = halfH
-
-      const [embeddedTop] = await merged.embedPages(
-        [top.page],
-        [{ left: 0, bottom: topCropBottom, right: pageW, top: topCropTop }]
-      );
-      const botCropBottom = PAGE_MARGIN;
-      const botCropTop = halfH;
-      const botCropHeight = botCropTop - botCropBottom;
-
-      const [embeddedBot] = await merged.embedPages(
-        [bottom.page],
-        [{ left: 0, bottom: botCropBottom, right: pageW, top: botCropTop }]
-      );
-      const outH = topCropHeight + botCropHeight;
-      const newPage = merged.addPage([pageW, outH]);
-
-      newPage.drawPage(embeddedTop, {
-        x: 0,
-        y: botCropHeight,
-        width: pageW,
-        height: topCropHeight,
-      });
-      newPage.drawPage(embeddedBot, {
-        x: 0,
-        y: 0,
-        width: pageW,
-        height: botCropHeight,
-      });
-    }
-
-    if (merged.getPageCount() === 0) {
-      console.error(
-        `[merge] 0 pages added for courseId=${courseId} instanceId=${instanceId} userId=${filterUserId}`
-      );
-      return res.status(404).send('No readable cheat sheet files found on disk');
-    }
-
-    // ── Send binary response ─────────────────────────────────────────────────
-    const mergedBytes = await merged.save();
-    const mergedBuffer = Buffer.from(mergedBytes);
-    const downloadName = `merged-cheatsheets-${courseId}-${instanceId}-${filterUserId}.pdf`;
-
+    const mergedPdf = await mergeCheatsheets(fields, qrImage, pdfBuffers);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', mergedBuffer.byteLength);
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
-    res.writeHead(200);
-    res.write(mergedBuffer);
-    res.end();
-  } catch (error) {
-    console.error('[merge] Error:', error);
-    if (!res.headersSent) {
-      res.status(500).send('Failed to merge cheat sheets');
-    }
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="cheatsheet-${fields.studentId}.pdf"`
+    );
+    return res.status(200).send(mergedPdf);
+  } catch (err) {
+    console.error('merge cheatsheet error:', err);
+    return res.status(500).send('Failed to generate cheatsheet PDF');
   }
 }

@@ -15,7 +15,7 @@ import { getSemesterInfoFromDb } from '../calendar/create-calendar';
 
 const QR_SECRET = process.env.CHEATSHEET_QR_SECRET;
 
-interface CheatsheetFields {
+export interface CheatsheetFields {
   courseName: string;
   courseId: string;
   instanceId: string;
@@ -40,14 +40,12 @@ function signPayload(payload: string, secret: string) {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-async function buildQrCodeSecure(cheatsheetId: string): Promise<string | null> {
+export async function buildQrCodeSecure(data: Record<string, any>): Promise<string | null> {
   if (!QR_SECRET) {
     console.error('CHEATSHEET_QR_SECRET is not set');
     return null;
   }
-  const payload = JSON.stringify({
-    cheatsheetId,
-  });
+  const payload = JSON.stringify(data);
   const signature = signPayload(payload, QR_SECRET);
   const finalPayload = JSON.stringify({ payload, signature });
   return QRCode.toDataURL(finalPayload);
@@ -58,7 +56,7 @@ export function generateWeekIdFromSemesterStart(semesterStart: string) {
   return `W${weekNumber}`;
 }
 
-function drawWatermark(doc: PDFDocument, fields: CheatsheetFields) {
+export function drawWatermark(doc: PDFDocument, fields: CheatsheetFields) {
   const { width, height } = doc.page;
   const text = `${fields.studentName} | ${fields.studentId} | ${fields.weekId}`;
 
@@ -87,9 +85,9 @@ function drawWatermark(doc: PDFDocument, fields: CheatsheetFields) {
   doc.restore();
 }
 
-function drawHeader(
+export function drawHeader(
   doc: PDFDocument,
-  fields: CheatsheetFields,
+  rows: [string, string][],
   qrImage: string,
   headerTop: number,
   headerHeight: number
@@ -104,21 +102,6 @@ function drawHeader(
   const qrX = width - QR_SIZE - 15;
   const qrY = CONTENT_TOP - 20;
   doc.rect(10, headerTop, width - 20, headerHeight).stroke();
-  const rows: [string, string][] = [
-    ['Course Name', fields.courseName],
-    ['Course Id', fields.courseId],
-    ['Instance Id', fields.instanceId],
-    ['University Id', fields.universityId],
-    ['Student Name', fields.studentName],
-    ['Student Id', fields.studentId],
-    ['Week Id', fields.weekId],
-    [
-      'Generated At',
-      new Date(fields.createdAt).toLocaleString('en-IN', {
-        timeZoneName: 'short', 
-      }),
-    ],
-  ];
   const textWidth = qrX - LEFT_X - 20;
   doc.fontSize(16);
   let y = CONTENT_TOP;
@@ -175,7 +158,22 @@ function buildPdf(fields: CheatsheetFields, qrImage: string) {
   const HEADER_TOP = PAGE_MARGIN;
   const HEADER_HEIGHT = (height - PAGE_MARGIN * 2) / 2;
   const WRITE_AREA_TOP = HEADER_TOP + HEADER_HEIGHT + 10;
-  drawHeader(doc, fields, qrImage, HEADER_TOP, HEADER_HEIGHT);
+  const rows: [string, string][] = [
+    ['Course Name', fields.courseName],
+    ['Course Id', fields.courseId],
+    ['Instance Id', fields.instanceId],
+    ['University Id', fields.universityId],
+    ['Student Name', fields.studentName],
+    ['Student Id', fields.studentId],
+    ['Week Id', fields.weekId],
+    [
+      'Generated At',
+      new Date(fields.createdAt).toLocaleString('en-IN', {
+        timeZoneName: 'short',
+      }),
+    ],
+  ];
+  drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
   drawWatermark(doc, fields);
   drawWriteArea(doc, WRITE_AREA_TOP, PAGE_MARGIN);
   return doc;
@@ -259,7 +257,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
     if (!semesterInfo?.semesterStart) {
-      return res.status(400).send('Semester start date not found, cannot generate week id');
+    return res.status(400).send('Semester start date not found, cannot generate week id');
     }
     const weekId = generateWeekIdFromSemesterStart(semesterInfo.semesterStart);
     fields.weekId = weekId;
@@ -310,13 +308,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!result) return;
     }
     fields.createdAt = createdAt;
-    const qrImage = await buildQrCodeSecure(cheatsheetId);
+    const qrImage = await buildQrCodeSecure({ cheatsheetId });
     if (!qrImage) {
       return res.status(500).send('QR generation failed');
     }
     const doc = buildPdf(fields, qrImage);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="cheatsheet-${fields.weekId}-${fields.courseId}.pdf"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="cheatsheet-${fields.weekId}-${fields.courseId}.pdf"`
+    );
     doc.pipe(res);
     doc.end();
   } catch (error) {
