@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import LinkIcon from '@mui/icons-material/Link';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import {
   Alert,
@@ -19,34 +20,73 @@ import {
   Paper,
   Select,
   Snackbar,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
 
-import { useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteMaterial,
   getMaterials,
   getMaterialFileUrl,
   postMaterial,
+  copyPrevSemMaterial,
   CourseMaterial,
 } from '@alea/spec';
-import { getExtensionFromMime } from '@alea/utils';
+import { getCurrentTermForUniversity, getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
-import { InsertDriveFile } from '@mui/icons-material';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 interface CourseResourcesTabProps {
   courseId: string;
-  instanceId: string;
+  instanceId?: string;
   universityId: string;
 }
+const generateSemesters = (startTerm: string, count = 8): string[] => {
+  const semesters: string[] = [];
+  if (!startTerm || typeof startTerm !== 'string' || startTerm === 'null') {
+    const genericSemesters: string[] = [];
+    for (let i = 1; i <= count; i++) {
+      const suffix = ['st', 'nd', 'rd'][((((i + 90) % 100) - 10) % 10) - 1] || 'th';
+      genericSemesters.push(`${i}${suffix} Sem`);
+    }
+    return genericSemesters;
+  }
+
+  let currentSeason = startTerm.substring(0, 2);
+  const digits = startTerm.match(/\d+/);
+  const currentYearStr = digits ? digits[0] : null;
+
+  if (!currentYearStr) return [startTerm];
+  let currentYear = parseInt(currentYearStr, 10);
+
+  if (currentSeason === 'SS') {
+    currentSeason = 'WS';
+  }
+
+  for (let i = 0; i < count; i++) {
+    if (currentSeason === 'WS') {
+      semesters.push(`WS${currentYear}-${currentYear + 1}`);
+      currentSeason = 'SS';
+    } else {
+      semesters.push(`SS${currentYear}-${currentYear + 1}`);
+      currentSeason = 'WS';
+      currentYear = currentYear - 1;
+    }
+  }
+  return semesters;
+};
 
 export default function CourseResourcesTab({
   courseId,
   instanceId,
   universityId,
 }: CourseResourcesTabProps) {
+  const startTerm = getCurrentTermForUniversity(universityId);
+  const SEMESTERS = useMemo(() => generateSemesters(startTerm, 8), [startTerm]);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [materialName, setMaterialName] = useState('');
@@ -55,18 +95,25 @@ export default function CourseResourcesTab({
   const [url, setUrl] = useState('');
   const [duplicateError, setDuplicateError] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
   const itemsPerPage = 5;
 
+  const queryClient = useQueryClient();
+  const [confirmCopyId, setConfirmCopyId] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<{ id: string; message: string } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
 
   const {
     data: resources = [],
     isLoading: loadingList,
     refetch: fetchResources,
   } = useQuery<CourseMaterial[]>({
-    queryKey: ['materials', universityId, courseId, instanceId],
-    queryFn: () => getMaterials(universityId, courseId, instanceId),
-    enabled: !!courseId && !!instanceId,
+    queryKey: ['materials', universityId, courseId, selectedSemesterCategory],
+    queryFn: () => getMaterials(universityId, courseId, selectedSemesterCategory),
+    enabled: !!courseId && !!selectedSemesterCategory,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -88,7 +135,10 @@ export default function CourseResourcesTab({
       const formData = new FormData();
       formData.append('universityId', universityId);
       formData.append('courseId', courseId);
-      formData.append('instanceId', instanceId);
+      formData.append('instanceId', selectedSemesterCategory);
+      if (instanceId) {
+        formData.append('authInstanceId', instanceId);
+      }
       formData.append('type', type);
       formData.append('materialName', materialName);
 
@@ -117,10 +167,15 @@ export default function CourseResourcesTab({
       setUrl('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       await fetchResources();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       if (error?.response?.status === 409) {
-        setDuplicateError('This file has already been uploaded. Please choose a different file.');
+        const existingInst = error.response.data?.existingInstance;
+        setDuplicateError(
+          existingInst
+            ? `This resource is already existing in ${existingInst}.`
+            : 'This resource has already been uploaded/added.'
+        );
       } else {
         setToast({
           type: 'error',
@@ -134,14 +189,51 @@ export default function CourseResourcesTab({
 
   const handleDelete = async (resourceId: string) => {
     try {
-      await deleteMaterial(resourceId);
+      await deleteMaterial(resourceId, instanceId);
 
       setConfirmDeleteId(null);
       setToast({ type: 'success', text: 'Resource deleted' });
       await fetchResources();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete error:', error);
       setToast({ type: 'error', text: error.message || 'Failed to delete resource' });
+    }
+  };
+
+  const handleCopyToSemester = async (targetSem: string, resourceId: string) => {
+    try {
+      setCopyError(null);
+      await copyPrevSemMaterial(
+        resourceId,
+        courseId,
+        universityId,
+        selectedSemesterCategory
+      );
+      setDuplicateError('');
+      setToast({ type: 'success', text: `Resource copied to ${targetSem} successfully!` });
+      queryClient.invalidateQueries({
+        queryKey: ['materials', universityId, courseId, targetSem],
+      });
+      await fetchResources();
+      setConfirmCopyId(null);
+    } catch (error: any) {
+      console.error('Copy error:', error);
+      if (error?.response?.status === 409) {
+        setCopyError({
+          id: resourceId,
+          message: error.response.data?.message || 'This resource already exists in the current semester.'
+        });
+      } else {
+        const errorMessage = error?.response?.data?.message 
+          || (typeof error?.response?.data === 'string' ? error.response.data : '') 
+          || error.message 
+          || 'Failed to copy resource';
+        setToast({
+          type: 'error',
+          text: errorMessage,
+        });
+        setConfirmCopyId(null);
+      }
     }
   };
 
@@ -186,14 +278,24 @@ export default function CourseResourcesTab({
             )}
           </>
         ) : (
-          <TextField
-            label="URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            fullWidth
-            size="small"
-            placeholder="https://..."
-          />
+          <>
+            <TextField
+              label="URL"
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setDuplicateError('');
+              }}
+              fullWidth
+              size="small"
+              placeholder="https://..."
+            />
+            {duplicateError && (
+              <Typography variant="body2" color="error" sx={{ mt: 0.5 }}>
+                {duplicateError}
+              </Typography>
+            )}
+          </>
         )}
 
         <Button
@@ -207,6 +309,39 @@ export default function CourseResourcesTab({
       </Box>
 
       <Divider sx={{ my: 2 }} />
+
+      <Box sx={{ mb: 2 }}>
+        <Tabs
+          value={selectedSemesterIndex}
+          onChange={(_e, newValue) => {
+            setSelectedSemesterIndex(newValue);
+            setCurrentPage(0);
+          }}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              minWidth: 90,
+            },
+          }}
+        >
+          {SEMESTERS.map((sem, idx) => (
+            <Tab
+              key={sem}
+              label={
+                <Typography variant="body2" fontWeight={700}>
+                  {idx === 0 ? 'Current Semester' : sem}
+                </Typography>
+              }
+            />
+          ))}
+        </Tabs>
+      </Box>
+
       {loadingList ? (
         <Box display="flex" justifyContent="center">
           <CircularProgress size={24} />
@@ -224,43 +359,98 @@ export default function CourseResourcesTab({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 1,
+                flexWrap: 'wrap',
+                gap: 1.5,
+                p: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: '1 1 auto', minWidth: '200px', gap: 1.5 }}>
                 {resource.type === 'FILE' ? (
                   getIconByExtension(getExtensionFromMime(resource?.mimeType), {
                     fontSize: 'small',
-                  }) ?? <InsertDriveFile color="primary" fontSize="small" />
+                  }) ?? <InsertDriveFileIcon color="primary" fontSize="small" />
                 ) : (
                   <InsertLinkIcon color="primary" fontSize="small" />
                 )}
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600}  sx={{ 
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word' 
+                  }}>
                   {resource.materialName}
                 </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {selectedSemesterIndex > 0 && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    {confirmCopyId === resource.id ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          Copy to current semester?
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          sx={{ minWidth: 0, px: 1, py: 0, fontSize: '0.7rem' }}
+                          onClick={() => handleCopyToSemester(SEMESTERS[0], resource.id)}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          sx={{ minWidth: 0, px: 1, py: 0, fontSize: '0.7rem' }}
+                          onClick={() => {
+                            setConfirmCopyId(null);
+                            setCopyError(null);
+                          }}
+                        >
+                          No
+                        </Button>
+                      </Box>
+                    ) : (
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setConfirmCopyId(resource.id);
+                          setCopyError(null);
+                        }}
+                        title="Copy to current semester"
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        <ContentCopyIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    {copyError?.id === resource.id && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, lineHeight: 1.1 }}>
+                        {copyError.message}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+
                 {resource.type === 'FILE' ? (
                   <IconButton
                     size="small"
                     onClick={() => {
                       window.open(getMaterialFileUrl(resource.id), '_blank');
                     }}
+                    title="View"
                     sx={{ color: 'palette.secondary.main' }}
                   >
-                    <VisibilityIcon />
+                    <VisibilityIcon fontSize="small" />
                   </IconButton>
                 ) : (
                   <IconButton
                     size="small"
                     onClick={() => window.open(resource.url, '_blank')}
+                    title="Open Link"
                     sx={{ color: 'palette.info.main' }}
                   >
-                    <LinkIcon />
+                    <LinkIcon fontSize="small" />
                   </IconButton>
                 )}
                 {confirmDeleteId === resource.id ? (
@@ -332,7 +522,6 @@ export default function CourseResourcesTab({
           </IconButton>
         </Box>
       )}
-
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)}>
         <Alert severity={toast?.type}>{toast?.text}</Alert>
       </Snackbar>

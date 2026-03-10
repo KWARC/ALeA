@@ -13,12 +13,15 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Tab,
+  Tabs,
+  Divider,
 } from '@mui/material';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMaterials, getMaterialFileUrl, CourseMaterial } from '@alea/spec';
-import { getExtensionFromMime } from '@alea/utils';
+import { getCurrentTermForUniversity, getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import { InsertDriveFile } from '@mui/icons-material';
 
@@ -29,14 +32,53 @@ interface MoreResourcesAccordionProps {
 }
 
 const ITEMS_PER_PAGE = 5;
+const generateSemesters = (startTerm: string, count = 8): string[] => {
+  const semesters: string[] = [];
+  if (!startTerm || typeof startTerm !== 'string' || startTerm === 'null') {
+    const genericSemesters: string[] = [];
+    for (let i = 1; i <= count; i++) {
+      const suffix = ['st', 'nd', 'rd'][((((i + 90) % 100) - 10) % 10) - 1] || 'th';
+      genericSemesters.push(`${i}${suffix} Sem`);
+    }
+    return genericSemesters;
+  }
+
+  let currentSeason = startTerm.substring(0, 2);
+  const digits = startTerm.match(/\d+/);
+  const currentYearStr = digits ? digits[0] : null;
+
+  if (!currentYearStr) return [startTerm];
+  let currentYear = parseInt(currentYearStr, 10);
+  if (currentSeason === 'SS') {
+    currentSeason = 'WS';
+  }
+
+  for (let i = 0; i < count; i++) {
+    if (currentSeason === 'WS') {
+      semesters.push(`WS${currentYear}-${currentYear + 1}`);
+      currentSeason = 'SS';
+    } else {
+      semesters.push(`SS${currentYear}-${currentYear + 1}`);
+      currentSeason = 'WS';
+      currentYear = currentYear - 1;
+    }
+  }
+  return semesters;
+};
 
 export function MoreResourcesAccordion({
   courseId,
   semester,
   institutionId,
 }: MoreResourcesAccordionProps) {
+  const startTerm = getCurrentTermForUniversity(institutionId);
+  const SEMESTERS = useMemo(() => generateSemesters(startTerm, 8), [startTerm]);
+
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
+  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
+
+  const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
 
   const {
     data: resources = [],
@@ -44,8 +86,8 @@ export function MoreResourcesAccordion({
     isError,
     error,
   } = useQuery<CourseMaterial[]>({
-    queryKey: ['materials', institutionId, courseId, semester],
-    queryFn: () => getMaterials(institutionId, courseId, semester),
+    queryKey: ['materials', institutionId, courseId, selectedSemesterCategory],
+    queryFn: () => getMaterials(institutionId, courseId, selectedSemesterCategory),
     enabled: expanded,
     staleTime: 5 * 60 * 1000,
   });
@@ -70,14 +112,42 @@ export function MoreResourcesAccordion({
 
         {expanded && (
           <Box sx={styles.expandedContent}>
-            {/* Error */}
+            <Box sx={{ mb: 2 }}>
+              <Tabs
+                value={selectedSemesterIndex}
+                onChange={(_e, newValue) => {
+                  setSelectedSemesterIndex(newValue);
+                  setPage(0);
+                }}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minWidth: 90,
+                  },
+                }}
+              >
+                {SEMESTERS.map((sem, index) => (
+                  <Tab
+                    key={sem}
+                    label={
+                      <Typography variant="body2" fontWeight={700}>
+                        {index === 0 ? 'Current Semester' : sem}
+                      </Typography>
+                    }
+                  />
+                ))}
+              </Tabs>
+            </Box>
             {isError && (
               <Alert severity="error" sx={styles.errorAlert}>
                 {(error as Error)?.message || 'Could not load resources. Please try again.'}
               </Alert>
             )}
-
-            {/* Content */}
             {loading ? (
               <Box display="flex" justifyContent="center" p={2}>
                 <CircularProgress size={24} />

@@ -1,4 +1,4 @@
-﻿import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
@@ -33,12 +33,19 @@ export function getMimeType(fileName: string): string {
 }
 
 async function computeChecksumStreaming(filePath: string): Promise<string> {
-  const hash = createHash('sha256');
-  const stream = fs.createReadStream(filePath);
   return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = fs.createReadStream(filePath);
+
     stream.on('data', (chunk) => hash.update(chunk));
-    stream.on('end', () => resolve(hash.digest('hex').substring(0, 8)));
-    stream.on('error', reject);
+    stream.on('end', () => {
+      stream.destroy();
+      resolve(hash.digest('hex').substring(0, 8));
+    });
+    stream.on('error', (err) => {
+      stream.destroy();
+      reject(err);
+    });
   });
 }
 
@@ -94,14 +101,15 @@ async function handleFileMaterial(
   try {
     const checksum = await computeChecksumStreaming(tempFilePath);
     const duplicateCheck = (await executeDontEndSet500OnError(
-      `SELECT id FROM CourseMaterials WHERE checksum = ?`,
-      [checksum],
+      `SELECT id, instanceId FROM CourseMaterials WHERE checksum = ? AND courseId = ? AND instanceId LIKE '%-%'`,
+      [checksum, courseId],
       res
     )) as any[];
     if (!duplicateCheck) return;
     if (duplicateCheck.length > 0) {
       if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-      return res.status(409).send('Duplicate file already exists');
+      const semList = Array.from(new Set(duplicateCheck.map((r: any) => r.instanceId))).join(' and ');
+      return res.status(409).json({ message: 'Duplicate file already exists', existingInstance: semList });
     }
     const storageFileName = `${universityId}_${courseId}_${instanceId}_${checksum}${ext}`;
     const filePath = path.resolve(BASE_PATH, storageFileName);
@@ -168,6 +176,17 @@ async function handleLinkMaterial(
     return res.status(400).send('Invalid URL format');
   }
 
+  const duplicateCheck = (await executeDontEndSet500OnError(
+    `SELECT id, instanceId FROM CourseMaterials WHERE url = ? AND courseId = ? AND instanceId LIKE '%-%'`,
+    [url, courseId],
+    res
+  )) as any[];
+  if (!duplicateCheck) return;
+  if (duplicateCheck.length > 0) {
+    const semList = Array.from(new Set(duplicateCheck.map((r: any) => r.instanceId))).join(' and ');
+    return res.status(409).json({ message: 'Duplicate link already exists', existingInstance: semList });
+  }
+
   const dbResult = await executeAndEndSet500OnError(
     `INSERT INTO CourseMaterials 
      (id, materialName, materialType, universityId, courseId, instanceId, uploadedBy, url)
@@ -199,6 +218,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const universityId = getField(fields, 'universityId');
   const courseId = getField(fields, 'courseId');
   const instanceId = getField(fields, 'instanceId');
+  const authInstanceId = getField(fields, 'authInstanceId') || instanceId; // Fallback to instanceId
   const type = getField(fields, 'type');
   const materialName = getField(fields, 'materialName');
   const url = getField(fields, 'url');
@@ -212,7 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     ResourceName.COURSE_METADATA,
     Action.MUTATE,
-    { universityId, courseId, instanceId }
+    { universityId, courseId, instanceId: authInstanceId } // Use real instanceId for auth
   );
 
   if (!userId) return;

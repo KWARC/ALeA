@@ -30,12 +30,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { courseId, instanceId, materialType, storageFileName } = materials[0];
 
+  const { authInstanceId } = req.body;
+  const instanceToAuthorize = authInstanceId || instanceId;
+
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.COURSE_METADATA,
     Action.MUTATE,
-    { courseId, instanceId }
+    { courseId, instanceId: instanceToAuthorize }
   );
 
   if (!userId) return;
@@ -52,15 +55,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Invalid filePath');
       return res.status(500).send('Internal server error');
     }
-    try {
-      if (fs.existsSync(filePath)) {
+      const otherReferences = (await executeDontEndSet500OnError(
+        `SELECT COUNT(*) as count FROM CourseMaterials WHERE storageFileName = ?`,
+        [storageFileName],
+        res
+      )) as any[];
+      
+      const count = otherReferences?.[0]?.count || 0;
+      
+      if (count === 0 && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-    } catch (deleteError) {
-      console.error('Error deleting file from storage:', deleteError);
-      await sendAlert(`File deletion failed in disc  ${filePath}`);
-      return res.status(500).send('Failed to delete file from storage. DB record preserved.');
-    }
   }
 
   return res.status(200).end();

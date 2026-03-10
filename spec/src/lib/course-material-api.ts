@@ -38,8 +38,23 @@ export async function getMaterialFileById(id: string, download?: boolean) {
   });
   return resp.data;
 }
-export async function deleteMaterial(id: string) {
-  await axios.post('/api/course-material/delete-material', { id });
+export async function deleteMaterial(id: string, authInstanceId?: string) {
+  await axios.post('/api/course-material/delete-material', { id, authInstanceId });
+}
+
+export async function copyPrevSemMaterial(
+  sourceMaterialId: string,
+  courseId: string,
+  universityId: string,
+  sourceInstanceId: string
+) {
+  const resp = await axios.post('/api/course-material/copy-prev-sem-course-material', {
+    sourceMaterialId,
+    courseId,
+    universityId,
+    sourceInstanceId,
+  });
+  return resp.data;
 }
 
 export function getMaterialFileUrl(id: string, download?: boolean): string {
