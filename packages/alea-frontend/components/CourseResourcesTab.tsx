@@ -203,12 +203,7 @@ export default function CourseResourcesTab({
   const handleCopyToSemester = async (targetSem: string, resourceId: string) => {
     try {
       setCopyError(null);
-      await copyPrevSemMaterial(
-        resourceId,
-        courseId,
-        universityId,
-        selectedSemesterCategory
-      );
+      await copyPrevSemMaterial(resourceId, courseId, universityId, selectedSemesterCategory);
       setDuplicateError('');
       setToast({ type: 'success', text: `Resource copied to ${targetSem} successfully!` });
       queryClient.invalidateQueries({
@@ -221,13 +216,15 @@ export default function CourseResourcesTab({
       if (error?.response?.status === 409) {
         setCopyError({
           id: resourceId,
-          message: error.response.data?.message || 'This resource already exists in the current semester.'
+          message:
+            error.response.data?.message || 'This resource already exists in the current semester.',
         });
       } else {
-        const errorMessage = error?.response?.data?.message 
-          || (typeof error?.response?.data === 'string' ? error.response.data : '') 
-          || error.message 
-          || 'Failed to copy resource';
+        const errorMessage =
+          error?.response?.data?.message ||
+          (typeof error?.response?.data === 'string' ? error.response.data : '') ||
+          error.message ||
+          'Failed to copy resource';
         setToast({
           type: 'error',
           text: errorMessage,
@@ -367,7 +364,15 @@ export default function CourseResourcesTab({
                 borderRadius: 2,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', flex: '1 1 auto', minWidth: '200px', gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flex: '1 1 auto',
+                  minWidth: '200px',
+                  gap: 1.5,
+                }}
+              >
                 {resource.type === 'FILE' ? (
                   getIconByExtension(getExtensionFromMime(resource?.mimeType), {
                     fontSize: 'small',
@@ -375,10 +380,14 @@ export default function CourseResourcesTab({
                 ) : (
                   <InsertLinkIcon color="primary" fontSize="small" />
                 )}
-                <Typography variant="body2" fontWeight={600}  sx={{ 
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{
                     wordBreak: 'break-word',
-                    overflowWrap: 'break-word' 
-                  }}>
+                    overflowWrap: 'break-word',
+                  }}
+                >
                   {resource.materialName}
                 </Typography>
               </Box>
