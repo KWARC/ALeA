@@ -12,11 +12,11 @@ import { Action, getCurrentTermForUniversity, ResourceName } from '@alea/utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
 
-  const { sourceMaterialId, sourceInstanceId, courseId, universityId } = req.body;
-  if (!sourceMaterialId || !courseId || !universityId || !sourceInstanceId) {
+  const { sourceMaterialId, courseId, universityId } = req.body;
+  if (!sourceMaterialId || !courseId || !universityId) {
     return res
       .status(422)
-      .send('Missing required fields: sourceMaterialId, courseId, universityId,sourceInstanceId');
+      .send('Missing required fields: sourceMaterialId, courseId, universityId');
   }
   const currInstanceId = getCurrentTermForUniversity(universityId);
   if (!currInstanceId) return res.status(422).send('InstanceId not found');

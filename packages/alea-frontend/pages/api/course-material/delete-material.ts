@@ -9,6 +9,7 @@ import {
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 import { sendAlert } from '../add-comment';
+import { getCurrentTermForCourseId } from '../get-current-term';
 const BASE_PATH = process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -30,8 +31,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { courseId, instanceId, materialType, storageFileName } = materials[0];
 
-  const { authInstanceId } = req.body;
-  const instanceToAuthorize = authInstanceId || instanceId;
+  const currentTerm = await getCurrentTermForCourseId(courseId);
+  const instanceToAuthorize = currentTerm || instanceId;
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,

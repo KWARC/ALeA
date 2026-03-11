@@ -15,15 +15,18 @@ import {
   Typography,
   Tab,
   Tabs,
-  Divider,
 } from '@mui/material';
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMaterials, getMaterialFileUrl, CourseMaterial } from '@alea/spec';
-import { getCurrentTermForUniversity, getExtensionFromMime } from '@alea/utils';
+import { getMaterials, getMaterialFileUrl } from '@alea/spec';
+import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import { InsertDriveFile } from '@mui/icons-material';
+import axios from 'axios';
+import { GetHistoricalSyllabusResponse } from '@alea/spec';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { useEffect } from 'react';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
@@ -32,71 +35,53 @@ interface MoreResourcesAccordionProps {
 }
 
 const ITEMS_PER_PAGE = 5;
-const generateSemesters = (startTerm: string, count = 8): string[] => {
-  const semesters: string[] = [];
-  if (!startTerm || typeof startTerm !== 'string' || startTerm === 'null') {
-    const genericSemesters: string[] = [];
-    for (let i = 1; i <= count; i++) {
-      const suffix = ['st', 'nd', 'rd'][((((i + 90) % 100) - 10) % 10) - 1] || 'th';
-      genericSemesters.push(`${i}${suffix} Sem`);
-    }
-    return genericSemesters;
-  }
-
-  let currentSeason = startTerm.substring(0, 2);
-  const digits = startTerm.match(/\d+/);
-  const currentYearStr = digits ? digits[0] : null;
-
-  if (!currentYearStr) return [startTerm];
-  let currentYear = parseInt(currentYearStr, 10);
-  if (currentSeason === 'SS') {
-    currentSeason = 'WS';
-  }
-
-  for (let i = 0; i < count; i++) {
-    if (currentSeason === 'WS') {
-      semesters.push(`WS${currentYear}-${currentYear + 1}`);
-      currentSeason = 'SS';
-    } else {
-      semesters.push(`SS${currentYear}-${currentYear + 1}`);
-      currentSeason = 'WS';
-      currentYear = currentYear - 1;
-    }
-  }
-  return semesters;
-};
 
 export function MoreResourcesAccordion({
   courseId,
   semester,
   institutionId,
 }: MoreResourcesAccordionProps) {
-  const startTerm = getCurrentTermForUniversity(institutionId);
-  const SEMESTERS = useMemo(() => generateSemesters(startTerm, 8), [startTerm]);
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  const [historicalSyllabus, setHistoricalSyllabus] = useState<GetHistoricalSyllabusResponse>({});
+
+  useEffect(() => {
+    if (!courseId) return;
+    axios.get(`/api/get-historical-syllabus/${courseId}`).then((resp) => {
+      setHistoricalSyllabus(resp.data);
+    });
+  }, [courseId]);
+
+  const SEMESTERS = useMemo(() => {
+    const historical = Object.keys(historicalSyllabus);
+    const all = currentTerm ? [currentTerm, ...historical] : historical;
+    return Array.from(new Set(all));
+  }, [currentTerm, historicalSyllabus]);
 
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
   const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
-
-  const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
-
   const {
-    data: resources = [],
+    data: fetchedResources,
     isLoading: loading,
     isError,
     error,
-  } = useQuery<CourseMaterial[]>({
-    queryKey: ['materials', institutionId, courseId, selectedSemesterCategory],
-    queryFn: () => getMaterials(institutionId, courseId, selectedSemesterCategory),
-    enabled: expanded,
+  } = useQuery({
+    queryKey: ['materials', institutionId, courseId],
+    queryFn: () => getMaterials(institutionId, courseId),
+    enabled: expanded && !!institutionId && !!courseId,
     staleTime: 5 * 60 * 1000,
   });
+
+  if (!courseId || loadingTermByCourseId) return null;
+
+  const resources = fetchedResources ?? [];
 
   const handleExpand = () => {
     setExpanded((prev) => !prev);
   };
 
-  const filtered = resources;
+  const filtered = resources.filter((r) => r.instanceId === SEMESTERS[selectedSemesterIndex]);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
@@ -136,7 +121,7 @@ export function MoreResourcesAccordion({
                     key={sem}
                     label={
                       <Typography variant="body2" fontWeight={700}>
-                        {index === 0 ? 'Current Semester' : sem}
+                        {currentTerm === sem ? 'Current Semester' : sem}
                       </Typography>
                     }
                   />

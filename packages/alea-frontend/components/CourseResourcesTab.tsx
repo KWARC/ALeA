@@ -26,7 +26,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteMaterial,
@@ -34,59 +34,42 @@ import {
   getMaterialFileUrl,
   postMaterial,
   copyPrevSemMaterial,
-  CourseMaterial,
+  GetHistoricalSyllabusResponse,
 } from '@alea/spec';
-import { getCurrentTermForUniversity, getExtensionFromMime } from '@alea/utils';
+import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import axios from 'axios';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { useEffect } from 'react';
 
 interface CourseResourcesTabProps {
   courseId: string;
   instanceId?: string;
   universityId: string;
 }
-const generateSemesters = (startTerm: string, count = 8): string[] => {
-  const semesters: string[] = [];
-  if (!startTerm || typeof startTerm !== 'string' || startTerm === 'null') {
-    const genericSemesters: string[] = [];
-    for (let i = 1; i <= count; i++) {
-      const suffix = ['st', 'nd', 'rd'][((((i + 90) % 100) - 10) % 10) - 1] || 'th';
-      genericSemesters.push(`${i}${suffix} Sem`);
-    }
-    return genericSemesters;
-  }
-
-  let currentSeason = startTerm.substring(0, 2);
-  const digits = startTerm.match(/\d+/);
-  const currentYearStr = digits ? digits[0] : null;
-
-  if (!currentYearStr) return [startTerm];
-  let currentYear = parseInt(currentYearStr, 10);
-
-  if (currentSeason === 'SS') {
-    currentSeason = 'WS';
-  }
-
-  for (let i = 0; i < count; i++) {
-    if (currentSeason === 'WS') {
-      semesters.push(`WS${currentYear}-${currentYear + 1}`);
-      currentSeason = 'SS';
-    } else {
-      semesters.push(`SS${currentYear}-${currentYear + 1}`);
-      currentSeason = 'WS';
-      currentYear = currentYear - 1;
-    }
-  }
-  return semesters;
-};
 
 export default function CourseResourcesTab({
   courseId,
   instanceId,
   universityId,
 }: CourseResourcesTabProps) {
-  const startTerm = getCurrentTermForUniversity(universityId);
-  const SEMESTERS = useMemo(() => generateSemesters(startTerm, 8), [startTerm]);
+  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
+  const currentTerm = currentTermByCourseId[courseId];
+  const [historicalSyllabus, setHistoricalSyllabus] = useState<GetHistoricalSyllabusResponse>({});
+
+  useEffect(() => {
+    if (!courseId) return;
+    axios.get(`/api/get-historical-syllabus/${courseId}`).then((resp) => {
+      console.log('Historical syllabus:', resp.data);
+
+      setHistoricalSyllabus(resp.data);
+    });
+  }, [courseId]);
+
+  const previousSems = Object.keys(historicalSyllabus);
+
+  const SEMESTERS = currentTerm ? [currentTerm, ...previousSems] : previousSems;
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [materialName, setMaterialName] = useState('');
@@ -107,17 +90,20 @@ export default function CourseResourcesTab({
   const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
 
   const {
-    data: resources = [],
+    data: fetchedResources,
     isLoading: loadingList,
     refetch: fetchResources,
-  } = useQuery<CourseMaterial[]>({
-    queryKey: ['materials', universityId, courseId, selectedSemesterCategory],
-    queryFn: () => getMaterials(universityId, courseId, selectedSemesterCategory),
-    enabled: !!courseId && !!selectedSemesterCategory,
+  } = useQuery({
+    queryKey: ['materials', universityId, courseId],
+    queryFn: () => getMaterials(universityId, courseId),
+    enabled: !!courseId && !!universityId,
     staleTime: 5 * 60 * 1000,
   });
 
-  const filteredResources = resources;
+  if (!courseId || loadingTermByCourseId) return null;
+
+  const resources = fetchedResources ?? [];
+  const filteredResources = resources.filter((r) => r.instanceId === selectedSemesterCategory);
   const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -136,9 +122,6 @@ export default function CourseResourcesTab({
       formData.append('universityId', universityId);
       formData.append('courseId', courseId);
       formData.append('instanceId', selectedSemesterCategory);
-      if (instanceId) {
-        formData.append('authInstanceId', instanceId);
-      }
       formData.append('type', type);
       formData.append('materialName', materialName);
 
@@ -189,11 +172,13 @@ export default function CourseResourcesTab({
 
   const handleDelete = async (resourceId: string) => {
     try {
-      await deleteMaterial(resourceId, instanceId);
+      await deleteMaterial(resourceId);
 
       setConfirmDeleteId(null);
       setToast({ type: 'success', text: 'Resource deleted' });
-      await fetchResources();
+      await queryClient.invalidateQueries({
+        queryKey: ['materials', universityId, courseId],
+      });
     } catch (error: any) {
       console.error('Delete error:', error);
       setToast({ type: 'error', text: error.message || 'Failed to delete resource' });
@@ -203,7 +188,7 @@ export default function CourseResourcesTab({
   const handleCopyToSemester = async (targetSem: string, resourceId: string) => {
     try {
       setCopyError(null);
-      await copyPrevSemMaterial(resourceId, courseId, universityId, selectedSemesterCategory);
+      await copyPrevSemMaterial(resourceId, courseId, universityId);
       setDuplicateError('');
       setToast({ type: 'success', text: `Resource copied to ${targetSem} successfully!` });
       queryClient.invalidateQueries({
@@ -212,23 +197,11 @@ export default function CourseResourcesTab({
       await fetchResources();
       setConfirmCopyId(null);
     } catch (error: any) {
-      console.error('Copy error:', error);
+      const message = error?.response?.data?.message || error.message || 'Failed to copy resource';
       if (error?.response?.status === 409) {
-        setCopyError({
-          id: resourceId,
-          message:
-            error.response.data?.message || 'This resource already exists in the current semester.',
-        });
+        setCopyError({ id: resourceId, message });
       } else {
-        const errorMessage =
-          error?.response?.data?.message ||
-          (typeof error?.response?.data === 'string' ? error.response.data : '') ||
-          error.message ||
-          'Failed to copy resource';
-        setToast({
-          type: 'error',
-          text: errorMessage,
-        });
+        setToast({ type: 'error', text: message });
         setConfirmCopyId(null);
       }
     }
@@ -314,24 +287,13 @@ export default function CourseResourcesTab({
             setSelectedSemesterIndex(newValue);
             setCurrentPage(0);
           }}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              minWidth: 90,
-            },
-          }}
         >
-          {SEMESTERS.map((sem, idx) => (
+          {SEMESTERS.map((sem) => (
             <Tab
               key={sem}
               label={
                 <Typography variant="body2" fontWeight={700}>
-                  {idx === 0 ? 'Current Semester' : sem}
+                  {currentTerm === sem ? 'Current Semester' : sem}
                 </Typography>
               }
             />

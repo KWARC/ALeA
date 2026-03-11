@@ -11,6 +11,7 @@ import {
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, MIME_MAP, ResourceName } from '@alea/utils';
+import { getCurrentTermForCourseId } from '../get-current-term';
 
 const BASE_PATH = path.resolve(process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials'));
 const TEMP_PATH = path.resolve(process.env.TEMP_DIR || path.join(process.cwd(), 'materials_temp'));
@@ -218,7 +219,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const universityId = getField(fields, 'universityId');
   const courseId = getField(fields, 'courseId');
   const instanceId = getField(fields, 'instanceId');
-  const authInstanceId = getField(fields, 'authInstanceId') || instanceId; // Fallback to instanceId
   const type = getField(fields, 'type');
   const materialName = getField(fields, 'materialName');
   const url = getField(fields, 'url');
@@ -227,12 +227,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required fields');
   }
 
+  const currentTerm = await getCurrentTermForCourseId(courseId);
+  const authInstanceId = currentTerm || instanceId;
+
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.COURSE_METADATA,
     Action.MUTATE,
-    { universityId, courseId, instanceId: authInstanceId } // Use real instanceId for auth
+    { universityId, courseId, instanceId: authInstanceId }
   );
 
   if (!userId) return;

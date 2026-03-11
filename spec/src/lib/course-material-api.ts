@@ -9,6 +9,7 @@ export interface CourseMaterial {
   sizeBytes?: number;
   url?: string;
   createdAt?: string;
+  instanceId: string;
 }
 
 export interface PostMaterialRequest {
@@ -24,9 +25,9 @@ export async function postMaterial(data: FormData) {
   await axios.post('/api/course-material/post-material', data);
 }
 
-export async function getMaterials(universityId: string, courseId: string, instanceId: string) {
+export async function getMaterials(universityId: string, courseId: string) {
   const resp = await axios.get('/api/course-material/get-materials', {
-    params: { universityId, courseId, instanceId },
+    params: { universityId, courseId },
   });
   return resp.data as CourseMaterial[];
 }
@@ -38,21 +39,19 @@ export async function getMaterialFileById(id: string, download?: boolean) {
   });
   return resp.data;
 }
-export async function deleteMaterial(id: string, authInstanceId?: string) {
-  await axios.post('/api/course-material/delete-material', { id, authInstanceId });
+export async function deleteMaterial(id: string) {
+  await axios.post('/api/course-material/delete-material', { id });
 }
 
 export async function copyPrevSemMaterial(
   sourceMaterialId: string,
   courseId: string,
-  universityId: string,
-  sourceInstanceId: string
+  universityId: string
 ) {
   const resp = await axios.post('/api/course-material/copy-prev-sem-course-material', {
     sourceMaterialId,
     courseId,
     universityId,
-    sourceInstanceId,
   });
   return resp.data;
 }
