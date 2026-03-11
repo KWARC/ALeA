@@ -1,10 +1,12 @@
-import type { UserInfo } from '@alea/spec';
-import { getAllCourses, getCourseIdsForEnrolledUser, getUserInfo } from '@alea/spec';
+import { getCourseIdsForEnrolledUser } from '@alea/spec';
+import { useCurrentUser } from '@alea/react-utils';
 import type { CourseInfo } from '@alea/utils';
 import { Box, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { useAllCourses } from '../hooks/useAllCourses';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BannerSection, VollKiInfoSection } from '../pages';
@@ -34,22 +36,13 @@ export default function StudentWelcomeScreen({
   const welcomeText = (locale.resource as { welcome?: string }).welcome ?? 'Welcome';
   const localeHome = locale.home.newHome;
 
-  const [userInfo, setUserInfo] = useState<UserInfo>(null);
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
-  const [allCourses, setAllCourses] = useState<Record<string, CourseInfo>>({});
-
-  useEffect(() => {
-    getUserInfo().then(setUserInfo);
-  }, []);
-  useEffect(() => {
-    getAllCourses().then(setAllCourses);
-  }, []);
-  useEffect(() => {
-    if (!currentTerm) return;
-    getCourseIdsForEnrolledUser(currentTerm).then((res: { enrolledCourseIds: string[] }) =>
-      setEnrolledCourseIds(res.enrolledCourseIds || [])
-    );
-  }, [currentTerm]);
+  const { user: userInfo } = useCurrentUser();
+  const { data: allCourses = {} } = useAllCourses(DEFAULT_INSTITUTION);
+  const { data: enrolledCourseIds = [] } = useQuery({
+    queryKey: ['enrolled-course-ids', currentTerm],
+    queryFn: () => getCourseIdsForEnrolledUser(currentTerm).then((r) => r.enrolledCourseIds ?? []),
+    enabled: !!currentTerm,
+  });
 
   const enrolledCourses = useMemo(
     () => enrolledCourseIds.filter((id) => allCourses[id]).map((id) => allCourses[id]),
