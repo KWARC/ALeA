@@ -1,4 +1,3 @@
-[dotenv@17.3.1] injecting env (38) from packages/alea-frontend/.env.local -- tip: 🛡️ auth for agents: https://vestauth.com
 -- CreateTable
 CREATE TABLE `ACLMembership` (
     `id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
