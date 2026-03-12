@@ -62,11 +62,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       )) as any[];
       
       const count = otherReferences?.[0]?.count || 0;
-      
+      try{
       if (count === 0 && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-  }
+      }catch (deleteError) {
+      console.error('Error deleting file from storage:', deleteError);
+      await sendAlert(`File deletion failed in disc  ${filePath}`);
+      return res.status(500).send('Failed to delete file from storage. DB record preserved.');
+    }
 
   return res.status(200).end();
 }
