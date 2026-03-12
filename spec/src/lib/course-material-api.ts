@@ -15,7 +15,6 @@ export interface CourseMaterial {
 export interface PostMaterialRequest {
   universityId: string;
   courseId: string;
-  instanceId: string;
   type: CourseMaterialType;
   materialName: string;
   url?: string;

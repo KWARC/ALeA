@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 function extractSemesterFromString(filename: string) {
-  const regex = /syllabus_(.+?)_(.+?)\.json/;
+  const regex = /syllabus_(\S+)_ (\S+)\.json/;
   const match = filename.match(regex);
   if (match && match[1] && match[2]) {
     return {

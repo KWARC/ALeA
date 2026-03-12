@@ -23,14 +23,10 @@ import { getMaterials, getMaterialFileUrl } from '@alea/spec';
 import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import { InsertDriveFile } from '@mui/icons-material';
-import axios from 'axios';
-import { GetHistoricalSyllabusResponse } from '@alea/spec';
-import { useCurrentTermContext } from '../contexts/CurrentTermContext';
-import { useEffect } from 'react';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
-  semester: string;
+  instanceId: string;
   institutionId: string;
 }
 
@@ -38,29 +34,13 @@ const ITEMS_PER_PAGE = 5;
 
 export function MoreResourcesAccordion({
   courseId,
-  semester,
+  instanceId,
   institutionId,
 }: MoreResourcesAccordionProps) {
-  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
-  const [historicalSyllabus, setHistoricalSyllabus] = useState<GetHistoricalSyllabusResponse>({});
-
-  useEffect(() => {
-    if (!courseId) return;
-    axios.get(`/api/get-historical-syllabus/${courseId}`).then((resp) => {
-      setHistoricalSyllabus(resp.data);
-    });
-  }, [courseId]);
-
-  const SEMESTERS = useMemo(() => {
-    const historical = Object.keys(historicalSyllabus);
-    const all = currentTerm ? [currentTerm, ...historical] : historical;
-    return Array.from(new Set(all));
-  }, [currentTerm, historicalSyllabus]);
-
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
   const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
+
   const {
     data: fetchedResources,
     isLoading: loading,
@@ -69,11 +49,26 @@ export function MoreResourcesAccordion({
   } = useQuery({
     queryKey: ['materials', institutionId, courseId],
     queryFn: () => getMaterials(institutionId, courseId),
-    enabled: expanded && !!institutionId && !!courseId,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!institutionId && !!courseId,
   });
 
-  if (!courseId || loadingTermByCourseId) return null;
+  const SEMESTERS = useMemo(() => {
+    const sems = new Set<string>();
+    if (instanceId) sems.add(instanceId);
+
+    if (fetchedResources) {
+      fetchedResources.forEach((r) => {
+        if (r.instanceId) sems.add(r.instanceId);
+      });
+    }
+    return Array.from(sems).sort((a, b) => {
+      if (a === instanceId) return -1;
+      if (b === instanceId) return 1;
+      return a.localeCompare(b);
+    });
+  }, [instanceId, fetchedResources]);
+
+  if (!courseId) return null;
 
   const resources = fetchedResources ?? [];
 
@@ -121,7 +116,7 @@ export function MoreResourcesAccordion({
                     key={sem}
                     label={
                       <Typography variant="body2" fontWeight={700}>
-                        {currentTerm === sem ? 'Current Semester' : sem}
+                        {instanceId === sem ? 'Current Semester' : sem}
                       </Typography>
                     }
                   />

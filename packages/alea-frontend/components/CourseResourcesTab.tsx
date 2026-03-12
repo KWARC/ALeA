@@ -26,7 +26,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteMaterial,
@@ -34,18 +34,14 @@ import {
   getMaterialFileUrl,
   postMaterial,
   copyPrevSemMaterial,
-  GetHistoricalSyllabusResponse,
 } from '@alea/spec';
 import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import axios from 'axios';
-import { useCurrentTermContext } from '../contexts/CurrentTermContext';
-import { useEffect } from 'react';
 
 interface CourseResourcesTabProps {
   courseId: string;
-  instanceId?: string;
+  instanceId: string;
   universityId: string;
 }
 
@@ -54,40 +50,11 @@ export default function CourseResourcesTab({
   instanceId,
   universityId,
 }: CourseResourcesTabProps) {
-  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
-  const [historicalSyllabus, setHistoricalSyllabus] = useState<GetHistoricalSyllabusResponse>({});
-
-  useEffect(() => {
-    if (!courseId) return;
-    axios.get(`/api/get-historical-syllabus/${courseId}`).then((resp) => {
-      console.log('Historical syllabus:', resp.data);
-
-      setHistoricalSyllabus(resp.data);
-    });
-  }, [courseId]);
-
-  const previousSems = Object.keys(historicalSyllabus);
-
-  const SEMESTERS = currentTerm ? [currentTerm, ...previousSems] : previousSems;
-  const [uploading, setUploading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [materialName, setMaterialName] = useState('');
-  const [type, setType] = useState<'FILE' | 'LINK'>('FILE');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [url, setUrl] = useState('');
-  const [duplicateError, setDuplicateError] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
-  const itemsPerPage = 5;
-
   const queryClient = useQueryClient();
   const [confirmCopyId, setConfirmCopyId] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<{ id: string; message: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
 
   const {
     data: fetchedResources,
@@ -100,9 +67,36 @@ export default function CourseResourcesTab({
     staleTime: 5 * 60 * 1000,
   });
 
-  if (!courseId || loadingTermByCourseId) return null;
+  const SEMESTERS = useMemo(() => {
+    const sems = new Set<string>();
+    if (instanceId) sems.add(instanceId);
+
+    if (fetchedResources) {
+      fetchedResources.forEach((r) => {
+        if (r.instanceId) sems.add(r.instanceId);
+      });
+    }
+    return Array.from(sems).sort((a, b) => {
+      if (a === instanceId) return -1;
+      if (b === instanceId) return 1;
+      return a.localeCompare(b);
+    });
+  }, [instanceId, fetchedResources]);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [materialName, setMaterialName] = useState('');
+  const [type, setType] = useState<'FILE' | 'LINK'>('FILE');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [url, setUrl] = useState('');
+  const [duplicateError, setDuplicateError] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
+  const itemsPerPage = 5;
+
+  if (!courseId) return null;
 
   const resources = fetchedResources ?? [];
+  const selectedSemesterCategory = SEMESTERS[selectedSemesterIndex];
   const filteredResources = resources.filter((r) => r.instanceId === selectedSemesterCategory);
   const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
@@ -121,7 +115,7 @@ export default function CourseResourcesTab({
       const formData = new FormData();
       formData.append('universityId', universityId);
       formData.append('courseId', courseId);
-      formData.append('instanceId', selectedSemesterCategory);
+      formData.append('instanceId', instanceId);
       formData.append('type', type);
       formData.append('materialName', materialName);
 
@@ -293,7 +287,7 @@ export default function CourseResourcesTab({
               key={sem}
               label={
                 <Typography variant="body2" fontWeight={700}>
-                  {currentTerm === sem ? 'Current Semester' : sem}
+                  {instanceId === sem ? 'Current Semester' : sem}
                 </Typography>
               }
             />

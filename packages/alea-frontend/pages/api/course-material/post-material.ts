@@ -109,8 +109,12 @@ async function handleFileMaterial(
     if (!duplicateCheck) return;
     if (duplicateCheck.length > 0) {
       if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-      const semList = Array.from(new Set(duplicateCheck.map((r: any) => r.instanceId))).join(' and ');
-      return res.status(409).json({ message: 'Duplicate file already exists', existingInstance: semList });
+      const semList = Array.from(new Set(duplicateCheck.map((r: any) => r.instanceId))).join(
+        ' and '
+      );
+      return res
+        .status(409)
+        .json({ message: 'Duplicate file already exists', existingInstance: semList });
     }
     const storageFileName = `${universityId}_${courseId}_${instanceId}_${checksum}${ext}`;
     const filePath = path.resolve(BASE_PATH, storageFileName);
@@ -185,7 +189,9 @@ async function handleLinkMaterial(
   if (!duplicateCheck) return;
   if (duplicateCheck.length > 0) {
     const semList = Array.from(new Set(duplicateCheck.map((r: any) => r.instanceId))).join(' and ');
-    return res.status(409).json({ message: 'Duplicate link already exists', existingInstance: semList });
+    return res
+      .status(409)
+      .json({ message: 'Duplicate link already exists', existingInstance: semList });
   }
 
   const dbResult = await executeAndEndSet500OnError(
@@ -218,24 +224,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const universityId = getField(fields, 'universityId');
   const courseId = getField(fields, 'courseId');
-  const instanceId = getField(fields, 'instanceId');
   const type = getField(fields, 'type');
   const materialName = getField(fields, 'materialName');
   const url = getField(fields, 'url');
 
-  if (!universityId || !courseId || !instanceId || !type || !materialName) {
+  if (!universityId || !courseId || !type || !materialName) {
     return res.status(422).send('Missing required fields');
   }
 
-  const currentTerm = await getCurrentTermForCourseId(courseId);
-  const authInstanceId = currentTerm || instanceId;
+  const instanceId = await getCurrentTermForCourseId(courseId);
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
     ResourceName.COURSE_METADATA,
     Action.MUTATE,
-    { universityId, courseId, instanceId: authInstanceId }
+    { universityId, courseId, instanceId }
   );
 
   if (!userId) return;
