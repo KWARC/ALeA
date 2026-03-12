@@ -13,18 +13,20 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Tab,
+  Tabs,
 } from '@mui/material';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMaterials, getMaterialFileUrl, CourseMaterial } from '@alea/spec';
+import { getMaterials, getMaterialFileUrl } from '@alea/spec';
 import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import { InsertDriveFile } from '@mui/icons-material';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
-  semester: string;
+  instanceId: string;
   institutionId: string;
 }
 
@@ -32,29 +34,49 @@ const ITEMS_PER_PAGE = 5;
 
 export function MoreResourcesAccordion({
   courseId,
-  semester,
+  instanceId,
   institutionId,
 }: MoreResourcesAccordionProps) {
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
+  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
 
   const {
-    data: resources = [],
+    data: fetchedResources,
     isLoading: loading,
     isError,
     error,
-  } = useQuery<CourseMaterial[]>({
-    queryKey: ['materials', institutionId, courseId, semester],
-    queryFn: () => getMaterials(institutionId, courseId, semester),
-    enabled: expanded,
-    staleTime: 5 * 60 * 1000,
+  } = useQuery({
+    queryKey: ['materials', institutionId, courseId],
+    queryFn: () => getMaterials(institutionId, courseId),
+    enabled: !!institutionId && !!courseId,
   });
+
+  const SEMESTERS = useMemo(() => {
+    const sems = new Set<string>();
+    if (instanceId) sems.add(instanceId);
+
+    if (fetchedResources) {
+      fetchedResources.forEach((r) => {
+        if (r.instanceId) sems.add(r.instanceId);
+      });
+    }
+    return Array.from(sems).sort((a, b) => {
+      if (a === instanceId) return -1;
+      if (b === instanceId) return 1;
+      return a.localeCompare(b);
+    });
+  }, [instanceId, fetchedResources]);
+
+  if (!courseId) return null;
+
+  const resources = fetchedResources ?? [];
 
   const handleExpand = () => {
     setExpanded((prev) => !prev);
   };
 
-  const filtered = resources;
+  const filtered = resources.filter((r) => r.instanceId === SEMESTERS[selectedSemesterIndex]);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
@@ -70,14 +92,42 @@ export function MoreResourcesAccordion({
 
         {expanded && (
           <Box sx={styles.expandedContent}>
-            {/* Error */}
+            <Box sx={{ mb: 2 }}>
+              <Tabs
+                value={selectedSemesterIndex}
+                onChange={(_e, newValue) => {
+                  setSelectedSemesterIndex(newValue);
+                  setPage(0);
+                }}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minWidth: 90,
+                  },
+                }}
+              >
+                {SEMESTERS.map((sem, index) => (
+                  <Tab
+                    key={sem}
+                    label={
+                      <Typography variant="body2" fontWeight={700}>
+                        {instanceId === sem ? 'Current Semester' : sem}
+                      </Typography>
+                    }
+                  />
+                ))}
+              </Tabs>
+            </Box>
             {isError && (
               <Alert severity="error" sx={styles.errorAlert}>
                 {(error as Error)?.message || 'Could not load resources. Please try again.'}
               </Alert>
             )}
-
-            {/* Content */}
             {loading ? (
               <Box display="flex" justifyContent="center" p={2}>
                 <CircularProgress size={24} />
