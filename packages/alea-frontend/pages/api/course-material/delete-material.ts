@@ -71,6 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await sendAlert(`File deletion failed in disc  ${filePath}`);
       return res.status(500).send('Failed to delete file from storage. DB record preserved.');
     }
+  }
 
   return res.status(200).end();
 }
