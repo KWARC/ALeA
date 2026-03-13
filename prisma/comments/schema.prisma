@@ -1,0 +1,578 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/@prisma/comments-client"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model ACLMembership {
+  id                Int               @id @default(autoincrement()) @db.UnsignedInt
+  parentACLId       String            @db.VarChar(255)
+  memberACLId       String?           @db.VarChar(255)
+  memberUserId      String?           @db.VarChar(255)
+  createdAt         DateTime?         @default(now()) @db.Timestamp(0)
+  AccessControlList AccessControlList @relation(fields: [parentACLId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ACLMembership_ibfk_1")
+
+  @@index([parentACLId], map: "parentACLId")
+}
+
+model AccessControlList {
+  id             String           @id @db.VarChar(255)
+  description    String?          @db.Text
+  updaterACLId   String?          @db.VarChar(255)
+  isOpen         Boolean?
+  createdAt      DateTime?        @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime?        @default(now()) @db.Timestamp(0)
+  ACLMembership  ACLMembership[]
+  ResourceAccess ResourceAccess[]
+}
+
+model Answer {
+  id             Int       @id @default(autoincrement()) @db.UnsignedInt
+  questionId     String    @db.VarChar(255)
+  subProblemId   String?   @db.VarChar(255)
+  userId         String    @db.VarChar(255)
+  answer         String?   @db.Text
+  questionTitle  String?   @db.Text
+  courseId       String?   @db.VarChar(255)
+  courseInstance String?   @db.VarChar(255)
+  institutionId  String?   @default("FAU") @db.VarChar(255)
+  homeworkId     Int?
+  createdAt      DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime? @default(now()) @db.Timestamp(0)
+  Grading        Grading[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model BlogPosts {
+  postId            String    @db.VarChar(255)
+  title             String    @db.VarChar(255)
+  body              String    @db.Text
+  authorId          String    @db.VarChar(100)
+  authorName        String    @db.VarChar(255)
+  createdAt         DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime? @default(now()) @db.Timestamp(0)
+  heroImageId       String?   @db.VarChar(255)
+  heroImageUrl      String?   @db.VarChar(255)
+  heroImagePosition String?   @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CdnImages {
+  id       String @db.VarChar(255)
+  metadata Json
+
+  @@ignore
+}
+
+model CourseMaterials {
+  id              String                       @id @db.VarChar(36)
+  materialName    String                       @db.VarChar(255)
+  materialType    CourseMaterials_materialType
+  storageFileName String?                      @db.Text
+  mimeType        String?                      @db.VarChar(100)
+  sizeBytes       BigInt?
+  universityId    String                       @db.VarChar(100)
+  courseId        String                       @db.VarChar(100)
+  instanceId      String                       @db.VarChar(100)
+  uploadedBy      String                       @db.VarChar(100)
+  url             String?                      @db.Text
+  checksum        String?                      @db.VarChar(64)
+  createdAt       DateTime?                    @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime?                    @default(now()) @db.Timestamp(0)
+}
+
+model CrossDomainAuthTokens {
+  otpToken  String    @id @db.VarChar(255)
+  jwtToken  String    @db.Text
+  createdAt DateTime? @default(now()) @db.Timestamp(0)
+  used      Boolean?  @default(false)
+}
+
+model Grading {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  checkerId          String               @db.VarChar(255)
+  answerId           Int                  @db.UnsignedInt
+  customFeedback     String?              @db.Text
+  totalPoints        Float                @db.Float
+  homeworkId         Int?
+  createdAt          DateTime?            @default(now()) @db.Timestamp(0)
+  updatedAt          DateTime?            @default(now()) @db.Timestamp(0)
+  reviewType         Grading_reviewType
+  Answer             Answer               @relation(fields: [answerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Grading_ibfk_1")
+  GradingAnswerClass GradingAnswerClass[]
+
+  @@index([answerId], map: "answerId")
+}
+
+model GradingAnswerClass {
+  id            Int       @id @default(autoincrement()) @db.UnsignedInt
+  gradingId     Int       @db.UnsignedInt
+  answerClassId String    @db.VarChar(255)
+  points        Float     @db.Float
+  isTrait       Boolean
+  closed        Boolean
+  title         String    @db.VarChar(255)
+  description   String?   @db.Text
+  count         Int?      @default(1)
+  createdAt     DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime? @default(now()) @db.Timestamp(0)
+  Grading       Grading   @relation(fields: [gradingId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "GradingAnswerClass_ibfk_1")
+
+  @@index([gradingId], map: "gradingId")
+}
+
+model ResourceAccess {
+  resourceId        String            @db.VarChar(255)
+  actionId          String            @db.VarChar(255)
+  aclId             String            @db.VarChar(255)
+  createdAt         DateTime?         @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime?         @default(now()) @db.Timestamp(0)
+  AccessControlList AccessControlList @relation(fields: [aclId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ResourceAccess_ibfk_1")
+
+  @@id([resourceId, actionId])
+  @@index([aclId], map: "aclId")
+}
+
+model StudyBuddyConnections {
+  senderId      String    @db.VarChar(255)
+  receiverId    String    @db.VarChar(255)
+  sbCourseId    String    @db.VarChar(255)
+  courseId      String    @db.VarChar(100)
+  instanceId    String    @db.VarChar(50)
+  institutionId String    @default("FAU") @db.VarChar(50)
+  timeOfIssue   DateTime? @default(now()) @db.Timestamp(0)
+
+  @@id([senderId, receiverId, courseId, instanceId, institutionId])
+}
+
+model StudyBuddyUsers {
+  userId           String    @db.VarChar(255)
+  sbCourseId       String    @db.VarChar(255)
+  courseId         String    @db.VarChar(100)
+  instanceId       String    @db.VarChar(50)
+  institutionId    String    @default("FAU") @db.VarChar(50)
+  active           Boolean
+  email            String    @db.VarChar(255)
+  userName         String?   @db.VarChar(255)
+  intro            String?   @db.VarChar(1023)
+  studyProgram     String?   @db.VarChar(255)
+  semester         Int?
+  meetType         String?   @db.VarChar(255)
+  languages        String?   @db.VarChar(255)
+  dayPreference    String?   @db.VarChar(255)
+  createdTimestamp DateTime? @default(now()) @db.Timestamp(0)
+
+  @@id([userId, courseId, instanceId, institutionId])
+}
+
+model announcement {
+  id            Int       @id @default(autoincrement())
+  courseId      String    @db.VarChar(255)
+  instructorId  String    @db.VarChar(255)
+  institutionId String    @db.VarChar(255)
+  instanceId    String    @db.VarChar(255)
+  title         String    @db.VarChar(255)
+  content       String    @db.Text
+  visibleUntil  DateTime? @db.Timestamp(0)
+  createdAt     DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model comments {
+  commentId           Int                      @id @default(autoincrement())
+  archive             String?                  @db.VarChar(255)
+  filepath            String?                  @db.VarChar(255)
+  parentCommentId     Int?
+  statement           String?                  @db.Text
+  isEdited            Int?                     @db.TinyInt
+  isPrivate           Int?                     @db.TinyInt
+  isDeleted           Int?                     @db.TinyInt
+  hiddenStatus        comments_hiddenStatus?
+  hiddenJustification String?                  @db.VarChar(255)
+  selectedText        String?                  @db.Text
+  selectedElement     String?                  @db.Text
+  isAnonymous         Int?                     @db.TinyInt
+  userId              String?                  @db.VarChar(255)
+  userName            String?                  @db.VarChar(255)
+  userEmail           String?                  @db.VarChar(255)
+  postedTimestamp     DateTime?                @default(now()) @db.Timestamp(0)
+  updatedTimestamp    DateTime?                @default(now()) @db.Timestamp(0)
+  threadId            Int?
+  commentType         comments_commentType?
+  questionStatus      comments_questionStatus?
+  courseId            String?                  @db.VarChar(255)
+  courseTerm          String?                  @db.VarChar(255)
+  institutionId       String?                  @db.VarChar(255)
+  uri                 String?                  @db.VarChar(1023)
+  pageUrl             String?                  @db.VarChar(1023)
+}
+
+model courseMetadata {
+  courseId         String    @db.VarChar(50)
+  instanceId       String    @db.VarChar(50)
+  lectureSchedule  Json
+  hasHomework      Boolean   @default(false)
+  hasQuiz          Boolean   @default(false)
+  updaterId        String?   @db.VarChar(255)
+  createdAt        DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt        DateTime? @default(now()) @db.Timestamp(0)
+  universityId     String    @db.VarChar(255)
+  courseName       String    @db.VarChar(255)
+  notes            String    @db.VarChar(255)
+  landing          String    @db.VarChar(255)
+  slides           String    @db.VarChar(255)
+  teaser           String?   @db.Text
+  instructors      Json
+  tutorialSchedule Json?
+  seriesId         String?   @db.VarChar(255)
+
+  @@id([courseId, instanceId])
+}
+
+model excused {
+  id             Int    @id @default(autoincrement())
+  userId         String @db.VarChar(255)
+  quizId         String @db.VarChar(255)
+  courseId       String @db.VarChar(255)
+  courseInstance String @db.VarChar(255)
+  institutionId  String @default("FAU") @db.VarChar(255)
+}
+
+model homework {
+  id                Int       @id @default(autoincrement())
+  versionNo         Int?
+  title             String?   @db.VarChar(1023)
+  givenTs           DateTime? @db.Timestamp(0)
+  dueTs             DateTime? @db.Timestamp(0)
+  feedbackReleaseTs DateTime? @db.Timestamp(0)
+  courseId          String?   @db.VarChar(255)
+  courseInstance    String?   @db.VarChar(255)
+  institutionId     String?   @default("FAU") @db.VarChar(255)
+  problems          Json?
+  updaterId         String?   @db.VarChar(255)
+  createdAt         DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime? @default(now()) @db.Timestamp(0)
+  css               Json?
+}
+
+model homeworkHistory {
+  id                Int
+  versionNo         Int
+  title             String?   @db.VarChar(255)
+  givenTs           DateTime? @db.Timestamp(0)
+  dueTs             DateTime? @db.Timestamp(0)
+  feedbackReleaseTs DateTime? @db.Timestamp(0)
+  courseId          String?   @db.VarChar(255)
+  courseInstance    String?   @db.VarChar(255)
+  institutionId     String?   @default("FAU") @db.VarChar(255)
+  problems          Json?
+  updaterId         String?   @db.VarChar(255)
+  createdAt         DateTime? @db.Timestamp(0)
+
+  @@id([id, versionNo])
+}
+
+model jobApplication {
+  id                   Int                              @id @default(autoincrement())
+  jobPostId            Int
+  applicantId          String                           @db.VarChar(50)
+  applicationStatus    jobApplication_applicationStatus @default(APPLIED)
+  createdAt            DateTime?                        @default(now()) @db.Timestamp(0)
+  updatedAt            DateTime?                        @default(now()) @db.Timestamp(0)
+  studentProfile       studentProfile                   @relation(fields: [applicantId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "fk_applicant")
+  jobPost              jobPost                          @relation(fields: [jobPostId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobPost")
+  jobApplicationAction jobApplicationAction[]
+
+  @@index([applicantId], map: "fk_applicant")
+  @@index([jobPostId], map: "fk_jobPost")
+}
+
+model jobApplicationAction {
+  id               Int                               @id @default(autoincrement())
+  jobApplicationId Int
+  actionByRole     jobApplicationAction_actionByRole
+  userId           String                            @db.VarChar(50)
+  actionType       jobApplicationAction_actionType
+  message          String?                           @db.VarChar(255)
+  createdAt        DateTime?                         @default(now()) @db.Timestamp(0)
+  jobApplication   jobApplication                    @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_action_application")
+
+  @@index([jobApplicationId], map: "fk_action_application")
+}
+
+model jobCategories {
+  id               Int                       @id @default(autoincrement())
+  jobCategory      jobCategories_jobCategory
+  internshipPeriod String?                   @db.VarChar(255)
+  startDate        DateTime?                 @db.Date
+  endDate          DateTime?                 @db.Date
+  instanceId       String?                   @db.VarChar(255)
+  createdAt        DateTime?                 @default(now()) @db.Timestamp(0)
+  updatedAt        DateTime?                 @default(now()) @db.Timestamp(0)
+  jobPost          jobPost[]
+}
+
+model jobPortalAdmin {
+  id             BigInt    @id @unique(map: "id") @default(autoincrement()) @db.UnsignedBigInt
+  name           String    @db.VarChar(255)
+  email          String    @unique(map: "email") @db.VarChar(255)
+  universityName String    @db.VarChar(255)
+  createdAt      DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model jobPost {
+  id                  Int                  @id @default(autoincrement())
+  organizationId      Int?
+  jobCategoryId       Int?
+  session             String?              @db.VarChar(255)
+  jobTitle            String?              @db.VarChar(255)
+  jobDescription      String?              @db.Text
+  workLocation        String?              @db.VarChar(255)
+  qualification       String?              @db.VarChar(255)
+  graduationYears     String?              @db.VarChar(255)
+  openPositions       Int?
+  compensation        Json?
+  facilities          String?              @db.Text
+  applicationDeadline DateTime?            @db.Timestamp(0)
+  workMode            String?              @db.VarChar(50)
+  createdByUserId     String?              @db.VarChar(50)
+  createdAt           DateTime?            @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime?            @default(now()) @db.Timestamp(0)
+  jobApplication      jobApplication[]
+  organizationProfile organizationProfile? @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jobPost_ibfk_1")
+  jobCategories       jobCategories?       @relation(fields: [jobCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jobPost_ibfk_2")
+  userInfo            userInfo?            @relation(fields: [createdByUserId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "jobPost_ibfk_3")
+
+  @@index([createdByUserId], map: "createdByUserId")
+  @@index([jobCategoryId], map: "jobCategoryId")
+  @@index([organizationId], map: "organizationId")
+}
+
+model notifications {
+  userId           String?   @db.VarChar(255)
+  updateId         Int       @id @default(autoincrement())
+  header           String?   @db.VarChar(255)
+  content          String?   @db.VarChar(255)
+  header_de        String?   @db.VarChar(255)
+  content_de       String?   @db.VarChar(255)
+  link             String?   @db.VarChar(255)
+  notificationType String?   @db.VarChar(255)
+  postedTimestamp  DateTime? @default(now()) @db.Timestamp(0)
+  updatedTimestamp DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model orgInvitations {
+  id                  Int                 @id @default(autoincrement())
+  organizationId      Int
+  inviteeEmail        String              @db.VarChar(255)
+  inviteruserId       String              @db.Char(36)
+  createdAt           DateTime?           @default(now()) @db.Timestamp(0)
+  organizationProfile organizationProfile @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "orgInvitations_ibfk_1")
+
+  @@index([organizationId], map: "organizationId")
+}
+
+model organizationProfile {
+  id                Int                @id @default(autoincrement())
+  companyName       String?            @db.VarChar(255)
+  domain            String?            @db.VarChar(255)
+  incorporationYear String?            @db.VarChar(50)
+  isStartup         Boolean?
+  website           String?            @db.VarChar(255)
+  about             String?            @db.Text
+  companyType       String?            @db.VarChar(255)
+  officeAddress     String?            @db.Text
+  officePostalCode  String?            @db.VarChar(255)
+  jobPost           jobPost[]
+  orgInvitations    orgInvitations[]
+  recruiterProfile  recruiterProfile[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model points {
+  points         Int?
+  reason         String?   @db.VarChar(255)
+  userId         String?   @db.VarChar(255)
+  commentId      Int?      @unique(map: "commentId")
+  granterId      String?   @db.VarChar(255)
+  grantTimestamp DateTime? @default(now()) @db.Timestamp(0)
+
+  @@ignore
+}
+
+model recruiterProfile {
+  userId              String               @id @db.VarChar(50)
+  name                String               @db.VarChar(255)
+  email               String               @db.VarChar(255)
+  position            String               @db.VarChar(255)
+  organizationId      Int?
+  mobile              String?              @db.VarChar(15)
+  altMobile           String?              @db.VarChar(15)
+  socialLinks         Json?
+  about               String?              @db.Text
+  createdAt           DateTime?            @default(now()) @db.DateTime(0)
+  updatedAt           DateTime?            @default(now()) @db.DateTime(0)
+  organizationProfile organizationProfile? @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_organization")
+  userInfo            userInfo             @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "fk_recruiter")
+
+  @@index([organizationId], map: "fk_organization")
+}
+
+model semesterInfo {
+  universityId     String    @db.VarChar(50)
+  instanceId       String    @db.VarChar(50)
+  semesterStart    DateTime? @db.Timestamp(0)
+  semesterEnd      DateTime? @db.Timestamp(0)
+  lectureStartDate DateTime? @db.Timestamp(0)
+  lectureEndDate   DateTime? @db.Timestamp(0)
+  holidays         Json
+  userId           String?   @db.VarChar(255)
+  createdAt        DateTime? @default(now()) @db.Timestamp(0)
+  updatedAt        DateTime? @default(now()) @db.Timestamp(0)
+
+  @@id([universityId, instanceId])
+}
+
+model studentProfile {
+  userId           String           @id @db.VarChar(50)
+  name             String           @db.VarChar(255)
+  resumeUrl        String?          @db.VarChar(2083)
+  email            String           @db.VarChar(255)
+  mobile           String?          @db.VarChar(15)
+  programme        String?          @db.VarChar(255)
+  yearOfAdmission  String?          @db.VarChar(50)
+  yearOfGraduation String?          @db.VarChar(50)
+  courses          String?          @db.Text
+  about            String?          @db.Text
+  gpa              String?          @db.VarChar(50)
+  location         String?          @db.VarChar(100)
+  altMobile        String?          @db.VarChar(15)
+  socialLinks      Json?
+  createdAt        DateTime?        @default(now()) @db.DateTime(0)
+  updatedAt        DateTime?        @default(now()) @db.DateTime(0)
+  jobApplication   jobApplication[]
+  userInfo         userInfo         @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+}
+
+model updateHistory {
+  updateId                    Int                                   @id @default(autoincrement())
+  ownerId                     String?                               @db.VarChar(255)
+  updaterId                   String                                @db.VarChar(255)
+  commentId                   Int
+  previousStatement           String?                               @db.Text
+  previousHiddenStatus        updateHistory_previousHiddenStatus?
+  previousHiddenJustification String?                               @db.VarChar(255)
+  updatedTimestamp            DateTime?                             @default(now()) @db.Timestamp(0)
+  previousQuestionStatus      updateHistory_previousQuestionStatus?
+}
+
+model userInfo {
+  userId                          String            @id @db.VarChar(50)
+  firstName                       String?           @db.VarChar(255)
+  lastName                        String?           @db.VarChar(255)
+  email                           String?           @db.VarChar(255)
+  notificationSeenTs              String?           @db.VarChar(255)
+  showTrafficLight                Boolean?          @default(true)
+  showSectionReview               Boolean?          @default(true)
+  saltedPassword                  String?           @db.VarChar(255)
+  verificationToken               String?           @db.VarChar(255)
+  isVerified                      Boolean?
+  passwordResetToken              String?           @db.VarChar(255)
+  passwordResetRequestTimestampMs BigInt?
+  languages                       String?           @db.VarChar(255)
+  studyProgram                    String?           @db.VarChar(255)
+  semester                        String?           @db.VarChar(255)
+  jobPost                         jobPost[]
+  recruiterProfile                recruiterProfile?
+  studentProfile                  studentProfile?
+}
+
+enum jobCategories_jobCategory {
+  internship
+  full_time  @map("full-time")
+}
+
+enum CourseMaterials_materialType {
+  FILE
+  LINK
+}
+
+enum jobApplicationAction_actionByRole {
+  APPLICANT
+  RECRUITER
+  ADMIN
+}
+
+enum jobApplication_applicationStatus {
+  APPLIED
+  APPLICATION_WITHDRAWN
+  SHORTLISTED_FOR_INTERVIEW
+  ON_HOLD
+  REJECTED
+  OFFERED
+  OFFER_REVOKED
+  OFFER_ACCEPTED
+  OFFER_REJECTED
+}
+
+enum jobApplicationAction_actionType {
+  CREATE_APPLICATION
+  WITHDRAW_APPLICATION
+  ACCEPT_OFFER
+  REJECT_OFFER
+  SHORTLIST_FOR_INTERVIEW
+  ON_HOLD
+  REJECT
+  SEND_OFFER
+  REVOKE_OFFER
+}
+
+enum updateHistory_previousHiddenStatus {
+  UNHIDDEN
+  SPAM
+  INCORRECT
+  IRRELEVANT
+  ABUSE
+  OTHER
+}
+
+enum Grading_reviewType {
+  SELF
+  INSTRUCTOR
+  PEER
+}
+
+enum comments_hiddenStatus {
+  UNHIDDEN
+  SPAM
+  INCORRECT
+  IRRELEVANT
+  ABUSE
+  OTHER
+}
+
+enum updateHistory_previousQuestionStatus {
+  UNANSWERED
+  ANSWERED
+  ACCEPTED
+  OTHER
+}
+
+enum comments_commentType {
+  QUESTION
+  REMARK
+  OTHER
+}
+
+enum comments_questionStatus {
+  UNANSWERED
+  ANSWERED
+  ACCEPTED
+  OTHER
+}

@@ -43,9 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ext = path.extname(String(storageFileName).trim());
     const downloadFileName = `${String(materialName).trim()}${ext}`;
     const forceDownload = req.query.download === 'true';
-    const isPdf = String(mimeType).toLowerCase() === 'application/pdf';
     const disposition =
-      !forceDownload && isPdf
+      !forceDownload
         ? `inline; filename="${downloadFileName}"`
         : `attachment; filename="${downloadFileName}"`;
 
