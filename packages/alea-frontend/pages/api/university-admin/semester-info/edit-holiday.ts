@@ -3,7 +3,8 @@ import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
-type DatabaseResult<T> = T[] | { error: any };
+type QueryResult<T> = T[] | { error: any };
+type MutationResult = { affectedRows: number } | { error: any };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -46,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const existingResult = (await executeQuery<{ holidays: string }[]>(
       `SELECT holidays FROM semesterInfo WHERE universityId = ? AND instanceId = ?`,
       [universityId, instanceId]
-    )) as DatabaseResult<{ holidays: string }>;
+    )) as QueryResult<{ holidays: string }>;
 
     if ('error' in existingResult) {
       return res.status(500).end('Database error');
@@ -79,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        SET holidays = ?, userId = ?
        WHERE universityId = ? AND instanceId = ?`,
       [JSON.stringify(updatedHolidays), userId, universityId, instanceId]
-    )) as DatabaseResult<{ affectedRows: number }>;
+    )) as MutationResult;
 
     if ('error' in updateResult) {
       return res.status(500).end('Failed to update holiday');
