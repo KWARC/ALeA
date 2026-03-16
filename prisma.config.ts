@@ -9,6 +9,6 @@ export default defineConfig({
     path: 'prisma/comments/migrations',
   },
   datasource: {
-    url: env('COMMENTS_DATABASE_URL'),
+    url: `mysql://${env('MYSQL_USER')}:${env('MYSQL_PASSWORD')}@${env('MYSQL_HOST')}:${env('MYSQL_PORT')}/${env('MYSQL_COMMENTS_DATABASE')}`,
   },
 });
