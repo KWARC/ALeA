@@ -9,6 +9,7 @@ import {
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 import { sendAlert } from '../add-comment';
+
 const BASE_PATH = process.env.MATERIALS_DIR || path.join(process.cwd(), 'materials');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -29,6 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (materials.length === 0) return res.status(404).send('Material not found');
 
   const { courseId, instanceId, materialType, storageFileName } = materials[0];
+
+
 
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
@@ -52,11 +55,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Invalid filePath');
       return res.status(500).send('Internal server error');
     }
-    try {
-      if (fs.existsSync(filePath)) {
+      const otherReferences = (await executeDontEndSet500OnError(
+        `SELECT COUNT(*) as count FROM CourseMaterials WHERE storageFileName = ?`,
+        [storageFileName],
+        res
+      )) as any[];
+      
+      const count = otherReferences?.[0]?.count || 0;
+      try{
+      if (count === 0 && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-    } catch (deleteError) {
+      }catch (deleteError) {
       console.error('Error deleting file from storage:', deleteError);
       await sendAlert(`File deletion failed in disc  ${filePath}`);
       return res.status(500).send('Failed to delete file from storage. DB record preserved.');

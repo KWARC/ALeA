@@ -863,7 +863,7 @@ const CourseHomePage: NextPage = () => {
         </Box>
         <MoreResourcesAccordion
           courseId={courseId}
-          semester={instance}
+          instanceId={instanceId}
           institutionId={institutionId}
         />
         <RecordedSyllabus courseId={courseId} />
