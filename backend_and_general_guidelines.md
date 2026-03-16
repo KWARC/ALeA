@@ -16,6 +16,8 @@ const SEC_PER_HOUR = 3600;
 const WAIT_DURATION_HRS = 14;
 end_timestamp_sec = start_timestamp_sec + WAIT_DURATION_HRS * SEC_PER_HOUR;
 ```
+## 1.4. Document regex expressions
+Whenever a regular expression is used in the code, add a one-line comment explaining what the regex does, since regex patterns are often difficult to read and maintain.
 
 # 2. Writing APIs
 
