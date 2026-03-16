@@ -493,6 +493,37 @@ model userInfo {
   studentProfile                  studentProfile?
 }
 
+model CheatSheet {
+  cheatsheetId          String               @id @db.VarChar(50)
+  userId                String               @db.VarChar(255)
+  studentName           String?              @db.VarChar(255)
+  universityId          String               @db.VarChar(255)
+  courseId              String               @db.VarChar(255)
+  instanceId            String               @db.VarChar(255)
+  weekId                String               @db.VarChar(255)
+  checksum              String?              @db.VarChar(255)
+  fileName              String?              @db.VarChar(255)
+  uploadedVersionNumber Int?
+  uploadedByUserId      String?              @db.VarChar(255)
+  uploadedAt            DateTime?            @db.Timestamp(0)
+  createdAt             DateTime?            @db.Timestamp(0)
+  updatedAt             DateTime?            @default(now()) @db.Timestamp(0)
+  CheatSheetHistory     CheatSheetHistory[]
+}
+
+model CheatSheetHistory {
+  id                    Int        @id @default(autoincrement())
+  cheatsheetId          String     @db.VarChar(50)
+  uploadedVersionNumber Int
+  uploadedByUserId      String     @db.VarChar(255)
+  checksum              String?    @db.VarChar(255)
+  fileName              String?    @db.VarChar(255)
+  uploadedAt            DateTime?  @db.Timestamp(0)
+  createdAt             DateTime?  @db.Timestamp(0)
+  updatedAt             DateTime?  @default(now()) @db.Timestamp(0)
+  CheatSheet            CheatSheet @relation(fields: [cheatsheetId], references: [cheatsheetId], onDelete: Cascade, map: "CheatSheetHistory_ibfk_1")
+}
+
 enum jobCategories_jobCategory {
   internship
   full_time  @map("full-time")
