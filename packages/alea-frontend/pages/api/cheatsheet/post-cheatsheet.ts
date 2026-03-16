@@ -77,10 +77,81 @@ async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
   });
 }
 
+async function extractQRFromImage(buffer: Buffer): Promise<QRData> {
+  try {
+    const metadata = await sharp(buffer).metadata();
+    if (!metadata.width || !metadata.height) {
+      throw new Error('Could not determine image dimensions');
+    }
+
+    const rgba = await sharp(buffer)
+      .toColorspace('srgb')
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+
+    const { width, height } = metadata;
+
+    for (const scale of [1, 2, 4]) {
+      let buf = rgba,
+        w = width,
+        h = height;
+
+      if (scale > 1) {
+        buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
+          .resize(width * scale, height * scale, { kernel: 'nearest' })
+          .raw()
+          .toBuffer();
+        w = width * scale;
+        h = height * scale;
+      }
+
+      const result = jsQR(
+        new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
+        w,
+        h
+      );
+
+      if (result) {
+        const outer = JSON.parse(result.data) as { payload: string; signature: string };
+        if (!verifyQRSignature(outer.payload, outer.signature)) {
+          throw new Error('QR signature verification failed — file may be tampered.');
+        }
+        const json = JSON.parse(outer.payload) as Record<string, string>;
+        return {
+          cheatsheetId: json['cheatsheetId'] ?? undefined,
+        };
+      }
+    }
+
+    throw new Error('No QR code found in image at any scale.');
+  } catch (err) {
+    throw new Error(`Failed to extract QR from image: ${(err as Error)?.message}`);
+  }
+}
+
 async function extractFields(
-  buffer: Buffer
+  buffer: Buffer,
+  mimetype?: string
 ): Promise<{ fields: ExtractedFields; diagnostics: string }> {
-  const qr = await extractQRFromPDF(buffer);
+  const pdfMagicBytes = buffer.subarray(0, 4).toString('hex') === '25504446'; 
+  const isPDF = pdfMagicBytes || mimetype?.toLowerCase().includes('pdf');
+
+  console.log('extractFields - mimetype:', mimetype, 'pdfMagicBytes:', pdfMagicBytes, 'isPDF:', isPDF);
+
+  let qr: QRData;
+  try {
+    if (isPDF) {
+      console.log('Processing as PDF');
+      qr = await extractQRFromPDF(buffer);
+    } else {
+      console.log('Processing as Image');
+      qr = await extractQRFromImage(buffer);
+    }
+  } catch (err) {
+    console.error('QR extraction error:', err);
+    throw err;
+  }
 
   const fields: ExtractedFields = {
     cheatsheetId: qr.cheatsheetId,
@@ -191,14 +262,37 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
             w = width * scale;
             h = height * scale;
           }
+          let detectionBuf = buf;
+          let detectionW = w;
+          let detectionH = h;
+          
+          if (w > 1000 || h > 1000) {
+            console.log(`Downscaling large image from ${w}x${h} for jsQR`);
+            const maxDim = Math.max(w, h);
+            const scaleFactor = Math.max(1, Math.ceil(maxDim / 800));
+            const newW = Math.floor(w / scaleFactor);
+            const newH = Math.floor(h / scaleFactor);
+            
+            detectionBuf = await sharp(buf, { raw: { width: w, height: h, channels: 4 } })
+              .resize(newW, newH, { kernel: 'nearest' })
+              .raw()
+              .toBuffer();
+            detectionW = newW;
+            detectionH = newH;
+          }
+
+          console.log(`Scale ${scale} - Detection dimensions: ${detectionW}x${detectionH}`);
 
           const result = jsQR(
-            new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
-            w,
-            h
+            new Uint8ClampedArray(detectionBuf.buffer, detectionBuf.byteOffset, detectionBuf.byteLength),
+            detectionW,
+            detectionH
           );
 
+          console.log(`jsQR result at scale ${scale}:`, result ? 'FOUND!' : 'Not found');
+
           if (result) {
+            console.log(`QR detected at scale ${scale}!`);
             const outer = JSON.parse(result.data) as { payload: string; signature: string };
             if (!verifyQRSignature(outer.payload, outer.signature)) {
               throw new Error('QR signature verification failed — file may be tampered.');
@@ -282,7 +376,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let fields: ExtractedFields, diagnostics: string;
   try {
-    ({ fields, diagnostics } = await extractFields(buffer));
+    ({ fields, diagnostics } = await extractFields(buffer, file.mimetype));
   } catch (err) {
     console.error('Error extracting fields:', err);
     return res.status(500).send('Failed to extract fields.');
