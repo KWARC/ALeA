@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "GNU AGPL",
   "scripts": {
-    "prebuild": "npm run prisma:generate && nx run prebuild-scripts:serve:production --watch=false",
+    "prebuild": " nx run prebuild-scripts:serve:production --watch=false",
     "start": "npm run prebuild && nx serve ",
     "build": "npm run prebuild && nx build alea-frontend",
     "test": "nx test",
