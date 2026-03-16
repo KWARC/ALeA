@@ -230,6 +230,7 @@ model courseMetadata {
   instructors      Json
   tutorialSchedule Json?
   seriesId         String?   @db.VarChar(255)
+  livestreamUrl    String?   @db.VarChar(2048)
 
   @@id([courseId, instanceId])
 }
