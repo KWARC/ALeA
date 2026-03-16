@@ -1,6 +1,12 @@
 import { useIsLoggedIn } from '@alea/react-utils';
 import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
-import { Action, CourseInfo, PARTNERED_UNIVERSITIES, pathToCourseHome } from '@alea/utils';
+import {
+  Action,
+  CourseInfo,
+  PARTNERED_UNIVERSITIES,
+  pathToCourseHome,
+  ResourceName,
+} from '@alea/utils';
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
@@ -308,6 +314,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     queryFn: async () => {
       const resources = await getResourcesForUser();
       return resources
+        .filter((item) => item.name !== ResourceName.COURSE_CHEATSHEET)
         .map((item) => ({
           ...item,
           actions: item.actions.filter((action) => action !== Action.TAKE),
