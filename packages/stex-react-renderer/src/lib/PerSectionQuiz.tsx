@@ -19,6 +19,7 @@ import {
   getProblemsPerSection,
   getUserProfile,
   ProblemData,
+  formatQuizLabelDropdown,
 } from '@alea/spec';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
@@ -200,10 +201,13 @@ export function PerSectionQuiz({
     return problems.find((p) => p.problemId === problemUri);
   }, [problems, problemUri]);
 
-  const [selectedExamUri, setSelectedExamUri] = useState<string | null>(null);
+  const [selectedRef, setSelectedRef] = useState<{
+    uri: string;
+    type: 'exam' | 'quiz';
+  } | null>(null);
 
   useEffect(() => {
-    setSelectedExamUri(null);
+    setSelectedRef(null);
   }, [problemUri]);
 
   const examOptions = useMemo<ExamInfoLite[]>(() => {
@@ -221,6 +225,47 @@ export function PerSectionQuiz({
 
     return Array.from(seen.values());
   }, [currentProblem]);
+
+  const quizOptions = useMemo<{ uri: string }[]>(() => {
+    if (!currentProblem?.quizRefs) return [];
+
+    const seen = new Map<string, { uri: string }>();
+
+    currentProblem.quizRefs.forEach((q) => {
+      if (!seen.has(q.quizUri)) {
+        seen.set(q.quizUri, { uri: q.quizUri });
+      }
+    });
+
+    return Array.from(seen.values());
+  }, [currentProblem]);
+
+  const combinedOptions = useMemo(() => {
+    const exams = examOptions.map((e) => ({
+      uri: e.uri,
+      type: 'exam' as const,
+    }));
+
+    const quizzes = quizOptions.map((q) => ({
+      uri: q.uri,
+      type: 'quiz' as const,
+    }));
+
+    return [...exams, ...quizzes];
+  }, [examOptions, quizOptions]);
+
+  const dropdownLabel = useMemo(() => {
+    if (examOptions.length > 0 && quizOptions.length > 0) {
+      return 'Appeared in exams & quizzes';
+    }
+    if (examOptions.length > 0) {
+      return 'Appeared in exams';
+    }
+    if (quizOptions.length > 0) {
+      return 'Appeared in quizzes';
+    }
+    return '';
+  }, [examOptions, quizOptions]);
 
   useEffect(() => {
     if (cachedProblemUris?.length) {
@@ -323,14 +368,12 @@ export function PerSectionQuiz({
   // TODO ALEA4-P3 const response = responses[problemIdx];
   // const solutions = problems[problemIdx]?.subProblemData?.map((p) => p.solution);
 
-  if (!problemUri) return null;
   const handleApplyFilter = (filtered: string[], type: string) => {
     let finalUris = filtered;
     if (type === 'exam') {
       finalUris = examProblemIds;
     }
     setProblemUris(finalUris);
-    setAllProblemUris(finalUris);
     setIsSubmitted(finalUris.map(() => false));
     setResponses(finalUris.map(() => undefined));
     setProblemIdx(0);
@@ -468,27 +511,38 @@ export function PerSectionQuiz({
                       my: 2,
                     }}
                   >
-                    {examOptions.length > 0 && !selectedExamUri && (
-                      <Box sx={{ minWidth: 150 }}>
+                    {combinedOptions.length > 0 && !selectedRef && (
+                      <Box sx={{ minWidth: 180 }}>
                         <ExamSelect
-                          exams={examOptions}
+                          exams={combinedOptions.map((o) => ({ uri: o.uri }))}
                           courseId={courseId}
                           value=""
-                          onChange={(uri) => setSelectedExamUri(uri)}
-                          label="Appeared in exams"
+                          onChange={(uri) => {
+                            const found = combinedOptions.find((o) => o.uri === uri);
+                            if (found) {
+                              setSelectedRef(found);
+                            }
+                          }}
+                          label={dropdownLabel}
                           size="small"
                         />
                       </Box>
                     )}
 
-                    {selectedExamUri && (
+                    {selectedRef && (
                       <Chip
-                        label={formatExamLabelDropdown(selectedExamUri, undefined, courseId)}
-                        color="error"
-                        onDelete={() => setSelectedExamUri(null)}
+                        label={
+                          selectedRef.type === 'exam'
+                            ? formatExamLabelDropdown(selectedRef.uri, undefined, courseId)
+                            : formatQuizLabelDropdown(selectedRef.uri, undefined, courseId)
+                        }
+                        color={selectedRef.type === 'exam' ? 'error' : 'primary'}
+                        onDelete={() => setSelectedRef(null)}
                         onClick={() =>
                           window.open(
-                            `/exam-problems?examUri=${encodeURIComponent(selectedExamUri)}`,
+                            selectedRef.type === 'exam'
+                              ? `/exam-problems?examUri=${encodeURIComponent(selectedRef.uri)}`
+                              : `/quiz-problems?quizUri=${encodeURIComponent(selectedRef.uri)}`,
                             '_blank'
                           )
                         }
@@ -513,7 +567,7 @@ export function PerSectionQuiz({
                     (currentProblem?.outOfSyllabusConcepts?.length ? (
                       <Tooltip
                         title={
-                          <Box sx={{ p:0.5, maxWidth: 300, whiteSpace: 'normal' }}>
+                          <Box sx={{ p: 0.5, maxWidth: 300, whiteSpace: 'normal' }}>
                             <div style={{ marginBottom: '4px' }}>
                               This problem contains concepts that were not covered in the course:
                             </div>
