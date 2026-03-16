@@ -42,7 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const examProblems = await getProblemsForExam(exam.uri);
 
     for (const problemUri of examProblems) {
-
       if (!sectionProblemSet.has(problemUri)) continue;
 
       examOnlyProblemSet.add(problemUri);
@@ -57,16 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-<<<<<<< HEAD
   for (const quiz of quizzes) {
     const quizProblems = await getProblemsForQuiz(quiz.uri);
 
     for (const problemUri of quizProblems) {
-      // const normalized = normalizeProblemUri(problemUri);
-
       if (!sectionProblemSet.has(problemUri)) continue;
-
-
 
       const existing = quizProblemMap.get(problemUri) ?? [];
 
@@ -79,9 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-=======
   const practiceProblemSet = new Set(practiceProblems.map((p) => p.problemId));
->>>>>>> origin/main
 
   const examOnlyProblems = Array.from(examOnlyProblemSet)
     .filter((p) => !practiceProblemSet.has(p))
@@ -96,7 +88,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const enrichedProblems = allProblems.map((p) => ({
     ...p,
     examRefs: examProblemMap.get(p.problemId) ?? [],
-    quizRefs: quizProblemMap.get(p.problemId) ?? [],}));
+    quizRefs: quizProblemMap.get(p.problemId) ?? [],
+  }));
 
   return res.status(200).json(enrichedProblems);
 }
