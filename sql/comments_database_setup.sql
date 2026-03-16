@@ -508,4 +508,33 @@ CREATE TABLE CrossDomainAuthTokens (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     used BOOLEAN DEFAULT FALSE
 );
-   
+
+CREATE TABLE CheatSheet (
+    cheatsheetId VARCHAR(50) PRIMARY KEY,
+    userId VARCHAR(255) NOT NULL,
+    studentName VARCHAR(255), 
+    universityId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(255) NOT NULL, 
+    instanceId VARCHAR(255) NOT NULL, 
+    weekId VARCHAR(255) NOT NULL,    
+    checksum VARCHAR(255),
+    fileName VARCHAR(255),
+    uploadedVersionNumber INT,
+    uploadedByUserId VARCHAR(255),
+    uploadedAt TIMESTAMP, -- this is the scanned cheatsheet's upload time
+    createdAt TIMESTAMP, --only for first download of empty cheatsheet
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- for every update
+);
+
+CREATE TABLE CheatSheetHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cheatsheetId VARCHAR(50) NOT NULL,
+    uploadedVersionNumber INT NOT NULL, 
+    uploadedByUserId VARCHAR(255) NOT NULL,
+    checksum VARCHAR(255),
+    fileName VARCHAR(255),
+    uploadedAt TIMESTAMP, -- this is the scanned cheatsheet's upload time
+    createdAt TIMESTAMP, --only for first download of empty cheatsheet
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- for every update
+    FOREIGN KEY (cheatsheetId) REFERENCES CheatSheet(cheatsheetId) ON DELETE CASCADE
+);
