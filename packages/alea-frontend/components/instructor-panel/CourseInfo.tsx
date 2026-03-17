@@ -94,6 +94,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             scheduleType: 'lecture',
             hasHomework: false,
             hasQuiz: false,
+            hasCheatsheet: false,
             seriesId: '',
             updaterId: '',
           };

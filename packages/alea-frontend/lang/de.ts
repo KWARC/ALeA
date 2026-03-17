@@ -495,6 +495,7 @@ export const de = {
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -511,6 +512,7 @@ export const de = {
 
     enableHomework: 'Hausaufgaben für diesen Kurs aktivieren',
     enableQuiz: 'Quiz für diesen Kurs aktivieren',
+    enableCheatsheet: 'Spickzettel für diesen Kurs aktivieren',
 
     instructorsLabel: 'Lehrende',
     noInstructors: 'Keine Dozenten gefunden.',
