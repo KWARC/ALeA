@@ -13,6 +13,7 @@ interface CourseMetadataRow {
   instructors: string | object | null;
   hasQuiz: boolean;
   hasHomework: boolean;
+  hasCheatsheet: boolean;
   universityId: string | null;
 }
 
@@ -88,6 +89,7 @@ function transformMetadataToCoursesInfo(
     const isCurrentTerm = sorted.some((i) => i.instanceId === currentTerm);
     const hasQuiz = sorted.some((i) => !!i.hasQuiz);
     const hasHomework = sorted.some((i) => !!i.hasHomework);
+    const hasCheatsheet = sorted.some((i) => !!i.hasCheatsheet);
 
     const semesterInstances = sorted.map((instance) => {
       const instructorList = parseInstructorsJson(instance.instructors);
@@ -108,6 +110,7 @@ function transformMetadataToCoursesInfo(
       isCurrentTerm,
       hasQuiz,
       hasHomework,
+      hasCheatsheet,
       primary.universityId || undefined,
       semesterInstances,
       primaryInstructorNames,
@@ -134,6 +137,7 @@ export async function getAllCoursesFromDb(
       instructors,
       hasQuiz,
       hasHomework,
+      hasCheatsheet,
       universityId
     FROM courseMetadata
   `;

@@ -8,6 +8,7 @@ import {
   updateCourseInfoMetadata,
   updateHasHomework,
   updateHasQuiz,
+  updateHasCheatsheet,
   getAllAclMembers,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
@@ -353,6 +354,27 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             />
           }
           label={t.enableQuiz}
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={courseInfo.hasCheatsheet || false}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                if (!confirm(t.confirmUpdateCheatsheet)) return;
+
+                try {
+                  await updateHasCheatsheet({ courseId, instanceId, hasCheatsheet: next });
+                  setField('hasCheatsheet', next);
+                } catch (err) {
+                  console.error('Failed to update cheatsheet', err);
+                  setToast({ type: 'error', text: 'Failed to update cheatsheet setting' });
+                }
+              }}
+            />
+          }
+          label={t.enableCheatsheet}
         />
         <TextField
           label={t.seriesIdLabel}
