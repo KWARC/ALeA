@@ -10,19 +10,24 @@ interface CourseMetadataRow {
   landing: string | null;
   slides: string | null;
   teaser: string | null;
-  instructors: string | null;
+  instructors: string | object | null;
   hasQuiz: boolean;
   hasHomework: boolean;
   universityId: string | null;
 }
 
-function parseJsonWithFallback<T>(jsonString: string | null | undefined, fallbackValue: T): T {
-  if (!jsonString) return fallbackValue;
+function parseInstructorsJson(val: string | object | null | undefined): Array<{ id: string; name: string }> {
+  if (val == null) return [];
+  const toItem = (x: unknown) =>
+    typeof x === 'string' ? { id: x, name: x } : { id: (x as any)?.id ?? '', name: (x as any)?.name ?? (x as any)?.id ?? '' };
+  if (typeof val === 'object') return (Array.isArray(val) ? val : []).map(toItem);
+  const s = String(val).trim();
+  if (!s) return [];
   try {
-    return JSON.parse(jsonString) as T;
-  } catch (error) {
-    console.error('Failed to parse JSON field:', error);
-    return fallbackValue;
+    const p = JSON.parse(s);
+    return Array.isArray(p) ? p.map(toItem) : [toItem(s)];
+  } catch {
+    return [toItem(s)];
   }
 }
 
@@ -85,20 +90,14 @@ function transformMetadataToCoursesInfo(
     const hasHomework = sorted.some((i) => !!i.hasHomework);
 
     const semesterInstances = sorted.map((instance) => {
-      const instructorList = parseJsonWithFallback<Array<{ id: string; name: string }>>(
-        instance.instructors,
-        []
-      );
+      const instructorList = parseInstructorsJson(instance.instructors);
       return {
         semester: instance.instanceId,
         instructors: extractInstructorNames(instructorList),
       };
     });
 
-    const primaryInstructorList = parseJsonWithFallback<Array<{ id: string; name: string }>>(
-      primary.instructors,
-      []
-    );
+    const primaryInstructorList = parseInstructorsJson(primary.instructors);
     const primaryInstructorNames = extractInstructorNames(primaryInstructorList) ?? undefined;
 
     coursesInfoMap[courseId] = createCourseInfo(

@@ -1,35 +1,36 @@
 import { Comment, NotificationType, PointsGrant, lmpResponseToUserInfo } from '@alea/spec';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
-import mysql from 'serverless-mysql';
+import { commentsDb } from './prisma-comments';
 
-const db = mysql({
-  config: {
-    host: process.env.MYSQL_HOST,
-    port: +process.env.MYSQL_PORT,
-    database: process.env.MYSQL_COMMENTS_DATABASE,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    charset: 'utf8mb4',
-  },
-});
+function isReadOnlyQuery(query: string): boolean {
+  const trimmed = query.trim().toUpperCase();
+  return /^(SELECT|SHOW|DESCRIBE|EXPLAIN|CALL\b)/.test(trimmed);
+}
 
 export async function executeQuery<T>(query: string, values: any[]) {
   try {
-    const results = await db.query<T>(query, values);
-    return results;
+    if (isReadOnlyQuery(query)) {
+      const results = await commentsDb.$queryRawUnsafe<T>(query, ...values);
+      return results;
+    }
+    const affectedRows = await commentsDb.$executeRawUnsafe(query, ...values);
+    return { affectedRows } as T;
   } catch (error) {
-    return { error };
+    return { error } as T;
   }
 }
 
 export async function executeQueryAndEnd<T>(query: string, values: any[]) {
   try {
-    const results = await db.query<T>(query, values);
-    await db.end();
-    return results;
+    if (isReadOnlyQuery(query)) {
+      const results = await commentsDb.$queryRawUnsafe<T>(query, ...values);
+      return results;
+    }
+    const affectedRows = await commentsDb.$executeRawUnsafe(query, ...values);
+    return { affectedRows } as T;
   } catch (error) {
-    return { error };
+    return { error } as T;
   }
 }
 
@@ -70,10 +71,27 @@ export async function executeTxnAndEnd(
   values3?: any[]
 ) {
   try {
-    const txn = db.transaction().query(query1, values1).query(query2, values2);
-    if (query3 && values3) txn.query(query3, values3);
-    const results = await txn.commit();
-    await db.end();
+    const results = await commentsDb.$transaction(async (tx) => {
+      const out: unknown[] = [];
+      out.push(
+        isReadOnlyQuery(query1)
+          ? await tx.$queryRawUnsafe(query1, ...values1)
+          : await tx.$executeRawUnsafe(query1, ...values1)
+      );
+      out.push(
+        isReadOnlyQuery(query2)
+          ? await tx.$queryRawUnsafe(query2, ...values2)
+          : await tx.$executeRawUnsafe(query2, ...values2)
+      );
+      if (query3 && values3) {
+        out.push(
+          isReadOnlyQuery(query3)
+            ? await tx.$queryRawUnsafe(query3, ...values3)
+            : await tx.$executeRawUnsafe(query3, ...values3)
+        );
+      }
+      return out;
+    });
     return results;
   } catch (error) {
     return { error };
