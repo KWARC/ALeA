@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "license": "GNU AGPL",
   "scripts": {
-    "prebuild": " nx run prebuild-scripts:serve:production --watch=false",
+    "prebuild": "npm run prisma:generate && nx run prebuild-scripts:serve:production --watch=false",
+    "prisma:generate": "prisma generate --schema=prisma/comments/schema.prisma",
+    "prisma:migrate-deploy": "prisma migrate deploy --schema=prisma/comments/schema.prisma",
+    "prisma:migrate-dev": "prisma migrate dev --schema=prisma/comments/schema.prisma",
     "start": "npm run prebuild && nx serve ",
     "build": "npm run prebuild && nx build alea-frontend",
     "test": "nx test",

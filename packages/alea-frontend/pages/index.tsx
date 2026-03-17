@@ -1,23 +1,28 @@
+import { useIsLoggedIn } from '@alea/react-utils';
+import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
+import {
+  Action,
+  CourseInfo,
+  PARTNERED_UNIVERSITIES,
+  pathToCourseHome,
+  ResourceName,
+} from '@alea/utils';
 import FeedIcon from '@mui/icons-material/Feed';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { Box, Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import { getResourcesForUser, updateUserInfoFromToken } from '@alea/spec';
-import { Action, CourseInfo, CourseResourceAction, PRIMARY_COL } from '@alea/utils';
+import { useQuery } from '@tanstack/react-query';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { useEffect } from 'react';
+import StudentWelcomeScreen from '../components/StudentWelcomeScreen';
 import WelcomeScreen from '../components/WelcomeScreen';
+import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES } from '@alea/utils';
-import { getAllCoursesFromDb } from './api/get-all-courses';
-import { pathToCourseHome } from '@alea/utils';
-import { useIsLoggedIn } from '@alea/react-utils';
-import { useQuery } from '@tanstack/react-query';
 import shadows from '../theme/shadows';
+import { getAllCoursesFromDb } from './api/get-all-courses';
 
 function getInstructor(courseData: CourseInfo, currentSemester: string) {
   for (const instance of courseData.instances) {
@@ -309,6 +314,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     queryFn: async () => {
       const resources = await getResourcesForUser();
       return resources
+        .filter((item) => item.name !== ResourceName.COURSE_CHEATSHEET)
         .map((item) => ({
           ...item,
           actions: item.actions.filter((action) => action !== Action.TAKE),
@@ -319,11 +325,14 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
   });
 
   if (loggedIn) {
-    return (
+    const isInstructor = (resourcesForInstructor?.length ?? 0) > 0;
+    return isInstructor ? (
       <WelcomeScreen
         resourcesForInstructor={resourcesForInstructor}
         filteredCourses={filteredCourses}
       />
+    ) : (
+      <StudentWelcomeScreen filteredCourses={filteredCourses} />
     );
   }
   return (
@@ -332,6 +341,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
         <BannerSection />
         <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
           <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
+             
             <Typography
               sx={{
                 color: 'secondary.700',

@@ -515,6 +515,156 @@ export async function getExamsForCourse(courseId: string) {
   return Array.from(seen.values());
 }
 
+export interface QuizMeta {
+  courseAcronym: string;
+  quizNumber: string;
+  formattedTerm: string;
+  formattedDate?: string;
+}
+
+export function getQuizMetaFromQuizUri(
+  quizUri: string,
+  quiz?: {
+    term?: string;
+    number?: string;
+    date?: string;
+    courseId?: string;
+  }
+): QuizMeta {
+  const decoded = decodeURIComponent(quizUri);
+
+  const courseAcronym = quiz?.courseId?.toUpperCase() ?? 'UNKNOWN';
+
+  const rawTerm = quiz?.term ?? '';
+  const formattedTerm = rawTerm.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
+
+  const quizNumber = quiz?.number ? `Quiz ${quiz.number}` : 'Quiz';
+
+  const formattedDate = quiz?.date ? new Date(quiz.date).toLocaleDateString('en-GB') : undefined;
+
+  return {
+    courseAcronym,
+    quizNumber,
+    formattedTerm,
+    formattedDate,
+  };
+}
+
+export function formatQuizLabelShortFromUri(quizUri: string, quiz?: any) {
+  const meta = getQuizMetaFromQuizUri(quizUri, quiz);
+
+  return [meta.courseAcronym, meta.quizNumber, meta.formattedTerm].filter(Boolean).join(' ');
+}
+
+export function formatQuizLabelFullFromUri(quizUri: string, quiz?: any) {
+  const meta = getQuizMetaFromQuizUri(quizUri, quiz);
+
+  return [
+    meta.courseAcronym,
+    meta.quizNumber,
+    meta.formattedTerm,
+    meta.formattedDate ? `from ${meta.formattedDate}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+export async function getQuizMetadataByUri(quizUri: string) {
+  if (!quizUri) return null;
+
+  const query = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?courseId ?term ?number ?date
+WHERE {
+  <${quizUri}> rdf:type ulo:quiz .
+  OPTIONAL { <${quizUri}> ulo:has-course ?courseId }
+  OPTIONAL { <${quizUri}> ulo:has-course-term ?term }
+  OPTIONAL { <${quizUri}> ulo:is-number ?number }
+  OPTIONAL { <${quizUri}> ulo:has-date ?date }
+}
+  `;
+
+  const results = await getParameterizedQueryResults(query);
+  const b = results?.results?.bindings?.[0];
+
+  if (!b) return null;
+
+  return {
+    courseId: b['courseId']?.value,
+    term: b['term']?.value,
+    number: b['number']?.value,
+    date: b['date']?.value,
+  };
+}
+
+export function buildGetQuizzesForCourseQuery(courseId: string): string {
+  const normalizedCourseId = courseId?.toUpperCase().split('-')[0];
+  console.log('Quiz query using course:', normalizedCourseId);
+
+  return `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?quiz ?term ?number ?date
+WHERE {
+  ?quiz rdf:type ulo:quiz ;
+        ulo:has-course "${normalizedCourseId}" .
+
+  OPTIONAL { ?quiz ulo:has-course-term ?term }
+  OPTIONAL { ?quiz ulo:is-number ?number }
+  OPTIONAL { ?quiz ulo:has-date ?date }
+}
+ORDER BY DESC(?date)
+`;
+}
+
+export async function getQuizzesForCourse(courseId: string) {
+  if (!courseId) return [];
+
+  const query = buildGetQuizzesForCourseQuery(courseId);
+  const results = await getParameterizedQueryResults(query);
+
+  const seen = new Map<string, any>();
+
+  for (const b of results?.results?.bindings ?? []) {
+    const quizUri = b['quiz']?.value;
+    if (!quizUri) continue;
+
+    if (!seen.has(quizUri)) {
+      seen.set(quizUri, {
+        uri: quizUri,
+        term: b['term']?.value,
+        number: b['number']?.value,
+        date: b['date']?.value,
+      });
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+export const TEMPL_GET_PROBLEMS_FOR_QUIZ = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?prob WHERE {
+  <_uri_quiz> (ulo:contains|dc:hasPart)* ?prob.
+  ?prob rdf:type ulo:problem.
+}
+`;
+
+export async function getProblemsForQuiz(quizUri: string): Promise<string[]> {
+  if (!quizUri) return [];
+
+  const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_QUIZ, {
+    _uri_quiz: quizUri,
+  });
+
+  return results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
+}
+
 export async function getProblemObjects(problemIdSubstr: string) {
   if (!problemIdSubstr) return [];
   const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEM_OBJECTS_BY_SUBSTR, {

@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule, tutorialSchedule, hasHomework, hasQuiz, seriesId  FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule, tutorialSchedule, hasHomework, hasQuiz, seriesId, livestreamUrl FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
@@ -32,15 +32,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const hasHomework = !!(result[0].hasHomework ?? false);
   const hasQuiz = !!(result[0].hasQuiz ?? false);
-  res
-    .status(200)
-    .json({
-      courseId,
-      instanceId,
-      lectureSchedule,
-      tutorialSchedule,
-      hasHomework,
-      hasQuiz,
-      seriesId: result[0].seriesId,
-    });
+  const livestreamUrl = result[0].livestreamUrl ?? null;
+  res.status(200).json({
+    courseId,
+    instanceId,
+    lectureSchedule,
+    tutorialSchedule,
+    hasHomework,
+    hasQuiz,
+    seriesId: result[0].seriesId,
+    livestreamUrl,
+  });
 }
