@@ -14,6 +14,7 @@ export interface CourseInfo {
   hasQuiz: boolean;
   hasHomework: boolean;
   universityId?: string;
+  livestreamUrl?: string;
   instances?: { semester: string; instructors?: string[] | null }[];
   instructors?: string[] | null;
   teaser?: string | null;

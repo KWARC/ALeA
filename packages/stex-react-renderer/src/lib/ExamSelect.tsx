@@ -25,8 +25,6 @@ export function ExamSelect({
   label = 'Appeared in exams',
   size = 'small',
 }: ExamSelectProps) {
-  if (!exams.length) return null;
-
   return (
     <FormControl size={size} sx={{ minWidth: 180 }}>
       <InputLabel sx={{ fontSize: '0.85rem' }}>{label}</InputLabel>
@@ -45,7 +43,7 @@ export function ExamSelect({
         }}
       >
         <MenuItem disabled value="">
-          <em>Select exam</em>
+          <em>{exams.length ? 'Select' : 'No items available'}</em>
         </MenuItem>
 
         {exams.map((exam) => {
