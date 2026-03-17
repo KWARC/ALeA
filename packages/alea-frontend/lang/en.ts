@@ -529,6 +529,7 @@ export const en = {
 
     confirmUpdateHomework: 'Are you sure you want to update homework availability?',
     confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
+    confirmUpdateCheatsheet: 'Are you sure you want to update cheatsheet availability?',
 
     courseName: 'Course Name',
     universityId: 'University ID',
@@ -544,6 +545,7 @@ export const en = {
 
     enableHomework: 'Enable homework for this course',
     enableQuiz: 'Enable quiz for this course',
+    enableCheatsheet: 'Enable cheatsheet for this course',
 
     instructorsLabel: 'Instructors',
     noInstructors: 'No instructors found.',

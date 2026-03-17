@@ -581,7 +581,7 @@ const CourseHomePage: NextPage = () => {
       url: ins.url,
     })) ?? [];
 
-  const { hasQuiz, notes, landing, slides } = courseInfo;
+  const { hasQuiz, hasCheatsheet, notes, landing, slides } = courseInfo;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -741,10 +741,12 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <CourseComponentLink href={cheatSheetsLink}>
-            CheatSheet&nbsp;
-            <FolderOpenIcon fontSize="large" />
-          </CourseComponentLink>
+          {hasCheatsheet && (
+            <CourseComponentLink href={cheatSheetsLink}>
+              CheatSheet&nbsp;
+              <FolderOpenIcon fontSize="large" />
+            </CourseComponentLink>
+          )}
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && (
