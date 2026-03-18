@@ -18,6 +18,8 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
+import CheatSheetsPage from './cheatsheet';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
@@ -31,6 +33,7 @@ type TabName =
   | 'quiz-dashboard'
   | 'study-buddy'
   | 'peer-review'
+  | 'cheatsheet'
   | 'syllabus'
   | 'course-metadata';
 
@@ -47,6 +50,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
+  'cheatsheet': { resource: ResourceName.COURSE_CHEATSHEET, actions: [Action.MUTATE] },
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
   'course-metadata': { resource: ResourceName.COURSE_METADATA, actions: [Action.MUTATE] },
 };
@@ -87,6 +91,8 @@ function ChosenTab({
       return <StudyBuddyModeratorStats courseId={courseId} institutionId={institutionId} />;
     case 'peer-review':
       return <InstructorPeerReviewViewing courseId={courseId} />;
+    case 'cheatsheet':
+      return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
     case 'syllabus':
       return <CoverageUpdateTab />;
     case 'course-metadata':
@@ -122,6 +128,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'peer-review': undefined,
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
+  'cheatsheet': '900px',
   'study-buddy': '900px',
   syllabus: '1200px',
   'course-metadata': '1200px',
@@ -184,6 +191,7 @@ const InstructorDashPage: NextPage = () => {
       const tabOrder: TabName[] = [
         'syllabus',
         'quiz-dashboard',
+        'cheatsheet',
         'homework-manager',
         'homework-grading',
         'study-buddy',

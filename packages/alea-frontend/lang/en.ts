@@ -468,6 +468,30 @@ export const en = {
     noHomeworkAvailable: 'No homework available',
     progress: 'Progress',
   },
+  studentWelcomeScreen: {
+    subtitle: "Here's what's happening in your courses",
+    whatsNext: "What's next",
+    liveQuiz: 'Live Quiz',
+    joinNow: 'Join now',
+    ongoingLecture: 'Ongoing Lecture',
+    ongoingTutorial: 'Ongoing Tutorial',
+    upcomingQuiz: 'Upcoming Quiz',
+    upcomingLecture: 'Upcoming Lecture',
+    upcomingTutorial: 'Upcoming Tutorial',
+    latestAssignment: 'Latest Assignment',
+    due: 'Due',
+    quizSchedule: 'Quiz schedule',
+    assignments: 'Assignments',
+    notes: 'Notes',
+    slides: 'Slides',
+    notEnrolled: "You're not enrolled in any courses yet",
+  },
+  semesterOverBanner: {
+    title: 'Semester is over',
+    description:
+      'No more scheduled lectures or tutorials. You can still view materials and past assignments from the course page.',
+    openCourse: 'Open course',
+  },
   syllabus: {
     syllabusEntries: 'Syllabus Entries',
     noSyllabusEntriesYet: 'No syllabus entries yet',
@@ -505,6 +529,7 @@ export const en = {
 
     confirmUpdateHomework: 'Are you sure you want to update homework availability?',
     confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
+    confirmUpdateCheatsheet: 'Are you sure you want to update cheatsheet availability?',
 
     courseName: 'Course Name',
     universityId: 'University ID',
@@ -520,6 +545,7 @@ export const en = {
 
     enableHomework: 'Enable homework for this course',
     enableQuiz: 'Enable quiz for this course',
+    enableCheatsheet: 'Enable cheatsheet for this course',
 
     instructorsLabel: 'Instructors',
     noInstructors: 'No instructors found.',

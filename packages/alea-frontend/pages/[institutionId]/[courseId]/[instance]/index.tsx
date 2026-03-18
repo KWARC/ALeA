@@ -26,6 +26,7 @@ import {
   pathToPracticeProblems,
   pathToInstructorDash,
   ResourceName,
+  pathToCheatSheet,
 } from '@alea/utils';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -36,6 +37,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -579,7 +581,7 @@ const CourseHomePage: NextPage = () => {
       url: ins.url,
     })) ?? [];
 
-  const { hasQuiz, notes, landing, slides } = courseInfo;
+  const { hasQuiz, hasCheatsheet, notes, landing, slides } = courseInfo;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -589,6 +591,7 @@ const CourseHomePage: NextPage = () => {
   const studyBuddyLink = pathToStudyBuddy(institutionId, courseId, instanceId);
   const practiceProblemsLink = pathToPracticeProblems(institutionId, courseId, instanceId);
   const instructorDashLink = pathToInstructorDash(institutionId, courseId, instanceId);
+  const cheatSheetsLink = pathToCheatSheet(institutionId, courseId, instanceId);
 
   const locale = router.locale || 'en';
   const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
@@ -631,7 +634,6 @@ const CourseHomePage: NextPage = () => {
       });
     }
   };
-
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}>
       <CourseHeader
@@ -737,6 +739,12 @@ const CourseHomePage: NextPage = () => {
             <CourseComponentLink href={instructorDashLink} sx={{ backgroundColor: 'blue.300' }}>
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
+            </CourseComponentLink>
+          )}
+          {hasCheatsheet && (
+            <CourseComponentLink href={cheatSheetsLink}>
+              CheatSheet&nbsp;
+              <FolderOpenIcon fontSize="large" />
             </CourseComponentLink>
           )}
         </Box>

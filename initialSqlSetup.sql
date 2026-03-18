@@ -10,6 +10,12 @@ INSERT INTO
 VALUES
     ('sys-admin', NULL, 'fake_joy');
 
+-- Insert into `ResourceAccess`
+INSERT INTO
+    ResourceAccess (resourceId, actionId, aclId)
+VALUES
+    ('/**', 'ACCESS_CONTROL', 'sys-admin');
+
 -- Insert course metadata
 INSERT INTO
     courseMetadata (

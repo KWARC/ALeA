@@ -417,6 +417,30 @@ export const de = {
       'Hinweis: Diese Probleme dienen nur dazu, Ihnen beim Lernen zu helfen. Sie decken das Kursmaterial nicht vollständig ab und es gibt keine Garantie dafür, dass die Probleme korrekt sind oder dass sie repräsentativ für die Art von Problemen sind, die in den Tests oder der Prüfung behandelt werden.',
     backToAllCourseProblems: 'Zurück zu allen Kursproblemen',
   },
+  studentWelcomeScreen: {
+    subtitle: 'Das ist los in Ihren Kursen',
+    whatsNext: 'Was kommt als Nächstes',
+    liveQuiz: 'Live-Quiz',
+    joinNow: 'Jetzt beitreten',
+    ongoingLecture: 'Laufende Vorlesung',
+    ongoingTutorial: 'Laufendes Tutorium',
+    upcomingQuiz: 'Bevorstehendes Quiz',
+    upcomingLecture: 'Bevorstehende Vorlesung',
+    upcomingTutorial: 'Bevorstehendes Tutorium',
+    latestAssignment: 'Neueste Hausaufgabe',
+    due: 'Fällig',
+    quizSchedule: 'Quizplan',
+    assignments: 'Hausaufgaben',
+    notes: 'Skript',
+    slides: 'Folien',
+    notEnrolled: 'Sie sind noch in keinem Kurs eingeschrieben',
+  },
+  semesterOverBanner: {
+    title: 'Semester ist vorbei',
+    description:
+      'Keine weiteren Vorlesungen oder Tutorien geplant. Sie können weiterhin Materialien und vergangene Hausaufgaben über die Kursseite ansehen.',
+    openCourse: 'Kurs öffnen',
+  },
   peerGrading: {
     peerGrading: 'Bewertung durch andere Lernende',
   },
@@ -471,6 +495,7 @@ export const de = {
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -487,6 +512,7 @@ export const de = {
 
     enableHomework: 'Hausaufgaben für diesen Kurs aktivieren',
     enableQuiz: 'Quiz für diesen Kurs aktivieren',
+    enableCheatsheet: 'Spickzettel für diesen Kurs aktivieren',
 
     instructorsLabel: 'Lehrende',
     noInstructors: 'Keine Dozenten gefunden.',

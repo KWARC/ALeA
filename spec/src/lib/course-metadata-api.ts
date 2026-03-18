@@ -36,6 +36,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   livestreamUrl?: string;
   instructors: InstructorInfo[];
   hasQuiz: boolean;
+  hasCheatsheet: boolean;
   updaterId?: string;
   universityId: string;
 }
@@ -115,6 +116,13 @@ export async function updateHasQuiz(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasQuiz: boolean }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-quiz`, data);
+  return response.data;
+}
+
+export async function updateHasCheatsheet(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasCheatsheet: boolean }
+) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-cheatsheet`, data);
   return response.data;
 }
 

@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllCoursesFromDb } from './get-all-courses';
 import { getCategorizedProblems } from './get-categorized-problem';
-import { getExamsForCourse, getProblemsForExam } from '@alea/spec';
+import {
+  getExamsForCourse,
+  getProblemsForExam,
+  getProblemsForQuiz,
+  getQuizzesForCourse,
+} from '@alea/spec';
 import { Language } from '@alea/utils';
-
-function normalizeProblemUri(uri: string) {
-  return uri.split('&d=')[0];
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sectionUri = req.query.sectionUri as string;
@@ -32,29 +33,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const examProblemMap = new Map<string, { examUri: string; examLabel: string }[]>();
   const examOnlyProblemSet = new Set<string>();
 
-  const sectionProblemSet = new Set(practiceProblems.map((p) => normalizeProblemUri(p.problemId)));
+  const sectionProblemSet = new Set(practiceProblems.map((p) => p.problemId));
+
+  const quizzes = await getQuizzesForCourse(courseId);
+  const quizProblemMap = new Map<string, { quizUri: string; quizLabel: string }[]>();
 
   for (const exam of exams) {
     const examProblems = await getProblemsForExam(exam.uri);
 
     for (const problemUri of examProblems) {
-      const normalized = normalizeProblemUri(problemUri);
+      if (!sectionProblemSet.has(problemUri)) continue;
 
-      if (!sectionProblemSet.has(normalized)) continue;
+      examOnlyProblemSet.add(problemUri);
 
-      examOnlyProblemSet.add(normalized);
-
-      const existing = examProblemMap.get(normalized) ?? [];
+      const existing = examProblemMap.get(problemUri) ?? [];
       existing.push({
         examUri: exam.uri,
         examLabel: exam.number ? `Exam ${exam.number} ${exam.term ?? ''}` : 'Exam',
       });
 
-      examProblemMap.set(normalized, existing);
+      examProblemMap.set(problemUri, existing);
     }
   }
 
-  const practiceProblemSet = new Set(practiceProblems.map((p) => normalizeProblemUri(p.problemId)));
+  for (const quiz of quizzes) {
+    const quizProblems = await getProblemsForQuiz(quiz.uri);
+
+    for (const problemUri of quizProblems) {
+      if (!sectionProblemSet.has(problemUri)) continue;
+
+      const existing = quizProblemMap.get(problemUri) ?? [];
+
+      existing.push({
+        quizUri: quiz.uri,
+        quizLabel: quiz.number ? `Quiz ${quiz.number}` : 'Quiz',
+      });
+
+      quizProblemMap.set(problemUri, existing);
+    }
+  }
+
+  const practiceProblemSet = new Set(practiceProblems.map((p) => p.problemId));
 
   const examOnlyProblems = Array.from(examOnlyProblemSet)
     .filter((p) => !practiceProblemSet.has(p))
@@ -68,7 +87,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const allProblems = [...practiceProblems, ...examOnlyProblems];
   const enrichedProblems = allProblems.map((p) => ({
     ...p,
-    examRefs: examProblemMap.get(normalizeProblemUri(p.problemId)) ?? [],
+    examRefs: examProblemMap.get(p.problemId) ?? [],
+    quizRefs: quizProblemMap.get(p.problemId) ?? [],
   }));
 
   return res.status(200).json(enrichedProblems);
