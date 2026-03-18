@@ -8,6 +8,26 @@ export const SYSTEM_UPDATES = [
     postedTimestamp: '2023-02-11T00:20:00+05:30',
     }*/
   {
+    id: 'course-materials',
+    header: 'Course Materials',
+    content:
+      'Instructors can now upload files and add links as course materials for students. Course materials are organized by semester and accessible from the course page. Instructors can also copy materials from previous semesters to streamline setup.',
+    header_de: 'Kursmaterialien',
+    content_de:
+      'Dozenten können jetzt Dateien hochladen und Links als Kursmaterialien für Studierende hinzufügen. Die Kursmaterialien sind nach Semester organisiert und von der Kursseite aus zugänglich. Dozenten können außerdem Materialien aus vorherigen Semestern kopieren, um die Einrichtung zu vereinfachen.',
+    postedTimestamp: '2026-03-16T00:20:00+05:30',
+  },
+  {
+    id: 'student-dashboard',
+    header: 'Student Dashboard',
+    content:
+      'A personalized Student Dashboard is now available on the homepage. Students can view their enrolled courses at a glance, see what\'s next with quick access to quizzes and homework, and track their progress across all courses in one place.',
+    header_de: 'Studierenden-Dashboard',
+    content_de:
+      'Ein personalisiertes Studierenden-Dashboard ist jetzt auf der Startseite verfügbar. Studierende können ihre eingeschriebenen Kurse auf einen Blick sehen, erfahren, was als Nächstes ansteht, mit schnellem Zugriff auf Quizze und Hausaufgaben, und verfolgen ihren Fortschritt in allen Kursen an einem Ort.',
+    postedTimestamp: '2026-03-16T00:20:00+05:30',
+  },
+  {
     id: 'dark-theme',
     header: 'Dark Theme',
     content:

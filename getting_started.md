@@ -26,13 +26,38 @@ Ensure you have the following installed on your system before proceeding:
 
 ## Database Setup
 
-1. **Check for SQL Setup Files**
-   - Navigate to the project folder and locate the `comments_database_setup` directory.
-   - Inside, you will find SQL scripts for setting up the database.
+The project uses **Prisma** for database migrations. Ensure MySQL is running and the database exists before running migrations.
 
-2. **Run SQL Scripts**
-   - Open MySQL Workbench.
-   - Execute the SQL queries from the `comments_database_setup` folder to create the necessary database and tables.
+1. **Create the database** (if it does not exist)
+   - Open MySQL Workbench or use the MySQL CLI.
+   - Create the database: `CREATE DATABASE comments_test;` (or your chosen database name).
+
+2. **Configure environment variables**
+   - Create `packages/alea-frontend/.env.local` with the following database connection variables (update as required):
+
+   ```
+   MYSQL_HOST=127.0.0.1
+   MYSQL_PORT=3306
+   MYSQL_USER=root
+   MYSQL_PASSWORD=password
+   MYSQL_COMMENTS_DATABASE=comments_test
+   ```
+
+3. **Run Prisma migrations**
+   - Deploy migrations to create/update tables:
+     ```sh
+     npm run prisma:migrate-deploy
+     ```
+   - For development with migration creation, use:
+     ```sh
+     npm run prisma:migrate-dev
+     ```
+
+4. **Generate Prisma client**
+   - The client is generated automatically by the prebuild step. To generate manually:
+     ```sh
+     npm run prisma:generate
+     ```
 
 ## Running the Applications  
 
@@ -55,18 +80,31 @@ This guide provides step-by-step instructions to create and configure an Access 
 
 Execute the SQL queries from the `intialSqlSetup.sql` file to set up the sys-admin ACL, initial course metadata, and other required data.
 
-### Step 2: Insert into `ResourceAccess`
 
-Run the following SQL query to add resource access control:
-
-   ```INSERT INTO ResourceAccess (resourceId, actionId, aclId) VALUES ('/**', 'ACCESS_CONTROL', 'sys-admin');```
-
-### Step 3: Assign Resource-Action Permissions
+### Step 2: Assign Resource-Action Permissions
 
 1. Navigate to the **exp** page in the application.
 2. Locate and click on the **system-administrator** button.
 3. Follow the prompts to create a resource-action assignment by specifying the desired resources and actions that the `sys-admin` role should control.
 4. Save the changes.
+
+### Step 3: University Admin Setup
+
+Set up the university admin to access the university and create semesters:
+
+1. **Create the university admin ACL** on the ACL page (`/acl`): Click "Create new ACL" and create the ACL (e.g., `fau-admin` for FAU). Set the updater ACL to `sys-admin` and add the desired user(s) as members.
+2. **Assign resource-action**: Navigate to the **exp** page and click the **system-administrator** button to open the sys-admin panel. Assign the resource-action: resource `/university/{universityId}/university-sem-info` with action `MUTATE` to the `{universityId}-admin` ACL (replace `{universityId}` with your university ID, e.g., `FAU`).
+3. The university admin can then navigate to `/u/{universityId}/university-admin` to access the dashboard and create semesters.
+
+### Step 4: Create Semester and Add Course to Semester
+
+Prerequisites: Complete Step 3 to set up the `{universityId}-admin` ACL and resource-action. Admins should see the "go to university admin page" link at `/u/{universityId}`.
+
+1. **Select semester**: Go to the University Admin page (`/u/{universityId}/university-admin`) and select the semester to which you want to add a course. Create a new semester if needed.
+2. **Add course**: In the Course Management section, select a course from the dropdown menu or manually enter the Course ID. Click the **Add Course to Semester** button.
+3. **Create Instructor ACL**: After adding the course, click the **Create Instructor ACL** button next to the Course ID. The ACL is created immediately—you can navigate directly to the ACL page (`/acl/{courseId}-{instanceId}-instructors`) to edit it and add instructor members. Then request the Sys-Admin to approve the course.
+4. **Sys-Admin approval**: The Sys-Admin approves the course by performing a **Quick Course Access Setup** from the sys-admin panel. After approval, instructors added to that course's ACL can access the Instructor Dashboard.
+5. **Instructor setup**: The instructor can now access the **Access Control** tab in the Instructor Dashboard. Click the **Default Resource-Action Setup** button to create the resource-action assignments for the course. Once complete, all tabs in the Instructor Dashboard become available.
 
 ## Fake User Login
 
