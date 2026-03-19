@@ -106,6 +106,11 @@ export default function CourseResourcesTab({
     return date.toISOString().split('T')[0];
   };
 
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   const [validFrom, setValidFrom] = useState('');
   const [validTill, setValidTill] = useState('');
   const [showValidity, setShowValidity] = useState(false);
@@ -424,10 +429,10 @@ export default function CourseResourcesTab({
                     sx={{ display: 'block' }}
                   >
                     {resource.validFrom &&
-                      `Valid-From:${resource.validFrom.split('-').reverse().join('-')}`}
+                      `Valid-From:${formatDateForDisplay(resource.validFrom)}`}
                     {resource.validFrom && resource.validTill && ' | '}
                     {resource.validTill &&
-                      `Valid-Till:${resource.validTill.split('-').reverse().join('-')}`}
+                      `Valid-Till:${formatDateForDisplay(resource.validTill)}`}
                   </Typography>
                 )}
               </Box>
