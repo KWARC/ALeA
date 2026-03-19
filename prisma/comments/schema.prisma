@@ -82,6 +82,8 @@ model CourseMaterials {
   uploadedBy      String                       @db.VarChar(100)
   url             String?                      @db.Text
   checksum        String?                      @db.VarChar(64)
+  validFrom       String?                      @db.VarChar(255)
+  validTill       String?                      @db.VarChar(255)
   createdAt       DateTime?                    @default(now()) @db.Timestamp(0)
   updatedAt       DateTime?                    @default(now()) @db.Timestamp(0)
 }

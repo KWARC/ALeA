@@ -87,6 +87,8 @@ async function handleFileMaterial(
   courseId: string,
   instanceId: string,
   materialName: string,
+  validFrom: string | undefined,
+  validTill: string | undefined,
   file: formidable.File
 ) {
   const tempFilePath = file.filepath;
@@ -132,8 +134,8 @@ async function handleFileMaterial(
     const dbResult = await executeAndEndSet500OnError(
       `INSERT INTO CourseMaterials 
        (id, materialName, materialType, storageFileName, mimeType, sizeBytes,
-        universityId, courseId, instanceId, uploadedBy, checksum)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        universityId, courseId, instanceId, uploadedBy, checksum, validFrom, validTill)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         materialId,
         materialName,
@@ -146,6 +148,8 @@ async function handleFileMaterial(
         instanceId,
         userId,
         checksum,
+        validFrom,
+        validTill,
       ],
       res
     );
@@ -169,7 +173,7 @@ async function handleLinkMaterial(
   res: NextApiResponse,
   materialId: string,
   userId: string,
-  { universityId, courseId, instanceId, materialName, url }: any
+  { universityId, courseId, instanceId, materialName, url, validFrom, validTill }: any
 ) {
   if (!url) {
     return res.status(422).send('Missing url for Link type');
@@ -196,9 +200,9 @@ async function handleLinkMaterial(
 
   const dbResult = await executeAndEndSet500OnError(
     `INSERT INTO CourseMaterials 
-     (id, materialName, materialType, universityId, courseId, instanceId, uploadedBy, url)
-     VALUES (?, ?, 'LINK', ?, ?, ?, ?, ?)`,
-    [materialId, materialName, universityId, courseId, instanceId, userId, url],
+     (id, materialName, materialType, universityId, courseId, instanceId, uploadedBy, url, validFrom, validTill)
+     VALUES (?, ?, 'LINK', ?, ?, ?, ?, ?, ?, ?)`,
+    [materialId, materialName, universityId, courseId, instanceId, userId, url, validFrom, validTill],
     res
   );
 
@@ -227,6 +231,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const type = getField(fields, 'type');
   const materialName = getField(fields, 'materialName');
   const url = getField(fields, 'url');
+  const validFrom = getField(fields, 'validFrom');
+  const validTill = getField(fields, 'validTill');
 
   if (!universityId || !courseId || !type || !materialName) {
     return res.status(422).send('Missing required fields');
@@ -265,6 +271,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       courseId,
       instanceId,
       materialName,
+      validFrom,
+      validTill,
       file
     );
   } else if (type === 'LINK') {
@@ -274,6 +282,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       instanceId,
       materialName,
       url,
+      validFrom,
+      validTill,
     });
   } else {
     return res.status(422).send('Invalid type. Must be FILE or LINK');
