@@ -56,7 +56,7 @@ export function MoreResourcesAccordion({
     setExpanded((prev) => !prev);
   };
 
-  const filtered = resources;
+  const filtered = resources.filter((r) => r.instanceId === instanceId);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
