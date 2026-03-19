@@ -90,20 +90,20 @@ export default function CourseResourcesTab({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [url, setUrl] = useState('');
   const getTodayDate = () => {
-    return new Date().toLocaleDateString('en-CA');
+    return new Date().toISOString().split('T')[0];
   };
 
   const getDefaultExpiryDate = () => {
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
-    return date.toLocaleDateString('en-CA');
+    return date.toISOString().split('T')[0];
   };
 
   const getYearLater = (baseDate: string) => {
     if (!baseDate) return getTodayDate();
-    const [year, month, day] = baseDate.split('-').map(Number);
-    const date = new Date(year + 1, month - 1, day);
-    return date.toLocaleDateString('en-CA');
+    const date = new Date(baseDate);
+    date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split('T')[0];
   };
 
   const [validFrom, setValidFrom] = useState('');
