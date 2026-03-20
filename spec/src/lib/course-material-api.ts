@@ -10,6 +10,8 @@ export interface CourseMaterial {
   url?: string;
   createdAt?: string;
   instanceId: string;
+  validFrom?: string;
+  validTill?: string;
 }
 
 export interface PostMaterialRequest {

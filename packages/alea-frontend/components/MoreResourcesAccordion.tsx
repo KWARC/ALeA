@@ -3,7 +3,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LinkIcon from '@mui/icons-material/Link';
-
 import {
   Alert,
   Box,
@@ -13,11 +12,9 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  Tab,
-  Tabs,
 } from '@mui/material';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMaterials, getMaterialFileUrl } from '@alea/spec';
 import { getExtensionFromMime } from '@alea/utils';
@@ -39,7 +36,6 @@ export function MoreResourcesAccordion({
 }: MoreResourcesAccordionProps) {
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
-  const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
 
   const {
     data: fetchedResources,
@@ -52,22 +48,6 @@ export function MoreResourcesAccordion({
     enabled: !!institutionId && !!courseId,
   });
 
-  const SEMESTERS = useMemo(() => {
-    const sems = new Set<string>();
-    if (instanceId) sems.add(instanceId);
-
-    if (fetchedResources) {
-      fetchedResources.forEach((r) => {
-        if (r.instanceId) sems.add(r.instanceId);
-      });
-    }
-    return Array.from(sems).sort((a, b) => {
-      if (a === instanceId) return -1;
-      if (b === instanceId) return 1;
-      return a.localeCompare(b);
-    });
-  }, [instanceId, fetchedResources]);
-
   if (!courseId) return null;
 
   const resources = fetchedResources ?? [];
@@ -76,7 +56,12 @@ export function MoreResourcesAccordion({
     setExpanded((prev) => !prev);
   };
 
-  const filtered = resources.filter((r) => r.instanceId === SEMESTERS[selectedSemesterIndex]);
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const filtered = resources.filter((r) => r.instanceId === instanceId);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
@@ -92,37 +77,6 @@ export function MoreResourcesAccordion({
 
         {expanded && (
           <Box sx={styles.expandedContent}>
-            <Box sx={{ mb: 2 }}>
-              <Tabs
-                value={selectedSemesterIndex}
-                onChange={(_e, newValue) => {
-                  setSelectedSemesterIndex(newValue);
-                  setPage(0);
-                }}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  '& .MuiTab-root': {
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    minWidth: 90,
-                  },
-                }}
-              >
-                {SEMESTERS.map((sem, index) => (
-                  <Tab
-                    key={sem}
-                    label={
-                      <Typography variant="body2" fontWeight={700}>
-                        {instanceId === sem ? 'Current Semester' : sem}
-                      </Typography>
-                    }
-                  />
-                ))}
-              </Tabs>
-            </Box>
             {isError && (
               <Alert severity="error" sx={styles.errorAlert}>
                 {(error as Error)?.message || 'Could not load resources. Please try again.'}
@@ -140,17 +94,35 @@ export function MoreResourcesAccordion({
               <Box sx={styles.resourceList}>
                 {visibleResources.map((resource) => (
                   <Box key={resource.id} sx={styles.resourceRow}>
-                    <Box sx={styles.resourceInfo}>
-                      {resource.type === 'FILE' ? (
-                        getIconByExtension(getExtensionFromMime(resource?.mimeType), {
-                          fontSize: 'small',
-                        }) ?? <InsertDriveFile color="primary" fontSize="small" />
-                      ) : (
-                        <InsertLinkIcon color="primary" fontSize="small" />
+                    <Box
+                      sx={{
+                        ...styles.resourceInfo,
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: 0.5,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {resource.type === 'FILE' ? (
+                          getIconByExtension(getExtensionFromMime(resource?.mimeType), {
+                            fontSize: 'small',
+                          }) ?? <InsertDriveFile color="primary" fontSize="small" />
+                        ) : (
+                          <InsertLinkIcon color="primary" fontSize="small" />
+                        )}
+                        <Typography variant="body2" fontWeight={700} color="text.primary">
+                          {resource.materialName}
+                        </Typography>
+                      </Box>
+                      {resource.validTill && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block' }}
+                        >
+                          {`Valid-Till: ${formatDateForDisplay(resource.validTill)}`}
+                        </Typography>
                       )}
-                      <Typography variant="body2" fontWeight={700} color="text.primary">
-                        {resource.materialName}
-                      </Typography>
                     </Box>
 
                     {resource.type === 'FILE' ? (

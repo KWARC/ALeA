@@ -6,14 +6,15 @@ import LinkIcon from '@mui/icons-material/Link';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-
 import {
   Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   Divider,
   FormControl,
+  FormControlLabel,
   IconButton,
   InputLabel,
   MenuItem,
@@ -88,6 +89,31 @@ export default function CourseResourcesTab({
   const [type, setType] = useState<'FILE' | 'LINK'>('FILE');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [url, setUrl] = useState('');
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const getDefaultExpiryDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getYearLater = (baseDate: string) => {
+    if (!baseDate) return getTodayDate();
+    const date = new Date(baseDate);
+    date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const [validFrom, setValidFrom] = useState('');
+  const [validTill, setValidTill] = useState('');
+  const [showValidity, setShowValidity] = useState(false);
   const [duplicateError, setDuplicateError] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedSemesterIndex, setSelectedSemesterIndex] = useState(0);
@@ -118,6 +144,10 @@ export default function CourseResourcesTab({
       formData.append('instanceId', instanceId);
       formData.append('type', type);
       formData.append('materialName', materialName);
+      if (showValidity) {
+        if (validFrom) formData.append('validFrom', validFrom);
+        if (validTill) formData.append('validTill', validTill);
+      }
 
       if (type === 'FILE') {
         const file = fileInputRef.current?.files?.[0];
@@ -142,6 +172,9 @@ export default function CourseResourcesTab({
       setToast({ type: 'success', text: 'Resource uploaded successfully!' });
       setMaterialName('');
       setUrl('');
+      setValidFrom('');
+      setValidTill('');
+      setShowValidity(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       await fetchResources();
     } catch (error: any) {
@@ -227,6 +260,47 @@ export default function CourseResourcesTab({
           </Select>
         </FormControl>
 
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showValidity}
+              onChange={(e) => setShowValidity(e.target.checked)}
+              size="small"
+            />
+          }
+          label={<Typography variant="body2">Availability Window</Typography>}
+        />
+        {showValidity && (
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="Valid From"
+              type="date"
+              value={validFrom}
+              onChange={(e) => setValidFrom(e.target.value)}
+              onFocus={() => {
+                if (!validFrom) setValidFrom(getTodayDate());
+              }}
+              fullWidth
+              size="small"
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Valid Till"
+              type="date"
+              value={validTill}
+              onChange={(e) => setValidTill(e.target.value)}
+              onFocus={() => {
+                if (!validTill) {
+                  setValidTill(validFrom ? getYearLater(validFrom) : getDefaultExpiryDate());
+                }
+              }}
+              fullWidth
+              size="small"
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        )}
+
         {type === 'FILE' ? (
           <>
             <input
@@ -304,7 +378,7 @@ export default function CourseResourcesTab({
           No resources uploaded yet.
         </Typography>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {displayResources.map((resource) => (
             <Box
               key={resource.id}
@@ -313,8 +387,8 @@ export default function CourseResourcesTab({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: 1.5,
-                p: 1.5,
+                gap: 1,
+                p: 1,
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
@@ -323,29 +397,44 @@ export default function CourseResourcesTab({
               <Box
                 sx={{
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   flex: '1 1 auto',
                   minWidth: '200px',
-                  gap: 1.5,
+                  justifyContent: 'center',
                 }}
               >
-                {resource.type === 'FILE' ? (
-                  getIconByExtension(getExtensionFromMime(resource?.mimeType), {
-                    fontSize: 'small',
-                  }) ?? <InsertDriveFileIcon color="primary" fontSize="small" />
-                ) : (
-                  <InsertLinkIcon color="primary" fontSize="small" />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  {resource.type === 'FILE' ? (
+                    getIconByExtension(getExtensionFromMime(resource?.mimeType), {
+                      fontSize: 'small',
+                    }) ?? <InsertDriveFileIcon color="primary" fontSize="small" />
+                  ) : (
+                    <InsertLinkIcon color="primary" fontSize="small" />
+                  )}
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                    }}
+                  >
+                    {resource.materialName}
+                  </Typography>
+                </Box>
+                {(resource.validFrom || resource.validTill) && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block' }}
+                  >
+                    {resource.validFrom &&
+                      `Valid-From:${formatDateForDisplay(resource.validFrom)}`}
+                    {resource.validFrom && resource.validTill && ' | '}
+                    {resource.validTill &&
+                      `Valid-Till:${formatDateForDisplay(resource.validTill)}`}
+                  </Typography>
                 )}
-                <Typography
-                  variant="body2"
-                  fontWeight={600}
-                  sx={{
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
-                  }}
-                >
-                  {resource.materialName}
-                </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

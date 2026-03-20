@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const results = await executeAndEndSet500OnError(
-    `SELECT id, materialName, materialType as type, mimeType, sizeBytes, url, createdAt ,instanceId
+    `SELECT id, materialName, materialType as type, mimeType, sizeBytes, url, createdAt, instanceId, validFrom, validTill
      FROM CourseMaterials 
      WHERE universityId = ? AND courseId = ? 
      ORDER BY createdAt DESC`,
@@ -21,5 +21,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!results) return;
 
-  return res.status(200).json(results);
+  const serializedResults = results.map((r: any) => ({
+    ...r,
+    sizeBytes: typeof r.sizeBytes === 'bigint' ? r.sizeBytes.toString() : r.sizeBytes,
+  }));
+
+  return res.status(200).json(serializedResults);
 }
