@@ -1,29 +1,30 @@
+import { isUserMember } from '@alea/spec';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ArticleIcon from '@mui/icons-material/Article';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getAllCourses } from '@alea/spec';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 
-import Diversity3 from '@mui/icons-material/Diversity3';
-import { getLocaleObject } from '../../lang/utils';
-import MainLayout from '../../layouts/MainLayout';
 import {
   CourseInfo,
   PARTNERED_UNIVERSITIES,
   UniversityDetail,
   pathToCourseHome,
   pathToCourseNotes,
-  pathToCourseView,
   pathToCourseResource,
+  pathToCourseView,
   pathToStudyBuddy,
 } from '@alea/utils';
+import Diversity3 from '@mui/icons-material/Diversity3';
+import { getLocaleObject } from '../../lang/utils';
+import MainLayout from '../../layouts/MainLayout';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
@@ -161,6 +162,15 @@ const StudentHomePage: NextPage = ({
   const institution = query.institution as string;
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId[institution];
+  const [isUniversityAdmin, setIsUniversityAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!institution || institution === 'others') {
+      setIsUniversityAdmin(false);
+      return;
+    }
+    isUserMember(`${institution.toLowerCase()}-admin`).then(setIsUniversityAdmin);
+  }, [institution]);
 
   if (!courses) return null;
   return (
@@ -179,13 +189,24 @@ const StudentHomePage: NextPage = ({
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>
-          <Link href="/study-buddy">
-            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
-              {institution === 'FAU' ? (
-                <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
-              ) : null}
-            </Tooltip>
-          </Link>
+          <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
+            <Link href="/study-buddy">
+              <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
+                {institution === 'FAU' ? (
+                  <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
+                ) : null}
+              </Tooltip>
+            </Link>
+            {isUniversityAdmin && institution !== 'others' && (
+              <Link href={`/u/${institution}/university-admin`}>
+                <Tooltip title="Go to University Admin page">
+                  <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />}>
+                    University Admin
+                  </Button>
+                </Tooltip>
+              </Link>
+            )}
+          </Box>
           <h2>{`${t.courseSection} (${currentTerm})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)

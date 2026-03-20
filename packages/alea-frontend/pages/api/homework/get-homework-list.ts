@@ -22,7 +22,9 @@ export async function getAllHomeworksOrSetError(
   homeworks.sort((a, b) => a.dueTs - b.dueTs);
   if (getProblems) {
     for (const homework of homeworks) {
-      homework.problems = JSON.parse(homework.problems);
+      if (typeof homework.problems === 'string') {
+        homework.problems = JSON.parse(homework.problems);
+      }
     }
   }
   return getProblems
