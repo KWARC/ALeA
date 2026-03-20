@@ -10,7 +10,7 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
-import { createCheatSheet, getAllCourses, getCheatSheets } from '@alea/spec';
+import { createCheatSheet, getAllCourses, getCheatSheets, getCourseInfoMetadata } from '@alea/spec';
 import type { NextPage } from 'next';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
@@ -28,9 +28,15 @@ interface CheatSheetActionsProps {
   isEmbedded: boolean;
   onGenerate: () => void;
   onUpload: () => void;
+  canStudentUploadCheatsheet?: boolean;
 }
 
-function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActionsProps) {
+function CheatSheetActions({
+  isEmbedded,
+  onGenerate,
+  onUpload,
+  canStudentUploadCheatsheet = false,
+}: CheatSheetActionsProps) {
   return (
     <Box display="flex" justifyContent="end" gap={2} alignItems="flex-start">
       {!isEmbedded && (
@@ -46,17 +52,19 @@ function CheatSheetActions({ isEmbedded, onGenerate, onUpload }: CheatSheetActio
           </Button>
         </Tooltip>
       )}
-      <Tooltip title="Upload Scanned PDF">
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<UploadFileIcon />}
-          onClick={onUpload}
-          sx={pageStyles.uploadBtn}
-        >
-          Upload
-        </Button>
-      </Tooltip>
+      {canStudentUploadCheatsheet && (
+        <Tooltip title="Upload Scanned PDF">
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadFileIcon />}
+            onClick={onUpload}
+            sx={pageStyles.uploadBtn}
+          >
+            Upload
+          </Button>
+        </Tooltip>
+      )}
     </Box>
   );
 }
@@ -77,6 +85,7 @@ function CheatSheetsContent({
   courseName,
   universityId,
   userId,
+  canStudentUploadCheatsheet = false,
 }: {
   files: any[];
   isLoading: boolean;
@@ -93,6 +102,7 @@ function CheatSheetsContent({
   courseName: string;
   universityId: string;
   userId: string;
+  canStudentUploadCheatsheet?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -100,7 +110,9 @@ function CheatSheetsContent({
   const [uploadWindow, setUploadWindow] = useState<DateRangeValue>({ start: '', end: '' });
 
   function handleUploaded() {
-    queryClient.invalidateQueries({ queryKey: ['cheatsheets', instanceId] });
+    queryClient.invalidateQueries({
+      queryKey: ['cheatsheets', courseId, instanceId],
+    });
   }
 
   const downloadCheatsheet = async () => {
@@ -127,6 +139,7 @@ function CheatSheetsContent({
         isEmbedded={isEmbedded}
         onGenerate={downloadCheatsheet}
         onUpload={() => setUploadOpen(true)}
+        canStudentUploadCheatsheet={canStudentUploadCheatsheet}
       />
 
       <Box sx={pageStyles.titleBar}>
@@ -145,27 +158,26 @@ function CheatSheetsContent({
             </Typography>
           </Box>
         </Box>
-        <Box display={"flex"} gap={2}>
-               <Box sx={pageStyles.titleRight}>
-          {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
-            <Chip
-              label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
-              color="primary"
-              size="small"
-              sx={pageStyles.countChip}
+        <Box display={'flex'} gap={2}>
+          <Box sx={pageStyles.titleRight}>
+            {!isLoading && files.length > 0 && (!isEmbedded || selectedUserId) && (
+              <Chip
+                label={`${files.length} file${files.length !== 1 ? 's' : ''}`}
+                color="primary"
+                size="small"
+                sx={pageStyles.countChip}
+              />
+            )}
+          </Box>
+          {!isEmbedded && userId && (
+            <InlineStudentMergeButton
+              courseId={courseId}
+              instanceId={instanceId}
+              universityId={universityId}
+              userId={userId}
             />
           )}
         </Box>
-        {!isEmbedded && userId && (
-          <InlineStudentMergeButton
-            courseId={courseId}
-            instanceId={instanceId}
-            universityId={universityId}
-            userId={userId}
-          />
-        )}
-   
-      </Box>
       </Box>
 
       {isEmbedded && uniqueUserIds.length > 0 && (
@@ -283,16 +295,24 @@ const CheatsheetsPage = ({
     queryFn: () => getAllCourses(),
     enabled: !isEmbedded,
   });
+  const { data: courseMetadata, isLoading: isMetadataLoading } = useQuery({
+    queryKey: ['courseMetadata', courseId, instanceId],
+    queryFn: () => getCourseInfoMetadata(courseId, instanceId),
+    enabled: !isEmbedded && Boolean(courseId && instanceId),
+  });
+  const canStudentUploadCheatsheet = Boolean(
+    isEmbedded ? true : isMetadataLoading ? false : courseMetadata?.canStudentUploadCheatsheet
+  );
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const {
     data: allFiles = [],
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['cheatsheets', instanceId, isEmbedded ? 'all' : userId],
-    enabled: Boolean(instanceId) && (isEmbedded || Boolean(userId)),
-    queryFn: () => fetchCheatsheets(courseId, instanceId, isEmbedded ? undefined : userId),
+    queryKey: ['cheatsheets', courseId, instanceId, isEmbedded ? 'instructor' : 'student'],
+    enabled: Boolean(instanceId) && Boolean(courseId),
+    queryFn: () => fetchCheatsheets(courseId, instanceId),
   });
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const uniqueUserIds = useMemo(
     () => [...new Set(allFiles.map((f) => f.userId))].sort(),
     [allFiles]
@@ -319,6 +339,7 @@ const CheatsheetsPage = ({
     courseId,
     courseName: propCourseName ?? '',
     userId,
+    canStudentUploadCheatsheet,
   };
 
   if (!isEmbedded) {
@@ -355,7 +376,9 @@ const CheatsheetsPage = ({
     );
   }
 
-  return <CheatSheetsContent {...sharedContentProps} isEmbedded universityId="" />;
+  return (
+    <CheatSheetsContent {...sharedContentProps} isEmbedded universityId={institutionId ?? ''} />
+  );
 };
 
 export default CheatsheetsPage;

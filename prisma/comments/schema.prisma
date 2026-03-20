@@ -221,6 +221,7 @@ model courseMetadata {
   hasHomework      Boolean   @default(false)
   hasQuiz          Boolean   @default(false)
   hasCheatsheet    Boolean   @default(false)
+  canStudentUploadCheatsheet Boolean   @default(false)
   updaterId        String?   @db.VarChar(255)
   createdAt        DateTime? @default(now()) @db.Timestamp(0)
   updatedAt        DateTime? @default(now()) @db.Timestamp(0)

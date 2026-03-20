@@ -16,12 +16,11 @@ import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FlipCameraIosIcon from '@mui/icons-material/FlipCameraIos';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { useRef, useState, DragEvent, ChangeEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { postScannedCheatSheet } from '@alea/spec';
+import ImageEditorModal from './ImageEditorModal';
 
-/** Converts an array of image Files into a single multi-page PDF Blob (one image per page). */
 async function imagesToPDF(imageFiles: File[]): Promise<Blob> {
   const encoder = new TextEncoder();
 
@@ -175,17 +174,31 @@ export function UploadCheatSheetContent({
   const [errorMsg, setErrorMsg] = useState('');
   const [cameraReady, setCameraReady] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+  const [editingImagePreview, setEditingImagePreview] = useState<string>('');
   const cameraMutation = useMutation({
     mutationFn: async (facing: 'environment' | 'user') => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera API not supported');
+      }
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
+
       setCameraReady(false);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } });
-      return stream;
+
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing } },
+        });
+      } catch (err) {
+        console.warn('Fallback to default camera', err);
+        return await navigator.mediaDevices.getUserMedia({ video: true });
+      }
     },
+
     onSuccess: (stream) => {
       streamRef.current = stream;
       if (videoRef.current) {
@@ -193,7 +206,9 @@ export function UploadCheatSheetContent({
         videoRef.current.onloadedmetadata = () => setCameraReady(true);
       }
     },
-    onError: () => {
+
+    onError: (err) => {
+      console.error('Camera error:', err);
       setCameraReady(false);
     },
   });
@@ -331,11 +346,41 @@ export function UploadCheatSheetContent({
     uploadMutation.mutate();
   }
 
-  // Expose close handler so parent can call resetState before closing
   function handleClose() {
     if (uploadMutation.isPending) return;
     resetState();
     onClose();
+  }
+  function handleEditImage(index: number) {
+    setEditingImageIndex(index);
+    setEditingImagePreview(images[index].preview);
+  }
+
+  function handleEditImageClose() {
+    setEditingImageIndex(null);
+    setEditingImagePreview('');
+  }
+
+  function handleEditImageSave(editedBlob: Blob) {
+    if (editingImageIndex === null) return;
+
+    const editedFile = new File([editedBlob], `edited-${Date.now()}.jpg`, {
+      type: 'image/jpeg',
+    });
+
+    const editedPreview = URL.createObjectURL(editedBlob);
+
+    setImages((prev) => {
+      const next = [...prev];
+      URL.revokeObjectURL(next[editingImageIndex].preview);
+      next[editingImageIndex] = {
+        file: editedFile,
+        preview: editedPreview,
+      };
+      return next;
+    });
+
+    handleEditImageClose();
   }
 
   const hasContent = tab === 'file' ? Boolean(file) : images.length > 0;
@@ -477,14 +522,13 @@ export function UploadCheatSheetContent({
                 >
                   {images.length} photo{images.length > 1 ? 's' : ''} captured
                 </Typography>
-                <ImageGrid images={images} onRemove={removeImage} />
+                <ImageGrid images={images} onRemove={removeImage} onEdit={handleEditImage} />
               </Box>
             )}
           </Box>
         </Fade>
       )}
 
-      {/* ── GALLERY TAB ── */}
       {tab === 'gallery' && (
         <Fade in>
           <Box sx={styles.cameraContainer}>
@@ -523,7 +567,7 @@ export function UploadCheatSheetContent({
                 >
                   {images.length} image{images.length > 1 ? 's' : ''} selected
                 </Typography>
-                <ImageGrid images={images} onRemove={removeImage} />
+                <ImageGrid images={images} onRemove={removeImage} onEdit={handleEditImage} />
               </Box>
             )}
           </Box>
@@ -569,33 +613,39 @@ export function UploadCheatSheetContent({
             : 'Upload'}
         </Button>
       </Box>
+      {editingImageIndex !== null && (
+        <ImageEditorModal
+          open={editingImageIndex !== null}
+          image={editingImagePreview}
+          onSave={handleEditImageSave}
+          onClose={handleEditImageClose}
+        />
+      )}
     </>
   );
 }
-
-// ── Small shared sub-component ──────────────────────────────────────────────
 
 interface ImageGridProps {
   images: ImageEntry[];
   onRemove: (index: number) => void;
 }
-
-function ImageGrid({ images, onRemove }: ImageGridProps) {
+function ImageGrid({ images, onRemove, onEdit }) {
   return (
-    <Box sx={styles.imageGrid}>
-      {images.map((img, i) => (
-        <Box key={i} sx={styles.imageTile}>
-          <Box component="img" src={img.preview} sx={styles.imageTileImg} />
-          <IconButton size="small" sx={styles.removeTileBtn} onClick={() => onRemove(i)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      {images.map((img, index) => (
+        <Box key={index} sx={{ position: 'relative' }}>
+          <img
+            src={img.preview}
+            style={{ width: 100, height: 100, objectFit: 'cover', cursor: 'pointer' }}
+            onClick={() => onEdit(index)} // 🔥 CLICK TO EDIT
+          />
+
+          <button onClick={() => onRemove(index)}>X</button>
         </Box>
       ))}
     </Box>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = {
   tabs: {

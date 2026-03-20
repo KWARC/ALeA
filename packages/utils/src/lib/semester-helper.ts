@@ -83,6 +83,11 @@ export async function createStudentResourceActions(courseId: string, instanceId?
       resourceId: `/course/${courseId}/instance/${term}/homework`,
       actionId: Action.TAKE,
     },
+    {
+      resourceId: `/course/${courseId}/instance/${term}/cheatsheet`,
+      actionId: Action.UPLOAD,
+    },
+
   ];
   for (const { resourceId, actionId } of resources) {
     try {
@@ -128,6 +133,10 @@ export async function createStaffResourceActions(courseId: string, instanceId?: 
     },
     {
       resourceId: `/course/${courseId}/instance/${term}/syllabus`,
+      actionId: Action.MUTATE,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${term}/cheatsheet`,
       actionId: Action.MUTATE,
     },
   ];

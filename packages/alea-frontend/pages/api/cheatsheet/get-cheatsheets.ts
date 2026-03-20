@@ -1,6 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
+import {
+  checkIfGetOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
+import {
+  getUserIdIfAuthorizedOrSetError,
+  isUserIdAuthorizedForAny,
+  ResourceActionParams,
+} from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 
 export async function resolveTargetUserIdOrsetError(
@@ -33,31 +41,71 @@ export async function resolveTargetUserIdOrsetError(
   return authUserId;
 }
 
+async function safeIsAuthorized(
+  userId: string,
+  resourceActions: ResourceActionParams[]
+): Promise<boolean> {
+  try {
+    return await isUserIdAuthorizedForAny(userId, resourceActions);
+  } catch (err) {
+    return false;
+  }
+}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
-  const { courseId, instanceId } = req.query;
-  if (!courseId || !instanceId) return res.status(422).send('Missing courseId or instanceId');
+  const { courseId, instanceId, userId: requestedUserId } = req.query;
+  if (!courseId || !instanceId) {
+    return res.status(422).send('Missing courseId or instanceId');
+  }
   if (typeof courseId !== 'string' || typeof instanceId !== 'string') {
     return res.status(422).send('Invalid params');
   }
 
-  const targetUserId = await resolveTargetUserIdOrsetError(
-    req,
-    res,
-    courseId,
-    instanceId,
-    req.query.userId
-  );
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
 
-  if (!targetUserId) return;
-  const results = await executeAndEndSet500OnError(
-    `SELECT cheatsheetId, userId, universityId, courseId, instanceId, weekId, checksum,  createdAt,uploadedAt
-      FROM CheatSheet
-      WHERE courseId = ? AND instanceId = ? AND userId = ? AND uploadedAt IS NOT NULL
-      ORDER BY createdAt DESC`,
-    [courseId, instanceId, targetUserId],
-    res
-  );
+  const isInstructor = await safeIsAuthorized(userId, [
+    {
+      name: ResourceName.COURSE_CHEATSHEET,
+      action: Action.MUTATE,
+      variables: { courseId, instanceId },
+    },
+  ]);
+
+  const isStudent = await safeIsAuthorized(userId, [
+    {
+      name: ResourceName.COURSE_CHEATSHEET,
+      action: Action.UPLOAD,
+      variables: { courseId, instanceId },
+    },
+  ]);
+
+  if (!isInstructor && !isStudent) {
+    return res.status(403).end();
+  }
+
+  let query = `
+    SELECT cheatsheetId, userId, universityId, courseId, instanceId, weekId, checksum, createdAt, uploadedAt
+    FROM CheatSheet
+    WHERE courseId = ? 
+      AND instanceId = ? 
+      AND uploadedAt IS NOT NULL
+  `;
+
+  const values: any[] = [courseId, instanceId];
+  if (typeof requestedUserId === 'string') {
+    if (!isInstructor) return res.status(403).end();
+    query += ` AND userId = ?`;
+    values.push(requestedUserId);
+  } else {
+    if (!isInstructor) {
+      query += ` AND userId = ?`;
+      values.push(userId);
+    }
+  }
+  query += ` ORDER BY createdAt DESC`;
+
+  const results = await executeAndEndSet500OnError(query, values, res);
   if (!results) return;
 
   return res.status(200).send(results);

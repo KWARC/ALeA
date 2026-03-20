@@ -9,6 +9,7 @@ import {
   updateHasHomework,
   updateHasQuiz,
   updateHasCheatsheet,
+  updateCanStudentUploadCheatsheet,
   getAllAclMembers,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
@@ -95,6 +96,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             hasHomework: false,
             hasQuiz: false,
             hasCheatsheet: false,
+            canStudentUploadCheatsheet: false,
             seriesId: '',
             updaterId: '',
           };
@@ -376,6 +378,26 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             />
           }
           label={t.enableCheatsheet}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={courseInfo.canStudentUploadCheatsheet || false}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
+
+                try {
+                  await updateCanStudentUploadCheatsheet({ courseId, instanceId, canStudentUploadCheatsheet: next });
+                  setField('canStudentUploadCheatsheet', next);
+                } catch (err) {
+                  console.error('Failed to update student cheatsheet upload', err);
+                  setToast({ type: 'error', text: t.failedCanStudentUploadCheatsheetUpdate });
+                }
+              }}
+            />
+          }
+          label={t.canStudentUploadCheatsheet}
         />
         <TextField
           label={t.seriesIdLabel}

@@ -37,6 +37,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   instructors: InstructorInfo[];
   hasQuiz: boolean;
   hasCheatsheet: boolean;
+  canStudentUploadCheatsheet: boolean;
   updaterId?: string;
   universityId: string;
 }
@@ -123,6 +124,13 @@ export async function updateHasCheatsheet(
   data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasCheatsheet: boolean }
 ) {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-cheatsheet`, data);
+  return response.data;
+}
+
+export async function updateCanStudentUploadCheatsheet(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { canStudentUploadCheatsheet: boolean }
+) {
+  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-can-student-upload-cheatsheet`, data);
   return response.data;
 }
 

@@ -496,6 +496,7 @@ export const de = {
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCanStudentUploadCheatsheet: 'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -513,6 +514,7 @@ export const de = {
     enableHomework: 'Hausaufgaben für diesen Kurs aktivieren',
     enableQuiz: 'Quiz für diesen Kurs aktivieren',
     enableCheatsheet: 'Spickzettel für diesen Kurs aktivieren',
+    canStudentUploadCheatsheet: 'Studierenden das Hochladen von Spickzetteln erlauben',
 
     instructorsLabel: 'Lehrende',
     noInstructors: 'Keine Dozenten gefunden.',
@@ -532,6 +534,7 @@ export const de = {
     failedToSave: 'Kursinformationen konnten nicht gespeichert werden',
     failedHomeworkUpdate: 'Hausaufgaben-Einstellung konnte nicht aktualisiert werden',
     failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
+    failedCanStudentUploadCheatsheetUpdate: 'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
   },
 
   courseMetadata: {
