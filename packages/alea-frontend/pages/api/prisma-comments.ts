@@ -59,6 +59,8 @@ export const commentsDb = baseClient.$extends({
     $allModels: { $allOperations: globalTransform },
     $queryRaw: globalTransform,
     $executeRaw: globalTransform,
+    $queryRawUnsafe: globalTransform,
+    $executeRawUnsafe: globalTransform,
   },
 });
 
