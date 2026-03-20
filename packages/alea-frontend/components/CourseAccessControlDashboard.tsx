@@ -45,6 +45,8 @@ const ALL_SHORT_IDS = [
   'quiz-take',
   'homework-take',
   'metadata',
+  'cheatsheet-access',
+  'cheatsheet',
 ];
 
 export type ShortId = (typeof ALL_SHORT_IDS)[number];
@@ -69,11 +71,13 @@ const staffAccessResources: Record<ShortId, string> = {
   'study-buddy': 'Study Buddy Management',
   comments: 'Comments Moderation',
   metadata: 'Course Metadata',
+  cheatsheet:'Cheatsheet',
 } as const;
 
 const studentAccessResources: Record<ShortId, string> = {
   'quiz-take': 'Quiz Take',
   'homework-take': 'Homework Take',
+  'cheatsheet-access': 'Cheatsheet Access'
 };
 
 const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string) =>
@@ -116,6 +120,14 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
     },
     metadata: {
       resourceId: `/course/${courseId}/instance/${currentTerm}/metadata`,
+      actionId: Action.MUTATE,
+    },
+    'cheatsheet-access': {
+      resourceId: `/course/${courseId}/instance/${currentTerm}/cheatsheet`,
+      actionId: Action.UPLOAD,
+    },
+    cheatsheet: {
+      resourceId: `/course/${courseId}/instance/${currentTerm}/cheatsheet`,
       actionId: Action.MUTATE,
     },
   } as Record<ShortId, ResourceActionPair>);
@@ -325,9 +337,7 @@ const CourseAccessControlDashboard = ({
               borderRadius="8px"
               bgcolor="background.default"
             >
-              <Typography variant="h6">
-                {displayName}
-              </Typography>
+              <Typography variant="h6">{displayName}</Typography>
               {renderEditableField(shortId as ShortId)}
               <IconButton
                 size="small"
@@ -361,9 +371,7 @@ const CourseAccessControlDashboard = ({
               borderRadius={2}
               bgcolor="background.default"
             >
-              <Typography variant="h6" >
-                {displayName}
-              </Typography>
+              <Typography variant="h6">{displayName}</Typography>
               {renderEditableField(shortId as ShortId)}
               <IconButton
                 size="small"

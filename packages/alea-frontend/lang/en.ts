@@ -530,6 +530,7 @@ export const en = {
     confirmUpdateHomework: 'Are you sure you want to update homework availability?',
     confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
     confirmUpdateCheatsheet: 'Are you sure you want to update cheatsheet availability?',
+    confirmUpdateCanStudentUploadCheatsheet: 'Are you sure you want to update student cheatsheet upload setting?',
 
     courseName: 'Course Name',
     universityId: 'University ID',
@@ -546,6 +547,7 @@ export const en = {
     enableHomework: 'Enable homework for this course',
     enableQuiz: 'Enable quiz for this course',
     enableCheatsheet: 'Enable cheatsheet for this course',
+    canStudentUploadCheatsheet: 'Allow students to upload cheatsheet',
 
     instructorsLabel: 'Instructors',
     noInstructors: 'No instructors found.',
@@ -566,6 +568,7 @@ export const en = {
     failedToSave: 'Failed to save course info',
     failedHomeworkUpdate: 'Failed to update homework setting',
     failedQuizUpdate: 'Failed to update quiz setting',
+    failedCanStudentUploadCheatsheetUpdate: 'Failed to update student cheatsheet upload setting',
   },
 
   courseMetadata: {
