@@ -56,6 +56,11 @@ export function MoreResourcesAccordion({
     setExpanded((prev) => !prev);
   };
 
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   const filtered = resources.filter((r) => r.instanceId === instanceId);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const visibleResources = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
@@ -115,7 +120,7 @@ export function MoreResourcesAccordion({
                           color="text.secondary"
                           sx={{ display: 'block' }}
                         >
-                          {`Valid-Till: ${resource.validTill.split('-').reverse().join('-')}`}
+                          {`Valid-Till: ${formatDateForDisplay(resource.validTill)}`}
                         </Typography>
                       )}
                     </Box>
