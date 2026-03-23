@@ -21,10 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (directMembers.length === 0) {
     return res.status(200).send([]);
   }
+  const userIdPlaceholders = directMembers.map(() => '?').join(', ');
   const userInfoResults: { firstname: string; lastname: string; userId: string }[] =
     await executeDontEndSet500OnError(
-      `select firstname, lastname, userId from userInfo where userId IN (?)`,
-      [directMembers],
+      `SELECT firstName as firstname, lastName as lastname, userId FROM userInfo WHERE userId IN (${userIdPlaceholders})`,
+      directMembers,
       res
     );
   const result = directMembers.map((userId) => {
