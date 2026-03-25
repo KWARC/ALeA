@@ -28,6 +28,7 @@ import {
   ResourceName,
   pathToCheatSheet,
 } from '@alea/utils';
+import { getSemesterInfo, SemesterData } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -69,7 +70,7 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
-import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
+import { handleEnrollment, handleUnEnrollment, getCourseEnrollmentAcl } from '../../../../components/courseHelpers';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { useStudentCount } from '../../../../hooks/useStudentCount';
 import { getLocaleObject } from '../../../../lang/utils';
@@ -524,12 +525,15 @@ const CourseHomePage: NextPage = () => {
     queryKey: ['courses'],
     queryFn: () => getAllCourses(),
   });
-  const { data: isEnrolled, isFetching } = useCheckAccess({
-    resource: ResourceName.COURSE_QUIZ,
-    action: Action.TAKE,
-    variables: {
-      courseId,
-      instanceId: currentTerm,
+  const { data: isEnrolled, isFetching } = useQuery({
+    queryKey: ['is-enrolled', courseId, currentTerm, userId],
+    enabled: Boolean(courseId && currentTerm && userId),
+    retry: false,
+    queryFn: async () => {
+      if (!userId) return false;
+      const aclId = getCourseEnrollmentAcl(courseId, currentTerm);
+      const response = await fetch(`/api/access-control/is-member?id=${aclId}&userId=${userId}`, { cache: "no-store" });
+      return await response.json();
     },
   });
   const enrolled = !isFetching && isEnrolled === true;
@@ -557,6 +561,19 @@ const CourseHomePage: NextPage = () => {
     enabled: Boolean(courseId && currentTerm),
     queryFn: () => getCourseInfoMetadata(courseId!, currentTerm!),
   });
+
+  const { data: semesterInfo } = useQuery({
+    queryKey: ['semester-info', institutionId, currentTerm],
+    enabled: Boolean(institutionId && currentTerm),
+    queryFn: () => getSemesterInfo(institutionId!, currentTerm!),
+  });
+
+  const isSemesterOver = semesterInfo && semesterInfo.length > 0 
+    ? new Date() > new Date(semesterInfo[0].semesterEnd)
+    : false;
+
+  const isSemesterOverText = isSemesterOver ? 'Semester is over' : 'Semester is not over';
+
   if (isValidating) return null;
   if (validationError) {
     return (
@@ -615,7 +632,7 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     if (enrollmentSuccess) {
       queryClient.invalidateQueries({
-        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
+        queryKey: ['is-enrolled', courseId, currentTerm, userId],
       });
     }
   };
@@ -630,7 +647,7 @@ const CourseHomePage: NextPage = () => {
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
       queryClient.invalidateQueries({
-        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
+        queryKey: ['is-enrolled', courseId, currentTerm, userId],
       });
     }
   };
@@ -749,7 +766,7 @@ const CourseHomePage: NextPage = () => {
           )}
         </Box>
         <InstructorDetails details={instructorDetails} />
-        {enrolled === false && (
+        {enrolled === false && !isSemesterOver && (
           <Box
             sx={{
               display: 'flex',
@@ -782,7 +799,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        {enrolled && (
+        {enrolled && !isSemesterOver && (
           <Box sx={{ m: 2, textAlign: 'center' }}>
             {studentCount !== null && (
               <Typography
