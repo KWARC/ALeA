@@ -19,6 +19,7 @@ import {
 
 import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
+import { red } from '@mui/material/colors';
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
   const fragmentResponse: any[] = await contentFragment({ uri: problemUri });
@@ -58,14 +59,19 @@ const ExamProblemsPage = () => {
     if (!examUri) return;
 
     const fetchData = async () => {
+        console.log("start fetch1234");
       setLoading(true);
       try {
         const decodedUri = decodeURIComponent(examUri);
 
+        console.log("start fetch");
+
         const meta = await getExamMetadataByUri(decodedUri);
+        console.log('Meta done');
         setExamMeta(meta);
 
         const uris = await getProblemsForExam(decodedUri);
+        console.log('Problems URIs:', uris);
 
         if (targetProblemId) {
           const idx = uris.indexOf(decodeURIComponent(targetProblemId));
@@ -73,10 +79,12 @@ const ExamProblemsPage = () => {
         }
 
         const examProblems = await buildExamProblems(uris);
+        console.log('Problems URIs:', uris);
         setProblems(examProblems);
       } catch (error) {
         console.error('Error loading exam data:', error);
       } finally {
+        console.log('Finished loading exam data');
         setLoading(false);
       }
     };
@@ -94,6 +102,7 @@ const ExamProblemsPage = () => {
     return formatExamLabelFullFromUri(examUri, examMeta);
   }, [examUri, examMeta]);
 
+  console.log({loading});
   if (loading) {
     return (
       <MainLayout title="Exam">
@@ -137,6 +146,8 @@ const ExamProblemsPage = () => {
             </Tooltip>
           )}
         </Box>
+
+        <Box bgcolor={red} height={"20px"}>abx</Box>
 
         <GradingContext.Provider
           value={{
