@@ -28,7 +28,7 @@ import {
   ResourceName,
   pathToCheatSheet,
 } from '@alea/utils';
-import { getSemesterInfo, SemesterData } from '@alea/spec';
+import { getSemesterInfo } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -70,7 +70,7 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
-import { handleEnrollment, handleUnEnrollment, getCourseEnrollmentAcl } from '../../../../components/courseHelpers';
+import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { useStudentCount } from '../../../../hooks/useStudentCount';
 import { getLocaleObject } from '../../../../lang/utils';
@@ -502,7 +502,6 @@ const CourseHomePage: NextPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [seriesId, setSeriesId] = useState<string>('');
 
-  const studentCount = useStudentCount(courseId, currentTerm);
   const queryClient = useQueryClient();
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -525,19 +524,16 @@ const CourseHomePage: NextPage = () => {
     queryKey: ['courses'],
     queryFn: () => getAllCourses(),
   });
-  const { data: isEnrolled, isFetching } = useQuery({
-    queryKey: ['is-enrolled', courseId, currentTerm, userId],
-    enabled: Boolean(courseId && currentTerm && userId),
-    retry: false,
-    queryFn: async () => {
-      if (!userId) return false;
-      const aclId = getCourseEnrollmentAcl(courseId, currentTerm);
-      const response = await fetch(`/api/access-control/is-member?id=${aclId}&userId=${userId}`, { cache: "no-store" });
-      return await response.json();
+  const { data: isEnrolled, isFetching } = useCheckAccess({
+    resource: ResourceName.COURSE_QUIZ,
+    action: Action.TAKE,
+    variables: {
+      courseId,
+      instanceId: currentTerm,
     },
   });
   const enrolled = !isFetching && isEnrolled === true;
-
+  const studentCount = useStudentCount(courseId, currentTerm, enrolled);
   const { data: hasInstructorAccess, isFetching: isInstructorFetching } = useQuery({
     queryKey: ['is-instructor', courseId, currentTerm],
     enabled: Boolean(courseId && currentTerm),
@@ -568,11 +564,10 @@ const CourseHomePage: NextPage = () => {
     queryFn: () => getSemesterInfo(institutionId!, currentTerm!),
   });
 
-  const isSemesterOver = semesterInfo && semesterInfo.length > 0 
-    ? new Date() > new Date(semesterInfo[0].semesterEnd)
-    : false;
-
-  const isSemesterOverText = isSemesterOver ? 'Semester is over' : 'Semester is not over';
+  const isSemesterOver =
+    semesterInfo && semesterInfo.length > 0
+      ? new Date() > new Date(semesterInfo[0].semesterEnd)
+      : false;
 
   if (isValidating) return null;
   if (validationError) {
@@ -632,7 +627,7 @@ const CourseHomePage: NextPage = () => {
     const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
     if (enrollmentSuccess) {
       queryClient.invalidateQueries({
-        queryKey: ['is-enrolled', courseId, currentTerm, userId],
+        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
       });
     }
   };
@@ -647,7 +642,7 @@ const CourseHomePage: NextPage = () => {
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
       queryClient.invalidateQueries({
-        queryKey: ['is-enrolled', courseId, currentTerm, userId],
+        queryKey: ['can-access', ResourceName.COURSE_QUIZ, Action.TAKE],
       });
     }
   };
