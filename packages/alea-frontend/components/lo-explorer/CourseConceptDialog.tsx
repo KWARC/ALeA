@@ -57,26 +57,24 @@ export const CourseConceptsDialog = ({
   const selectAllKey = 'Select All';
 
   const { data: courses = {} } = useAllCourses();
-
+  const courseEntries = Object.entries(courses).filter(([_, info]) => info.notes);
   const courseQueries = useQueries({
-    queries: Object.entries(courses)
-      .filter(([_, info]) => info.notes)
-      .map(([courseId, info]) => ({
-        queryKey: ['content-toc', info.notes],
-        queryFn: () => contentToc({ uri: info.notes }).then(([, toc]) => toc ?? []),
-        enabled: Boolean(info.notes),
-        staleTime: Infinity,
-      })),
+    queries: courseEntries.map(([courseId, info]) => ({
+      queryKey: ['content-toc', info.notes],
+      queryFn: () => contentToc({ uri: info.notes }).then(([, toc]) => toc ?? []),
+      enabled: Boolean(info.notes),
+      staleTime: Infinity,
+    })),
   });
-  const allSectionDetails: {
-    [courseId: string]: SecInfo[];
-  } = Object.fromEntries(
-    Object.keys(courses)
-      .filter((courseId, index) => courseQueries[index]?.data)
-      .map((courseId, index) => [
-        courseId,
-        courseQueries[index].data.flatMap((entry) => getSecInfo(entry)),
-      ])
+  const allSectionDetails = Object.fromEntries(
+    courseEntries
+      .map(([courseId], index) => {
+        const data = courseQueries[index]?.data;
+        if (!data) return null;
+
+        return [courseId, data.flatMap((entry) => getSecInfo(entry))];
+      })
+      .filter(Boolean)
   );
 
   const handleCourseChange = (event: SelectChangeEvent) => {
