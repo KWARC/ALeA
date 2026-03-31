@@ -188,7 +188,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
       >
         <Typography
           variant="body1"
-          sx={{ color: 'secondary.main', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
+          sx={{ color: 'text.primary', fontStyle: 'italic', mb: 3, lineHeight: 1.6 }}
         >
           Old exams are great practice resources, but since exam styles evolve, recent exams are
           better models, and any course topic even if not asked before can still appear in upcoming
