@@ -125,8 +125,8 @@ async function generateSemesterAndHolidayEvents(
   });
 
   try {
-    const parsed = JSON.parse(semesterInfo.holidays || '{}');
-    const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
+      const parsed = semesterInfo.holidays;
+      const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as any)?.holidays)
       ? (parsed as any).holidays

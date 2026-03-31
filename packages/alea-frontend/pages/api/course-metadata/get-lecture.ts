@@ -24,8 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let lectureSchedule: any[] = [];
   let tutorialSchedule: any[] = [];
   try {
-    lectureSchedule = result[0].lectureSchedule ? JSON.parse(result[0].lectureSchedule) : [];
-    tutorialSchedule = result[0].tutorialSchedule ? JSON.parse(result[0].tutorialSchedule) : [];
+    lectureSchedule = result[0].lectureSchedule ? result[0].lectureSchedule : [];
+    tutorialSchedule = result[0].tutorialSchedule ? result[0].tutorialSchedule : [];
   } catch {
     return res.status(500).end('Failed to parse lecture schedule JSON');
   }

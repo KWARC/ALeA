@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let scheduleData: any[] = [];
   if (existing?.length && existing[0][scheduleColumn]) {
     try {
-      scheduleData = JSON.parse(existing[0][scheduleColumn]);
+      scheduleData = existing[0][scheduleColumn];
     } catch {
       scheduleData = [];
     }
