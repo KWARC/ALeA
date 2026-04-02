@@ -1,13 +1,30 @@
-import { FTML } from '@flexiformal/ftml';
+import { SafeHtml } from '@alea/react-utils';
+import {
+  AnswerClass,
+  CreateAnswerClassRequest,
+  createGrading,
+  FTMLProblemWithSolution,
+  getAnswerAdmin,
+  getAnswerInfo,
+  getCourseAcls,
+  getCourseGradingItems,
+  getNextGradingItem,
+  GradingItem,
+  HomeworkInfo,
+  isUserMember,
+  ResponseWithSubProblemId,
+  Tristate,
+} from '@alea/spec';
+import { AnswerContext, GradingCreator, ProblemDisplay } from '@alea/stex-react-renderer';
+import { CURRENT_TERM, getParamFromUri } from '@alea/utils';
+import { contentFragment } from '@flexiformal/ftml-backend';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
-import CloseIcon from '@mui/icons-material/Close';
 import ShieldIcon from '@mui/icons-material/Shield';
 import {
   Button,
-  Checkbox,
   FormControlLabel,
   IconButton,
   List,
@@ -18,30 +35,6 @@ import {
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
-import {
-  AnswerClass,
-  AnswerResponse,
-  CreateAnswerClassRequest,
-  createGrading,
-  FTMLProblemWithSolution,
-  getAnswerAdmin,
-  getAnswerInfo,
-  getAnswersWithGrading,
-  getCourseGradingItems,
-  GradingInfo,
-  GradingItem,
-  HomeworkInfo,
-  ResponseWithSubProblemId,
-  Tristate,
-} from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
-import {
-  AnswerContext,
-  GradingContext,
-  GradingCreator,
-  ProblemDisplay,
-  ShowGradingFor,
-} from '@alea/stex-react-renderer';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from './MultiItemsSelector';
 const MULTI_SELECT_FIELDS = ['homeworkId', 'questionId', 'studentId'] as const;
@@ -55,6 +48,24 @@ const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
 type MultSelectField = (typeof MULTI_SELECT_FIELDS)[number];
 type SortField = (typeof ALL_SORT_FIELDS)[number];
 
+function getMappedProblem(
+  questionMap: Record<string, FTMLProblemWithSolution>,
+  questionId: string
+) {
+  return questionMap[questionId] ?? questionMap[getParamFromUri(questionId, 'a') ?? questionId];
+}
+
+function getQuestionTitle(
+  questionMap: Record<string, FTMLProblemWithSolution>,
+  questionId: string
+) {
+  return (
+    getMappedProblem(questionMap, questionId)?.problem?.title_html ??
+    getParamFromUri(questionId, 'd')?.replace(/[-_+]/g, ' ') ??
+    questionId
+  );
+}
+
 function getSelectedGradingItems(
   items: GradingItem[],
   params: SortAndFilterParams,
@@ -63,7 +74,7 @@ function getSelectedGradingItems(
 ) {
   function getValue(item: GradingItem, field: SortField) {
     if (field === 'homeworkDate') return homeworkMap[item.homeworkId]?.givenTs;
-    if (field === 'questionTitle') return item.questionId + '(TODO ALEA4-P4)'; // questionMap[item.questionId]?.problem;
+    if (field === 'questionTitle') return getQuestionTitle(questionMap, item.questionId);
     if (field === 'studentId') return item.studentId;
     if (field === 'updatedAt') return item.updatedAt;
   }
@@ -164,31 +175,6 @@ function GradingListSortFields({
   );
 }
 
-function TriStateCheckbox({
-  value,
-  onChange,
-}: {
-  value: Tristate;
-  onChange: (newValue: Tristate) => void;
-}) {
-  return (
-    <Checkbox
-      checked={value === Tristate.TRUE}
-      indeterminate={value === Tristate.UNKNOWN}
-      icon={<CloseIcon />}
-      indeterminateIcon={<CheckBoxOutlineBlankIcon />}
-      onChange={(e) => {
-        const newVal =
-          value === Tristate.UNKNOWN
-            ? Tristate.TRUE
-            : value === Tristate.TRUE
-            ? Tristate.FALSE
-            : Tristate.UNKNOWN;
-        onChange(newVal);
-      }}
-    />
-  );
-}
 function GradingProblem({
   onNewGrading,
   answerClasses,
@@ -304,7 +290,6 @@ function GradingItemsList({
   gradingItems,
   onSelectItem,
   homeworkMap,
-  problemMap,
   isPeerGrading,
 }: {
   gradingItems: GradingItem[];
@@ -315,7 +300,6 @@ function GradingItemsList({
     answerId: number
   ) => void;
   homeworkMap: Record<string, HomeworkInfo>;
-  problemMap: Record<string, FTMLProblemWithSolution>;
   isPeerGrading: boolean;
 }) {
   return (
@@ -329,7 +313,6 @@ function GradingItemsList({
               studentId,
               answerId,
               numSubProblemsAnswered,
-              numSubProblemsGraded,
               numSubProblemsInstructorGraded,
             },
             idx
@@ -347,9 +330,7 @@ function GradingItemsList({
                 )}
               </ListItemIcon>
               <ListItemText
-                primary={
-                  <SafeHtml html={problemMap[questionId]?.problem.title_html ?? questionId} />
-                }
+                primary={`Problem ${idx + 1}`}
                 secondary={
                   <>
                     {!homeworkId ? (
@@ -372,68 +353,95 @@ function GradingItemsList({
 }
 
 function GradingItemDisplay({
-  homeworkId,
   questionId,
-  studentId,
   answerId,
   questionMap,
   courseId,
   isPeerGrading,
-  onNextGradingItem,
-  onPrevGradingItem,
+  onAfterGrading,
+  peerResponses,
 }: {
-  homeworkId: number;
   questionId: string;
-  studentId: string;
   answerId: number;
   courseId: string;
   isPeerGrading?: boolean;
   questionMap: Record<string, FTMLProblemWithSolution>;
-  onNextGradingItem: () => void;
-  onPrevGradingItem: () => void;
+  onAfterGrading?: () => void | Promise<void>;
+  peerResponses?: { subProblemId: string; answer: string }[];
 }) {
   const [studentResponse, setStudentResponse] =
     useState<Record<string, ResponseWithSubProblemId>>();
-  const [problem, setProblem] = useState<FTMLProblemWithSolution | null>(
-    questionMap[questionId] || null
+  const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>(
+    getMappedProblem(questionMap, questionId)
   );
   const [answerClasses, setAnswerClasses] = useState<AnswerClass[]>();
+
   const refreshGradingInfo = useCallback(() => {
-    if (!isPeerGrading) {
+    const lookupKey = getParamFromUri(questionId, 'a') ?? questionId;
+    if (isPeerGrading) {
+      const responses = Array.isArray(peerResponses) ? peerResponses : [];
+      const r: Record<string, ResponseWithSubProblemId> = {};
+      r[questionId] = { problemId: questionId, responses };
+      if (lookupKey !== questionId) {
+        r[lookupKey] = { problemId: lookupKey, responses };
+      }
+      setStudentResponse(r);
+    } else {
       getAnswerAdmin(courseId, answerId).then((c) => {
         const r: Record<string, ResponseWithSubProblemId> = {};
+        const responses = Array.isArray(c?.responses)
+          ? c.responses
+          : [{ subProblemId: c?.subProblemId, answer: c?.answer }];
         r[questionId] = {
           problemId: questionId,
-          responses: [{ subProblemId: c.subProblemId, answer: c.answer }],
+          responses,
         };
+        if (lookupKey !== questionId) {
+          r[lookupKey] = {
+            problemId: lookupKey,
+            responses,
+          };
+        }
         setStudentResponse(r);
       });
     }
     getAnswerInfo(answerId, courseId, questionId).then((r) => {
-      if (r.subProblemId === questionId) setAnswerClasses(problem.answerClasses);
-      else
-        setAnswerClasses(
-          problem.problem.subProblems.filter((c) => c.id === r.subProblemId)[0]?.answerClasses
-        );
+      if (!problem) {
+        setAnswerClasses([]);
+        return;
+      }
+      if (r.subProblemId === questionId || r.subProblemId === lookupKey) {
+        setAnswerClasses(problem.answerClasses || []);
+        return;
+      }
+      const subClasses =
+        problem.problem?.subProblems?.find((c) => c.id === r.subProblemId)?.answerClasses || [];
+      setAnswerClasses(subClasses);
     });
-  }, [homeworkId, questionId, studentId]);
+  }, [answerId, courseId, isPeerGrading, peerResponses, problem, questionId]);
 
   useEffect(() => {
     refreshGradingInfo();
-  }, [homeworkId, questionId, studentId]);
+  }, [refreshGradingInfo]);
 
   useEffect(() => {
-    if (questionMap[questionId]) {
-      setProblem(questionMap[questionId]);
+    const mappedProblem = getMappedProblem(questionMap, questionId);
+    if (mappedProblem) {
+      setProblem(mappedProblem);
       return;
     }
+    setProblem(undefined);
     const fetchProblem = async () => {
       try {
-        // TODO ALEA4-P4
-        // const problemIdPrefix = questionId.replace(/\?[^?]*$/, '');
-        // const problemObject = await getProblemObjects(problemIdPrefix);
-        // const problemHtml = await getLearningObjectShtml(problemObject);
-        // setProblem(getProblem(problemHtml, ''));
+        const fragmentResponse = (await contentFragment({ uri: questionId })) as unknown[];
+        setProblem({
+          problem: {
+            uri: questionId,
+            html: (fragmentResponse?.[2] as string) || '',
+            title_html: (fragmentResponse?.[1] as string) || '',
+          },
+          answerClasses: [],
+        });
       } catch (error) {
         console.error('Error fetching problem:', error);
       }
@@ -444,20 +452,14 @@ function GradingItemDisplay({
   return (
     <Box maxWidth={900}>
       <AnswerContext.Provider value={studentResponse}>
-        <ProblemDisplay
-          isFrozen={true}
-          // problemId={questionId} TODO ALEA4-P4
-          problem={problem}
-          onResponseUpdate={() => {
-            console.log('onResponseUpdate');
-          }}
-        />
+        <ProblemDisplay isFrozen={true} problem={problem} />
       </AnswerContext.Provider>
       <GradingProblem
         answerClasses={answerClasses}
         onNewGrading={async (acs, feedback) => {
           await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
           refreshGradingInfo();
+          await onAfterGrading?.();
         }}
       ></GradingProblem>
     </Box>
@@ -480,6 +482,14 @@ export function GradingInterface({
   isPeerGrading: boolean;
   courseId: string;
 }) {
+  const [isInstructorUser, setIsInstructorUser] = useState(false);
+  const [roleResolved, setRoleResolved] = useState(false);
+  const [isLoadingNextItem, setIsLoadingNextItem] = useState(false);
+  const [studentCurrentItem, setStudentCurrentItem] = useState<GradingItem | null>(null);
+  const [studentCurrentResponses, setStudentCurrentResponses] = useState<
+    { subProblemId: string; answer: string }[]
+  >([]);
+  const skippedAnswerIdsRef = useRef<number[]>([]);
   const [sortAndFilterParams, setSortAndFilterParams] = useState<SortAndFilterParams>({
     multiSelectField: {
       homeworkId: [],
@@ -512,8 +522,88 @@ export function GradingInterface({
     [gradingItems, sortAndFilterParams]
   );
 
+  const loadNextStudentItem = useCallback(
+    async (skipAnswerId?: number | string) => {
+      if (!courseId) return;
+      let nextSkippedAnswerIds = skippedAnswerIdsRef.current;
+      const parsedSkipAnswerId =
+        skipAnswerId !== undefined && skipAnswerId !== null ? Number(skipAnswerId) : undefined;
+      if (parsedSkipAnswerId !== undefined && Number.isFinite(parsedSkipAnswerId)) {
+        nextSkippedAnswerIds = Array.from(
+          new Set([...skippedAnswerIdsRef.current, parsedSkipAnswerId])
+        );
+        skippedAnswerIdsRef.current = nextSkippedAnswerIds;
+      }
+
+      setIsLoadingNextItem(true);
+      try {
+        const res = await getNextGradingItem(courseId, undefined, nextSkippedAnswerIds);
+        const nextItem = res.gradingItem;
+        setStudentCurrentItem(nextItem);
+        setStudentCurrentResponses(res.responses || []);
+        if (!nextItem) {
+          setSelected(undefined);
+          return;
+        }
+        const nextAnswerId = Number(nextItem.answerId);
+        if (!Number.isFinite(nextAnswerId)) {
+          setSelected(undefined);
+          setStudentCurrentItem(null);
+          return;
+        }
+        setSelected({
+          homeworkId: nextItem.homeworkId ?? 0,
+          questionId: nextItem.questionId,
+          studentId: nextItem.studentId,
+          answerId: nextAnswerId,
+        });
+      } finally {
+        setIsLoadingNextItem(false);
+      }
+    },
+    [courseId]
+  );
+
   useEffect(() => {
     if (!courseId) return;
+    let cancelled = false;
+    setRoleResolved(false);
+    async function resolveRoleFromInstructorAcl() {
+      try {
+        const aclIds = await getCourseAcls(courseId, CURRENT_TERM);
+        const instructorAclIds = (aclIds || []).filter((id) => id.endsWith('-instructors'));
+        if (!instructorAclIds.length) {
+          if (!cancelled) setIsInstructorUser(false);
+          return;
+        }
+        const membershipChecks = await Promise.all(
+          instructorAclIds.map((aclId) => isUserMember(aclId))
+        );
+        if (!cancelled) setIsInstructorUser(membershipChecks.some(Boolean));
+      } catch {
+        if (!cancelled) setIsInstructorUser(false);
+      } finally {
+        if (!cancelled) setRoleResolved(true);
+      }
+    }
+    resolveRoleFromInstructorAcl();
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId]);
+
+  const effectiveIsPeerGrading = isPeerGrading && !isInstructorUser;
+
+  useEffect(() => {
+    if (!courseId || !roleResolved) return;
+    if (!isInstructorUser) {
+      setGradingItems([]);
+      homeworkMap.current = {};
+      questionMap.current = {};
+      skippedAnswerIdsRef.current = [];
+      loadNextStudentItem();
+      return;
+    }
     getCourseGradingItems(courseId).then((res) => {
       setGradingItems(res.gradingItems);
       homeworkMap.current = res.homeworks.reduce((acc, c) => {
@@ -527,102 +617,128 @@ export function GradingInterface({
         return acc;
       }, {} as Record<string, FTMLProblemWithSolution>);
     });
-  }, [courseId]);
+  }, [courseId, isInstructorUser, loadNextStudentItem, roleResolved]);
+
+  const displayedGradingItems = isInstructorUser
+    ? selectedGradedItems
+    : studentCurrentItem
+    ? [studentCurrentItem]
+    : [];
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={sortAndFilterParams.showHomeworkOnly}
-              onChange={() =>
-                setSortAndFilterParams({
-                  ...sortAndFilterParams,
-                  showHomeworkOnly: !sortAndFilterParams.showHomeworkOnly,
-                  showPracticeOnly: false,
-                })
+      {!isInstructorUser && effectiveIsPeerGrading && (
+        <Box
+          sx={{
+            mb: 2,
+            px: 2,
+            py: 1.5,
+            mx: 'auto',
+            maxWidth: 900,
+            borderRadius: 2.5,
+            border: '1px solid rgba(148, 163, 184, 0.28)',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            backgroundColor: 'background.paper',
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 500,
+              color: 'text.primary',
+              fontSize: { xs: '0.98rem', md: '1.05rem' },
+              lineHeight: 1.6,
+              textAlign: 'center',
+            }}
+          >
+            Peer grading helps you strengthen your understanding by reviewing and evaluating other
+            students&apos; solutions.
+          </Typography>
+        </Box>
+      )}
+      {isInstructorUser && (
+        <>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={sortAndFilterParams.showHomeworkOnly}
+                  onChange={() =>
+                    setSortAndFilterParams({
+                      ...sortAndFilterParams,
+                      showHomeworkOnly: !sortAndFilterParams.showHomeworkOnly,
+                      showPracticeOnly: false,
+                    })
+                  }
+                  color="primary"
+                />
               }
-              color="primary"
+              label="Homework Problems Only"
             />
-          }
-          label="Homework Problems Only"
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={sortAndFilterParams.showPracticeOnly}
-              onChange={() =>
-                setSortAndFilterParams({
-                  ...sortAndFilterParams,
-                  showPracticeOnly: !sortAndFilterParams.showPracticeOnly,
-                  showHomeworkOnly: false,
-                })
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={sortAndFilterParams.showPracticeOnly}
+                  onChange={() =>
+                    setSortAndFilterParams({
+                      ...sortAndFilterParams,
+                      showPracticeOnly: !sortAndFilterParams.showPracticeOnly,
+                      showHomeworkOnly: false,
+                    })
+                  }
+                  color="primary"
+                />
               }
-              color="primary"
+              label="Practice Problems Only"
             />
-          }
-          label="Practice Problems Only"
-        />
-      </Box>
-      <GradingItemOrganizer
-        questionMap={questionMap.current}
-        homeworkMap={homeworkMap.current}
-        gradingItems={gradingItems}
-        isPeerGrading={isPeerGrading}
-        sortAndFilterParams={sortAndFilterParams}
-        setSortAndFilterParams={setSortAndFilterParams}
-      />
-      <Typography sx={{ fontStyle: 'italic' }}>
-        <b style={{ color: 'red' }}>{selectedGradedItems.length}</b> Grading Items Selected.
-      </Typography>
+          </Box>
+          <GradingItemOrganizer
+            questionMap={questionMap.current}
+            homeworkMap={homeworkMap.current}
+            gradingItems={gradingItems}
+            isPeerGrading={effectiveIsPeerGrading}
+            sortAndFilterParams={sortAndFilterParams}
+            setSortAndFilterParams={setSortAndFilterParams}
+          />
+          <Typography sx={{ fontStyle: 'italic' }}>
+            <b style={{ color: 'red' }}>{selectedGradedItems.length}</b> Grading Items Selected.
+          </Typography>
+        </>
+      )}
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
         <Box sx={{ border: '1px solid', borderColor: 'divider' }} flex="1 1 200px" maxWidth={300}>
           <GradingItemsList
-            gradingItems={selectedGradedItems}
+            gradingItems={displayedGradingItems}
             homeworkMap={homeworkMap.current}
-            problemMap={questionMap.current}
-            isPeerGrading={isPeerGrading}
+            isPeerGrading={effectiveIsPeerGrading}
             onSelectItem={(homeworkId, questionId, studentId, answerId) =>
               setSelected({ homeworkId, questionId, studentId, answerId })
             }
           />
         </Box>
         <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
+          {!isInstructorUser && (
+            <Box mb={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => loadNextStudentItem(selected?.answerId)}
+                disabled={isLoadingNextItem || !selected}
+              >
+                Skip
+              </Button>
+            </Box>
+          )}
           {selected ? (
             <GradingItemDisplay
               {...selected}
               courseId={courseId}
+              isPeerGrading={effectiveIsPeerGrading}
               questionMap={questionMap.current}
-              onNextGradingItem={() => {
-                const idx = selectedGradedItems.findIndex(
-                  (item) =>
-                    item.homeworkId === selected.homeworkId &&
-                    item.questionId === selected.questionId &&
-                    item.studentId === selected.studentId
-                );
-
-                if (idx === selectedGradedItems.length - 1) return;
-                const newIdx = idx === -1 ? 0 : idx + 1;
-                const { homeworkId, questionId, studentId, answerId } = selectedGradedItems[newIdx];
-                setSelected({ homeworkId, questionId, studentId, answerId });
-              }}
-              onPrevGradingItem={() => {
-                const idx = selectedGradedItems.findIndex(
-                  (item) =>
-                    item.homeworkId === selected.homeworkId &&
-                    item.questionId === selected.questionId &&
-                    item.studentId === selected.studentId
-                );
-
-                if (idx === 0) return;
-                const newIdx = idx === 0 ? selectedGradedItems.length - 1 : idx - 1;
-                const { homeworkId, questionId, studentId, answerId } = selectedGradedItems[newIdx];
-                setSelected({ homeworkId, questionId, studentId, answerId });
-              }}
+              peerResponses={!isInstructorUser ? studentCurrentResponses : undefined}
+              onAfterGrading={!isInstructorUser ? () => loadNextStudentItem() : undefined}
             />
           ) : (
-            <i>Please click on a grading item on the left.</i>
+            <i>{isInstructorUser ? 'Please click on a grading item on the left.' : 'No grading items available.'}</i>
           )}
         </Box>
       </Box>
