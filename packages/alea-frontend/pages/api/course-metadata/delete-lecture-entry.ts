@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let schedule: LectureSchedule[];
   try {
-    schedule = JSON.parse(result[0][scheduleColumn] || '[]');
+    schedule = result[0][scheduleColumn] || [];
   } catch {
     return res.status(500).end('Failed to parse schedule JSON');
   }

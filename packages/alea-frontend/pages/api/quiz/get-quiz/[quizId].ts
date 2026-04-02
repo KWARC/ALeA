@@ -28,7 +28,7 @@ async function getUserQuizResponseOrSetError(quizId: string, userId: string, res
 
   for (const r of results) {
     const { problemId, response } = r;
-    resp[problemId] = JSON.parse(response) as any;
+    resp[problemId] = response as any;
   }
   return resp;
 }

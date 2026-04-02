@@ -77,7 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let lectureSchedule: LectureSchedule[] = [];
     if (Array.isArray(lectureResult) && lectureResult.length > 0) {
       try {
-        lectureSchedule = JSON.parse(lectureResult[0].lectureSchedule || '[]');
+        lectureSchedule = lectureResult[0].lectureSchedule || [];
       } catch (e) {
         console.error('Failed to parse lecture schedule:', e);
         lectureSchedule = [];
@@ -117,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         lectureEndDate = parseDate(row.lectureEndDate);
 
         try {
-          holidays = JSON.parse(row.holidays || '[]');
+          holidays = row.holidays || [];
         } catch (e) {
           console.error('Failed to parse holidays:', e);
           holidays = [];
