@@ -32,11 +32,75 @@ import {
   ListItemIcon,
   ListItemText,
   Switch,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from './MultiItemsSelector';
+
+const TIMED_SKIP_DURATION_MS = 24 * 60 * 60 * 1000;
+
+interface TimedSkipEntry {
+  answerId: number;
+  expiresAt: number;
+}
+
+function getTimedSkipKey(courseId: string) {
+  return `peer-grading-skip:${courseId}`;
+}
+
+function getAlwaysSkipKey(courseId: string) {
+  return `peer-grading-always-skip:${courseId}`;
+}
+
+function readTimedSkips(courseId: string): number[] {
+  try {
+    const raw = localStorage.getItem(getTimedSkipKey(courseId));
+    if (!raw) return [];
+    const entries: TimedSkipEntry[] = JSON.parse(raw);
+    const now = Date.now();
+    const valid = entries.filter((e) => e.expiresAt > now);
+    localStorage.setItem(getTimedSkipKey(courseId), JSON.stringify(valid));
+    return valid.map((e) => e.answerId);
+  } catch {
+    return [];
+  }
+}
+
+function addTimedSkip(courseId: string, answerId: number) {
+  try {
+    const raw = localStorage.getItem(getTimedSkipKey(courseId));
+    const entries: TimedSkipEntry[] = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    const cleaned = entries.filter((e) => e.expiresAt > now && e.answerId !== answerId);
+    cleaned.push({ answerId, expiresAt: now + TIMED_SKIP_DURATION_MS });
+    localStorage.setItem(getTimedSkipKey(courseId), JSON.stringify(cleaned));
+  } catch {
+    // ignore
+  }
+}
+
+function readAlwaysSkips(courseId: string): number[] {
+  try {
+    const raw = localStorage.getItem(getAlwaysSkipKey(courseId));
+    if (!raw) return [];
+    return JSON.parse(raw) as number[];
+  } catch {
+    return [];
+  }
+}
+
+function addAlwaysSkip(courseId: string, answerId: number) {
+  try {
+    const existing = readAlwaysSkips(courseId);
+    const updated = Array.from(new Set([...existing, answerId]));
+    localStorage.setItem(getAlwaysSkipKey(courseId), JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+}
+
 const MULTI_SELECT_FIELDS = ['homeworkId', 'questionId', 'studentId'] as const;
 const ALL_SORT_FIELDS = ['homeworkDate', 'questionTitle', 'updatedAt', 'studentId'] as const;
 const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
@@ -146,7 +210,6 @@ function GradingListSortFields({
             <IconButton
               onClick={(e) => {
                 e.stopPropagation();
-
                 setSortAndFilterParams((prev) => ({
                   ...prev,
                   sortOrders: {
@@ -188,6 +251,7 @@ function GradingProblem({
     </Box>
   );
 }
+
 function GradingItemOrganizer({
   gradingItems,
   questionMap,
@@ -465,6 +529,7 @@ function GradingItemDisplay({
     </Box>
   );
 }
+
 interface SortAndFilterParams {
   multiSelectField: Record<MultSelectField, (string | number)[]>;
   isGraded: Tristate;
@@ -489,7 +554,17 @@ export function GradingInterface({
   const [studentCurrentResponses, setStudentCurrentResponses] = useState<
     { subProblemId: string; answer: string }[]
   >([]);
+
   const skippedAnswerIdsRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    const timed = readTimedSkips(courseId);
+    const always = readAlwaysSkips(courseId);
+    const merged = Array.from(new Set([...timed, ...always]));
+    skippedAnswerIdsRef.current = merged;
+  }, [courseId]);
+
   const [sortAndFilterParams, setSortAndFilterParams] = useState<SortAndFilterParams>({
     multiSelectField: {
       homeworkId: [],
@@ -564,6 +639,22 @@ export function GradingInterface({
     [courseId]
   );
 
+  const handleSkip = useCallback(() => {
+    const answerId = selected?.answerId;
+    if (answerId !== undefined) {
+      addTimedSkip(courseId, answerId);
+    }
+    loadNextStudentItem(answerId);
+  }, [courseId, loadNextStudentItem, selected?.answerId]);
+
+  const handleAlwaysSkip = useCallback(() => {
+    const answerId = selected?.answerId;
+    if (answerId !== undefined) {
+      addAlwaysSkip(courseId, answerId);
+    }
+    loadNextStudentItem(answerId);
+  }, [courseId, loadNextStudentItem, selected?.answerId]);
+
   useEffect(() => {
     if (!courseId) return;
     let cancelled = false;
@@ -600,7 +691,7 @@ export function GradingInterface({
       setGradingItems([]);
       homeworkMap.current = {};
       questionMap.current = {};
-      skippedAnswerIdsRef.current = [];
+      skippedAnswerIdsRef.current = [...readTimedSkips(courseId), ...readAlwaysSkips(courseId)];
       loadNextStudentItem();
       return;
     }
@@ -717,15 +808,32 @@ export function GradingInterface({
         </Box>
         <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
           {!isInstructorUser && (
-            <Box mb={1}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => loadNextStudentItem(selected?.answerId)}
-                disabled={isLoadingNextItem || !selected}
-              >
-                Skip
-              </Button>
+            <Box mb={1} display="flex" gap={1}>
+              <Tooltip title="Hide this problem for 24 hours, then it may reappear.">
+                <span>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleSkip}
+                    disabled={isLoadingNextItem || !selected}
+                  >
+                    Skip
+                  </Button>
+                </span>
+              </Tooltip>
+              <Tooltip title="Never show this problem to you again.">
+                <span>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="warning"
+                    onClick={handleAlwaysSkip}
+                    disabled={isLoadingNextItem || !selected}
+                  >
+                    Always Skip
+                  </Button>
+                </span>
+              </Tooltip>
             </Box>
           )}
           {selected ? (
@@ -738,7 +846,11 @@ export function GradingInterface({
               onAfterGrading={!isInstructorUser ? () => loadNextStudentItem() : undefined}
             />
           ) : (
-            <i>{isInstructorUser ? 'Please click on a grading item on the left.' : 'No grading items available.'}</i>
+            <i>
+              {isInstructorUser
+                ? 'Please click on a grading item on the left.'
+                : 'No grading items available.'}
+            </i>
           )}
         </Box>
       </Box>
