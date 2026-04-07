@@ -8,7 +8,7 @@ export interface UniversityTermConfig {
 export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   FAU: {
     universityId: 'FAU',
-    currentTerm: 'WS25-26',
+    currentTerm: 'SS26',
   },
   IISc: {
     universityId: 'IISc',
@@ -16,7 +16,7 @@ export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   },
   Jacobs: {
     universityId: 'Jacobs',
-    currentTerm: 'WS25-26',
+    currentTerm: 'SS26',
   },
   'Heriot Watt': {
     universityId: 'Heriot Watt',
