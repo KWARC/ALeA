@@ -46,10 +46,13 @@ export async function validateMemberAndAclIds(
   if (memberCount !== memberUserIds.length) return false;*/
 
   if (!memberACLIds?.length) return true;
-  const results = await executeQuery<[]>('select id from AccessControlList where id in (?)', [
-    memberACLIds,
-  ]);
+  const placeholders = memberACLIds.map(() => '?').join(', ');
+  const results = await executeQuery<{ id: string }[]>(
+    `select id from AccessControlList where id in (${placeholders})`,
+    memberACLIds
+  );
   if (!results || 'error' in results) return false;
+  if (!Array.isArray(results)) return false;
   return results.length === memberACLIds.length;
 }
 
