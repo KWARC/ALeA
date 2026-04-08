@@ -8,7 +8,7 @@ import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 import { useEffect, useState } from 'react';
 import Chart from 'react-google-charts';
 import JobStatsChart from './dashboard';
-
+//TODO: whole page needs to be redesigned, it was just a quick mockup to test the charts and data transformation logic.
 const StudentStats = () => {
   const [applications, setApplications] = useState([]);
   const [profileStrength, setProfileStrength] = useState(0);

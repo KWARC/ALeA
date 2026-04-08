@@ -21,7 +21,7 @@ export const getSocialIcon = (name) => {
     case 'twitter':
       return <Twitter sx={{ color: ' #08a0e9' }} />;
     case 'github':
-      return <GitHub sx={{ color: 'black' }} />;
+      return <GitHub sx={{ color: 'text.primary' }} />;
     case 'youtube':
       return <YouTube sx={{ color: 'red' }} />;
 
@@ -61,11 +61,11 @@ export const UserProfileCard = ({
         flex: '1 1 300px',
         p: 1,
         borderRadius: 3,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: 'background.default',
         boxShadow: 3,
       }}
     >
-      <Box sx={{ p: 3, borderRadius: 3, backgroundColor: '#f9f9f9', boxShadow: 3, mb: 3 }}>
+      <Box sx={{ p: 3, borderRadius: 3, bgcolor: 'background.paper', boxShadow: 3, mb: 3 }}>
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Avatar
             sx={{
@@ -205,7 +205,7 @@ export const UserProfileCard = ({
           sx={{
             p: 3,
             borderRadius: 3,
-            backgroundColor: '#f9f9f9',
+            bgcolor:'background.paper',
             boxShadow: 3,
           }}
         >
@@ -222,7 +222,7 @@ export const UserProfileCard = ({
                         width: 40,
                         height: 40,
                         mr: 2,
-                        bgcolor: 'white',
+                        bgcolor: 'background.default',
                         fontSize: 'large',
                         cursor: 'pointer',
                       }}
@@ -242,14 +242,14 @@ export const UserProfileCard = ({
                       style={{
                         fontSize: 16,
                         fontWeight: 'bold',
-                        color: '#333',
+                        color: 'primary.main',
                         textDecoration: 'underline',
                       }}
                     >
                       {String(url)}
                     </a>
                   ) : (
-                    <Typography sx={{ fontSize: 16, fontWeight: 'bold', color: '#777' }}>
+                    <Typography sx={{ fontSize: 16, fontWeight: 'bold', color: 'text.secondary' }}>
                       N/A
                     </Typography>
                   )}

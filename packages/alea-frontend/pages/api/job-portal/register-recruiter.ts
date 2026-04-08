@@ -12,6 +12,7 @@ import { RecruiterData } from '@alea/spec';
 import { getDomainFromEmail, isFauId } from '@alea/utils';
 import { getRecruiterProfileByUserIdOrSet500OnError } from './get-recruiter-profile';
 import { getOrganizationProfileByIdOrSet500OnError } from './get-organization-profile';
+import { commentsDb } from '../prisma-comments';
 
 export function getOrgAcl(orgId: number) {
   return `org${orgId}-recruiters`;
@@ -124,25 +125,31 @@ async function createOrganizationProfileOrSet500OnError(
   },
   res: NextApiResponse
 ) {
-  if (!companyName || !domain) return res.status(422).send('Missing required params');
-  const result = await executeAndEndSet500OnError(
-    `INSERT INTO organizationProfile 
-      (companyName, incorporationYear, isStartup, website, domain, about, companyType, officeAddress, officePostalCode) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      companyName,
-      incorporationYear,
-      isStartup,
-      website,
-      domain,
-      about,
-      companyType,
-      officeAddress,
-      officePostalCode,
-    ],
-    res
-  );
-  return result;
+  try {
+    if (!companyName || !domain) {
+      res.status(422).send('Missing required params');
+      return null;
+    }
+
+    const organization = await commentsDb.organizationProfile.create({
+      data: {
+        companyName,
+        domain,
+        incorporationYear,
+        isStartup,
+        website,
+        about,
+        companyType,
+        officeAddress,
+        officePostalCode,
+      },
+    });
+    return organization; 
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error });
+    return null;
+  }
 }
 export async function createNewOrganizationAndRecruiterOrSetError(
   companyName: string,
@@ -159,7 +166,7 @@ export async function createNewOrganizationAndRecruiterOrSetError(
     const organizationData = { companyName, domain };
     const result = await createOrganizationProfileOrSet500OnError(organizationData, res);
     if (!result) throw new Error('Failed to create Organization Profile');
-    orgId = result?.insertId;
+    orgId = result?.id;
     recruiter = await createRecruiterProfileOrSet500OnError(
       { ...recruiterData, userId: userId, organizationId: orgId },
       res

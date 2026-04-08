@@ -12,17 +12,32 @@ import {
 import { OrganizationData, updateOrganizationProfile } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
-export function OrganizationDetails({ data }: { data: OrganizationData }) {
+export function OrganizationDetails({
+  data,
+  onChange,
+}: {
+  data: OrganizationData;
+  onChange: (key: keyof OrganizationData, value: string | boolean) => void;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [orgData, setOrgData] = useState(data);
+  const [originalOrgData, setOriginalOrgData] = useState(data);
+
   useEffect(() => {
-    if (data) setOrgData(data);
-  }, [data]);
+    if (!isEditing) setOrgData(data);
+  }, [data, isEditing]);
+
+  const handleEditStart = () => {
+    setOriginalOrgData(orgData);
+    setIsEditing(true);
+  };
 
   const handleChange = (key: keyof OrganizationData, value: string | boolean) => {
     setOrgData((prev) => ({ ...prev, [key]: value }));
+    onChange(key, value);
   };
+
   const handleSave = async () => {
     setLoading(true);
     setIsEditing(false);
@@ -32,16 +47,20 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setOrgData(data);
+    setOrgData(originalOrgData);
+    Object.entries(originalOrgData).forEach(([key, value]) => {
+      onChange(key as keyof OrganizationData, value as string | boolean);
+    });
   };
-  if (loading) return <CircularProgress />;
+
+  if (loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
   return (
     <Box
       sx={{
         mb: 3,
         p: 3,
         borderRadius: '20px',
-        bgcolor: '#fff',
+        bgcolor: 'background.default',
         boxShadow: 3,
       }}
     >
@@ -53,7 +72,7 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
           sx={{
             flexGrow: 1,
             height: '1px',
-            backgroundColor: '#cfd0d1',
+            backgroundColor: 'text.secondary',
             m: 2,
           }}
         />
@@ -63,7 +82,7 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
             <Button
               variant="outlined"
               sx={{
-                borderRadius: '50px',
+                borderRadius: 12,
                 paddingX: 5,
                 paddingY: 1,
                 textTransform: 'none',
@@ -76,11 +95,11 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
             <Button
               variant="contained"
               sx={{
-                borderRadius: '50px',
+                borderRadius: 12,
                 paddingX: 5,
                 paddingY: 1,
                 textTransform: 'none',
-                bgcolor: '#806BE7',
+                bgcolor: 'jobPortal.purple',
                 color: 'white',
               }}
               onClick={handleSave}
@@ -89,7 +108,7 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
             </Button>
           </Box>
         ) : (
-          <IconButton onClick={() => setIsEditing(true)}>
+          <IconButton onClick={handleEditStart}>
             <Edit />
           </IconButton>
         )}
@@ -109,10 +128,19 @@ export function OrganizationDetails({ data }: { data: OrganizationData }) {
                   <FormControlLabel
                     label={label}
                     labelPlacement="start"
+                    sx={{
+                      ml: 'auto',
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: '0.85rem',
+                        color: 'text.secondary',
+                      },
+                    }}
                     control={
                       <Switch
                         checked={!!orgData.isStartup}
                         onChange={(e) => handleChange('isStartup', e.target.checked)}
+                        color="primary"
+                        size="small"
                       />
                     }
                   />

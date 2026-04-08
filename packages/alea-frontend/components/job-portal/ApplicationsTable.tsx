@@ -141,7 +141,7 @@ const ActionButtons = ({
       <Tooltip title={getTooltip(application.applicationStatus, 'SHORTLIST_FOR_INTERVIEW')}>
         <span>
           <IconButton
-            color="primary"
+           sx={{ color:"primary.main"}}
             disabled={
               !canPerformAction(
                 application.applicationStatus,
@@ -266,7 +266,7 @@ const ApplicationRow = ({
     alert('Download Functionality not active as of now');
   };
   return (
-    <TableRow sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+    <TableRow sx={{ '&:nth-of-type(odd)': {bgcolor:'background.paper'  } }}>
       <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Box sx={{ textAlign: 'left' }}>
@@ -274,7 +274,7 @@ const ApplicationRow = ({
             <Typography variant="body1" fontWeight="bold">
               {application.studentProfile.name}
             </Typography>
-            <IconButton color="primary" onClick={() => handleViewApplicant(application)}>
+            <IconButton sx={{color:'text.primary'}} onClick={() => handleViewApplicant(application)}>
               <Visibility />
             </IconButton>
           </Box>
@@ -332,7 +332,7 @@ const ApplicationRow = ({
           <Tooltip title="View Resume" arrow>
             <Link href={application?.studentProfile?.resumeUrl || '#'} passHref legacyBehavior>
               <a target="_blank" rel="noopener noreferrer">
-                <IconButton color="primary">
+                <IconButton sx={{color:"text.primary"}}>
                   <FileOpen />
                 </IconButton>
               </a>
@@ -391,9 +391,9 @@ export const ApplicationTable = ({
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
               sx={{
-                bgcolor: sortBy === 'name' ? '#5A46C6' : '#806BE7',
+                bgcolor: sortBy === 'name' ? "jobPortal.purpleDark" : "jobPortal.purple",
                 color: 'white',
-                '&:hover': { bgcolor: '#5A46C6' },
+                '&:hover': { bgcolor: "jobPortal.purpleDark" },
               }}
               onClick={() => handleSort('name')}
             >
@@ -402,9 +402,9 @@ export const ApplicationTable = ({
 
             <Button
               sx={{
-                bgcolor: sortBy === 'date' ? '#5A46C6' : '#806BE7',
+                bgcolor: sortBy === 'date' ? "jobPortal.purpleDark" : "jobPortal.purple",
                 color: 'white',
-                '&:hover': { bgcolor: '#5A46C6' },
+                '&:hover': { bgcolor: "jobPortal.purpleDark" },
               }}
               onClick={() => handleSort('date')}
             >
@@ -413,7 +413,7 @@ export const ApplicationTable = ({
           </Box>
 
           <TableContainer
-            sx={{ maxHeight: '500px', overflowY: 'auto', mt: '20px', borderRadius: '20px' }}
+            sx={{ maxHeight: '500px', overflowY: 'auto', mt: '20px', borderRadius: '20px' ,boxShadow:3}}
           >
             <Table sx={{ minWidth: 650 }} aria-label="job applicants table">
               <TableHead>

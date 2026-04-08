@@ -28,7 +28,7 @@ const HEADING_LINE_HEIGHT = 1.5;
 const theme = createTheme();
 
 export const typography: TypographyVariantsOptions = {
-  fontFamily: `'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif`, //TODO: acc to wald, also look for T1 and T2
+  fontFamily: `'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif`, 
   fontWeightLight: 400,
   fontWeightRegular: 400,
   fontWeightMedium: 600,
