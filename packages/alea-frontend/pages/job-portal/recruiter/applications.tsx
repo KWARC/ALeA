@@ -54,7 +54,6 @@ const StatusFilter = ({
         label="Filter by Status"
         labelId="Filter by Status"
         sx={{
-          backgroundColor: 'white',
           '& .MuiSelect-select': {
             padding: '10px',
           },
@@ -132,7 +131,6 @@ export const JobSelect = ({
         displayEmpty
         fullWidth
         sx={{
-          backgroundColor: 'white',
           '& .MuiSelect-select': {
             padding: '10px',
           },
@@ -192,11 +190,11 @@ const Applications = () => {
     fetchData();
   }, []);
 
-  if (accessCheckLoading) return <CircularProgress />;
+  if (accessCheckLoading) return <CircularProgress sx={{color:"text.primary"}}/>;
   return (
     <Box sx={{ maxWidth: '1200px', margin: 'auto', p: { xs: '30px 16px', md: '30px' } }}>
       <Box>
-        <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.main">
+        <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>

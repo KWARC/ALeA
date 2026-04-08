@@ -1,3 +1,38 @@
+declare module '@mui/material/styles' {
+  interface Palette {
+    jobPortal: {
+      background: string;
+      purple: string;
+      purpleDark: string;
+      gradients: {
+        drawer: string;
+        g1: string;
+        g2: string;
+        g3: string;
+        g4: string;
+        g5: string;
+      };
+      statsColors: string[];
+    };
+  }
+  interface PaletteOptions {
+    jobPortal?: {
+      background: string;
+      purple: string;
+      purpleDark: string;
+      gradients: {
+        drawer: string;
+        g1: string;
+        g2: string;
+        g3: string;
+        g4: string;
+        g5: string;
+      };
+      statsColors: string[];
+    };
+  }
+}
+
 import { PaletteOptions } from '@mui/material/styles';
 export const lightPalette: PaletteOptions = {
   mode: 'light',
@@ -116,6 +151,20 @@ export const lightPalette: PaletteOptions = {
     warmHighlight: 'linear-gradient(135deg, rgb(255, 191, 87), #e8f4fd)',
     fadeBottom: 'linear-gradient(to bottom, #f8f9fa00 0%, #f8f9fa66 35%, #f8f9fabf 100%)',
   },
+  jobPortal: {
+    background: '#f9f5f2',
+    purple: '#806BE7',
+    purpleDark: '#5A46C6',
+    gradients: {
+      drawer: 'linear-gradient(to bottom, #806BE7, #5F5CE3, #525AE2, #5C49E0)',
+      g1: 'linear-gradient(to bottom, #806BE7, #7366E6, #655FE4, #525AE2, #5C49E0)',
+      g2: 'linear-gradient(90deg, #4A69E1, #6C8CFF)',
+      g3: 'linear-gradient(90deg, #3a56c8, #6f86ff)',
+      g4: 'linear-gradient(135deg, #3a56c8, #6f86ff)',
+      g5: 'linear-gradient(135deg, #3a56c8, #5f75ff)',
+    },
+    statsColors: ['#1CD083', '#5A69E2', '#48A9F8', '#8BC741'],
+  },
 };
 
 export const darkPalette: PaletteOptions = {
@@ -230,5 +279,19 @@ export const darkPalette: PaletteOptions = {
     gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
     rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
     spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
+  },
+  jobPortal: {
+    background: '#020617',
+    purple: '#9b7ce8',
+    purpleDark: '#7a5fd6',
+    gradients: {
+      drawer: 'linear-gradient(to bottom, #3A3266, #2D2C6D, #272B6D, #2C236B)',
+      g1: 'linear-gradient(90deg, #4a5fd5, #7a8fff)',
+      g2: 'linear-gradient(90deg, #3a4fb8, #5a6fd8)',
+      g3: 'linear-gradient(90deg, #5a6fd8, #8a9fff)',
+      g4: 'linear-gradient(135deg, #5a6fd8, #8a9fff)',
+      g5: 'linear-gradient(135deg, #5a6fd8, #7a8fff)',
+    },
+    statsColors: ['#0f8a5c', '#3a4fb8', '#2e7ac1', '#6a9a2f'],
   },
 };

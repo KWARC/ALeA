@@ -1,7 +1,7 @@
 import { useMatomo } from '@jonkoops/matomo-tracker-react';
 import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip, useTheme } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import { logout } from '@alea/spec';
 import { CountryFlag, useCurrentUser, useIsLoggedIn } from '@alea/react-utils';
@@ -36,7 +36,7 @@ function ThemeToggleButton() {
 
   return (
     <Tooltip title={title}>
-      <IconButton onClick={handleModeChange} sx={{ color: 'white','&:hover': {
+      <IconButton onClick={handleModeChange} sx={{ color: "text.primary",'&:hover': {
       bgcolor:  'action.hover',} }}>
         {mode === 'dark' ? (
           <Brightness4Icon />
@@ -77,8 +77,9 @@ function UserButton() {
     <Box whiteSpace="nowrap">
       <Button
         sx={{
-          color: 'black',
-          border: '1px solid black',
+          color: "text.primary",
+          border: `1px solid`,
+          borderColor: "text.primary",
           textTransform: 'none',
         }}
         onClick={handleClick}
@@ -217,7 +218,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
               <UserButton />
             ) : (
               <Button
-                sx={{ color: 'black', border: '1px solid black' }}
+                sx={{ color: "text.primary", border: `1px solid`,borderColor:"text.primary" }}
                 onClick={() => {
                   // Don't change target when user reclicks 'Login' button.
                   if (window.location.pathname === '/login') return;

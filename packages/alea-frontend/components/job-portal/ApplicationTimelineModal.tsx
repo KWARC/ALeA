@@ -39,7 +39,7 @@ export function JobApplicationTimeline({
       {timelineEntries.map((entry, index) => (
         <TimelineItem key={entry.id}>
           <TimelineSeparator>
-            <TimelineDot color="primary" />
+            <TimelineDot sx={{ color: 'text.primary' }} />
             {index < timelineEntries.length - 1 && <TimelineConnector />}
           </TimelineSeparator>
 
@@ -64,11 +64,11 @@ export function JobApplicationTimeline({
   );
 }
 
-const JobApplicationTimelineModal= ({
+const JobApplicationTimelineModal = ({
   open,
   applicationId,
   onClose,
-}:{
+}: {
   open: boolean;
   applicationId: number;
   onClose: () => void;
@@ -110,7 +110,7 @@ const JobApplicationTimelineModal= ({
       <DialogContent dividers>
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-            <CircularProgress />
+            <CircularProgress sx={{ color: 'text.primary' }} />
           </Box>
         )}
 

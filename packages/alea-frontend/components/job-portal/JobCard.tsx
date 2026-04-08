@@ -126,7 +126,7 @@ export const JobCard = ({
         borderRadius: '15px',
         boxShadow: 3,
         p: 2,
-        bgcolor: '#fff',
+        bgcolor: "background.paper",
       }}
     >
       <Box display="flex" gap={1}>
@@ -187,7 +187,7 @@ export const JobCard = ({
             transform: 'translate(-50%, -50%)',
             width: '90%',
             maxWidth: 600,
-            bgcolor: 'background.paper',
+            bgcolor: 'background.default',
             borderRadius: 3,
             boxShadow: 24,
             p: 4,

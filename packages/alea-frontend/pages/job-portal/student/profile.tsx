@@ -31,6 +31,7 @@ const ProfileForm = () => {
     socialLinks: {},
     resumeUrl: '',
   });
+  const [originalProfileData, setOriginalProfileData] = useState(profileData);
 
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -65,8 +66,7 @@ const ProfileForm = () => {
           twitter: parsedSocialLinks.twitter || 'N/A',
           ...parsedSocialLinks,
         };
-        setProfileData((prevData) => ({
-          ...prevData,
+        const newProfileData = {
           name: res?.name || '',
           userId: res?.userId || '',
           email: res?.email || '',
@@ -81,7 +81,9 @@ const ProfileForm = () => {
           yearOfGraduation: res?.yearOfGraduation || '',
           socialLinks: requiredSocialLinks,
           resumeUrl: res?.resumeUrl || '',
-        }));
+        };
+        setProfileData(newProfileData);
+        setOriginalProfileData(newProfileData);
       } catch (error) {
         console.error('Error fetching student data:', error);
       } finally {
@@ -130,23 +132,34 @@ const ProfileForm = () => {
       };
 
       await updateStudentProfile(updatedProfile);
+      setOriginalProfileData(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
   };
-  if (accessCheckLoading || loading) {
-    return <CircularProgress color="primary" />;
-  }
+
+  const handleCancel = () => {
+    setProfileData(originalProfileData);
+  };
+  if (accessCheckLoading || loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
+
   return (
-    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', p: { xs: '30px 16px', md: '30px' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 3,
+        flexWrap: 'wrap',
+        p: { xs: '0 16px 20px', md: '10px 30px 30px' },
+      }}
+    >
       <Box
         sx={{
           maxWidth: 1200,
           flex: 2,
           padding: 1,
-          backgroundColor: '#f9f9f9',
+          bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 3,
         }}
@@ -164,7 +177,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
                 Edit Profile
               </Typography>
 
@@ -177,6 +190,7 @@ const ProfileForm = () => {
                     paddingY: 1,
                     textTransform: 'none',
                   }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </Button>
@@ -188,7 +202,7 @@ const ProfileForm = () => {
                     paddingX: 5,
                     paddingY: 1,
                     textTransform: 'none',
-                    bgcolor: '#806BE7',
+                    bgcolor: 'jobPortal.purple',
                     color: 'white',
                   }}
                   onClick={handleSave}
@@ -201,14 +215,14 @@ const ProfileForm = () => {
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ display: 'flex', alignItems: 'center', mb: '20px' }}
+              sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}
             >
               Personal Details
               <Box
                 sx={{
                   flexGrow: 1,
                   height: '1px',
-                  backgroundColor: '#cfd0d1',
+                  bgcolor: 'text.secondary',
                   marginLeft: 2,
                 }}
               />
@@ -383,7 +397,7 @@ const ProfileForm = () => {
           borderRadius: 4,
         }}
       >
-        <UserProfileCard type="student" userData={profileData} showPortfolioLinks />;
+        <UserProfileCard type="student" userData={profileData} showPortfolioLinks />
       </Box>
     </Box>
   );
