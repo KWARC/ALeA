@@ -830,7 +830,7 @@ export function GradingInterface({
                     onClick={handleAlwaysSkip}
                     disabled={isLoadingNextItem || !selected}
                   >
-                    Always Skip
+                    Pass on this 
                   </Button>
                 </span>
               </Tooltip>
