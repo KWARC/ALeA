@@ -72,7 +72,7 @@ const JobDetailsModal = ({
                 {selectedJob.jobTitle}
               </Typography>
 
-              <Typography variant="body1" color="textSecondary" sx={{ mb: 2 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 <strong>Company:</strong> {selectedJob.organization.companyName}
               </Typography>
 
@@ -254,9 +254,9 @@ export const JobBox = ({
   const [openOrgModal, setOpenOrgModal] = useState(false);
   const getIcon = () => {
     if (job.workMode === 'remote')
-      return <HomeWorkOutlined sx={{ color: 'white', fontSize: 18 }} />;
+      return <HomeWorkOutlined sx={{ color: 'text.primary', fontSize: 18 }} />;
     if (job.workMode === 'hybrid') return <SyncAltOutlined sx={{ color: 'white', fontSize: 18 }} />;
-    return <BusinessOutlined sx={{ color: 'white', fontSize: 18 }} />;
+    return <BusinessOutlined sx={{ color: 'text.primary', fontSize: 18 }} />;
   };
 
   const getBgColor = () => {
@@ -275,7 +275,7 @@ export const JobBox = ({
           overflow: 'hidden',
           p: 2,
           minHeight: 280,
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
         }}
       >
         {/* 
@@ -293,12 +293,12 @@ export const JobBox = ({
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
           <Typography
             variant="body1"
-            color="textSecondary"
+            color="text.secondary"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
             {job.organization.companyName}
             <IconButton sx={{ ml: 1 }} onClick={() => setOpenOrgModal(true)}>
-              <InfoOutlined color="primary" />
+              <InfoOutlined sx={{color:"text.primary" }}/>
             </IconButton>
           </Typography>
 
@@ -501,7 +501,7 @@ export function SearchJob() {
   const sortedJobs = handleSort(filteredJobs);
 
   if (accessCheckLoading) {
-    return <CircularProgress color="primary" />;
+    return <CircularProgress sx={{ color: 'text.primary' }} />;
   }
 
   return (
@@ -515,8 +515,8 @@ export function SearchJob() {
             mb: 3,
             px: 3,
             py: 2,
-            backgroundColor: '#fff',
-            borderRadius: '12px',
+            bgcolor: 'background.paper',
+            borderRadius: 3,
             boxShadow: 2,
             flexWrap: 'wrap',
           }}
@@ -528,13 +528,12 @@ export function SearchJob() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type any job name or company name"
             InputProps={{
-              startAdornment: <Search sx={{ color: 'gray', mr: 1 }} />,
+              startAdornment: <Search sx={{ color: 'text.secodary', mr: 1 }} />,
             }}
             sx={{
               minWidth: '300px',
               flexGrow: 1,
               borderRadius: '10px',
-              backgroundColor: '#f9f9f9',
               '& .MuiOutlinedInput-root': {
                 borderRadius: '10px',
               },
@@ -555,10 +554,7 @@ export function SearchJob() {
               label="Sort By"
               sx={{
                 borderRadius: '10px',
-                backgroundColor: '#f9f9f9',
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '10px',
-                },
+                '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1.5px' },
               }}
             >
               {JOB_SORT_OPTIONS.map((option) => (
@@ -595,15 +591,12 @@ export function SearchJob() {
               label="Filter Work Mode"
               startAdornment={
                 <InputAdornment position="start">
-                  <FilterAlt sx={{ color: 'gray' }} />
+                  <FilterAlt sx={{ color: 'text.secondary' }} />
                 </InputAdornment>
               }
-              sx={{
+               sx={{
                 borderRadius: '10px',
-                backgroundColor: '#f9f9f9',
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '10px',
-                },
+                '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1.5px' },
               }}
             >
               <MenuItem value="all">All </MenuItem>
@@ -622,7 +615,7 @@ export function SearchJob() {
               height: '50vh',
             }}
           >
-            <CircularProgress />
+            <CircularProgress sx={{ color: 'text.primary' }} />
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>

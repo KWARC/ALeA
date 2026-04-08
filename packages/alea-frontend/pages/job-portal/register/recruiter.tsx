@@ -11,6 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { getRecruiterProfile, getUserProfile, registerRecruiter } from '@alea/spec';
 import { getDomainFromEmail, isBusinessDomain } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -41,6 +42,7 @@ export default function RecruiterRegistration() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchProfileAndPrefill = async () => {
@@ -77,9 +79,8 @@ export default function RecruiterRegistration() {
     fetchRecruiterData();
   }, []);
 
-  if (loading) {
-    return <CircularProgress color="primary" />;
-  }
+  if (loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
+
   if (isRegistered) return <Alert severity="info">You are already registered.</Alert>;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +166,7 @@ export default function RecruiterRegistration() {
             textAlign: 'center',
             borderRadius: 3,
             p: 5,
-            background: 'rgba(255, 255, 255, 0.85)',
+            bgcolor: 'background.paper',
             backdropFilter: 'blur(12px)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             border: '1px solid rgba(74,105,225,0.3)',
@@ -176,7 +177,7 @@ export default function RecruiterRegistration() {
             variant="h4"
             fontWeight="bold"
             gutterBottom
-            color="blue.400 "
+            color="text.primary"
             sx={{ mb: 4 }}
           >
             Recruiter Registration
@@ -229,13 +230,14 @@ export default function RecruiterRegistration() {
             fullWidth
             sx={{
               mt: 4,
-              bgcolor: 'blue.400 ',
               textTransform: 'none',
               fontWeight: 600,
               py: 1.5,
-              fontSize: '16px',
+              fontSize: 16,
+              background: theme.palette.jobPortal.gradients.g4,
+              boxShadow: '0 10px 30px rgba(74,105,225,0.35)',
               '&:hover': {
-                bgcolor: '#233ba4ff',
+                background: theme.palette.jobPortal.gradients.g5,
               },
             }}
             onClick={handleSubmit}
@@ -252,7 +254,7 @@ export default function RecruiterRegistration() {
               </Typography>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCloseDialog} color="primary">
+              <Button onClick={handleCloseDialog} color="primary" variant="contained">
                 Close
               </Button>
             </DialogActions>

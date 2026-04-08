@@ -16,7 +16,7 @@ import { FileOpen, PersonAdd, Cancel, Pause } from '@mui/icons-material';
 import { Chart } from 'react-google-charts';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 import { JobSelect } from './applications';
-
+//TODO: Whole page needs to be redesigned, it was just a quick mockup to test the charts and data transformation logic.
 const applicantData = [
   {
     name: 'Full Stack Developer',

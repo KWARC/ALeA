@@ -7,6 +7,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   canAccessResource,
   createStudentProfile,
@@ -23,6 +24,7 @@ export default function StudentRegistration() {
   const router = useRouter();
   const [isRegistered, setIsRegistered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const theme = useTheme();
   const [formData, setFormData] = useState<CreateStudentProfileData>({
     name: '',
     resumeUrl: '',
@@ -100,9 +102,8 @@ export default function StudentRegistration() {
     fetchStudentData();
   }, [accessCheckLoading]);
 
-  if (accessCheckLoading || loading) {
-    return <CircularProgress color="primary" />;
-  }
+  if (accessCheckLoading || loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
+
   if (isRegistered) {
     return <Alert severity="info">You are already registered.</Alert>;
   }
@@ -160,7 +161,7 @@ export default function StudentRegistration() {
             position: 'relative',
             p: { xs: 3, md: 4 },
             borderRadius: '24px',
-            background: 'rgba(255,255,255,0.85)',
+            bgcolor: 'background.paper',
             backdropFilter: 'blur(14px)',
             boxShadow: '0 20px 50px rgba(74,105,225,0.18)',
             border: '1px solid rgba(74,105,225,0.25)',
@@ -174,7 +175,10 @@ export default function StudentRegistration() {
               left: 0,
               width: '100%',
               height: 6,
-              background: 'linear-gradient(90deg, blue.400 , #6f86ff)',
+              background: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? theme.palette.jobPortal.gradients.g1
+                  : theme.palette.jobPortal.gradients.g2,
             }}
           />
 
@@ -182,7 +186,7 @@ export default function StudentRegistration() {
             variant="h5"
             fontWeight={700}
             textAlign="center"
-            color="blue.400 "
+            color="text.primary"
             sx={{ mb: 1, mt: 1 }}
           >
             Student Registration
@@ -299,10 +303,10 @@ export default function StudentRegistration() {
                 borderRadius: '14px',
                 fontWeight: 600,
                 textTransform: 'none',
-                background: 'linear-gradient(135deg, blue.400 , #6f86ff)',
+                background: theme.palette.jobPortal.gradients.g4,
                 boxShadow: '0 10px 30px rgba(74,105,225,0.35)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #3a56c8, #5f75ff)',
+                  background: theme.palette.jobPortal.gradients.g5,
                 },
               }}
               onClick={handleSubmit}

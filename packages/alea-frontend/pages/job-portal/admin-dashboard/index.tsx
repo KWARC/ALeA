@@ -42,10 +42,7 @@ import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../../../layouts/MainLayout';
-export const getExactDuration = (
-  startDate?: string,
-  endDate?: string
-): string => {
+export const getExactDuration = (startDate?: string, endDate?: string): string => {
   if (!startDate || !endDate) return '';
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -169,7 +166,7 @@ const AdminDashboard = () => {
 
   const renderActions = (job) => (
     <>
-      <IconButton onClick={() => handleEdit(job)} color="primary">
+      <IconButton onClick={() => handleEdit(job)} sx={{color:"text.primary"}} >
         <Edit />
       </IconButton>
       <IconButton onClick={() => deleteJob(job.id)} color="error">
@@ -225,7 +222,7 @@ const AdminDashboard = () => {
         formattedEditJob.endDate = null;
         formattedEditJob.internshipPeriod = null;
       }
-      const response = await updateJobCategory(formattedEditJob);  
+      const response = await updateJobCategory(formattedEditJob);
       setSnackbarOpen(true);
       setJobs((prevJobs) =>
         prevJobs.map((job) => (job.id === editJob.id ? { ...job, ...formattedEditJob } : job))
@@ -240,7 +237,7 @@ const AdminDashboard = () => {
   const deleteJob = async (id: number) => {
     if (id) {
       try {
-        await deleteJobCategory(id);   
+        await deleteJobCategory(id);
         setJobs((prevJobs) => prevJobs.filter((job) => job.id !== id));
 
         setSnackbarOpen(true);
@@ -274,8 +271,17 @@ const AdminDashboard = () => {
           value={activeTab}
           onChange={handleTabChange}
           centered
-          textColor="primary"
-          indicatorColor="primary"
+          sx={{
+            '& .MuiTabs-indicator': {
+              bgcolor: 'text.primary',
+            },
+            '& .MuiTab-root': {
+              color: 'text.secondary',
+              '&.Mui-selected': {
+                color: 'text.primary',
+              },
+            },
+          }}
         >
           <Tab label="Job Categorys" />
           <Tab label="Programmes & Courses" />
@@ -509,6 +515,7 @@ const JobEditModal = ({
               margin="normal"
               InputLabelProps={{
                 shrink: true,
+                  sx: { color: 'text.primary' },
               }}
             />
             <TextField

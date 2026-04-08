@@ -202,9 +202,9 @@ const LoginPage: NextPage = () => {
                 )}
               </Button>
               <Box
-                style={{
+                sx={{
                   fontFamily: 'Roboto',
-                  color: '#777',
+                  color: 'text.secondary',
                   marginTop: '10px',
                 }}
               >
@@ -219,19 +219,19 @@ const LoginPage: NextPage = () => {
                 <br />
                 <Box display="flex" sx={{ margin: '25px 0px' }}>
                   <hr
-                    style={{ marginRight: '10px', backgroundColor: 'black' }}
+                    style={{ marginRight: '10px', backgroundColor: 'currentColor', opacity: 0.3 }}
                   />
                   <span
                     style={{
                       fontWeight: 'bold',
-                      color: 'black',
+                      color: 'inherit',
                       fontSize: '20px',
                     }}
                   >
                     OR
                   </span>
                   <hr
-                    style={{ marginLeft: '10px', backgroundColor: 'black' }}
+                    style={{ marginLeft: '10px', backgroundColor: 'currentColor', opacity: 0.3 }}
                   />
                 </Box>
                 <Box
@@ -277,20 +277,20 @@ const LoginPage: NextPage = () => {
                   <br />
                   <Typography
                     variant="body2"
-                    style={{
+                    sx={{
                       marginTop: 10,
                       textAlign: 'center',
-                      color: 'blue',
+                      color: 'text.primary',
                     }}
                   >
                     <Link href="/forgot-password">Forgot your password?</Link>
                   </Typography>
                   <br />
-                  <Typography sx={{ color: 'black', marginBottom: '25px' }}>
+                  <Typography sx={{ color: 'text.primary', marginBottom: '25px' }}>
                     Do not have an account?{' '}
                     <Link
                       href="/signup"
-                      style={{ width: '100%', color: 'blue' }}
+                      style={{ width: '100%', color: 'inherit' }}
                     >
                       Sign Up
                     </Link>

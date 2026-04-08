@@ -11,6 +11,7 @@ import {
   canAccessResource,
   getOrganizationProfile,
   getRecruiterProfile,
+  OrganizationData,
   RecruiterData,
   updateRecruiterProfile,
 } from '@alea/spec';
@@ -44,6 +45,7 @@ const ProfileForm = () => {
       officePostalCode: '',
     },
   });
+  const [originalProfileData, setOriginalProfileData] = useState(profileData);
   const [loading, setLoading] = useState(true);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const router = useRouter();
@@ -89,8 +91,7 @@ const ProfileForm = () => {
           ...parsedSocialLinks,
         };
 
-        setProfileData((prevData) => ({
-          ...prevData,
+        const newProfileData = {
           name: recruiterProfile?.name || '',
           userId: recruiterProfile?.userId || '',
           position: recruiterProfile?.position || '',
@@ -111,7 +112,10 @@ const ProfileForm = () => {
             officeAddress: organizationDetail?.officeAddress || '',
             officePostalCode: organizationDetail?.officePostalCode || '',
           },
-        }));
+        };
+
+        setProfileData(newProfileData);
+        setOriginalProfileData(newProfileData);
       } catch (error) {
         console.error('Error fetching organization details:', error);
       }
@@ -129,7 +133,15 @@ const ProfileForm = () => {
       [name]: value,
     }));
   };
-
+  const handleOrgChange = (key: keyof OrganizationData, value: string | boolean) => {
+    setProfileData((prev) => ({
+      ...prev,
+      organization: {
+        ...prev.organization,
+        [key]: value,
+      },
+    }));
+  };
   const handleSocialLinksChange = (event) => {
     const { name, value } = event.target;
     setProfileData((prevProfileData) => ({
@@ -154,21 +166,33 @@ const ProfileForm = () => {
         socialLinks: JSON.stringify(profileData.socialLinks),
       };
       await updateRecruiterProfile(updatedProfile);
+      setOriginalProfileData(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
   };
-  if (loading) return <CircularProgress />;
+
+  const handleCancel = () => {
+    setProfileData(originalProfileData);
+  };
+  if (loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
   return (
-    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', p: { xs: '30px 16px', md: '30px' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 3,
+        flexWrap: 'wrap',
+        p: { xs: '0 16px 20px', md: '10px 30px 30px' },
+      }}
+    >
       <Box
         sx={{
           maxWidth: 1200,
           flex: 2,
           padding: 1,
-          backgroundColor: '#f9f9f9',
+          backgroundColor: 'background.paper',
           borderRadius: 2,
           boxShadow: 3,
         }}
@@ -176,7 +200,6 @@ const ProfileForm = () => {
         <Typography variant="h4" gutterBottom align="center">
           Profile Information
         </Typography>
-
         <Card sx={{ marginBottom: 1, px: 5, borderRadius: '20px' }}>
           <CardContent>
             <Box
@@ -186,7 +209,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={'primary.main'}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
                 Edit Profile
               </Typography>
 
@@ -199,6 +222,7 @@ const ProfileForm = () => {
                     paddingY: 1,
                     textTransform: 'none',
                   }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </Button>
@@ -210,7 +234,7 @@ const ProfileForm = () => {
                     paddingX: 5,
                     paddingY: 1,
                     textTransform: 'none',
-                    bgcolor: '#806BE7',
+                    bgcolor: 'jobPortal.purple',
                     color: 'white',
                   }}
                   onClick={handleSave}
@@ -223,14 +247,14 @@ const ProfileForm = () => {
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ display: 'flex', alignItems: 'center', mb: '20px' }}
+              sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}
             >
               Personal Details
               <Box
                 sx={{
                   flexGrow: 1,
                   height: '1px',
-                  backgroundColor: '#cfd0d1',
+                  backgroundColor: 'text.secondary',
                   marginLeft: 2,
                 }}
               />
@@ -336,7 +360,7 @@ const ProfileForm = () => {
             </CardContent>
           </Card>
         </Card>
-        <OrganizationDetails data={profileData.organization} />
+        <OrganizationDetails data={profileData.organization} onChange={handleOrgChange} />{' '}
       </Box>
       <Box
         sx={{

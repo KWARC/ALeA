@@ -69,7 +69,7 @@ const InviteRecruiterPage = () => {
     }
   };
 
-  if (accessCheckLoading) return <CircularProgress />;
+  if (accessCheckLoading) return <CircularProgress sx={{color:'text.primary'}}/>;
   return (
     <Box
       sx={{
@@ -83,7 +83,7 @@ const InviteRecruiterPage = () => {
       <Card
         sx={{
           borderRadius: '20px',
-          backgroundColor: '#f5f7fa',
+          backgroundColor: 'background.paper',
           boxShadow: 3,
           p: { xs: 1, md: 4 },
         }}
