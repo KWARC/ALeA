@@ -147,7 +147,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             memberMap.set(s.id, { userId: s.id, fullName: s.name || '' });
           }
         }
-
         const merged: CourseInstructorExt[] = savedInstructors.map((saved) => ({
           id: saved.id,
           name: saved.name,
@@ -323,8 +322,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasHomework || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateHomework)) return;
-
                 try {
                   await updateHasHomework({ courseId, instanceId, hasHomework: next });
                   setField('hasHomework', next);
@@ -344,8 +341,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasQuiz || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateQuiz)) return;
-
                 try {
                   await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
                   setField('hasQuiz', next);
@@ -365,7 +360,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateCheatsheet)) return;
 
                 try {
                   await updateHasCheatsheet({ courseId, instanceId, hasCheatsheet: next });
@@ -385,10 +379,12 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.canStudentUploadCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
-
                 try {
-                  await updateCanStudentUploadCheatsheet({ courseId, instanceId, canStudentUploadCheatsheet: next });
+                  await updateCanStudentUploadCheatsheet({
+                    courseId,
+                    instanceId,
+                    canStudentUploadCheatsheet: next,
+                  });
                   setField('canStudentUploadCheatsheet', next);
                 } catch (err) {
                   console.error('Failed to update student cheatsheet upload', err);

@@ -201,11 +201,12 @@ export default function UniversityAdminDashboard() {
             {showSemForm && (
               <SemesterForm
                 onSemesterCreated={handleSemesterCreated}
-                currentSemester={semester}
+                currentSemester=""
                 universityId={universityId}
               />
             )}
-
+            {!showSemForm && (
+            <>
             <CourseManagement semester={semester} universityId={universityId} disabled={semesterOptions.length === 0} />
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box flex={1}>
@@ -221,6 +222,8 @@ export default function UniversityAdminDashboard() {
                 <HolidayManagement universityId={universityId} instanceId={semester} disabled={semesterOptions.length === 0} />
               </Box>
             </Box>
+            </>
+           )}
           </Paper>
         </Box>
       </Box>
