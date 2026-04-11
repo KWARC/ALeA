@@ -8,16 +8,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const { courseId } = req.query as { courseId?: string };
+   const { courseId, universityId, instanceId } = req.query as {
+    courseId?: string;
+    universityId?: string;
+    instanceId?: string;
+  };
 
   if (!courseId) {
     res.status(422).json({ error: 'Missing required field: courseId' });
     return;
   }
 
+  if (!universityId || !instanceId) {
+    return res.status(422).json({ error: 'Missing universityId or instanceId' });
+  }
+
   try {
     const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
-    const filePath = path.join(syllabusDir, 'current-sem.json');
+    const universityDir = path.join(syllabusDir, universityId);
+    // const filePath = path.join(syllabusDir, 'current-sem.json');
+
+     const filePath = path.join(universityDir, `${instanceId}.json`);
 
     let hasEntries = false;
     let count = 0;

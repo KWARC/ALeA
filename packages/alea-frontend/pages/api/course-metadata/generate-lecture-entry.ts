@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     universityId?: string;
   };
 
-  if (!courseId || !instanceId) {
+  if (!courseId || !instanceId || !universityId) {
     res.status(422).end('Missing required fields');
     return;
   }
@@ -87,9 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const queries = [
       ...(universityId
         ? [
+          [
             `SELECT lectureStartDate, lectureEndDate, holidays FROM semesterInfo WHERE universityId = ? AND instanceId = ? LIMIT 1`,
             [universityId, instanceId],
-          ]
+          ],
+        ]
         : []),
       [
         `SELECT lectureStartDate, lectureEndDate, holidays FROM semesterInfo WHERE instanceId = ? LIMIT 1`,
@@ -180,11 +182,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     generatedEntries.sort((a, b) => a.timestamp_ms - b.timestamp_ms);
 
     const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
-    const filePath = path.join(syllabusDir, 'current-sem.json');
+    // const filePath = path.join(syllabusDir, 'current-sem.json');
+
+    
 
     if (!fs.existsSync(syllabusDir)) {
       fs.mkdirSync(syllabusDir, { recursive: true });
     }
+
+    const universityDir = path.join(syllabusDir, universityId);
+
+    if (!fs.existsSync(universityDir)) {
+      fs.mkdirSync(universityDir, { recursive: true });
+    }
+
+    const filePath = path.join(universityDir, `${instanceId}.json`);
+
+    // if (!fs.existsSync(syllabusDir)) {
+    //   fs.mkdirSync(syllabusDir, { recursive: true });
+    // }
 
     let existing: Record<string, { lectures: any[]; notCoveredSections?: any[] }> = {};
     let alreadyExists = false;
