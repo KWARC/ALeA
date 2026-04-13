@@ -28,6 +28,7 @@ import {
   ResourceName,
   pathToCheatSheet,
 } from '@alea/utils';
+import { getSemesterInfo } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -501,7 +502,6 @@ const CourseHomePage: NextPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [seriesId, setSeriesId] = useState<string>('');
 
-  const studentCount = useStudentCount(courseId, currentTerm);
   const queryClient = useQueryClient();
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -533,7 +533,7 @@ const CourseHomePage: NextPage = () => {
     },
   });
   const enrolled = !isFetching && isEnrolled === true;
-
+  const studentCount = useStudentCount(courseId, currentTerm, enrolled);
   const { data: hasInstructorAccess, isFetching: isInstructorFetching } = useQuery({
     queryKey: ['is-instructor', courseId, currentTerm],
     enabled: Boolean(courseId && currentTerm),
@@ -557,6 +557,18 @@ const CourseHomePage: NextPage = () => {
     enabled: Boolean(courseId && currentTerm),
     queryFn: () => getCourseInfoMetadata(courseId!, currentTerm!),
   });
+
+  const { data: semesterInfo } = useQuery({
+    queryKey: ['semester-info', institutionId, currentTerm],
+    enabled: Boolean(institutionId && currentTerm),
+    queryFn: () => getSemesterInfo(institutionId!, currentTerm!),
+  });
+
+  const isSemesterOver =
+    semesterInfo && semesterInfo.length > 0
+      ? new Date() > new Date(semesterInfo[0].semesterEnd)
+      : false;
+
   if (isValidating) return null;
   if (validationError) {
     return (
@@ -749,7 +761,7 @@ const CourseHomePage: NextPage = () => {
           )}
         </Box>
         <InstructorDetails details={instructorDetails} />
-        {enrolled === false && (
+        {enrolled === false && !isSemesterOver && (
           <Box
             sx={{
               display: 'flex',
@@ -782,7 +794,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        {enrolled && (
+        {enrolled && !isSemesterOver && (
           <Box sx={{ m: 2, textAlign: 'center' }}>
             {studentCount !== null && (
               <Typography
