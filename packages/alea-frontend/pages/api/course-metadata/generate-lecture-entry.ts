@@ -87,11 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const queries = [
       ...(universityId
         ? [
-          [
-            `SELECT lectureStartDate, lectureEndDate, holidays FROM semesterInfo WHERE universityId = ? AND instanceId = ? LIMIT 1`,
-            [universityId, instanceId],
-          ],
-        ]
+            [
+              `SELECT lectureStartDate, lectureEndDate, holidays FROM semesterInfo WHERE universityId = ? AND instanceId = ? LIMIT 1`,
+              [universityId, instanceId],
+            ],
+          ]
         : []),
       [
         `SELECT lectureStartDate, lectureEndDate, holidays FROM semesterInfo WHERE instanceId = ? LIMIT 1`,
@@ -182,9 +182,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     generatedEntries.sort((a, b) => a.timestamp_ms - b.timestamp_ms);
 
     const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
-    // const filePath = path.join(syllabusDir, 'current-sem.json');
-
-    
 
     if (!fs.existsSync(syllabusDir)) {
       fs.mkdirSync(syllabusDir, { recursive: true });
@@ -197,10 +194,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const filePath = path.join(universityDir, `${instanceId}.json`);
-
-    // if (!fs.existsSync(syllabusDir)) {
-    //   fs.mkdirSync(syllabusDir, { recursive: true });
-    // }
 
     let existing: Record<string, { lectures: any[]; notCoveredSections?: any[] }> = {};
     let alreadyExists = false;

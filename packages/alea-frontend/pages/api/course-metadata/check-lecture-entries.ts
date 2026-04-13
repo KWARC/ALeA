@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-   const { courseId, universityId, instanceId } = req.query as {
+  const { courseId, universityId, instanceId } = req.query as {
     courseId?: string;
     universityId?: string;
     instanceId?: string;
@@ -26,9 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
     const universityDir = path.join(syllabusDir, universityId);
-    // const filePath = path.join(syllabusDir, 'current-sem.json');
 
-     const filePath = path.join(universityDir, `${instanceId}.json`);
+    const filePath = path.join(universityDir, `${instanceId}.json`);
 
     let hasEntries = false;
     let count = 0;
