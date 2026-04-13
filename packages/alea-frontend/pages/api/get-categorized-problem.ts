@@ -33,7 +33,7 @@ async function getAllConceptUrisForCourse(
   const cached = CONCEPT_URIS_FOR_COURSE.get(courseId);
   if (isCacheValid(cached)) return cached.data;
 
-  const toc = (await contentToc({ uri: courseNotesUri }))?.[1] ?? [];
+  const toc = (await contentToc({ uri: courseNotesUri }))?.[2] ?? [];
 
   const sectionUris = getSections(toc);
   const conceptUris = new Set<string>();

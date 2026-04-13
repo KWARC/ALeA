@@ -208,14 +208,8 @@ function resolveSlideFromFragment(
 
 const CourseViewPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('course-view');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('course-view');
 
   const instanceId = resolvedInstanceId;
   const sectionId = router.query.sectionId as string;
@@ -349,7 +343,7 @@ const CourseViewPage: NextPage = () => {
 
     const notes = courses?.[courseId]?.notes;
     if (!notes) return;
-    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+    contentToc({ uri: notes }).then(([css, _, toc] = [[], { type: 'Part' }, []]) => {
       setToc(toc);
       setCourseSections(getSections(toc));
       injectCss(css);
@@ -588,7 +582,12 @@ const CourseViewPage: NextPage = () => {
           <SearchIcon fontSize="large" sx={{ opacity: 0.5 }} />
         </IconButton>
       </Tooltip>
-      <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth maxWidth={hasResults ? 'lg' : 'md'}>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth={hasResults ? 'lg' : 'md'}
+      >
         <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'text.primary' }}>
           {courseId.toUpperCase()}
         </DialogTitle>

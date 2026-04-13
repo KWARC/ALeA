@@ -269,7 +269,7 @@ export async function getLastUpdatedNotes(
 
       if (notesUri) {
         const tocResp = await contentToc({ uri: notesUri });
-        const docSections = tocResp[1];
+        const docSections = tocResp[2];
         const sections = docSections.flatMap((d) => getSecInfo(d));
         const secInfo = sections.reduce((acc, s) => {
           acc[s.uri] = { id: s.uri, title: s.title, uri: s.uri };
