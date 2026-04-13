@@ -68,8 +68,6 @@ export function PeerReviewGradedItemDisplay({
     >
       <Box>
         <ProblemDisplay
-          // problemId={grade.questionId} TODO ALEA4-P4
-          // showUnansweredProblems={false}
           showPoints={false}
           problem={problem}
           isFrozen={true}

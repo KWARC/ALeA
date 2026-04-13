@@ -7,55 +7,53 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { getCurrentTermForCourseId } from '../get-current-term';
-import { getCourseEnrollmentAcl } from '../../../components/courseHelpers';
 import { isMemberOfAcl } from '../acl-utils/acl-common-utils';
+import { getCourseEnrollmentAcl } from '../../../components/courseHelpers';
 
-const CACHE_TTL_MS = 30_000; // 30 seconds 
-interface ContributionStats {
-  done: number;
-  received: number;
+const PEER_CONTRIBUTION_CACHE_TTL_MS = 30_000;
+
+interface PeerContributionCounts {
+  reviewsGiven: number;
+  reviewsReceived: number;
 }
-interface ContributionCacheEntry {
-  stats: Map<string, ContributionStats>;
+
+interface PeerContributionCacheEntry {
+  countsByUserId: Map<string, PeerContributionCounts>;
   expiresAt: number;
 }
 
-const contributionCache = new Map<string, ContributionCacheEntry>();
-const inflightRefreshes = new Map<string, Promise<Map<string, ContributionStats>>>();
+const peerContributionCache = new Map<string, PeerContributionCacheEntry>();
+const inflightPeerContributionLoads = new Map<
+  string,
+  Promise<Map<string, PeerContributionCounts>>
+>();
 
-export function invalidateContributionCache(courseId: string, courseInstanceId: string): void {
-  const key = `${courseId}::${courseInstanceId}`;
-  contributionCache.delete(key);
-}
-
-async function getContributionStats(
+async function fetchPeerContributionCounts(
   userIds: string[],
   courseId: string,
   courseInstanceId: string,
   res: NextApiResponse
-): Promise<Map<string, ContributionStats> | null> {
+): Promise<Map<string, PeerContributionCounts> | null> {
   const cacheKey = `${courseId}::${courseInstanceId}`;
-  const cached = contributionCache.get(cacheKey);
+  const cached = peerContributionCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
-    console.log(`[PEER GRADING] contribution cache HIT for ${cacheKey}`);
-    return cached.stats;
+    return cached.countsByUserId;
   }
-  const existing = inflightRefreshes.get(cacheKey);
-  if (existing) {
-    console.log(`[PEER GRADING] contribution cache COALESCED for ${cacheKey}`);
-    return existing;
-  }
-  console.log(`[PEER GRADING] contribution cache MISS for ${cacheKey} — querying DB`);
 
-  const refreshPromise = (async (): Promise<Map<string, ContributionStats>> => {
+  const inflight = inflightPeerContributionLoads.get(cacheKey);
+  if (inflight) {
+    return inflight;
+  }
+
+  const loadPromise = (async (): Promise<Map<string, PeerContributionCounts>> => {
     try {
-      const ph = userIds.map(() => '?').join(', ');
-      const [doneRows, receivedRows] = await Promise.all([
+      const inList = userIds.map(() => '?').join(', ');
+      const [givenRows, receivedRows] = await Promise.all([
         executeAndEndSet500OnError<{ userId: string; count: number }[]>(
           `SELECT g.checkerId AS userId, COUNT(DISTINCT g.answerId) AS count
            FROM Grading g
            WHERE g.reviewType = 'PEER'
-             AND g.checkerId IN (${ph})
+             AND g.checkerId IN (${inList})
            GROUP BY g.checkerId`,
           [...userIds],
           res
@@ -65,7 +63,7 @@ async function getContributionStats(
            FROM Answer a
            INNER JOIN Grading g ON g.answerId = a.id
            WHERE g.reviewType = 'PEER'
-             AND a.userId IN (${ph})
+             AND a.userId IN (${inList})
              AND a.courseId = ?
              AND a.courseInstance = ?
            GROUP BY a.userId`,
@@ -74,97 +72,82 @@ async function getContributionStats(
         ),
       ]);
 
-      if (!doneRows || !receivedRows) {
+      if (!givenRows || !receivedRows) {
         return new Map();
       }
 
-      const doneMap = new Map(doneRows.map((r) => [r.userId, Number(r.count)]));
-      const receivedMap = new Map(receivedRows.map((r) => [r.userId, Number(r.count)]));
+      const givenByUserId = new Map(givenRows.map((r) => [r.userId, Number(r.count)]));
+      const receivedByUserId = new Map(receivedRows.map((r) => [r.userId, Number(r.count)]));
 
-      const stats = new Map<string, ContributionStats>(
-        userIds.map((uid) => [
-          uid,
+      const countsByUserId = new Map<string, PeerContributionCounts>(
+        userIds.map((id) => [
+          id,
           {
-            done: doneMap.get(uid) ?? 0,
-            received: receivedMap.get(uid) ?? 0,
+            reviewsGiven: givenByUserId.get(id) ?? 0,
+            reviewsReceived: receivedByUserId.get(id) ?? 0,
           },
         ])
       );
 
-      contributionCache.set(cacheKey, { stats, expiresAt: Date.now() + CACHE_TTL_MS });
-      return stats;
+      peerContributionCache.set(cacheKey, {
+        countsByUserId,
+        expiresAt: Date.now() + PEER_CONTRIBUTION_CACHE_TTL_MS,
+      });
+      return countsByUserId;
     } finally {
-      inflightRefreshes.delete(cacheKey);
+      inflightPeerContributionLoads.delete(cacheKey);
     }
   })();
 
-  inflightRefreshes.set(cacheKey, refreshPromise);
-  return refreshPromise;
+  inflightPeerContributionLoads.set(cacheKey, loadPromise);
+  return loadPromise;
 }
 
-function parseExcludeAnswerIds(excludeAnswerIdsInput: string | string[] | undefined): number[] {
-  const excludeAnswerIdsCsv = Array.isArray(excludeAnswerIdsInput)
-    ? excludeAnswerIdsInput.join(',')
-    : excludeAnswerIdsInput || '';
+function parseExcludedAnswerIds(raw: string | string[] | undefined): number[] {
+  const csv = Array.isArray(raw) ? raw.join(',') : raw || '';
   return Array.from(
     new Set(
-      excludeAnswerIdsCsv
+      csv
         .split(',')
-        .map((rawId) => Number(rawId.trim()))
-        .filter((parsedId) => Number.isFinite(parsedId))
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n))
     )
   );
 }
 
-function weightedRandomSelect<T extends { userId: string; answerId?: number; questionId?: string }>(
+function pickWeightedByPeerContribution<T extends { userId: string }>(
   candidates: T[],
-  contributionMap: Map<string, ContributionStats>
+  peerContributionByUserId: Map<string, PeerContributionCounts>
 ): T {
   const weights = candidates.map((c) => {
-    const stats = contributionMap.get(c.userId) ?? { done: 0, received: 0 };
-    return (stats.done + 1) / (stats.received + 1);
+    const n = peerContributionByUserId.get(c.userId) ?? {
+      reviewsGiven: 0,
+      reviewsReceived: 0,
+    };
+    return (n.reviewsGiven + 1) / (n.reviewsReceived + 1);
   });
 
-  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-  const random = Math.random() * totalWeight;
-
-  console.log('\n========== [PEER GRADING] Weighted Selection Debug ==========');
-  console.log(`Total candidates: ${candidates.length}`);
-  console.log(
-    `Random number drawn: ${random.toFixed(4)} (out of totalWeight: ${totalWeight.toFixed(4)})`
-  );
-  console.log('--------------------------------------------------------------');
-
-  let cumulative = 0;
-  let selectedIndex = candidates.length - 1;
-
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  let roll = Math.random() * total;
   for (let i = 0; i < candidates.length; i++) {
-    const stats = contributionMap.get(candidates[i].userId) ?? { done: 0, received: 0 };
-    const rangeStart = cumulative;
-    cumulative += weights[i];
-    const rangeEnd = cumulative;
-    const isSelected = random <= cumulative && selectedIndex === candidates.length - 1;
-    if (isSelected) selectedIndex = i;
-
-    console.log(
-      `Candidate ${i + 1}: userId=${candidates[i].userId} | answerId=${
-        candidates[i].answerId ?? 'N/A'
-      }` +
-        `\n  done=${stats.done}, received=${stats.received} => weight=${weights[i].toFixed(4)}` +
-        `\n  cumulative range: [${rangeStart.toFixed(4)} -> ${rangeEnd.toFixed(4)}]` +
-        `\n  ${isSelected ? 'SELECTED' : 'not selected'}`
-    );
+    roll -= weights[i];
+    if (roll <= 0) {
+      return candidates[i];
+    }
   }
+  return candidates[candidates.length - 1];
+}
 
-  console.log('--------------------------------------------------------------');
-  console.log(
-    `Final selection: userId=${candidates[selectedIndex].userId} | answerId=${
-      candidates[selectedIndex].answerId ?? 'N/A'
-    }`
-  );
-  console.log('=============================================================\n');
+type AnswerGroupRow = GradingItem & { userId: string };
 
-  return candidates[selectedIndex];
+function firstQueuedRowPerAuthor(rows: AnswerGroupRow[]): AnswerGroupRow[] {
+  const byAuthor = new Map<string, AnswerGroupRow>();
+  for (const row of rows) {
+    if (!byAuthor.has(row.userId)) {
+      byAuthor.set(row.userId, row);
+    }
+  }
+  return [...byAuthor.values()];
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -176,37 +159,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     (req.query.courseInstance as string) ?? (await getCurrentTermForCourseId(courseId));
   if (!courseInstanceId) return res.status(422).send('Missing course instance');
 
-  const currentUserId = await getUserIdOrSetError(req, res);
-  if (!currentUserId) return;
-
-  console.log(
-    `[PEER GRADING] grader=${currentUserId} courseId=${courseId} courseInstance=${courseInstanceId}`
-  );
+  const graderUserId = await getUserIdOrSetError(req, res);
+  if (!graderUserId) return;
 
   const enrollmentAclId = getCourseEnrollmentAcl(courseId, courseInstanceId);
-  const isEnrolled = await isMemberOfAcl(enrollmentAclId, currentUserId);
+  const isEnrolled = await isMemberOfAcl(enrollmentAclId, graderUserId);
   if (!isEnrolled) return res.status(403).send('Not enrolled in course');
 
-  const excludeAnswerIds = parseExcludeAnswerIds(
+  const excludedAnswerIds = parseExcludedAnswerIds(
     req.query.excludeAnswerIds as string | string[] | undefined
   );
 
-  let exclusionQuery = '';
-  if (excludeAnswerIds.length > 0) {
-    const excludeIdPlaceholders = excludeAnswerIds.map(() => '?').join(',');
-    exclusionQuery = `HAVING MIN(a.id) NOT IN (${excludeIdPlaceholders})`;
-  }
+  const excludeClause =
+    excludedAnswerIds.length > 0
+      ? `HAVING MIN(a.id) NOT IN (${excludedAnswerIds.map(() => '?').join(',')})`
+      : '';
 
-  const queryParams: (string | number)[] = [
+  const sqlParams: (string | number)[] = [
     courseId,
     courseInstanceId,
-    currentUserId,
-    currentUserId,
+    graderUserId,
+    graderUserId,
   ];
-  if (excludeAnswerIds.length) queryParams.push(...excludeAnswerIds);
-  const candidateGradingItems = await executeAndEndSet500OnError<
-    (GradingItem & { userId: string })[]
-  >(
+  if (excludedAnswerIds.length) {
+    sqlParams.push(...excludedAnswerIds);
+  }
+
+  const candidateRows = await executeAndEndSet500OnError<AnswerGroupRow[]>(
     `SELECT
         a.homeworkId AS homeworkId,
         a.questionId AS questionId,
@@ -234,71 +213,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             AND myg.checkerId = ?
         )
       GROUP BY a.homeworkId, a.questionId, a.userId
-      ${exclusionQuery}
+      ${excludeClause}
       ORDER BY MAX(a.updatedAt) ASC, MIN(a.id) ASC`,
-    queryParams,
+    sqlParams,
     res
   );
-  if (!candidateGradingItems) return;
-  if (!candidateGradingItems.length) {
-    console.log(`[PEER GRADING] No candidates found.`);
+  if (!candidateRows) return;
+  if (!candidateRows.length) {
     return res.status(200).json({ gradingItem: null, responses: [] });
   }
 
-  const candidateUserIds = [...new Set(candidateGradingItems.map((c) => c.userId))];
-  console.log(
-    `[PEER GRADING] ${candidateGradingItems.length} rows, ${
-      candidateUserIds.length
-    } unique users: [${candidateUserIds.join(', ')}]`
-  );
-
-  const contributionMap = await getContributionStats(
-    candidateUserIds,
+  const distinctAuthorRows = firstQueuedRowPerAuthor(candidateRows);
+  const peerContributionByUserId = await fetchPeerContributionCounts(
+    distinctAuthorRows.map((r) => r.userId),
     courseId,
     courseInstanceId,
     res
   );
-  if (!contributionMap) return;
+  if (!peerContributionByUserId) return;
 
-  console.log('[PEER GRADING] Contribution stats:');
-  for (const [uid, s] of contributionMap.entries()) {
-    console.log(
-      `  ${uid} done=${s.done} received=${s.received} weight=${(
-        (s.done + 1) /
-        (s.received + 1)
-      ).toFixed(4)}`
-    );
-  }
+  const selectedRow = pickWeightedByPeerContribution(distinctAuthorRows, peerContributionByUserId);
+  const { userId: _authorUserId, ...gradingItem } = selectedRow;
 
-  const uniqueUserCandidates = candidateUserIds.map(
-    (uid) => candidateGradingItems.find((c) => c.userId === uid)!
-  );
-  const selected = weightedRandomSelect(uniqueUserCandidates, contributionMap);
-  const { userId: _hidden, ...gradingItem } = selected;
-
-  const ctxRows = await executeAndEndSet500OnError<
+  const anchorRows = await executeAndEndSet500OnError<
     { questionId: string; userId: string; courseId: string; courseInstance: string }[]
   >(
     'SELECT questionId, userId, courseId, courseInstance FROM Answer WHERE id = ?',
     [gradingItem.answerId],
     res
   );
-  if (!ctxRows?.length) return res.status(200).json({ gradingItem: null, responses: [] });
-  const ctx = ctxRows[0];
+  if (!anchorRows?.length) return res.status(200).json({ gradingItem: null, responses: [] });
+  const anchor = anchorRows[0];
 
   const responses = await executeAndEndSet500OnError<{ subProblemId: string; answer: string }[]>(
     `SELECT subProblemId, answer
      FROM Answer
      WHERE questionId = ? AND userId = ? AND courseId = ? AND courseInstance = ?
      ORDER BY subProblemId`,
-    [ctx.questionId, ctx.userId, ctx.courseId, ctx.courseInstance],
+    [anchor.questionId, anchor.userId, anchor.courseId, anchor.courseInstance],
     res
   );
   if (!responses) return;
-
-  console.log(
-    `[PEER GRADING] Serving: owner=${ctx.userId} answerId=${gradingItem.answerId} responses=${responses.length}`
-  );
 
   res.status(200).json({ gradingItem, responses });
 }
