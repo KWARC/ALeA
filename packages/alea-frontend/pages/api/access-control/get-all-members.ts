@@ -12,13 +12,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).send([]);
   }
   
-  const result: { firstname: string; lastname: string; userId: string }[] =
+  const placeholders = members.map(() => '?').join(',');
+  const result: { firstName: string; lastName: string; userId: string }[] =
     await executeDontEndSet500OnError(
-      `select firstname, lastname, userId from userInfo where userId IN (?)`,
-      [members],
+      `select firstName, lastName, userId from userInfo where userId IN (${placeholders})`,
+      members,
       res
     );
   res
     .status(200)
-    .send(result.map((c) => ({ fullName: `${c.firstname} ${c.lastname}`, userId: c.userId })));
+    .send(result.map((c) => ({ fullName: `${c.firstName} ${c.lastName}`, userId: c.userId })));
 }

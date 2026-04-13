@@ -32,6 +32,47 @@ import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../lang/utils';
 import { useEffect, useState } from 'react';
 
+function parseInstructors(val: unknown): Array<{ id: string; name: string }> {
+  if (val == null) return [];
+  if (Array.isArray(val)) {
+    return val.map((v: any) => {
+      if (typeof v === 'string') {
+        return { id: v, name: v }; 
+      }
+      return {
+        id: v.id || v.name || '',
+        name: v.name || v.id || '',
+      };
+    });
+  }
+  if (typeof val === 'string') {
+    const s = val.trim();
+    if (!s) return [];
+
+    try {
+      const parsed = JSON.parse(s);
+
+      if (Array.isArray(parsed)) {
+        return parsed.map((v: any) => {
+          if (typeof v === 'string') {
+            return { id: v, name: v }; 
+          }
+          return {
+            id: v.id || v.name || '',
+            name: v.name || v.id || '',
+          };
+        });
+      }
+
+      return [];
+    } catch {
+      return [{ id: s, name: s }];
+    }
+  }
+
+  return [];
+}
+
 interface CourseInfoTabProps {
   courseId: string;
   instanceId: string;
@@ -114,9 +155,9 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       }
 
       try {
-        const savedInstructors = resolvedInfo!.instructors ?? [];
+        const savedInstructors = parseInstructors(resolvedInfo!.instructors);
         const savedMap = new Map<string, InstructorInfo>(
-          resolvedInfo.instructors.map((s) => [s.id, s])
+          savedInstructors.map((s) => [s.id, s])
         );
 
         const aclIds = await getCourseAcls(courseId, instanceId);
