@@ -32,6 +32,47 @@ import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../lang/utils';
 import { useEffect, useState } from 'react';
 
+function parseInstructors(val: unknown): Array<{ id: string; name: string }> {
+  if (val == null) return [];
+  if (Array.isArray(val)) {
+    return val.map((v: any) => {
+      if (typeof v === 'string') {
+        return { id: v, name: v };
+      }
+      return {
+        id: v.id || v.name || '',
+        name: v.name || v.id || '',
+      };
+    });
+  }
+  if (typeof val === 'string') {
+    const s = val.trim();
+    if (!s) return [];
+
+    try {
+      const parsed = JSON.parse(s);
+
+      if (Array.isArray(parsed)) {
+        return parsed.map((v: any) => {
+          if (typeof v === 'string') {
+            return { id: v, name: v };
+          }
+          return {
+            id: v.id || v.name || '',
+            name: v.name || v.id || '',
+          };
+        });
+      }
+
+      return [];
+    } catch {
+      return [{ id: s, name: s }];
+    }
+  }
+
+  return [];
+}
+
 interface CourseInfoTabProps {
   courseId: string;
   instanceId: string;
@@ -114,10 +155,8 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       }
 
       try {
-        const savedInstructors = resolvedInfo!.instructors ?? [];
-        const savedMap = new Map<string, InstructorInfo>(
-          resolvedInfo.instructors.map((s) => [s.id, s])
-        );
+        const savedInstructors = parseInstructors(resolvedInfo!.instructors);
+        const savedMap = new Map<string, InstructorInfo>(savedInstructors.map((s) => [s.id, s]));
 
         const aclIds = await getCourseAcls(courseId, instanceId);
         const instructorAclIds = (aclIds || []).filter((id) => id.endsWith('-instructors'));
@@ -323,7 +362,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasHomework || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateHomework)) return;
 
                 try {
                   await updateHasHomework({ courseId, instanceId, hasHomework: next });
@@ -344,7 +382,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasQuiz || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateQuiz)) return;
 
                 try {
                   await updateHasQuiz({ courseId, instanceId, hasQuiz: next });
@@ -365,7 +402,6 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.hasCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateCheatsheet)) return;
 
                 try {
                   await updateHasCheatsheet({ courseId, instanceId, hasCheatsheet: next });
@@ -385,10 +421,13 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               checked={courseInfo.canStudentUploadCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-                if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
 
                 try {
-                  await updateCanStudentUploadCheatsheet({ courseId, instanceId, canStudentUploadCheatsheet: next });
+                  await updateCanStudentUploadCheatsheet({
+                    courseId,
+                    instanceId,
+                    canStudentUploadCheatsheet: next,
+                  });
                   setField('canStudentUploadCheatsheet', next);
                 } catch (err) {
                   console.error('Failed to update student cheatsheet upload', err);
