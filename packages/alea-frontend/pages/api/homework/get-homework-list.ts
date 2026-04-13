@@ -23,7 +23,7 @@ export async function getAllHomeworksOrSetError(
   if (getProblems) {
     for (const homework of homeworks) {
       if (typeof homework.problems === 'string') {
-        homework.problems = JSON.parse(homework.problems);
+        homework.problems = homework.problems;
       }
     }
   }

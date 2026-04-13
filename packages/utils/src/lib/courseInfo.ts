@@ -55,7 +55,7 @@ export function getCoursePdfUrl(notesUri: string): string {
   }
 }
 
-export const CURRENT_TERM = 'WS25-26';
+export const CURRENT_TERM = 'SS26';
 
 export function createCourseInfo(
   courseId: string,

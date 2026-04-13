@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let lectureSchedule: any[] = [];
   try {
     lectureSchedule =
-      Array.isArray(result) && result.length ? JSON.parse(result[0].lectureSchedule || '[]') : [];
+      Array.isArray(result) && result.length ? result[0].lectureSchedule || [] : [];
   } catch (e) {
     lectureSchedule = [];
   }

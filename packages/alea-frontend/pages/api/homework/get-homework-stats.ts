@@ -13,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!courseId) return res.status(422).send('Missing params.');
   const instanceId = (req.query.courseInstance as string) ?? await getCurrentTermForCourseId(courseId);
   const homework = await getHomeworkOrSetError(homeworkId, true, res);
-  homework.problems = JSON.parse(homework.problems.toString());
-  homework.css = JSON.parse(homework.css.toString());
+  homework.problems = homework.problems;
+  homework.css = homework.css;
   const totalStudentAttend =
     (
       await executeAndEndSet500OnError(

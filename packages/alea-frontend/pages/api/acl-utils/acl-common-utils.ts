@@ -1,6 +1,6 @@
 import { AccessControlList } from '@alea/spec';
 import { NextApiResponse } from 'next';
-import { executeAndEndSet500OnError, executeQuery, getUserIdOrSetError } from '../comment-utils';
+import { executeAndEndSet500OnError, executeQuery, getUserId } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';
 
 export async function checkResourceAssociatedOrSet500OnError(aclId: string, res) {
@@ -20,7 +20,7 @@ export async function isMemberOfAcl(acl: string, userId: string) {
   return await CACHE_STORE.isMemberOfSet(getCacheKey(acl), userId);
 }
 export async function isCurrentUserMemberOfAClupdater(aclId: string, res, req): Promise<boolean> {
-  const userId = await getUserIdOrSetError(req, res);
+  const userId = await getUserId(req);
   if (!userId) return false;
   const queryResult = (
     await executeQuery('select updaterACLId from AccessControlList where id=?', [aclId])
@@ -46,10 +46,13 @@ export async function validateMemberAndAclIds(
   if (memberCount !== memberUserIds.length) return false;*/
 
   if (!memberACLIds?.length) return true;
-  const results = await executeQuery<[]>('select id from AccessControlList where id in (?)', [
-    memberACLIds,
-  ]);
+  const placeholders = memberACLIds.map(() => '?').join(', ');
+  const results = await executeQuery<{ id: string }[]>(
+    `select id from AccessControlList where id in (${placeholders})`,
+    memberACLIds
+  );
   if (!results || 'error' in results) return false;
+  if (!Array.isArray(results)) return false;
   return results.length === memberACLIds.length;
 }
 

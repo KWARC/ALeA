@@ -193,6 +193,11 @@ export function getExpectedResourceActions(courseId: string, instanceId?: string
       actionId: Action.TAKE,
       aclId: `${courseId}-${term}-enrollments`,
     },
+    {
+      resourceId: `/course/${courseId}/instance/${term}/cheatsheet`,
+      actionId: Action.UPLOAD,
+      aclId: `${courseId}-${term}-enrollments`,
+    },
     // Staff
     {
       resourceId: `/course/${courseId}/instance/${term}/quiz`,
@@ -231,6 +236,11 @@ export function getExpectedResourceActions(courseId: string, instanceId?: string
     },
     {
       resourceId: `/course/${courseId}/instance/${term}/syllabus`,
+      actionId: Action.MUTATE,
+      aclId: `${courseId}-${term}-staff`,
+    },
+    {
+      resourceId: `/course/${courseId}/instance/${term}/cheatsheet`,
       actionId: Action.MUTATE,
       aclId: `${courseId}-${term}-staff`,
     },

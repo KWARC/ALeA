@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let holidays: any[];
   try {
-    holidays = JSON.parse(result[0].holidays);
+    holidays = result[0].holidays;
   } catch (error) {
     return res.status(500).end('Failed to parse holidays JSON');
   }

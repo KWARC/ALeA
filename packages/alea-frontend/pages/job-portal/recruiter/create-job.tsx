@@ -7,6 +7,7 @@ import {
   Stepper,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   canAccessResource,
   createJobPost,
@@ -184,14 +185,14 @@ const JobPostPage = () => {
   const handleBack = () => setActiveStep((prev) => prev - 1);
   const hasErrors = Object.values(errors ?? {}).some(Boolean);
   const isFinalStep = activeStep === 2;
-  if (loading) return <CircularProgress />;
+  if (loading) return <CircularProgress sx={{color:"text.primary"}}/>;
   return (
     <Box
       sx={{
         mt: 1,
         textAlign: 'center',
         borderRadius: '40px',
-        bgcolor: '#f2f2f2',
+        bgcolor: "jobPortal.background",
         p: { xs: '30px 16px', md: '30px' },
         maxWidth: 'md',
         mx: 'auto',
@@ -199,10 +200,13 @@ const JobPostPage = () => {
     >
       <Box
         sx={{
-          bgcolor: '#ededed',
+          bgcolor: "background.paper",
           p: 5,
           borderRadius: '20px',
           position: 'relative',
+          border: '1px solid',
+          borderColor:'divider',
+          boxShadow:3
         }}
       >
         <Typography variant="h4" fontWeight="bold">

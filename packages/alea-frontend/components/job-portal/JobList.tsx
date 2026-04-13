@@ -63,7 +63,6 @@ export const EligibilityForm = ({
           name="qualification"
           value={formData.qualification}
           onChange={handleChange}
-          sx={{ bgcolor: 'white' }}
         >
           <MenuItem value="Masters">Masters</MenuItem>
           <MenuItem value="Bachelors">Bachelors</MenuItem>
@@ -78,7 +77,6 @@ export const EligibilityForm = ({
         name="graduationYears"
         value={formData.graduationYears}
         onChange={handleChange}
-        sx={{ bgcolor: 'white' }}
       />
       <TextField
         type="date"
@@ -87,7 +85,6 @@ export const EligibilityForm = ({
         InputLabelProps={{ shrink: true }}
         margin="normal"
         name="applicationDeadlineTimestamp_ms"
-        sx={{ bgcolor: 'white' }}
         error={!!errors?.applicationDeadlineTimestamp_ms}
         helperText={errors?.applicationDeadlineTimestamp_ms}
         value={epochMsToDateInput(formData.applicationDeadlineTimestamp_ms)}
@@ -131,7 +128,6 @@ export const EligibilityForm = ({
         name="openPositions"
         value={formData.openPositions}
         onChange={handleChange}
-        sx={{ bgcolor: 'white' }}
       />
     </Box>
   );
@@ -181,7 +177,7 @@ export const OfferDetailsForm = ({
             type="number"
             value={compensation.fixedAmount ?? ''}
             onChange={(e) => handleCompensationChange('fixedAmount', Number(e.target.value))}
-            sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+            sx={{  flex: 1, minWidth: 160 }}
           />
         ) : (
           <>
@@ -190,7 +186,7 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.minAmount ?? ''}
               onChange={(e) => handleCompensationChange('minAmount', Number(e.target.value))}
-              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+              sx={{ flex: 1, minWidth: 160 }}
             />
 
             <TextField
@@ -198,7 +194,7 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.maxAmount ?? ''}
               onChange={(e) => handleCompensationChange('maxAmount', Number(e.target.value))}
-              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+              sx={{  flex: 1, minWidth: 160 }}
             />
           </>
         )}
@@ -209,7 +205,6 @@ export const OfferDetailsForm = ({
             value={compensation.currency}
             label="Currency"
             onChange={(e) => handleCompensationChange('currency', e.target.value)}
-            sx={{ bgcolor: 'white' }}
             MenuProps={{ disablePortal: true }}
           >
             <MenuItem value="EUR">EUR</MenuItem>
@@ -223,7 +218,7 @@ export const OfferDetailsForm = ({
             value={compensation.frequency}
             label="Frequency"
             onChange={(e) => handleCompensationChange('frequency', e.target.value)}
-            sx={{ bgcolor: 'white' }}
+     
             MenuProps={{ disablePortal: true }}
           >
             <MenuItem value="monthly">Monthly</MenuItem>
@@ -243,7 +238,7 @@ export const OfferDetailsForm = ({
         onChange={handleChange}
         multiline
         rows={3}
-        sx={{ bgcolor: 'white', mt: 3 }}
+        sx={{  mt: 3 }}
         placeholder="Health insurance, relocation support, meals..."
       />
     </Box>
@@ -263,7 +258,7 @@ export const JobDescriptionsForm = ({
 }) => {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom mb={2}>
         Job Descriptions
       </Typography>
       <FormControl fullWidth variant="outlined" error={!!errors.jobCategoryId}>
@@ -276,7 +271,16 @@ export const JobDescriptionsForm = ({
           }
           label="Select Job Category"
           fullWidth
-          sx={{ bgcolor: 'white' }}
+          MenuProps={{
+            disablePortal: true,
+            PaperProps: {
+              sx: {
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                boxShadow: 3,
+              },
+            },
+          }}
         >
           {jobCategories.map((job) => (
             <MenuItem key={job.id} value={job.id}>
@@ -288,7 +292,7 @@ export const JobDescriptionsForm = ({
       </FormControl>
 
       {!jobCategories.length && (
-        <Typography color="error" variant="subtitle2" sx={{ mb: 2 }}>
+        <Typography color="error" variant="h6" sx={{ mb: 1 }}>
           No job categories available. Please contact admin to create categories.
         </Typography>
       )}
@@ -301,9 +305,6 @@ export const JobDescriptionsForm = ({
         value={formData.session}
         onChange={handleChange}
         disabled
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <TextField
         label="Job Title"
@@ -315,9 +316,6 @@ export const JobDescriptionsForm = ({
         name="jobTitle"
         value={formData.jobTitle}
         onChange={handleChange}
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <TextField
         label="Location "
@@ -326,9 +324,6 @@ export const JobDescriptionsForm = ({
         name="workLocation"
         value={formData.workLocation}
         onChange={handleChange}
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <FormControl fullWidth margin="normal" error={!!errors?.workMode}>
         <InputLabel id="workMode-label">Work Mode</InputLabel>
@@ -338,8 +333,16 @@ export const JobDescriptionsForm = ({
           name="workMode"
           value={formData.workMode}
           onChange={handleChange}
-          sx={{ bgcolor: 'white' }}
-          MenuProps={{ disablePortal: true }}
+          MenuProps={{
+            disablePortal: true,
+            PaperProps: {
+              sx: {
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                boxShadow: 3,
+              },
+            },
+          }}
         >
           <MenuItem value="hybrid">Hybrid</MenuItem>
           <MenuItem value="onsite">Onsite</MenuItem>
@@ -356,9 +359,6 @@ export const JobDescriptionsForm = ({
         onChange={handleChange}
         multiline
         rows={4}
-        sx={{
-          bgcolor: 'white',
-        }}
         placeholder="Enter the job description here..."
       />
     </Box>
@@ -573,7 +573,7 @@ export const JobList = ({
             >
               <ListItemText
                 primary={
-                  <Typography variant="h6" fontWeight="bold" color="primary">
+                  <Typography variant="h6" fontWeight="bold" color="text.primary">
                     {job.jobTitle}
                   </Typography>
                 }
@@ -597,7 +597,7 @@ export const JobList = ({
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton color="primary" onClick={() => handleEdit(job)}>
+                <IconButton sx={{color:"text.primary"}} onClick={() => handleEdit(job)}>
                   <Edit />
                 </IconButton>
                 <IconButton

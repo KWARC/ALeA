@@ -33,7 +33,7 @@ function isNonEmptyResponse(resp: FTML.ProblemResponseType) {
 }
 
 function numInputsResponded(r: FTML.ProblemResponse | undefined) {
-  if (!r) return 0;
+  if (!r?.responses) return 0;
   return r.responses.reduce<number>((prev, resp) => prev + (isNonEmptyResponse(resp) ? 1 : 0), 0);
 }
 
