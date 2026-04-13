@@ -11,10 +11,11 @@ import {
   canAccessResource,
   getOrganizationProfile,
   getRecruiterProfile,
+  OrganizationData,
   RecruiterData,
   updateRecruiterProfile,
 } from '@alea/spec';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { OrganizationDetails } from '../../../components/job-portal/OrganizationDetails';
@@ -37,91 +38,93 @@ const ProfileForm = () => {
       companyName: '',
       isStartup: false,
       companyType: '',
-      incorporationYear: null,
+      incorporationYear: '',
       website: '',
       about: '',
       officeAddress: '',
       officePostalCode: '',
     },
   });
+  const [originalProfileData, setOriginalProfileData] = useState(profileData);
   const [loading, setLoading] = useState(true);
   const [recruiter, setRecruiter] = useState<RecruiterData>(null);
   const router = useRouter();
-useEffect(() => {
-  const initialize = async () => {
-    setLoading(true);
-    let recruiterProfile: RecruiterData | null = null;
-    try {
-      recruiterProfile = await getRecruiterProfile();
-      if (!recruiterProfile) {
-        router.push('/job-portal'); 
-        return;
-      }
-      setRecruiter(recruiterProfile);
-    } catch (error) {
-      console.error('Failed to fetch recruiter profile:', error);
-      router.push('/job-portal'); 
-      return;
-    }
-    try {
-      const hasAccess = await canAccessResource(
-        ResourceName.JOB_PORTAL_ORG,
-        Action.MANAGE_JOB_POSTS,
-        { orgId: String(recruiterProfile.organizationId) }
-      );
-      if (!hasAccess) {
-        alert('You do not have access to this page.');
+  useEffect(() => {
+    const initialize = async () => {
+      setLoading(true);
+      let recruiterProfile: RecruiterData | null = null;
+      try {
+        recruiterProfile = await getRecruiterProfile();
+        if (!recruiterProfile) {
+          router.push('/job-portal');
+          return;
+        }
+        setRecruiter(recruiterProfile);
+      } catch (error) {
+        console.error('Failed to fetch recruiter profile:', error);
         router.push('/job-portal');
         return;
       }
-    } catch (error) {
-      console.error('Error checking access:', error);
-      router.push('/job-portal'); 
-      return;
-    }
-    try {
-      const organizationDetail = await getOrganizationProfile(recruiterProfile.organizationId);
-      const parsedSocialLinks = recruiterProfile?.socialLinks || {};
-      const requiredSocialLinks = {
-        linkedin: parsedSocialLinks.linkedin || 'N/A',
-        github: parsedSocialLinks.github || 'N/A',
-        twitter: parsedSocialLinks.twitter || 'N/A',
-        ...parsedSocialLinks,
-      };
+      try {
+        const hasAccess = await canAccessResource(
+          ResourceName.JOB_PORTAL_ORG,
+          Action.MANAGE_JOB_POSTS,
+          { orgId: String(recruiterProfile.organizationId) }
+        );
+        if (!hasAccess) {
+          alert('You do not have access to this page.');
+          router.push('/job-portal');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking access:', error);
+        router.push('/job-portal');
+        return;
+      }
+      try {
+        const organizationDetail = await getOrganizationProfile(recruiterProfile.organizationId);
+        const parsedSocialLinks = recruiterProfile?.socialLinks || {};
+        const requiredSocialLinks = {
+          linkedin: parsedSocialLinks.linkedin || 'N/A',
+          github: parsedSocialLinks.github || 'N/A',
+          twitter: parsedSocialLinks.twitter || 'N/A',
+          ...parsedSocialLinks,
+        };
 
-      setProfileData((prevData) => ({
-        ...prevData,
-        name: recruiterProfile?.name || '',
-        userId: recruiterProfile?.userId || '',
-        position: recruiterProfile?.position || '',
-        email: recruiterProfile?.email || '',
-        mobile: recruiterProfile?.mobile || '',
-        altMobile: recruiterProfile?.altMobile || '',
-        about: recruiterProfile.about,
-        socialLinks: requiredSocialLinks,
-        organization: {
-          id: organizationDetail?.id,
-          domain: organizationDetail?.domain,
-          companyName: organizationDetail?.companyName || '',
-          isStartup: organizationDetail?.isStartup ?? false,
-          companyType: organizationDetail?.companyType || '',
-          incorporationYear: organizationDetail?.incorporationYear ?? null,
-          website: organizationDetail?.website || '',
-          about: organizationDetail?.about || '',
-          officeAddress: organizationDetail?.officeAddress || '',
-          officePostalCode: organizationDetail?.officePostalCode || '',
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching organization details:', error);
-    }
+        const newProfileData = {
+          name: recruiterProfile?.name || '',
+          userId: recruiterProfile?.userId || '',
+          position: recruiterProfile?.position || '',
+          email: recruiterProfile?.email || '',
+          mobile: recruiterProfile?.mobile || '',
+          altMobile: recruiterProfile?.altMobile || '',
+          about: recruiterProfile.about,
+          socialLinks: requiredSocialLinks,
+          organization: {
+            id: organizationDetail?.id,
+            domain: organizationDetail?.domain,
+            companyName: organizationDetail?.companyName || '',
+            isStartup: organizationDetail?.isStartup ?? false,
+            companyType: organizationDetail?.companyType || '',
+            incorporationYear: organizationDetail?.incorporationYear || '',
+            website: organizationDetail?.website || '',
+            about: organizationDetail?.about || '',
+            officeAddress: organizationDetail?.officeAddress || '',
+            officePostalCode: organizationDetail?.officePostalCode || '',
+          },
+        };
 
-    setLoading(false); 
-  };
+        setProfileData(newProfileData);
+        setOriginalProfileData(newProfileData);
+      } catch (error) {
+        console.error('Error fetching organization details:', error);
+      }
 
-  initialize();
-}, []);
+      setLoading(false);
+    };
 
+    initialize();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -130,7 +133,15 @@ useEffect(() => {
       [name]: value,
     }));
   };
-
+  const handleOrgChange = (key: keyof OrganizationData, value: string | boolean) => {
+    setProfileData((prev) => ({
+      ...prev,
+      organization: {
+        ...prev.organization,
+        [key]: value,
+      },
+    }));
+  };
   const handleSocialLinksChange = (event) => {
     const { name, value } = event.target;
     setProfileData((prevProfileData) => ({
@@ -155,21 +166,33 @@ useEffect(() => {
         socialLinks: JSON.stringify(profileData.socialLinks),
       };
       await updateRecruiterProfile(updatedProfile);
+      setOriginalProfileData(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
   };
-  if (loading) return <CircularProgress />;
+
+  const handleCancel = () => {
+    setProfileData(originalProfileData);
+  };
+  if (loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
   return (
-    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', p: { xs: '30px 16px', md: '30px' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 3,
+        flexWrap: 'wrap',
+        p: { xs: '0 16px 20px', md: '10px 30px 30px' },
+      }}
+    >
       <Box
         sx={{
           maxWidth: 1200,
           flex: 2,
           padding: 1,
-          backgroundColor: '#f9f9f9',
+          backgroundColor: 'background.paper',
           borderRadius: 2,
           boxShadow: 3,
         }}
@@ -177,7 +200,6 @@ useEffect(() => {
         <Typography variant="h4" gutterBottom align="center">
           Profile Information
         </Typography>
-
         <Card sx={{ marginBottom: 1, px: 5, borderRadius: '20px' }}>
           <CardContent>
             <Box
@@ -187,7 +209,7 @@ useEffect(() => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
                 Edit Profile
               </Typography>
 
@@ -200,6 +222,7 @@ useEffect(() => {
                     paddingY: 1,
                     textTransform: 'none',
                   }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </Button>
@@ -211,7 +234,7 @@ useEffect(() => {
                     paddingX: 5,
                     paddingY: 1,
                     textTransform: 'none',
-                    bgcolor: '#806BE7',
+                    bgcolor: 'jobPortal.purple',
                     color: 'white',
                   }}
                   onClick={handleSave}
@@ -224,14 +247,14 @@ useEffect(() => {
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ display: 'flex', alignItems: 'center', mb: '20px' }}
+              sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}
             >
               Personal Details
               <Box
                 sx={{
                   flexGrow: 1,
                   height: '1px',
-                  backgroundColor: '#cfd0d1',
+                  backgroundColor: 'text.secondary',
                   marginLeft: 2,
                 }}
               />
@@ -337,7 +360,7 @@ useEffect(() => {
             </CardContent>
           </Card>
         </Card>
-        <OrganizationDetails data={profileData.organization} />
+        <OrganizationDetails data={profileData.organization} onChange={handleOrgChange} />{' '}
       </Box>
       <Box
         sx={{
@@ -353,7 +376,15 @@ useEffect(() => {
 };
 
 const Profile = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<ProfileForm />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Profile | Job Portal - ALeA"
+      description="View and update your recruiter profile details on the ALeA Job Portal"
+    >
+      {<ProfileForm />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Profile;

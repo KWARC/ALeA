@@ -97,12 +97,15 @@ const SysAdmin: NextPage = () => {
   async function loadCurrentSemCourses() {
     try {
       const courseData = await getAllCourses();
-      const filteredCourses = Object.entries(courseData).reduce((acc, [courseId, courseInfo]: [string, CourseInfo]) => {
-        if (courseInfo.isCurrent) {
-          acc[courseId] = courseInfo;
-        }
-        return acc;
-      }, {} as { [id: string]: CourseInfo });
+      const filteredCourses = Object.entries(courseData).reduce(
+        (acc, [courseId, courseInfo]: [string, CourseInfo]) => {
+          if (courseInfo.isCurrent) {
+            acc[courseId] = courseInfo;
+          }
+          return acc;
+        },
+        {} as { [id: string]: CourseInfo }
+      );
 
       setCourses(filteredCourses);
     } catch (e) {
@@ -389,7 +392,7 @@ const SysAdmin: NextPage = () => {
               maxWidth: '100%',
               p: { xs: '15px', sm: '20px' },
               boxSizing: 'border-box',
-              backgroundColor: '#fff',
+              bgcolor: 'background.paper',
               borderRadius: '8px',
               mt: 2,
               mb: 2,
@@ -432,7 +435,7 @@ const SysAdmin: NextPage = () => {
             maxWidth: '100%',
             p: { xs: '15px', sm: '20px' },
             boxSizing: 'border-box',
-            backgroundColor: '#f9f9f9',
+            bgcolor: 'background.paper',
             borderRadius: '8px',
             mt: 4,
           }}
@@ -465,7 +468,7 @@ const SysAdmin: NextPage = () => {
           {selectedCourseId && (
             <Box
               sx={{
-                backgroundColor: '#e3f2fd',
+                bgcolor: 'background.paper',
                 border: '1px solid #2196f3',
                 borderRadius: '8px',
                 p: '15px',
@@ -627,13 +630,16 @@ const SysAdmin: NextPage = () => {
                     editing?.resourceId === entry.resourceId &&
                     editing?.actionId === entry.actionId ? (
                       <IconButton
-                        color="primary"
+                        sx={{ color: 'text.primary' }}
                         onClick={() => handleUpdateClick(entry.resourceId, entry.actionId)}
                       >
                         <CheckIcon />
                       </IconButton>
                     ) : (
-                      <IconButton color="primary" onClick={() => handleEditClick(entry)}>
+                      <IconButton
+                        sx={{ color: 'text.primary' }}
+                        onClick={() => handleEditClick(entry)}
+                      >
                         <EditIcon />
                       </IconButton>
                     )}

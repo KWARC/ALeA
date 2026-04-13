@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { canAccessResource, getStudentProfile, updateStudentProfile } from '@alea/spec';
-import { Action, CURRENT_TERM, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
@@ -26,11 +26,12 @@ const ProfileForm = () => {
     location: '',
     gpa: '',
     programme: '',
-    yearOfAdmission: null,
-    yearOfGraduation: null,
+    yearOfAdmission: '',
+    yearOfGraduation: '',
     socialLinks: {},
     resumeUrl: '',
   });
+  const [originalProfileData, setOriginalProfileData] = useState(profileData);
 
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -65,8 +66,7 @@ const ProfileForm = () => {
           twitter: parsedSocialLinks.twitter || 'N/A',
           ...parsedSocialLinks,
         };
-        setProfileData((prevData) => ({
-          ...prevData,
+        const newProfileData = {
           name: res?.name || '',
           userId: res?.userId || '',
           email: res?.email || '',
@@ -77,11 +77,13 @@ const ProfileForm = () => {
           location: res?.location || '',
           gpa: res?.gpa || '',
           programme: res?.programme || '',
-          yearOfAdmission: res?.yearOfAdmission || null,
-          yearOfGraduation: res?.yearOfGraduation || null,
+          yearOfAdmission: res?.yearOfAdmission || '',
+          yearOfGraduation: res?.yearOfGraduation || '',
           socialLinks: requiredSocialLinks,
           resumeUrl: res?.resumeUrl || '',
-        }));
+        };
+        setProfileData(newProfileData);
+        setOriginalProfileData(newProfileData);
       } catch (error) {
         console.error('Error fetching student data:', error);
       } finally {
@@ -130,23 +132,34 @@ const ProfileForm = () => {
       };
 
       await updateStudentProfile(updatedProfile);
+      setOriginalProfileData(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
   };
-  if (accessCheckLoading || loading) {
-    return <CircularProgress color="primary" />;
-  }
+
+  const handleCancel = () => {
+    setProfileData(originalProfileData);
+  };
+  if (accessCheckLoading || loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
+
   return (
-    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', p: { xs: '30px 16px', md: '30px' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 3,
+        flexWrap: 'wrap',
+        p: { xs: '0 16px 20px', md: '10px 30px 30px' },
+      }}
+    >
       <Box
         sx={{
           maxWidth: 1200,
           flex: 2,
           padding: 1,
-          backgroundColor: '#f9f9f9',
+          bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 3,
         }}
@@ -164,7 +177,7 @@ const ProfileForm = () => {
               flexWrap="wrap"
               sx={{ mb: 6 }}
             >
-              <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
                 Edit Profile
               </Typography>
 
@@ -177,6 +190,7 @@ const ProfileForm = () => {
                     paddingY: 1,
                     textTransform: 'none',
                   }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </Button>
@@ -188,7 +202,7 @@ const ProfileForm = () => {
                     paddingX: 5,
                     paddingY: 1,
                     textTransform: 'none',
-                    bgcolor: '#806BE7',
+                    bgcolor: 'jobPortal.purple',
                     color: 'white',
                   }}
                   onClick={handleSave}
@@ -201,14 +215,14 @@ const ProfileForm = () => {
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ display: 'flex', alignItems: 'center', mb: '20px' }}
+              sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}
             >
               Personal Details
               <Box
                 sx={{
                   flexGrow: 1,
                   height: '1px',
-                  backgroundColor: '#cfd0d1',
+                  bgcolor: 'text.secondary',
                   marginLeft: 2,
                 }}
               />
@@ -307,7 +321,7 @@ const ProfileForm = () => {
                   variant="standard"
                   fullWidth
                   sx={{ maxWidth: '350px', m: '20px 0 0' }}
-                  value={profileData.yearOfAdmission || 'N/A'}
+                  value={profileData.yearOfAdmission}
                   onChange={handleChange}
                   name="yearOfAdmission"
                 />
@@ -319,7 +333,7 @@ const ProfileForm = () => {
                   variant="standard"
                   fullWidth
                   sx={{ maxWidth: '350px', m: '20px 0 0' }}
-                  value={profileData.yearOfGraduation || 'N/A'}
+                  value={profileData.yearOfGraduation}
                   onChange={handleChange}
                   name="yearOfGraduation"
                 />
@@ -383,12 +397,20 @@ const ProfileForm = () => {
           borderRadius: 4,
         }}
       >
-        <UserProfileCard type="student" userData={profileData} showPortfolioLinks />;
+        <UserProfileCard type="student" userData={profileData} showPortfolioLinks />
       </Box>
     </Box>
   );
 };
 const Profile = () => {
-  return <JpLayoutWithSidebar role="student">{<ProfileForm />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Profile | Job Portal - ALeA"
+      description="View and update your profile details on the ALeA Job Portal"
+    >
+      {<ProfileForm />}
+    </JpLayoutWithSidebar>
+  );
 };
 export default Profile;

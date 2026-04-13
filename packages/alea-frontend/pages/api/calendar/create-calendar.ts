@@ -22,8 +22,7 @@ function parseDateDDMMYYYY(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-
-async function getSemesterInfoFromDb(
+export async function getSemesterInfoFromDb(
   universityId: string,
   instanceId: string
 ): Promise<SemesterInfo | null> {
@@ -126,8 +125,8 @@ async function generateSemesterAndHolidayEvents(
   });
 
   try {
-    const parsed = JSON.parse(semesterInfo.holidays || '{}');
-    const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
+      const parsed = semesterInfo.holidays;
+      const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as any)?.holidays)
       ? (parsed as any).holidays
@@ -153,6 +152,14 @@ async function getUserEvents(
   userId: string
 ): Promise<{ events: ICalEventData[]; universityId?: string; instanceId?: string }> {
   const coverageData = getCoverageData();
+
+  const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
+    Object.entries(coverageData).map(([courseId, courseData]) => [
+      courseId,
+      courseData?.lectures ?? [],
+    ])
+  );
+
   const resourceAndActions = await getAuthorizedCourseResources(userId);
 
   const resourceAccessToInstructor = resourceAndActions
@@ -176,8 +183,7 @@ async function getUserEvents(
   const accessibleCourseIds = isInstructor
     ? accessibleCourseIdsForInstructor
     : accessibleCourseIdsForStudent;
-  const events = generateCalendarEvents(coverageData, accessibleCourseIds);
-
+  const events = generateCalendarEvents(coverageLecturesByCourseId, accessibleCourseIds);
 
   // Get universityId and instanceId from the first accessible course
   let universityId: string | undefined;

@@ -187,7 +187,7 @@ export const RecorrectionDialog: React.FC<RecorrectionDialogProps> = ({
                                   [problemId]: e.target.value,
                                 }));
                               }}
-                              onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                              onFocus={(e) => (e.target.style.borderColor = 'blue.sky')}
                               onBlur={(e) => (e.target.style.borderColor = '#ccc')}
                             />
                           </TableCell>

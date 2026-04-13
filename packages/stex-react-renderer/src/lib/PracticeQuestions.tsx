@@ -34,8 +34,9 @@ export function PracticeQuestions({
       px="10px"
       maxWidth="800px"
       m="auto"
-      bgcolor="white"
-      border="1px solid #CCC"
+      bgcolor="background.default"
+      border="1px solid"
+      borderColor="divider"
       borderRadius="5px"
     >
       <Typography fontWeight="bold" textAlign="left" sx={{ pt: 2 }}>

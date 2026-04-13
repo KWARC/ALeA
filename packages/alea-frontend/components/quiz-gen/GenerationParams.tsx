@@ -1,5 +1,4 @@
 import { Box, Chip, Typography } from '@mui/material';
-import { PRIMARY_COL } from '@alea/utils';
 
 interface GenerationParamsProps {
   genParams: any;
@@ -18,7 +17,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
       bottom={0}
       zIndex={10}
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        background: 'linear-gradient(135deg, background.paper 0%, #f8f9fa 100%)',
         borderRadius: 3,
         p: 3,
         border: '1px solid #e1e5e9',
@@ -33,7 +32,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
           left: 0,
           right: 0,
           height: '4px',
-          background: `linear-gradient(90deg, ${PRIMARY_COL} 0%, #8B4513 100%)`,
+          background: `linear-gradient(90deg, ${'primary.main'} 0%, #8B4513 100%)`,
           borderRadius: '12px 12px 0 0',
         },
       }}
@@ -61,7 +60,7 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
               label={genParams?.mode}
               size="small"
               sx={{
-                backgroundColor: PRIMARY_COL,
+                backgroundColor: 'primary.main',
                 color: 'white',
                 fontWeight: 500,
                 fontSize: '0.75rem',
@@ -81,12 +80,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                 variant="body2"
                 sx={{
                   fontWeight: 400,
-                  color: PRIMARY_COL,
+                  color: 'primary.main',
                   backgroundColor: '#f8f9fa',
                   px: 1.5,
                   py: 0.5,
                   borderRadius: 2,
-                  border: `1px solid ${PRIMARY_COL}20`,
+                  border: `1px solid ${'primary.main'}20`,
                 }}
               >
                 {genParams?.variantOptions?.theme}
@@ -106,12 +105,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                 variant="body2"
                 sx={{
                   fontWeight: 400,
-                  color: PRIMARY_COL,
+                  color: 'primary.main',
                   backgroundColor: '#f8f9fa',
                   px: 1.5,
                   py: 0.5,
                   borderRadius: 2,
-                  border: `1px solid ${PRIMARY_COL}20`,
+                  border: `1px solid ${'primary.main'}20`,
                 }}
               >
                 {genParams?.variantOptions?.minorEditType}
@@ -132,12 +131,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   variant="body2"
                   sx={{
                     fontWeight: 400,
-                    color: PRIMARY_COL,
+                    color: 'primary.main',
                     backgroundColor: '#f8f9fa',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 2,
-                    border: `1px solid ${PRIMARY_COL}20`,
+                    border: `1px solid ${'primary.main'}20`,
                   }}
                 >
                   {genParams?.variantOptions?.variantType}
@@ -154,12 +153,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   variant="body2"
                   sx={{
                     fontWeight: 400,
-                    color: PRIMARY_COL,
+                    color: 'primary.main',
                     backgroundColor: '#f8f9fa',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 2,
-                    border: `1px solid ${PRIMARY_COL}20`,
+                    border: `1px solid ${'primary.main'}20`,
                   }}
                 >
                   {genParams?.variantOptions?.language}
@@ -181,12 +180,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   variant="body2"
                   sx={{
                     fontWeight: 400,
-                    color: PRIMARY_COL,
+                    color: 'primary.main',
                     backgroundColor: '#f8f9fa',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 2,
-                    border: `1px solid ${PRIMARY_COL}20`,
+                    border: `1px solid ${'primary.main'}20`,
                   }}
                 >
                   {genParams?.variantOptions?.modifyType}
@@ -203,12 +202,12 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
                   variant="body2"
                   sx={{
                     fontWeight: 400,
-                    color: PRIMARY_COL,
+                    color: 'primary.main',
                     backgroundColor: '#f8f9fa',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 2,
-                    border: `1px solid ${PRIMARY_COL}20`,
+                    border: `1px solid ${'primary.main'}20`,
                   }}
                 >
                   {Array.isArray(genParams?.variantOptions?.modifiedOption)
@@ -272,19 +271,19 @@ export const GenerationParams = ({ genParams, existingProblemUri }: GenerationPa
             rel="noopener noreferrer"
             sx={{
               fontWeight: 800,
-              color: PRIMARY_COL,
+              color: 'primary.main',
               textDecoration: 'none',
               backgroundColor: '#f8f9fa',
               px: 2,
               py: 1,
               borderRadius: 2,
-              border: `1px solid ${PRIMARY_COL}30`,
+              border: `1px solid ${'primary.main'}30`,
               transition: 'all 0.2s ease',
               fontSize: '0.875rem',
               wordBreak: 'break-all',
               '&:hover': {
-                backgroundColor: `${PRIMARY_COL}08`,
-                borderColor: PRIMARY_COL,
+                backgroundColor: `${'primary.main'}08`,
+                borderColor: 'primary.main',
                 transform: 'translateY(-1px)',
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
               },

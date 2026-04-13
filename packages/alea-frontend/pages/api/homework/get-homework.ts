@@ -128,8 +128,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const homework: HomeworkInfo = await getHomeworkOrSetError(+homeworkId, true, res);
   if (!homework) return;
 
-  homework.problems = JSON.parse(homework.problems.toString());
-  homework.css = JSON.parse(homework.css?.toString() ?? '[]');
+  homework.problems =
+    typeof homework.problems === 'string' ? JSON.parse(homework.problems) : homework.problems;
+  homework.css =
+    typeof homework.css === 'string' ? JSON.parse(homework.css) : homework.css ?? [];
   const phase = getHomeworkPhase(homework);
 
   const { courseId, courseInstance } = homework;

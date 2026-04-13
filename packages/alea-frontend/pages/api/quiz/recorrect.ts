@@ -47,9 +47,15 @@ export async function getCorrectedPoints(
       continue;
     }
 
-    const responses: FTML.ProblemResponse[] = byProblemId[problemId].map((r) => {
-      return JSON.parse(r.response) as FTML.ProblemResponse;
-    });
+    const responses: FTML.ProblemResponse[] = byProblemId[problemId]
+      .map((r) => {
+        try {
+          return typeof r.response === 'string' ? JSON.parse(r.response) : r.response;
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean) as FTML.ProblemResponse[];
 
     const feedbacks = (await batchGradeHex([[problems[problemId].solution, responses]]))?.[0];
     for (let i = 0; i < (feedbacks?.length ?? 0); i++) {

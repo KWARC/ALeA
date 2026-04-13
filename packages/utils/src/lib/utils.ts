@@ -1,4 +1,8 @@
 import { getOuterHTML } from 'domutils';
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+
+dayjs.extend(localizedFormat);
 
 export const BG_COLOR = 'hsl(210, 20%, 98%)';
 export const IS_SERVER = typeof window === 'undefined';
@@ -7,6 +11,14 @@ export const Window = IS_SERVER ? undefined : window;
 export const PRIMARY_COL = '#203360';
 export const PRIMARY_COL_DARK_HOVER = '#162343';
 export const SECONDARY_COL = '#8c9fb1';
+export const getAdaptiveColor = (
+  baseColor: string,
+  defaultBg: string,
+  basePercent = 30,
+  defaultBgPercent = 70
+) => {
+  return `color-mix(in srgb, ${defaultBg} ${defaultBgPercent}%, ${baseColor} ${basePercent}%)`;
+};
 export enum Language {
   Deutsch = 'Deutsch',
   English = 'English',
@@ -51,6 +63,30 @@ export const languageUrlMap: Record<string, Language> = {
   ur: Language.Urdu,
   vi: Language.Vietnamese,
 };
+export const MIME_MAP: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.txt': 'text/plain',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.csv': 'text/csv',
+  '.zip': 'application/zip',
+};
+export const MIME_TO_EXTENSION: Record<string, string> = Object.fromEntries(
+  Object.entries(MIME_MAP).map(([ext, mime]) => [mime, ext])
+);
+
+export const getExtensionFromMime = (mime: string): string | undefined => MIME_TO_EXTENSION[mime];
 
 export async function waitForNSeconds(n_sec: number) {
   return new Promise((resolve) => setTimeout(resolve, n_sec * 1000));
@@ -302,7 +338,7 @@ export function isBusinessDomain(domain?: string) {
 }
 export function getDomainFromEmail(email: string): string | undefined {
   if (!email) return undefined;
-  const parts = email.split("@");
+  const parts = email.split('@');
   return parts.length === 2 ? parts[1] : undefined;
 }
 export function truncateText(text: string, maxLength: number) {
@@ -322,3 +358,106 @@ export const formatTime = (seconds: number) => {
     return `${minutes} min ${secondsLeft} sec`;
   }
 };
+
+export function dateToEpochMs(dateStr: string) {
+  return dayjs(dateStr).endOf('day').valueOf();
+}
+
+export function epochMsToDateInput(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('YYYY-MM-DD') : '';
+}
+
+export function epochMsToCivilDate(epochMs?: number) {
+  return epochMs ? dayjs(epochMs).format('LL') : '';
+}
+
+export function getCurrentWeekNoFromStartDate(startDate: string | Date): number {
+  const start = new Date(startDate);
+  const today = new Date();
+  start.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffInMs = today.getTime() - start.getTime();
+  if (diffInMs < 0) return 0;
+  const MS_IN_WEEK = 1000 * 60 * 60 * 24 * 7;
+  return Math.floor(diffInMs / MS_IN_WEEK) + 1;
+}
+
+export function pathToCourseResource(
+  institutionId: string,
+  courseId: string,
+  instance: string,
+  resourceName: string
+): string {
+  const normalizedResource =
+    resourceName && resourceName !== '/'
+      ? resourceName.startsWith('/')
+        ? resourceName
+        : `/${resourceName}`
+      : '';
+
+  return `/${institutionId}/${courseId}/${instance}${normalizedResource}`;
+}
+
+export function pathToCourseHome(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '');
+}
+
+export function pathToCourseView(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/course-view');
+}
+
+export function pathToCourseNotes(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/course-notes');
+}
+
+export function pathToStudyBuddy(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/study-buddy');
+}
+
+export function pathToHomework(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/homework');
+}
+
+export function pathToPracticeProblems(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/practice-problems');
+}
+
+export function pathToInstructorDash(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/instructor-dash');
+}
+
+export function pathToCheatSheet(
+  institutionId: string,
+  courseId: string,
+  instance = 'latest'
+): string {
+  return pathToCourseResource(institutionId, courseId, instance, '/cheatsheet');
+}

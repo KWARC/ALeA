@@ -1,5 +1,4 @@
 import { Box, Button, CircularProgress } from '@mui/material';
-import { PRIMARY_COL } from '@alea/utils';
 
 export type QuizViewMode = 'all' | 'generated' | 'existing';
 export function ViewModeSelector({
@@ -32,7 +31,7 @@ export function ViewModeSelector({
             <CircularProgress
               size={20}
               sx={{
-                color: viewMode === mode ? 'white' : PRIMARY_COL,
+                color: viewMode === mode ? 'white' : 'primary.main',
                 position: 'absolute',
                 top: '30%',
                 left: '42%',

@@ -15,14 +15,11 @@ import {
   UserInformation,
   UserSignUpDetail,
 } from './comment';
-import {  logoutAndGetToLoginPage } from './lmp';
+import { logoutAndGetToLoginPage } from './lmp';
 
 async function commentRequest(apiUrl: string, requestType: string, data?: any) {
   try {
-    const resp =
-      requestType === 'POST'
-        ? await axios.post(apiUrl, data)
-        : await axios.get(apiUrl);
+    const resp = requestType === 'POST' ? await axios.post(apiUrl, data) : await axios.get(apiUrl);
     return resp.data;
   } catch (err) {
     const error = err as Error | AxiosError;
@@ -100,6 +97,11 @@ export async function updateQuestionState(
   await commentRequest('/api/update-question-state', 'POST', body);
 }
 
+export async function reopenQuestion(commentId: number) {
+  const body = { commentId };
+  await commentRequest('/api/reopen-question', 'POST', body);
+}
+
 export async function getCourseInstanceThreads(
   courseId: string,
   courseTerm: string,
@@ -171,26 +173,25 @@ export async function updateUserProfile(
   semester: string,
   languages: string
 ) {
-  return await axios.post(
-    '/api/update-user-profile',
-    { userId, firstName, lastName, email, studyProgram, semester, languages }
-  );
+  return await axios.post('/api/update-user-profile', {
+    userId,
+    firstName,
+    lastName,
+    email,
+    studyProgram,
+    semester,
+    languages,
+  });
 }
 
 export async function updateTrafficLightStatus(trafficStatus: boolean) {
   cachedUserInformation = undefined;
-  return await axios.post(
-    '/api/update-trafficlight-status',
-    { trafficStatus }
-  );
+  return await axios.post('/api/update-trafficlight-status', { trafficStatus });
 }
 
 export async function updateSectionReviewStatus(showSectionReview: boolean) {
   cachedUserInformation = undefined;
-  return await axios.post(
-    '/api/update-section-review-status',
-    { showSectionReview }
-  );
+  return await axios.post('/api/update-section-review-status', { showSectionReview });
 }
 
 export async function signUpUser(userDetail: UserSignUpDetail) {
@@ -237,17 +238,14 @@ export async function createBlogPost(
   heroImageUrl?: string,
   heroImagePosition?: string
 ) {
-  return await axios.post(
-    '/api/blog/create-post',
-    {
-      title,
-      body,
-      postId,
-      heroImageId,
-      heroImageUrl,
-      heroImagePosition,
-    }
-  );
+  return await axios.post('/api/blog/create-post', {
+    title,
+    body,
+    postId,
+    heroImageId,
+    heroImageUrl,
+    heroImagePosition,
+  });
 }
 
 export async function getPostSnippets(): Promise<PostSnippet[]> {
@@ -275,10 +273,14 @@ export async function updateBlogPost(
   heroImagePosition: string,
   postId: string
 ) {
-  return await axios.post(
-    '/api/blog/update-post',
-    { title, body, heroImageId, heroImageUrl, postId, heroImagePosition }
-  );
+  return await axios.post('/api/blog/update-post', {
+    title,
+    body,
+    heroImageId,
+    heroImageUrl,
+    postId,
+    heroImagePosition,
+  });
 }
 
 export async function deleteBlogPost(postId: string) {
@@ -316,19 +318,13 @@ export async function generateApfelToken(userId: string, time: number) {
 }
 
 export async function updateUserInfoFromToken() {
-  const response = await axios.post(
-    '/api/update-user-info-from-token',
-    {}
-  );
+  const response = await axios.post('/api/update-user-info-from-token', {});
   return response.data;
 }
 
 export async function getResourcesForUser() {
   if (!isLoggedInViaCookie()) return [];
-  const response = await axios.post(
-    '/api/get-resources-for-user',
-    {}
-  );
+  const response = await axios.post('/api/get-resources-for-user', {});
   return response.data as CourseResourceAction[];
 }
 
@@ -353,12 +349,9 @@ export async function getStudentCountInCourse(courseId: string, instanceId: stri
 }
 
 export async function getCourseIdsForEnrolledUser(instanceId?: string) {
-  const response = await axios.post(
-    '/api/get-courseids-for-enrolled-user',
-    {
-      instanceId,
-    }
-  );
+  const response = await axios.post('/api/get-courseids-for-enrolled-user', {
+    instanceId,
+  });
   return response.data;
 }
 
@@ -372,7 +365,9 @@ export async function getAllCourses(universityId?: string) {
 }
 
 export async function getCurrentTerm(courseId?: string): Promise<string | Record<string, string>> {
-  const response = await axios.get<Record<string, string> | { courseId: string; currentTerm: string }>('/api/get-current-term', {
+  const response = await axios.get<
+    Record<string, string> | { courseId: string; currentTerm: string }
+  >('/api/get-current-term', {
     params: courseId ? { courseId } : {},
   });
   if (courseId) {
@@ -380,4 +375,3 @@ export async function getCurrentTerm(courseId?: string): Promise<string | Record
   }
   return response.data as Record<string, string>;
 }
-

@@ -13,7 +13,9 @@ export interface CourseInfo {
   isCurrent: boolean;
   hasQuiz: boolean;
   hasHomework: boolean;
+  hasCheatsheet: boolean;
   universityId?: string;
+  livestreamUrl?: string;
   instances?: { semester: string; instructors?: string[] | null }[];
   instructors?: string[] | null;
   teaser?: string | null;
@@ -53,7 +55,7 @@ export function getCoursePdfUrl(notesUri: string): string {
   }
 }
 
-export const CURRENT_TERM = 'WS25-26';
+export const CURRENT_TERM = 'SS26';
 
 export function createCourseInfo(
   courseId: string,
@@ -63,6 +65,7 @@ export function createCourseInfo(
   isCurrent = false,
   hasQuiz = false,
   hasHomework = false,
+  hasCheatsheet = false,
   universityId?: string,
   instances?: { semester: string; instructors?: string[] | null }[],
   instructors?: string[] | null,
@@ -84,6 +87,7 @@ export function createCourseInfo(
     isCurrent,
     hasQuiz,
     hasHomework,
+    hasCheatsheet,
     universityId,
     instances,
     instructors,
@@ -112,8 +116,12 @@ export interface LectureEntry {
   venueLink?: string;
 }
 
+export interface CourseCoverageData {
+  lectures: LectureEntry[];
+  notCoveredSections?: string[];
+}
 export interface CoverageTimeline {
-  [courseId: string]: LectureEntry[];
+  [courseId: string]: CourseCoverageData;
 }
 
 export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
@@ -125,6 +133,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -139,6 +148,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'SS25', instructors: null }],
     ['Michael Kohlhase'],
@@ -153,6 +163,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
+    false,
     'FAU',
     [
       { semester: 'WS23-24', instructors: null },
@@ -170,6 +181,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -184,6 +196,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'SS25', instructors: null }],
     ['Michael Kohlhase'],
@@ -198,6 +211,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'SS25', instructors: ['Dennis Müller'] }],
     ['Michael Kohlhase'],
@@ -212,6 +226,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
+    false,
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -226,6 +241,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
+    false,
     'FAU',
     [
       { semester: 'SS25', instructors: null },
@@ -243,6 +259,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
+    false,
     'Jacobs',
     [{ semester: 'Fall 2006', instructors: null }],
     ['Michael Kohlhase'],
@@ -256,6 +273,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     'https://mathhub.info?a=courses/Jacobs/ComSem&p=course/notes&d=coursepage&l=en',
     false,
     true,
+    false,
     false,
     'Jacobs',
     [],
@@ -271,6 +289,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
+    false,
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -284,6 +303,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     'https://mathhub.info?a=courses/Jacobs/GenCS/course&p=course/notes&d=coursepage1&l=en',
     false,
     true,
+    false,
     false,
     'Jacobs',
     [],
@@ -299,6 +319,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
+    false,
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -312,6 +333,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     'https://mathhub.info?a=courses/Jacobs/GenICT/course&p=course/notes&d=coursepage&l=en',
     false,
     true,
+    false,
     false,
     'Jacobs',
     [
@@ -330,6 +352,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     'https://mathhub.info?a=courses/Jacobs/TDM/course&p=course/notes&d=coursepage&l=en',
     false,
     true,
+    false,
     false,
     'Jacobs',
     [],

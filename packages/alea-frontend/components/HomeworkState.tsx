@@ -81,7 +81,7 @@ const HomeworkStats = ({ title, stats }: { title: string; stats: HomeworkStatsIn
             }),
           ]}
           width="100%"
-          height="400px"
+          height={400}
           options={{
             vAxis: { minValue: 0 },
             isStacked: true,
@@ -106,7 +106,7 @@ const HomeworkStats = ({ title, stats }: { title: string; stats: HomeworkStatsIn
             }),
           ]}
           width="100%"
-          height="400px"
+          height={400}
         />
       )}
     </Box>

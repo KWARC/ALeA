@@ -283,12 +283,12 @@ CREATE TABLE studentProfile (
     resumeUrl VARCHAR(2083), 
     email VARCHAR(255) NOT NULL, 
     mobile VARCHAR(15), 
-    programme VARCHAR(255) NOT NULL, 
-    yearOfAdmission YEAR NOT NULL, 
-    yearOfGraduation YEAR, 
+    programme VARCHAR(255), 
+    yearOfAdmission VARCHAR(50) ,
+    yearOfGraduation VARCHAR(50), 
     courses TEXT, 
     about TEXT, 
-    gpa FLOAT,
+    gpa VARCHAR(50),
     location VARCHAR(100),
     altMobile VARCHAR(15),
     socialLinks JSON,
@@ -301,7 +301,7 @@ CREATE TABLE organizationProfile (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     companyName VARCHAR(255) , 
     domain VARCHAR(255) ,
-    incorporationYear YEAR ,
+    incorporationYear VARCHAR(50) ,
     isStartup  BOOLEAN,
     website VARCHAR(255),
     about TEXT, 
@@ -356,11 +356,11 @@ CREATE TABLE jobPost (
     jobDescription TEXT,                                          
     workLocation VARCHAR(255),                                
     qualification VARCHAR(255),                                   
-    targetYears VARCHAR(255),                                     
+    graduationYears VARCHAR(255),                                     
     openPositions INT,                                            
     compensation JSON,            
     facilities TEXT,                                              
-    applicationDeadline DATETIME,   
+    applicationDeadline TIMESTAMP,   
     workMode VARCHAR(50),
     createdByUserId VARCHAR(50),                              
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
@@ -369,7 +369,6 @@ CREATE TABLE jobPost (
     FOREIGN KEY (jobCategoryId) REFERENCES jobCategories(id),
     FOREIGN KEY (createdByUserId) REFERENCES userInfo(userId)                
 );
-
 
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -425,7 +424,7 @@ CREATE TABLE orgInvitations (
     organizationId int NOT NULL,
     inviteeEmail VARCHAR(255) NOT NULL,
     inviteruserId CHAR(36) NOT NULL,     
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
 );
 
@@ -483,13 +482,59 @@ CREATE TABLE courseMetadata (
     landing VARCHAR(255) NOT NULL,
     slides VARCHAR(255) NOT NULL,
     teaser TEXT,
+    livestreamUrl VARCHAR(2048) NULL,
     instructors JSON NOT NULL,
     PRIMARY KEY (courseId, instanceId)
 );
-
+CREATE TABLE CourseMaterials (
+    id VARCHAR(36) PRIMARY KEY,
+    materialName VARCHAR(255) NOT NULL,
+    materialType ENUM('FILE', 'LINK') NOT NULL,
+    storageFileName TEXT,
+    mimeType VARCHAR(100),
+    sizeBytes BIGINT,
+    universityId VARCHAR(100) NOT NULL,
+    courseId VARCHAR(100) NOT NULL,
+     instanceId VARCHAR(100) NOT NULL,
+    uploadedBy VARCHAR(100) NOT NULL,
+    url TEXT,
+    checksum VARCHAR(64),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 CREATE TABLE CrossDomainAuthTokens (
     otpToken VARCHAR(255) PRIMARY KEY,
     jwtToken TEXT NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     used BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE CheatSheet (
+    cheatsheetId VARCHAR(50) PRIMARY KEY,
+    userId VARCHAR(255) NOT NULL,
+    studentName VARCHAR(255), 
+    universityId VARCHAR(255) NOT NULL,
+    courseId VARCHAR(255) NOT NULL, 
+    instanceId VARCHAR(255) NOT NULL, 
+    weekId VARCHAR(255) NOT NULL,    
+    checksum VARCHAR(255),
+    fileName VARCHAR(255),
+    uploadedVersionNumber INT,
+    uploadedByUserId VARCHAR(255),
+    uploadedAt TIMESTAMP, -- this is the scanned cheatsheet's upload time
+    createdAt TIMESTAMP, --only for first download of empty cheatsheet
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- for every update
+);
+
+CREATE TABLE CheatSheetHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cheatsheetId VARCHAR(50) NOT NULL,
+    uploadedVersionNumber INT NOT NULL, 
+    uploadedByUserId VARCHAR(255) NOT NULL,
+    checksum VARCHAR(255),
+    fileName VARCHAR(255),
+    uploadedAt TIMESTAMP, -- this is the scanned cheatsheet's upload time
+    createdAt TIMESTAMP, --only for first download of empty cheatsheet
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- for every update
+    FOREIGN KEY (cheatsheetId) REFERENCES CheatSheet(cheatsheetId) ON DELETE CASCADE
 );

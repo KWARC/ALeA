@@ -1,4 +1,5 @@
 import { Box, Button, CircularProgress, Icon, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   APPLICATION_STATUS,
   ApplicationStatus,
@@ -9,7 +10,6 @@ import {
   JobApplicationInfo,
   JobPostInfo,
   StudentData,
-  
 } from '@alea/spec';
 import { Action, CURRENT_TERM, ResourceName } from '@alea/utils';
 import { useRouter } from 'next/router';
@@ -18,11 +18,11 @@ import { useEffect, useState } from 'react';
 import { Add, Assignment, Cancel, Chat, EmojiPeople, SvgIconComponent } from '@mui/icons-material';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import { JobCard } from '../../../components/job-portal/JobCard';
-export const OFFER_STATUSES:ApplicationStatus[] = [
+export const OFFER_STATUSES: ApplicationStatus[] = [
   APPLICATION_STATUS.OFFERED,
   APPLICATION_STATUS.OFFER_ACCEPTED,
   APPLICATION_STATUS.OFFER_REJECTED,
-]; 
+];
 export const DashboardJobSection = ({
   title,
   jobs,
@@ -50,7 +50,7 @@ export const DashboardJobSection = ({
         p: 3,
         borderRadius: 2,
         boxShadow: 3,
-        backgroundColor: '#fff',
+        backgroundColor: 'background.default',
         display: 'flex',
         flexDirection: 'column',
         minHeight: 350,
@@ -58,7 +58,7 @@ export const DashboardJobSection = ({
       }}
     >
       <Box>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" mb={1}>
           {title}
         </Typography>
         {jobs && jobs.length > 0 ? (
@@ -140,9 +140,11 @@ export const StatsSection = ({
                 fontSize: 80,
                 mr: 2,
                 color: 'white',
-                border: '1px solid #fff',
-                borderRadius: '15px',
-                pb: '20px',
+                border: '1px solid white',
+                borderRadius: 4,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
               <IconComponent sx={{ fontSize: '60px' }} />
@@ -150,11 +152,11 @@ export const StatsSection = ({
             <Box sx={{ flexGrow: 1 }}>
               <Typography
                 variant="h6"
-                sx={{ color: '#FFFFFF', fontWeight: '500', fontSize: '1.5rem' }}
+                sx={{ color: 'white', fontWeight: '500', fontSize: '1.5rem' }}
               >
                 {stat.label}
               </Typography>
-              <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: '600' }}>
+              <Typography variant="h3" sx={{ color: 'white', fontWeight: '600' }}>
                 {statusState[stat.key] ?? 0}
               </Typography>
             </Box>
@@ -179,6 +181,7 @@ export function StudentDashboard() {
   });
   const [allJobPosts, setAllJobPosts] = useState<JobPostInfo[]>([]);
   const router = useRouter();
+  const theme = useTheme();
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -232,9 +235,9 @@ export function StudentDashboard() {
       }
       if (OFFER_STATUSES.includes(applicationStatus)) {
         statusStats.offerReceived += 1;
-      }  
+      }
     });
-        return statusStats;
+    return statusStats;
   };
 
   const stats = [
@@ -243,12 +246,10 @@ export function StudentDashboard() {
     { key: 'applied', label: 'Applied' },
     { key: 'rejected', label: 'Rejected' },
   ];
-  const colors = ['#1CD083', '#5A69E2', '#48A9F8', '#8BC741'];
+  const colors = theme.palette.jobPortal.statsColors;
   const iconComponents = [EmojiPeople, Assignment, Cancel, Chat];
 
-  if (accessCheckLoading || loading) {
-    return <CircularProgress color="primary" />;
-  }
+  if (accessCheckLoading || loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: '30px 16px', md: '30px' } }}>
@@ -273,7 +274,15 @@ export function StudentDashboard() {
 }
 
 const Dashboard = () => {
-  return <JpLayoutWithSidebar role="student">{<StudentDashboard />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Dashboard | Job Portal - ALeA"
+      description="Overview of your job applications, and activity on the ALeA Job Portal"
+    >
+      {<StudentDashboard />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Dashboard;

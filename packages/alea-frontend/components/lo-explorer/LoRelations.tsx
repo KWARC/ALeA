@@ -9,7 +9,7 @@ import {
   LoRelationToNonDimConcept,
 } from '@alea/spec';
 import { DimAndURIListDisplay, URIListDisplay } from '@alea/stex-react-renderer';
-import { capitalizeFirstLetter, PRIMARY_COL } from '@alea/utils';
+import { capitalizeFirstLetter } from '@alea/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -157,7 +157,7 @@ const LoRelations = ({
           <Typography
             sx={{
               fontWeight: 'bold',
-              color: PRIMARY_COL,
+              color: 'primary.main',
             }}
           >
             Show Insights

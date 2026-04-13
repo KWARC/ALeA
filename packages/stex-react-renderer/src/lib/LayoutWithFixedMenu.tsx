@@ -1,9 +1,9 @@
 import ListIcon from '@mui/icons-material/List';
 import { Box, Drawer, IconButton } from '@mui/material';
-import { BG_COLOR, PRIMARY_COL, shouldUseDrawer, Window } from '@alea/utils';
+import { shouldUseDrawer, Window } from '@alea/utils';
+import { useTheme } from '@mui/material/styles';
 import { createContext, useContext, useEffect, useState } from 'react';
 import styles from './stex-react-renderer.module.scss';
-
 const MenuContext = createContext({ offset: 0, inDrawer: false });
 const MENU_WIDTH = '300px';
 export function FixedPositionMenu({
@@ -17,7 +17,8 @@ export function FixedPositionMenu({
   const staticSection = (
     <Box
       sx={{
-        border: '2px solid #CCC',
+        border: '2px solid',
+        borderColor: 'divider',
         fontFamily: 'Open Sans,Verdana,sans-serif',
       }}
     >
@@ -34,16 +35,9 @@ export function FixedPositionMenu({
   );
   if (inDrawer) {
     return (
-      <Box
-        maxHeight="100vh"
-        maxWidth="400px"
-        display="flex"
-        flexDirection="column"
-      >
+      <Box maxHeight="100vh" maxWidth="400px" display="flex" flexDirection="column">
         {staticSection}
-        <Box sx={{ overflowY: 'scroll', overflowX: 'hidden' }}>
-          {scrollSection}
-        </Box>
+        <Box sx={{ overflowY: 'scroll', overflowX: 'hidden' }}>{scrollSection}</Box>
       </Box>
     );
   }
@@ -66,7 +60,7 @@ export function LayoutWithFixedMenu({
   setShowDashboard,
   topOffset,
   drawerAnchor = 'left',
-  noFrills = false
+  noFrills = false,
 }: {
   menu: any;
   children: any;
@@ -76,12 +70,12 @@ export function LayoutWithFixedMenu({
   drawerAnchor?: 'left' | 'right';
   noFrills?: boolean;
 }) {
+  const theme = useTheme();
   const [windowSize, setWindowSize] = useState(0);
   const [offset, setOffset] = useState(topOffset);
 
   useEffect(() => {
-    const onScroll = () =>
-      setOffset(Math.max(topOffset - (Window?.pageYOffset || 0), 0));
+    const onScroll = () => setOffset(Math.max(topOffset - (Window?.pageYOffset || 0), 0));
     // clean up code
     window.removeEventListener('scroll', onScroll);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -105,12 +99,10 @@ export function LayoutWithFixedMenu({
         open={useDrawer && showDashboard}
         onClose={() => setShowDashboard(false)}
       >
-        <MenuContext.Provider value={{ offset, inDrawer: true }}>
-          {menu}
-        </MenuContext.Provider>
+        <MenuContext.Provider value={{ offset, inDrawer: true }}>{menu}</MenuContext.Provider>
       </Drawer>
 
-      {(!showDashboard && !noFrills) && (
+      {!showDashboard && !noFrills && (
         <Box
           sx={{
             position: 'fixed',
@@ -123,16 +115,16 @@ export function LayoutWithFixedMenu({
         >
           <IconButton
             sx={{
-              border: `2px solid ${PRIMARY_COL}`,
+              border: `2px solid ${'primary.main'}`,
               borderRadius: '500px',
-              color: PRIMARY_COL,
-              backgroundColor: 'white',
+              color: 'primary.main',
+              backgroundColor: 'background.paper',
               boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.5)',
               transition: 'all 0.3s ease 0s',
               ':hover': {
                 boxShadow: '0px 15px 20px rgba(0, 0, 0, 0.4)',
                 transform: 'translateY(1px)',
-                backgroundColor: 'white',
+                backgroundColor: 'background.paper',
               },
             }}
             onClick={() => setShowDashboard(true)}
@@ -142,26 +134,15 @@ export function LayoutWithFixedMenu({
         </Box>
       )}
 
-      <Box
-        display="flex"
-        flexDirection={drawerAnchor === 'left' ? 'row' : 'row-reverse'}
-      >
+      <Box display="flex" flexDirection={drawerAnchor === 'left' ? 'row' : 'row-reverse'}>
         {!useDrawer && showDashboard && (
-          <Box
-            width={MENU_WIDTH}
-            minWidth={MENU_WIDTH}
-            sx={{ overflowY: 'auto' }}
-          >
-            <MenuContext.Provider value={{ offset, inDrawer: false }}>
-              {menu}
-            </MenuContext.Provider>
+          <Box width={MENU_WIDTH} minWidth={MENU_WIDTH} sx={{ overflowY: 'auto' }}>
+            <MenuContext.Provider value={{ offset, inDrawer: false }}>{menu}</MenuContext.Provider>
           </Box>
         )}
         <Box
           flex={1}
-          width={
-            !useDrawer && showDashboard ? `calc(100% - ${MENU_WIDTH})` : '100%'
-          }
+          width={!useDrawer && showDashboard ? `calc(100% - ${MENU_WIDTH})` : '100%'}
           margin="0 5px"
         >
           {children}

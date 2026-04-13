@@ -3,7 +3,17 @@ import DownloadIcon from '@mui/icons-material/Download';
 import EmailIcon from '@mui/icons-material/Email';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import { Avatar, Box, Button, CircularProgress, Container, Paper, Tab, Tabs, Typography } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 
 import {
@@ -20,7 +30,6 @@ import {
   updateTrafficLightStatus,
   UserProfile,
 } from '@alea/spec';
-import { PRIMARY_COL } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { DataExportTab } from '../components/profile/DataExportTab';
 import { ProfileTab } from '../components/profile/ProfileTab';
@@ -136,7 +145,7 @@ const MyProfilePage = () => {
           <Box
             sx={{
               p: 4,
-              bgcolor: PRIMARY_COL,
+              bgcolor: 'primary.main',
               color: 'white',
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
@@ -150,7 +159,7 @@ const MyProfilePage = () => {
                 height: 100,
                 fontSize: '2.5rem',
                 bgcolor: 'white',
-                color: PRIMARY_COL,
+                color: 'primary.main',
               }}
             >
               {userInfo.fullName.charAt(0)}

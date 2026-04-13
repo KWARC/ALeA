@@ -191,6 +191,9 @@ export const de = {
     description2:
       ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch Lernenden-Modell) wird in allen semantischen Diensten in ALeA verwendet.',
   },
+  courseNotes: {
+    notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
+  },
   courseView: {
     notes: 'Notizen',
     instructorNotes: 'Notizen der Lehrenden',
@@ -404,7 +407,7 @@ export const de = {
   practiceProblems: {
     practiceProblems: 'Übungsaufgaben',
     practiceProblemsDescription:
-      'Die folgenden Aufgaben sollen Ihnen beim Lernen helfen. Sie decken den Kursstoff nicht erschöpfend ab und es gibt keine Garantie dafür, dass die Aufgaben richtig sind oder dass sie repräsentativ für die Aufgabentypen sind, die in den Tests oder der Prüfung vorkommen werden.',
+      'Diese Aufgaben dienen nur zur Unterstützung beim Lernen, sind nicht vollständig oder garantiert korrekt und spiegeln möglicherweise nicht die tatsächlichen Quiz- oder Prüfungsfragen wider.',
     problems: 'Probleme',
     practice: 'Üben',
   },
@@ -413,6 +416,30 @@ export const de = {
     warning:
       'Hinweis: Diese Probleme dienen nur dazu, Ihnen beim Lernen zu helfen. Sie decken das Kursmaterial nicht vollständig ab und es gibt keine Garantie dafür, dass die Probleme korrekt sind oder dass sie repräsentativ für die Art von Problemen sind, die in den Tests oder der Prüfung behandelt werden.',
     backToAllCourseProblems: 'Zurück zu allen Kursproblemen',
+  },
+  studentWelcomeScreen: {
+    subtitle: 'Das ist los in Ihren Kursen',
+    whatsNext: 'Was kommt als Nächstes',
+    liveQuiz: 'Live-Quiz',
+    joinNow: 'Jetzt beitreten',
+    ongoingLecture: 'Laufende Vorlesung',
+    ongoingTutorial: 'Laufendes Tutorium',
+    upcomingQuiz: 'Bevorstehendes Quiz',
+    upcomingLecture: 'Bevorstehende Vorlesung',
+    upcomingTutorial: 'Bevorstehendes Tutorium',
+    latestAssignment: 'Neueste Hausaufgabe',
+    due: 'Fällig',
+    quizSchedule: 'Quizplan',
+    assignments: 'Hausaufgaben',
+    notes: 'Skript',
+    slides: 'Folien',
+    notEnrolled: 'Sie sind noch in keinem Kurs eingeschrieben',
+  },
+  semesterOverBanner: {
+    title: 'Semester ist vorbei',
+    description:
+      'Keine weiteren Vorlesungen oder Tutorien geplant. Sie können weiterhin Materialien und vergangene Hausaufgaben über die Kursseite ansehen.',
+    openCourse: 'Kurs öffnen',
   },
   peerGrading: {
     peerGrading: 'Bewertung durch andere Lernende',
@@ -468,6 +495,8 @@ export const de = {
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCanStudentUploadCheatsheet: 'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -484,6 +513,8 @@ export const de = {
 
     enableHomework: 'Hausaufgaben für diesen Kurs aktivieren',
     enableQuiz: 'Quiz für diesen Kurs aktivieren',
+    enableCheatsheet: 'Spickzettel für diesen Kurs aktivieren',
+    canStudentUploadCheatsheet: 'Studierenden das Hochladen von Spickzetteln erlauben',
 
     instructorsLabel: 'Lehrende',
     noInstructors: 'Keine Dozenten gefunden.',
@@ -503,6 +534,7 @@ export const de = {
     failedToSave: 'Kursinformationen konnten nicht gespeichert werden',
     failedHomeworkUpdate: 'Hausaufgaben-Einstellung konnte nicht aktualisiert werden',
     failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
+    failedCanStudentUploadCheatsheetUpdate: 'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
   },
 
   courseMetadata: {
@@ -522,6 +554,9 @@ export const de = {
     lectureEntryFailed: 'Erzeugung der Vortragseinträge fehlgeschlagen: {{error}}',
 
     generateLectureEntry: 'Vortragseintrag erstellen',
+    generateLectureEntryTooltip:
+      'Wir nutzen Semesterdaten, Feiertage und den Vorlesungsplan, um Vortragseinträge (Lehrplan) für das gesamte Semester zu erzeugen.',
+    lectureEntriesAlreadyGenerated: 'Vortragseinträge bereits erstellt',
 
     lectureScheduleTab: 'Vorlesungsplan',
     tutorialScheduleTab: 'Tutorienplan',

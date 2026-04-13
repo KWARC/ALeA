@@ -26,7 +26,7 @@ import {
 import { Cancel, History, Visibility } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { JobSelect } from './applications';
 import { UserProfileCard } from '../../../components/job-portal/UserProfileCard';
 import JobApplicationTimelineModal from '../../../components/job-portal/ApplicationTimelineModal';
@@ -51,7 +51,7 @@ export const UserProfileModal = ({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          backgroundColor: '#e0e0e0',
+          bgcolor: 'background.paper',
           maxWidth: '600px',
           maxHeight: '80vh',
           minWidth: { xs: '90vw', sm: 400 },
@@ -68,7 +68,7 @@ export const UserProfileModal = ({
             top: 10,
             right: 10,
             zIndex: 1,
-            bgcolor: '#f5f3f0',
+            bgcolor: 'background.paper',
           }}
         >
           <Cancel sx={{ color: 'red' }} />
@@ -222,26 +222,52 @@ export const OfferMakingTable = ({
   };
 
   return (
-    <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'auto' }}>
-      <Box sx={{ p: 2, bgcolor: '#f9fafb', borderBottom: '1px solid #eee' }}>
-        <Typography variant="subtitle2" color="text.secondary">
+    <Paper
+      elevation={3}
+      sx={{
+        borderRadius: 3,
+        overflow: 'auto',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Box
+        sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          borderBottom: (theme) =>
+            `1px solid ${
+              theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+            }`,
+        }}
+      >
+        <Typography variant="subtitle1" fontSize={16} color="text.secondary">
           Make offers and track candidate responses for candidates shortlisted for interview.
         </Typography>
       </Box>
 
       <Table>
         <TableHead>
-          <TableRow sx={{ bgcolor: '#fafafa' }}>
-            <TableCell sx={{ textAlign: 'center' }}>
+          <TableRow
+            sx={{
+              bgcolor: 'background.paper',
+              '& th': {
+                borderBottom: (theme) =>
+                  `2px solid ${
+                    theme.palette.mode === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'
+                  }`,
+              },
+            }}
+          >
+            <TableCell align="center">
               <b>Candidate</b>
             </TableCell>
-            <TableCell sx={{ textAlign: 'center' }}>
+            <TableCell align="center">
               <b>Email</b>
             </TableCell>
-            <TableCell sx={{ textAlign: 'center' }}>
+            <TableCell align="center">
               <b>Candidate Response</b>
             </TableCell>
-            <TableCell sx={{ textAlign: 'center' }}>
+            <TableCell align="center">
               <b>Action</b>
             </TableCell>
           </TableRow>
@@ -261,15 +287,45 @@ export const OfferMakingTable = ({
             </TableRow>
           ) : (
             applications.map((application) => (
-              <TableRow key={application.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                <TableCell sx={{ textAlign: 'center' }}>
+              <TableRow
+                key={application.id}
+                hover
+                sx={{
+                  transition: 'all 0.2s ease',
+                  '& td': {
+                    borderBottom: (theme) =>
+                      `1px solid ${
+                        theme.palette.mode === 'light'
+                          ? 'rgba(0,0,0,0.08)'
+                          : 'rgba(255,255,255,0.08)'
+                      }`,
+                  },
+
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(0,0,0,0.03)'
+                        : 'rgba(255,255,255,0.05)',
+                  },
+
+                  '&:last-child td': {
+                    borderBottom: 0,
+                  },
+                }}
+              >
+                <TableCell align="center">
                   <Box
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 1 }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                    }}
                   >
                     <Typography fontWeight={500}>
                       {application.studentProfile?.name || '—'}
                     </Typography>
-                    <IconButton color="primary" onClick={() => handleViewApplicant(application)}>
+                    <IconButton sx={{color:"text.primary" }}onClick={() => handleViewApplicant(application)}>
                       <Visibility />
                     </IconButton>
 
@@ -292,17 +348,17 @@ export const OfferMakingTable = ({
                   />
                 </TableCell>
 
-                <TableCell sx={{ textAlign: 'center' }}>
+                <TableCell align="center">
                   <Typography variant="body2" color="text.secondary">
                     {application.studentProfile?.email || '—'}
                   </Typography>
                 </TableCell>
 
-                <TableCell sx={{ textAlign: 'center' }}>
+                <TableCell align="center">
                   {renderCandidateResponse(application.applicationStatus)}
                 </TableCell>
 
-                <TableCell sx={{ textAlign: 'center' }}>{renderAction(application)}</TableCell>
+                <TableCell align="center">{renderAction(application)}</TableCell>
               </TableRow>
             ))
           )}
@@ -369,11 +425,11 @@ const MakeOffer = () => {
       )
     );
   };
-  if (accessCheckLoading) return <CircularProgress />;
+  if (accessCheckLoading) return <CircularProgress sx={{color:"text.primary"}}/>;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" fontWeight="bold" color={PRIMARY_COL}>
+      <Typography variant="h4" fontWeight="bold" color="text.primary">
         Make Offers
       </Typography>
 
@@ -390,7 +446,15 @@ const MakeOffer = () => {
 };
 
 const MakeOfferPage = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<MakeOffer />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Make Offer | Job Portal - ALeA"
+      description="Send job offers to selected students and manage offer details on the ALeA Job Portal"
+    >
+      {<MakeOffer />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default MakeOfferPage;

@@ -141,7 +141,7 @@ const LoCartModal: React.FC<LoCartModalProps> = ({
                       wordBreak: 'break-word',
                       cursor: 'pointer',
                       '&:hover': {
-                        color: '#1976d2',
+                        color: 'blue.sky',
                       },
                     }}
                     onClick={() => setDisplayedItem(item)}

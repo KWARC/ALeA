@@ -25,7 +25,7 @@ MONITOR_STATUS_FILE = os.getenv("MONITOR_STATUS_FILE", "./tmp/monitor-status.jso
 ENDPOINTS = [
     {"name": "Mathhub", "url": "http://mathhub.info"},
     {"name": "LMP", "url": "https://lms.voll-ki.fau.de/lmp/activity"},
-    {"name": "ALeA", "url": "https://courses.voll-ki.fau.de"},
+    {"name": "ALeA", "url": "https://alea.education"},
 ]
 SKIPPED_ALERTS = [("LMP", "Request timed out")]
 

@@ -3,7 +3,8 @@ import { Action, ResourceName } from '@alea/utils';
 import { getUserIdIfAuthorizedOrSetError } from '../../access-control/resource-utils';
 import { executeQuery, checkIfPostOrSetError } from '../../comment-utils';
 
-type DatabaseResult<T> = T[] | { error: any };
+type QueryResult<T> = T[] | { error: any };
+type MutationResult = { affectedRows: number } | { error: any };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -43,10 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).end('Dates must be in DD/MM/YYYY format');
     }
 
-    const existingResult = (await executeQuery<{ holidays: string }[]>(
+    const existingResult = await executeQuery<{ holidays: { date: string; name: string }[] }[]>(
       `SELECT holidays FROM semesterInfo WHERE universityId = ? AND instanceId = ?`,
       [universityId, instanceId]
-    )) as DatabaseResult<{ holidays: string }>;
+    );
 
     if ('error' in existingResult) {
       return res.status(500).end('Database error');
@@ -55,13 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!existingResult.length) {
       return res.status(404).end('Semester not found');
     }
-
-    let holidays: Array<{ date: string; name: string }>;
-    try {
-      holidays = JSON.parse(existingResult[0].holidays || '[]');
-    } catch (error) {
-      return res.status(500).end('Invalid holidays JSON');
-    }
+    const holidays = existingResult[0].holidays || [];
 
     const holidayIndex = holidays.findIndex((h) => h.date === originalDate);
     if (holidayIndex === -1) {
@@ -79,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        SET holidays = ?, userId = ?
        WHERE universityId = ? AND instanceId = ?`,
       [JSON.stringify(updatedHolidays), userId, universityId, instanceId]
-    )) as DatabaseResult<{ affectedRows: number }>;
+    )) as MutationResult;
 
     if ('error' in updateResult) {
       return res.status(500).end('Failed to update holiday');

@@ -4,14 +4,26 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import SchoolIcon from '@mui/icons-material/School';
-import { alpha, Box, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  alpha,
+  Box,
+  IconButton,
+  Paper,
+  SxProps,
+  TextField,
+  Theme,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { LoType } from '@alea/spec';
 import { UriProblemViewer } from '@alea/stex-react-renderer';
-import { capitalizeFirstLetter, getParamsFromUri } from '@alea/utils';
+import { capitalizeFirstLetter, getAdaptiveColor, getParamsFromUri } from '@alea/utils';
 import React, { memo, useState } from 'react';
 import { CartItem } from './lo-explorer/LoCartModal';
 import LoRelations from './lo-explorer/LoRelations';
 import { LoReverseRelations } from './lo-explorer/LoReverseRelation';
+import { bgcolor } from '@mui/system';
 
 interface UrlData {
   projectName: string;
@@ -32,22 +44,22 @@ export function getUrlInfo(url: string): UrlData {
   const fileName = fileParts[0];
   if (archive.startsWith('courses/')) {
     projectName = `${projectParts[1]}/${projectParts[2]}`;
-    icon = <SchoolIcon sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <SchoolIcon sx={{ color: 'text.primary', fontSize: '18px' }} />;
   } else if (archive.startsWith('problems/')) {
     projectName = projectParts[1];
-    icon = <Quiz sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <Quiz sx={{ color: 'text.primary', fontSize: '18px' }} />;
   } else if (archive.startsWith('KwarcMH/')) {
     projectName = projectParts[0];
-    icon = <SchoolIcon sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <SchoolIcon sx={{ color: 'text.primary', fontSize: '18px' }} />;
   } else if (archive.startsWith('smglom/')) {
     projectName = projectParts[0];
-    icon = <Book sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <Book sx={{ color: 'text.primary', fontSize: '18px' }} />;
   } else if (archive.startsWith('mkohlhase/')) {
     projectName = projectParts[0];
-    icon = <SupervisedUserCircle sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <SupervisedUserCircle sx={{ color: 'text.primary', fontSize: '18px' }} />;
   } else if (archive.startsWith('talks/')) {
     projectName = projectParts[0];
-    icon = <MicExternalOn sx={{ color: 'primary.main', fontSize: '18px' }} />;
+    icon = <MicExternalOn sx={{ color: 'text.primary', fontSize: '18px' }} />;
   }
 
   return { projectName, topic, fileName, icon };
@@ -94,7 +106,15 @@ export function UrlNameExtractor({ url }: { url: string }) {
 
 export const LoViewer: React.FC<{ uri: string; uriType: LoType }> = ({ uri, uriType }) => {
   return (
-    <Box sx={{ padding: 2, border: '1px solid #ccc', borderRadius: 4, backgroundColor: '#f9f9f9' }}>
+    <Box
+      sx={{
+        padding: 2,
+        border: '1px solid ',
+        borderColor: 'divider',
+        borderRadius: 4,
+        bgcolor: 'background.paper',
+      }}
+    >
       {uri ? (
         <SafeFTMLFragment key={uri} fragment={{ type: 'FromBackend', uri: uri }} />
       ) : (
@@ -112,17 +132,13 @@ interface DetailsPanelProps {
 
 export const DetailsPanel: React.FC<DetailsPanelProps> = memo(
   ({ uriType, selectedUri, displayReverseRelation }) => {
+    const theme = useTheme();
+    const bgDefault = theme.palette.background.default;
     return (
       <Box
         sx={{
-          flex: 2,
-          minWidth: '250px',
-          background: 'rgba(240, 255, 240, 0.9)',
-          borderRadius: '8px',
-          padding: '16px',
-          height: '90vh',
-          overflowY: 'auto',
-          boxShadow: 'inset 0 4px 8px rgba(0, 0, 0, 0.1)',
+          ...detailsPanelStyles.container,
+          bgcolor: getAdaptiveColor('#f0fff0e6', bgDefault),
         }}
       >
         <Typography color="secondary" variant="subtitle1" sx={{ fontWeight: 'bold' }}>
@@ -165,6 +181,8 @@ const LoListDisplay = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showReverseRelation, setShowReverseRelation] = useState(false);
   const [reverseRelationConcept, setReverseRelationConcept] = useState<string>('');
+  const theme = useTheme();
+  const bgDefault = theme.palette.background.default;
   const displayReverseRelation = (conceptUri: string) => {
     setShowReverseRelation((prevState) => !prevState);
     setReverseRelationConcept(conceptUri);
@@ -181,7 +199,7 @@ const LoListDisplay = ({
     );
   });
   return (
-    <Box sx={{ display: 'flex', gap: '16px', marginTop: '20px', flexWrap: 'wrap' }}>
+    <Box sx={loListStyles.pageContainer}>
       {showReverseRelation && (
         <LoReverseRelations
           concept={reverseRelationConcept}
@@ -192,29 +210,8 @@ const LoListDisplay = ({
           handleCloseDialog={() => setShowReverseRelation(false)}
         />
       )}
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: '250px',
-          background: 'rgba(240, 240, 255, 0.9)',
-          borderRadius: '8px',
-          padding: '16px',
-          overflowY: 'auto',
-          maxHeight: '90vh',
-          boxShadow: 'inset 0 4px 8px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-            marginBottom: '16px',
-            width: '100%',
-          }}
-        >
+      <Box sx={{ ...loListStyles.listPanel, bgcolor: getAdaptiveColor('#f0f0ffe6', bgDefault) }}>
+        <Box sx={loListStyles.listHeader}>
           <Typography variant="h6" color="primary">
             {filteredUris.length} {capitalizeFirstLetter(loType)}s
           </Typography>
@@ -231,33 +228,22 @@ const LoListDisplay = ({
 
         {filteredUris.map((uri, index) => {
           const isInCart = cart.some((item) => item.uri === uri && item.uriType === loType);
+          const isSelected = selectedUri === uri;
           return (
             <Paper
               key={index}
               elevation={3}
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                background: isInCart ? 'rgba(220, 255, 220, 0.9)' : 'white',
-                '&:hover': { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' },
+                ...loListStyles.listItem,
+                background: isInCart ? getAdaptiveColor('#dcffdce6', bgDefault) : 'bacground.card',
               }}
             >
               <Tooltip title={uri} arrow placement="right-start">
                 <Typography
                   sx={{
-                    cursor: 'pointer',
-                    flex: 1,
-                    wordBreak: 'break-word',
-                    color: selectedUri === uri ? '#096dd9' : '#333',
-                    fontWeight: selectedUri === uri ? 'bold' : 'normal',
-                    fontSize: '0.875rem',
-                    '&:hover': {
-                      color: alpha('#096dd9', 0.7),
-                    },
+                    ...loListStyles.uriText,
+                    color: isSelected ? getAdaptiveColor('#096dd9', bgDefault) : 'text.primary',
+                    fontWeight: isSelected ? 'bold' : 'normal',
                   }}
                   onClick={() => setSelectedUri(uri)}
                 >
@@ -300,3 +286,64 @@ const LoListDisplay = ({
 };
 
 export default LoListDisplay;
+
+const loListStyles: Record<string, SxProps<Theme>> = {
+  pageContainer: {
+    display: 'flex',
+    gap: 2,
+    mt: 2,
+    flexWrap: 'wrap',
+  },
+
+  listPanel: {
+    flex: 1,
+    minWidth: 250,
+    borderRadius: 2,
+    p: 2,
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
+  },
+
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 1,
+    mb: 2,
+    flexWrap: 'wrap',
+  },
+
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    p: 1.5,
+    mb: 1,
+    borderRadius: 2,
+    '&:hover': {
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    },
+  },
+
+  uriText: {
+    cursor: 'pointer',
+    flex: 1,
+    wordBreak: 'break-word',
+    fontSize: '0.875rem',
+    '&:hover': {
+      color: alpha('#096dd9', 0.7),
+    },
+  },
+};
+
+const detailsPanelStyles: Record<string, SxProps<Theme>> = {
+  container: {
+    flex: 2,
+    minWidth: 250,
+    borderRadius: 2,
+    p: 2,
+    height: '90vh',
+    overflowY: 'auto',
+    boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
+  },
+};

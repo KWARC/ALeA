@@ -45,6 +45,8 @@ const ALL_SHORT_IDS = [
   'quiz-take',
   'homework-take',
   'metadata',
+  'cheatsheet-access',
+  'cheatsheet',
 ];
 
 export type ShortId = (typeof ALL_SHORT_IDS)[number];
@@ -69,11 +71,13 @@ const staffAccessResources: Record<ShortId, string> = {
   'study-buddy': 'Study Buddy Management',
   comments: 'Comments Moderation',
   metadata: 'Course Metadata',
+  cheatsheet:'Cheatsheet',
 } as const;
 
 const studentAccessResources: Record<ShortId, string> = {
   'quiz-take': 'Quiz Take',
   'homework-take': 'Homework Take',
+  'cheatsheet-access': 'Cheatsheet Access'
 };
 
 const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string) =>
@@ -118,29 +122,44 @@ const getAclShortIdToResourceActionPair = (courseId: string, currentTerm: string
       resourceId: `/course/${courseId}/instance/${currentTerm}/metadata`,
       actionId: Action.MUTATE,
     },
+    'cheatsheet-access': {
+      resourceId: `/course/${courseId}/instance/${currentTerm}/cheatsheet`,
+      actionId: Action.UPLOAD,
+    },
+    cheatsheet: {
+      resourceId: `/course/${courseId}/instance/${currentTerm}/cheatsheet`,
+      actionId: Action.MUTATE,
+    },
   } as Record<ShortId, ResourceActionPair>);
 
-const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
+const CourseAccessControlDashboard = ({
+  courseId,
+  instanceId,
+}: {
+  courseId: string;
+  instanceId?: string;
+}) => {
   const router = useRouter();
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const [semesterSetupLoading, setSemesterSetupLoading] = useState(false);
   const [semesterSetupMessage, setSemesterSetupMessage] = useState('');
   const [isAlreadySetup, setIsAlreadySetup] = useState(false);
-  const currentTerm = currentTermByCourseId[courseId];
+  const currentTerm = instanceId ?? currentTermByCourseId[courseId];
   async function checkIfAlreadySetup() {
-    const complete = await isCourseSemesterSetupComplete(courseId);
+    const complete = await isCourseSemesterSetupComplete(courseId, currentTerm);
     setIsAlreadySetup(!!complete);
   }
 
   const handleCreateCourseACL = async () => {
+    if (!currentTerm) return;
     setSemesterSetupLoading(true);
     setSemesterSetupMessage(`Creating semester acl for courseId ${courseId} ...`);
     try {
-      await createSemesterAclsForCourse(courseId);
-      await createInstructorResourceActions(courseId);
-      await createStudentResourceActions(courseId);
-      await createStaffResourceActions(courseId);
-      await createMetadataResourceActions(courseId);
+      await createSemesterAclsForCourse(courseId, currentTerm);
+      await createInstructorResourceActions(courseId, currentTerm);
+      await createStudentResourceActions(courseId, currentTerm);
+      await createStaffResourceActions(courseId, currentTerm);
+      await createMetadataResourceActions(courseId, currentTerm);
       setSemesterSetupMessage(`Semester acl setup successful for courseId ${courseId}`);
       window.location.reload();
       await checkIfAlreadySetup();
@@ -159,10 +178,11 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
         size="small"
         variant="outlined"
         sx={{
-          width: '120px',
+          width: 120,
           '& .MuiInputBase-input': {
-            padding: '4px 8px',
-            fontSize: '12px',
+            px:1,
+            py: 0.5,
+            fontSize: 12,
           },
         }}
       />
@@ -282,14 +302,14 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
 
   if (loadingTermByCourseId) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
         <Typography>Loading...</Typography>
       </Box>
     );
   }
 
   return (
-    <Box display="flex" flexDirection="column" maxWidth="900px" m="auto" p="20px" gap="20px">
+    <Box display="flex" flexDirection="column" maxWidth="900px" m="auto" p={20} gap={2.5}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4" fontWeight="bold">
           Access Control
@@ -297,7 +317,7 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
         <Button
           variant="contained"
           onClick={handleCreateCourseACL}
-          disabled={semesterSetupLoading || isAlreadySetup}
+          disabled={semesterSetupLoading || isAlreadySetup || !currentTerm}
           startIcon={semesterSetupLoading ? <CircularProgress size={20} /> : null}
         >
           {isAlreadySetup ? 'Resource-Action already created' : 'Default Resource-Action Setup'}
@@ -312,13 +332,12 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
               justifyContent="space-between"
               alignItems="center"
               p="10px"
-              border="1px solid #ddd"
+              border="1px solid"
+              borderColor="divider"
               borderRadius="8px"
               bgcolor="background.default"
             >
-              <Typography variant="h6" fontSize="14px">
-                {displayName}
-              </Typography>
+              <Typography variant="h6">{displayName}</Typography>
               {renderEditableField(shortId as ShortId)}
               <IconButton
                 size="small"
@@ -346,14 +365,13 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
               display="flex"
               justifyContent="space-between"
               alignItems="center"
-              p="10px"
-              border="1px solid #ddd"
-              borderRadius="8px"
+              p={1.25}
+              border="1px solid "
+              borderColor="divider"
+              borderRadius={2}
               bgcolor="background.default"
             >
-              <Typography variant="h6" fontSize="14px">
-                {displayName}
-              </Typography>
+              <Typography variant="h6">{displayName}</Typography>
               {renderEditableField(shortId as ShortId)}
               <IconButton
                 size="small"
@@ -377,7 +395,7 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
         sx={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '10px',
+          gap: 2.5,
         }}
       >
         {acls.map((acl, index) => {
@@ -399,7 +417,7 @@ const CourseAccessControlDashboard = ({ courseId }: { courseId: string }) => {
           value={newAclId}
           onChange={(e) => setNewAclId(e.target.value)}
           size="small"
-          sx={{ mb: 0, width: '20%', fontSize: '12px', ml: 0.5, p: 0 }}
+          sx={{ mb: 0, width: '20%', fontSize: 12, ml: 0.5, p: 0 }}
           label="New ACL"
         />
         <Button onClick={handleCreateAclClick} variant="contained" sx={{ mt: 0, ml: 1 }}>

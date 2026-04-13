@@ -46,7 +46,7 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
           variant="contained"
           color="primary"
           onClick={() => setShowProblems(true)}
-          sx={{ marginBottom: '10px' }}
+          sx={{ mb: 1.25 }}
         >
           {t.practiceProblem}
         </Button>
@@ -75,7 +75,7 @@ const PracticeProblem: React.FC<PracticeProblemProps> = ({
               variant="contained"
               color="primary"
               onClick={() => setShowProblems(false)}
-              sx={{ marginTop: '10px' }}
+              sx={{  mt:1.25 }}
             >
               {t.hidepracticeProblem}
             </Button>

@@ -34,22 +34,19 @@ const ProblemIdPreview: React.FC<ProblemIdPreviewProps> = ({ uri, param }) => {
           alignItems: 'center',
           gap: 0.5,
           '&:hover': {
-            color: '#1976d2',
+            color: 'blue.sky',
           },
         }}
       >
-         ({value || 'Unknown'}{' '}
+        ({value || 'Unknown'}{' '}
         {copied ? (
-          <Typography
-            component="span"
-            sx={{ fontSize: 12, fontWeight: 500, color: '#4caf50' }}
-          >
+          <Typography component="span" sx={{ fontSize: 12, fontWeight: 500, color: '#4caf50' }}>
             Copied
           </Typography>
         ) : (
           <ContentCopyIcon sx={{ fontSize: 16 }} />
         )}
-         )
+        )
       </Typography>
     </Tooltip>
   );

@@ -1,7 +1,7 @@
 import { useMatomo } from '@jonkoops/matomo-tracker-react';
 import HelpIcon from '@mui/icons-material/Help';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Menu, MenuItem, Toolbar, Tooltip, useTheme } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import { logout } from '@alea/spec';
 import { CountryFlag, useCurrentUser, useIsLoggedIn } from '@alea/react-utils';
@@ -12,9 +12,43 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import styles from '../styles/header.module.scss';
 import NotificationButton from './NotificationButton';
-import { PRIMARY_COL } from '@alea/utils';
+import { useColorMode } from '../contexts/ColorModeContext';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
+
+function ThemeToggleButton() {
+  const { mode, setMode } = useColorMode();
+
+  const handleModeChange = () => {
+    if (mode === 'light') {
+      setMode('dark');
+    } else if (mode === 'dark') {
+      setMode('system');
+    } else {
+      setMode('light');
+    }
+  };
+
+  const title = `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`;
+
+  return (
+    <Tooltip title={title}>
+      <IconButton onClick={handleModeChange} sx={{ color: "text.primary",'&:hover': {
+      bgcolor:  'action.hover',} }}>
+        {mode === 'dark' ? (
+          <Brightness4Icon />
+        ) : mode === 'light' ? (
+          <Brightness7Icon />
+        ) : (
+          <SettingsBrightnessIcon />
+        )}
+      </IconButton>
+    </Tooltip>
+  );
+}
 
 function UserButton() {
   const router = useRouter();
@@ -43,8 +77,9 @@ function UserButton() {
     <Box whiteSpace="nowrap">
       <Button
         sx={{
-          color: 'black',
-          border: '1px solid black',
+          color: "text.primary",
+          border: `1px solid`,
+          borderColor: "text.primary",
           textTransform: 'none',
         }}
         onClick={handleClick}
@@ -151,7 +186,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
             placement="right"
             title={
               <Tooltip title={t.headerWarning}>
-                <WarningIcon fontSize="large" sx={{ cursor: 'pointer', color: '#e20' }} />
+                <WarningIcon fontSize="large" sx={{ cursor: 'pointer', color: "error.600"}} />
               </Tooltip>
             }
           >
@@ -169,10 +204,11 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
         </Link>
         <Box>
           <Box display="flex" alignItems="center">
-            <NotificationButton bgColor="#ced9f2" />
+            <NotificationButton bgColor="primary.400" />
+            <ThemeToggleButton />
             <Link href="/help" tabIndex={-1}>
               <Tooltip title={t.helpCenter}>
-                <IconButton sx={{ bgcolor: PRIMARY_COL, ml: '5px' }}>
+                <IconButton sx={{ bgcolor: "primary.main", ml: '5px' }}>
                   <HelpIcon htmlColor="white" />
                 </IconButton>
               </Tooltip>
@@ -182,7 +218,7 @@ export function Header({ headerBgColor }: { headerBgColor?: string }) {
               <UserButton />
             ) : (
               <Button
-                sx={{ color: 'black', border: '1px solid black' }}
+                sx={{ color: "text.primary", border: `1px solid`,borderColor:"text.primary" }}
                 onClick={() => {
                   // Don't change target when user reclicks 'Login' button.
                   if (window.location.pathname === '/login') return;

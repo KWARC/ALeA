@@ -4,7 +4,7 @@ import {
   checkIfPostOrSetError,
   executeTxnAndEndSet500OnError,
   getExistingCommentDontEnd,
-  getUserIdOrSetError
+  getUserIdOrSetError,
 } from './comment-utils';
 
 export default async function handler(req, res) {
@@ -19,11 +19,17 @@ export default async function handler(req, res) {
     return;
   }
   const { existing, error } = await getExistingCommentDontEnd(commentId);
-  if (!await canUserModerateComments(userId, existing.courseId, existing.courseTerm)) {
+  if (!(await canUserModerateComments(userId, existing.courseId, existing.courseTerm))) {
     res.status(403).json({ message: 'Unauthorized' });
     return;
   }
-  
+  const isOwner = existing.userId === userId;
+  const isModerator = await canUserModerateComments(userId, existing.courseId, existing.courseTerm);
+
+  if (!isOwner && !isModerator) {
+    res.status(403).json({ message: 'Unauthorized' });
+    return;
+  }
   if (!existing || existing.isPrivate) {
     res.status(error || 404).json({ message: 'Comment not found' });
     return;

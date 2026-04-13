@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let schedule: LectureSchedule[] = [];
   try {
-    schedule = JSON.parse(existing[0][columnName] || '[]');
+    schedule = existing[0][columnName] || [];
   } catch {
     return res.status(500).end('Invalid schedule JSON');
   }

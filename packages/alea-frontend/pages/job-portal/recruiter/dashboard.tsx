@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
   APPLICATION_STATUS,
@@ -86,7 +87,7 @@ export function RecruiterDashboard() {
   const [jobPostsByOrg, setJobPostsByOrg] = useState<JobPostInfo[]>([]);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const router = useRouter();
-
+  const theme = useTheme();
   useEffect(() => {
     if (!router.isReady) return;
     if (router.query.showProfilePopup === 'true') {
@@ -163,7 +164,6 @@ export function RecruiterDashboard() {
     { key: 'shortlistedCandidates', label: 'Shortlisted Candidates' },
     { key: 'offeredCandidates', label: 'Offer Sent' },
   ];
-  const colors = ['#1CD083', '#5A69E2', '#48A9F8', '#8BC741'];
   const iconComponents = [Group, HourglassEmpty, HowToReg, TaskAlt];
   const transformApplicationData = (applicationData: { [jobId: string]: JobApplicationInfo[] }) => {
     const stats = {
@@ -198,16 +198,18 @@ export function RecruiterDashboard() {
     };
   }, [recruiter, organization]);
 
-  if (loading) {
-    return <CircularProgress color="primary" />;
-  }
+  if (loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: '30px 16px', md: '30px' } }}>
-      <ProfileCompletionDialog open={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
+      <ProfileCompletionDialog
+        open={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      />
       <StatsSection
         stats={stats}
         iconComponents={iconComponents}
-        colors={colors}
+        colors={theme.palette.jobPortal.statsColors}
         statusState={statusState}
       />
       <Typography
@@ -236,7 +238,15 @@ export function RecruiterDashboard() {
 }
 
 const Dashboard = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<RecruiterDashboard />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Dashboard | Job Portal - ALeA"
+      description="Overview of your job postings, applications, and activity in the ALeA Job Portal"
+    >
+      {<RecruiterDashboard />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Dashboard;

@@ -218,6 +218,9 @@ export const en = {
     description2:
       ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in ALeA.',
   },
+  courseNotes: {
+    notCovered: 'This section is not covered in the course',
+  },
   courseView: {
     notes: 'Notes',
     instructorNotes: "Instructor's notes",
@@ -430,7 +433,7 @@ export const en = {
   practiceProblems: {
     practiceProblems: 'Practice Problems',
     practiceProblemsDescription:
-      'The following problems are meant to aid your learning. They do not cover the course material exhaustively and there are no guarantees that the problems are correct or that they are representative of the kinds of problems that will be on the quizzes or the exam.',
+      'These problems are for learning support only, are not exhaustive or guaranteed correct, and may not reflect the actual quiz or exam questions',
     problems: 'problems',
     practice: 'Practice',
   },
@@ -464,6 +467,30 @@ export const en = {
     latestHomework: 'Latest Homework',
     noHomeworkAvailable: 'No homework available',
     progress: 'Progress',
+  },
+  studentWelcomeScreen: {
+    subtitle: "Here's what's happening in your courses",
+    whatsNext: "What's next",
+    liveQuiz: 'Live Quiz',
+    joinNow: 'Join now',
+    ongoingLecture: 'Ongoing Lecture',
+    ongoingTutorial: 'Ongoing Tutorial',
+    upcomingQuiz: 'Upcoming Quiz',
+    upcomingLecture: 'Upcoming Lecture',
+    upcomingTutorial: 'Upcoming Tutorial',
+    latestAssignment: 'Latest Assignment',
+    due: 'Due',
+    quizSchedule: 'Quiz schedule',
+    assignments: 'Assignments',
+    notes: 'Notes',
+    slides: 'Slides',
+    notEnrolled: "You're not enrolled in any courses yet",
+  },
+  semesterOverBanner: {
+    title: 'Semester is over',
+    description:
+      'No more scheduled lectures or tutorials. You can still view materials and past assignments from the course page.',
+    openCourse: 'Open course',
   },
   syllabus: {
     syllabusEntries: 'Syllabus Entries',
@@ -502,6 +529,8 @@ export const en = {
 
     confirmUpdateHomework: 'Are you sure you want to update homework availability?',
     confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
+    confirmUpdateCheatsheet: 'Are you sure you want to update cheatsheet availability?',
+    confirmUpdateCanStudentUploadCheatsheet: 'Are you sure you want to update student cheatsheet upload setting?',
 
     courseName: 'Course Name',
     universityId: 'University ID',
@@ -517,6 +546,8 @@ export const en = {
 
     enableHomework: 'Enable homework for this course',
     enableQuiz: 'Enable quiz for this course',
+    enableCheatsheet: 'Enable cheatsheet for this course',
+    canStudentUploadCheatsheet: 'Allow students to upload cheatsheet',
 
     instructorsLabel: 'Instructors',
     noInstructors: 'No instructors found.',
@@ -537,6 +568,7 @@ export const en = {
     failedToSave: 'Failed to save course info',
     failedHomeworkUpdate: 'Failed to update homework setting',
     failedQuizUpdate: 'Failed to update quiz setting',
+    failedCanStudentUploadCheatsheetUpdate: 'Failed to update student cheatsheet upload setting',
   },
 
   courseMetadata: {
@@ -556,6 +588,9 @@ export const en = {
     lectureEntryFailed: 'Lecture entry generation failed: {{error}}',
 
     generateLectureEntry: 'Generate Lecture Entry',
+    generateLectureEntryTooltip:
+      'We use semester dates, holidays, and lecture schedule to generate lecture entries (syllabus) for the entire semester.',
+    lectureEntriesAlreadyGenerated: 'Lecture Entries Already Generated',
 
     lectureScheduleTab: 'Lecture Schedule',
     tutorialScheduleTab: 'Tutorial Schedule',

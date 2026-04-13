@@ -30,16 +30,16 @@ import {
   createJobPost,
   deleteJobPost,
   getJobPosts,
+  JobCategoryInfo,
   JobPostFormData,
   JobPostInfo,
   RecruiterData,
   updateJobPost,
 } from '@alea/spec';
-import { formatCompensation } from 'packages/alea-frontend/pages/job-portal/search-job';
-import {
-  validateJobPost,
-  ValidationErrors,
-} from 'packages/alea-frontend/pages/job-portal/recruiter/create-job';
+import { formatCompensation } from '../../pages/job-portal/search-job';
+import { validateJobPost, ValidationErrors } from '../../pages/job-portal/recruiter/create-job';
+import { CURRENT_TERM, dateToEpochMs, epochMsToCivilDate, epochMsToDateInput } from '@alea/utils';
+import dayjs from 'dayjs';
 
 export const EligibilityForm = ({
   formData,
@@ -63,7 +63,6 @@ export const EligibilityForm = ({
           name="qualification"
           value={formData.qualification}
           onChange={handleChange}
-          sx={{ bgcolor: 'white' }}
         >
           <MenuItem value="Masters">Masters</MenuItem>
           <MenuItem value="Bachelors">Bachelors</MenuItem>
@@ -72,41 +71,55 @@ export const EligibilityForm = ({
         {errors?.qualification && <FormHelperText>{errors.qualification}</FormHelperText>}
       </FormControl>
       <TextField
-        label="Target Year"
+        label="Student Graduation year"
         fullWidth
         margin="normal"
-        name="targetYears"
-        error={!!errors?.targetYears}
-        helperText={errors?.targetYears}
-        value={formData.targetYears}
+        name="graduationYears"
+        value={formData.graduationYears}
         onChange={handleChange}
-        sx={{ bgcolor: 'white' }}
       />
       <TextField
-        type="datetime-local"
+        type="date"
         label="Application Deadline"
         fullWidth
         InputLabelProps={{ shrink: true }}
         margin="normal"
-        name="applicationDeadline"
-        sx={{ bgcolor: 'white' }}
-        error={!!errors?.applicationDeadline}
-        helperText={errors?.applicationDeadline}
-        value={
-          formData.applicationDeadline
-            ? formData.applicationDeadline.slice(0, 16).replace(' ', 'T')
-            : ''
-        }
+        name="applicationDeadlineTimestamp_ms"
+        error={!!errors?.applicationDeadlineTimestamp_ms}
+        helperText={errors?.applicationDeadlineTimestamp_ms}
+        value={epochMsToDateInput(formData.applicationDeadlineTimestamp_ms)}
         onChange={(e) => {
-          const selectedDate = new Date(e.target.value);
-          if (selectedDate < new Date()) {
-            alert('Deadline must be in the future.');
-            handleChange({ target: { name: 'applicationDeadline', value: '' } });
-          } else {
-            handleChange(e);
+          const selectedDateStr = e.target.value;
+          if (!selectedDateStr) {
+            handleChange({
+              target: {
+                name: 'applicationDeadlineTimestamp_ms',
+                value: null,
+              },
+            });
+            return;
           }
+          const selectedEpochMs = dateToEpochMs(selectedDateStr);
+          const todayEpochMs = dayjs().startOf('day').valueOf();
+          if (selectedEpochMs < todayEpochMs) {
+            alert('Deadline must be today or in the future.');
+            handleChange({
+              target: {
+                name: 'applicationDeadlineTimestamp_ms',
+                value: null,
+              },
+            });
+            return;
+          }
+          handleChange({
+            target: {
+              name: 'applicationDeadlineTimestamp_ms',
+              value: selectedEpochMs,
+            },
+          });
         }}
       />
+
       <TextField
         label="Number of Intended Offers"
         type="number"
@@ -115,7 +128,6 @@ export const EligibilityForm = ({
         name="openPositions"
         value={formData.openPositions}
         onChange={handleChange}
-        sx={{ bgcolor: 'white' }}
       />
     </Box>
   );
@@ -165,8 +177,7 @@ export const OfferDetailsForm = ({
             type="number"
             value={compensation.fixedAmount ?? ''}
             onChange={(e) => handleCompensationChange('fixedAmount', Number(e.target.value))}
-            error={!!errors?.compensation}
-            sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+            sx={{  flex: 1, minWidth: 160 }}
           />
         ) : (
           <>
@@ -175,8 +186,7 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.minAmount ?? ''}
               onChange={(e) => handleCompensationChange('minAmount', Number(e.target.value))}
-              error={!!errors?.compensation}
-              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+              sx={{ flex: 1, minWidth: 160 }}
             />
 
             <TextField
@@ -184,19 +194,17 @@ export const OfferDetailsForm = ({
               type="number"
               value={compensation.maxAmount ?? ''}
               onChange={(e) => handleCompensationChange('maxAmount', Number(e.target.value))}
-              error={!!errors?.compensation}
-              sx={{ bgcolor: 'white', flex: 1, minWidth: 160 }}
+              sx={{  flex: 1, minWidth: 160 }}
             />
           </>
         )}
 
-        <FormControl sx={{ flex: 1, minWidth: 140 }} error={!!errors?.compensation}>
+        <FormControl sx={{ flex: 1, minWidth: 140 }}>
           <InputLabel>Currency</InputLabel>
           <Select
             value={compensation.currency}
             label="Currency"
             onChange={(e) => handleCompensationChange('currency', e.target.value)}
-            sx={{ bgcolor: 'white' }}
             MenuProps={{ disablePortal: true }}
           >
             <MenuItem value="EUR">EUR</MenuItem>
@@ -204,13 +212,13 @@ export const OfferDetailsForm = ({
           </Select>
         </FormControl>
 
-        <FormControl sx={{ flex: 1, minWidth: 160 }} error={!!errors?.compensation}>
+        <FormControl sx={{ flex: 1, minWidth: 160 }}>
           <InputLabel>Frequency</InputLabel>
           <Select
             value={compensation.frequency}
             label="Frequency"
             onChange={(e) => handleCompensationChange('frequency', e.target.value)}
-            sx={{ bgcolor: 'white' }}
+     
             MenuProps={{ disablePortal: true }}
           >
             <MenuItem value="monthly">Monthly</MenuItem>
@@ -218,15 +226,9 @@ export const OfferDetailsForm = ({
           </Select>
         </FormControl>
       </Box>
-      {errors?.compensation ? (
-        <Typography variant="body2" color="error" mt={1}>
-          {errors.compensation}
-        </Typography>
-      ) : (
-        <Typography variant="body2" color="text.secondary" mt={2}>
-          {formatCompensation(compensation)}
-        </Typography>
-      )}
+      <Typography variant="body2" color="text.secondary" mt={2}>
+        {formatCompensation(compensation)}
+      </Typography>
       <TextField
         label="Facilities / Perks"
         fullWidth
@@ -236,7 +238,7 @@ export const OfferDetailsForm = ({
         onChange={handleChange}
         multiline
         rows={3}
-        sx={{ bgcolor: 'white', mt: 3 }}
+        sx={{  mt: 3 }}
         placeholder="Health insurance, relocation support, meals..."
       />
     </Box>
@@ -247,16 +249,54 @@ export const JobDescriptionsForm = ({
   formData,
   handleChange,
   errors,
+  jobCategories,
 }: {
   formData: JobPostFormData;
   handleChange: (e: any) => void;
   errors?: ValidationErrors;
+  jobCategories?: JobCategoryInfo[];
 }) => {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom mb={2}>
         Job Descriptions
       </Typography>
+      <FormControl fullWidth variant="outlined" error={!!errors.jobCategoryId}>
+        <InputLabel id="job-category-select-label">Select Job Category</InputLabel>
+        <Select
+          labelId="job-category-select-label"
+          value={formData.jobCategoryId}
+          onChange={(e) =>
+            handleChange({ target: { name: 'jobCategoryId', value: e.target.value } })
+          }
+          label="Select Job Category"
+          fullWidth
+          MenuProps={{
+            disablePortal: true,
+            PaperProps: {
+              sx: {
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                boxShadow: 3,
+              },
+            },
+          }}
+        >
+          {jobCategories.map((job) => (
+            <MenuItem key={job.id} value={job.id}>
+              {job.jobCategory}
+            </MenuItem>
+          ))}
+        </Select>{' '}
+        {errors.jobCategoryId && <FormHelperText>{errors.jobCategoryId}</FormHelperText>}
+      </FormControl>
+
+      {!jobCategories.length && (
+        <Typography color="error" variant="h6" sx={{ mb: 1 }}>
+          No job categories available. Please contact admin to create categories.
+        </Typography>
+      )}
+
       <TextField
         label="Session"
         fullWidth
@@ -265,9 +305,6 @@ export const JobDescriptionsForm = ({
         value={formData.session}
         onChange={handleChange}
         disabled
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <TextField
         label="Job Title"
@@ -279,9 +316,6 @@ export const JobDescriptionsForm = ({
         name="jobTitle"
         value={formData.jobTitle}
         onChange={handleChange}
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <TextField
         label="Location "
@@ -290,9 +324,6 @@ export const JobDescriptionsForm = ({
         name="workLocation"
         value={formData.workLocation}
         onChange={handleChange}
-        sx={{
-          bgcolor: 'white',
-        }}
       />
       <FormControl fullWidth margin="normal" error={!!errors?.workMode}>
         <InputLabel id="workMode-label">Work Mode</InputLabel>
@@ -302,8 +333,16 @@ export const JobDescriptionsForm = ({
           name="workMode"
           value={formData.workMode}
           onChange={handleChange}
-          sx={{ bgcolor: 'white' }}
-          MenuProps={{ disablePortal: true }}
+          MenuProps={{
+            disablePortal: true,
+            PaperProps: {
+              sx: {
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                boxShadow: 3,
+              },
+            },
+          }}
         >
           <MenuItem value="hybrid">Hybrid</MenuItem>
           <MenuItem value="onsite">Onsite</MenuItem>
@@ -320,9 +359,6 @@ export const JobDescriptionsForm = ({
         onChange={handleChange}
         multiline
         rows={4}
-        sx={{
-          bgcolor: 'white',
-        }}
         placeholder="Enter the job description here..."
       />
     </Box>
@@ -333,11 +369,13 @@ export const EditJobPostDialog = ({
   open,
   handleClose,
   jobData,
+  jobCategories,
   handleSave,
 }: {
   open: boolean;
   handleClose: () => void;
   jobData: JobPostInfo | null;
+  jobCategories: JobCategoryInfo[];
   handleSave: (updatedJob: JobPostInfo) => Promise<void>;
 }) => {
   const [formData, setFormData] = useState<JobPostInfo | null>(jobData);
@@ -370,6 +408,23 @@ export const EditJobPostDialog = ({
     await handleSave(formData);
     handleClose();
   };
+  useEffect(() => {
+    if (!formData) return;
+    const selectedId = formData.jobCategoryId;
+    if (!selectedId) return;
+    const selectedJob = jobCategories.find((job) => job.id === selectedId);
+    if (!selectedJob) return;
+    const categoryName = selectedJob.jobCategory;
+    setFormData((prevData) => ({
+      ...prevData,
+      session: `${categoryName}(${CURRENT_TERM})`,
+      compensation: {
+        ...prevData.compensation,
+        frequency: categoryName.toLowerCase() === 'full-time' ? 'yearly' : 'monthly',
+        type: categoryName.toLowerCase() === 'full-time' ? 'salary' : 'stipend',
+      },
+    }));
+  }, [formData?.jobCategoryId, jobCategories]);
 
   if (!formData) return null;
   return (
@@ -389,7 +444,12 @@ export const EditJobPostDialog = ({
     >
       <DialogTitle>Edit Job Post</DialogTitle>
       <DialogContent dividers>
-        <JobDescriptionsForm formData={formData} handleChange={handleChange} errors={errors} />
+        <JobDescriptionsForm
+          formData={formData}
+          jobCategories={jobCategories}
+          handleChange={handleChange}
+          errors={errors}
+        />
         <OfferDetailsForm formData={formData} handleChange={handleChange} errors={errors} />
         <EligibilityForm formData={formData} handleChange={handleChange} errors={errors} />
       </DialogContent>
@@ -403,7 +463,13 @@ export const EditJobPostDialog = ({
   );
 };
 
-export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
+export const JobList = ({
+  recruiter,
+  jobCategories,
+}: {
+  recruiter: RecruiterData;
+  jobCategories: JobCategoryInfo[];
+}) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostInfo>(null);
   const [jobPosts, setJobPosts] = useState<JobPostInfo[]>([]);
@@ -507,29 +573,31 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
             >
               <ListItemText
                 primary={
-                  <Typography variant="h6" fontWeight="bold" color="primary">
+                  <Typography variant="h6" fontWeight="bold" color="text.primary">
                     {job.jobTitle}
                   </Typography>
                 }
                 secondary={
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Location: {job.workLocation}
-                    </Typography>
+                    {job.workLocation && (
+                      <Typography variant="body2" color="text.secondary">
+                        Location: {job.workLocation}
+                      </Typography>
+                    )}
                     <Typography variant="body2" color="text.secondary">
                       Created By: {job.createdByUserId} |{' '}
                       {new Date(job.createdAt).toLocaleDateString()}
                     </Typography>
 
                     <Typography variant="body2" color="error">
-                      Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
+                      Deadline: {epochMsToCivilDate(job.applicationDeadlineTimestamp_ms)}
                     </Typography>
                   </Box>
                 }
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton color="primary" onClick={() => handleEdit(job)}>
+                <IconButton sx={{color:"text.primary"}} onClick={() => handleEdit(job)}>
                   <Edit />
                 </IconButton>
                 <IconButton
@@ -567,6 +635,7 @@ export const JobList = ({ recruiter }: { recruiter: RecruiterData }) => {
         open={openDialog}
         handleClose={handleClose}
         jobData={selectedJob}
+        jobCategories={jobCategories}
         handleSave={handleSave}
       />
     </Box>

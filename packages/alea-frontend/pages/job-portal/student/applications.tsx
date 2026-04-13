@@ -43,7 +43,7 @@ const Applications = () => {
   const [companySortOrder, setCompanySortOrder] = useState('asc');
   const [applications, setApplications] = useState<ApplicationWithJobAndOrgTitle[]>([]);
   const [filter, setFilter] = useState('ALL');
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [accessCheckLoading, setAccessCheckLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -142,8 +142,8 @@ const Applications = () => {
       console.error(err);
     }
   };
-  const handleOpenTimeline = () => setShowTimeline(true);
-  const handleCloseTimeline = () => setShowTimeline(false);
+  const handleOpenTimeline = (applicationId: number) => setSelectedApplicationId(applicationId);
+  const handleCloseTimeline = () => setSelectedApplicationId(null);
   const filteredApplications = applications.filter((application) => {
     switch (filter) {
       case 'ALL':
@@ -167,12 +167,10 @@ const Applications = () => {
         return true;
     }
   });
-  if (accessCheckLoading || loading) {
-    return <CircularProgress color="primary" />;
-  }
+  if (accessCheckLoading || loading) return <CircularProgress sx={{ color: 'text.primary' }} />;
   return (
     <Box sx={{ p: { xs: '30px 16px', md: '30px' }, maxWidth: 'lg', mx: 'auto' }}>
-      <Paper sx={{ bgcolor: 'rgb(249, 249, 249)', p: { xs: 1, md: 5 } }}>
+      <Paper sx={{ bgcolor: 'background.paper', p: { xs: 1, md: 5 } }}>
         <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={2}>
           {[
             { label: 'ALL', value: 'ALL' },
@@ -237,23 +235,22 @@ const Applications = () => {
             ) : (
               <TableBody>
                 {filteredApplications.length > 0 ? (
-                  filteredApplications.map((jobApplication,idx) => (
+                  filteredApplications.map((jobApplication, idx) => (
                     <TableRow key={jobApplication.id} hover>
                       <TableCell align="center">{idx + 1}</TableCell>
                       <TableCell align="center">
                         <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
                           {new Date(jobApplication.createdAt).toLocaleDateString()}
                           <Tooltip title="View Application Timeline" arrow>
-                            <IconButton color="info" size="small" onClick={handleOpenTimeline}>
+                            <IconButton
+                              color="info"
+                              size="small"
+                              onClick={() => handleOpenTimeline(jobApplication.id)}
+                            >
                               <History fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </Box>
-                        <JobApplicationTimelineModal
-                          open={showTimeline}
-                          applicationId={jobApplication.id}
-                          onClose={handleCloseTimeline}
-                        />
                       </TableCell>
                       <TableCell align="center">{jobApplication.companyName}</TableCell>
                       <TableCell align="center">{jobApplication.jobTitle}</TableCell>
@@ -287,7 +284,7 @@ const Applications = () => {
                           <Chip
                             label="Application Kept On Hold"
                             sx={{
-                              bgcolor: '#806BE7',
+                              bgcolor: 'jobPortal.purple',
                               color: 'white',
                               '& .MuiChip-icon': { color: 'white' },
                             }}
@@ -349,13 +346,28 @@ const Applications = () => {
             )}
           </Table>
         </TableContainer>
+        {selectedApplicationId && (
+          <JobApplicationTimelineModal
+            open={true}
+            applicationId={selectedApplicationId}
+            onClose={handleCloseTimeline}
+          />
+        )}
       </Paper>
     </Box>
   );
 };
 
 const Application = () => {
-  return <JpLayoutWithSidebar role="student">{<Applications />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="student"
+      title="Applications | Job Portal - ALeA"
+      description="View and manage your job applications submitted through the ALeA Job Portal"
+    >
+      {<Applications />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default Application;

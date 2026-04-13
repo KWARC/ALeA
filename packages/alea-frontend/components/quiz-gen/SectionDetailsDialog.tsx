@@ -15,7 +15,7 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { FlatQuizProblem } from '../../pages/quiz-gen';
 import { SecInfo } from '../../types';
 import { ConceptDetails } from './ConceptDetails';
@@ -26,10 +26,7 @@ import { GoalSelector } from './goal-hierarchy/GoalSelector';
 import { QuestionCategorySelector } from './QuestionCategorySelector';
 import { QuestionTypeSelector } from './QuestionTypeSelector';
 import { SelectedConcept } from './SelectedConcept';
-
-interface ConceptPropertiesMap {
-  [conceptUri: string]: ConceptProperty[];
-}
+import { useQueries } from '@tanstack/react-query';
 
 export interface ConceptProperty {
   description?: string;
@@ -83,9 +80,7 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   setGeneratedProblems,
   setLatestGeneratedProblems,
 }) => {
-  const [concepts, setConcepts] = useState<{ label: string; value: string }[]>([]);
   const [selectedConcepts, setSelectedConcepts] = useState<{ label: string; value: string }[]>([]);
-  const [conceptProperties, setConceptProperties] = useState<ConceptPropertiesMap>({});
   const [selectedProperties, setSelectedProperties] = useState<{ [conceptUri: string]: string[] }>(
     {}
   );
@@ -95,7 +90,6 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const questionTypes = [
     {
@@ -142,9 +136,6 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
       description: 'Judgment calls, design choices, or recommendations.',
     },
   ];
-
-  const allSelected = concepts.length > 0 && selectedConcepts.length === concepts.length;
-  const someSelected = selectedConcepts.length > 0 && selectedConcepts.length < concepts.length;
 
   //TODO: add option to avoid maximum stack size exceeded
   function createHierarchy(goalUri: string, allGoals: Goal[]): GoalNode {
@@ -208,35 +199,49 @@ export const SectionDetailsDialog: React.FC<SectionDetailsDialogProps> = ({
     setSelectedCategories([]);
     setCurrentStep(0);
   }, [startSectionUri, endSectionUri]);
-
-  useEffect(() => {
-    if (!open || !startSectionUri || !endSectionUri || !sections?.length) return;
-
-    const fetchConcepts = async () => {
-      setLoading(true);
-      try {
-        const rangeSections = getSectionRange(startSectionUri, endSectionUri, sections);
-        const allUris: string[] = [];
-
-        for (const sec of rangeSections) {
-          const properties = await getConceptPropertyInSection(sec.uri);
-          setConceptProperties((prev) => ({ ...prev, ...properties }));
-
-          const defs = await getDefiniedaInSectionAgg(sec.uri);
-          allUris.push(...defs.map((c) => c.conceptUri));
-        }
-
-        const uniqueUris = [...new Set(allUris)];
-        setConcepts(uniqueUris.map((uri) => ({ label: `${conceptUriToName(uri)}`, value: uri })));
-      } catch (err) {
-        console.error('Error fetching concepts in range:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConcepts();
+  const rangeSections = useMemo(() => {
+    if (!open || !startSectionUri || !endSectionUri || !sections?.length) return [];
+    return getSectionRange(startSectionUri, endSectionUri, sections);
   }, [open, startSectionUri, endSectionUri, sections]);
+  const propertyQueries = useQueries({
+    queries: rangeSections.map((sec) => ({
+      queryKey: ['concept-properties', sec.uri],
+      queryFn: () => getConceptPropertyInSection(sec.uri),
+      enabled: Boolean(sec.uri),
+      staleTime: Infinity,
+    })),
+  });
+  const conceptProperties = useMemo(() => {
+    const allProperties: Record<string, any> = {};
+    for (const q of propertyQueries) {
+      if (q.data) {
+        Object.assign(allProperties, q.data);
+      }
+    }
+    return allProperties;
+  }, [propertyQueries]);
+
+  const defsQueries = useQueries({
+    queries: rangeSections.map((sec) => ({
+      queryKey: ['defined-concepts-and-definition', sec.uri],
+      queryFn: () => getDefiniedaInSectionAgg(sec.uri),
+      enabled: Boolean(sec.uri),
+      staleTime: Infinity,
+    })),
+  });
+
+  const concepts = useMemo(() => {
+    const allUris = defsQueries.flatMap((q) => q.data?.map((c) => c.conceptUri) ?? []);
+    const uniqueUris = [...new Set(allUris)];
+    return uniqueUris.map((uri) => ({
+      label: conceptUriToName(uri),
+      value: uri,
+    }));
+  }, [defsQueries]);
+  const loading = defsQueries.some((q) => q.isLoading) || propertyQueries.some((q) => q.isLoading);
+
+  const allSelected = concepts.length > 0 && selectedConcepts.length === concepts.length;
+  const someSelected = selectedConcepts.length > 0 && selectedConcepts.length < concepts.length;
 
   const generateNewProblems = async () => {
     setGenerating(true);

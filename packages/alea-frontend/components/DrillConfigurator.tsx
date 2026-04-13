@@ -13,15 +13,10 @@ import Checkbox from '@mui/material/Checkbox';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import {
-  BloomDimension,
-  CardsWithSmileys,
-  SmileyLevel,
-  smileyToLevel,
-} from '@alea/spec';
+import { BloomDimension, CardsWithSmileys, SmileyLevel, smileyToLevel } from '@alea/spec';
 import { SafeHtml, useIsLoggedIn } from '@alea/react-utils';
 import { ConfigureLevelSlider } from '@alea/stex-react-renderer';
-import { PRIMARY_COL, SECONDARY_COL, Window, stableShuffle } from '@alea/utils';
+import { Window, stableShuffle } from '@alea/utils';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from 'react';
@@ -180,7 +175,7 @@ function CoverageConfigurator({
   return (
     <>
       <Tooltip title={t.chooseCoverageHover}>
-        <Typography variant="h6" style={{ textAlign: 'center' }}>
+        <Typography variant="h6" color="text.primary" style={{ textAlign: 'center' }}>
           {t.chooseCoverage}
         </Typography>
       </Tooltip>
@@ -209,7 +204,7 @@ function CoverageConfigurator({
                       setCheckedChapterIdxs(newChecked);
                     }}
                   >
-                    <b style={{ display: 'block', color: PRIMARY_COL, fontSize: 'large' }}>
+                    <b style={{ display: 'block', color: 'primary.main', fontSize: 'large' }}>
                       <SafeHtml html={chapterTitle} />
                     </b>
                   </ListItemButton>
@@ -230,10 +225,10 @@ function CoverageConfigurator({
                     id={labelId}
                     primary={
                       <Box sx={{ fontSize: '14px' }}>
-                        <b style={{ display: 'block', color: PRIMARY_COL }}>
+                        <b style={{ display: 'block', color: 'primary.main' }}>
                           <SafeHtml html={sectionTitle} />
                         </b>
-                        <b style={{ color: SECONDARY_COL }}>
+                        <b style={{ color: 'secondary.main' }}>
                           {loggedIn && selectedCards.length + '/'}
                           {totalCount}&nbsp;{t.concepts}
                         </b>
@@ -295,12 +290,12 @@ function ReviseAndDrillButtons({
   const { flashCards: t } = getLocaleObject(router);
 
   return (
-    <Box textAlign={'center'} mt="20px">
+    <Box textAlign={'center'} mt={2.5}>
       <FormControlLabel
         control={<Checkbox checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} />}
         label={t.shuffleCards}
       />
-      <Box display="flex" gap="10px" justifyContent="center" mb="5px">
+      <Box display="flex" gap={1.25} justifyContent="center" mb={0.5}>
         <Button
           variant="contained"
           disabled={isDisabled}
@@ -328,7 +323,7 @@ function ReviseAndDrillButtons({
 
       <b
         style={{
-          color: SECONDARY_COL,
+          color: 'secondary.main',
           textAlign: 'center',
           display: 'block',
           fontFamily: "'Roboto'",

@@ -19,7 +19,7 @@ import {
   JobPostInfo,
   RecruiterData,
 } from '@alea/spec';
-import { Action, PRIMARY_COL, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { ApplicationTable } from '../../../components/job-portal/ApplicationsTable';
 import JpLayoutWithSidebar from '../../../layouts/JpLayoutWithSidebar';
 
@@ -54,7 +54,6 @@ const StatusFilter = ({
         label="Filter by Status"
         labelId="Filter by Status"
         sx={{
-          backgroundColor: 'white',
           '& .MuiSelect-select': {
             padding: '10px',
           },
@@ -75,7 +74,7 @@ const StatusFilter = ({
 
 export const JobSelect = ({
   setLoading,
-   setApplications,
+  setApplications,
   jobPosts,
 }: {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -132,7 +131,6 @@ export const JobSelect = ({
         displayEmpty
         fullWidth
         sx={{
-          backgroundColor: 'white',
           '& .MuiSelect-select': {
             padding: '10px',
           },
@@ -192,16 +190,23 @@ const Applications = () => {
     fetchData();
   }, []);
 
-  if (accessCheckLoading) return <CircularProgress />;
+  if (accessCheckLoading) return <CircularProgress sx={{color:"text.primary"}}/>;
   return (
     <Box sx={{ maxWidth: '1200px', margin: 'auto', p: { xs: '30px 16px', md: '30px' } }}>
       <Box>
-        <Typography variant="h4" fontWeight="bold" gutterBottom color={PRIMARY_COL}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom color="text.primary">
           Job Applications
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <JobSelect setLoading={setLoading} setApplications={setApplications} jobPosts={jobPosts} />
-          <StatusFilter applications={applications} setFilteredApplications={setFilteredApplications} />
+          <JobSelect
+            setLoading={setLoading}
+            setApplications={setApplications}
+            jobPosts={jobPosts}
+          />
+          <StatusFilter
+            applications={applications}
+            setFilteredApplications={setFilteredApplications}
+          />
         </Box>
         <hr />
         <ApplicationTable
@@ -215,7 +220,15 @@ const Applications = () => {
 };
 
 const JobApplicationsPage = () => {
-  return <JpLayoutWithSidebar role="recruiter">{<Applications />}</JpLayoutWithSidebar>;
+  return (
+    <JpLayoutWithSidebar
+      role="recruiter"
+      title="Applications | Job Portal - ALeA"
+      description="Review and manage student job applications in the ALeA Job Portal"
+    >
+      {<Applications />}
+    </JpLayoutWithSidebar>
+  );
 };
 
 export default JobApplicationsPage;

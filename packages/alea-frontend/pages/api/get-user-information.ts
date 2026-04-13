@@ -26,6 +26,7 @@ export default async function handler(
   if (!result) return;
   if (!result[0]) {
     return res.status(200).send({
+      userId,
       showTrafficLight: false,
       showSectionReview: true,
       notificationSeenTs: null,
@@ -34,6 +35,7 @@ export default async function handler(
   }
   const authProvider = getAuthProvider(result[0].hasPassword);
   res.status(200).send({
+    userId,
     showTrafficLight: result[0].showTrafficLight,
     showSectionReview: result[0].showSectionReview,
     notificationSeenTs: result[0].notificationSeenTs,

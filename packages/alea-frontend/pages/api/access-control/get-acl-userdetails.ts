@@ -21,15 +21,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (directMembers.length === 0) {
     return res.status(200).send([]);
   }
-  const userInfoResults: { firstname: string; lastname: string; userId: string }[] =
+  const placeholders = directMembers.map(() => '?').join(',');
+  const userInfoResults: { firstName: string; lastName: string; userId: string }[] =
     await executeDontEndSet500OnError(
-      `select firstname, lastname, userId from userInfo where userId IN (?)`,
-      [directMembers],
+      `select firstName, lastName, userId from userInfo where userId IN (${placeholders})`,
+      directMembers,
       res
     );
   const result = directMembers.map((userId) => {
     const userInfo = userInfoResults.find((record) => record.userId === userId);
-    const fullName = userInfo ? `${userInfo.firstname} ${userInfo.lastname}` : '';
+    const fullName = userInfo ? `${userInfo.firstName} ${userInfo.lastName}` : '';
     return { fullName, userId };
   });
   res.status(200).send(result);

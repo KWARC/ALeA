@@ -1,12 +1,13 @@
 import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { TourDisplay } from '@alea/stex-react-renderer';
-import { BG_COLOR } from '@alea/utils';
+import { useTheme } from '@mui/material/styles';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import MainLayout from '../../layouts/MainLayout';
 
 const GuidedTourPage: NextPage = () => {
+  const theme = useTheme();
   const router = useRouter();
   const { locale } = router;
   const [language, setLanguage] = useState(locale);
@@ -34,7 +35,7 @@ const GuidedTourPage: NextPage = () => {
           </Select>
         </FormControl>
       </Box>
-      <Box flexGrow={1} bgcolor={BG_COLOR}>
+      <Box flexGrow={1} bgcolor="background.paper">
         <TourDisplay tourId={tourId} language={language} topOffset={125} />
       </Box>
     </MainLayout>

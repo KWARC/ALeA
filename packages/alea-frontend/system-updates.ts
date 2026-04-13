@@ -8,6 +8,106 @@ export const SYSTEM_UPDATES = [
     postedTimestamp: '2023-02-11T00:20:00+05:30',
     }*/
   {
+    id: 'course-materials',
+    header: 'Course Materials',
+    content:
+      'Instructors can now upload files and add links as course materials for students. Course materials are organized by semester and accessible from the course page. Instructors can also copy materials from previous semesters to streamline setup.',
+    header_de: 'Kursmaterialien',
+    content_de:
+      'Dozenten können jetzt Dateien hochladen und Links als Kursmaterialien für Studierende hinzufügen. Die Kursmaterialien sind nach Semester organisiert und von der Kursseite aus zugänglich. Dozenten können außerdem Materialien aus vorherigen Semestern kopieren, um die Einrichtung zu vereinfachen.',
+    postedTimestamp: '2026-03-16T00:20:00+05:30',
+  },
+  {
+    id: 'student-dashboard',
+    header: 'Student Dashboard',
+    content:
+      'A personalized Student Dashboard is now available on the homepage. Students can view their enrolled courses at a glance, see what\'s next with quick access to quizzes and homework, and track their progress across all courses in one place.',
+    header_de: 'Studierenden-Dashboard',
+    content_de:
+      'Ein personalisiertes Studierenden-Dashboard ist jetzt auf der Startseite verfügbar. Studierende können ihre eingeschriebenen Kurse auf einen Blick sehen, erfahren, was als Nächstes ansteht, mit schnellem Zugriff auf Quizze und Hausaufgaben, und verfolgen ihren Fortschritt in allen Kursen an einem Ort.',
+    postedTimestamp: '2026-03-16T00:20:00+05:30',
+  },
+  {
+    id: 'dark-theme',
+    header: 'Dark Theme',
+    content:
+      'ALeA now features a dark theme with improved visual design and user experience across the platform. Users can now switch between light, dark and system theme modes to customize their viewing experience.',
+    header_de: 'Dunkles Design',
+    content_de:
+      'ALeA verfügt jetzt über ein dunkles Design mit verbesserter visueller Gestaltung und Benutzerfreundlichkeit auf der gesamten Plattform. Nutzer können jetzt zwischen Hell-, Dunkel- und Systemmodus wechseln, um ihre Ansicht anzupassen.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
+    id: 'not-covered-sections',
+    header: 'Omitted Sections',
+    content:
+      'Sections that have not been covered in lectures are now clearly marked, helping students identify which content is still pending.',
+    header_de: 'Ausgelassene Abschnitte',
+    content_de:
+      'Abschnitte, die in Vorlesungen nicht behandelt wurden, sind jetzt klar gekennzeichnet und helfen Studierenden dabei, zu identifizieren, welche Inhalte noch ausstehen.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
+    id: 'new-url-structure',
+    header: 'New URL Structure',
+    content:
+      'ALeA now features a new URL structure that supports multiple course instances with unique course IDs at the university level. The enhanced URI mapping system includes special cases like "latest" and "legacy" routes for flexible navigation and backward compatibility.',
+    header_de: 'Neue URL-Struktur',
+    content_de:
+      'ALeA verfügt jetzt über eine neue URL-Struktur, die mehrere Kursinstanzen mit eindeutigen Kurs-IDs auf Universitätsebene unterstützt. Das verbesserte URI-Zuordnungssystem umfasst Sonderfälle wie "latest" und "legacy" Routen für flexible Navigation und Rückwärtskompatibilität.',
+    postedTimestamp: '2026-02-16T00:20:00+05:30',
+  },
+  {
+    id: 'exam-problems-page',
+    header: 'Exam Problems Page Introduced',
+    content:
+      'A dedicated Exam Problems page is now available. Users can select a specific exam from the list of all past exams on the Practice Problems page and navigate to a separate exam page to view all problems associated with that exam.',
+    header_de: 'Seite für Prüfungsaufgaben eingeführt',
+    content_de:
+      'Eine eigene Seite für Prüfungsaufgaben ist jetzt verfügbar. Nutzer können auf der Seite „Übungsaufgaben“ eines beliebigen Kurses eine bestimmte Prüfung aus der Liste aller bisherigen Prüfungen auswählen und zu einer separaten Prüfungsseite navigieren, um alle zugehörigen Aufgaben anzuzeigen.',
+    postedTimestamp: '2026-01-09T00:20:00+05:30',
+  },
+  {
+    id: 'course-metadata-instructor-dashboard',
+    header: 'Course Metadata Management in Instructor Dashboard',
+    content:
+      'Instructors can now create announcements, update course information, add other instructors, and schedule lectures and tutorials directly within the Course Metadata tab of the Instructor Dashboard, making course management simpler and more efficient.',
+    header_de: 'Kursmetadaten-Verwaltung im Dozenten-Dashboard',
+    content_de:
+      'Dozenten können jetzt direkt im Tab „Kursmetadaten“ des Dozenten-Dashboards Ankündigungen erstellen, Kursinformationen aktualisieren, weitere Dozenten hinzufügen sowie Vorlesungen und Tutorials planen. Dadurch wird die Kursverwaltung einfacher und effizienter.',
+    postedTimestamp: '2025-12-03T00:20:00+05:30',
+  },
+  {
+    id: 'unenroll-feature',
+    header: 'Unenroll Feature',
+    content:
+      'Users can now unenroll from a course directly from the course-view page using the Unenroll button.',
+    header_de: 'Abmelde-Button hinzugefügt',
+    content_de:
+      'Nutzer können sich jetzt direkt über die course-view-Seite mithilfe des Abmelde-Buttons von einem Kurs abmelden.',
+    postedTimestamp: '2025-11-26T00:20:00+05:30',
+  },
+  {
+    id: 'maintenance-alert-banner',
+    header: 'Maintenance Alert Banner',
+    content:
+      'A persistent alert banner that is displayed across the platform whenever ALeA is undergoing scheduled maintenance.',
+    header_de: 'Wartungs-Hinweisbanner',
+    content_de:
+      'Ein dauerhaft sichtbares Hinweisbanner wird auf der gesamten Plattform angezeigt, wann immer ALeA planmäßige Wartungsarbeiten durchführt.',
+    postedTimestamp: '2025-10-31T00:20:00+05:30',
+  },
+  {
+    id: 'syllabus-and-adventurous-problems-categorization',
+    header: 'Syllabus and Adventurous Problems Categorization',
+    content:
+      'Practice Problems are now organized into two dedicated tabs: Syllabus Problems and Adventurous Problems. Syllabus Problems include questions aligned with the course syllabus, while Adventurous Problems offer additional challenges that are not tied to any specific syllabus section.',
+    header_de: 'Kategorisierung von Lehrplan- und abenteuerlichen Aufgaben',
+    content_de:
+      'Die Übungsaufgaben sind jetzt in zwei separate Tabs unterteilt: „Lehrplanaufgaben“ und „Abenteuerliche Aufgaben“. Die Lehrplanaufgaben enthalten Fragen, die auf den Kurslehrplan abgestimmt sind, während die abenteuerlichen Aufgaben zusätzliche Herausforderungen bieten, die keinem bestimmten Lehrplanabschnitt zugeordnet sind.',
+    postedTimestamp: '2025-09-02T17:20:00+05:30',
+  },
+  {
     id: 'section-time-taken',
     header: 'Actual Section Completion Time',
     content:
@@ -73,7 +173,6 @@ export const SYSTEM_UPDATES = [
     postedTimestamp: '2025-06-10T00:20:00+05:30',
   },
 
-  
   {
     id: 'auto-lecture-progress',
     header: 'Auto-Fill Lecture Details from Video',

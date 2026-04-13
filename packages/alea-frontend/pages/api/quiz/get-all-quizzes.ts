@@ -7,7 +7,7 @@ import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-util
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   if (!courseId) return res.status(400).json({ message: 'Missing courseId.' });
-  let instanceId = req.query.instanceId as string;
+  let instanceId = (req.query.instanceId as string) || (req.query.courseTerm as string);
   if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
 
   const userId = await getUserIdIfAuthorizedOrSetError(

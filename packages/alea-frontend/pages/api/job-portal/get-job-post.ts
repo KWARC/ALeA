@@ -31,13 +31,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
   const jobPosts: any = await executeDontEndSet500OnError(
-    `SELECT id,jobCategoryId,organizationId ,createdByUserId,session,jobTitle,jobDescription,workLocation,workMode,qualification,targetYears,openPositions,compensation,facilities,applicationDeadline,createdAt
-    FROM jobPost 
-    WHERE organizationId = ?`,
+    `
+  SELECT 
+    id,
+    jobCategoryId,
+    organizationId,
+    createdByUserId,
+    session,
+    jobTitle,
+    jobDescription,
+    workLocation,
+    workMode,
+    qualification,
+    graduationYears,
+    openPositions,
+    compensation,
+    facilities,
+    UNIX_TIMESTAMP(applicationDeadline) * 1000 AS applicationDeadlineTimestamp_ms,
+    createdAt
+  FROM jobPost
+  WHERE organizationId = ?
+  `,
     [organizationId],
     res
   );
   if (!jobPosts) return;
-  const normalizedResults:JobPostInfo[] = jobPosts.map(normalizeJobPost);
+  const normalizedResults: JobPostInfo[] = jobPosts.map(normalizeJobPost);
   res.status(200).json(normalizedResults);
 }

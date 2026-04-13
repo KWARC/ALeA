@@ -44,7 +44,7 @@ function timestampEOD() {
 const HomeworkManager = ({ courseId, institutionId }) => {
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
-  
+
   const [homeworks, setHomeworks] = useState<HomeworkStub[]>([]);
   const [stats, setStats] = useState<HomeworkStatsInfo | null>(null);
   const [id, setId] = useState<number | null>(null);
@@ -182,7 +182,7 @@ const HomeworkManager = ({ courseId, institutionId }) => {
   };
 
   return (
-    <Box maxWidth="lg" sx={{ m: '0 auto', p: '0 16px' }}>
+    <Box maxWidth="lg" sx={{ m: '0 auto', px: 2, py: 0 }}>
       <Box
         sx={{
           display: 'flex',
@@ -190,7 +190,8 @@ const HomeworkManager = ({ courseId, institutionId }) => {
           alignItems: 'center',
           mt: 2,
           p: 3,
-          border: '1px solid #ccc',
+          border: '1px solid ',
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >

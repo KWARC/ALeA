@@ -1,5 +1,4 @@
 import { languageUrlMap } from '@alea/utils';
-import { ClipInfo, getDefiniedaInSectionAgg, Slide } from '@alea/spec';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useRouter } from 'next/router';
@@ -26,6 +25,7 @@ import { AwayFromSlideWarning } from './AwayFromSlideWarning';
 import { SafeHtml } from '@alea/react-utils';
 import { PresentationToggleButton } from './PresentationToggleButton';
 import { SlidesClipInfo } from '@alea/spec';
+import { useDefiniedaInSectionAgg } from '../hooks/useDefinedConceptsInSection';
 
 export interface Marker {
   time: number;
@@ -98,12 +98,14 @@ export function MediaItem({
   const [overlay, setOverlay] = useState<{ title: string; description: string } | null>(null);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>(videoId);
   const router = useRouter();
-  const [conceptsUri, setConceptsUri] = useState<string[]>([]);
-  const [loadingConcepts, setLoadingConcepts] = useState(false);
-  const conceptsCache = useRef<Record<string, string[]>>({});
   const [isAwayFromSlide, setIsAwayFromSlide] = useState(false);
   const [showConcepts, setShowConcepts] = useState(true);
   const [hasSlideAtCurrentTime, setHasSlideAtCurrentTime] = useState(false);
+  const [activeSectionUri, setActiveSectionUri] = useState<string | null>(null);
+
+  const { data: conceptsAndDefinitions = [], isFetching: loadingConcepts } =
+    useDefiniedaInSectionAgg(activeSectionUri);
+  const conceptsUri = conceptsAndDefinitions.map((c) => c.conceptUri);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -118,7 +120,7 @@ export function MediaItem({
     window.localStorage.setItem('alea_show_concepts_overlay', String(showConcepts));
   }, [showConcepts]);
 
-  const hasSlides = !!hasSlidesForSection; 
+  const hasSlides = !!hasSlidesForSection;
   const masterVideoUrl = presenterVideoId || videoId;
 
   const currentSlideClipRange = useMemo(
@@ -172,30 +174,10 @@ export function MediaItem({
       currentVideoUrl === compositeVideoId || currentVideoUrl === presentationVideoId;
     onVideoTypeChange?.(isPlayingCompositeOrPresentation);
   }, [currentVideoUrl, compositeVideoId, presentationVideoId, onVideoTypeChange]);
-  const handleMarkerClick = useCallback(async (marker: Marker) => {
+  const handleMarkerClick = useCallback((marker: Marker) => {
     const sectionUri = marker?.data?.sectionUri;
     if (!sectionUri) return;
-    if (conceptsCache.current[sectionUri]) {
-      setConceptsUri(conceptsCache.current[sectionUri]);
-      setOverlay({
-        title: marker.label ?? 'Untitled',
-        description: marker.data.description ?? 'No Description Available',
-      });
-      return;
-    }
-    setLoadingConcepts(true);
-    try {
-      const definedConcepts = await getDefiniedaInSectionAgg(sectionUri);
-      const result = definedConcepts.map((concept) => concept.conceptUri) ?? [];
-      conceptsCache.current[sectionUri] = result;
-
-      setConceptsUri(result);
-    } catch (err) {
-      console.error('Error loading concepts:', err);
-      setConceptsUri([]);
-    } finally {
-      setLoadingConcepts(false);
-    }
+    setActiveSectionUri(sectionUri);
     setOverlay({
       title: marker.label ?? 'Untitled',
       description: marker.data.description ?? 'No Description Available',
@@ -208,7 +190,7 @@ export function MediaItem({
     audioOnly,
     timestampSec,
     applyVideoPlayerStyles,
-    clipId
+    clipId,
   });
 
   const presentationVideoUrl = presentationVideoId || compositeVideoId;
@@ -233,7 +215,7 @@ export function MediaItem({
     hasSlideAtCurrentTime,
     setHasSlideAtCurrentTime,
     onHasSlideAtCurrentTimeChange,
-    autoSyncEnabled: !isChangingResolution
+    autoSyncEnabled: !isChangingResolution,
   });
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -329,13 +311,13 @@ export function MediaItem({
                 top: { xs: 1, md: 1.25 },
                 left: '50%',
                 transform: 'translateX(-50%)',
-                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                bgcolor: 'primary.900',
                 color: 'white',
                 px: { xs: 1, md: 1.25 },
                 py: 0.5,
                 borderRadius: 0.5,
                 zIndex: 100,
-                fontSize: { xs: '0.75rem', md: '0.875rem' },
+                fontSize: { xs: 12, md: 14 },
               }}
             >
               {tooltip}
@@ -391,7 +373,6 @@ export function MediaItem({
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  color: '#111827',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -406,10 +387,10 @@ export function MediaItem({
                 size="small"
                 onClick={() => setShowConcepts(true)}
                 sx={{
-                  bgcolor: '#e5e7eb',
-                  color: '#111827',
-                  border: '1px solid rgba(148, 163, 184, 0.7)',
-                  '&:hover': { bgcolor: '#d1d5db' },
+                  bgcolor: 'background.default',
+                  color: 'primary.800',
+                  border: '1px solid divider',
+                  '&:hover': { bgcolor: 'primary.100' },
                 }}
               >
                 <MenuBookIcon fontSize="small" />

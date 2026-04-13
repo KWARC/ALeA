@@ -306,12 +306,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   cursor: 'pointer',
                   fontWeight: isActive ? 700 : 500,
                   fontSize: '17px',
-                  color: isActive ? '#203360' : '#7a7a7a',
-                  borderBottom: isActive ? '3px solid #203360' : '3px solid transparent',
+                  color: isActive ? 'primary.main' : '#7a7a7a',
+                  borderBottom: isActive ? '3px solid primary.main' : '3px solid transparent',
                   transition: '0.25s',
                   mr: 3,
                   '&:hover': {
-                    color: '#203360',
+                    color: '#primary.main',
                   },
                 }}
               >
@@ -422,7 +422,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   flexWrap: 'wrap',
                   mt: 1,
                   pl: 1,
-                  borderLeft: '3px solid #203360',
+                  borderLeft: '3px solid primary.main',
                 }}
               >
                 <Typography fontWeight="bold" sx={{ width: '100%' }}>
@@ -673,7 +673,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 flexWrap: 'wrap',
                 mt: 1,
                 pl: 1,
-                borderLeft: '3px solid #203360',
+                borderLeft: '3px solid primary.main',
               }}
             >
               <Typography fontWeight="bold" sx={{ width: '100%' }}>

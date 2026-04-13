@@ -28,7 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     socialLinks,
     about,
   } = req.body;
-  const parsedGpa = gpa ? Number(gpa) : null;
   const result = await executeAndEndSet500OnError(
     `UPDATE studentProfile 
 SET name = ?, 
@@ -52,7 +51,7 @@ WHERE userId = ?`,
       altMobile,
       programme,
       courses,
-      parsedGpa,
+      gpa,
       yearOfAdmission,
       yearOfGraduation,
       location,

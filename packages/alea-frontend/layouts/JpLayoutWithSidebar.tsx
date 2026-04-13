@@ -12,7 +12,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { Header } from '../components/Header';
-import { PRIMARY_COL } from '@alea/utils';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useRouter } from 'next/router';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -26,6 +25,7 @@ import {
   Send,
   Work,
 } from '@mui/icons-material';
+import Head from 'next/head';
 
 const Sidebar = ({
   drawerOpen,
@@ -98,14 +98,14 @@ const Sidebar = ({
           width: isMdUp ? (drawerOpen ? 270 : 120) : 270,
           top: isMdUp ? 0 : 64,
           height: isMdUp ? '100%' : 'calc(100% - 64px)',
-          background: 'linear-gradient(to bottom, #806BE7, #4A69E1, #525AE2, #5C49E0)',
+          background: theme.palette.jobPortal.gradients.drawer,
           transition: 'width 0.3s',
           borderRadius: isMdUp ? '0 15px 15px 0' : 0,
         },
         zIndex: isMdUp ? 0 : 1300,
       }}
     >
-      <List>
+      <List sx={{ pr: 0 }}>
         <ListItem onClick={() => setDrawerOpen(!drawerOpen)}>
           <ListItemIcon>
             {drawerOpen ? <Close sx={{ color: 'white' }} /> : <MenuIcon sx={{ color: 'white' }} />}
@@ -123,21 +123,23 @@ const Sidebar = ({
                 }
               }}
               sx={{
-                bgcolor: isActive ? '#f9f5f2' : 'transparent',
-                color: isActive ? '#4A69E1' : '#f9f5f2',
+                bgcolor: isActive ? 'jobPortal.background' : 'transparent',
+                color: isActive ? 'text.primary' : 'white',
                 pr: 4,
+                transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.2s ease',
                 borderRadius: '30px 0 0px 30px ',
                 '&:hover': isActive
-                  ? { bgcolor: 'white' }
+                  ? { bgcolor: 'rgba(255,255,255,0.5)' }
                   : {
-                      bgcolor: 'rgba(249, 245, 242, 0.1)',
+                      bgcolor: 'rgba(255,255,255,0.1)',
                     },
                 '&:hover .MuiListItemIcon-root': {
-                  color: PRIMARY_COL,
+                  color: 'primary.main',
                 },
               }}
             >
-              <ListItemIcon sx={{ color: isActive ? PRIMARY_COL : 'white' }}>
+              <ListItemIcon sx={{ color: isActive ? 'text.primary' : 'white' }}>
                 {icon || <DashboardIcon />}
               </ListItemIcon>
               {drawerOpen && <ListItemText primary={label} />}
@@ -169,9 +171,13 @@ const Sidebar = ({
 const JpLayoutWithSidebar = ({
   role,
   children,
+  title,
+  description,
 }: {
   role: 'student' | 'recruiter' | 'admin';
   children: any;
+  title?: string;
+  description?: string;
 }) => {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -181,17 +187,31 @@ const JpLayoutWithSidebar = ({
       sx={{
         display: 'flex',
         height: '100dvh',
-        backgroundColor: '#f4f4f4',
+        bgcolor: 'jobPortal.background',
       }}
     >
+      <Head>
+        <title>{title || 'ALeA Job Portal'}</title>
+        <meta
+          name="description"
+          content={
+            description ||
+            'ALeA Job Portal – student profiles, job applications, and recruiter access'
+          }
+        />
+        <link
+          rel="icon"
+          href="https://www.voll-ki.fau.de/wp-content/themes/FAU-Einrichtungen/img/socialmedia/favicon.ico"
+        />
+      </Head>
       <Sidebar drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} role={role} />
       <Box
         sx={{
-          borderRadius: '32px',
-          bgcolor: '#f9f5f2',
+          borderRadius: 8,
+          bgcolor: 'jobPortal.background',
           ml: {
             xs: 0,
-            md: '-64px',
+            md: -8,
           },
           flexGrow: 1,
           display: 'flex',
@@ -199,14 +219,14 @@ const JpLayoutWithSidebar = ({
           overflow: 'hidden',
         }}
       >
-        <Header headerBgColor="#f9f5f2" />
+        <Header headerBgColor={theme.palette.jobPortal.background} />
         <Box
           sx={{
             overflowY: 'auto',
             flexGrow: 1,
-            pb: '10px',
+            pb: 2.5,
             position: 'relative',
-            bgcolor: '#f9f5f2',
+            bgcolor: 'jobPortal.background',
           }}
         >
           {!isMdUp && (
@@ -217,8 +237,8 @@ const JpLayoutWithSidebar = ({
                 top: 0,
                 left: 0,
                 zIndex: 1000,
-                bgcolor: '#fff',
-                color: PRIMARY_COL,
+                bgcolor: 'background.paper',
+                color: 'text.primary',
                 borderRadius: '50%',
                 m: 1,
                 boxShadow: 1,

@@ -11,8 +11,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { getAllCourses, getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
-import { convertHtmlStringToPlain, CourseInfo, CoverageTimeline, LectureEntry } from '@alea/utils';
+import { getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
+import { convertHtmlStringToPlain, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
@@ -20,6 +20,7 @@ import { CoverageUpdater } from './CoverageUpdater';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { ContentDashboard } from '@alea/stex-react-renderer';
 import { MenuBook } from '@mui/icons-material';
+import { useAllCourses } from '../hooks/useAllCourses';
 
 export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
   const secInfo: SecInfo[] = [];
@@ -45,8 +46,8 @@ const CoverageUpdateTab = () => {
   const courseId = router.query.courseId as string;
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
+  const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
   const [coverageTimeline, setCoverageTimeline] = useState<CoverageTimeline>({});
-  const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
@@ -59,9 +60,7 @@ const CoverageUpdateTab = () => {
     getCoverageTimeline(true).then(setCoverageTimeline);
   }, []);
 
-  useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+  const { data: courses = {} } = useAllCourses();
 
   useEffect(() => {
     const getSections = async () => {
@@ -110,8 +109,10 @@ const CoverageUpdateTab = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
-    const courseSnaps = coverageTimeline[courseId] || [];
-    setSnaps(courseSnaps);
+
+    const courseData = coverageTimeline[courseId];
+    setSnaps(courseData?.lectures ?? []);
+    setNotCoveredSections(courseData?.notCoveredSections ?? []);
   }, [coverageTimeline, courseId, router.isReady]);
 
   const handleSaveSingle = async (updatedEntry: LectureEntry) => {
@@ -138,6 +139,31 @@ const CoverageUpdateTab = () => {
       setSaveMessage({
         type: 'error',
         message: 'Failed to save coverage data. Please try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveNotCoveredSections = async (uris: string[]) => {
+    setLoading(true);
+    try {
+      await updateCoverageTimeline({
+        courseId,
+        notCoveredSections: uris,
+      });
+
+      setNotCoveredSections(uris);
+
+      setSaveMessage({
+        type: 'success',
+        message: 'Skipped sections saved successfully!',
+      });
+    } catch (error) {
+      console.error('Error saving skipped sections:', error);
+      setSaveMessage({
+        type: 'error',
+        message: 'Failed to save skipped sections.',
       });
     } finally {
       setLoading(false);
@@ -241,9 +267,11 @@ const CoverageUpdateTab = () => {
             <CoverageUpdater
               courseId={courseId}
               snaps={snaps}
+              notCoveredSections={notCoveredSections}
               secInfo={secInfo}
               handleSaveSingle={handleSaveSingle}
               handleDeleteSingle={handleDeleteSingle}
+              handleSaveNotCoveredSections={handleSaveNotCoveredSections}
             />
           </Box>
         </Paper>

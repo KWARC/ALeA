@@ -31,7 +31,7 @@ const nextConfig = {
       ...config.experiments,
       asyncWebAssembly: true,
     };
-    
+
     // Fix for markdown-it v14 module resolution
     // markdown-it v14 uses ES modules but Next.js SSR needs CommonJS
     if (!config.resolve) {
@@ -41,8 +41,11 @@ const nextConfig = {
       config.resolve.alias = {};
     }
     config.resolve.alias['markdown-it'] = require.resolve('markdown-it/dist/index.cjs.js');
-    
+
     return config;
+  },
+  experimental: {
+    middlewareClientMaxBodySize: 2 * 1024 * 1024 * 1024, // 2GB
   },
 };
 
@@ -82,3 +85,4 @@ const plugins = [
 ];
 
 module.exports = composePlugins(...plugins)(nextConfig);
+

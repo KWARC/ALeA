@@ -183,13 +183,20 @@ export function getUpcomingQuizSyllabus(
 interface QuizDashboardProps {
   courseId: string;
   institutionId: string;
+  instanceId?: string;
   quizId?: string;
   onQuizIdChange?: (quizId: string) => void;
 }
 
-const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, quizId, onQuizIdChange }) => {
+const QuizDashboard: NextPage<QuizDashboardProps> = ({
+  courseId,
+  institutionId,
+  instanceId,
+  quizId,
+  onQuizIdChange,
+}) => {
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const currentTerm = instanceId ?? currentTermByCourseId[courseId];
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
   const [formLoading, setFormLoading] = useState(false);
   const justCreatedQuizIdRef = useRef<string | null>(null);
@@ -221,6 +228,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
   });
   const [accessType, setAccessType] = useState<'PREVIEW_ONLY' | 'MUTATE'>();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasSubproblemError, setHasSubproblemError] = useState(false);
   const [canAccess, setCanAccess] = useState(false);
   const [syllabusLoading, setSyllabusLoading] = useState(false);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
@@ -250,10 +258,10 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
     if (!justCreatedQuizIdRef.current) return;
 
     const id = justCreatedQuizIdRef.current;
-    if (!quizzes.find(q => q.id === id)) return;
+    if (!quizzes.find((q) => q.id === id)) return;
 
-      justCreatedQuizIdRef.current = null;
-      onQuizIdChange?.(id);
+    justCreatedQuizIdRef.current = null;
+    onQuizIdChange?.(id);
   }, [quizzes, onQuizIdChange]);
 
   useEffect(() => {
@@ -495,8 +503,11 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
   }, [courseId]);
 
   useEffect(() => {
-    const timeline = coverageTimeline[courseId];
-    const syllabus = getUpcomingQuizSyllabus(timeline, sections);
+    const courseData = coverageTimeline[courseId];
+
+    const lectures = courseData?.lectures ?? [];
+
+    const syllabus = getUpcomingQuizSyllabus(lectures, sections);
     if (syllabus) {
       setUpcomingQuizSyllabus(syllabus);
     }
@@ -542,7 +553,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
   if (!canAccess) return <>Unauthorized</>;
 
   return (
-    <Box m="auto" maxWidth="800px" p="10px">
+    <Box m="auto" maxWidth={800} p={1.25}>
       <Box mb={2}>
         {quizzes.length > 0 && (
           <EndSemSumAccordion
@@ -667,7 +678,13 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
             </Select>
           </FormControl>
           {accessType == 'MUTATE' && (
-            <QuizFileReader setCss={setCss} setTitle={setTitle} setProblems={setProblems} />
+            <QuizFileReader
+              setCss={setCss}
+              setTitle={setTitle}
+              setProblems={setProblems}
+              setHasSubproblemError={setHasSubproblemError}
+              allowSubproblems={false}
+            />
           )}
         </>
       )}
@@ -689,7 +706,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({ courseId, institutionId, 
       <Box display="flex" gap={2} alignItems="center" mt={2} mb={2}>
         {accessType == 'MUTATE' && (
           <Button
-            disabled={!!formErrorReason || isUpdating}
+            disabled={!!formErrorReason || isUpdating || hasSubproblemError}
             variant="contained"
             startIcon={<UpdateIcon />}
             onClick={async (e) => {

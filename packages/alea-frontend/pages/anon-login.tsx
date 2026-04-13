@@ -9,19 +9,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  anonUserSignUp,
-  checkIfUserIdExists,
-  logInUser,
-  ANON_USER_ID_PREFIX,
-} from '@alea/spec';
-import { BG_COLOR, capitalizeFirstLetter, PRIMARY_COL, setCookie } from '@alea/utils';
+import { anonUserSignUp, checkIfUserIdExists, logInUser, ANON_USER_ID_PREFIX } from '@alea/spec';
+import { capitalizeFirstLetter, setCookie } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ADJECTIVES, ANIMALS } from '../constants/avatar';
 import MainLayout from '../layouts/MainLayout';
-
 
 function modifyUserId(personality: string, animalName: string): string {
   return `${ANON_USER_ID_PREFIX}${personality}_${animalName}`;
@@ -129,13 +123,25 @@ const AnonLoginPage: NextPage = () => {
 
   return (
     <MainLayout>
-      <Box sx={{ m: 'auto', maxWidth: '700px', px: '10px', backgroundColor: BG_COLOR, py: '20px' }}>
+      <Box
+        sx={{
+          m: 'auto',
+          maxWidth: '700px',
+          px: '10px',
+          backgroundColor: 'background.paper',
+          py: '20px',
+        }}
+      >
         <Box sx={{ padding: '20px', width: '400px', m: 'auto' }}>
           <Typography variant="h4" textAlign="center" mb={2}>
             {isLoginMode ? 'Login' : 'Sign Up'}
           </Typography>
           <Typography variant="body1" textAlign="center" mb={2}>
-            {!isLoginMode && <strong style={{ color: PRIMARY_COL }}>Choose Your Avatar</strong>}
+            {!isLoginMode && (
+              <Typography component="strong" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                Choose Your Avatar
+              </Typography>
+            )}
           </Typography>
           <Box sx={{ display: 'flex' }}>
             <FormControl>

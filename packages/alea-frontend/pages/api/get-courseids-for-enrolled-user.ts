@@ -1,7 +1,7 @@
 import { getAllCoursesFromDb } from './get-all-courses';
 import { getCurrentTermForCourseId } from './get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCourseEnrollmentAcl } from '../course-home/[courseId]';
+import { getCourseEnrollmentAcl } from '../../components/courseHelpers';
 import { isMemberOfAcl } from './acl-utils/acl-common-utils';
 import { getUserIdOrSetError } from './comment-utils';
 

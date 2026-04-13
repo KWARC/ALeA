@@ -1,29 +1,38 @@
+import { isUserMember } from '@alea/spec';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ArticleIcon from '@mui/icons-material/Article';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
-import { getAllCourses } from '@alea/spec';
-import { CourseInfo, PRIMARY_COL, PRIMARY_COL_DARK_HOVER } from '@alea/utils';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 
+import {
+  CourseInfo,
+  PARTNERED_UNIVERSITIES,
+  UniversityDetail,
+  pathToCourseHome,
+  pathToCourseNotes,
+  pathToCourseResource,
+  pathToCourseView,
+  pathToStudyBuddy,
+} from '@alea/utils';
 import Diversity3 from '@mui/icons-material/Diversity3';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
-import { PARTNERED_UNIVERSITIES, UniversityDetail } from '@alea/utils';
 import { getAllCoursesFromDb } from '../api/get-all-courses';
 
 function ColoredIconButton({ children }: { children: ReactNode }) {
   return (
     <IconButton
       sx={{
-        bgcolor: PRIMARY_COL,
-        '&:hover, &.Mui-focusVisible': { bgcolor: PRIMARY_COL_DARK_HOVER },
+        bgcolor: 'primary.main',
+        '&:hover, &.Mui-focusVisible': { bgcolor: 'primary.dark' },
       }}
     >
       {children}
@@ -31,36 +40,41 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
   );
 }
 
-export function CourseThumb({ course }: { course: CourseInfo }) {
+export function CourseThumb({
+  course,
+  institutionId,
+}: {
+  course: CourseInfo;
+  institutionId?: string;
+}) {
   const router = useRouter();
   const { home } = getLocaleObject(router);
   const t = home.courseThumb;
-  const {
-    courseId,
-    courseName,
-    courseHome,
-    imageLink,
-    notesLink,
-    slidesLink,
-    cardsLink,
-    forumLink,
-    quizzesLink,
-    hasQuiz,
-  } = course;
+  const { courseId, courseName, imageLink, hasQuiz } = course;
+  const inst = institutionId ?? course.universityId ?? 'FAU';
+  const instance = 'latest';
+  const homeHref = pathToCourseHome(inst, courseId, instance);
+  const notesLink = pathToCourseNotes(inst, courseId, instance);
+  const slidesLink = pathToCourseView(inst, courseId, instance);
+  const cardsLink = pathToCourseResource(inst, courseId, instance, '/flash-cards');
+  const forumLink = pathToCourseResource(inst, courseId, instance, '/forum');
+  const quizzesLink = pathToCourseResource(inst, courseId, instance, '/quiz-dash');
+  const studyBuddyLink = pathToStudyBuddy(inst, courseId, instance);
   const width = courseId === 'iwgs-1' ? 83 : courseId === 'iwgs-2' ? 165 : 200;
   return (
     <Card
       sx={{
-        backgroundColor: 'hsl(210, 20%, 95%)',
-        border: '1px solid #CCC',
-        p: '10px',
-        m: '10px',
-        width: '200px',
+        bgcolor: 'background.card',
+        border: '1px solid ',
+        borderColor: 'divider',
+        p: 1.25,
+        m: 1.25,
+        maxWidth: 252,
       }}
     >
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
         <Box display="flex" flexDirection="column" alignItems="center">
-          <Link href={courseHome} style={{ textAlign: 'center' }}>
+          <Link href={homeHref} style={{ textAlign: 'center' }}>
             <Image
               src={imageLink}
               width={width}
@@ -69,12 +83,15 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
               style={{ display: 'block', margin: 'auto' }}
               priority={true}
             />
-            <span style={{ fontSize: '16px', marginTop: '5px', fontWeight: 'bold' }}>
+            <Typography
+              component="span"
+              sx={{ fontSize: 16, mt: 0.6, fontWeight: 'bold', fontFamily: 'Latin Modern' }}
+            >
               {courseName.length > 50 ? courseId.toUpperCase() : courseName}
-            </span>
+            </Typography>
           </Link>
         </Box>
-        <Box display="flex" justifyContent="space-between" mt="5px" gap="5px" flexWrap="wrap">
+        <Box display="flex" justifyContent="space-between" mt={0.6} gap={0.6} flexWrap="wrap">
           <Tooltip title={t.notes}>
             <Link href={notesLink} passHref>
               <Button size="small" variant="contained">
@@ -120,7 +137,7 @@ export function CourseThumb({ course }: { course: CourseInfo }) {
           }
 
           <Tooltip title={t.studyBuddy}>
-            <Link href={`/study-buddy/${courseId}`} passHref>
+            <Link href={studyBuddyLink} passHref>
               <ColoredIconButton>
                 <Diversity3 htmlColor="white" />
               </ColoredIconButton>
@@ -145,6 +162,15 @@ const StudentHomePage: NextPage = ({
   const institution = query.institution as string;
   const { currentTermByUniversityId } = useCurrentTermContext();
   const currentTerm = currentTermByUniversityId[institution];
+  const [isUniversityAdmin, setIsUniversityAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!institution || institution === 'others') {
+      setIsUniversityAdmin(false);
+      return;
+    }
+    isUserMember(`${institution.toLowerCase()}-admin`).then(setIsUniversityAdmin);
+  }, [institution]);
 
   if (!courses) return null;
   return (
@@ -159,23 +185,34 @@ const StudentHomePage: NextPage = ({
               width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
               height={150}
             />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'#04316a'}>
+            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'blue.800'}>
               {UniversityDetail[institution]?.fullName}
             </Typography>
           </Box>
-          <Link href="/study-buddy">
-            <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
-              {institution === 'FAU' ? (
-                <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
-              ) : null}
-            </Tooltip>
-          </Link>
+          <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
+            <Link href="/study-buddy">
+              <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
+                {institution === 'FAU' ? (
+                  <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
+                ) : null}
+              </Tooltip>
+            </Link>
+            {isUniversityAdmin && institution !== 'others' && (
+              <Link href={`/u/${institution}/university-admin`}>
+                <Tooltip title="Go to University Admin page">
+                  <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />}>
+                    University Admin
+                  </Button>
+                </Tooltip>
+              </Link>
+            )}
+          </Box>
           <h2>{`${t.courseSection} (${currentTerm})`}</h2>
           <Box display="flex" flexWrap="wrap">
             {Object.values(courses)
               .filter((course) => course.isCurrent)
               .map((c) => (
-                <CourseThumb key={c.courseId} course={c} />
+                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
               ))}
           </Box>
           <h2>{t.otherCourses}</h2>
@@ -183,7 +220,7 @@ const StudentHomePage: NextPage = ({
             {Object.values(courses)
               .filter((course) => !course.isCurrent)
               .map((c) => (
-                <CourseThumb key={c.courseId} course={c} />
+                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
               ))}
           </Box>
           <hr style={{ width: '90%' }} />
