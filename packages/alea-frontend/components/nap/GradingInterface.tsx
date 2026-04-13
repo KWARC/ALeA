@@ -394,7 +394,7 @@ function GradingItemsList({
                 )}
               </ListItemIcon>
               <ListItemText
-                primary={`Problem ${idx + 1}`}
+                primary={!isPeerGrading ? `Problem ${idx + 1}` : 'Problem'}
                 secondary={
                   <>
                     {!homeworkId ? (
