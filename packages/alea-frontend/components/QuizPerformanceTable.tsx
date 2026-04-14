@@ -66,18 +66,20 @@ function RecorrectionInfoDisp({ recorrectionInfo }: { recorrectionInfo?: Recorre
 
 function QuizPerformanceTable({
   courseId,
+  instanceId,
   quizList,
   header,
 }: {
   courseId: string;
+  instanceId?: string;
   quizList: QuizStubInfo[];
   header: string;
 }) {
   const { quizPerformanceTable: t } = getLocaleObject(useRouter());
   const [previousQuizData, setPreviousQuizData] = useState<GetPreviousQuizInfoResponse>();
   useEffect(() => {
-    getPreviousQuizInfo(courseId).then(setPreviousQuizData);
-  }, [courseId]);
+    getPreviousQuizInfo(courseId, instanceId).then(setPreviousQuizData);
+  }, [courseId, instanceId]);
   return (
     <>
       <Typography variant="h5" sx={{ m: '30px 0 15px' }}>
