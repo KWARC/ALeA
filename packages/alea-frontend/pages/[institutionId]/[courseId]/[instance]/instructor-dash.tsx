@@ -261,10 +261,6 @@ const InstructorDashPage: NextPage = () => {
           scrollButtons="auto"
           aria-label="Instructor Dashboard Tabs"
           sx={{
-            overflowX: 'auto',
-            '& .MuiTabs-flexContainer': {
-              justifyContent: { xs: 'flex-start', md: 'center' },
-            },
             '& .MuiTab-root': {
               fontSize: '14px',
               minWidth: '120px',
