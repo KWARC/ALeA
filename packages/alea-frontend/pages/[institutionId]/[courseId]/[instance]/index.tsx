@@ -1,48 +1,42 @@
+import { useCurrentUser } from '@alea/react-utils';
 import {
-  Announcement,
   canAccessResource,
-  CourseInfoMetadata,
   getActiveAnnouncements,
   getAllCourses,
   getCourseInfoMetadata,
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
-  getUserInfo,
-  LectureScheduleItem,
-  UserInfo,
+  getSemesterInfo,
+  LectureScheduleItem
 } from '@alea/spec';
+import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
   Action,
-  CourseInfo,
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
-  isFauId,
-  pathToCourseResource,
-  pathToCourseNotes,
-  pathToCourseView,
-  pathToStudyBuddy,
-  pathToHomework,
-  pathToPracticeProblems,
-  pathToInstructorDash,
-  ResourceName,
   pathToCheatSheet,
+  pathToCourseNotes,
+  pathToCourseResource,
+  pathToCourseView,
+  pathToHomework,
+  pathToInstructorDash,
+  pathToPracticeProblems,
+  pathToStudyBuddy,
+  ResourceName
 } from '@alea/utils';
-import { getSemesterInfo } from '@alea/spec';
-import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import PersonIcon from '@mui/icons-material/Person';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
-import { useTheme } from '@mui/material/styles';
 import {
   Alert,
   Box,
@@ -50,34 +44,34 @@ import {
   ButtonGroup,
   Card,
   CircularProgress,
+  Grid,
   IconButton,
-  Tooltip,
   InputAdornment,
   TextField,
+  Tooltip,
   Typography,
-  Grid,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { useCurrentUser } from '@alea/react-utils';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCheckAccess } from '../../../../hooks/auth/useCheckAccess';
 import { CourseHeader } from '../../../../components/CourseHeader';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import InstructorDetails from '../../../../components/InstructorDetails';
+import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
 import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
+import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
+import { useCheckAccess } from '../../../../hooks/auth/useCheckAccess';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { useStudentCount } from '../../../../hooks/useStudentCount';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import shadows from '../../../../theme/shadows';
-import type { NextPage } from 'next';
-import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -593,7 +587,7 @@ const CourseHomePage: NextPage = () => {
       url: ins.url,
     })) ?? [];
 
-  const { hasQuiz, hasCheatsheet, notes, landing, slides } = courseInfo;
+  const { hasQuiz, hasHomework, hasCheatsheet, notes, landing, slides } = courseInfo;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -733,7 +727,7 @@ const CourseHomePage: NextPage = () => {
               <QuizIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          {['lbs', 'ai-1', 'smai'].includes(courseId) && (
+          {hasHomework && (
             <CourseComponentLink href={homeworkLink}>
               {t.homeworks}&nbsp;
               <AssignmentTurnedInIcon fontSize="large" />
