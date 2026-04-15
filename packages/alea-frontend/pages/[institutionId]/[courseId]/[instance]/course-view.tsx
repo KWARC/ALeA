@@ -151,7 +151,7 @@ function findSection(
   notCoveredSections: string[],
   isParentNotCovered = false
 ): { tocElem: Extract<FTML.TocElem, { type: 'Section' }>; isNotCovered: boolean } {
-  for (const tocElem of toc) {
+  for (const tocElem of toc || []) {
     const isNotCovered =
       isParentNotCovered ||
       (tocElem.type === 'Section' && notCoveredSections.includes(tocElem.uri));
