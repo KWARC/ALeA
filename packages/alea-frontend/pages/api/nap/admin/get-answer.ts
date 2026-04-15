@@ -26,9 +26,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const answerId = +(req.query.answerId as string);
   const answer = await executeAndEndSet500OnError<any[]>(
-    'SELECT	subProblemId, questionId, answer, userId FROM Answer WHERE	id = ? ',
+    'SELECT subProblemId, questionId, answer, userId, courseId, courseInstance FROM Answer WHERE id = ?',
     [answerId],
     res
   );
-  res.send(answer[0]);
+  if (!answer?.length) return res.status(404).end();
+
+  const base = answer[0];
+  const allResponses = await executeAndEndSet500OnError<any[]>(
+    `SELECT subProblemId, answer
+     FROM Answer
+     WHERE questionId = ? AND userId = ? AND courseId = ? AND courseInstance = ?
+     ORDER BY subProblemId`,
+    [base.questionId, base.userId, base.courseId, base.courseInstance],
+    res
+  );
+  if (!allResponses) return;
+
+  res.send({
+    ...base,
+    responses: allResponses,
+  });
 }

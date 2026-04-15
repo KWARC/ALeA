@@ -110,3 +110,8 @@ export interface GradingItem {
   numSubProblemsGraded: number;
   numSubProblemsInstructorGraded: number;
 }
+
+export interface GetNextGradingItemResponse {
+  gradingItem: GradingItem | null;
+  responses?: { subProblemId: string; answer: string }[];
+}

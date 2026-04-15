@@ -7,6 +7,7 @@ import {
   CreateAnswerRequest,
   CreateGradingRequest,
   CreateReviewRequest,
+  GetNextGradingItemResponse,
   GradingInfo,
   GradingItem,
   GradingWithAnswer,
@@ -33,10 +34,10 @@ export async function createAnswer(answer: CreateAnswerRequest) {
   }
 }
 
-export async function createGrading(grading: CreateGradingRequest) {
+export async function createGrading(gradingRequest: CreateGradingRequest) {
   return await axios
-    .post('/api/nap/create-grading', grading)
-    .then((c) => ({ status: c.status, data: c.data as number }));
+    .post('/api/nap/create-grading', gradingRequest)
+    .then((response) => ({ status: response.status, data: response.data as number }));
 }
 
 export async function createReviewRequest(request: CreateReviewRequest) {
@@ -129,6 +130,20 @@ export async function getCourseGradingItems(courseId: string) {
     params: { courseId },
   });
   return resp.data as GetCourseGradingItemsResponse;
+}
+export async function getNextGradingItem(
+  courseId: string,
+  courseInstance?: string,
+  excludeAnswerIds?: number[]
+) {
+  const response = await axios.get('/api/nap/get-next-grading-item', {
+    params: {
+      courseId,
+      courseInstance,
+      excludeAnswerIds: excludeAnswerIds?.length ? excludeAnswerIds.join(',') : undefined,
+    },
+  });
+  return response.data as GetNextGradingItemResponse;
 }
 export async function getMyAnswers() {
   return (
