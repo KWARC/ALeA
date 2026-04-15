@@ -123,6 +123,7 @@ export function SlidePicker({
         setLocalAvailableSlides(EMPTY_SLIDE_DATA);
         return;
       }
+         if (!slidesData) return;
       setError(null);
       try {
         const processedSlides = await getRelevantSlides(slidesData, section.uri);
@@ -142,7 +143,7 @@ export function SlidePicker({
       }
     };
     fetchSlides();
-  }, [sectionUri, secInfo, courseId, section]);
+  }, [sectionUri, secInfo, courseId, section,slidesData]);
 
   const slideOptions = availableSlides?.slides ?? [];
   const selectedSlide = slideOptions.find((slide) => slide.uri === slideUri);
