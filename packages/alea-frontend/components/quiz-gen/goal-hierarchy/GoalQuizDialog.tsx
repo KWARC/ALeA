@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { CircularProgress, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { QuizPanel } from '../QuizPanel';
-import { FlatQuizProblem } from 'packages/alea-frontend/pages/quiz-gen';
+import { FlatQuizProblem } from '../../../pages/quiz-gen';
 import { getSecInfo } from '../../coverage-update';
 import { getAllCourses, getProblemsByGoal, UserInfo } from '@alea/spec';
-import { SecInfo } from 'packages/alea-frontend/types';
+import { SecInfo } from '../../../types';
 import { CourseInfo } from '@alea/utils';
 import { contentToc } from '@flexiformal/ftml-backend';
 
@@ -40,7 +40,7 @@ export const GoalQuizDialog = ({
       if (!courseInfo?.notes) return;
       setLoadingSections(true);
       try {
-        const toc = (await contentToc({ uri: courseInfo.notes }))?.[1] ?? [];
+        const toc = (await contentToc({ uri: courseInfo.notes }))?.[2] ?? [];
         const formattedSections = toc.flatMap((entry) =>
           getSecInfo(entry).map(({ id, uri, title }) => ({ id, uri, title }))
         );

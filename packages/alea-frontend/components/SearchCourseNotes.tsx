@@ -3,12 +3,16 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useRouter } from 'next/router';
 
-import { useEffect, useState } from 'react';
-import { searchDocs, type SearchResult, contentToc, TocElem } from '@flexiformal/ftml-backend';
-import { getSecInfo } from '../components/coverage-update';
 import { getAllCourses, getSlideUriToIndexMapping } from '@alea/spec';
-import { getParamFromUri, pathToCourseHome, pathToCourseNotes, pathToCourseView } from '@alea/utils';
 import type { CourseInfo } from '@alea/utils';
+import {
+  getParamFromUri,
+  pathToCourseHome,
+  pathToCourseNotes,
+  pathToCourseView,
+} from '@alea/utils';
+import { contentToc, searchDocs, TocElem, type SearchResult } from '@flexiformal/ftml-backend';
+import { useEffect, useState } from 'react';
 
 function findImmediateParentSection(
   targetUri: string,
@@ -100,7 +104,7 @@ const SearchCourseNotes = ({
   useEffect(() => {
     if (!notesUri) return;
 
-    contentToc({ uri: notesUri }).then(([, toc] = [[], []]) => {
+    contentToc({ uri: notesUri }).then(([, , toc] = [[], { type: 'Part' }, []]) => {
       setToc(toc);
     });
   }, [notesUri]);
@@ -133,7 +137,7 @@ const SearchCourseNotes = ({
         }
 
         try {
-          const [, toc] = (await contentToc({ uri: courseInfo.notes })) ?? [];
+          const [, , toc] = (await contentToc({ uri: courseInfo.notes })) ?? [[], undefined ,[]];
           return [courseId, toc ?? []];
         } catch (err) {
           console.error(`Failed to load TOC for course ${courseId}`, err);
@@ -189,9 +193,11 @@ const SearchCourseNotes = ({
       const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
       if (!parentSlideUri) {
         router.push(
-          `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
-            targetUri
-          )}`
+          `${pathToCourseView(
+            institutionId,
+            foundCourseId,
+            instance
+          )}?fragment=${encodeURIComponent(targetUri)}`
         );
         return;
       }
@@ -208,9 +214,13 @@ const SearchCourseNotes = ({
 
       if (foundSectionId && foundSlideNum !== undefined) {
         router.push(
-          `${pathToCourseView(institutionId, foundCourseId, instance)}?sectionId=${encodeURIComponent(
-            foundSectionId
-          )}&slideNum=${encodeURIComponent(String(foundSlideNum))}`
+          `${pathToCourseView(
+            institutionId,
+            foundCourseId,
+            instance
+          )}?sectionId=${encodeURIComponent(foundSectionId)}&slideNum=${encodeURIComponent(
+            String(foundSlideNum)
+          )}`
         );
         return;
       }

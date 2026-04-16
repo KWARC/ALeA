@@ -115,7 +115,7 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId ?? '']?.notes;
     if (!notes) return;
     setToc(undefined);
-    contentToc({ uri: notes }).then(([css, toc] = [[], []]) => {
+    contentToc({ uri: notes }).then(([_css, _, toc] = [[], { type: 'Part' }, []]) => {
       setToc(toc);
       uriToTitle.current = {};
       getSectionUriToTitle(toc, uriToTitle.current);
@@ -238,7 +238,7 @@ const CourseNotesPage: NextPage = () => {
           height: 'calc(100vh - 120px)',
           overflow: 'auto',
           position: 'relative',
-          bgcolor:'white'
+          bgcolor: 'white',
         }}
       >
         <SafeFTMLDocument
