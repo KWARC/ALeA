@@ -154,7 +154,12 @@ export interface UploadCheatSheetContentProps {
   onUploaded: () => void;
   onClose: () => void;
 }
-
+type UploadWindowStatus = 'PAST' | 'CURRENT' | 'FUTURE';
+interface UploadContext {
+  windowStart: string; // ISO
+  windowEnd: string; // ISO
+  status: UploadWindowStatus;
+}
 export function UploadCheatSheetContent({
   isInstructor = false,
   onUploaded,
@@ -172,6 +177,8 @@ export function UploadCheatSheetContent({
   const [file, setFile] = useState<File | null>(null);
   const [images, setImages] = useState<ImageEntry[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [uploadContext, setUploadContext] = useState<UploadContext | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
@@ -227,7 +234,7 @@ export function UploadCheatSheetContent({
       if (tab === 'file' && file) {
         const formData = new FormData();
         formData.append('file', file);
-        await postScannedCheatSheet(formData);
+        return await postScannedCheatSheet(formData);
       } else if (images.length > 0) {
         const pdfBlob = await imagesToPDF(images.map((img) => img.file));
         const pdfFile = new File([pdfBlob], `cheatsheet-${Date.now()}.pdf`, {
@@ -235,16 +242,27 @@ export function UploadCheatSheetContent({
         });
         const formData = new FormData();
         formData.append('file', pdfFile);
-        await postScannedCheatSheet(formData);
+        return await postScannedCheatSheet(formData);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       setFile(null);
       setImages([]);
+      setSuccessMsg(data?.message || 'Cheatsheet uploaded successfully!');
+      if (data?.uploadContext && isInstructor) {
+        setUploadContext(data.uploadContext);
+      }
       onUploaded();
     },
-    onError: (err: Error) => {
-      setErrorMsg(err?.message ?? 'Something went wrong. Please try again.');
+    onError: (err: any) => {
+      if (isInstructor) return;
+      const errorMessage =
+        typeof err?.response?.data === 'string'
+          ? err.response.data
+          : err?.response?.data?.message ??
+            err?.message ??
+            'Something went wrong. Please try again.';
+      setErrorMsg(errorMessage);
     },
   });
 
@@ -252,6 +270,8 @@ export function UploadCheatSheetContent({
     setFile(null);
     setImages([]);
     setErrorMsg('');
+    setSuccessMsg('');
+    setUploadContext(null);
     setTab('file');
     uploadMutation.reset();
     stopCamera();
@@ -586,7 +606,20 @@ export function UploadCheatSheetContent({
       )}
       {uploadMutation.isSuccess && (
         <Alert severity="success" sx={{ mt: 1.5 }}>
-          Cheat sheet uploaded successfully!
+          <Box>
+            <div>{successMsg}</div>
+            {uploadContext && (
+              <Box sx={{ mt: 1, fontSize: '0.875rem', opacity: 0.9 }}>
+                <div>
+                  📅 Window: {new Date(uploadContext.windowStart).toLocaleString()} →{' '}
+                  {new Date(uploadContext.windowEnd).toLocaleString()}
+                </div>
+                <div>
+                  Status: {uploadContext.status === 'CURRENT' ? '✓ Current' : uploadContext.status}
+                </div>
+              </Box>
+            )}
+          </Box>
         </Alert>
       )}
 

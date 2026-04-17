@@ -1,7 +1,6 @@
-import { Box, Button, CircularProgress, Chip, Tooltip, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Chip, Tooltip, Typography, Alert } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import { useRouter } from 'next/router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useCurrentUser } from '@alea/react-utils';
@@ -10,65 +9,166 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
-import { createCheatSheet, getAllCourses, getCheatSheets, getCourseInfoMetadata } from '@alea/spec';
-import type { NextPage } from 'next';
+import {
+  createCheatSheet,
+  getAllCourses,
+  getCheatSheets,
+  getCheatsheetUploadWindow,
+  CheatsheetUploadWindowResponse,
+} from '@alea/spec';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
 import { PostAdd } from '@mui/icons-material';
 import {
-  CheatSheetRow,
-  DateRangeValue,
+  CheatSheetWindowsTable,
   EmptyState,
   FilePreviewDialog,
   InlineStudentMergeButton,
-  InstructorDateRangeFields,
   UserFilterBar,
 } from '../../../../components/CheatSheetComponents';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material';
 
 interface CheatSheetActionsProps {
   isEmbedded: boolean;
-  onGenerate: () => void;
+  onDownload: () => void;
   onUpload: () => void;
-  canStudentUploadCheatsheet?: boolean;
+  uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
 }
 
 function CheatSheetActions({
   isEmbedded,
-  onGenerate,
+  onDownload,
   onUpload,
-  canStudentUploadCheatsheet = false,
+  uploadWindowInfo,
 }: CheatSheetActionsProps) {
+  const getUploadButtonState = () => {
+    if (isEmbedded) {
+      return {
+        disabled: false,
+        tooltip: 'Upload cheatsheet.',
+      };
+    }
+
+    if (!uploadWindowInfo?.hasUploadEnabled) {
+      return {
+        disabled: true,
+        tooltip: uploadWindowInfo?.message || 'Cheatsheet upload is not available',
+      };
+    }
+
+    if (uploadWindowInfo.currentWindow) {
+      return {
+        disabled: false,
+        tooltip: `Current Week Cheatsheet upload available until ${new Date(
+          uploadWindowInfo.currentWindow.windowEnd
+        ).toLocaleString()}`,
+      };
+    }
+
+    if (uploadWindowInfo.upcomingWindow) {
+      const startDate = new Date(uploadWindowInfo.upcomingWindow.windowStart).toLocaleString();
+      return {
+        disabled: true,
+        tooltip: `Next upload window: ${startDate}`,
+      };
+    }
+
+    return {
+      disabled: true,
+      tooltip: 'No upload windows available',
+    };
+  };
+
+  const uploadState = getUploadButtonState();
   return (
     <Box display="flex" justifyContent="end" gap={2} alignItems="flex-start">
       {!isEmbedded && (
-        <Tooltip title="Generate Empty CheatSheet">
+        <Tooltip title="Download Blank CheatSheet">
           <Button
             variant="contained"
             size="small"
             startIcon={<PostAdd />}
-            onClick={onGenerate}
+            onClick={onDownload}
             sx={pageStyles.uploadBtn}
           >
-            Generate
+            Download
           </Button>
         </Tooltip>
       )}
-      {canStudentUploadCheatsheet && (
-        <Tooltip title="Upload Scanned PDF">
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<UploadFileIcon />}
-            onClick={onUpload}
-            sx={pageStyles.uploadBtn}
-          >
-            Upload
-          </Button>
+      {(isEmbedded || uploadWindowInfo?.hasUploadEnabled) && (
+        <Tooltip title={uploadState.tooltip}>
+          <span>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<UploadFileIcon />}
+              onClick={onUpload}
+              disabled={uploadState.disabled}
+              sx={pageStyles.uploadBtn}
+            >
+              Upload
+            </Button>
+          </span>
         </Tooltip>
       )}
     </Box>
   );
 }
+export function CheatsheetDownloadDialog({
+  open,
+  onClose,
+  scope,
+  onScopeChange,
+  onDownload,
+  isDownloading = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  scope: 'this-week' | 'semester';
+  onScopeChange: (value: 'this-week' | 'semester') => void;
+  onDownload: () => void;
+  isDownloading?: boolean;
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Download Cheatsheets</DialogTitle>
 
+      <DialogContent sx={{ mt: 2 }}>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Download blank cheatsheet and write it in your own handwriting.{' '}
+        </Alert>
+
+        <Typography variant="subtitle2" fontWeight="bold" mb={2}>
+          Choose what you want
+        </Typography>
+
+        <RadioGroup
+          value={scope}
+          onChange={(e) => onScopeChange(e.target.value as 'this-week' | 'semester')}
+          sx={{ mb: 3 }}
+        >
+          <FormControlLabel value="this-week" control={<Radio />} label="Current week only" />
+          <FormControlLabel value="semester" control={<Radio />} label="Entire semester" />
+        </RadioGroup>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+
+        <Button onClick={onDownload} variant="contained" disabled={isDownloading}>
+          {isDownloading ? 'Downloading...' : 'Download'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 function CheatSheetsContent({
   files,
   isLoading,
@@ -85,7 +185,7 @@ function CheatSheetsContent({
   courseName,
   universityId,
   userId,
-  canStudentUploadCheatsheet = false,
+  uploadWindowInfo,
 }: {
   files: any[];
   isLoading: boolean;
@@ -102,25 +202,38 @@ function CheatSheetsContent({
   courseName: string;
   universityId: string;
   userId: string;
-  canStudentUploadCheatsheet?: boolean;
+  uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
 }) {
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [generationWindow, setGenerationWindow] = useState<DateRangeValue>({ start: '', end: '' });
-  const [uploadWindow, setUploadWindow] = useState<DateRangeValue>({ start: '', end: '' });
-
+  const [bulkDownloadOpen, setBulkDownloadOpen] = useState(false);
+  const [downloadScope, setDownloadScope] = useState<'this-week' | 'semester'>('this-week');
+  const [isDownloading, setIsGenerating] = useState(false);
   function handleUploaded() {
     queryClient.invalidateQueries({
       queryKey: ['cheatsheets', courseId, instanceId],
     });
   }
 
-  const downloadCheatsheet = async () => {
+  type CheatsheetScope = 'WEEK' | 'SEMESTER';
+  const handleDownload = async () => {
+    try {
+      setIsGenerating(true);
+      const scope: CheatsheetScope = downloadScope === 'this-week' ? 'WEEK' : 'SEMESTER';
+      await downloadCheatsheet(scope);
+    } catch (err) {
+      console.error('Error generating cheatsheet:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  const downloadCheatsheet = async (scope: CheatsheetScope) => {
     const { blob, filename } = await createCheatSheet({
       courseName,
       courseId,
       instanceId,
       universityId,
+      scope,
     });
     const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(safeBlob);
@@ -135,11 +248,31 @@ function CheatSheetsContent({
 
   return (
     <Box sx={pageStyles.container}>
+      {!isEmbedded && uploadWindowInfo && !uploadWindowInfo.currentWindow && (
+        <Alert severity={uploadWindowInfo.hasUploadEnabled ? 'info' : 'warning'} sx={{ mb: 2 }}>
+          {uploadWindowInfo.upcomingWindow
+            ? `Next upload window: ${new Date(
+                uploadWindowInfo.upcomingWindow.windowStart
+              ).toLocaleDateString()} ${new Date(
+                uploadWindowInfo.upcomingWindow.windowStart
+              ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+            : uploadWindowInfo.message || 'No upload windows available'}
+        </Alert>
+      )}
+
       <CheatSheetActions
         isEmbedded={isEmbedded}
-        onGenerate={downloadCheatsheet}
+        onDownload={() => setBulkDownloadOpen(true)}
         onUpload={() => setUploadOpen(true)}
-        canStudentUploadCheatsheet={canStudentUploadCheatsheet}
+        uploadWindowInfo={uploadWindowInfo}
+      />
+      <CheatsheetDownloadDialog
+        open={bulkDownloadOpen}
+        onClose={() => setBulkDownloadOpen(false)}
+        scope={downloadScope}
+        onScopeChange={setDownloadScope}
+        onDownload={handleDownload}
+        isDownloading={isDownloading}
       />
 
       <Box sx={pageStyles.titleBar}>
@@ -229,14 +362,13 @@ function CheatSheetsContent({
 
       {!isLoading && !isError && files.length > 0 && (
         <Box sx={pageStyles.list}>
-          {files.map((file) => (
-            <CheatSheetRow
-              key={file.cheatsheetId}
-              file={file}
+          {uploadWindowInfo?.allWindows && (
+            <CheatSheetWindowsTable
+              windows={uploadWindowInfo.allWindows}
+              files={files}
               onPreview={onPreview}
-              showUserId={false}
             />
-          ))}
+          )}
         </Box>
       )}
 
@@ -256,8 +388,6 @@ function CheatSheetsContent({
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 async function fetchCheatsheets(
   courseId: string,
   instanceId: string,
@@ -276,7 +406,6 @@ const CheatsheetsPage = ({
   instanceId: string;
   courseName?: string;
 }) => {
-  const router = useRouter();
   const isEmbedded = Boolean(propCourseId && propInstanceId);
   const {
     institutionId,
@@ -295,14 +424,13 @@ const CheatsheetsPage = ({
     queryFn: () => getAllCourses(),
     enabled: !isEmbedded,
   });
-  const { data: courseMetadata, isLoading: isMetadataLoading } = useQuery({
-    queryKey: ['courseMetadata', courseId, instanceId],
-    queryFn: () => getCourseInfoMetadata(courseId, instanceId),
-    enabled: !isEmbedded && Boolean(courseId && instanceId),
+
+  const { data: uploadWindowInfo } = useQuery({
+    queryKey: ['cheatsheet-upload-window', courseId, instanceId, institutionId],
+    queryFn: () => getCheatsheetUploadWindow(courseId, instanceId, institutionId),
+    enabled: Boolean(courseId && instanceId && institutionId),
   });
-  const canStudentUploadCheatsheet = Boolean(
-    isEmbedded ? true : isMetadataLoading ? false : courseMetadata?.canStudentUploadCheatsheet
-  );
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const {
     data: allFiles = [],
@@ -339,7 +467,7 @@ const CheatsheetsPage = ({
     courseId,
     courseName: propCourseName ?? '',
     userId,
-    canStudentUploadCheatsheet,
+    uploadWindowInfo,
   };
 
   if (!isEmbedded) {

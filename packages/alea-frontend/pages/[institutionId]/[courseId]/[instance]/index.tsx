@@ -580,8 +580,8 @@ const CourseHomePage: NextPage = () => {
       name: ins.name,
       url: ins.url,
     })) ?? [];
-
-  const { hasQuiz, hasCheatsheet, notes, landing, slides } = courseInfo;
+  const cheatsheetConfig = courseMetadata?.cheatsheetConfig;
+  const { hasQuiz, notes, landing, slides } = courseInfo;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -741,7 +741,7 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          {hasCheatsheet && (
+          {cheatsheetConfig?.hasCheatsheet && (
             <CourseComponentLink href={cheatSheetsLink}>
               CheatSheet&nbsp;
               <FolderOpenIcon fontSize="large" />
