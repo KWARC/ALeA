@@ -91,7 +91,7 @@ function transformMetadataToCoursesInfo(
     const hasQuiz = sorted.some((i) => !!i.hasQuiz);
     const hasHomework = sorted.some((i) => !!i.hasHomework);
     const cheatsheetConfig =
-      sorted.find((i) => i.instanceId === currentTerm)?.cheatsheetConfig ?? undefined;
+      sorted.find((i) => i.instanceId === currentTerm)?.cheatsheetConfig ?? null;
     const semesterInstances = sorted.map((instance) => {
       const instructorList = parseInstructorsJson(instance.instructors);
       return {
@@ -111,7 +111,7 @@ function transformMetadataToCoursesInfo(
       isCurrentTerm,
       hasQuiz,
       hasHomework,
-      cheatsheetConfig || undefined,
+      cheatsheetConfig || null,
       primary.universityId || undefined,
       semesterInstances,
       primaryInstructorNames,
