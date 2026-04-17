@@ -627,7 +627,8 @@ function getAllUploadDays(semesterStart: Date, semesterEnd: Date, uploadStartDay
   return result;
 }
 
-function parseTime(timeStr: string): { hour: number; minute: number } {
+function parseTime(timeStr?: string): { hour: number; minute: number } {
+  if (!timeStr) return { hour: 0, minute: 0 };
   const [hour, minute] = timeStr.split(':').map(Number);
   return { hour: hour || 0, minute: minute || 0 };
 }
@@ -650,8 +651,8 @@ export function CheatsheetConfigDialog({
   semesterEnd: Date;
   initialConfig?: Record<string, any>;
 }) {
-  const [configStartDay, setConfigStartDay] = useState(initialConfig?.uploadStartDay || 'Monday');
-  const [configEndDay, setConfigEndDay] = useState(initialConfig?.uploadEndDay);
+  const [configStartDay, setConfigStartDay] = useState(initialConfig?.uploadStartDay ?? '');
+  const [configEndDay, setConfigEndDay] = useState(initialConfig?.uploadEndDay ?? '');
   const startTimeParsed = parseTime(initialConfig?.uploadStartTime);
   const endTimeParsed = parseTime(initialConfig?.uploadEndTime);
 
@@ -667,6 +668,7 @@ export function CheatsheetConfigDialog({
     initialConfig?.cheatsheetSkip ?? []
   );
   const uploadDays = useMemo(() => {
+    if (!configStartDay) return [];
     return getAllUploadDays(semesterStart, semesterEnd, configStartDay);
   }, [semesterStart, semesterEnd, configStartDay]);
   const filteredEndDays = useMemo(() => {
