@@ -5,49 +5,50 @@ import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
+  executeTxnAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
-  const checkerId = await getUserIdOrSetError(req, res);
-  if (!checkerId) return;
+  const graderUserId = await getUserIdOrSetError(req, res);
+  if (!graderUserId) return;
   const { answerId } = req.body as CreateGradingRequest;
   let { customFeedback, answerClasses } = req.body as CreateGradingRequest;
   answerClasses = answerClasses?.filter((c) => c.count !== 0);
   customFeedback = customFeedback?.trim();
   if (!answerId || !answerClasses?.length) return res.status(422).end();
 
-  for (const element of answerClasses) {
+  for (const answerClassItem of answerClasses) {
     if (
-      !element.answerClassId ||
-      element.closed === null ||
-      element.isTrait === null ||
-      !element.description ||
-      !element.title ||
-      !element.points === null
+      !answerClassItem.answerClassId ||
+      answerClassItem.closed === null ||
+      answerClassItem.isTrait === null ||
+      !answerClassItem.description ||
+      !answerClassItem.title ||
+      !answerClassItem.points === null
     )
       return res.status(422).end();
   }
 
-  const answers = await executeAndEndSet500OnError(
+  const answerRows = await executeAndEndSet500OnError(
     `SELECT userId, courseId, courseInstance FROM Answer WHERE id=?`,
     [answerId],
     res
   );
-  if (!answers) return;
-  if (!answers.length) return res.status(404).send('Answer not found');
-  const answer = answers[0];
-  const isInstructor = await isUserIdAuthorizedForAny(checkerId, [
+  if (!answerRows) return;
+  if (!answerRows.length) return res.status(404).send('Answer not found');
+  const answerRow = answerRows[0];
+  const isInstructorGrader = await isUserIdAuthorizedForAny(graderUserId, [
     {
       name: ResourceName.COURSE_HOMEWORK,
       action: Action.INSTRUCTOR_GRADING,
-      variables: { courseId: answer.courseId, instanceId: answer.courseInstance },
+      variables: { courseId: answerRow.courseId, instanceId: answerRow.courseInstance },
     },
   ]);
   const reviewType =
-    checkerId === answer.userId
+    graderUserId === answerRow.userId
       ? ReviewType.SELF
-      : isInstructor
+      : isInstructorGrader
       ? ReviewType.INSTRUCTOR
       : ReviewType.PEER;
 
@@ -55,15 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   for (const answerClass of answerClasses) {
     totalPoints += answerClass.count * answerClass.points;
   }
-  const gradingResult = await executeAndEndSet500OnError(
-    `INSERT INTO Grading (checkerId, answerId, reviewType, customFeedback, totalPoints) 
-    VALUES (?,?,?,?,?)`,
-    [checkerId, answerId, reviewType, customFeedback, totalPoints],
-    res
-  );
-  if (!gradingResult) return;
-  const answerClassesParams = answerClasses.flatMap((c) => [
-    gradingResult.insertId,
+  const gradingAnswerClassInsertParams = answerClasses.flatMap((c) => [
     c.answerClassId,
     c.points,
     c.isTrait,
@@ -72,12 +65,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     c.description,
     c.count,
   ]);
-  const values = new Array(answerClasses.length).fill('(?, ?, ?, ?, ?, ?, ?, ?)');
-  await executeAndEndSet500OnError(
-    `INSERT INTO GradingAnswerClass (gradingId, answerClassId, points, isTrait, closed, title, description, count)
-    VALUES ${values.join(', ')}`,
-    answerClassesParams,
-    res
+  const gradingAnswerClassRowPlaceholders = new Array(answerClasses.length).fill(
+    '(LAST_INSERT_ID(), ?, ?, ?, ?, ?, ?, ?)'
   );
+  const transactionResult = await executeTxnAndEndSet500OnError(
+    res,
+    `INSERT INTO Grading (checkerId, answerId, reviewType, customFeedback, totalPoints) 
+    VALUES (?,?,?,?,?)`,
+    [graderUserId, answerId, reviewType, customFeedback, totalPoints],
+    'SELECT LAST_INSERT_ID() AS insertId',
+    [],
+    `INSERT INTO GradingAnswerClass (gradingId, answerClassId, points, isTrait, closed, title, description, count)
+    VALUES ${gradingAnswerClassRowPlaceholders.join(', ')}`,
+    gradingAnswerClassInsertParams
+  );
+  if (!transactionResult) return;
   res.status(201).end();
 }

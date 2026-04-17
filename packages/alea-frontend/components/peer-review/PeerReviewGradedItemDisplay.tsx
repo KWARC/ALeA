@@ -1,6 +1,7 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, IconButton } from '@mui/material';
+import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { GradingContext, ProblemDisplay, ShowGradingFor } from '@alea/stex-react-renderer';
 import dayjs from 'dayjs';
@@ -14,16 +15,43 @@ export function PeerReviewGradedItemDisplay({
 }) {
   const [problem, setProblem] = useState<FTMLProblemWithSolution>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
+
   useEffect(() => {
-    // TODO ALEA4-P4
-    // //getLearningObjectShtml(grade.questionId).then((p) => {
-    // setProblem(getProblem(p, ''));
-    //});
-    // setAnswerText({
-    //   freeTextResponses: { [grade.subProblemId]: grade.answer },
-    //   autogradableResponses: [],
-    // });
+    let isMounted = true;
+    async function loadProblem() {
+      try {
+        const fragmentResponse: any[] = await contentFragment({ uri: grade.questionId });
+        if (!isMounted) return;
+        setProblem({
+          problem: {
+            uri: grade.questionId,
+            html: fragmentResponse?.[2] || '',
+            title_html: fragmentResponse?.[1] || '',
+          },
+          answerClasses: [],
+        });
+        const responses = [] as FTML.ProblemResponse['responses'];
+        const subProblemIdx = Number(grade.subProblemId);
+        if (Number.isFinite(subProblemIdx)) {
+          responses[subProblemIdx] = {
+            type: 'Fillinsol',
+            value: grade.answer,
+          };
+        }
+        setAnswerText({
+          uri: grade.questionId,
+          responses,
+        });
+      } catch (error) {
+        console.error('Error fetching peer-review problem:', error);
+      }
+    }
+    loadProblem();
+    return () => {
+      isMounted = false;
+    };
   }, [grade]);
+
   return (
     <GradingContext.Provider
       value={{
@@ -40,8 +68,6 @@ export function PeerReviewGradedItemDisplay({
     >
       <Box>
         <ProblemDisplay
-          // problemId={grade.questionId} TODO ALEA4-P4
-          // showUnansweredProblems={false}
           showPoints={false}
           problem={problem}
           isFrozen={true}
