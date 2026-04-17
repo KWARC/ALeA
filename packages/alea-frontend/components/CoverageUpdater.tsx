@@ -163,7 +163,7 @@ export function CoverageUpdater({
 
   const handleSubmitForm = (formData: any) => {
     const newItem: LectureEntry = {
-      timestamp_ms: Date.now(),
+      timestamp_ms: formData.timestamp_ms,
       sectionUri: formData.sectionUri,
       targetSectionUri: formData.targetSectionUri,
       clipId: formData.clipId,

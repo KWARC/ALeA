@@ -105,8 +105,15 @@ export function CoverageForm({
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const timestamp = Date.parse(e.target.value);
-    setFormData({ ...formData, timestamp_ms: timestamp });
+    const d = dayjs(e.target.value);
+    setFormData({
+      ...formData,
+      timestamp_ms: dayjs(formData.timestamp_ms)
+        .year(d.year())
+        .month(d.month())
+        .date(d.date())
+        .valueOf(),
+    });
   };
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
