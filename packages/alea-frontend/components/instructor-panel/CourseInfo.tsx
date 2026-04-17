@@ -1,16 +1,15 @@
 import {
   addCourseMetadata,
   CourseInfoMetadata,
-  getAclUserDetails,
   getCourseAcls,
   getCourseInfoMetadata,
   InstructorInfo,
   updateCourseInfoMetadata,
   updateHasHomework,
   updateHasQuiz,
-  updateHasCheatsheet,
-  updateCanStudentUploadCheatsheet,
+  updateCheatsheetConfig,
   getAllAclMembers,
+  getSemesterInfo,
 } from '@alea/spec';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -72,6 +71,7 @@ function parseInstructors(val: unknown): Array<{ id: string; name: string }> {
 
   return [];
 }
+import { CheatsheetConfigDialog } from '../CheatSheetComponents';
 
 interface CourseInfoTabProps {
   courseId: string;
@@ -100,6 +100,9 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
   const [instructors, setInstructors] = useState<CourseInstructorExt[]>([]);
   const [instructorsLoading, setInstructorsLoading] = useState(true);
+  const [semesterStart, setSemesterStart] = useState<Date | undefined>();
+  const [semesterEnd, setSemesterEnd] = useState<Date | undefined>();
+  const [cheatsheetConfigDialog, setCheatsheetConfigDialog] = useState(false);
 
   useEffect(() => {
     if (!router.isReady || !courseId || !instanceId) return;
@@ -116,6 +119,13 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         setLivestreamUrl(info.livestreamUrl || '');
         setCourseInfo(info);
         setIsNew(false);
+        const data: any = await getSemesterInfo('FAU', instanceId);
+        const semesterData = data.semesterInfo || data;
+        const semester: any = Array.isArray(semesterData) ? semesterData[0] : semesterData;
+        const semesterStart = new Date(semester.semesterStart);
+        const semesterEnd = new Date(semester.semesterEnd);
+        setSemesterEnd(semesterEnd);
+        setSemesterStart(semesterStart);
       } catch (err: any) {
         if (err?.response?.status === 404) {
           resolvedInfo = {
@@ -136,8 +146,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
             scheduleType: 'lecture',
             hasHomework: false,
             hasQuiz: false,
-            hasCheatsheet: false,
-            canStudentUploadCheatsheet: false,
+            cheatsheetConfig: {},
             seriesId: '',
             updaterId: '',
           };
@@ -289,6 +298,46 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
     }
   };
 
+  const handleSaveCheatsheetConfig = async (configUpdates: Partial<Record<string, any>>) => {
+    if (!courseInfo) return;
+
+    try {
+      await updateCheatsheetConfig({
+        courseId,
+        instanceId,
+        config: configUpdates,
+      });
+      const mergedConfig = {
+        ...courseInfo.cheatsheetConfig,
+        ...configUpdates,
+      };
+      setField('cheatsheetConfig', mergedConfig);
+      setToast({ type: 'success', text: 'Cheatsheet configuration updated' });
+    } catch (err) {
+      console.error('Failed to update cheatsheet config', err);
+      setToast({ type: 'error', text: 'Failed to update cheatsheet configuration' });
+    }
+  };
+
+  const handleOpenCheatsheetConfig = () => {
+    if (courseInfo) {
+      setCheatsheetConfigDialog(true);
+    }
+  };
+
+  const handleSubmitCheatsheetConfig = async (data: any) => {
+    await handleSaveCheatsheetConfig({
+      uploadStartDay: data.uploadStartDay,
+      uploadStartTime: data.uploadStartTime,
+      uploadEndDay: data.uploadEndDay,
+      uploadEndTime: data.uploadEndTime,
+      cheatsheetStart: data.cheatsheetStart,
+      cheatsheetEnd: data.cheatsheetEnd,
+      cheatsheetSkip: data.cheatsheetSkip,
+    });
+    setCheatsheetConfigDialog(false);
+  };
+
   if (loading || !courseInfo) {
     return (
       <Box sx={{ p: 5, textAlign: 'center' }}>
@@ -399,17 +448,10 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         <FormControlLabel
           control={
             <Checkbox
-              checked={courseInfo.hasCheatsheet || false}
+              checked={courseInfo.cheatsheetConfig?.hasCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
-
-                try {
-                  await updateHasCheatsheet({ courseId, instanceId, hasCheatsheet: next });
-                  setField('hasCheatsheet', next);
-                } catch (err) {
-                  console.error('Failed to update cheatsheet', err);
-                  setToast({ type: 'error', text: 'Failed to update cheatsheet setting' });
-                }
+                await handleSaveCheatsheetConfig({ hasCheatsheet: next });
               }}
             />
           }
@@ -418,16 +460,13 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
         <FormControlLabel
           control={
             <Checkbox
-              checked={courseInfo.canStudentUploadCheatsheet || false}
+              checked={courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet || false}
               onChange={async (e) => {
                 const next = e.target.checked;
+                if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
 
                 try {
-                  await updateCanStudentUploadCheatsheet({
-                    courseId,
-                    instanceId,
-                    canStudentUploadCheatsheet: next,
-                  });
+                  await updateCanStudentUploadCheatsheet({ courseId, instanceId, canStudentUploadCheatsheet: next });
                   setField('canStudentUploadCheatsheet', next);
                 } catch (err) {
                   console.error('Failed to update student cheatsheet upload', err);
@@ -436,8 +475,21 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
               }}
             />
           }
-          label={t.canStudentUploadCheatsheet}
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <span>{t.canStudentUploadCheatsheet}</span>
+              {courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet && (
+                <span style={{ fontSize: '0.85em', color: '#666' }}>
+                  ({courseInfo.cheatsheetConfig?.uploadStartTime} -{' '}
+                  {courseInfo.cheatsheetConfig?.uploadEndTime})
+                </span>
+              )}
+            </Box>
+          }
         />
+        <Button variant="outlined" size="small" onClick={handleOpenCheatsheetConfig}disabled={!courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet}>
+          Configure Cheatsheet Window
+        </Button>
         <TextField
           label={t.seriesIdLabel}
           value={seriesId}
@@ -548,6 +600,17 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)}>
         <Alert severity={toast?.type}>{toast?.text}</Alert>
       </Snackbar>
+
+      {cheatsheetConfigDialog && semesterStart && semesterEnd && (
+        <CheatsheetConfigDialog
+          open={cheatsheetConfigDialog}
+          onClose={() => setCheatsheetConfigDialog(false)}
+          semesterStart={semesterStart}
+          semesterEnd={semesterEnd}
+          onSave={handleSubmitCheatsheetConfig}
+          initialConfig={courseInfo.cheatsheetConfig}
+        />
+      )}
     </Paper>
   );
 }

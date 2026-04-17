@@ -1,3 +1,14 @@
+interface CheatsheetConfig {
+  hasCheatsheet?: boolean;
+  canStudentUploadCheatsheet?: boolean;
+  uploadStartDay?: string; // "Monday", "Tuesday", etc.
+  uploadStartTime?: string; // HH:MM format (24-hour)
+  uploadEndDay?: string; // "Monday", "Tuesday", etc.
+  uploadEndTime?: string; // HH:MM format (24-hour)
+  cheatsheetStart?: string; // YYYY-MM-DD format
+  cheatsheetEnd?: string; // YYYY-MM-DD format
+  cheatsheetSkip?: string[]; // Array of YYYY-MM-DD strings
+}
 export interface CourseInfo {
   courseId: string;
   courseName: string;
@@ -13,7 +24,7 @@ export interface CourseInfo {
   isCurrent: boolean;
   hasQuiz: boolean;
   hasHomework: boolean;
-  hasCheatsheet: boolean;
+  cheatsheetConfig?: CheatsheetConfig;
   universityId?: string;
   livestreamUrl?: string;
   instances?: { semester: string; instructors?: string[] | null }[];
@@ -65,7 +76,7 @@ export function createCourseInfo(
   isCurrent = false,
   hasQuiz = false,
   hasHomework = false,
-  hasCheatsheet = false,
+  cheatsheetConfig?: CheatsheetConfig,
   universityId?: string,
   instances?: { semester: string; instructors?: string[] | null }[],
   instructors?: string[] | null,
@@ -87,7 +98,7 @@ export function createCourseInfo(
     isCurrent,
     hasQuiz,
     hasHomework,
-    hasCheatsheet,
+    cheatsheetConfig,
     universityId,
     instances,
     instructors,
@@ -133,7 +144,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -148,7 +159,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'SS25', instructors: null }],
     ['Michael Kohlhase'],
@@ -163,7 +174,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
-    false,
+    {},
     'FAU',
     [
       { semester: 'WS23-24', instructors: null },
@@ -181,7 +192,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -196,7 +207,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'SS25', instructors: null }],
     ['Michael Kohlhase'],
@@ -211,7 +222,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'SS25', instructors: ['Dennis Müller'] }],
     ['Michael Kohlhase'],
@@ -226,7 +237,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
-    false,
+    {},
     'FAU',
     [{ semester: 'WS25-26', instructors: null }],
     ['Michael Kohlhase'],
@@ -241,7 +252,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     true,
     true,
     true,
-    false,
+    {},
     'FAU',
     [
       { semester: 'SS25', instructors: null },
@@ -259,7 +270,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [{ semester: 'Fall 2006', instructors: null }],
     ['Michael Kohlhase'],
@@ -274,7 +285,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -289,7 +300,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -304,7 +315,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -319,7 +330,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [],
     ['Michael Kohlhase'],
@@ -334,7 +345,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [
       { semester: 'Fall 2014', instructors: null },
@@ -353,7 +364,7 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     false,
     true,
     false,
-    false,
+    {},
     'Jacobs',
     [],
     ['Michael Kohlhase'],

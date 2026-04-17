@@ -382,6 +382,16 @@ export function getCurrentWeekNoFromStartDate(startDate: string | Date): number 
   return Math.floor(diffInMs / MS_IN_WEEK) + 1;
 }
 
+export function formatDateLabel(date: string | Date) {
+  const d = typeof date === 'string' ? new Date(date) : date;
+
+  return d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export function pathToCourseResource(
   institutionId: string,
   courseId: string,

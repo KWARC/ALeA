@@ -12,6 +12,18 @@ export interface LectureSchedule {
   quizFeedbackDelayMinutes?: number;
 }
 
+export interface CheatsheetConfig {
+  hasCheatsheet?: boolean;
+  canStudentUploadCheatsheet?: boolean;
+  uploadStartDay?: string; // "Monday", "Tuesday", etc.
+  uploadStartTime?: string; // HH:MM format (24-hour)
+  uploadEndDay?: string; // "Monday", "Tuesday", etc.
+  uploadEndTime?: string; // HH:MM format (24-hour)
+  cheatsheetStart?: string; // YYYY-MM-DD format
+  cheatsheetEnd?: string; // YYYY-MM-DD format
+  cheatsheetSkip?: string[]; // Array of YYYY-MM-DD strings
+}
+
 export interface CourseMetadata {
   courseId: string;
   instanceId: string;
@@ -36,8 +48,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   livestreamUrl?: string;
   instructors: InstructorInfo[];
   hasQuiz: boolean;
-  hasCheatsheet: boolean;
-  canStudentUploadCheatsheet: boolean;
+  cheatsheetConfig?: CheatsheetConfig;
   updaterId?: string;
   universityId: string;
 }
@@ -120,17 +131,13 @@ export async function updateHasQuiz(
   return response.data;
 }
 
-export async function updateHasCheatsheet(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasCheatsheet: boolean }
-) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-cheatsheet`, data);
-  return response.data;
-}
-
-export async function updateCanStudentUploadCheatsheet(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { canStudentUploadCheatsheet: boolean }
-) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-can-student-upload-cheatsheet`, data);
+export async function updateCheatsheetConfig(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { config: Partial<CheatsheetConfig> }
+): Promise<{ success: boolean }> {
+  const response = await axios.post(
+    `${COURSE_METADATA_BASE_URL}/update-cheatsheet-config`,
+    data
+  );
   return response.data;
 }
 
