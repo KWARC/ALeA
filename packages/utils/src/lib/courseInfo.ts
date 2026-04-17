@@ -116,9 +116,15 @@ export interface LectureEntry {
   venueLink?: string;
 }
 
+export interface OutOfOrderSectionInfo {
+  startTimestamp_ms: number;
+  endTimestamp_ms?: number;
+}
+
 export interface CourseCoverageData {
   lectures: LectureEntry[];
   notCoveredSections?: string[];
+   outOfOrderSections?: Record<string, OutOfOrderSectionInfo>;
 }
 export interface CoverageTimeline {
   [courseId: string]: CourseCoverageData;

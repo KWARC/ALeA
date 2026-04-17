@@ -51,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const courseData = existingData[courseId] ?? {
       lectures: [],
       notCoveredSections: [],
+      outOfOrderSections: {},
     };
 
     const currentSnaps = courseData.lectures;
@@ -75,6 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     existingData[courseId] = {
       lectures: sanitizedLectures,
       notCoveredSections: req.body.notCoveredSections ?? courseData.notCoveredSections,
+      outOfOrderSections: req.body.outOfOrderSections ?? courseData.outOfOrderSections ?? {},
     };
 
     fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
