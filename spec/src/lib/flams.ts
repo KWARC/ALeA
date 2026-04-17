@@ -529,11 +529,23 @@ export function getQuizMetaFromQuizUri(
     number?: string;
     date?: string;
     courseId?: string;
-  }
+  },
+  courseId?: string
 ): QuizMeta {
   const decoded = decodeURIComponent(quizUri);
 
-  const courseAcronym = quiz?.courseId?.toUpperCase() ?? 'UNKNOWN';
+  let courseAcronym = 'UNKNOWN';
+
+  if (courseId) {
+    courseAcronym = courseId.toUpperCase();
+  } else if (quiz?.courseId) {
+    courseAcronym = quiz.courseId.toUpperCase();
+  } else {
+    const match = decoded.match(/courses\/[^/]+\/([^/]+)/);
+    if (match && match[1]) {
+      courseAcronym = match[1].toUpperCase();
+    }
+  }
 
   const rawTerm = quiz?.term ?? '';
   const formattedTerm = rawTerm.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
@@ -550,14 +562,14 @@ export function getQuizMetaFromQuizUri(
   };
 }
 
-export function formatQuizLabelShortFromUri(quizUri: string, quiz?: any) {
-  const meta = getQuizMetaFromQuizUri(quizUri, quiz);
+export function formatQuizLabelShortFromUri(quizUri: string, quiz?: any, courseId?: string) {
+  const meta = getQuizMetaFromQuizUri(quizUri, quiz, courseId);
 
   return [meta.courseAcronym, meta.quizNumber, meta.formattedTerm].filter(Boolean).join(' ');
 }
 
-export function formatQuizLabelFullFromUri(quizUri: string, quiz?: any) {
-  const meta = getQuizMetaFromQuizUri(quizUri, quiz);
+export function formatQuizLabelFullFromUri(quizUri: string, quiz?: any, courseId?: string) {
+  const meta = getQuizMetaFromQuizUri(quizUri, quiz, courseId);
 
   return [
     meta.courseAcronym,

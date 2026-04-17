@@ -47,6 +47,7 @@ async function buildQuizProblems(
 const QuizProblemsPage = () => {
   const router = useRouter();
   const quizUri = router.query.quizUri as string | undefined;
+  const courseId = router.query.courseId as string | undefined;
   const targetProblemId = router.query.problemId as string | undefined;
 
   const [quizMeta, setQuizMeta] = useState<any>(null);
@@ -86,13 +87,13 @@ const QuizProblemsPage = () => {
 
   const quizLabelShort = useMemo(() => {
     if (!quizUri || !quizMeta) return '';
-    return formatQuizLabelShortFromUri(quizUri, quizMeta);
-  }, [quizUri, quizMeta]);
+    return formatQuizLabelShortFromUri(quizUri, quizMeta, courseId ?? quizMeta?.courseId);
+  }, [quizUri, quizMeta, courseId]);
 
   const quizLabelFull = useMemo(() => {
     if (!quizUri || !quizMeta) return '';
-    return formatQuizLabelFullFromUri(quizUri, quizMeta);
-  }, [quizUri, quizMeta]);
+    return formatQuizLabelFullFromUri(quizUri, quizMeta, courseId ?? quizMeta?.courseId);
+  }, [quizUri, quizMeta, courseId]);
 
   if (loading) {
     return (
