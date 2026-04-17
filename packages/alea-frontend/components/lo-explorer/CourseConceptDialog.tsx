@@ -61,7 +61,7 @@ export const CourseConceptsDialog = ({
   const courseQueries = useQueries({
     queries: courseEntries.map(([courseId, info]) => ({
       queryKey: ['content-toc', info.notes],
-      queryFn: () => contentToc({ uri: info.notes }).then(([, toc]) => toc ?? []),
+      queryFn: () => contentToc({ uri: info.notes }).then(([, , toc]) => toc ?? []),
       enabled: Boolean(info.notes),
       staleTime: Infinity,
     })),

@@ -18,7 +18,6 @@ import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ForceFauLogin } from '../../components/ForceFAULogin';
-import { useCurrentTermContext } from '../../contexts/CurrentTermContext';
 import { getLocaleObject } from '../../lang/utils';
 import MainLayout from '../../layouts/MainLayout';
 import { handleEnrollment } from '../../components/courseHelpers';
@@ -117,16 +116,14 @@ const QuizPage: NextPage = () => {
   const phase = moderatorPhase ?? quizInfo?.phase;
   const courseId = quizInfo?.courseId;
   const instanceId = quizInfo?.courseTerm;
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
 
   const [forceFauLogin, setForceFauLogin] = useState(false);
   const { user } = useCurrentUser();
 
   const enrollInCourse = async () => {
     const userId = user?.userId;
-    if (!userId || !courseId || !currentTerm) return;
-    const enrollmentSuccess = await handleEnrollment(userId, courseId, currentTerm);
+    if (!userId || !courseId || !instanceId) return;
+    const enrollmentSuccess = await handleEnrollment(userId, courseId, instanceId);
     setIsEnrolled(enrollmentSuccess);
   };
 
@@ -184,16 +181,16 @@ const QuizPage: NextPage = () => {
   }, [courseId, instanceId]);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
+    if (!courseId || !instanceId) return;
     const checkAccess = async () => {
       const hasAccess = await canAccessResource(ResourceName.COURSE_QUIZ, Action.TAKE, {
         courseId,
-        instanceId: currentTerm,
+        instanceId,
       });
       setIsEnrolled(hasAccess);
     };
     checkAccess();
-  }, [courseId, currentTerm]);
+  }, [courseId, instanceId]);
 
   useEffect(() => {
     getAllCourses().then(setAllCourses);

@@ -7,7 +7,7 @@ export function useContentToc(notesUri: string) {
     queryFn: async () => {
       if (!notesUri) return [];
       const toc = await contentToc({ uri: notesUri });
-      return toc?.[1] ?? []; 
+      return toc?.[2] ?? []; 
     },
     enabled: Boolean(notesUri),
     staleTime: Infinity,

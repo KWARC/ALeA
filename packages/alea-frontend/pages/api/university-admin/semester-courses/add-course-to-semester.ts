@@ -34,8 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const alreadyExistCourseIdRow = await executeAndEndSet500OnError(
-    `SELECT courseName, notes, landing, slides, teaser
-     FROM courseMetadata
+    `SELECT courseName, notes, landing, slides, teaser, instructors     FROM courseMetadata
      WHERE courseId = ? AND universityId = ?
      LIMIT 1`,
     [courseId, universityId],
@@ -48,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let landing = '';
   let slides = '';
   let teaser: string | null = null;
+  let instructors: any = [];
 
   if (Array.isArray(alreadyExistCourseIdRow) && alreadyExistCourseIdRow.length > 0) {
     const template = alreadyExistCourseIdRow[0] as any;
@@ -56,8 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     landing = template?.landing || landing;
     slides = template?.slides || slides;
     teaser = template?.teaser ?? teaser;
+    instructors = template?.instructors || instructors;
   }
-
 
   const insertResult = await executeAndEndSet500OnError(
     `INSERT INTO courseMetadata (
@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       landing,
       slides,
       teaser,
-      JSON.stringify([]),
+      typeof instructors === 'string' ? instructors : JSON.stringify(instructors),
     ],
     res
   );

@@ -554,6 +554,8 @@ export const de = {
     lectureEntryFailed: 'Erzeugung der Vortragseinträge fehlgeschlagen: {{error}}',
 
     generateLectureEntry: 'Vortragseintrag erstellen',
+    generateLectureEntryTooltip:
+      'Wir nutzen Semesterdaten, Feiertage und den Vorlesungsplan, um Vortragseinträge (Lehrplan) für das gesamte Semester zu erzeugen.',
     lectureEntriesAlreadyGenerated: 'Vortragseinträge bereits erstellt',
 
     lectureScheduleTab: 'Vorlesungsplan',

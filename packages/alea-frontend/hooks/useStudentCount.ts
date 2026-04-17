@@ -1,7 +1,7 @@
 import { getStudentCountInCourse } from '@alea/spec';
 import { useEffect, useState } from 'react';
 
-export function useStudentCount(courseId?: string, instanceId?: string) {
+export function useStudentCount(courseId?: string, instanceId?: string, reFetch?: boolean) {
   const [studentCount, setStudentCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function useStudentCount(courseId?: string, instanceId?: string) {
         console.error('Error fetching student count:', err);
         setStudentCount(null);
       });
-  }, [courseId]);
+  }, [courseId, instanceId, reFetch]);
 
   return studentCount;
 }
