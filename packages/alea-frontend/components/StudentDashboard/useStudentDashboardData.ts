@@ -9,7 +9,7 @@ import {
   getSemesterInfo,
 } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
-import { pathToCheatSheet, toWeekdayIndex } from '@alea/utils';
+import { pathToCheatSheet } from '@alea/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -19,22 +19,6 @@ import { DEFAULT_INSTITUTION } from './types';
 import { getNextOrCurrentScheduleOccurrence, normalizeLectureScheduleEntry } from './utils';
 
 dayjs.extend(utc);
-
-function getWeekStartFromDate(date: Date, startDay: number): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = (day - startDay + 7) % 7;
-  d.setDate(d.getDate() - diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function toLocalDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 type LectureEntry = {
   lectureSchedule?: LectureSchedule[];
@@ -123,22 +107,8 @@ async function fetchCourseDashboardData(
     const sheets = (cheatSheets || []) as Array<{ weekId: string }>;
 
     if (currentWindow?.isWithinWindow && !currentWindow.isSkipped) {
-      const windowStartDate = new Date(currentWindow.windowStart);
-      const startDayNum = courseInfo.cheatsheetConfig?.uploadStartDay
-        ? toWeekdayIndex(courseInfo.cheatsheetConfig.uploadStartDay)
-        : 1; // default Monday
-      const weekStart = getWeekStartFromDate(windowStartDate, startDayNum);
-      const currentWeekId = toLocalDateString(weekStart);
+      const currentWeekId = currentWindow.weekId;
       const hasUploadedCurrentWeek = sheets.some((sheet) => sheet.weekId === currentWeekId);
-
-      console.log('[Cheatsheet Debug]', {
-        windowStart: currentWindow.windowStart,
-        windowStartDate: windowStartDate.toString(),
-        weekStart: weekStart.toString(),
-        currentWeekId,
-        sheets: sheets.map((s) => s.weekId),
-        hasUploadedCurrentWeek,
-      });
 
       if (!hasUploadedCurrentWeek) {
         courseResult.cheatsheetUploadPending = true;
