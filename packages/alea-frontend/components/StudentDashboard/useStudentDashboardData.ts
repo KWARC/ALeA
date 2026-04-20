@@ -15,7 +15,6 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { useMemo } from 'react';
 import type { CourseStudentData } from './types';
-import { DEFAULT_INSTITUTION } from './types';
 import { getNextOrCurrentScheduleOccurrence, normalizeLectureScheduleEntry } from './utils';
 
 dayjs.extend(utc);
@@ -33,7 +32,8 @@ function normalizeSchedule(items: LectureSchedule[] | undefined): LectureSchedul
 async function fetchCourseDashboardData(
   courseId: string,
   currentTerm: string,
-  courseInfo?: CourseInfo
+  courseInfo: CourseInfo | undefined,
+  institutionId: string
 ): Promise<Omit<CourseStudentData, 'isSemesterOver'>> {
   const now = Date.now();
   const courseResult: Omit<CourseStudentData, 'isSemesterOver'> = {
@@ -55,7 +55,7 @@ async function fetchCourseDashboardData(
     getHomeworkList(courseId),
     courseInfo?.cheatsheetConfig?.hasCheatsheet &&
     courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet
-      ? getCheatsheetUploadWindow(courseId, currentTerm, DEFAULT_INSTITUTION).catch(() => null)
+      ? getCheatsheetUploadWindow(courseId, currentTerm, institutionId).catch(() => null)
       : Promise.resolve(null),
     courseInfo?.cheatsheetConfig?.hasCheatsheet
       ? getCheatSheets(courseId, currentTerm).catch(() => [])
@@ -106,31 +106,28 @@ async function fetchCourseDashboardData(
     const currentWindow = uploadWindowResponse?.currentWindow;
     const sheets = (cheatSheets || []) as Array<{ weekId: string }>;
 
-    if (currentWindow?.isWithinWindow && !currentWindow.isSkipped) {
-      const currentWeekId = currentWindow.weekId;
-      const hasUploadedCurrentWeek = sheets.some((sheet) => sheet.weekId === currentWeekId);
+    if (!currentWindow?.isWithinWindow) return courseResult;
+    if (currentWindow.isSkipped) return courseResult;
 
-      if (!hasUploadedCurrentWeek) {
-        courseResult.cheatsheetUploadPending = true;
-        courseResult.cheatsheetUploadHref = pathToCheatSheet(
-          DEFAULT_INSTITUTION,
-          courseId,
-          currentTerm
-        );
-        courseResult.cheatsheetUploadWindowEndTs = currentWindow.windowEnd
-          ? dayjs.utc(currentWindow.windowEnd).valueOf()
-          : undefined;
-      }
-    }
+    const currentWeekId = currentWindow.weekId;
+    const hasUploadedCurrentWeek = sheets.some((sheet) => sheet.weekId === currentWeekId);
+
+    if (hasUploadedCurrentWeek) return courseResult;
+
+    courseResult.cheatsheetUploadPending = true;
+    courseResult.cheatsheetUploadHref = pathToCheatSheet(institutionId, courseId, currentTerm);
+    courseResult.cheatsheetUploadWindowEndTs = currentWindow.windowEnd
+      ? dayjs.utc(currentWindow.windowEnd).valueOf()
+      : undefined;
   }
 
   return courseResult;
 }
 
-async function getSemesterOver(currentTerm: string): Promise<boolean> {
+async function getSemesterOver(currentTerm: string, institutionId: string): Promise<boolean> {
   const now = Date.now();
   try {
-    const raw = await getSemesterInfo(DEFAULT_INSTITUTION, currentTerm);
+    const raw = await getSemesterInfo(institutionId, currentTerm);
     const obj = Array.isArray(raw) ? raw[0] : raw;
     const endDate = (obj as { lectureEndDate?: string } | null)?.lectureEndDate;
     return !!endDate && now > dayjs.utc(endDate).endOf('day').valueOf();
@@ -142,11 +139,12 @@ async function getSemesterOver(currentTerm: string): Promise<boolean> {
 export function useStudentDashboardData(
   enrolledCourseIds: string[],
   currentTerm: string | undefined,
-  allCourses: Record<string, CourseInfo>
+  allCourses: Record<string, CourseInfo>,
+  institutionId: string
 ): { data: Record<string, CourseStudentData>; loading: boolean } {
   const semesterQuery = useQuery({
-    queryKey: ['semester', DEFAULT_INSTITUTION, currentTerm],
-    queryFn: () => getSemesterOver(currentTerm!),
+    queryKey: ['semester', institutionId, currentTerm],
+    queryFn: () => getSemesterOver(currentTerm ?? '', institutionId),
     enabled: !!currentTerm && enrolledCourseIds.length > 0,
   });
 
@@ -161,7 +159,8 @@ export function useStudentDashboardData(
           courseInfo?.cheatsheetConfig?.hasCheatsheet,
           courseInfo?.cheatsheetConfig?.canStudentUploadCheatsheet,
         ],
-        queryFn: () => fetchCourseDashboardData(courseId, currentTerm!, courseInfo),
+        queryFn: () =>
+          fetchCourseDashboardData(courseId, currentTerm ?? '', courseInfo, institutionId),
         enabled: !!currentTerm,
       };
     }),

@@ -52,7 +52,8 @@ export default function StudentWelcomeScreen({
   const { data: courseData, loading } = useStudentDashboardData(
     enrolledCourseIds,
     currentTerm,
-    allCourses
+    allCourses,
+    DEFAULT_INSTITUTION
   );
   const quickAccess = useMemo(
     () => getAggregatedQuickAccess(courseData, allCourses),
