@@ -435,6 +435,7 @@ export const de = {
     slides: 'Folien',
     cheatsheet: 'Spickzettel',
     cheatsheetUploadPending: 'Spickzettel-Upload ausstehend',
+    cheatsheetEnrollmentPending: 'Einschreiben erforderlich, um auf den Spickzettel zuzugreifen',
     uploadBefore: 'Hochladen vor',
     uploadPending: 'Upload ausstehend',
     notEnrolled: 'Sie sind noch in keinem Kurs eingeschrieben',
