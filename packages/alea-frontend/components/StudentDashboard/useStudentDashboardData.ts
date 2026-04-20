@@ -1,11 +1,15 @@
 import type { HomeworkStub, LectureSchedule, LectureScheduleItem, QuizStubInfo } from '@alea/spec';
 import {
+  getCheatSheets,
+  getCheatsheetUploadWindow,
   getCourseQuizList,
   getHomeworkList,
   getLectureEntry,
   getLectureSchedule,
   getSemesterInfo,
 } from '@alea/spec';
+import type { CourseInfo } from '@alea/utils';
+import { pathToCheatSheet, toWeekdayIndex } from '@alea/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -15,6 +19,22 @@ import { DEFAULT_INSTITUTION } from './types';
 import { getNextOrCurrentScheduleOccurrence, normalizeLectureScheduleEntry } from './utils';
 
 dayjs.extend(utc);
+
+function getWeekStartFromDate(date: Date, startDay: number): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day - startDay + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 type LectureEntry = {
   lectureSchedule?: LectureSchedule[];
@@ -28,7 +48,8 @@ function normalizeSchedule(items: LectureSchedule[] | undefined): LectureSchedul
 
 async function fetchCourseDashboardData(
   courseId: string,
-  currentTerm: string
+  currentTerm: string,
+  courseInfo?: CourseInfo
 ): Promise<Omit<CourseStudentData, 'isSemesterOver'>> {
   const now = Date.now();
   const courseResult: Omit<CourseStudentData, 'isSemesterOver'> = {
@@ -45,9 +66,16 @@ async function fetchCourseDashboardData(
     instanceId: currentTerm,
   }).catch(() => null);
 
-  const [quizList, homeworkList] = await Promise.all([
+  const [quizList, homeworkList, uploadWindowResponse, cheatSheets] = await Promise.all([
     getCourseQuizList(courseId),
     getHomeworkList(courseId),
+    courseInfo?.cheatsheetConfig?.hasCheatsheet &&
+    courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet
+      ? getCheatsheetUploadWindow(courseId, currentTerm, DEFAULT_INSTITUTION).catch(() => null)
+      : Promise.resolve(null),
+    courseInfo?.cheatsheetConfig?.hasCheatsheet
+      ? getCheatSheets(courseId, currentTerm).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   const quizzes = (quizList || []) as QuizStubInfo[];
@@ -87,6 +115,45 @@ async function fetchCourseDashboardData(
     courseResult.nextTutorialVenueLink = nextTutorial.venueLink;
   }
 
+  if (
+    courseInfo?.cheatsheetConfig?.hasCheatsheet &&
+    courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet
+  ) {
+    const currentWindow = uploadWindowResponse?.currentWindow;
+    const sheets = (cheatSheets || []) as Array<{ weekId: string }>;
+
+    if (currentWindow?.isWithinWindow && !currentWindow.isSkipped) {
+      const windowStartDate = new Date(currentWindow.windowStart);
+      const startDayNum = courseInfo.cheatsheetConfig?.uploadStartDay
+        ? toWeekdayIndex(courseInfo.cheatsheetConfig.uploadStartDay)
+        : 1; // default Monday
+      const weekStart = getWeekStartFromDate(windowStartDate, startDayNum);
+      const currentWeekId = toLocalDateString(weekStart);
+      const hasUploadedCurrentWeek = sheets.some((sheet) => sheet.weekId === currentWeekId);
+
+      console.log('[Cheatsheet Debug]', {
+        windowStart: currentWindow.windowStart,
+        windowStartDate: windowStartDate.toString(),
+        weekStart: weekStart.toString(),
+        currentWeekId,
+        sheets: sheets.map((s) => s.weekId),
+        hasUploadedCurrentWeek,
+      });
+
+      if (!hasUploadedCurrentWeek) {
+        courseResult.cheatsheetUploadPending = true;
+        courseResult.cheatsheetUploadHref = pathToCheatSheet(
+          DEFAULT_INSTITUTION,
+          courseId,
+          currentTerm
+        );
+        courseResult.cheatsheetUploadWindowEndTs = currentWindow.windowEnd
+          ? dayjs.utc(currentWindow.windowEnd).valueOf()
+          : undefined;
+      }
+    }
+  }
+
   return courseResult;
 }
 
@@ -104,7 +171,8 @@ async function getSemesterOver(currentTerm: string): Promise<boolean> {
 
 export function useStudentDashboardData(
   enrolledCourseIds: string[],
-  currentTerm: string | undefined
+  currentTerm: string | undefined,
+  allCourses: Record<string, CourseInfo>
 ): { data: Record<string, CourseStudentData>; loading: boolean } {
   const semesterQuery = useQuery({
     queryKey: ['semester', DEFAULT_INSTITUTION, currentTerm],
@@ -113,11 +181,20 @@ export function useStudentDashboardData(
   });
 
   const courseQueries = useQueries({
-    queries: enrolledCourseIds.map((courseId) => ({
-      queryKey: ['course-dashboard', courseId, currentTerm],
-      queryFn: () => fetchCourseDashboardData(courseId, currentTerm!),
-      enabled: !!currentTerm,
-    })),
+    queries: enrolledCourseIds.map((courseId) => {
+      const courseInfo = allCourses[courseId];
+      return {
+        queryKey: [
+          'course-dashboard',
+          courseId,
+          currentTerm,
+          courseInfo?.cheatsheetConfig?.hasCheatsheet,
+          courseInfo?.cheatsheetConfig?.canStudentUploadCheatsheet,
+        ],
+        queryFn: () => fetchCourseDashboardData(courseId, currentTerm!, courseInfo),
+        enabled: !!currentTerm,
+      };
+    }),
   });
 
   const data = useMemo(() => {

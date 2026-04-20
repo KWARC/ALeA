@@ -1,8 +1,9 @@
 import type { LectureSchedule, LectureScheduleItem } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
-import { parseTimeString, toWeekdayIndex } from '@alea/utils';
+import { parseTimeString, pathToCheatSheet, toWeekdayIndex } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { CourseStudentData, QuickAccessData } from './types';
+import { DEFAULT_INSTITUTION } from './types';
 
 export function stripHtml(html: string): string {
   if (typeof html !== 'string') return '';
@@ -77,6 +78,7 @@ export function getAggregatedQuickAccess(
     nextAssignment: null,
     nextLecture: null,
     nextTutorial: null,
+    pendingCheatsheetUpload: null,
   };
 
   const liveQuizEntry = Object.entries(courseData).find(([, info]) => info?.liveQuiz);
@@ -146,6 +148,17 @@ export function getAggregatedQuickAccess(
           venue: info.nextTutorialVenue,
           venueLink: info.nextTutorialVenueLink,
           isOngoing: info.isTutorialOngoing,
+        },
+      };
+    }
+
+    if (info.cheatsheetUploadPending && !result.pendingCheatsheetUpload) {
+      result.pendingCheatsheetUpload = {
+        courseId,
+        courseName: name,
+        data: {
+          href: info.cheatsheetUploadHref ?? pathToCheatSheet(DEFAULT_INSTITUTION, courseId),
+          windowEndTs: info.cheatsheetUploadWindowEndTs,
         },
       };
     }

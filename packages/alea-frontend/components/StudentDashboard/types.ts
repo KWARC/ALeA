@@ -18,6 +18,9 @@ export interface CourseStudentData {
   nextTutorialVenue?: string;
   nextTutorialVenueLink?: string;
   isSemesterOver: boolean;
+  cheatsheetUploadPending?: boolean;
+  cheatsheetUploadHref?: string;
+  cheatsheetUploadWindowEndTs?: number;
 }
 
 export type QuickAccessItem<T> = {
@@ -43,6 +46,7 @@ export interface QuickAccessData {
     venueLink?: string;
     isOngoing?: boolean;
   }> | null;
+  pendingCheatsheetUpload: QuickAccessItem<{ href: string; windowEndTs?: number }> | null;
 }
 
 export interface SemesterOverBannerProps {
@@ -66,6 +70,7 @@ export interface WhatsNextSectionProps {
 export interface CourseDashboardCardProps {
   courseId: string;
   courseName: string;
+  courseInfo?: CourseInfo;
   data: CourseStudentData | undefined;
   isLoading: boolean;
   institutionId: string;
