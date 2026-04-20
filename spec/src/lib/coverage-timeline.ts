@@ -6,6 +6,7 @@ interface CoverageUpdatePayload {
   timestamp_ms?: number;
   action?: 'upsert' | 'delete';
   notCoveredSections?: string[];
+  outOfOrderSections?: Record<string, { startTimestamp_ms: number; endTimestamp_ms?: number }>;
 }
 
 let coverageTimelineCache: CoverageTimeline | undefined = undefined;
@@ -35,6 +36,7 @@ export async function updateCoverageTimeline(payload: CoverageUpdatePayload) {
     ...(payload.updatedEntry && { updatedEntry: payload.updatedEntry }),
     ...(payload.timestamp_ms && { timestamp_ms: payload.timestamp_ms }),
     ...(payload.notCoveredSections && { notCoveredSections: payload.notCoveredSections }),
+    ...(payload.outOfOrderSections && { outOfOrderSections: payload.outOfOrderSections }),
   };
   return axios.post('/api/set-coverage-timeline', finalPayload);
 }
