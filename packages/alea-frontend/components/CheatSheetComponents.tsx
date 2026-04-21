@@ -30,8 +30,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MergeTypeIcon from '@mui/icons-material/MergeType';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useMemo, useState } from 'react';
-import { getCheatSheetFile, UploadWindow } from '@alea/spec';
+import { getCheatSheetFile, CheatSheet, UploadWindow } from '@alea/spec';
 import { toWeekdayIndex, WEEKDAYS } from '@alea/utils';
 
 export interface DateRangeValue {
@@ -408,15 +409,17 @@ export function InlineStudentMergeButton({
           </span>
         </Tooltip>
 
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={merging ? <CircularProgress size={14} thickness={5} /> : <MergeTypeIcon />}
-          onClick={handleDownload}
-          disabled={merging}
-        >
-          {merging ? 'Merging…' : 'Merge & Download'}
-        </Button>
+        <Tooltip title="Combines all uploaded cheatsheets into one PDF — bring this to your exam">
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={merging ? <CircularProgress size={14} thickness={5} /> : <MergeTypeIcon />}
+            onClick={handleDownload}
+            disabled={merging}
+          >
+            {merging ? 'Merging…' : 'Merge & Download'}
+          </Button>
+        </Tooltip>
       </Box>
 
       {error && (
@@ -442,14 +445,16 @@ export function CheatSheetWindowsTable({
   windows,
   files,
   onPreview,
+  onDelete,
 }: {
   windows: UploadWindow[];
-  files: any[];
-  onPreview: (file: any) => void;
+  files: CheatSheet[];
+  onPreview: (file: CheatSheet) => void;
+  onDelete: (file: CheatSheet) => void;
 }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const fileMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, CheatSheet>();
     files.forEach((file) => {
       map.set(file.weekId, file);
     });
@@ -457,7 +462,7 @@ export function CheatSheetWindowsTable({
   }, [files]);
 
   const filteredWindows = windows.filter((w) => !w.isSkipped);
-  const handlePreview = async (file: any) => {
+  const handlePreview = async (file: CheatSheet) => {
     setLoadingId(file.checksum);
     try {
       const { blob, filename } = await getCheatSheetFile(file.checksum);
@@ -468,13 +473,13 @@ export function CheatSheetWindowsTable({
         url,
         mimeType,
         filename: filename ?? 'cheatsheet.pdf',
-      });
+      } as CheatSheet);
     } finally {
       setLoadingId(null);
     }
   };
 
-  const handleDownload = async (file: any) => {
+  const handleDownload = async (file: CheatSheet) => {
     setLoadingId(file.checksum);
     try {
       const { blob, filename } = await getCheatSheetFile(file.checksum);
@@ -586,6 +591,19 @@ export function CheatSheetWindowsTable({
                           </IconButton>
                         </span>
                       </Tooltip>
+
+                      <Tooltip title="Delete">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDelete(file)}
+                            disabled={loadingId === file.checksum}
+                            sx={tableStyles.deleteBtn}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                     </Box>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
@@ -601,6 +619,16 @@ export function CheatSheetWindowsTable({
     </Box>
   );
 }
+
+const tableStyles = {
+  deleteBtn: {
+    color: 'text.secondary',
+    '&:hover': {
+      color: 'error.main',
+      bgcolor: 'error.50',
+    },
+  },
+};
 
 function formatDate(date: Date) {
   return date.toLocaleDateString();

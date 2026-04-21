@@ -1,7 +1,7 @@
 import { Box, Button, CircularProgress, Chip, Tooltip, Typography, Alert } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useCurrentUser } from '@alea/react-utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
@@ -11,13 +11,15 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
 import {
   createCheatSheet,
+  deleteCheatSheet,
   getAllCourses,
   getCheatSheets,
   getCheatsheetUploadWindow,
+  CheatSheet,
   CheatsheetUploadWindowResponse,
 } from '@alea/spec';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
-import { PostAdd } from '@mui/icons-material';
+import { PostAdd, DeleteOutline } from '@mui/icons-material';
 import {
   CheatSheetWindowsTable,
   EmptyState,
@@ -169,6 +171,46 @@ export function CheatsheetDownloadDialog({
     </Dialog>
   );
 }
+function DeleteConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting?: boolean;
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Delete Cheatsheet</DialogTitle>
+      <DialogContent sx={{ mt: 1 }}>
+        <Alert severity="warning" sx={{ mb: 1 }}>
+          This action cannot be undone. The cheatsheet file will be permanently removed.
+        </Alert>
+        <Typography variant="body2" color="text.secondary">
+          Are you sure you want to delete this cheatsheet?
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isDeleting}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={isDeleting}
+          startIcon={<DeleteOutline />}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function CheatSheetsContent({
   files,
   isLoading,
@@ -187,15 +229,15 @@ function CheatSheetsContent({
   userId,
   uploadWindowInfo,
 }: {
-  files: any[];
+  files: CheatSheet[];
   isLoading: boolean;
   isError: boolean;
   isEmbedded: boolean;
   uniqueUserIds: string[];
   selectedUserId: string | null;
   onUserIdChange: (id: string | null) => void;
-  previewFile: any | null;
-  onPreview: (file: any) => void;
+  previewFile: CheatSheet | null;
+  onPreview: (file: CheatSheet) => void;
   onClosePreview: () => void;
   instanceId: string;
   courseId: string;
@@ -209,6 +251,15 @@ function CheatSheetsContent({
   const [bulkDownloadOpen, setBulkDownloadOpen] = useState(false);
   const [downloadScope, setDownloadScope] = useState<'this-week' | 'semester'>('this-week');
   const [isDownloading, setIsGenerating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CheatSheet | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: (file: CheatSheet) => deleteCheatSheet({ cheatsheetId: String(file.cheatsheetId) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cheatsheets', courseId, instanceId] });
+      setDeleteTarget(null);
+    },
+  });
   function handleUploaded() {
     queryClient.invalidateQueries({
       queryKey: ['cheatsheets', courseId, instanceId],
@@ -367,12 +418,20 @@ function CheatSheetsContent({
               windows={uploadWindowInfo.allWindows}
               files={files}
               onPreview={onPreview}
+              onDelete={setDeleteTarget}
             />
           )}
         </Box>
       )}
 
       <FilePreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
+
+      <DeleteConfirmDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+        isDeleting={deleteMutation.isPending}
+      />
 
       <UploadCheatSheet
         open={uploadOpen}
@@ -392,7 +451,7 @@ async function fetchCheatsheets(
   courseId: string,
   instanceId: string,
   userId?: string
-): Promise<any[]> {
+): Promise<CheatSheet[]> {
   const data = await getCheatSheets(courseId, instanceId, userId);
   return data;
 }
@@ -451,7 +510,7 @@ const CheatsheetsPage = ({
     return allFiles.filter((f) => f.userId === selectedUserId);
   }, [allFiles, isEmbedded, selectedUserId]);
 
-  const [previewFile, setPreviewFile] = useState<any | null>(null);
+  const [previewFile, setPreviewFile] = useState<CheatSheet | null>(null);
 
   const sharedContentProps = {
     files: visibleFiles,
@@ -483,7 +542,9 @@ const CheatsheetsPage = ({
       );
     }
     if (!institutionId || !courseId || !instanceId) return <CourseNotFound />;
-    const courseInfo = (courses as any)[courseId];
+    const courseInfo = (courses as Record<string, { courseName: string; imageLink: string }>)[
+      courseId
+    ];
     if (!courseInfo) return <CourseNotFound />;
     return (
       <MainLayout title={`${courseId.toUpperCase()} · CheatSheets | ALeA`}>
