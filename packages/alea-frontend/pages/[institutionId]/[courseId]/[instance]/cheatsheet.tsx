@@ -1,4 +1,16 @@
-import { Box, Button, CircularProgress, Chip, Tooltip, Typography, Alert } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Chip,
+  Tooltip,
+  Typography,
+  Alert,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,6 +27,7 @@ import {
   getAllCourses,
   getCheatSheets,
   getCheatsheetUploadWindow,
+  getStudentsEnrolledInCourse,
   CheatSheet,
   CheatsheetUploadWindowResponse,
 } from '@alea/spec';
@@ -123,6 +136,162 @@ function CheatSheetActions({
     </Box>
   );
 }
+
+function InstructorCheatsheetStats({
+  files,
+  uploadWindowInfo,
+  enrolledStudents,
+}: {
+  files: CheatSheet[];
+  uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
+  enrolledStudents: string[];
+}) {
+  const weeklyStats = useMemo(() => {
+    const uploadedByWeek = new Map<string, Set<string>>();
+    files.forEach((file) => {
+      if (!uploadedByWeek.has(file.weekId)) {
+        uploadedByWeek.set(file.weekId, new Set());
+      }
+      uploadedByWeek.get(file.weekId)!.add(file.userId);
+    });
+
+    return (uploadWindowInfo?.allWindows ?? [])
+      .filter((window) => !window.isSkipped)
+      .map((window) => {
+        const weekId = window.windowStart.split('T')[0];
+        const uploaded = uploadedByWeek.get(weekId)?.size ?? 0;
+        const isCurrent = window.isWithinWindow;
+        return {
+          weekId,
+          uploaded,
+          isCurrent,
+          windowStart: window.windowStart,
+          windowEnd: window.windowEnd,
+        };
+      });
+  }, [files, uploadWindowInfo]);
+
+  if (weeklyStats.length === 0) {
+    return (
+      <Box sx={statsStyles.card}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          Cheatsheet Upload Stats
+        </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          No upload windows are configured for this course instance yet.
+        </Alert>
+      </Box>
+    );
+  }
+
+  const defaultWeekId =
+    weeklyStats.find((stat) => stat.isCurrent)?.weekId ??
+    [...weeklyStats].reverse().find((stat) => stat.uploaded > 0)?.weekId ??
+    weeklyStats[0].weekId;
+  const [selectedWeekOverride, setSelectedWeekOverride] = useState<string | null>(null);
+  const selectedWeekId = weeklyStats.some((stat) => stat.weekId === selectedWeekOverride)
+    ? selectedWeekOverride
+    : defaultWeekId;
+  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === selectedWeekId)!;
+  const uploadedUsersForSelectedWeek = useMemo(() => {
+    if (!selectedWeekId) return new Set<string>();
+    return new Set(
+      files.filter((file) => file.weekId === selectedWeekId).map((file) => file.userId)
+    );
+  }, [files, selectedWeekId]);
+  const missingStudents = useMemo(
+    () => enrolledStudents.filter((studentId) => !uploadedUsersForSelectedWeek.has(studentId)),
+    [enrolledStudents, uploadedUsersForSelectedWeek]
+  );
+
+  const totalWeeksWithUploads = weeklyStats.filter((stat) => stat.uploaded > 0).length;
+  const totalUploaded = files.length;
+  const selectedWeekLabel = new Date(selectedWeekStat.weekId).toLocaleDateString();
+  const selectedWeekProgress =
+    enrolledStudents.length > 0
+      ? Math.round((selectedWeekStat.uploaded / enrolledStudents.length) * 100)
+      : null;
+
+  return (
+    <Box sx={statsStyles.card}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Cheatsheet Upload Stats
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Track submissions by week and see which students still have not uploaded.
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Chip
+            label={`${totalUploaded} upload${totalUploaded !== 1 ? 's' : ''} total`}
+            color="primary"
+            size="small"
+          />
+          <Chip
+            label={`${totalWeeksWithUploads}/${weeklyStats.length || 0} weeks with uploads`}
+            size="small"
+          />
+        </Box>
+      </Box>
+
+      <FormControl size="small" sx={{ mt: 2, minWidth: 260 }}>
+        <InputLabel id="cheatsheet-week-select-label">Week</InputLabel>
+        <Select
+          labelId="cheatsheet-week-select-label"
+          value={selectedWeekId}
+          label="Week"
+          onChange={(event) => setSelectedWeekOverride(event.target.value)}
+        >
+          {weeklyStats.map((stat) => (
+            <MenuItem key={stat.weekId} value={stat.weekId}>
+              {new Date(stat.weekId).toLocaleDateString()}
+              {stat.isCurrent ? ' (Current)' : ''}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <Alert severity={selectedWeekStat?.isCurrent ? 'info' : 'success'} sx={{ mt: 2 }}>
+        <strong>{selectedWeekStat.isCurrent ? 'Current week' : 'Selected week'}:</strong>{' '}
+        {selectedWeekLabel} - {selectedWeekStat.uploaded} student
+        {selectedWeekStat.uploaded !== 1 ? 's have' : ' has'} uploaded out of{' '}
+        {enrolledStudents.length}.
+        {selectedWeekProgress !== null ? ` (${selectedWeekProgress}% complete)` : ''}
+      </Alert>
+
+      <Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
+        <Typography variant="body2" color="text.secondary">
+          Upload window: {new Date(selectedWeekStat.windowStart).toLocaleString()} -{' '}
+          {new Date(selectedWeekStat.windowEnd).toLocaleString()}
+        </Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Not Submitted Yet ({missingStudents.length})
+        </Typography>
+        {missingStudents.length > 0 ? (
+          <Box sx={statsStyles.missingList}>
+            {missingStudents.map((studentId) => (
+              <Box key={studentId} sx={statsStyles.missingItem}>
+                {studentId}
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <Alert severity="success">Everyone enrolled has submitted for this week.</Alert>
+        )}
+      </Box>
+    </Box>
+  );
+}
 export function CheatsheetDownloadDialog({
   open,
   onClose,
@@ -213,6 +382,7 @@ function DeleteConfirmDialog({
 
 function CheatSheetsContent({
   files,
+  statsFiles,
   isLoading,
   isError,
   isEmbedded,
@@ -228,8 +398,10 @@ function CheatSheetsContent({
   universityId,
   userId,
   uploadWindowInfo,
+  enrolledStudents,
 }: {
   files: CheatSheet[];
+  statsFiles: CheatSheet[];
   isLoading: boolean;
   isError: boolean;
   isEmbedded: boolean;
@@ -245,6 +417,7 @@ function CheatSheetsContent({
   universityId: string;
   userId: string;
   uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
+  enrolledStudents: string[];
 }) {
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -299,6 +472,14 @@ function CheatSheetsContent({
 
   return (
     <Box sx={pageStyles.container}>
+      {isEmbedded && (
+        <InstructorCheatsheetStats
+          files={statsFiles}
+          uploadWindowInfo={uploadWindowInfo}
+          enrolledStudents={enrolledStudents}
+        />
+      )}
+
       {!isEmbedded && uploadWindowInfo && !uploadWindowInfo.currentWindow && (
         <Alert severity={uploadWindowInfo.hasUploadEnabled ? 'info' : 'warning'} sx={{ mb: 2 }}>
           {uploadWindowInfo.upcomingWindow
@@ -490,6 +671,12 @@ const CheatsheetsPage = ({
     enabled: Boolean(courseId && instanceId && institutionId),
   });
 
+  const { data: enrolledStudents } = useQuery({
+    queryKey: ['cheatsheet-enrolled-students', courseId, instanceId],
+    queryFn: () => getStudentsEnrolledInCourse(courseId, instanceId),
+    enabled: Boolean(courseId && instanceId && isEmbedded),
+  });
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const {
     data: allFiles = [],
@@ -514,6 +701,7 @@ const CheatsheetsPage = ({
 
   const sharedContentProps = {
     files: visibleFiles,
+    statsFiles: allFiles,
     isLoading,
     isError,
     uniqueUserIds,
@@ -527,6 +715,7 @@ const CheatsheetsPage = ({
     courseName: propCourseName ?? '',
     userId,
     uploadWindowInfo,
+    enrolledStudents: Array.isArray(enrolledStudents) ? enrolledStudents : [],
   };
 
   if (!isEmbedded) {
@@ -645,5 +834,43 @@ const pageStyles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 0.5,
+  },
+};
+
+const statsStyles = {
+  card: {
+    mb: 2,
+    p: 2,
+    borderRadius: 2,
+    bgcolor: 'background.paper',
+    border: '1px solid',
+    borderColor: 'divider',
+    boxShadow: 1,
+  },
+  missingList: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: 1,
+    maxHeight: 240,
+    overflowY: 'auto',
+    pr: 1,
+    border: '1px solid',
+    borderColor: 'divider',
+    borderRadius: 2,
+    p: 1,
+    bgcolor: 'background.default',
+  },
+  missingItem: {
+    px: 1.25,
+    py: 0.75,
+    borderRadius: 1.5,
+    bgcolor: 'warning.50',
+    color: 'warning.dark',
+    border: '1px solid',
+    borderColor: 'warning.200',
+    fontSize: 14,
+    lineHeight: 1.3,
+    fontWeight: 500,
+    wordBreak: 'break-word',
   },
 };
