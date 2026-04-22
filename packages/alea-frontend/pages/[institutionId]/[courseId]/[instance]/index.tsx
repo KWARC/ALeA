@@ -131,6 +131,8 @@ function CourseScheduleSection({
             endTime: item.lectureEndTime ?? item.endTime ?? '',
             venue: item.venue,
             venueLink: item.venueLink,
+            tutorName: item.tutorName,
+            comments: item.comments,
           });
 
           const lectures = Array.isArray(data?.lectureSchedule)
@@ -276,6 +278,19 @@ function CourseScheduleSection({
                             entry.venue
                           )}
                         </Typography>
+                        {entry.tutorName && (
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            👤 TutorName: {entry.tutorName}
+                          </Typography>
+                        )}
+                        {entry.comments && (
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            💬 {entry.comments}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ))}
@@ -382,6 +397,19 @@ function CourseScheduleSection({
                             entry.venue
                           )}
                         </Typography>
+                        {entry.tutorName && (
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            👤 TutorName: {entry.tutorName}
+                          </Typography>
+                        )}
+                        {entry.comments && (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            💬 {entry.comments}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ))}

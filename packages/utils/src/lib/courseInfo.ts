@@ -125,6 +125,8 @@ export interface LectureEntry {
   lectureEndTimestamp_ms?: number;
   venue?: string;
   venueLink?: string;
+  tutorName?: string;
+  comments?: string;
 }
 
 export interface CourseCoverageData {
