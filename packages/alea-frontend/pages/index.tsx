@@ -341,7 +341,6 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
         <BannerSection />
         <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
           <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
-             
             <Typography
               sx={{
                 color: 'secondary.700',

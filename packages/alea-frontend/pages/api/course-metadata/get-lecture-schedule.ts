@@ -11,26 +11,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const result = await executeAndEndSet500OnError(
-    `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+    `SELECT lectureSchedule, tutorialSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
     [courseId, instanceId],
     res
   );
   if (!result) return;
 
   let lectureSchedule: any[] = [];
+  let tutorialSchedule: any[] = [];
   try {
-    lectureSchedule =
-      Array.isArray(result) && result.length ? result[0].lectureSchedule || [] : [];
+    lectureSchedule = result[0].lectureSchedule || [];
+    tutorialSchedule = result[0].tutorialSchedule || [];
   } catch (e) {
     lectureSchedule = [];
+    tutorialSchedule = [];
   }
-  const schedule = lectureSchedule?.map((lec: any) => ({
+
+  const mapStoredToView = (lec: any) => ({
     dayOfWeek: toWeekdayIndex(lec.lectureDay) ?? undefined,
     startTime: lec.lectureStartTime,
     endTime: lec.lectureEndTime,
     venue: lec.venue,
     venueLink: lec.venueLink,
-  }));
+    tutorName: lec.tutorName,
+    comments: lec.comments,
+  });
+
+  const schedule = [
+    ...lectureSchedule.map(mapStoredToView),
+    ...tutorialSchedule.map(mapStoredToView),
+  ];
 
   res.status(200).json({ schedule });
 }

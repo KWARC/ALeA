@@ -68,19 +68,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const lectureResult = await executeAndEndSet500OnError(
-      `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+      `SELECT lectureSchedule, tutorialSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
       [courseId, instanceId],
       res
     );
     if (!lectureResult) return;
 
     let lectureSchedule: LectureSchedule[] = [];
+    let tutorialSchedule: LectureSchedule[] = [];
     if (Array.isArray(lectureResult) && lectureResult.length > 0) {
       try {
         lectureSchedule = lectureResult[0].lectureSchedule || [];
+        tutorialSchedule = lectureResult[0].tutorialSchedule || [];
       } catch (e) {
-        console.error('Failed to parse lecture schedule:', e);
-        lectureSchedule = [];
+        console.error('Failed to parse schedule JSON:', e);
       }
     }
 
@@ -138,7 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const generatedEntries: any[] = [];
 
-    for (const lecture of lectureSchedule) {
+    for (const lecture of [...lectureSchedule, ...tutorialSchedule]) {
       const weekdayIdx = toWeekdayIndex(lecture.lectureDay);
       if (weekdayIdx === undefined) {
         console.warn(`Invalid weekday: ${lecture.lectureDay}`);
@@ -173,6 +174,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           lectureEndTimestamp_ms: endTime.getTime(),
           venue: lecture.venue || '',
           venueLink: lecture.venueLink || '',
+          tutorName: lecture.tutorName || '',
+          comments: lecture.comments || '',
         });
       }
     }
