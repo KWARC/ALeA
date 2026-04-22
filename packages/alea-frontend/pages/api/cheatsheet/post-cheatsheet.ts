@@ -19,6 +19,9 @@ import { CheatsheetConfig } from '@alea/spec';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
 const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
+const TEMP_CHEATSHEETS_DIR = path.resolve(
+  process.env.TEMP_CHEATSHEETS_DIR || path.join(process.cwd(), 'cheatsheets_temp')
+);
 
 export const config = { api: { bodyParser: false } };
 
@@ -69,7 +72,7 @@ function buildFileName(fields: ExtractedFields, userId: string, checksum: string
 
 async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
   return new Promise((resolve, reject) => {
-    formidable({ keepExtensions: true }).parse(req, (err, _fields, files) => {
+    formidable({ keepExtensions: true, uploadDir: TEMP_CHEATSHEETS_DIR }).parse(req, (err, _fields, files) => {
       if (err) return reject(err);
       const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
       if (!uploaded) return reject(new Error('No file uploaded.'));
@@ -415,6 +418,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
+  fs.mkdirSync(TEMP_CHEATSHEETS_DIR, { recursive: true });
   let file: formidable.File;
   try {
     file = await parseUpload(req);
