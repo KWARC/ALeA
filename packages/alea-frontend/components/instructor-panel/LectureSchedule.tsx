@@ -27,6 +27,7 @@ import {
   updateLectureEntry,
   deleteLectureEntry,
   addLectureSchedule,
+  getUserSuggestions,
 } from '@alea/spec';
 import { UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
 import { getAllCourses } from '@alea/spec';
@@ -35,6 +36,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { getLocaleObject } from '../../lang/utils';
+import AclAutocompleteSelector from '../AclAutocompleteSelector';
 
 interface LectureScheduleTabProps {
   courseId: string;
@@ -53,6 +55,8 @@ const initialNewEntry: LectureScheduleUI = {
   lectureEndTime: '',
   venue: '',
   venueLink: '',
+  tutorName: '',
+  comments: '',
   hasQuiz: false,
 };
 
@@ -226,6 +230,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           lectureEndTime: entryToSave.lectureEndTime,
           venue: entryToSave.venue,
           venueLink: entryToSave.venueLink,
+          tutorName: entryToSave.tutorName,
+          comments: entryToSave.comments,
         };
       }
       await addLectureSchedule({
@@ -372,6 +378,35 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               size="small"
               sx={{ width: 140 }}
             />
+
+            {selectedScheduleType === 'tutorial' && (
+              <>
+                <Box sx={{ width: 120, mt: 0.8 }}>
+                  <AclAutocompleteSelector
+                    label="TutorName"
+                    fetchSuggestions={getUserSuggestions}
+                    values={tutorialScheduleData.tutorName ? [tutorialScheduleData.tutorName] : []}
+                    setValues={(vals) =>
+                      setTutorialScheduleData((prev) => ({
+                        ...prev,
+                        tutorName: vals[vals.length - 1] ?? '',
+                      }))
+                    }
+                    chipLabel={(userId) => userId}
+                    errorMessage="Duplicate or invalid user"
+                    sx={{ mb: 0 }}
+                  />
+                </Box>
+
+                <TextField
+                  label="comments"
+                  value={tutorialScheduleData.comments || ''}
+                  onChange={(e) => handleFieldChange('comments', e.target.value)}
+                  size="small"
+                  sx={{ width: 120 }}
+                />
+              </>
+            )}
 
             <TextField
               label={t.startTime}
@@ -548,6 +583,12 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
               </TableCell>
               <TableCell>{t.venue}</TableCell>
               <TableCell>{t.venueLink}</TableCell>
+              {selectedScheduleType === 'tutorial' && (
+                <>
+                  <TableCell>TutorName</TableCell>
+                  <TableCell>comments</TableCell>
+                </>
+              )}
 
               {selectedScheduleType === 'lecture' && (
                 <>
@@ -572,6 +613,22 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                       {t.link}
                     </a>
                   </TableCell>
+                  {selectedScheduleType === 'tutorial' && (
+                    <>
+                      <TableCell>{entry.tutorName}</TableCell>
+                      <TableCell>
+                        {entry.comments && (
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            ({entry.comments})
+                          </Typography>
+                        )}
+                      </TableCell>
+                    </>
+                  )}
                   {selectedScheduleType === 'lecture' && (
                     <>
                       <TableCell>{hasHomework ? t.yes : t.no}</TableCell>
@@ -646,6 +703,28 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             value={editEntry?.venueLink || ''}
             onChange={(e) => setEditEntry((prev) => prev && { ...prev, venueLink: e.target.value })}
           />
+          {selectedScheduleType === 'tutorial' && (
+            <>
+              <AclAutocompleteSelector
+                label="TutorName"
+                fetchSuggestions={getUserSuggestions}
+                values={editEntry?.tutorName ? [editEntry.tutorName] : []}
+                setValues={(vals) =>
+                  setEditEntry((prev) =>
+                    prev ? { ...prev, tutorName: vals[vals.length - 1] ?? '' } : prev
+                  )
+                }
+                chipLabel={(userId) => userId}
+                errorMessage="Duplicate or invalid user"
+                sx={{ mb: 0 }}
+              />
+              <TextField
+                label="comments"
+                value={editEntry?.comments || ''}
+                onChange={(e) => setEditEntry((prev) => prev && { ...prev, comments: e.target.value })}
+              />
+            </>
+          )}
           <TextField
             label={t.startTime}
             type="time"
