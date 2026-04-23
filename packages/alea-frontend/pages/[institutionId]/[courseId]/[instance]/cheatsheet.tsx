@@ -152,7 +152,7 @@ function InstructorCheatsheetStats({
       if (!uploadedByWeek.has(file.weekId)) {
         uploadedByWeek.set(file.weekId, new Set());
       }
-      uploadedByWeek.get(file.weekId)!.add(file.userId);
+      uploadedByWeek.get(file.weekId)?.add(file.userId);
     });
 
     return (uploadWindowInfo?.allWindows ?? [])
@@ -171,6 +171,26 @@ function InstructorCheatsheetStats({
       });
   }, [files, uploadWindowInfo]);
 
+  const defaultWeekId =
+    weeklyStats.find((stat) => stat.isCurrent)?.weekId ??
+    [...weeklyStats].reverse().find((stat) => stat.uploaded > 0)?.weekId ??
+    weeklyStats[0]?.weekId ??
+    null;
+  const [selectedWeekOverride, setSelectedWeekOverride] = useState<string | null>(null);
+  const selectedWeekId = weeklyStats.some((stat) => stat.weekId === selectedWeekOverride)
+    ? selectedWeekOverride
+    : defaultWeekId;
+  const uploadedUsersForSelectedWeek = useMemo(() => {
+    if (!selectedWeekId) return new Set<string>();
+    return new Set(
+      files.filter((file) => file.weekId === selectedWeekId).map((file) => file.userId)
+    );
+  }, [files, selectedWeekId]);
+  const missingStudents = useMemo(
+    () => enrolledStudents.filter((studentId) => !uploadedUsersForSelectedWeek.has(studentId)),
+    [enrolledStudents, uploadedUsersForSelectedWeek]
+  );
+
   if (weeklyStats.length === 0) {
     return (
       <Box sx={statsStyles.card}>
@@ -184,25 +204,9 @@ function InstructorCheatsheetStats({
     );
   }
 
-  const defaultWeekId =
-    weeklyStats.find((stat) => stat.isCurrent)?.weekId ??
-    [...weeklyStats].reverse().find((stat) => stat.uploaded > 0)?.weekId ??
-    weeklyStats[0].weekId;
-  const [selectedWeekOverride, setSelectedWeekOverride] = useState<string | null>(null);
-  const selectedWeekId = weeklyStats.some((stat) => stat.weekId === selectedWeekOverride)
-    ? selectedWeekOverride
-    : defaultWeekId;
-  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === selectedWeekId)!;
-  const uploadedUsersForSelectedWeek = useMemo(() => {
-    if (!selectedWeekId) return new Set<string>();
-    return new Set(
-      files.filter((file) => file.weekId === selectedWeekId).map((file) => file.userId)
-    );
-  }, [files, selectedWeekId]);
-  const missingStudents = useMemo(
-    () => enrolledStudents.filter((studentId) => !uploadedUsersForSelectedWeek.has(studentId)),
-    [enrolledStudents, uploadedUsersForSelectedWeek]
-  );
+  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === selectedWeekId);
+
+  if (!selectedWeekStat) return null;
 
   const totalWeeksWithUploads = weeklyStats.filter((stat) => stat.uploaded > 0).length;
   const totalUploaded = files.length;
