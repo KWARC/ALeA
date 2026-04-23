@@ -13,9 +13,10 @@ export default async function handler(
     return;
   }
 
-  const currentTerm = await getCurrentTermForCourseId(courseId);
+  const instanceId =
+    (req.query.instanceId as string) || (await getCurrentTermForCourseId(courseId));
   const quizzesInfo: QuizStubInfo[] = getAllQuizzes()
-    .filter((q) => q.courseId === courseId && q.courseTerm === currentTerm)
+    .filter((q) => q.courseId === courseId && q.courseTerm === instanceId)
     .map((q) => ({
       quizId: q.id,
       quizStartTs: q.quizStartTs,

@@ -48,7 +48,7 @@ function getChapterAndSections(toc: FTML.TocElem, chapterTitle = ''): TopLevelSe
 }
 
 export async function getCardsBySection(notesUri: string) {
-  const tocContent = (await contentToc({ uri: notesUri }))?.[1] ?? [];
+  const tocContent = (await contentToc({ uri: notesUri }))?.[2] ?? [];
   const topLevelSections = tocContent.map((toc) => getChapterAndSections(toc)).flat();
   const courseCards: CourseCards = {};
   const cardsBySection = await Promise.all(

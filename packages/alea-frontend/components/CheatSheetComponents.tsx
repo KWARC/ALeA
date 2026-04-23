@@ -2,12 +2,22 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
+  Chip,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
-  LinearProgress,
+  ListItemText,
+  MenuItem,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -20,8 +30,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MergeTypeIcon from '@mui/icons-material/MergeType';
-import { useState } from 'react';
-import { getCheatSheetFile } from '@alea/spec';
+import { useMemo, useState } from 'react';
+import { getCheatSheetFile, UploadWindow } from '@alea/spec';
+import { toWeekdayIndex, WEEKDAYS } from '@alea/utils';
 
 export interface DateRangeValue {
   start: string;
@@ -269,7 +280,7 @@ export function UserFilterBar({
   mergeProps?: {
     courseId: string;
     instanceId: string;
-    universityId:string;
+    universityId: string;
     courseName: string;
   };
 }) {
@@ -344,14 +355,14 @@ export function InlineStudentMergeButton({
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `cheatsheets-${courseId.replace(/\s+/g, "_")}-${userId}.pdf`;
+      a.download = `cheatsheets-${courseId.replace(/\s+/g, '_')}-${userId}.pdf`;
       a.click();
 
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError(err?.message ?? "Merge failed");
+      setError(err?.message ?? 'Merge failed');
     } finally {
       setMerging(false);
     }
@@ -368,7 +379,7 @@ export function InlineStudentMergeButton({
       setPreviewUrl(url);
       setPreviewOpen(true);
     } catch (err: any) {
-      setError(err?.message ?? "Preview failed");
+      setError(err?.message ?? 'Preview failed');
     } finally {
       setMerging(false);
     }
@@ -384,18 +395,14 @@ export function InlineStudentMergeButton({
     <>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
         }}
       >
         <Tooltip title="Preview merged cheatsheets">
           <span>
-            <IconButton
-              size="small"
-              onClick={handlePreview}
-              disabled={merging}
-            >
+            <IconButton size="small" onClick={handlePreview} disabled={merging}>
               <OpenInNewIcon fontSize="small" />
             </IconButton>
           </span>
@@ -404,17 +411,11 @@ export function InlineStudentMergeButton({
         <Button
           variant="contained"
           size="small"
-          startIcon={
-            merging ? (
-              <CircularProgress size={14} thickness={5} />
-            ) : (
-              <MergeTypeIcon />
-            )
-          }
+          startIcon={merging ? <CircularProgress size={14} thickness={5} /> : <MergeTypeIcon />}
           onClick={handleDownload}
           disabled={merging}
         >
-          {merging ? "Merging…" : "Merge & Download"}
+          {merging ? 'Merging…' : 'Merge & Download'}
         </Button>
       </Box>
 
@@ -424,26 +425,436 @@ export function InlineStudentMergeButton({
         </Typography>
       )}
 
-      <Dialog
-        open={previewOpen}
-        onClose={handleClosePreview}
-        maxWidth="lg"
-        fullWidth
-      >
+      <Dialog open={previewOpen} onClose={handleClosePreview} maxWidth="lg" fullWidth>
         <DialogTitle>Merged Cheatsheet Preview</DialogTitle>
 
-        <DialogContent sx={{ height: "80vh", p: 0 }}>
+        <DialogContent sx={{ height: '80vh', p: 0 }}>
           {previewUrl && (
-            <iframe
-              src={previewUrl}
-              width="100%"
-              height="100%"
-              style={{ border: "none" }}
-            />
+            <iframe src={previewUrl} width="100%" height="100%" style={{ border: 'none' }} />
           )}
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+export function CheatSheetWindowsTable({
+  windows,
+  files,
+  onPreview,
+}: {
+  windows: UploadWindow[];
+  files: any[];
+  onPreview: (file: any) => void;
+}) {
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const fileMap = useMemo(() => {
+    const map = new Map<string, any>();
+    files.forEach((file) => {
+      map.set(file.weekId, file);
+    });
+    return map;
+  }, [files]);
+
+  const filteredWindows = windows.filter((w) => !w.isSkipped);
+  const handlePreview = async (file: any) => {
+    setLoadingId(file.checksum);
+    try {
+      const { blob, filename } = await getCheatSheetFile(file.checksum);
+      const mimeType = blob.type || 'application/pdf';
+      const url = window.URL.createObjectURL(blob);
+      onPreview({
+        ...file,
+        url,
+        mimeType,
+        filename: filename ?? 'cheatsheet.pdf',
+      });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleDownload = async (file: any) => {
+    setLoadingId(file.checksum);
+    try {
+      const { blob, filename } = await getCheatSheetFile(file.checksum);
+      const mimeType = blob.type || 'application/pdf';
+      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: mimeType });
+      const url = window.URL.createObjectURL(safeBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename ?? 'cheatsheet.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  return (
+    <Box>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Window</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell align="right">Action</TableCell>
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {filteredWindows.map((window) => {
+            const key = window.windowStart.split('T')[0];
+            const file = fileMap.get(key);
+            const isUploaded = Boolean(file);
+            const isClosed = new Date(window.windowEnd) < new Date();
+            const isOpen = window.isWithinWindow;
+
+            return (
+              <TableRow
+                key={window.windowStart}
+                sx={{
+                  backgroundColor: window.isWithinWindow ? 'action.hover' : 'inherit',
+                }}
+              >
+                <TableCell>
+                  <Tooltip
+                    title={`${new Date(window.windowStart).toLocaleString()} → ${new Date(
+                      window.windowEnd
+                    ).toLocaleString()}`}
+                  >
+                    <Typography variant="body2">
+                      {new Date(window.windowStart).toLocaleDateString()} –{' '}
+                      {new Date(window.windowEnd).toLocaleDateString()}
+                    </Typography>
+                  </Tooltip>
+                </TableCell>
+
+                <TableCell>
+                  <Tooltip
+                    title={
+                      isUploaded ? `Uploaded at: ${new Date(file.createdAt).toLocaleString()}` : ''
+                    }
+                  >
+                    <span>
+                      {isUploaded ? (
+                        <Chip label="Uploaded" color="success" size="small" />
+                      ) : isOpen ? (
+                        <Chip label="Open" color="warning" size="small" />
+                      ) : isClosed ? (
+                        <Chip label="Missed" color="error" size="small" />
+                      ) : (
+                        <Chip label="Upcoming" size="small" />
+                      )}
+                    </span>
+                  </Tooltip>
+                </TableCell>
+
+                <TableCell align="right">
+                  {isUploaded ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <Tooltip title="Preview">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => handlePreview(file)}
+                            disabled={loadingId === file.checksum}
+                          >
+                            {loadingId === file.checksum ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <OpenInNewIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+
+                      <Tooltip title="Download">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDownload(file)}
+                            disabled={loadingId === file.checksum}
+                          >
+                            {loadingId === file.checksum ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <DownloadIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      —
+                    </Typography>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString();
+}
+
+function formatDateForStorage(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getAllUploadDays(semesterStart: Date, semesterEnd: Date, uploadStartDayName: string) {
+  const uploadStartDay = toWeekdayIndex(uploadStartDayName);
+  const result: Date[] = [];
+  const first = new Date(semesterStart);
+  const diff = (uploadStartDay - first.getDay() + 7) % 7;
+  first.setDate(first.getDate() + diff);
+  const current = new Date(first);
+  while (current <= semesterEnd) {
+    result.push(new Date(current));
+    current.setDate(current.getDate() + 7);
+  }
+  return result;
+}
+
+function parseTime(timeStr?: string): { hour: number; minute: number } {
+  if (!timeStr) return { hour: 0, minute: 0 };
+  const [hour, minute] = timeStr.split(':').map(Number);
+  return { hour: hour || 0, minute: minute || 0 };
+}
+
+function formatTime(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+export function CheatsheetConfigDialog({
+  open,
+  onClose,
+  onSave,
+  semesterStart,
+  semesterEnd,
+  initialConfig,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: any) => void;
+  semesterStart: Date;
+  semesterEnd: Date;
+  initialConfig?: Record<string, any>;
+}) {
+  const [configStartDay, setConfigStartDay] = useState(initialConfig?.uploadStartDay ?? '');
+  const [configEndDay, setConfigEndDay] = useState(initialConfig?.uploadEndDay ?? '');
+  const startTimeParsed = parseTime(initialConfig?.uploadStartTime);
+  const endTimeParsed = parseTime(initialConfig?.uploadEndTime);
+
+  const [configStartHour, setConfigStartHour] = useState(startTimeParsed.hour);
+  const [configStartMinute, setConfigStartMinute] = useState(startTimeParsed.minute);
+  const [configEndHour, setConfigEndHour] = useState(endTimeParsed.hour);
+  const [configEndMinute, setConfigEndMinute] = useState(endTimeParsed.minute);
+  const [cheatsheetStart, setCheatsheetStart] = useState<string>(
+    initialConfig?.cheatsheetStart ?? ''
+  );
+  const [cheatsheetEnd, setCheatsheetEnd] = useState<string>(initialConfig?.cheatsheetEnd ?? '');
+  const [cheatsheetSkip, setCheatsheetSkip] = useState<string[]>(
+    initialConfig?.cheatsheetSkip ?? []
+  );
+  const uploadDays = useMemo(() => {
+    if (!configStartDay) return [];
+    return getAllUploadDays(semesterStart, semesterEnd, configStartDay);
+  }, [semesterStart, semesterEnd, configStartDay]);
+  const filteredEndDays = useMemo(() => {
+    if (!cheatsheetStart) return uploadDays;
+    return uploadDays.filter((d) => d >= new Date(cheatsheetStart));
+  }, [uploadDays, cheatsheetStart]);
+  const skipRanges = useMemo(() => {
+    return uploadDays.map((start) => {
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      return {
+        value: formatDateForStorage(start),
+        label: `${formatDate(start)} - ${formatDate(end)}`,
+      };
+    });
+  }, [uploadDays]);
+
+  const handleSave = () => {
+    onSave({
+      uploadStartDay: configStartDay,
+      uploadEndDay: configEndDay,
+      uploadStartTime: formatTime(configStartHour, configStartMinute),
+      uploadEndTime: formatTime(configEndHour, configEndMinute),
+      cheatsheetStart,
+      cheatsheetEnd,
+      cheatsheetSkip,
+    });
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Configure Cheatsheet Upload Window</DialogTitle>
+      <DialogContent sx={{ pt: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box>
+          <Typography fontWeight="bold">Upload Window</Typography>
+          <Box sx={{ display: 'flex', gap: 2, mt: 1, alignItems: 'center' }}>
+            <Select
+              value={configStartDay}
+              onChange={(e) => setConfigStartDay(e.target.value as string)}
+              size="small"
+              sx={{ minWidth: 120 }}
+            >
+              {WEEKDAYS.map((day) => (
+                <MenuItem key={day} value={day}>
+                  {day}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Select
+              value={configStartHour}
+              onChange={(e) => setConfigStartHour(e.target.value as number)}
+              size="small"
+              sx={{ width: 70 }}
+            >
+              {Array.from({ length: 24 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {String(i).padStart(2, '0')}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Typography>:</Typography>
+
+            <Select
+              value={configStartMinute}
+              onChange={(e) => setConfigStartMinute(e.target.value as number)}
+              size="small"
+              sx={{ width: 70 }}
+            >
+              {Array.from({ length: 60 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {String(i).padStart(2, '0')}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2, mt: 2, alignItems: 'center' }}>
+            <Select
+              value={configEndDay}
+              onChange={(e) => setConfigEndDay(e.target.value as string)}
+              size="small"
+              sx={{ minWidth: 120 }}
+            >
+              {WEEKDAYS.map((day) => (
+                <MenuItem key={day} value={day}>
+                  {day}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Select
+              value={configEndHour}
+              onChange={(e) => setConfigEndHour(e.target.value as number)}
+              size="small"
+              sx={{ width: 70 }}
+            >
+              {Array.from({ length: 24 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {String(i).padStart(2, '0')}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Typography>:</Typography>
+
+            <Select
+              value={configEndMinute}
+              onChange={(e) => setConfigEndMinute(e.target.value as number)}
+              size="small"
+              sx={{ width: 70 }}
+            >
+              {Array.from({ length: 60 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {String(i).padStart(2, '0')}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </Box>
+        <Box>
+          <Typography fontWeight="bold">Cheatsheet Start</Typography>
+          <Select
+            fullWidth
+            value={cheatsheetStart}
+            onChange={(e) => setCheatsheetStart(e.target.value)}
+          >
+            {uploadDays.map((date) => (
+              <MenuItem key={formatDateForStorage(date)} value={formatDateForStorage(date)}>
+                {formatDate(date)}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+        <Box>
+          <Typography fontWeight="bold">Cheatsheet End</Typography>
+          <Select
+            fullWidth
+            value={cheatsheetEnd}
+            onChange={(e) => setCheatsheetEnd(e.target.value)}
+          >
+            {filteredEndDays.map((date) => (
+              <MenuItem key={formatDateForStorage(date)} value={formatDateForStorage(date)}>
+                {formatDate(date)}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+        <Box>
+          <Typography fontWeight="bold">Cheatsheet Skip</Typography>
+          <Select
+            fullWidth
+            multiple
+            value={cheatsheetSkip}
+            onChange={(e) => setCheatsheetSkip(e.target.value as string[])}
+            renderValue={(selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {(selected as string[]).map((val) => {
+                  const found = skipRanges.find((r) => r.value === val);
+
+                  return <Chip key={val} label={`Week of ${found?.label}`} size="small" />;
+                })}
+              </Box>
+            )}
+          >
+            {skipRanges.map((range) => (
+              <MenuItem key={range.value} value={range.value}>
+                <Checkbox checked={cheatsheetSkip.includes(range.value)} />
+                <ListItemText primary={`Week of ${range.label}`} />
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          Weekly windows are generated based on your upload start day and semester duration.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={handleSave}>
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

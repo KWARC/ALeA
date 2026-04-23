@@ -68,19 +68,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const lectureResult = await executeAndEndSet500OnError(
-      `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+      `SELECT lectureSchedule, tutorialSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
       [courseId, instanceId],
       res
     );
     if (!lectureResult) return;
 
     let lectureSchedule: LectureSchedule[] = [];
+    let tutorialSchedule: LectureSchedule[] = [];
     if (Array.isArray(lectureResult) && lectureResult.length > 0) {
       try {
         lectureSchedule = lectureResult[0].lectureSchedule || [];
+        tutorialSchedule = lectureResult[0].tutorialSchedule || [];
       } catch (e) {
-        console.error('Failed to parse lecture schedule:', e);
-        lectureSchedule = [];
+        console.error('Failed to parse schedules:', e);
       }
     }
 
@@ -140,42 +141,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const generatedEntries: any[] = [];
 
-    for (const lecture of lectureSchedule) {
-      const weekdayIdx = toWeekdayIndex(lecture.lectureDay);
-      if (weekdayIdx === undefined) {
-        console.warn(`Invalid weekday: ${lecture.lectureDay}`);
-        continue;
-      }
+    // Process both Lectures and Tutorials
+    const allSchedules = [
+      { data: lectureSchedule, type: 'Lecture' },
+      { data: tutorialSchedule, type: 'Tutorial' },
+    ];
 
-      for (const lectureDate of generateLectureDates(
-        lectureStartDate,
-        lectureEndDate,
-        weekdayIdx,
-        holidays
-      )) {
-        const startTime = setTimeOnDate(lectureDate, lecture.lectureStartTime);
-        const endTime = setTimeOnDate(lectureDate, lecture.lectureEndTime);
+    for (const schedule of allSchedules) {
+      for (const item of schedule.data) {
+        const weekdayIdx = toWeekdayIndex(item.lectureDay);
+        if (weekdayIdx === undefined) {
+          console.warn(`Invalid weekday: ${item.lectureDay}`);
+          continue;
+        }
 
-        console.log(
-          `Generated: ${lectureDate.toISOString().split('T')[0]} (${lecture.lectureDay})`
-        );
+        for (const lectureDate of generateLectureDates(
+          lectureStartDate,
+          lectureEndDate,
+          weekdayIdx,
+          holidays
+        )) {
+          const startTime = setTimeOnDate(lectureDate, item.lectureStartTime);
+          const endTime = setTimeOnDate(lectureDate, item.lectureEndTime);
 
-        generatedEntries.push({
-          timestamp_ms: startTime.getTime(),
-          sectionUri: '',
-          targetSectionUri: '',
-          clipId: '',
-          isQuizScheduled: !!lecture.hasQuiz,
-          slideUri: '',
-          autoDetected: {
-            clipId: '',
+          generatedEntries.push({
+            timestamp_ms: startTime.getTime(),
             sectionUri: '',
+            targetSectionUri: '',
+            clipId: '',
+            isQuizScheduled: !!item.hasQuiz,
             slideUri: '',
-          },
-          lectureEndTimestamp_ms: endTime.getTime(),
-          venue: lecture.venue || '',
-          venueLink: lecture.venueLink || '',
-        });
+            autoDetected: {
+              clipId: '',
+              sectionUri: '',
+              slideUri: '',
+            },
+            lectureEndTimestamp_ms: endTime.getTime(),
+            venue: item.venue || '',
+            venueLink: item.venueLink || '',
+            tutorName: item.tutorName || '',
+            comments: item.comments || '',
+            type: schedule.type,
+          });
+        }
       }
     }
 

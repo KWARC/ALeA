@@ -179,15 +179,15 @@ const QuizDashPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!courseId) return;
-    getCourseQuizList(courseId).then((res) => {
+    if (!courseId || !currentTerm) return;
+    getCourseQuizList(courseId, currentTerm).then((res) => {
       const quizzes = res as QuizStubInfo[];
       for (const quiz of quizzes) {
         injectCss(quiz.css);
       }
       setQuizList(quizzes);
     });
-  }, [courseId]);
+  }, [courseId, currentTerm]);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -280,6 +280,7 @@ const QuizDashPage: NextPage = () => {
             />
             <QuizPerformanceTable
               courseId={courseId}
+              instanceId={currentTerm}
               quizList={previousQuizzes}
               header={t.previousQuizzes}
             />

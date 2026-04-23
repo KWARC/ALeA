@@ -13,11 +13,15 @@ import sharp from 'sharp';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import jsQR from 'jsqr';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
-import { Action, ResourceName } from '@alea/utils';
-import { getCheatSheetConfigOrSet500OnError } from './create-cheatsheet';
+import { Action, formatDateLabel, ResourceName } from '@alea/utils';
+import { getUploadWindow } from './get-cheatsheet-upload-window';
+import { CheatsheetConfig } from '@alea/spec';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
 const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
+const TEMP_CHEATSHEETS_DIR = path.resolve(
+  process.env.TEMP_CHEATSHEETS_DIR || path.join(process.cwd(), 'cheatsheets_temp')
+);
 
 export const config = { api: { bodyParser: false } };
 
@@ -68,7 +72,7 @@ function buildFileName(fields: ExtractedFields, userId: string, checksum: string
 
 async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
   return new Promise((resolve, reject) => {
-    formidable({ keepExtensions: true }).parse(req, (err, _fields, files) => {
+    formidable({ keepExtensions: true, uploadDir: TEMP_CHEATSHEETS_DIR }).parse(req, (err, _fields, files) => {
       if (err) return reject(err);
       const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
       if (!uploaded) return reject(new Error('No file uploaded.'));
@@ -314,51 +318,99 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   throw new Error(`No QR code found across first ${Math.min(pdf.numPages, 3)} page(s).`);
 }
 
-const WINDOW_START_DAY = 1;
-const WINDOW_END_DAY = 0;
-//allowing on all days by default
-function isWithinDefaultUploadWindow(): boolean {
-  const now = new Date();
-  const day = now.getDay();
-  const inWindow =
-    WINDOW_START_DAY <= WINDOW_END_DAY
-      ? day >= WINDOW_START_DAY && day <= WINDOW_END_DAY
-      : day >= WINDOW_START_DAY || day <= WINDOW_END_DAY;
-
-  return inWindow;
+function buildCheatsheetUploadErrorMessage(
+  uploadContext: UploadContext,
+  weekId: string
+) {
+  const start = formatDateLabel(new Date(uploadContext.windowStart));
+  const end = formatDateLabel(new Date(uploadContext.windowEnd));
+  const weekLabel = formatDateLabel(weekId);
+  if (uploadContext.status === 'PAST') {
+    return `Cheatsheet submission window is closed.\nThis cheatsheet is for the week of  (${weekLabel}). Upload window was: ${start} - ${end}. Please contact instructor if you need to submit this cheatsheet.`;
+  }
+  if (uploadContext.status === 'FUTURE') {
+    return `Submission not started for week (${weekLabel}). It will open from ${start} to ${end}.`;
+  }
+  return '';
 }
 
-async function validateUploadWindowOrSetError(
+type UploadWindowStatus = 'PAST' | 'CURRENT' | 'FUTURE';
+interface UploadContext {
+  windowStart: string; // ISO
+  windowEnd: string; // ISO
+  status: UploadWindowStatus;
+}
+
+export function getUploadContext(weekId: string | Date, config: CheatsheetConfig): UploadContext {
+  const weekDate = typeof weekId === 'string' ? new Date(weekId) : weekId;
+  const { windowStart, windowEnd } = getUploadWindow(weekDate, config);
+  const now = new Date();
+  let status: UploadWindowStatus;
+  if (now < windowStart) {
+    status = 'FUTURE';
+  } else if (now > windowEnd) {
+    status = 'PAST';
+  } else {
+    status = 'CURRENT';
+  }
+  return {
+    windowStart: windowStart.toISOString(),
+    windowEnd: windowEnd.toISOString(),
+    status,
+  };
+}
+
+export async function validateCheatsheetUploadWindowOrSetError(
   universityId: string,
   courseId: string,
   instanceId: string,
   weekId: string,
   res: NextApiResponse
-): Promise<boolean> {
-  const result = await getCheatSheetConfigOrSet500OnError(
-    universityId,
-    courseId,
-    instanceId,
-    weekId,
-    res
-  );
-  if (!result) return false;
-  if (result.length) {
-    const now = new Date();
-    const start = new Date(result[0].uploadStartAt);
-    const end = new Date(result[0].uploadEndAt);
-    if (now < start || now > end) {
-      res.status(403).send('Empty cheatsheet generation window is closed');
-      return false;
-    }
-    return true;
+) {
+  const config = await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res);
+  if (!config) return;
+
+  if (!config.canStudentUploadCheatsheet) {
+    return res.status(403).send('Cheatsheet upload is not enabled for this course.');
   }
-  if (!isWithinDefaultUploadWindow()) {
-    res.status(403).send('Upload window is closed');
-    return false;
+  const uploadContext = getUploadContext(weekId, config);
+  if (uploadContext.status !== 'CURRENT') {
+    const errorMessage = buildCheatsheetUploadErrorMessage(
+      uploadContext,
+      weekId,
+    );
+    return res.status(403).send(errorMessage);
   }
   return true;
 }
+
+export async function getCheatsheetConfigOrSetError(
+  universityId: string,
+  courseId: string,
+  instanceId: string,
+  res: NextApiResponse
+) {
+  const result = await executeAndEndSet500OnError(
+    `SELECT cheatsheetConfig FROM courseMetadata 
+     WHERE courseId = ? AND instanceId = ? AND universityId = ?`,
+    [courseId, instanceId, universityId],
+    res
+  );
+  if (!result) return;
+
+  if (!result.length || !result[0].cheatsheetConfig) {
+    return res.status(403).send('Cheatsheet upload configuration is not set for this course.');
+  }
+
+  try {
+    return typeof result[0].cheatsheetConfig === 'string'
+      ? JSON.parse(result[0].cheatsheetConfig)
+      : result[0].cheatsheetConfig;
+  } catch {
+    return res.status(403).send('Invalid cheatsheet configuration.');
+  }
+}
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -366,6 +418,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
   fs.mkdirSync(CHEATSHEETS_DIR, { recursive: true });
+  fs.mkdirSync(TEMP_CHEATSHEETS_DIR, { recursive: true });
   let file: formidable.File;
   try {
     file = await parseUpload(req);
@@ -412,19 +465,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     {
       name: ResourceName.COURSE_CHEATSHEET,
       action: Action.UPLOAD,
-      variables: { courseId, instanceId, studentId: userId },
+      variables: { courseId, instanceId},
     },
   ]);
   if (isStudent) {
-    const isValid = await validateUploadWindowOrSetError(
+    const isWithinUploadWindow = await validateCheatsheetUploadWindowOrSetError(
       universityId,
       courseId,
       instanceId,
       weekId,
       res
     );
-
-    if (!isValid) return;
+    if (!isWithinUploadWindow) return;
   }
   if (isStudent && studentId !== userId) {
     return res.status(403).send('You cannot upload a cheat sheet for another student.');
@@ -434,6 +486,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .status(403)
       .send('You do not have permission to upload cheat sheets for this course.');
   }
+  const config = await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res);
+  const uploadContext = isInstructor && config ? getUploadContext(weekId, config) : undefined;
   const checksum = generateChecksum(buffer);
   const fileName = buildFileName(fields, userId, checksum);
 
@@ -445,7 +499,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const finalPath = path.join(CHEATSHEETS_DIR, fileName);
   if (existingRow?.uploadedAt) {
     if (existingRow.checksum === checksum) {
-      return res.status(200).send('Already uploaded.');
+      return res.status(200).json({ message: 'Already uploaded.' });
     }
     const txnResult = await executeTxnAndEndSet500OnError(
       res,
@@ -463,7 +517,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     if (!txnResult) return;
-    return res.status(200).end();
+    return res.status(200).json({
+      message: 'Updated successfully',
+      ...(uploadContext && { uploadContext }),
+    });
   }
   const result = await executeAndEndSet500OnError(
     `UPDATE CheatSheet
@@ -483,5 +540,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
   }
-  res.status(201).end();
+  return res.status(201).json({
+    message: 'Uploaded successfully',
+    ...(uploadContext && { uploadContext }),
+  });
 }

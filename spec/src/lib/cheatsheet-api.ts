@@ -17,6 +17,22 @@ export interface CheatSheetRequest {
   courseId: string;
   courseName: string;
   instanceId: string;
+  scope?: string;
+}
+
+export interface UploadWindow {
+  windowStart: string; // ISO string
+  windowEnd: string; // ISO string
+  isSkipped: boolean;
+  isWithinWindow: boolean;
+}
+
+export interface CheatsheetUploadWindowResponse {
+  hasUploadEnabled: boolean;
+  currentWindow: UploadWindow | null;
+  upcomingWindow: UploadWindow | null;
+  allWindows: UploadWindow[];
+  message?: string;
 }
 export async function getCheatSheets(courseId: string, instanceId: string, userId?: string) {
   const resp = await axios.get('/api/cheatsheet/get-cheatsheets', {
@@ -44,5 +60,17 @@ export async function createCheatSheet(body: CheatSheetRequest) {
   return { blob: resp.data as Blob, filename };
 }
 export async function postScannedCheatSheet(body: FormData) {
-  await axios.post('/api/cheatsheet/post-cheatsheet', body);
+  const resp = await axios.post('/api/cheatsheet/post-cheatsheet', body);
+  return resp.data;
+}
+
+export async function getCheatsheetUploadWindow(
+  courseId: string,
+  instanceId: string,
+  universityId: string,
+): Promise<CheatsheetUploadWindowResponse> {
+  const resp = await axios.get('/api/cheatsheet/get-cheatsheet-upload-window', {
+    params: { courseId, instanceId, universityId },
+  });
+  return resp.data as CheatsheetUploadWindowResponse;
 }

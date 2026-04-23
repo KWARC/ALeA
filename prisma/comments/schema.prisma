@@ -220,8 +220,19 @@ model courseMetadata {
   lectureSchedule  Json
   hasHomework      Boolean   @default(false)
   hasQuiz          Boolean   @default(false)
-  hasCheatsheet    Boolean   @default(false)
-  canStudentUploadCheatsheet Boolean   @default(false)
+  /// Cheatsheet configuration stored as JSON with the following structure:
+  /// {
+  ///   hasCheatsheet?: boolean;                    // Whether cheatsheet feature is enabled
+  ///   canStudentUploadCheatsheet?: boolean;       // Whether students can upload cheatsheets
+  ///   uploadStartDay?: string;                    // Day name ("Monday", "Tuesday", etc.), default "Monday"
+  ///   uploadStartTime?: string;                   // HH:MM format (24-hour), default "09:00"
+  ///   uploadEndDay?: string;                      // Day name ("Monday", "Tuesday", etc.), default "Monday"
+  ///   uploadEndTime?: string;                     // HH:MM format (24-hour), default "17:00"
+  ///   cheatsheetStart?: string;                   // YYYY-MM-DD format for cheatsheet availability start
+  ///   cheatsheetEnd?: string;                     // YYYY-MM-DD format for cheatsheet availability end
+  ///   cheatsheetSkip?: string[];                  // Array of YYYY-MM-DD strings for weeks to skip
+  /// }
+  cheatsheetConfig Json? 
   updaterId        String?   @db.VarChar(255)
   createdAt        DateTime? @default(now()) @db.Timestamp(0)
   updatedAt        DateTime? @default(now()) @db.Timestamp(0)

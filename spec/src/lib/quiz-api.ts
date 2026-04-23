@@ -73,12 +73,17 @@ export async function deleteQuiz(quizId: string, courseId: string, courseTerm: s
   );
 }
 
-export async function getCourseQuizList(courseId: string): Promise<QuizStubInfo[]> {
-  return (await axios.get(`/api/quiz/get-course-quiz-list/${courseId}`)).data;
+export async function getCourseQuizList(
+  courseId: string,
+  instanceId?: string
+): Promise<QuizStubInfo[]> {
+  const params = instanceId ? { instanceId } : undefined;
+  return (await axios.get(`/api/quiz/get-course-quiz-list/${courseId}`, { params })).data;
 }
 
-export async function getPreviousQuizInfo(courseId: string) {
-  const resp = await axios.get(`/api/quiz/get-previous-quiz-info/${courseId}`);
+export async function getPreviousQuizInfo(courseId: string, instanceId?: string) {
+  const params = instanceId ? { instanceId } : undefined;
+  const resp = await axios.get(`/api/quiz/get-previous-quiz-info/${courseId}`, { params });
   return resp.data as GetPreviousQuizInfoResponse;
 }
 

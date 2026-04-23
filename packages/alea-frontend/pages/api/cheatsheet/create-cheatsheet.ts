@@ -2,16 +2,28 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
-
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
-import { Action, getCurrentWeekNoFromStartDate, ResourceName } from '@alea/utils';
+import {
+  Action,
+  formatDateLabel,
+  getCurrentWeekNoFromStartDate,
+  ResourceName,
+  toWeekdayIndex,
+} from '@alea/utils';
 import { getUserProfileOrSet500OnError } from '../get-user-profile';
-import { getSemesterInfoFromDb } from '../calendar/create-calendar';
+import { getCheatsheetConfigOrSetError } from './post-cheatsheet';
+import { CheatsheetConfig } from '@alea/spec';
+import {
+  getCheatsheetWeekStarts,
+  getSkippedWeeksSet,
+  getUploadWindow,
+  getWeekStartFromDate,
+} from './get-cheatsheet-upload-window';
 
 const QR_SECRET = process.env.CHEATSHEET_QR_SECRET;
 
@@ -146,18 +158,31 @@ function drawWriteArea(doc: PDFDocument, startY: number, margin: number) {
   doc.restore();
 }
 
-function buildPdf(fields: CheatsheetFields, qrImage: string) {
+function buildPdf() {
   const PAGE_MARGIN = 10;
-  const doc = new PDFDocument({
+  return new PDFDocument({
     size: 'A4',
     margin: PAGE_MARGIN,
     autoFirstPage: false,
   });
+}
+
+function renderPdfPage(
+  doc: PDFDocument,
+  fields: CheatsheetFields,
+  qrImage: string,
+  config: CheatsheetConfig
+) {
+  const PAGE_MARGIN = 10;
   doc.addPage();
   const { height } = doc.page;
   const HEADER_TOP = PAGE_MARGIN;
   const HEADER_HEIGHT = (height - PAGE_MARGIN * 2) / 2;
   const WRITE_AREA_TOP = HEADER_TOP + HEADER_HEIGHT + 10;
+  const uploadWindow = getUploadWindow(new Date(fields.weekId), config);
+  const weekOf = `${formatDateLabel(uploadWindow.windowStart)} - ${formatDateLabel(
+    uploadWindow.windowEnd
+  )}`;
   const rows: [string, string][] = [
     ['Course Name', fields.courseName],
     ['Course Id', fields.courseId],
@@ -165,64 +190,13 @@ function buildPdf(fields: CheatsheetFields, qrImage: string) {
     ['University Id', fields.universityId],
     ['Student Name', fields.studentName],
     ['Student Id', fields.studentId],
-    ['Week Id', fields.weekId],
-    [
-      'Generated At',
-      new Date(fields.createdAt).toLocaleString('en-IN', {
-        timeZoneName: 'short',
-      }),
-    ],
+    ['Week Of', weekOf],
   ];
   drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
   drawWatermark(doc, fields);
   drawWriteArea(doc, WRITE_AREA_TOP, PAGE_MARGIN);
-  return doc;
 }
 
-export async function getCheatSheetConfigOrSet500OnError(
-  universityId: string,
-  courseId: string,
-  instanceId: string,
-  weekId: string,
-  res: NextApiResponse
-) {
-  // const result: any[] = await executeDontEndSet500OnError(
-  //   `SELECT generationStartAt, generationEndAt, uploadStartAt, uploadEndAt FROM CheatSheetConfig
-  //   WHERE universityId = ? AND courseId = ? AND instanceId = ? AND weekId = ?`,
-  //   [universityId, courseId, instanceId, weekId],
-  //   res
-  // );
-  // if (!result) return;
-  // return result;
-  return [];
-}
-
-async function validateGenerationWindowOrSetError(
-  universityId: string,
-  courseId: string,
-  instanceId: string,
-  weekId: string,
-  res: NextApiResponse
-): Promise<boolean> {
-  const result = await getCheatSheetConfigOrSet500OnError(
-    universityId,
-    courseId,
-    instanceId,
-    weekId,
-    res
-  );
-  if (!result) return false;
-  if (result.length) {
-    const now = new Date();
-    const start = new Date(result[0].generationStartAt);
-    const end = new Date(result[0].generationEndAt);
-    if (now < start || now > end) {
-      res.status(403).send('Empty cheatsheet generation window is closed');
-      return false;
-    }
-  }
-  return true;
-}
 function generateId() {
   const time = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 6);
@@ -231,12 +205,76 @@ function generateId() {
 function toMySQLDatetime(date: Date = new Date()) {
   return date.toISOString().slice(0, 19).replace('T', ' ');
 }
+async function getOrCreateCheatsheetOrSetError({
+  userId,
+  studentName,
+  universityId,
+  courseId,
+  instanceId,
+  weekId,
+  res,
+}) {
+  const existing = await executeAndEndSet500OnError(
+    `SELECT cheatsheetId, createdAt
+     FROM CheatSheet
+     WHERE userId=? AND courseId=? AND instanceId=? AND universityId=? AND weekId=?
+     LIMIT 1`,
+    [userId, courseId, instanceId, universityId, weekId],
+    res
+  );
+  if (!existing) return;
+  if (existing.length > 0) {
+    return { cheatsheetId: existing[0].cheatsheetId, createdAt: existing[0].createdAt };
+  }
+  const cheatsheetId = generateId();
+  const createdAt = new Date();
+
+  const result = await executeDontEndSet500OnError(
+    `INSERT INTO CheatSheet
+     (cheatsheetId, userId, studentName, universityId, courseId, instanceId, weekId, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      cheatsheetId,
+      userId,
+      studentName,
+      universityId,
+      courseId,
+      instanceId,
+      weekId,
+      toMySQLDatetime(createdAt),
+    ],
+    res
+  );
+  if (!result) return;
+  return { cheatsheetId, createdAt };
+}
+
+function getEffectiveWeekStart(now: Date, config: CheatsheetConfig): Date {
+  const startDayNum =
+    typeof config.uploadStartDay === 'string'
+      ? toWeekdayIndex(config.uploadStartDay)
+      : config.uploadStartDay;
+  const [startH, startM] = config.uploadStartTime.split(':').map(Number);
+  const base = getWeekStartFromDate(now, startDayNum);
+  const weekStart = new Date(base);
+  weekStart.setHours(startH, startM, 0, 0);
+  if (now < weekStart) {
+    const prev = new Date(weekStart);
+    prev.setUTCDate(prev.getUTCDate() - 7);
+    return prev;
+  }
+  return weekStart;
+}
+
+function toSafeLabel(str: string) {
+  return str.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');//Converts string into a URL-safe label by replacing spaces with hyphens and removing special characters
+}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   if (!validateBody(req.body)) {
     return res.status(422).send('Missing required fields');
   }
-  const { courseId, instanceId, universityId } = req.body;
+  const { courseId, instanceId, universityId, scope = 'WEEK' } = req.body;
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
@@ -254,70 +292,77 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fields = req.body as CheatsheetFields;
     fields.studentName = studentName;
     fields.studentId = userId;
-
-    const semesterInfo = await getSemesterInfoFromDb(universityId, instanceId);
-    if (!semesterInfo?.semesterStart) {
-    return res.status(400).send('Semester start date not found, cannot generate week id');
+    const config = await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res);
+    if (!config) return;
+    if (!config.cheatsheetStart || !config.cheatsheetEnd) {
+      return res.status(403).send('Cheatsheet start or end date not found.');
     }
-    const weekId = generateWeekIdFromSemesterStart(semesterInfo.semesterStart);
-    fields.weekId = weekId;
-    const allowed = await validateGenerationWindowOrSetError(
-      universityId,
-      courseId,
-      instanceId,
-      weekId,
-      res
-    );
-    if (!allowed) return;
-    const existing = await executeAndEndSet500OnError(
-      `SELECT cheatsheetId, createdAt
-   FROM CheatSheet
-   WHERE userId=? AND courseId=? AND instanceId=? AND universityId=? AND weekId=?
-   LIMIT 1`,
-      [userId, courseId, instanceId, universityId, weekId],
-      res
-    );
-    if (!existing) return;
+    const weekStarts = getCheatsheetWeekStarts(config);
+    const skippedWeeks = getSkippedWeeksSet(config);
+    const doc = buildPdf();
+    if (scope === 'WEEK') {
+      const weekStart = getEffectiveWeekStart(new Date(), config);
+      const weekId = weekStart.toISOString().split('T')[0];
+      fields.weekId = weekId;
+      const { cheatsheetId, createdAt } = await getOrCreateCheatsheetOrSetError({
+        userId,
+        studentName,
+        universityId,
+        courseId,
+        instanceId,
+        weekId,
+        res,
+      });
+      if (!cheatsheetId) return;
+      fields.createdAt = createdAt;
 
-    let cheatsheetId;
-    let createdAt;
+      const qrImage = await buildQrCodeSecure({ cheatsheetId });
+      if (!qrImage) return res.status(500).send('QR generation failed');
 
-    if (existing.length > 0) {
-      cheatsheetId = existing[0].cheatsheetId;
-      createdAt = existing[0].createdAt;
+      renderPdfPage(doc, fields, qrImage, config);
     } else {
-      cheatsheetId = generateId();
-      createdAt = new Date();
-
-      const result = await executeDontEndSet500OnError(
-        `INSERT INTO CheatSheet
-    (cheatsheetId, userId, studentName, universityId, courseId, instanceId, weekId, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          cheatsheetId,
+      for (const weekStart of weekStarts) {
+        const weekId = weekStart.toISOString().split('T')[0];
+        if (skippedWeeks.has(weekId)) continue;
+        fields.weekId = weekId;
+        const { cheatsheetId, createdAt } = await getOrCreateCheatsheetOrSetError({
           userId,
           studentName,
           universityId,
           courseId,
           instanceId,
           weekId,
-          toMySQLDatetime(createdAt),
-        ],
-        res
-      );
-      if (!result) return;
+          res,
+        });
+        if (!cheatsheetId) continue;
+        fields.createdAt = createdAt;
+        const qrImage = await buildQrCodeSecure({ cheatsheetId });
+        if (!qrImage) continue;
+        renderPdfPage(doc, fields, qrImage, config);
+      }
     }
-    fields.createdAt = createdAt;
-    const qrImage = await buildQrCodeSecure({ cheatsheetId });
-    if (!qrImage) {
-      return res.status(500).send('QR generation failed');
+    let filename: string;
+
+    if (scope === 'WEEK') {
+      const weekStart = getEffectiveWeekStart(new Date(), config);
+      const { windowStart, windowEnd } = getUploadWindow(weekStart, config);
+      const label = `${formatDateLabel(windowStart)}-${formatDateLabel(windowEnd)}`;
+      const safeRange = toSafeLabel(label);
+      filename = `cheatsheet-${safeRange}-${courseId}.pdf`;
+    } else {
+      const validWeeks = weekStarts.filter((w) => !skippedWeeks.has(formatDateLabel(w)));
+      const firstWeek = validWeeks[0];
+      const lastWeek = validWeeks[validWeeks.length - 1];
+      const firstWindow = getUploadWindow(firstWeek, config);
+      const lastWindow = getUploadWindow(lastWeek, config);
+      const label = `${formatDateLabel(firstWindow.windowStart)}-${formatDateLabel(
+        lastWindow.windowEnd
+      )}`;
+      const safeRange = toSafeLabel(label);
+      filename = `cheatsheet-${safeRange}-${courseId}.pdf`;
     }
-    const doc = buildPdf(fields, qrImage);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="cheatsheet-${fields.weekId}-${fields.courseId}.pdf"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     doc.pipe(res);
     doc.end();
   } catch (error) {

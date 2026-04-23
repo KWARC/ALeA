@@ -588,6 +588,8 @@ export const en = {
     lectureEntryFailed: 'Lecture entry generation failed: {{error}}',
 
     generateLectureEntry: 'Generate Lecture Entry',
+    generateLectureEntryTooltip:
+      'We use semester dates, holidays, and lecture schedule to generate lecture entries (syllabus) for the entire semester.',
     lectureEntriesAlreadyGenerated: 'Lecture Entries Already Generated',
 
     lectureScheduleTab: 'Lecture Schedule',
@@ -599,6 +601,8 @@ export const en = {
     day: 'Day',
     venue: 'Venue',
     venueLink: 'Venue Link',
+    tutorName: 'Tutor Name',
+    comments: 'Comments',
     startTime: 'Start Time',
     endTime: 'End Time',
     homework: 'Homework',

@@ -5,11 +5,25 @@ export interface LectureSchedule {
   venueLink?: string;
   lectureStartTime: string;
   lectureEndTime: string;
+  tutorName?: string;
+  comments?: string;
   hasQuiz?: boolean;
   quizOffsetMinutes?: number;
   quizOffsetReference?: 'lecture-start' | 'lecture-end';
   quizDurationMinutes?: number;
   quizFeedbackDelayMinutes?: number;
+}
+
+export interface CheatsheetConfig {
+  hasCheatsheet?: boolean;
+  canStudentUploadCheatsheet?: boolean;
+  uploadStartDay?: string; // "Monday", "Tuesday", etc.
+  uploadStartTime?: string; // HH:MM format (24-hour)
+  uploadEndDay?: string; // "Monday", "Tuesday", etc.
+  uploadEndTime?: string; // HH:MM format (24-hour)
+  cheatsheetStart?: string; // YYYY-MM-DD format
+  cheatsheetEnd?: string; // YYYY-MM-DD format
+  cheatsheetSkip?: string[]; // Array of YYYY-MM-DD strings
 }
 
 export interface CourseMetadata {
@@ -36,8 +50,7 @@ export interface CourseInfoMetadata extends CourseMetadata {
   livestreamUrl?: string;
   instructors: InstructorInfo[];
   hasQuiz: boolean;
-  hasCheatsheet: boolean;
-  canStudentUploadCheatsheet: boolean;
+  cheatsheetConfig?: CheatsheetConfig;
   updaterId?: string;
   universityId: string;
 }
@@ -67,6 +80,8 @@ export interface LectureScheduleItem {
   endTime: string;
   venue?: string;
   venueLink?: string;
+  tutorName?: string;
+  comments?: string;
 }
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
@@ -120,18 +135,11 @@ export async function updateHasQuiz(
   return response.data;
 }
 
-export async function updateHasCheatsheet(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { hasCheatsheet: boolean }
-) {
-  const response = await axios.post(`${COURSE_METADATA_BASE_URL}/update-cheatsheet`, data);
-  return response.data;
-}
-
-export async function updateCanStudentUploadCheatsheet(
-  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { canStudentUploadCheatsheet: boolean }
-) {
+export async function updateCheatsheetConfig(
+  data: Pick<CourseMetadata, 'courseId' | 'instanceId'> & { config: Partial<CheatsheetConfig> }
+): Promise<{ success: boolean }> {
   const response = await axios.post(
-    `${COURSE_METADATA_BASE_URL}/update-can-student-upload-cheatsheet`,
+    `${COURSE_METADATA_BASE_URL}/update-cheatsheet-config`,
     data
   );
   return response.data;

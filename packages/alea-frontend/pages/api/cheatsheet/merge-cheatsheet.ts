@@ -34,13 +34,7 @@ export async function mergeCheatsheets(
       ['University Id', fields.universityId],
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
-      ['Upto Week Id', fields.weekId],
-      [
-        'Generated At',
-        new Date(fields.createdAt).toLocaleString('en-IN', {
-          timeZoneName: 'short',
-        }),
-      ],
+      ['Upto Week Of', fields.weekId],
     ];
     drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
     drawWatermark(doc, fields);

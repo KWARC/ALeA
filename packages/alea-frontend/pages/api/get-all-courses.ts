@@ -1,6 +1,7 @@
 import { CourseInfo, createCourseInfo, getCurrentTermForUniversity } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeQuery } from './comment-utils';
+import { CheatsheetConfig } from '@alea/spec';
 
 interface CourseMetadataRow {
   courseId: string;
@@ -13,7 +14,7 @@ interface CourseMetadataRow {
   instructors: string | object | null;
   hasQuiz: boolean;
   hasHomework: boolean;
-  hasCheatsheet: boolean;
+  cheatsheetConfig: CheatsheetConfig | null;
   universityId: string | null;
 }
 
@@ -89,8 +90,8 @@ function transformMetadataToCoursesInfo(
     const isCurrentTerm = sorted.some((i) => i.instanceId === currentTerm);
     const hasQuiz = sorted.some((i) => !!i.hasQuiz);
     const hasHomework = sorted.some((i) => !!i.hasHomework);
-    const hasCheatsheet = sorted.some((i) => !!i.hasCheatsheet);
-
+    const cheatsheetConfig =
+      sorted.find((i) => i.instanceId === currentTerm)?.cheatsheetConfig ?? null;
     const semesterInstances = sorted.map((instance) => {
       const instructorList = parseInstructorsJson(instance.instructors);
       return {
@@ -110,7 +111,7 @@ function transformMetadataToCoursesInfo(
       isCurrentTerm,
       hasQuiz,
       hasHomework,
-      hasCheatsheet,
+      cheatsheetConfig || null,
       primary.universityId || undefined,
       semesterInstances,
       primaryInstructorNames,
@@ -137,7 +138,7 @@ export async function getAllCoursesFromDb(
       instructors,
       hasQuiz,
       hasHomework,
-      hasCheatsheet,
+      cheatsheetConfig,
       universityId
     FROM courseMetadata
   `;
