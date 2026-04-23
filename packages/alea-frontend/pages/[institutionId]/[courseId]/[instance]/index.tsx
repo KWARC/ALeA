@@ -236,7 +236,7 @@ function CourseScheduleSection({
                 <Box
                   sx={{
                     position: 'relative',
-                    maxHeight: showAllLectures ? 'none' : 260,
+                    maxHeight: showAllLectures || !hasMoreLectures ? 'none' : 310,
                     overflow: 'hidden',
                   }}
                 >
@@ -280,7 +280,7 @@ function CourseScheduleSection({
                         </Typography>
                         {entry.tutorName && (
                           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            👤 TutorName: {entry.tutorName}
+                            👤 {entry.tutorName}
                           </Typography>
                         )}
                         {entry.comments && (
@@ -355,7 +355,7 @@ function CourseScheduleSection({
                 <Box
                   sx={{
                     position: 'relative',
-                    maxHeight: showAllTutorials ? 'none' : 260,
+                    maxHeight: showAllTutorials || !hasMoreTutorials ? 'none' : 310,
                     overflow: 'hidden',
                   }}
                 >
@@ -399,7 +399,7 @@ function CourseScheduleSection({
                         </Typography>
                         {entry.tutorName && (
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            👤 TutorName: {entry.tutorName}
+                            👤 {entry.tutorName}
                           </Typography>
                         )}
                         {entry.comments && (
