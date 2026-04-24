@@ -55,11 +55,14 @@ function generateCalendarEvents(
     }
 
     for (const entry of entries) {
-      const lectureInfo = entry.isQuizScheduled ? '📝 Lecture and Quiz' : '📚 Lecture';
+      const type = (entry as any).type || 'Lecture';
+      const lectureInfo = entry.isQuizScheduled ? `📝 ${type} and Quiz` : `📚 ${type}`;
       const location = entry.venue || undefined;
       let summary = `${courseId} - ${lectureInfo}`;
       let description = `Course: ${courseId}\n${lectureInfo}`;
       if (location) description += `\nLocation: ${location}`;
+      if (entry.tutorName) description += `\nTutor: ${entry.tutorName}`;
+      if (entry.comments) description += `\nComments: ${entry.comments}`;
       if (entry.lectureEndTimestamp_ms) {
         events.push({
           start: new Date(entry.timestamp_ms),
