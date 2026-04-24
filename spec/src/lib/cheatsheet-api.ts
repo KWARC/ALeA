@@ -23,6 +23,7 @@ export interface CheatSheetRequest {
 export interface UploadWindow {
   windowStart: string; // ISO string
   windowEnd: string; // ISO string
+  weekId: string;
   isSkipped: boolean;
   isWithinWindow: boolean;
 }

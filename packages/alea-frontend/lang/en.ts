@@ -484,6 +484,11 @@ export const en = {
     assignments: 'Assignments',
     notes: 'Notes',
     slides: 'Slides',
+    cheatsheet: 'Cheatsheet',
+    cheatsheetUploadPending: 'Cheatsheet upload pending',
+    cheatsheetEnrollmentPending: 'Get enrolled to access the CheatSheet',
+    uploadBefore: 'Upload before',
+    uploadPending: 'Upload pending',
     notEnrolled: "You're not enrolled in any courses yet",
   },
   semesterOverBanner: {
