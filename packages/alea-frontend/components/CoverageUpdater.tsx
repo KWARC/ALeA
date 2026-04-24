@@ -99,6 +99,7 @@ export function CoverageUpdater({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
+  const [fauTvClips, setFauTvClips] = useState<any[]>([]);
 
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
 
@@ -117,20 +118,23 @@ export function CoverageUpdater({
   }, [snaps, secInfo]);
 
   useEffect(() => {
-    async function loadTimezone() {
+    async function loadCourseDetails() {
       try {
         const courses = await getAllCourses();
-        const universityId = courses?.[courseId]?.universityId;
-        if (universityId && UniversityDetail[universityId]) {
-          setTimezone(UniversityDetail[universityId].defaultTimezone);
-        } else {
-          setTimezone(undefined);
+        const course = courses?.[courseId];
+        if (course) {
+          const universityId = course.universityId;
+          if (universityId && UniversityDetail[universityId]) {
+            setTimezone(UniversityDetail[universityId].defaultTimezone);
+          } else {
+            setTimezone(undefined);
+          }
         }
       } catch (err) {
-        console.error('Failed to load university timezone', err);
+        console.error('Failed to load course details', err);
       }
     }
-    loadTimezone();
+    loadCourseDetails();
   }, [courseId]);
 
   useEffect(() => {
@@ -282,16 +286,49 @@ export function CoverageUpdater({
             courseId={courseId}
             entries={snaps}
             secInfo={secInfo}
-            onEdit={(idx) => {
+            onEdit={async (idx) => {
               const entry = coverageEntries[idx];
               const auto: typeof entry.autoDetected & { slideNumber?: number } = entry.autoDetected;
 
               const shouldPrefill =
                 entry.sectionUri === '' || entry.sectionUri === 'update-pending';
 
+              let defaultClipId = shouldPrefill ? auto?.clipId || '' : entry.clipId;
+              let fetchedClips = fauTvClips;
+              if (!defaultClipId && fetchedClips.length === 0) {
+                try {
+                  const courses = await getAllCourses();
+                  const course = courses?.[courseId];
+                  if (course?.fauTvSeriesId) {
+                    const res = await fetch(`/api/get-fau-series-clips/${course.fauTvSeriesId}`);
+                    if (res.ok) {
+                      fetchedClips = await res.json();
+                      setFauTvClips(fetchedClips);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Failed to fetch FAU.tv clips:', error);
+                }
+              }
+
+              if (!defaultClipId && fetchedClips.length > 0) {
+                const d = new Date(entry.timestamp_ms);
+                const lectureDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+                  2,
+                  '0'
+                )}-${String(d.getDate()).padStart(2, '0')}`;
+
+                const matchedClip = fetchedClips.find(
+                  (clip) => clip.recording_date === lectureDate
+                );
+                if (matchedClip) {
+                  defaultClipId = matchedClip.id.toString();
+                }
+              }
+
               const merged = {
                 ...entry,
-                clipId: shouldPrefill ? auto?.clipId || '' : entry.clipId,
+                clipId: defaultClipId,
                 sectionUri: shouldPrefill ? auto?.sectionUri || '' : entry.sectionUri,
                 slideUri: shouldPrefill ? auto?.slideUri || '' : entry.slideUri,
                 slideNumber: shouldPrefill ? auto?.slideNumber : entry.slideNumber,
