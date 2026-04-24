@@ -17,6 +17,8 @@ interface Props {
   chipLabel?: (value: string) => string;
   onTypingChange?: (isTyping: boolean) => void;
   errorMessage?: string;
+  size?: 'small' | 'medium';
+  sx?: any;
 }
 
 export default function AclAutocompleteSelector({
@@ -27,6 +29,8 @@ export default function AclAutocompleteSelector({
   chipLabel = (x) => x,
   onTypingChange,
   errorMessage = 'Invalid or duplicate entry',
+  size = 'small',
+  sx,
 }: Props) {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<'initial' | 'success' | 'failure'>('initial');
@@ -71,8 +75,9 @@ export default function AclAutocompleteSelector({
   };
 
   return (
-    <Box mb={3}>
+    <Box sx={{ mb: size === 'small' ? 0 : 3, ...sx }}>
       <Autocomplete
+        size={size}
         freeSolo
         options={suggestions}
         getOptionLabel={(opt) =>
@@ -95,7 +100,7 @@ export default function AclAutocompleteSelector({
           <TextField
             {...params}
             label={label}
-            size="small"
+            size={size}
             onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
           />
         )}

@@ -131,6 +131,8 @@ function CourseScheduleSection({
             endTime: item.lectureEndTime ?? item.endTime ?? '',
             venue: item.venue,
             venueLink: item.venueLink,
+            tutorName: item.tutorName,
+            comments: item.comments,
           });
 
           const lectures = Array.isArray(data?.lectureSchedule)
@@ -234,7 +236,7 @@ function CourseScheduleSection({
                 <Box
                   sx={{
                     position: 'relative',
-                    maxHeight: showAllLectures ? 'none' : 260,
+                    maxHeight: showAllLectures || !hasMoreLectures ? 'none' : 310,
                     overflow: 'hidden',
                   }}
                 >
@@ -276,6 +278,19 @@ function CourseScheduleSection({
                             entry.venue
                           )}
                         </Typography>
+                        {entry.tutorName && (
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            👤 {entry.tutorName}
+                          </Typography>
+                        )}
+                        {entry.comments && (
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            💬 {entry.comments}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ))}
@@ -340,7 +355,7 @@ function CourseScheduleSection({
                 <Box
                   sx={{
                     position: 'relative',
-                    maxHeight: showAllTutorials ? 'none' : 260,
+                    maxHeight: showAllTutorials || !hasMoreTutorials ? 'none' : 310,
                     overflow: 'hidden',
                   }}
                 >
@@ -382,6 +397,19 @@ function CourseScheduleSection({
                             entry.venue
                           )}
                         </Typography>
+                        {entry.tutorName && (
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            👤 {entry.tutorName}
+                          </Typography>
+                        )}
+                        {entry.comments && (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            💬 {entry.comments}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ))}
