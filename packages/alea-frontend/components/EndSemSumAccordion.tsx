@@ -88,15 +88,53 @@ export const EndSemSumAccordion: React.FC<EndSemSumAccordionProps> = ({
   };
 
   return (
-    <Accordion>
+    <Accordion
+      sx={{
+        borderRadius: '12px !important',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid #e0e6ed',
+        '&:before': { display: 'none' },
+        overflow: 'hidden',
+        mb: 3,
+      }}
+    >
       <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
+        expandIcon={<ExpandMoreIcon sx={{ color: 'primary.main' }} />}
         aria-controls="end-sem-summary-content"
         id="end-sem-summary-header"
+        sx={{
+          backgroundColor: '#f8fafd',
+          borderBottom: '1px solid #e0e6ed',
+          minHeight: '48px !important',
+          '& .MuiAccordionSummary-content': {
+            my: 1,
+          },
+        }}
       >
-        <Typography variant="h6">End Semester Summary</Typography>
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#1a335d',
+            fontWeight: 700,
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 6,
+              height: 20,
+              backgroundColor: 'primary.main',
+              borderRadius: 4,
+              mr: 1,
+            }}
+          />
+          End Semester Summary
+        </Typography>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails sx={{ p: 2, backgroundColor: '#ffffff' }}>
         <Box>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -110,21 +148,60 @@ export const EndSemSumAccordion: React.FC<EndSemSumAccordionProps> = ({
             </Alert>
           )}
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select quizzes to exclude from the end semester summary calculation:
+          <Typography
+            variant="body2"
+            sx={{ color: '#4a5568', mb: 1, display: 'block' }}
+          >
+            Select <strong>quizzes</strong> to exclude from the{' '}
+            <span style={{ color: '#2b6cb0', fontWeight: 600 }}>
+              end semester summary
+            </span>{' '}
+            calculation:
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            {excludedQuizzes.length} of {quizzes.length} quizzes excluded
-          </Typography>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              px: 1.2,
+              py: 0.3,
+              borderRadius: '20px',
+              backgroundColor: excludedQuizzes.length > 0 ? '#fff5f5' : '#f0fff4',
+              border: `1px solid ${excludedQuizzes.length > 0 ? '#feb2b2' : '#c6f6d5'}`,
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: excludedQuizzes.length > 0 ? '#c53030' : '#2f855a',
+              }}
+            >
+              {excludedQuizzes.length} of {quizzes.length} quizzes excluded
+            </Typography>
+          </Box>
 
           {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" p={2}>
-              <CircularProgress size={24} />
-              <Typography sx={{ ml: 1 }}>Loading quizzes...</Typography>
+            <Box display="flex" justifyContent="center" alignItems="center" p={4}>
+              <CircularProgress size={28} />
+              <Typography sx={{ ml: 2, color: 'text.secondary' }}>Loading quizzes...</Typography>
             </Box>
           ) : quizzes.length === 0 ? (
-            <Typography color="text.secondary">No quizzes found for this course.</Typography>
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 2,
+                px: 2,
+                backgroundColor: '#f8fafc',
+                borderRadius: '8px',
+                border: '1px solid #edf2f7',
+              }}
+            >
+              <Typography variant="body2" sx={{ color: '#718096', fontStyle: 'italic' }}>
+                No quizzes have been created for this course yet.
+              </Typography>
+            </Box>
           ) : (
             <>
               <FormGroup sx={{ maxHeight: '300px', overflowY: 'auto', mb: 2 }}>

@@ -567,6 +567,8 @@ export const de = {
     day: 'Tag',
     venue: 'Veranstaltungsort',
     venueLink: 'Venue-Link',
+    tutorName: 'Tutor Name',
+    comments: 'Kommentare',
     startTime: 'Startzeit',
     endTime: 'Endzeit',
     homework: 'Hausaufgaben',
