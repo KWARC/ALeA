@@ -630,11 +630,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `UPDATE CheatSheet
    SET checksum = ?,
        fileName = ?,
-       uploadedVersionNumber = ?,
+       uploadedVersionNumber =COALESCE(uploadedVersionNumber, 0) + 1,
        uploadedByUserId = ?,
        uploadedAt = NOW()
    WHERE cheatsheetId = ?`,
-    [checksum, fileName, 1, userId, cheatsheetId],
+    [checksum, fileName, userId, cheatsheetId],
     res
   );
 
