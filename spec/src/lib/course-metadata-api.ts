@@ -5,6 +5,8 @@ export interface LectureSchedule {
   venueLink?: string;
   lectureStartTime: string;
   lectureEndTime: string;
+  tutorName?: string;
+  comments?: string;
   hasQuiz?: boolean;
   quizOffsetMinutes?: number;
   quizOffsetReference?: 'lecture-start' | 'lecture-end';
@@ -78,6 +80,8 @@ export interface LectureScheduleItem {
   endTime: string;
   venue?: string;
   venueLink?: string;
+  tutorName?: string;
+  comments?: string;
 }
 
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
