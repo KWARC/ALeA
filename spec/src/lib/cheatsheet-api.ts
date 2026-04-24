@@ -11,7 +11,9 @@ export interface CheatSheet {
   uploadedAt: string;
   createdAt: string;
 }
-
+export interface DeleteCheatSheetRequest {
+  cheatsheetId: string;
+}
 export interface CheatSheetRequest {
   universityId: string;
   courseId: string;
@@ -53,9 +55,9 @@ export async function getCheatSheetFile(
 }
 
 export async function createCheatSheet(body: CheatSheetRequest) {
-  const resp = await axios.post('/api/cheatsheet/create-cheatsheet', body,{
-      responseType: 'blob',  
-    });
+  const resp = await axios.post('/api/cheatsheet/create-cheatsheet', body, {
+    responseType: 'blob',
+  });
   const filename = resp.headers['content-disposition']?.match(/filename="?([^"]+)"?/)?.[1]; // Matches and captures the filename from Content-Disposition, handling optional quotes
   return { blob: resp.data as Blob, filename };
 }
@@ -64,10 +66,17 @@ export async function postScannedCheatSheet(body: FormData) {
   return resp.data;
 }
 
+export async function deleteCheatSheet(
+  body: DeleteCheatSheetRequest
+): Promise<{ message: string }> {
+  const resp = await axios.post('/api/cheatsheet/delete-cheatsheet', body);
+  return resp.data as { message: string };
+}
+
 export async function getCheatsheetUploadWindow(
   courseId: string,
   instanceId: string,
-  universityId: string,
+  universityId: string
 ): Promise<CheatsheetUploadWindowResponse> {
   const resp = await axios.get('/api/cheatsheet/get-cheatsheet-upload-window', {
     params: { courseId, instanceId, universityId },

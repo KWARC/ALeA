@@ -1,7 +1,15 @@
-import { Box, Button, CircularProgress, Chip, Tooltip, Typography, Alert } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Chip,
+  Tooltip,
+  Typography,
+  Alert,
+} from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useCurrentUser } from '@alea/react-utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
@@ -11,13 +19,16 @@ import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
 import {
   createCheatSheet,
+  deleteCheatSheet,
   getAllCourses,
   getCheatSheets,
   getCheatsheetUploadWindow,
+  getStudentsEnrolledInCourse,
+  CheatSheet,
   CheatsheetUploadWindowResponse,
 } from '@alea/spec';
 import { UploadCheatSheet } from '../../../../components/UploadCheatSheet';
-import { PostAdd } from '@mui/icons-material';
+import { PostAdd, DeleteOutline } from '@mui/icons-material';
 import {
   CheatSheetWindowsTable,
   EmptyState,
@@ -121,6 +132,136 @@ function CheatSheetActions({
     </Box>
   );
 }
+
+function InstructorCheatsheetStats({
+  files,
+  uploadWindowInfo,
+  enrolledStudents,
+}: {
+  files: CheatSheet[];
+  uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
+  enrolledStudents: string[];
+}) {
+  const weeklyStats = useMemo(() => {
+    const uploadedByWeek = new Map<string, Set<string>>();
+    files.forEach((file) => {
+      if (!uploadedByWeek.has(file.weekId)) {
+        uploadedByWeek.set(file.weekId, new Set());
+      }
+      uploadedByWeek.get(file.weekId)?.add(file.userId);
+    });
+
+    return (uploadWindowInfo?.allWindows ?? [])
+      .filter((window) => !window.isSkipped)
+      .map((window) => {
+        const weekId = window.windowStart.split('T')[0];
+        const uploaded = uploadedByWeek.get(weekId)?.size ?? 0;
+        const isCurrent = window.isWithinWindow;
+        return {
+          weekId,
+          uploaded,
+          isCurrent,
+          windowStart: window.windowStart,
+          windowEnd: window.windowEnd,
+        };
+      });
+  }, [files, uploadWindowInfo]);
+
+  const defaultWeekId =
+    weeklyStats.find((stat) => stat.isCurrent)?.weekId ??
+    [...weeklyStats].reverse().find((stat) => stat.uploaded > 0)?.weekId ??
+    weeklyStats[0]?.weekId ??
+    null;
+  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === defaultWeekId);
+
+  if (weeklyStats.length === 0) {
+    return (
+      <Box sx={statsStyles.card}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          Cheatsheet Upload Stats
+        </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          No upload windows are configured for this course instance yet.
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (!selectedWeekStat) return null;
+
+  const selectedWeekLabel = new Date(selectedWeekStat.weekId).toLocaleDateString();
+  const selectedWeekProgress =
+    enrolledStudents.length > 0
+      ? Math.round((selectedWeekStat.uploaded / enrolledStudents.length) * 100)
+      : null;
+  const currentWeekId = weeklyStats.find((stat) => stat.isCurrent)?.weekId ?? selectedWeekStat.weekId;
+  const currentWeekTime = new Date(currentWeekId).getTime();
+
+  return (
+    <Box sx={statsStyles.card}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Cheatsheet Upload Stats
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Track submissions for the current week.
+          </Typography>
+        </Box>
+      </Box>
+
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <strong>Current week:</strong>{' '}
+        {selectedWeekLabel} - {selectedWeekStat.uploaded} student
+        {selectedWeekStat.uploaded !== 1 ? 's have' : ' has'} uploaded out of{' '}
+        {enrolledStudents.length}.
+        {selectedWeekProgress !== null ? ` (${selectedWeekProgress}% complete)` : ''}
+      </Alert>
+
+      <Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
+        <Typography variant="body2" color="text.secondary">
+          Upload window: {new Date(selectedWeekStat.windowStart).toLocaleString()} -{' '}
+          {new Date(selectedWeekStat.windowEnd).toLocaleString()}
+        </Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Weekly Submission Summary
+        </Typography>
+        <Box sx={statsStyles.weeklySummaryList}>
+          {weeklyStats.map((stat) => {
+            const weekTime = new Date(stat.weekId).getTime();
+            const weekStyle =
+              weekTime < currentWeekTime
+                ? statsStyles.weeklySummaryItemPrevious
+                : weekTime > currentWeekTime
+                  ? statsStyles.weeklySummaryItemUpcoming
+                  : undefined;
+            return (
+              <Box key={stat.weekId} sx={{ ...statsStyles.weeklySummaryItem, ...weekStyle }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {new Date(stat.weekId).toLocaleDateString()}
+                    {weekTime === currentWeekTime ? ' (Current week)' : ''}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {stat.uploaded}/{enrolledStudents.length} submitted
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 export function CheatsheetDownloadDialog({
   open,
   onClose,
@@ -169,8 +310,49 @@ export function CheatsheetDownloadDialog({
     </Dialog>
   );
 }
+function DeleteConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting?: boolean;
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Delete Cheatsheet</DialogTitle>
+      <DialogContent sx={{ mt: 1 }}>
+        <Alert severity="warning" sx={{ mb: 1 }}>
+          This action cannot be undone. The cheatsheet file will be permanently removed.
+        </Alert>
+        <Typography variant="body2" color="text.secondary">
+          Are you sure you want to delete this cheatsheet?
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isDeleting}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={isDeleting}
+          startIcon={<DeleteOutline />}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function CheatSheetsContent({
   files,
+  statsFiles,
   isLoading,
   isError,
   isEmbedded,
@@ -186,16 +368,18 @@ function CheatSheetsContent({
   universityId,
   userId,
   uploadWindowInfo,
+  enrolledStudents,
 }: {
-  files: any[];
+  files: CheatSheet[];
+  statsFiles: CheatSheet[];
   isLoading: boolean;
   isError: boolean;
   isEmbedded: boolean;
   uniqueUserIds: string[];
   selectedUserId: string | null;
   onUserIdChange: (id: string | null) => void;
-  previewFile: any | null;
-  onPreview: (file: any) => void;
+  previewFile: CheatSheet | null;
+  onPreview: (file: CheatSheet) => void;
   onClosePreview: () => void;
   instanceId: string;
   courseId: string;
@@ -203,12 +387,22 @@ function CheatSheetsContent({
   universityId: string;
   userId: string;
   uploadWindowInfo?: CheatsheetUploadWindowResponse | null;
+  enrolledStudents: string[];
 }) {
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [bulkDownloadOpen, setBulkDownloadOpen] = useState(false);
   const [downloadScope, setDownloadScope] = useState<'this-week' | 'semester'>('this-week');
   const [isDownloading, setIsGenerating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CheatSheet | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: (file: CheatSheet) => deleteCheatSheet({ cheatsheetId: String(file.cheatsheetId) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cheatsheets', courseId, instanceId] });
+      setDeleteTarget(null);
+    },
+  });
   function handleUploaded() {
     queryClient.invalidateQueries({
       queryKey: ['cheatsheets', courseId, instanceId],
@@ -248,6 +442,14 @@ function CheatSheetsContent({
 
   return (
     <Box sx={pageStyles.container}>
+      {isEmbedded && (
+        <InstructorCheatsheetStats
+          files={statsFiles}
+          uploadWindowInfo={uploadWindowInfo}
+          enrolledStudents={enrolledStudents}
+        />
+      )}
+
       {!isEmbedded && uploadWindowInfo && !uploadWindowInfo.currentWindow && (
         <Alert severity={uploadWindowInfo.hasUploadEnabled ? 'info' : 'warning'} sx={{ mb: 2 }}>
           {uploadWindowInfo.upcomingWindow
@@ -367,12 +569,21 @@ function CheatSheetsContent({
               windows={uploadWindowInfo.allWindows}
               files={files}
               onPreview={onPreview}
+              onDelete={setDeleteTarget}
+              restrictDeleteToCurrentWindow={!isEmbedded}
             />
           )}
         </Box>
       )}
 
       <FilePreviewDialog file={previewFile} open={Boolean(previewFile)} onClose={onClosePreview} />
+
+      <DeleteConfirmDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+        isDeleting={deleteMutation.isPending}
+      />
 
       <UploadCheatSheet
         open={uploadOpen}
@@ -392,7 +603,7 @@ async function fetchCheatsheets(
   courseId: string,
   instanceId: string,
   userId?: string
-): Promise<any[]> {
+): Promise<CheatSheet[]> {
   const data = await getCheatSheets(courseId, instanceId, userId);
   return data;
 }
@@ -431,6 +642,12 @@ const CheatsheetsPage = ({
     enabled: Boolean(courseId && instanceId && institutionId),
   });
 
+  const { data: enrolledStudents } = useQuery({
+    queryKey: ['cheatsheet-enrolled-students', courseId, instanceId],
+    queryFn: () => getStudentsEnrolledInCourse(courseId, instanceId),
+    enabled: Boolean(courseId && instanceId && isEmbedded),
+  });
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const {
     data: allFiles = [],
@@ -451,10 +668,11 @@ const CheatsheetsPage = ({
     return allFiles.filter((f) => f.userId === selectedUserId);
   }, [allFiles, isEmbedded, selectedUserId]);
 
-  const [previewFile, setPreviewFile] = useState<any | null>(null);
+  const [previewFile, setPreviewFile] = useState<CheatSheet | null>(null);
 
   const sharedContentProps = {
     files: visibleFiles,
+    statsFiles: allFiles,
     isLoading,
     isError,
     uniqueUserIds,
@@ -468,6 +686,7 @@ const CheatsheetsPage = ({
     courseName: propCourseName ?? '',
     userId,
     uploadWindowInfo,
+    enrolledStudents: Array.isArray(enrolledStudents) ? enrolledStudents : [],
   };
 
   if (!isEmbedded) {
@@ -483,7 +702,9 @@ const CheatsheetsPage = ({
       );
     }
     if (!institutionId || !courseId || !instanceId) return <CourseNotFound />;
-    const courseInfo = (courses as any)[courseId];
+    const courseInfo = (courses as Record<string, { courseName: string; imageLink: string }>)[
+      courseId
+    ];
     if (!courseInfo) return <CourseNotFound />;
     return (
       <MainLayout title={`${courseId.toUpperCase()} · CheatSheets | ALeA`}>
@@ -584,5 +805,48 @@ const pageStyles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 0.5,
+  },
+};
+
+const statsStyles = {
+  card: {
+    mb: 2,
+    p: 2,
+    borderRadius: 2,
+    bgcolor: 'background.paper',
+    border: '1px solid',
+    borderColor: 'divider',
+    boxShadow: 1,
+  },
+  weeklySummaryList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1,
+    maxHeight: 210,
+    overflowY: 'auto',
+    pr: 1,
+    border: '1px solid',
+    borderColor: 'divider',
+    borderRadius: 2,
+    p: 1,
+    bgcolor: 'background.default',
+    alignContent: 'start',
+  },
+  weeklySummaryItem: {
+    px: 1.25,
+    py: 0.9,
+    borderRadius: 1.5,
+    bgcolor: 'background.paper',
+    border: '1px solid',
+    borderColor: 'divider',
+    width: '100%',
+  },
+  weeklySummaryItemPrevious: {
+    bgcolor: 'success.50',
+    borderColor: 'success.300',
+  },
+  weeklySummaryItemUpcoming: {
+    bgcolor: 'warning.50',
+    borderColor: 'warning.300',
   },
 };

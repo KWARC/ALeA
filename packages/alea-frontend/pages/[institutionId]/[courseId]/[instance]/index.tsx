@@ -770,16 +770,16 @@ const CourseHomePage: NextPage = () => {
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
+          {cheatsheetConfig?.hasCheatsheet && (
+            <CourseComponentLink href={cheatSheetsLink}>
+              Cheatsheet&nbsp;
+              <FolderOpenIcon fontSize="large" />
+            </CourseComponentLink>
+          )}
           {isInstructor && (
             <CourseComponentLink href={instructorDashLink} sx={{ backgroundColor: 'blue.300' }}>
               {<p>{t.instructorDashBoard}</p>}&nbsp;
               <PersonIcon fontSize="large" />
-            </CourseComponentLink>
-          )}
-          {cheatsheetConfig?.hasCheatsheet && (
-            <CourseComponentLink href={cheatSheetsLink}>
-              CheatSheet&nbsp;
-              <FolderOpenIcon fontSize="large" />
             </CourseComponentLink>
           )}
         </Box>
