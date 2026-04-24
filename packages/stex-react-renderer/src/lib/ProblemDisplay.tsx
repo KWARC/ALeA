@@ -113,6 +113,9 @@ export function ProblemViewer({
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
 
+  const router = useRouter();
+  const universityId = router.query.universityId as string;
+
   return (
     <SafeFTMLFragment
       key={uri}
@@ -132,6 +135,7 @@ export function ProblemViewer({
               problemTitle={problem.problem.title_html ?? ''}
               isFrozen={isFrozen}
               problemId={problemUri}
+              universityId={universityId}
             ></AnswerAccepter>
           </Box>
         );
@@ -145,11 +149,13 @@ function AnswerAccepter({
   masterProblemId,
   isFrozen,
   problemTitle,
+  universityId,
 }: {
   problemId: string;
   masterProblemId: string;
   isFrozen: boolean;
   problemTitle: string;
+  universityId: string;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
@@ -171,7 +177,8 @@ function AnswerAccepter({
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
-        institutionId: 'FAU', // TODO(M5)
+        // institutionId: 'FAU', // TODO(M5)
+        institutionId: universityId,
         homeworkId: +(router.query.id ?? 0),
       });
       console.log('All answers saved successfully!');
@@ -228,7 +235,7 @@ export function ProblemDisplay({
   onFreezeResponse?: () => void;
 }) {
   const { user } = useCurrentUser();
-  const userId = user?.userId ?? ''
+  const userId = user?.userId ?? '';
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 

@@ -325,7 +325,9 @@ const MyAnswersPage: NextPage = () => {
   );
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this answer?')) {
-      deleteAnswer(id).then(() => {
+      const universityId = router.query.universityId as string;
+
+      deleteAnswer(id, universityId).then(() => {
         getMyAnswers().then((answers) => {
           setAnswerItems(answers);
         });
