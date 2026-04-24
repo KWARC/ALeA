@@ -194,6 +194,8 @@ function InstructorCheatsheetStats({
     enrolledStudents.length > 0
       ? Math.round((selectedWeekStat.uploaded / enrolledStudents.length) * 100)
       : null;
+  const currentWeekId = weeklyStats.find((stat) => stat.isCurrent)?.weekId ?? selectedWeekStat.weekId;
+  const currentWeekTime = new Date(currentWeekId).getTime();
 
   return (
     <Box sx={statsStyles.card}>
@@ -234,12 +236,19 @@ function InstructorCheatsheetStats({
         </Typography>
         <Box sx={statsStyles.weeklySummaryList}>
           {weeklyStats.map((stat) => {
+            const weekTime = new Date(stat.weekId).getTime();
+            const weekStyle =
+              weekTime < currentWeekTime
+                ? statsStyles.weeklySummaryItemPrevious
+                : weekTime > currentWeekTime
+                  ? statsStyles.weeklySummaryItemUpcoming
+                  : undefined;
             return (
-              <Box key={stat.weekId} sx={statsStyles.weeklySummaryItem}>
+              <Box key={stat.weekId} sx={{ ...statsStyles.weeklySummaryItem, ...weekStyle }}>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {new Date(stat.weekId).toLocaleDateString()}
-                    {stat.isCurrent ? ' (Current)' : ''}
+                    {weekTime === currentWeekTime ? ' (Current week)' : ''}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {stat.uploaded}/{enrolledStudents.length} submitted
@@ -830,5 +839,13 @@ const statsStyles = {
     border: '1px solid',
     borderColor: 'divider',
     width: '100%',
+  },
+  weeklySummaryItemPrevious: {
+    bgcolor: 'success.50',
+    borderColor: 'success.300',
+  },
+  weeklySummaryItemUpcoming: {
+    bgcolor: 'warning.50',
+    borderColor: 'warning.300',
   },
 };
