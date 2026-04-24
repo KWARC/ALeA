@@ -40,9 +40,10 @@ import { getLocaleObject } from 'packages/alea-frontend/lang/utils';
 interface AnnouncementsTabProps {
   courseId: string;
   instanceId: string;
+  universityId: string;
 }
 
-const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceId }) => {
+const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceId, universityId }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -61,7 +62,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const fetchedAnnouncements = await getAnnouncements(courseId, instanceId, 'FAU');// TODO(M5)
+      const fetchedAnnouncements = await getAnnouncements(courseId, instanceId, universityId);// TODO(M5)
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
@@ -70,7 +71,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
     } finally {
       setLoading(false);
     }
-  }, [courseId, instanceId, t]);
+  }, [courseId, instanceId, universityId, t]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -115,7 +116,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           visibleUntil: visibleUntilSQL,
           courseId: courseId,
           instanceId: instanceId,
-          institutionId: 'FAU',// TODO(M5)
+          institutionId: universityId,// TODO(M5)
         };
         await updateAnnouncement(updateRequest);
       } else {
@@ -125,7 +126,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           content: content.trim(),
           visibleUntil: visibleUntilSQL,
           instanceId: instanceId,
-          institutionId: 'FAU',// TODO(M5)
+          institutionId: universityId,// TODO(M5)
         };
         await createAnnouncement(createRequest);
       }
@@ -146,7 +147,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({ courseId, instanceI
           id: announcementToDelete,
           courseId: courseId,
           instanceId: instanceId,
-          institutionId: 'FAU',// TODO(M5)
+          institutionId: universityId,// TODO(M5)
         });
         setDeleteDialogOpen(false);
         setAnnouncementToDelete(null);

@@ -44,6 +44,7 @@ import {
 } from '@alea/stex-react-renderer';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from './MultiItemsSelector';
+import { useRouter } from 'next/router';
 const MULTI_SELECT_FIELDS = ['homeworkId', 'questionId', 'studentId'] as const;
 const ALL_SORT_FIELDS = ['homeworkDate', 'questionTitle', 'updatedAt', 'studentId'] as const;
 const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
@@ -392,6 +393,9 @@ function GradingItemDisplay({
   onNextGradingItem: () => void;
   onPrevGradingItem: () => void;
 }) {
+  const router = useRouter();
+  const institutionId = router.query.universityId as string;
+
   const [studentResponse, setStudentResponse] =
     useState<Record<string, ResponseWithSubProblemId>>();
   const [problem, setProblem] = useState<FTMLProblemWithSolution | null>(
@@ -409,7 +413,7 @@ function GradingItemDisplay({
         setStudentResponse(r);
       });
     }
-    getAnswerInfo(answerId, courseId, questionId).then((r) => {
+    getAnswerInfo(answerId, courseId, questionId, institutionId).then((r) => {
       if (r.subProblemId === questionId) setAnswerClasses(problem.answerClasses);
       else
         setAnswerClasses(
