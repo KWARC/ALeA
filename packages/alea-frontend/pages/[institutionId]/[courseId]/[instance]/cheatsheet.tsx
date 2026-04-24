@@ -6,10 +6,6 @@ import {
   Tooltip,
   Typography,
   Alert,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
 } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -176,20 +172,7 @@ function InstructorCheatsheetStats({
     [...weeklyStats].reverse().find((stat) => stat.uploaded > 0)?.weekId ??
     weeklyStats[0]?.weekId ??
     null;
-  const [selectedWeekOverride, setSelectedWeekOverride] = useState<string | null>(null);
-  const selectedWeekId = weeklyStats.some((stat) => stat.weekId === selectedWeekOverride)
-    ? selectedWeekOverride
-    : defaultWeekId;
-  const uploadedUsersForSelectedWeek = useMemo(() => {
-    if (!selectedWeekId) return new Set<string>();
-    return new Set(
-      files.filter((file) => file.weekId === selectedWeekId).map((file) => file.userId)
-    );
-  }, [files, selectedWeekId]);
-  const missingStudents = useMemo(
-    () => enrolledStudents.filter((studentId) => !uploadedUsersForSelectedWeek.has(studentId)),
-    [enrolledStudents, uploadedUsersForSelectedWeek]
-  );
+  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === defaultWeekId);
 
   if (weeklyStats.length === 0) {
     return (
@@ -204,12 +187,8 @@ function InstructorCheatsheetStats({
     );
   }
 
-  const selectedWeekStat = weeklyStats.find((stat) => stat.weekId === selectedWeekId);
-
   if (!selectedWeekStat) return null;
 
-  const totalWeeksWithUploads = weeklyStats.filter((stat) => stat.uploaded > 0).length;
-  const totalUploaded = files.length;
   const selectedWeekLabel = new Date(selectedWeekStat.weekId).toLocaleDateString();
   const selectedWeekProgress =
     enrolledStudents.length > 0
@@ -232,41 +211,13 @@ function InstructorCheatsheetStats({
             Cheatsheet Upload Stats
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Track submissions by week and see which students still have not uploaded.
+            Track submissions for the current week.
           </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Chip
-            label={`${totalUploaded} upload${totalUploaded !== 1 ? 's' : ''} total`}
-            color="primary"
-            size="small"
-          />
-          <Chip
-            label={`${totalWeeksWithUploads}/${weeklyStats.length || 0} weeks with uploads`}
-            size="small"
-          />
         </Box>
       </Box>
 
-      <FormControl size="small" sx={{ mt: 2, minWidth: 260 }}>
-        <InputLabel id="cheatsheet-week-select-label">Week</InputLabel>
-        <Select
-          labelId="cheatsheet-week-select-label"
-          value={selectedWeekId}
-          label="Week"
-          onChange={(event) => setSelectedWeekOverride(event.target.value)}
-        >
-          {weeklyStats.map((stat) => (
-            <MenuItem key={stat.weekId} value={stat.weekId}>
-              {new Date(stat.weekId).toLocaleDateString()}
-              {stat.isCurrent ? ' (Current)' : ''}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <Alert severity={selectedWeekStat?.isCurrent ? 'info' : 'success'} sx={{ mt: 2 }}>
-        <strong>{selectedWeekStat.isCurrent ? 'Current week' : 'Selected week'}:</strong>{' '}
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <strong>Current week:</strong>{' '}
         {selectedWeekLabel} - {selectedWeekStat.uploaded} student
         {selectedWeekStat.uploaded !== 1 ? 's have' : ' has'} uploaded out of{' '}
         {enrolledStudents.length}.
@@ -279,19 +230,25 @@ function InstructorCheatsheetStats({
           {new Date(selectedWeekStat.windowEnd).toLocaleString()}
         </Typography>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          Not Submitted Yet ({missingStudents.length})
+          Weekly Submission Summary
         </Typography>
-        {missingStudents.length > 0 ? (
-          <Box sx={statsStyles.missingList}>
-            {missingStudents.map((studentId) => (
-              <Box key={studentId} sx={statsStyles.missingItem}>
-                {studentId}
+        <Box sx={statsStyles.weeklySummaryList}>
+          {weeklyStats.map((stat) => {
+            return (
+              <Box key={stat.weekId} sx={statsStyles.weeklySummaryItem}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {new Date(stat.weekId).toLocaleDateString()}
+                    {stat.isCurrent ? ' (Current)' : ''}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {stat.uploaded}/{enrolledStudents.length} submitted
+                  </Typography>
+                </Box>
               </Box>
-            ))}
-          </Box>
-        ) : (
-          <Alert severity="success">Everyone enrolled has submitted for this week.</Alert>
-        )}
+            );
+          })}
+        </Box>
       </Box>
     </Box>
   );
@@ -851,11 +808,11 @@ const statsStyles = {
     borderColor: 'divider',
     boxShadow: 1,
   },
-  missingList: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+  weeklySummaryList: {
+    display: 'flex',
+    flexDirection: 'column',
     gap: 1,
-    maxHeight: 240,
+    maxHeight: 210,
     overflowY: 'auto',
     pr: 1,
     border: '1px solid',
@@ -863,18 +820,15 @@ const statsStyles = {
     borderRadius: 2,
     p: 1,
     bgcolor: 'background.default',
+    alignContent: 'start',
   },
-  missingItem: {
+  weeklySummaryItem: {
     px: 1.25,
-    py: 0.75,
+    py: 0.9,
     borderRadius: 1.5,
-    bgcolor: 'warning.50',
-    color: 'warning.dark',
+    bgcolor: 'background.paper',
     border: '1px solid',
-    borderColor: 'warning.200',
-    fontSize: 14,
-    lineHeight: 1.3,
-    fontWeight: 500,
-    wordBreak: 'break-word',
+    borderColor: 'divider',
+    width: '100%',
   },
 };
