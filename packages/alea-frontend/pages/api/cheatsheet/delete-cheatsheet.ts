@@ -5,8 +5,6 @@ import {
   executeTxnAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
-import fs from 'fs';
-import path from 'path';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 import {
@@ -14,8 +12,6 @@ import {
   getUploadContext,
   validateCheatsheetUploadWindowOrSetError,
 } from './post-cheatsheet';
-
-const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
 
 function validateBody(body: any): body is { cheatsheetId: string } {
   return typeof body?.cheatsheetId === 'string' && body.cheatsheetId.trim().length > 0;
@@ -26,8 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-
-  if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
 
   if (!validateBody(req.body)) {
     return res.status(422).send('Missing or invalid cheatsheetId.');
@@ -72,11 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .send('You do not have permission to delete cheat sheets for this course.');
   }
 
-  // Students can only delete their own cheatsheet
-  if (isStudent && studentId !== userId) {
-    return res.status(403).send('You cannot delete a cheat sheet for another student.');
-  }
-
   // Students must be within the upload window to delete
   if (isStudent) {
     const isWithinUploadWindow = await validateCheatsheetUploadWindowOrSetError(
@@ -89,15 +78,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!isWithinUploadWindow) return;
   }
 
+  // Students can only delete their own cheatsheet
+  if (isStudent && studentId !== userId) {
+    return res.status(403).send('You cannot delete a cheat sheet for another student.');
+  }
+
   // ── 3. Guard: nothing uploaded yet ───────────────────────────────────────
   if (!existingRow.uploadedAt || !fileName) {
     return res.status(400).send('No uploaded file found for this cheatsheet to delete.');
   }
 
-  // ── 4. Archive current state to CheatSheetHistory ────────────────────────
-  const txnResult = await executeTxnAndEndSet500OnError(
+  // ── 4. Archive to history then clear upload fields ──────────────────────
+  // History must be written here so a subsequent re-upload is treated as
+  // a fresh first upload (uploadedAt = NULL) while the deleted version is
+  // still preserved in CheatSheetHistory.
+  const result = await executeTxnAndEndSet500OnError(
     res,
-    // Step A — copy current row into history
+    // Step A — archive current row into history
     `INSERT INTO CheatSheetHistory
        (cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt)
      SELECT cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt
@@ -114,21 +111,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
      WHERE cheatsheetId = ?`,
     [cheatsheetId]
   );
-  if (!txnResult) return;
+  if (!result) return;
 
-  // ── 5. Delete the PDF file from disk ─────────────────────────────────────
-  const filePath = path.join(CHEATSHEETS_DIR, fileName);
-  try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    // File removal failed — not fatal; record is already cleared in DB
-    console.error('Failed to remove cheatsheet file from disk:', err);
-  }
-
-  // ── 6. Build optional upload-context for the response ────────────────────
-  const config = await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res);
+  // ── 5. Build optional upload-context for the response ───────────────────
+  const config = isInstructor
+    ? await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res)
+    : undefined;
   const uploadContext = isInstructor && config ? getUploadContext(weekId, config) : undefined;
 
   return res.status(200).json({
