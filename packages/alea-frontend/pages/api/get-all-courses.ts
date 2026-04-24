@@ -1,4 +1,4 @@
-import { CourseInfo, createCourseInfo, getCurrentTermForUniversity } from '@alea/utils';
+import { CourseInfo, createCourseInfo, getCurrentTermForUniversity, COURSES_INFO } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfGetOrSetError, executeQuery } from './comment-utils';
 import { CheatsheetConfig } from '@alea/spec';
@@ -103,6 +103,8 @@ function transformMetadataToCoursesInfo(
     const primaryInstructorList = parseInstructorsJson(primary.instructors);
     const primaryInstructorNames = extractInstructorNames(primaryInstructorList) ?? undefined;
 
+    const staticCourseInfo = COURSES_INFO[courseId];
+
     coursesInfoMap[courseId] = createCourseInfo(
       courseId,
       primary.courseName,
@@ -116,7 +118,8 @@ function transformMetadataToCoursesInfo(
       semesterInstances,
       primaryInstructorNames,
       primary.teaser ?? null,
-      primary.slides ?? undefined
+      primary.slides ?? undefined,
+      staticCourseInfo?.fauTvSeriesId
     );
   }
 

@@ -31,6 +31,7 @@ export interface CourseInfo {
   instructors?: string[] | null;
   teaser?: string | null;
   slides?: string;
+  fauTvSeriesId?: string;
 }
 
 export function getSlidesLink(courseId: string) {
@@ -81,9 +82,10 @@ export function createCourseInfo(
   instances?: { semester: string; instructors?: string[] | null }[],
   instructors?: string[] | null,
   teaser?: string | null,
-  slides?: string
+  slides?: string,
+  fauTvSeriesId?: string
 ): CourseInfo {
-  return {
+  const courseInfo: CourseInfo = {
     courseId,
     courseName,
     imageLink: `/${courseId}.jpg`,
@@ -105,6 +107,12 @@ export function createCourseInfo(
     teaser,
     slides,
   };
+
+  if (fauTvSeriesId) {
+    courseInfo.fauTvSeriesId = fauTvSeriesId;
+  }
+
+  return courseInfo;
 }
 
 export interface LectureEntry {
@@ -166,7 +174,8 @@ export const COURSES_INFO: { [courseId: string]: CourseInfo } = {
     [{ semester: 'SS25', instructors: null }],
     ['Michael Kohlhase'],
     'A classical course on statistical and subsymbolic artificial intelligence covering the whole range of methods from reasoning with uncertainty, decision theory, MDPs and POMDPs to machine learning and natural language processing.',
-    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=slides2&l=en'
+    'https://mathhub.info?a=courses/FAU/AI/course&p=course/notes&d=slides2&l=en',
+    '4592'
   ),
   gdp: createCourseInfo(
     'gdp',
