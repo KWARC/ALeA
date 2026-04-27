@@ -543,7 +543,7 @@ export function CheatSheetWindowsTable({
                 <TableCell>
                   <Tooltip
                     title={
-                      isUploaded ? `Uploaded at: ${new Date(file.createdAt).toLocaleString()}` : ''
+                      isUploaded ? `Uploaded at: ${new Date(file.uploadedAt).toLocaleString()}` : ''
                     }
                   >
                     <span>
