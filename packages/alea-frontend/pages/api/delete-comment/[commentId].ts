@@ -1,5 +1,6 @@
 import {
   checkIfPostOrSetError,
+  executeAndEndSet500OnError,
   executeTxnAndEndSet500OnError,
   getExistingCommentDontEnd,
   getUserIdOrSetError,
@@ -16,19 +17,31 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { existing, error } = await getExistingCommentDontEnd(commentId);
-  const ownerId = existing?.userId;
+  const { institutionId } = req.body;
+  if (!institutionId) {
+    return res.status(422).end('Missing institutionId');
+  }
+
+  // const { existing, error } = await getExistingCommentDontEnd(commentId);
+
+  const existing = await executeAndEndSet500OnError(
+    `SELECT userId FROM comments WHERE commentId=? AND institutionId=?`,
+    [commentId, institutionId],
+    res
+  );
+  if (!existing) return;
+  
+  const ownerId = existing[0]?.userId;
   if (!ownerId || userId !== ownerId) {
-    res.status(error || 403).json({ message: 'User not authorized' });
-    return;
+    return res.status(403).json({ message: 'User not authorized' });
   }
 
   const commentUpdate = await executeTxnAndEndSet500OnError(
     res,
     `UPDATE comments
     SET statement=NULL, userId=NULL, userName=NULL, userEmail=NULL, selectedText=NULL, isDeleted=1
-    WHERE commentId=?`,
-    [commentId],
+    WHERE commentId=? AND institutionId=?`,
+    [commentId, institutionId],
     `DELETE FROM updateHistory WHERE commentId=?`,
     [commentId],
     `DELETE FROM points WHERE commentId=?`,

@@ -42,23 +42,29 @@ export async function editComment(commentId: number, statement: string) {
   await commentRequest('/api/edit-comment', 'POST', body);
 }
 
-export async function deleteComment(commentId: number) {
-  await commentRequest(`/api/delete-comment/${commentId}`, 'POST');
+export async function deleteComment(commentId: number, institutionId: string) {
+  await commentRequest(`/api/delete-comment/${commentId}`, 'POST', {
+    institutionId,
+  });
 }
 
-export async function getComments(uris: string[]): Promise<Comment[]> {
-  const comments: Comment[] = await commentRequest(`/api/get-comments`, 'POST', { uris });
+export async function getComments(uris: string[], institutionId: string): Promise<Comment[]> {
+  const comments: Comment[] = await commentRequest(`/api/get-comments`, 'POST', {
+    uris,
+    institutionId,
+  });
   return comments;
 }
 
 export async function getThreadsForCourseInstance(
   courseId: string,
-  courseTerm: string
+  courseTerm: string,
+  institutionId: string
 ): Promise<Comment[]> {
   const comments: Comment[] = await commentRequest(
     `/api/get-comments-for-course-instance`,
     'POST',
-    { courseId, courseTerm }
+    { courseId, courseTerm, institutionId }
   );
   return comments;
 }

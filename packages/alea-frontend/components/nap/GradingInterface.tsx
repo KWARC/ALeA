@@ -394,7 +394,7 @@ function GradingItemDisplay({
   onPrevGradingItem: () => void;
 }) {
   const router = useRouter();
-  const institutionId = router.query.universityId as string;
+  const institutionId = router.query.institutionId as string;
 
   const [studentResponse, setStudentResponse] =
     useState<Record<string, ResponseWithSubProblemId>>();

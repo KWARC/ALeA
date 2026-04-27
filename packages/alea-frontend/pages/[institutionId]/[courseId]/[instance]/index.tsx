@@ -462,12 +462,13 @@ function CourseScheduleSection({
   );
 }
 
-function AnnouncementsSection({ courseId, instanceId }: { courseId: string; instanceId: string }) {
+function AnnouncementsSection({ courseId, instanceId, institutionId }: { courseId: string; instanceId: string; institutionId: string; }) {
   const theme = useTheme();
   const { data: announcements, isLoading: loading } = useQuery({
-    queryKey: ['announcements', courseId, instanceId],
+    queryKey: ['announcements', courseId, instanceId, institutionId],
     enabled: Boolean(courseId && instanceId),
-    queryFn: () => getActiveAnnouncements(courseId!, instanceId!, 'FAU'), // TODO(M5)
+    // queryFn: () => getActiveAnnouncements(courseId!, instanceId!, 'FAU'), // TODO(M5)
+    queryFn: () => getActiveAnnouncements(courseId!, instanceId!, institutionId),
   });
 
   if (loading) {
@@ -846,7 +847,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
+        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} institutionId={institutionId} />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         {showSearchBar && (

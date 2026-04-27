@@ -75,7 +75,10 @@ function removeRecentCourse(courseCode: string) {
 }
 function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: string }) {
   // TODO(M5)
-  const institutionId = 'FAU';
+  // const institutionId = 'FAU';
+  const router = useRouter();
+  const institutionId = (router.query.institutionId as string) || 'FAU';
+
   const [sortedCourses, setSortedCourses] = useState<GetSortedCoursesByConnectionsResponse[]>();
   const [selectedCourseIndex, setSelectedCourseIndex] = useState<string>(null);
   const [connections, setConnections] = useState<UserStats['connections']>([]);
@@ -136,7 +139,9 @@ function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: stri
 
 function StatsForModerator() {
   // TODO(M5) we will change the frontend code after we have done with backend
-  const institutionId = 'FAU';
+  const router = useRouter();
+  // const institutionId = 'FAU';
+  const institutionId = (router.query.institutionId as string) || 'FAU';
   const [overviewData, setOverviewData] = useState<AllCoursesStats>();
   const [semester, setSemester] = useState('WS25-26');
   const { studyBuddy: t } = getLocaleObject(useRouter());
@@ -186,12 +191,13 @@ function StatsForModerator() {
 
 function CourseStub({ courseCode, onCancel }: { courseCode: string; onCancel?: () => void }) {
   const router = useRouter();
+  const institutionId = (router.query.institutionId as string) || 'FAU';
   const { studyBuddy: t } = getLocaleObject(router);
   return (
     <Button
       sx={{ display: 'flex', alignItems: 'center' }}
       variant="contained"
-      onClick={() => router.push(pathToStudyBuddy('FAU', courseCode, 'latest'))}
+      onClick={() => router.push(pathToStudyBuddy(institutionId, courseCode, 'latest'))}
     >
       {MaAI_COURSES[courseCode]?.courseName ?? courseCode}
       {onCancel && (
@@ -271,7 +277,8 @@ const Courses: NextPage = () => {
   const { studyBuddy: t } = getLocaleObject(useRouter());
   const [, forceRerender] = useReducer((x) => x + 1, 0);
   // TODO(M5) we will change the frontend code after we have done with backend
-  const institutionId = 'FAU';
+  // const institutionId = 'FAU';
+  const institutionId = (router.query.institutionId as string) || 'FAU';
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
   const [isUserAModerator, setIsUserAModerator] = useState(false);
 
@@ -331,7 +338,7 @@ const Courses: NextPage = () => {
               addRecentCourse(courseCode);
               forceRerender();
               await new Promise((r) => setTimeout(r, 500));
-              router.push(pathToStudyBuddy('FAU', courseCode, 'latest'));
+              router.push(pathToStudyBuddy(institutionId, courseCode, 'latest'));
             }
           }}
         />
@@ -348,7 +355,7 @@ const Courses: NextPage = () => {
                 <TableRow key={courseCode}>
                   <TableCell>
                     <Link
-                      href={pathToStudyBuddy('FAU', courseCode, 'latest')}
+                      href={pathToStudyBuddy(institutionId, courseCode, 'latest')}
                       onClick={() => addRecentCourse(courseCode)}
                     >
                       {courseList[courseCode]?.courseName}

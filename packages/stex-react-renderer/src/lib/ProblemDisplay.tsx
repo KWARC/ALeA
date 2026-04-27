@@ -114,7 +114,7 @@ export function ProblemViewer({
   });
 
   const router = useRouter();
-  const universityId = router.query.universityId as string;
+  const institutionId = router.query.institutionId as string;
 
   return (
     <SafeFTMLFragment
@@ -135,7 +135,7 @@ export function ProblemViewer({
               problemTitle={problem.problem.title_html ?? ''}
               isFrozen={isFrozen}
               problemId={problemUri}
-              universityId={universityId}
+              institutionId={institutionId}
             ></AnswerAccepter>
           </Box>
         );
@@ -149,13 +149,13 @@ function AnswerAccepter({
   masterProblemId,
   isFrozen,
   problemTitle,
-  universityId,
+  institutionId,
 }: {
   problemId: string;
   masterProblemId: string;
   isFrozen: boolean;
   problemTitle: string;
-  universityId: string;
+  institutionId: string;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
@@ -178,7 +178,7 @@ function AnswerAccepter({
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
         // institutionId: 'FAU', // TODO(M5)
-        institutionId: universityId,
+        institutionId: institutionId,
         homeworkId: +(router.query.id ?? 0),
       });
       console.log('All answers saved successfully!');

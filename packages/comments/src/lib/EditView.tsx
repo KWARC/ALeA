@@ -41,6 +41,7 @@ export function EditView({
   onUpdate,
 }: EditViewProps) {
   const router = useRouter();
+  const institutionId = router.query.institutionId as string;
   const courseId = router.query['courseId'] as string;
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
@@ -70,7 +71,8 @@ export function EditView({
       parentCommentId: parentId,
       courseId,
       courseTerm,
-      institutionId: 'FAU', // TODO(M5)
+      // institutionId: 'FAU', // TODO(M5)
+      institutionId: institutionId,
       statement: inputText,
       isPrivate: isPrivateNote,
       isAnonymous: postAnonymously,

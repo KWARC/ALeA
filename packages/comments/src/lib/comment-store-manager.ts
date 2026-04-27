@@ -9,7 +9,20 @@ const COMMENTS_FETCHER = new RequestAggregator<string, Comment[]>(
   (u1: string, u2: string) => u1 === u2,
   (uri: string) => uri,
   (uri: string) => uri,
-  (uris: string[]) => from(getComments(uris)),
+  // (uris: string[]) => from(getComments(uris)),
+  (uris: string[]) => {
+    let institutionId = '';
+
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      institutionId = parts[0] || '';
+    }
+
+    if (!institutionId) {
+      console.warn('Missing institutionId in getComments');
+    }
+    return from(getComments(uris, institutionId));
+  },
   (comments: Comment[], requests: string[]) => {
     for (const req of requests) {
       const fileComments = (comments || []).filter((comment) => comment.uri === req);
