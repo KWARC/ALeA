@@ -72,63 +72,167 @@ function buildFileName(fields: ExtractedFields, userId: string, checksum: string
 
 async function parseUpload(req: NextApiRequest): Promise<formidable.File> {
   return new Promise((resolve, reject) => {
-    formidable({ keepExtensions: true, uploadDir: TEMP_CHEATSHEETS_DIR }).parse(req, (err, _fields, files) => {
-      if (err) return reject(err);
-      const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
-      if (!uploaded) return reject(new Error('No file uploaded.'));
-      resolve(uploaded);
-    });
+    formidable({ keepExtensions: true, uploadDir: TEMP_CHEATSHEETS_DIR }).parse(
+      req,
+      (err, _fields, files) => {
+        if (err) return reject(err);
+        const uploaded = Array.isArray(files.file) ? files.file[0] : files.file;
+        if (!uploaded) return reject(new Error('No file uploaded.'));
+        resolve(uploaded);
+      }
+    );
   });
+}
+
+async function tryJsQR(buf: Buffer, w: number, h: number): Promise<string | null> {
+  const result = jsQR(new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength), w, h);
+  return result ? result.data : null;
+}
+
+async function normaliseForDetection(
+  rgba: Buffer,
+  w: number,
+  h: number,
+  targetMin = 300,
+  targetMax = 1200
+): Promise<{ buf: Buffer; w: number; h: number }> {
+  const maxDim = Math.max(w, h);
+  const minDim = Math.min(w, h);
+
+  if (maxDim <= targetMax && minDim >= targetMin) return { buf: rgba, w, h };
+
+  let newW: number, newH: number;
+  if (maxDim > targetMax) {
+    const f = targetMax / maxDim;
+    newW = Math.round(w * f);
+    newH = Math.round(h * f);
+  } else {
+    const f = targetMin / minDim;
+    newW = Math.round(w * f);
+    newH = Math.round(h * f);
+  }
+
+  const buf = await sharp(rgba, { raw: { width: w, height: h, channels: 4 } })
+    .resize(newW, newH, { kernel: 'lanczos3' })
+    .raw()
+    .toBuffer();
+  return { buf, w: newW, h: newH };
+}
+
+async function scaleVariants(
+  rgba: Buffer,
+  w: number,
+  h: number
+): Promise<Array<{ buf: Buffer; w: number; h: number; label: string }>> {
+  const variants: Array<{ buf: Buffer; w: number; h: number; label: string }> = [];
+  const natural = await normaliseForDetection(rgba, w, h);
+  variants.push({ ...natural, label: 'natural' });
+  for (const scale of [0.5, 0.75, 1.5, 2, 3]) {
+    const nw = Math.round(w * scale);
+    const nh = Math.round(h * scale);
+    if (nw < 50 || nh < 50 || nw > 4000 || nh > 4000) continue; // sanity bounds
+    if (variants.some((v) => Math.abs(v.w - nw) < 10 && Math.abs(v.h - nh) < 10)) continue;
+    const buf = await sharp(rgba, { raw: { width: w, height: h, channels: 4 } })
+      .resize(nw, nh, { kernel: 'lanczos3' })
+      .raw()
+      .toBuffer();
+    variants.push({ buf, w: nw, h: nh, label: `x${scale}` });
+  }
+
+  return variants;
+}
+
+async function cornerCrops(
+  rgba: Buffer,
+  w: number,
+  h: number
+): Promise<Array<{ buf: Buffer; w: number; h: number; label: string }>> {
+  const crops: Array<{ buf: Buffer; w: number; h: number; label: string }> = [];
+  const cw = Math.round(w * 0.35);
+  const ch = Math.round(h * 0.35);
+  const positions = [
+    { left: 0, top: 0, label: 'top-left' },
+    { left: w - cw, top: 0, label: 'top-right' },
+    { left: 0, top: h - ch, label: 'bottom-left' },
+    { left: w - cw, top: h - ch, label: 'bottom-right' },
+  ];
+  for (const { left, top, label } of positions) {
+    const buf = await sharp(rgba, { raw: { width: w, height: h, channels: 4 } })
+      .extract({ left, top, width: cw, height: ch })
+      .raw()
+      .toBuffer();
+    crops.push({ buf, w: cw, h: ch, label });
+  }
+  return crops;
+}
+
+async function toGreyscaleRGBA(rgba: Buffer, w: number, h: number): Promise<Buffer> {
+  return sharp(rgba, { raw: { width: w, height: h, channels: 4 } })
+    .greyscale()
+    .toColorspace('srgb')
+    .ensureAlpha()
+    .raw()
+    .toBuffer();
+}
+
+async function attemptQROnVariants(
+  variants: Array<{ buf: Buffer; w: number; h: number; label: string }>,
+  context: string
+): Promise<string | null> {
+  for (const { buf, w, h, label } of variants) {
+    let data = await tryJsQR(buf, w, h);
+    if (data) {
+      console.log(`QR found [${context}/${label}/colour]`);
+      return data;
+    }
+    const grey = await toGreyscaleRGBA(buf, w, h);
+    data = await tryJsQR(grey, w, h);
+    if (data) {
+      console.log(`QR found [${context}/${label}/grey]`);
+      return data;
+    }
+  }
+  return null;
 }
 
 async function extractQRFromImage(buffer: Buffer): Promise<QRData> {
   try {
     const metadata = await sharp(buffer).metadata();
-    if (!metadata.width || !metadata.height) {
+    if (!metadata.width || !metadata.height)
       throw new Error('Could not determine image dimensions');
-    }
-
-    const rgba = await sharp(buffer)
-      .toColorspace('srgb')
-      .ensureAlpha()
-      .raw()
-      .toBuffer();
 
     const { width, height } = metadata;
+    const rgba = await sharp(buffer).toColorspace('srgb').ensureAlpha().raw().toBuffer();
 
-    for (const scale of [1, 2, 4]) {
-      let buf = rgba,
-        w = width,
-        h = height;
-
-      if (scale > 1) {
-        buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
-          .resize(width * scale, height * scale, { kernel: 'nearest' })
-          .raw()
-          .toBuffer();
-        w = width * scale;
-        h = height * scale;
-      }
-
-      const result = jsQR(
-        new Uint8ClampedArray(buf.buffer, buf.byteOffset, buf.byteLength),
-        w,
-        h
-      );
-
-      if (result) {
-        const outer = JSON.parse(result.data) as { payload: string; signature: string };
-        if (!verifyQRSignature(outer.payload, outer.signature)) {
-          throw new Error('QR signature verification failed — file may be tampered.');
+    const variants = await scaleVariants(rgba, width, height);
+    let raw = await attemptQROnVariants(variants, 'full');
+    if (!raw) {
+      const crops = await cornerCrops(rgba, width, height);
+      const cropVariants: Array<{ buf: Buffer; w: number; h: number; label: string }> = [];
+      for (const crop of crops) {
+        const norm = await normaliseForDetection(crop.buf, crop.w, crop.h);
+        cropVariants.push({ ...norm, label: crop.label });
+        const up2w = Math.round(norm.w * 2);
+        const up2h = Math.round(norm.h * 2);
+        if (up2w <= 3000 && up2h <= 3000) {
+          const up2 = await sharp(norm.buf, { raw: { width: norm.w, height: norm.h, channels: 4 } })
+            .resize(up2w, up2h, { kernel: 'lanczos3' })
+            .raw()
+            .toBuffer();
+          cropVariants.push({ buf: up2, w: up2w, h: up2h, label: `${crop.label}x2` });
         }
-        const json = JSON.parse(outer.payload) as Record<string, string>;
-        return {
-          cheatsheetId: json['cheatsheetId'] ?? undefined,
-        };
       }
+      raw = await attemptQROnVariants(cropVariants, 'crop');
     }
 
-    throw new Error('No QR code found in image at any scale.');
+    if (!raw) throw new Error('No QR code found in image at any scale or crop.');
+
+    const outer = JSON.parse(raw) as { payload: string; signature: string };
+    if (!verifyQRSignature(outer.payload, outer.signature)) {
+      throw new Error('QR signature verification failed — file may be tampered.');
+    }
+    const json = JSON.parse(outer.payload) as Record<string, string>;
+    return { cheatsheetId: json['cheatsheetId'] ?? undefined };
   } catch (err) {
     throw new Error(`Failed to extract QR from image: ${(err as Error)?.message}`);
   }
@@ -138,10 +242,17 @@ async function extractFields(
   buffer: Buffer,
   mimetype?: string
 ): Promise<{ fields: ExtractedFields; diagnostics: string }> {
-  const pdfMagicBytes = buffer.subarray(0, 4).toString('hex') === '25504446'; 
+  const pdfMagicBytes = buffer.subarray(0, 4).toString('hex') === '25504446';
   const isPDF = pdfMagicBytes || mimetype?.toLowerCase().includes('pdf');
 
-  console.log('extractFields - mimetype:', mimetype, 'pdfMagicBytes:', pdfMagicBytes, 'isPDF:', isPDF);
+  console.log(
+    'extractFields - mimetype:',
+    mimetype,
+    'pdfMagicBytes:',
+    pdfMagicBytes,
+    'isPDF:',
+    isPDF
+  );
 
   let qr: QRData;
   try {
@@ -218,94 +329,94 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
       }
 
       try {
-        const { width, height, data } = img;
+        const { width, height, data, kind } = img;
         const pixelCount = width * height;
-        const naiveCh = data.length / pixelCount;
 
-        let ch = 0,
-          hasPad = false;
-        if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
-          ch = naiveCh;
+        let greyBuf: Buffer | null = null;
+
+        if (kind === 1) {
+          greyBuf = Buffer.alloc(pixelCount);
+          const stride = Math.ceil(width / 8);
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const bit = (data[y * stride + (x >> 3)] >> (7 - (x & 7))) & 1;
+              greyBuf[y * width + x] = bit ? 0x00 : 0xff;
+            }
+          }
+        }
+
+        let rgba: Buffer;
+        if (greyBuf) {
+          rgba = await sharp(greyBuf, { raw: { width, height, channels: 1 } })
+            .toColorspace('srgb')
+            .ensureAlpha()
+            .raw()
+            .toBuffer();
         } else {
-          for (const c of [1, 3, 4]) {
-            if (data.length === height * (width * c + 1)) {
-              ch = c;
-              hasPad = true;
-              break;
+          const naiveCh = data.length / pixelCount;
+          let ch = 0,
+            hasPad = false;
+          if (Number.isInteger(naiveCh) && naiveCh >= 1 && naiveCh <= 4) {
+            ch = naiveCh;
+          } else {
+            for (const c of [1, 3, 4]) {
+              if (data.length === height * (width * c + 1)) {
+                ch = c;
+                hasPad = true;
+                break;
+              }
             }
+            if (!ch) ch = Math.max(1, Math.round(naiveCh));
           }
-          if (!ch) ch = Math.max(1, Math.round(naiveCh));
+
+          let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
+          if (hasPad) {
+            const stride = width * ch + 1;
+            const stripped = Buffer.alloc(pixelCount * ch);
+            for (let row = 0; row < height; row++) {
+              raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+            }
+            raw = stripped;
+          }
+
+          rgba = await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 | 4 } })
+            .toColorspace('srgb')
+            .ensureAlpha()
+            .raw()
+            .toBuffer();
         }
 
-        let raw = Buffer.from(data instanceof Uint8Array ? data : data.buffer);
+        const variants = await scaleVariants(rgba, width, height);
+        let qrRaw = await attemptQROnVariants(variants, `pdf-p${pageNum}-${name}-full`);
 
-        if (hasPad) {
-          const stride = width * ch + 1;
-          const stripped = Buffer.alloc(pixelCount * ch);
-          for (let row = 0; row < height; row++) {
-            raw.copy(stripped, row * width * ch, row * stride + 1, row * stride + 1 + width * ch);
+        if (!qrRaw) {
+          const crops = await cornerCrops(rgba, width, height);
+          const cropVariants: Array<{ buf: Buffer; w: number; h: number; label: string }> = [];
+          for (const crop of crops) {
+            const norm = await normaliseForDetection(crop.buf, crop.w, crop.h);
+            cropVariants.push({ ...norm, label: crop.label });
+            const up2w = Math.round(norm.w * 2);
+            const up2h = Math.round(norm.h * 2);
+            if (up2w <= 3000 && up2h <= 3000) {
+              const up2 = await sharp(norm.buf, {
+                raw: { width: norm.w, height: norm.h, channels: 4 },
+              })
+                .resize(up2w, up2h, { kernel: 'lanczos3' })
+                .raw()
+                .toBuffer();
+              cropVariants.push({ buf: up2, w: up2w, h: up2h, label: `${crop.label}x2` });
+            }
           }
-          raw = stripped;
+          qrRaw = await attemptQROnVariants(cropVariants, `pdf-p${pageNum}-${name}-crop`);
         }
 
-        const rgba = await sharp(raw, { raw: { width, height, channels: ch as 1 | 2 | 3 | 4 } })
-          .toColorspace('srgb')
-          .ensureAlpha()
-          .raw()
-          .toBuffer();
-
-        for (const scale of [1, 2, 4]) {
-          let buf = rgba,
-            w = width,
-            h = height;
-          if (scale > 1) {
-            buf = await sharp(rgba, { raw: { width, height, channels: 4 } })
-              .resize(width * scale, height * scale, { kernel: 'nearest' })
-              .raw()
-              .toBuffer();
-            w = width * scale;
-            h = height * scale;
+        if (qrRaw) {
+          const outer = JSON.parse(qrRaw) as { payload: string; signature: string };
+          if (!verifyQRSignature(outer.payload, outer.signature)) {
+            throw new Error('QR signature verification failed — file may be tampered.');
           }
-          let detectionBuf = buf;
-          let detectionW = w;
-          let detectionH = h;
-          
-          if (w > 1000 || h > 1000) {
-            console.log(`Downscaling large image from ${w}x${h} for jsQR`);
-            const maxDim = Math.max(w, h);
-            const scaleFactor = Math.max(1, Math.ceil(maxDim / 800));
-            const newW = Math.floor(w / scaleFactor);
-            const newH = Math.floor(h / scaleFactor);
-            
-            detectionBuf = await sharp(buf, { raw: { width: w, height: h, channels: 4 } })
-              .resize(newW, newH, { kernel: 'nearest' })
-              .raw()
-              .toBuffer();
-            detectionW = newW;
-            detectionH = newH;
-          }
-
-          console.log(`Scale ${scale} - Detection dimensions: ${detectionW}x${detectionH}`);
-
-          const result = jsQR(
-            new Uint8ClampedArray(detectionBuf.buffer, detectionBuf.byteOffset, detectionBuf.byteLength),
-            detectionW,
-            detectionH
-          );
-
-          console.log(`jsQR result at scale ${scale}:`, result ? 'FOUND!' : 'Not found');
-
-          if (result) {
-            console.log(`QR detected at scale ${scale}!`);
-            const outer = JSON.parse(result.data) as { payload: string; signature: string };
-            if (!verifyQRSignature(outer.payload, outer.signature)) {
-              throw new Error('QR signature verification failed — file may be tampered.');
-            }
-            const json = JSON.parse(outer.payload) as Record<string, string>;
-            return {
-              cheatsheetId: json['cheatsheetId'] ?? undefined,
-            };
-          }
+          const json = JSON.parse(outer.payload) as Record<string, string>;
+          return { cheatsheetId: json['cheatsheetId'] ?? undefined };
         }
 
         console.warn(`No QR detected in image "${name}" on page ${pageNum} at any scale.`);
@@ -318,10 +429,7 @@ async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
   throw new Error(`No QR code found across first ${Math.min(pdf.numPages, 3)} page(s).`);
 }
 
-function buildCheatsheetUploadErrorMessage(
-  uploadContext: UploadContext,
-  weekId: string
-) {
+function buildCheatsheetUploadErrorMessage(uploadContext: UploadContext, weekId: string) {
   const start = formatDateLabel(new Date(uploadContext.windowStart));
   const end = formatDateLabel(new Date(uploadContext.windowEnd));
   const weekLabel = formatDateLabel(weekId);
@@ -375,10 +483,7 @@ export async function validateCheatsheetUploadWindowOrSetError(
   }
   const uploadContext = getUploadContext(weekId, config);
   if (uploadContext.status !== 'CURRENT') {
-    const errorMessage = buildCheatsheetUploadErrorMessage(
-      uploadContext,
-      weekId,
-    );
+    const errorMessage = buildCheatsheetUploadErrorMessage(uploadContext, weekId);
     return res.status(403).send(errorMessage);
   }
   return true;
@@ -410,7 +515,6 @@ export async function getCheatsheetConfigOrSetError(
     return res.status(403).send('Invalid cheatsheet configuration.');
   }
 }
-
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -465,7 +569,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     {
       name: ResourceName.COURSE_CHEATSHEET,
       action: Action.UPLOAD,
-      variables: { courseId, instanceId},
+      variables: { courseId, instanceId },
     },
   ]);
   if (isStudent) {
