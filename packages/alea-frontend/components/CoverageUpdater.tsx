@@ -24,6 +24,7 @@ import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
 import { getAllCourses } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
+import axios from 'axios';
 
 export function getSectionNameForUri(
   uri: string,
@@ -142,8 +143,8 @@ export function CoverageUpdater({
 
     const fetchAllClips = async () => {
       try {
-        const res = await fetch(`/api/get-fau-series-clips/${seriesId}`);
-        const data = await res.json();
+        const res = await axios.get(`/api/get-fau-series-clips/${seriesId}`);
+        const data = res.data;
         if (Array.isArray(data)) {
           setClips(data);
         }

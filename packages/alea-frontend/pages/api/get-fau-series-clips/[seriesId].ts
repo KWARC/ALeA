@@ -7,9 +7,7 @@ interface FAUClip {
   recording_date: string;
   title: string;
 }
-interface FAUSeriesClipsResponse {
-  data: FAUClip[];
-}
+
 interface CachedObject {
   cacheTimeMs: number;
   clips: FAUClip[];
@@ -19,13 +17,13 @@ const CACHED_SERIES_CLIPS = new Map<string, CachedObject>();
 
 function isFresh(cachedObject: CachedObject) {
   if (!cachedObject) return false;
-  const MAX_CACHE_STALENESS_MS = 60 * 60 * 1000; // 1 hour
+  const MAX_CACHE_STALENESS_MS = 60 * 60 * 1000;
   return Date.now() - cachedObject.cacheTimeMs < MAX_CACHE_STALENESS_MS;
 }
 
 export async function getSeriesClips(seriesId: string): Promise<FAUClip[]> {
   const url = `${FAU_TV_SERIES_CLIPS_BASE_URL}/${seriesId}/clips`;
-  const { data } = await axios.get<FAUSeriesClipsResponse>(url);
+  const { data } = await axios.get(url);
   return data.data || [];
 }
 
