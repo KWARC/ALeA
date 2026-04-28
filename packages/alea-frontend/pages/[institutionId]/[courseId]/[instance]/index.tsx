@@ -8,7 +8,7 @@ import {
   getLectureEntry,
   getLectureSchedule,
   getSemesterInfo,
-  LectureScheduleItem
+  LectureScheduleItem,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -23,7 +23,7 @@ import {
   pathToInstructorDash,
   pathToPracticeProblems,
   pathToStudyBuddy,
-  ResourceName
+  ResourceName,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -629,7 +629,7 @@ const CourseHomePage: NextPage = () => {
   const cheatSheetsLink = pathToCheatSheet(institutionId, courseId, instanceId);
 
   const locale = router.locale || 'en';
-  const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q } = getLocaleObject(router);
+  const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q , studentWelcomeScreen: tCheatsheet} = getLocaleObject(router);
   const t = home.courseThumb;
 
   const showSearchBar = ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId);
@@ -776,12 +776,26 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          {cheatsheetConfig?.hasCheatsheet && (
-            <CourseComponentLink href={cheatSheetsLink}>
-              CheatSheet&nbsp;
-              <FolderOpenIcon fontSize="large" />
-            </CourseComponentLink>
-          )}
+          {cheatsheetConfig?.hasCheatsheet &&
+            (enrolled ? (
+              <CourseComponentLink href={cheatSheetsLink}>
+                CheatSheet&nbsp;
+                <FolderOpenIcon fontSize="large" />
+              </CourseComponentLink>
+            ) : (
+              <Tooltip title={tCheatsheet.cheatsheetEnrollmentPending} arrow>
+                <span style={{ width: '100%' }}>
+                  <Button
+                    variant="contained"
+                    disabled
+                    sx={{ width: '100%', height: '48px', fontSize: '16px' }}
+                  >
+                    CheatSheet&nbsp;
+                    <FolderOpenIcon fontSize="large" />
+                  </Button>
+                </span>
+              </Tooltip>
+            ))}
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && !isSemesterOver && (
