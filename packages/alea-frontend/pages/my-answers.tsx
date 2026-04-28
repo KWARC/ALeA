@@ -130,6 +130,7 @@ function AnswerItemDisplay({
 
   return (
     <Box>
+      {problem && (
       <ProblemDisplay
         showPoints={false}
         problem={problem}
@@ -138,6 +139,7 @@ function AnswerItemDisplay({
         uri={answer.questionId}
         // problem={problem} TODO ALEA4-P4
       ></ProblemDisplay>
+      )}
       <Box sx={{ margin: '10px' }}>
         <span>{dayjs(answer.updatedAt).fromNow()}</span>
         <IconButton
@@ -325,7 +327,9 @@ const MyAnswersPage: NextPage = () => {
   );
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this answer?')) {
-      deleteAnswer(id).then(() => {
+      const institutionId = router.query.institutionId as string;
+
+      deleteAnswer(id, institutionId).then(() => {
         getMyAnswers().then((answers) => {
           setAnswerItems(answers);
         });

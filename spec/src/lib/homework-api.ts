@@ -3,8 +3,10 @@ import { FTML } from '@flexiformal/ftml';
 import { HomeworkInfo, HomeworkPhase, HomeworkStatsInfo, HomeworkStub } from './homework';
 import { GradingInfo } from './nap';
 
-export async function getHomeworkList(courseId: string) {
-  const resp = await axios.get(`/api/homework/get-homework-list?courseId=${courseId}`);
+export async function getHomeworkList(courseId: string, courseInstance?: string) {
+  const resp = await axios.get('/api/homework/get-homework-list', {
+    params: { courseId, courseInstance },
+  });
   return resp.data as HomeworkStub[];
 }
 export async function getHomeworkStats(courseId: string, homeworkId: string) {

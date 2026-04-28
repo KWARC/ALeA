@@ -34,6 +34,7 @@ export interface CreateAnswerRequest {
 export interface UpdateAnswerRequest {
   answer: string;
   id: number;
+  institutionId: string;
 }
 
 export interface CreateReviewRequest {

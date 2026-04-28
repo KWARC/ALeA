@@ -61,8 +61,8 @@ export async function getAnswerWithReviewRequestId(id: number) {
     .then((c) => c.data);
 }
 
-export async function deleteAnswer(id: number) {
-  return axios.post('/api/nap/delete-answer', { id } );
+export async function deleteAnswer(id: number, institutionId: string) {
+  return axios.post('/api/nap/delete-answer', { id, institutionId  } );
 }
 export async function deleteGraded(id: number) {
   return axios.post('/api/nap/delete-grade', { id });
@@ -106,7 +106,7 @@ export async function getAnswerAdmin(courseId: string, answerId: number) {
     },
   }).then(c=>c.data);
 }
-export async function getAnswerInfo(answerId: number, courseId: string, questionId: string) {
+export async function getAnswerInfo(answerId: number, courseId: string, questionId: string, institutionId: string) {
   return axios
     .get('/api/nap/get-answers-info', {
       params: {
@@ -114,6 +114,7 @@ export async function getAnswerInfo(answerId: number, courseId: string, question
         courseId,
         courseInstance: CURRENT_TERM,
         questionId,
+        institutionId,
       },
     })
     .then((c) => c.data as { subProblemId: string });
@@ -140,10 +141,10 @@ export async function getMyGraded() {
     await axios.get<GradingWithAnswer[]>('/api/nap/get-my-graded')
   ).data;
 }
-export async function getGradingItems(answerId: number, subProblemId: number) {
+export async function getGradingItems(answerId: number, subProblemId: number, institutionId: string) {
   return (
     await axios.get<GradingInfo[]>('/api/nap/get-answer-grading', {
-      params: { answerId, subProblemId },
+      params: { answerId, subProblemId, institutionId },
     })
   ).data;
 }

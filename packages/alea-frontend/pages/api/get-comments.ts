@@ -6,10 +6,7 @@ import {
 } from './comment-utils';
 
 // Returns success as true or false.
-export async function processResults(
-  res,
-  results: Comment[]
-): Promise<boolean> {
+export async function processResults(res, results: Comment[]): Promise<boolean> {
   const commentIds = results.map((c) => c.commentId);
   const userIds = results.map((c) => c.userId);
 
@@ -53,20 +50,22 @@ export async function processResults(
 }
 
 export default async function handler(req, res) {
-  const { uris } = req.body as GetCommentsRequest;
+  const { uris, institutionId } = req.body as GetCommentsRequest;
+  if (!institutionId) {
+    return res.status(422).end('Missing institutionId');
+  }
+
   if (!uris?.length) {
     res.status(200).json([]);
     return;
   }
 
-
   const userId = (await getUserId(req)) || '';
-  const fileConstraint = Array(uris.length)
-    .fill('(uri = ?)')
-    .join(' OR ');
+  const fileConstraint = Array(uris.length).fill('(uri = ?)').join(' OR ');
 
-  const query = `SELECT * FROM comments WHERE (isPrivate != 1 OR userId = ? ) AND ( ${fileConstraint} )`;
-  const queryValues = [userId];
+  const query = `SELECT * FROM comments WHERE institutionId = ? 
+    AND (isPrivate != 1 OR userId = ? ) AND ( ${fileConstraint} )`;
+  const queryValues = [institutionId, userId];
   uris.forEach((uri) => queryValues.push(uri));
 
   const results = await executeDontEndSet500OnError(query, queryValues, res);

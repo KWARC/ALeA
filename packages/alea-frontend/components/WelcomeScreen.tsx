@@ -120,9 +120,14 @@ const getResourceIcon = (name: ResourceName) => {
   }
 };
 
-async function getCommentsInfo(courseId: string, currentTerm: string, router: NextRouter) {
+async function getCommentsInfo(
+  courseId: string,
+  currentTerm: string,
+  router: NextRouter,
+  institutionId: string
+) {
   const { resource: r } = getLocaleObject(router);
-  const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU'); // TODO(M5)
+  const comments = await getCourseInstanceThreads(courseId, currentTerm, institutionId);
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
     (comment) => comment.questionStatus === QuestionStatus.UNANSWERED
@@ -416,12 +421,14 @@ async function getLastUpdatedDescriptions({
   action,
   router,
   currentTerm,
+  institutionId,
 }: {
   courseId: string;
   name: ResourceName;
   action: Action;
   router: NextRouter;
   currentTerm: string;
+  institutionId: string;
 }): Promise<ResourceDisplayInfo> {
   let description = null;
   let timeAgo = null;
@@ -462,7 +469,8 @@ async function getLastUpdatedDescriptions({
       ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(
         courseId,
         currentTerm,
-        router
+        router,
+        institutionId
       ));
       break;
     default:
@@ -699,8 +707,9 @@ function WelcomeScreen({
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const router = useRouter();
+  const institutionId = router.query.institutionId as string;
   const { currentTermByUniversityId } = useCurrentTermContext();
-  const currentTerm = currentTermByUniversityId['FAU'];
+  const currentTerm = currentTermByUniversityId[institutionId];
 
   const {
     resource: r,
@@ -733,6 +742,7 @@ function WelcomeScreen({
               action: action,
               router,
               currentTerm: currentTerm, // Use the current term from context
+              institutionId,
             }).then(({ description, timeAgo, timestamp, quizId, colorInfo }) => {
               newDescriptions[`${courseId}-${resource.name}-${action}`] = {
                 description,
@@ -752,7 +762,7 @@ function WelcomeScreen({
     };
 
     fetchDescriptions();
-  }, [groupedResources, router, currentTerm]);
+  }, [groupedResources, router, currentTerm, institutionId]);
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
@@ -785,7 +795,7 @@ function WelcomeScreen({
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
         {Object.entries(groupedResources).map(([courseId, resources]) => (
           <Box key={courseId} sx={{ marginBottom: 4 }}>
-            <Link href={pathToCourseHome('FAU', courseId, 'latest')}>
+            <Link href={pathToCourseHome(institutionId, courseId, 'latest')}>
               <Typography
                 sx={{
                   fontSize: '22px',

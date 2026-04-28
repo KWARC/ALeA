@@ -65,9 +65,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfQueryParameterExistOrSetError(req, res, ['questionId'])) return;
   const answerId = +(req.query.answerId as string);
 
+  const institutionId = req.query.institutionId as string;
+  if (!institutionId) {
+    return res.status(422).end('Missing institutionId');
+  }
+
   const answerInfo = await executeAndEndSet500OnError<any[]>(
-    `select userId,subProblemId from Answer where id = ?`,
-    [answerId],
+    `select userId,subProblemId from Answer where id = ? AND institutionId = ?`,
+    [answerId, institutionId],
     res
   );
 

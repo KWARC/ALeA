@@ -120,6 +120,7 @@ function ForumViewControls({
   const { forum: t } = getLocaleObject(router);
   const [openQuestionDialog, setOpenQuestionDialog] = useState(false);
   const courseId = router.query?.courseId as string;
+  const institutionId = router.query.institutionId as string;
   const { currentTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
   
@@ -186,7 +187,7 @@ function ForumViewControls({
               commentId: -1,
               courseId,
               courseTerm: currentTerm,
-              institutionId: 'FAU',// TODO(M5)
+              institutionId: institutionId,
               isPrivate: false,
               isAnonymous,
               commentType: CommentType.QUESTION,
@@ -234,6 +235,7 @@ export function QuestionStatusIcon({ comment }: { comment: Comment }) {
 
 export function ForumView() {
   const router = useRouter();
+  const institutionId = router.query.institutionId as string;
   const courseId = router.query.courseId as string;
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
@@ -245,8 +247,8 @@ export function ForumView() {
 
   useEffect(() => {
     if (!router.isReady || !courseId || !currentTerm) return;
-    getCourseInstanceThreads(courseId, currentTerm, 'FAU').then(setThreadComments);// TODO(M5)
-  }, [courseId, router.isReady, updateCounter, currentTerm]);
+    getCourseInstanceThreads(courseId, currentTerm, institutionId).then(setThreadComments);
+  }, [courseId, router.isReady, updateCounter, currentTerm, institutionId]);
 
   if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;
   const toShow = showUnanswered

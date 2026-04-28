@@ -15,14 +15,20 @@ import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../lang/utils';
 import { SafeHtml } from '@alea/react-utils';
 
-function HomeworkPerformanceTable({ courseId }: { courseId: string }) {
+function HomeworkPerformanceTable({
+  courseId,
+  courseInstance,
+}: {
+  courseId: string;
+  courseInstance?: string;
+}) {
   const { homeworkPerformanceTable: t, homework: tHW } = getLocaleObject(useRouter());
   const [homeworkData, setHomeworkData] = useState<LearnerHomeworkInfo[]>([]);
 
   useEffect(() => {
     const getHomeworkData = async () => {
       try {
-        const data = await getHomeworkList(courseId);
+        const data = await getHomeworkList(courseId, courseInstance);
         const mappedData: LearnerHomeworkInfo[] = data.map((homework: HomeworkStub) => ({
           title: homework.title,
           givenTs: new Date(homework.givenTs).toLocaleDateString('en-GB'),

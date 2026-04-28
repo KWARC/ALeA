@@ -102,7 +102,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
       </Snackbar>
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
-        <AnnouncementsTab courseId={courseId} instanceId={instanceId} />
+        <AnnouncementsTab courseId={courseId} instanceId={instanceId} universityId={universityId}  />
       </Box>
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">

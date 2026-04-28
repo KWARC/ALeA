@@ -69,6 +69,7 @@ export function isSpam(status?: HiddenStatus) {
 
 export interface GetCommentsRequest {
   uris: string[];
+  institutionId: string;
 }
 
 export interface EditCommentRequest {

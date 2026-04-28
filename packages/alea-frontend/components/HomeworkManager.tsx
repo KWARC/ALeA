@@ -41,9 +41,17 @@ function timestampEOD() {
   return date;
 }
 
-const HomeworkManager = ({ courseId, institutionId }) => {
+const HomeworkManager = ({
+  courseId,
+  institutionId,
+  courseInstance,
+}: {
+  courseId: string;
+  institutionId: string;
+  courseInstance?: string;
+}) => {
   const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
+  const currentTerm = courseInstance ?? currentTermByCourseId[courseId];
 
   const [homeworks, setHomeworks] = useState<HomeworkStub[]>([]);
   const [stats, setStats] = useState<HomeworkStatsInfo | null>(null);
@@ -62,7 +70,9 @@ const HomeworkManager = ({ courseId, institutionId }) => {
 
   const getHomeworks = async () => {
     try {
-      const homeworkList = await getHomeworkList(courseId);
+      const homeworkList = currentTerm
+        ? await getHomeworkList(courseId, currentTerm)
+        : await getHomeworkList(courseId);
       setHomeworks(homeworkList);
       setSelectedHomeworkId(homeworkList[0]?.id);
     } catch (error) {
