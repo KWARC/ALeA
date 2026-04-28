@@ -9,7 +9,6 @@ const COMMENTS_FETCHER = new RequestAggregator<string, Comment[]>(
   (u1: string, u2: string) => u1 === u2,
   (uri: string) => uri,
   (uri: string) => uri,
-  // (uris: string[]) => from(getComments(uris)),
   (uris: string[]) => {
     let institutionId = '';
 

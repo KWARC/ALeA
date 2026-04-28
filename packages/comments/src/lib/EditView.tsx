@@ -71,7 +71,6 @@ export function EditView({
       parentCommentId: parentId,
       courseId,
       courseTerm,
-      // institutionId: 'FAU', // TODO(M5)
       institutionId: institutionId,
       statement: inputText,
       isPrivate: isPrivateNote,

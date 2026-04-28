@@ -22,15 +22,13 @@ export default async function handler(req, res) {
     return res.status(422).end('Missing institutionId');
   }
 
-  // const { existing, error } = await getExistingCommentDontEnd(commentId);
-
   const existing = await executeAndEndSet500OnError(
     `SELECT userId FROM comments WHERE commentId=? AND institutionId=?`,
     [commentId, institutionId],
     res
   );
   if (!existing) return;
-  
+
   const ownerId = existing[0]?.userId;
   if (!ownerId || userId !== ownerId) {
     return res.status(403).json({ message: 'User not authorized' });

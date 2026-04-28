@@ -8,7 +8,7 @@ import {
   getLectureEntry,
   getLectureSchedule,
   getSemesterInfo,
-  LectureScheduleItem
+  LectureScheduleItem,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -23,7 +23,7 @@ import {
   pathToInstructorDash,
   pathToPracticeProblems,
   pathToStudyBuddy,
-  ResourceName
+  ResourceName,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -462,12 +462,19 @@ function CourseScheduleSection({
   );
 }
 
-function AnnouncementsSection({ courseId, instanceId, institutionId }: { courseId: string; instanceId: string; institutionId: string; }) {
+function AnnouncementsSection({
+  courseId,
+  instanceId,
+  institutionId,
+}: {
+  courseId: string;
+  instanceId: string;
+  institutionId: string;
+}) {
   const theme = useTheme();
   const { data: announcements, isLoading: loading } = useQuery({
     queryKey: ['announcements', courseId, instanceId, institutionId],
     enabled: Boolean(courseId && instanceId),
-    // queryFn: () => getActiveAnnouncements(courseId!, instanceId!, 'FAU'), // TODO(M5)
     queryFn: () => getActiveAnnouncements(courseId!, instanceId!, institutionId),
   });
 
@@ -847,7 +854,11 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <AnnouncementsSection courseId={courseId} instanceId={currentTerm} institutionId={institutionId} />
+        <AnnouncementsSection
+          courseId={courseId}
+          instanceId={currentTerm}
+          institutionId={institutionId}
+        />
 
         <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
         {showSearchBar && (

@@ -127,7 +127,6 @@ async function getCommentsInfo(
   institutionId: string
 ) {
   const { resource: r } = getLocaleObject(router);
-  // const comments = await getCourseInstanceThreads(courseId, currentTerm, 'FAU'); // TODO(M5)
   const comments = await getCourseInstanceThreads(courseId, currentTerm, institutionId);
   const questions = comments.filter((comment) => comment.commentType === CommentType.QUESTION);
   const unanswered = questions.filter(
@@ -710,7 +709,6 @@ function WelcomeScreen({
   const router = useRouter();
   const institutionId = router.query.institutionId as string;
   const { currentTermByUniversityId } = useCurrentTermContext();
-  // const currentTerm = currentTermByUniversityId['FAU'];
   const currentTerm = currentTermByUniversityId[institutionId];
 
   const {

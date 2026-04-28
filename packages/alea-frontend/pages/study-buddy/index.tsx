@@ -74,8 +74,6 @@ function removeRecentCourse(courseCode: string) {
   }
 }
 function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: string }) {
-  // TODO(M5)
-  // const institutionId = 'FAU';
   const router = useRouter();
   const institutionId = (router.query.institutionId as string) || 'FAU';
 
@@ -138,9 +136,7 @@ function StudyBuddyOverviewGraph({ instanceId = 'WS25-26' }: { instanceId?: stri
 }
 
 function StatsForModerator() {
-  // TODO(M5) we will change the frontend code after we have done with backend
   const router = useRouter();
-  // const institutionId = 'FAU';
   const institutionId = (router.query.institutionId as string) || 'FAU';
   const [overviewData, setOverviewData] = useState<AllCoursesStats>();
   const [semester, setSemester] = useState('WS25-26');
@@ -276,8 +272,6 @@ const Courses: NextPage = () => {
   const courseList = MaAI_COURSES;
   const { studyBuddy: t } = getLocaleObject(useRouter());
   const [, forceRerender] = useReducer((x) => x + 1, 0);
-  // TODO(M5) we will change the frontend code after we have done with backend
-  // const institutionId = 'FAU';
   const institutionId = (router.query.institutionId as string) || 'FAU';
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
   const [isUserAModerator, setIsUserAModerator] = useState(false);

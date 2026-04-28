@@ -16,8 +16,6 @@ export function StudyBuddyModeratorStats({
   courseId: string;
   institutionId: string;
 }) {
-  // TODO(M5): make instanceId dynamic
-  // const instanceId = 'WS25-26';
   const { currentTermByCourseId } = useCurrentTermContext();
   const instanceId = currentTermByCourseId[courseId];
   const [overviewData, setOverviewData] = useState<AllCoursesStats>();

@@ -177,7 +177,6 @@ function AnswerAccepter({
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
-        // institutionId: 'FAU', // TODO(M5)
         institutionId: institutionId,
         homeworkId: +(router.query.id ?? 0),
       });
