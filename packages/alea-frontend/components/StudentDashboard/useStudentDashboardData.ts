@@ -47,7 +47,7 @@ async function fetchCourseDashboardData(
 
   const [quizList, homeworkList] = await Promise.all([
     getCourseQuizList(courseId),
-    getHomeworkList(courseId),
+    getHomeworkList(courseId, currentTerm),
   ]);
 
   const quizzes = (quizList || []) as QuizStubInfo[];

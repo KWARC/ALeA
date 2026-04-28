@@ -74,7 +74,13 @@ function ChosenTab({
     case 'access-control':
       return <CourseAccessControlDashboard courseId={courseId} instanceId={instanceId} />;
     case 'homework-manager':
-      return <HomeworkManager courseId={courseId} institutionId={institutionId} />;
+      return (
+        <HomeworkManager
+          courseId={courseId}
+          institutionId={institutionId}
+          courseInstance={instanceId}
+        />
+      );
     case 'homework-grading':
       return <GradingInterface isPeerGrading={false} courseId={courseId} />;
     case 'quiz-dashboard':
