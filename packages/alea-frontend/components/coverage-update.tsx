@@ -41,7 +41,11 @@ export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
   return secInfo;
 }
 
-const CoverageUpdateTab = () => {
+interface CoverageUpdateTabProps {
+  instanceId: string;
+}
+
+const CoverageUpdateTab = ({ instanceId }: CoverageUpdateTabProps) => {
   const router = useRouter();
   const courseId = router.query.courseId as string;
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
@@ -51,6 +55,7 @@ const CoverageUpdateTab = () => {
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
+  const [seriesId, setSeriesId] = useState<string>('');
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -59,6 +64,16 @@ const CoverageUpdateTab = () => {
   useEffect(() => {
     getCoverageTimeline(true).then(setCoverageTimeline);
   }, []);
+
+  useEffect(() => {
+    if (!courseId || !instanceId) return;
+    fetch(`/api/course-metadata/get-lecture?courseId=${courseId}&instanceId=${instanceId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSeriesId(data.seriesId || '');
+      })
+      .catch((err) => console.error('Failed to fetch seriesId:', err));
+  }, [courseId, instanceId]);
 
   const { data: courses = {} } = useAllCourses();
 
@@ -266,6 +281,7 @@ const CoverageUpdateTab = () => {
           <Box sx={{ mt: 2, overflow: 'auto' }}>
             <CoverageUpdater
               courseId={courseId}
+              seriesId={seriesId}
               snaps={snaps}
               notCoveredSections={notCoveredSections}
               secInfo={secInfo}

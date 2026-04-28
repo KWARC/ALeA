@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { LectureEntry } from '@alea/utils';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageForm, FormData } from './CoverageForm';
@@ -64,6 +65,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 
 interface CoverageUpdaterProps {
   courseId: string;
+  seriesId?: string;
   snaps: LectureEntry[];
   notCoveredSections?: string[];
   secInfo: Record<FTML.DocumentUri, SecInfo>;
@@ -74,6 +76,7 @@ interface CoverageUpdaterProps {
 
 export function CoverageUpdater({
   courseId,
+  seriesId,
   snaps,
   notCoveredSections: initialNotCoveredSections,
   secInfo,
@@ -101,6 +104,7 @@ export function CoverageUpdater({
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
 
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
+  const [clips, setClips] = useState<any[]>([]);
 
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
@@ -132,6 +136,39 @@ export function CoverageUpdater({
     }
     loadTimezone();
   }, [courseId]);
+
+  useEffect(() => {
+    if (!seriesId) return;
+
+    const fetchAllClips = async () => {
+      try {
+        const res = await fetch(`/api/get-fau-series-clips/${seriesId}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setClips(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch series clips:', err);
+      }
+    };
+
+    fetchAllClips();
+  }, [seriesId]);
+
+  useEffect(() => {
+    if (!seriesId || clips.length === 0) return;
+
+    const lectureDate = dayjs(formData.timestamp_ms).format('YYYY-MM-DD');
+    const matchedClip = clips.find((c: any) => c.recording_date === lectureDate);
+    if (matchedClip) {
+      setFormData((prev) => {
+        if (!prev.clipId || prev.clipId.trim() === '') {
+          return { ...prev, clipId: matchedClip.id.toString() };
+        }
+        return prev;
+      });
+    }
+  }, [seriesId, formData.timestamp_ms, clips]);
 
   useEffect(() => {
     setNotCoveredSections(initialNotCoveredSections);
@@ -193,10 +230,19 @@ export function CoverageUpdater({
     handleSaveSingle(newItem);
   };
 
-  const handleEditDialogOpen = (entry: FormData, index: number) => {
+  const handleEditDialogOpen = async (entry: FormData, index: number) => {
     console.log('setformdata', entry.slideUri);
 
-    setFormData({ ...entry });
+    const updatedEntry = { ...entry };
+    if (seriesId && (!entry.clipId || entry.clipId.trim() === '') && clips.length > 0) {
+      const lectureDate = dayjs(entry.timestamp_ms).format('YYYY-MM-DD');
+      const matchedClip = clips.find((c: any) => c.recording_date === lectureDate);
+      if (matchedClip) {
+        updatedEntry.clipId = matchedClip.id.toString();
+      }
+    }
+
+    setFormData(updatedEntry);
     setEditIndex(index);
     setEditDialogOpen(true);
   };
