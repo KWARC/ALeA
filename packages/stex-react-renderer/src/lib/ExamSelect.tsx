@@ -53,7 +53,7 @@ export function ExamSelect({
           return (
             <MenuItem key={exam.uri} value={exam.uri}>
               <Tooltip title={fullLabel} placement="right" arrow>
-                <Typography noWrap sx={{ maxWidth: 300 }}>
+                <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
                   {dropdownLabel}
                 </Typography>
               </Tooltip>
