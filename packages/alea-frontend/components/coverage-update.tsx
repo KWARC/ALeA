@@ -41,9 +41,13 @@ export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
   return secInfo;
 }
 
-const CoverageUpdateTab = () => {
+interface CoverageUpdateTabProps {
+  courseId: string;
+  instanceId: string;
+}
+
+const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => {
   const router = useRouter();
-  const courseId = router.query.courseId as string;
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
@@ -266,6 +270,7 @@ const CoverageUpdateTab = () => {
           <Box sx={{ mt: 2, overflow: 'auto' }}>
             <CoverageUpdater
               courseId={courseId}
+              instanceId={instanceId}
               snaps={snaps}
               notCoveredSections={notCoveredSections}
               secInfo={secInfo}
