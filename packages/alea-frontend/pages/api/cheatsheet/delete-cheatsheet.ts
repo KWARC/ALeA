@@ -93,8 +93,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fs.unlinkSync(path.join(CHEATSHEETS_DIR, matchingFileName));
     }
 
-    await commentsDb.$transaction(async (tx) => {
-      await tx.cheatSheetHistory.create({
+    await commentsDb.$transaction(async (dbtransaction) => {
+      await dbtransaction.cheatSheetHistory.create({
         data: {
           cheatsheetId,
           uploadedVersionNumber,
@@ -106,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      await tx.cheatSheet.update({
+      await dbtransaction.cheatSheet.update({
         where: { cheatsheetId },
         data: {
           checksum: null,
