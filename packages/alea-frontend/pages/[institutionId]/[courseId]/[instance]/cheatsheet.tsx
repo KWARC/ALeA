@@ -570,7 +570,6 @@ function CheatSheetsContent({
               files={files}
               onPreview={onPreview}
               onDelete={setDeleteTarget}
-              restrictDeleteToCurrentWindow={!isEmbedded}
             />
           )}
         </Box>

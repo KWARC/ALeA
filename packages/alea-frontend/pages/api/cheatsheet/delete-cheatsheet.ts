@@ -1,20 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  executeTxnAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../comment-utils';
+import { checkIfPostOrSetError, getUserIdOrSetError } from '../comment-utils';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
-import {
-  getCheatsheetConfigOrSetError,
-  getUploadContext,
-  validateCheatsheetUploadWindowOrSetError,
-} from './post-cheatsheet';
+import { commentsDb } from '../prisma-comments';
+import fs from 'fs';
+import path from 'path';
 
-function validateBody(body: any): body is { cheatsheetId: string } {
-  return typeof body?.cheatsheetId === 'string' && body.cheatsheetId.trim().length > 0;
+const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
+
+function validateBody(body: unknown): body is { cheatsheetId: string } {
+  if (!body || typeof body !== 'object') return false;
+
+  const { cheatsheetId } = body as { cheatsheetId?: unknown };
+  return typeof cheatsheetId === 'string' && cheatsheetId.trim().length > 0;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,18 +26,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { cheatsheetId } = req.body;
-  const cheatSheetData = await executeAndEndSet500OnError(
-    `SELECT * FROM CheatSheet WHERE cheatsheetId = ?`,
-    [cheatsheetId],
-    res
-  );
-  if (!cheatSheetData) return;
-  if (!cheatSheetData.length) {
-    return res.status(404).send('Cheatsheet record not found.');
+  let existingRow;
+  try {
+    existingRow = await commentsDb.cheatSheet.findUnique({
+      where: { cheatsheetId },
+      select: {
+        userId: true,
+        courseId: true,
+        instanceId: true,
+        checksum: true,
+        fileName: true,
+        uploadedVersionNumber: true,
+        uploadedByUserId: true,
+        uploadedAt: true,
+        createdAt: true,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send('Internal Server Error.');
   }
 
-  const existingRow = cheatSheetData[0];
-  const { userId: studentId, courseId, instanceId, universityId, weekId, fileName } = existingRow;
+  if (!existingRow) return res.status(404).send('Cheatsheet record not found.');
+
+  const {
+    userId: studentId,
+    courseId,
+    instanceId,
+    checksum,
+    fileName,
+    uploadedVersionNumber,
+    uploadedByUserId,
+    uploadedAt,
+    createdAt,
+  } = existingRow;
 
   const isInstructor = await isUserIdAuthorizedForAny(userId, [
     {
@@ -49,65 +69,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   ]);
 
-  const isStudent = await isUserIdAuthorizedForAny(userId, [
-    {
-      name: ResourceName.COURSE_CHEATSHEET,
-      action: Action.UPLOAD,
-      variables: { courseId, instanceId },
-    },
-  ]);
-
-  if (!isInstructor && !isStudent) {
+  if (!isInstructor && studentId !== userId) {
     return res
       .status(403)
-      .send('You do not have permission to delete cheat sheets for this course.');
+      .send('You can only delete your own cheat sheet unless you are an instructor.');
   }
 
-  if (isStudent) {
-    const isWithinUploadWindow = await validateCheatsheetUploadWindowOrSetError(
-      universityId,
-      courseId,
-      instanceId,
-      weekId,
-      res
-    );
-    if (!isWithinUploadWindow) return;
-  }
+  if (!CHEATSHEETS_DIR) return res.status(500).send('CHEATSHEETS_DIR is not configured.');
 
-  if (isStudent && studentId !== userId) {
-    return res.status(403).send('You cannot delete a cheat sheet for another student.');
-  }
-
-  if (!existingRow.uploadedAt || !fileName) {
+  if (!uploadedAt || !fileName || uploadedVersionNumber === null || !uploadedByUserId) {
     return res.status(400).send('No uploaded file found for this cheatsheet to delete.');
   }
 
-  const result = await executeTxnAndEndSet500OnError(
-    res,
-    `INSERT INTO CheatSheetHistory
-       (cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt)
-     SELECT cheatsheetId, uploadedVersionNumber, uploadedByUserId, checksum, fileName, uploadedAt, createdAt
-     FROM CheatSheet
-     WHERE cheatsheetId = ?`,
-    [cheatsheetId],
+  const filePrefix = fileName ? fileName.replace(/-[a-f0-9]{8}\.pdf$/i, '') : '';
 
-    `UPDATE CheatSheet
-     SET checksum            = NULL,
-         fileName            = NULL,
-         uploadedByUserId    = NULL,
-         uploadedAt          = NULL
-     WHERE cheatsheetId = ?`,
-    [cheatsheetId]
-  );
-  if (!result) return;
+  try {
+    const fileNames = fs.readdirSync(CHEATSHEETS_DIR);
+    const matchingFiles = filePrefix
+      ? fileNames.filter((name) => name.startsWith(filePrefix) && name.endsWith('.pdf'))
+      : [];
 
-  const config = isInstructor
-    ? await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res)
-    : undefined;
-  const uploadContext = isInstructor && config ? getUploadContext(weekId, config) : undefined;
+    for (const matchingFileName of matchingFiles) {
+      fs.unlinkSync(path.join(CHEATSHEETS_DIR, matchingFileName));
+    }
 
-  return res.status(200).json({
-    message: 'Cheatsheet deleted successfully.',
-    ...(uploadContext && { uploadContext }),
-  });
+    await commentsDb.$transaction(async (tx) => {
+      await tx.cheatSheetHistory.create({
+        data: {
+          cheatsheetId,
+          uploadedVersionNumber,
+          uploadedByUserId,
+          checksum,
+          fileName,
+          uploadedAt,
+          createdAt,
+        },
+      });
+
+      await tx.cheatSheet.update({
+        where: { cheatsheetId },
+        data: {
+          checksum: null,
+          fileName: null,
+          uploadedByUserId: null,
+          uploadedAt: null,
+        },
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send('Internal Server Error.');
+  }
+
+  return res.status(204).end();
 }

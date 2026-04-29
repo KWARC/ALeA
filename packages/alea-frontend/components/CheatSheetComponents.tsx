@@ -446,13 +446,11 @@ export function CheatSheetWindowsTable({
   files,
   onPreview,
   onDelete,
-  restrictDeleteToCurrentWindow = false,
 }: {
   windows: UploadWindow[];
   files: CheatSheet[];
   onPreview: (file: CheatSheet) => void;
   onDelete: (file: CheatSheet) => void;
-  restrictDeleteToCurrentWindow?: boolean;
 }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const fileMap = useMemo(() => {
@@ -518,7 +516,6 @@ export function CheatSheetWindowsTable({
             const isUploaded = Boolean(file);
             const isClosed = new Date(window.windowEnd) < new Date();
             const isOpen = window.isWithinWindow;
-            const canDelete = !restrictDeleteToCurrentWindow || isOpen;
 
             return (
               <TableRow
@@ -595,18 +592,12 @@ export function CheatSheetWindowsTable({
                         </span>
                       </Tooltip>
 
-                      <Tooltip
-                        title={
-                          canDelete
-                            ? 'Delete'
-                            : 'Deletion is only allowed during the current upload window contact instructor if you need to make changes'
-                        }
-                      >
+                      <Tooltip title="Delete">
                         <span>
                           <IconButton
                             size="small"
                             onClick={() => onDelete(file)}
-                            disabled={loadingId === file.checksum || !canDelete}
+                            disabled={loadingId === file.checksum}
                             sx={tableStyles.deleteBtn}
                           >
                             <DeleteOutlineIcon fontSize="small" />
