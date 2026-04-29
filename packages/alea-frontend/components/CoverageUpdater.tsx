@@ -22,9 +22,9 @@ import { CoverageTable } from './CoverageTable';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
-import { getAllCourses } from '@alea/spec';
+import { getAllCourses, getLectureEntry, getFauSeriesClips, FauClip } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 
 export function getSectionNameForUri(
   uri: string,
@@ -36,6 +36,12 @@ export function getSectionNameForUri(
 
 export function getNoonTimestampOnSameDay(timestamp: number) {
   return new Date(timestamp).setHours(12, 0, 0, 0);
+}
+
+function getMatchedClipId(timestamp: number, clips: FauClip[]): string | null {
+  const lectureDate = dayjs(timestamp).format('YYYY-MM-DD');
+  const matchedClip = clips.find((c: FauClip) => c.recording_date === lectureDate);
+  return matchedClip ? matchedClip.id.toString() : null;
 }
 
 function convertSnapToEntry(snap: LectureEntry): FormData {
@@ -66,7 +72,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 
 interface CoverageUpdaterProps {
   courseId: string;
-  seriesId?: string;
+  instanceId: string;
   snaps: LectureEntry[];
   notCoveredSections?: string[];
   secInfo: Record<FTML.DocumentUri, SecInfo>;
@@ -77,7 +83,7 @@ interface CoverageUpdaterProps {
 
 export function CoverageUpdater({
   courseId,
-  seriesId,
+  instanceId,
   snaps,
   notCoveredSections: initialNotCoveredSections,
   secInfo,
@@ -85,6 +91,7 @@ export function CoverageUpdater({
   handleDeleteSingle,
   handleSaveNotCoveredSections,
 }: CoverageUpdaterProps) {
+  const [seriesId, setSeriesId] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
     sectionName: '',
     sectionUri: '',
@@ -105,7 +112,12 @@ export function CoverageUpdater({
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
 
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
-  const [clips, setClips] = useState<any[]>([]);
+  const { data: clips = [] } = useQuery<FauClip[]>({
+    queryKey: ['fau-series-clips', seriesId],
+    queryFn: () => (seriesId ? getFauSeriesClips(seriesId) : Promise.resolve([])),
+    enabled: !!seriesId,
+    staleTime: 1000 * 60 * 30,
+  });
 
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
@@ -139,35 +151,28 @@ export function CoverageUpdater({
   }, [courseId]);
 
   useEffect(() => {
-    if (!seriesId) return;
-
-    const fetchAllClips = async () => {
+    if (!courseId || !instanceId) return;
+    const fetchSeriesId = async () => {
       try {
-        const res = await axios.get(`/api/get-fau-series-clips/${seriesId}`);
-        const data = res.data;
-        if (Array.isArray(data)) {
-          setClips(data);
+        const data = await getLectureEntry({ courseId, instanceId });
+        if (data?.seriesId) {
+          setSeriesId(data.seriesId);
         }
       } catch (err) {
-        console.error('Failed to fetch series clips:', err);
+        console.error('Failed to fetch seriesId:', err);
       }
     };
+    fetchSeriesId();
+  }, [courseId, instanceId]);
 
-    fetchAllClips();
-  }, [seriesId]);
 
   useEffect(() => {
     if (!seriesId || clips.length === 0) return;
+    if (formData.clipId && formData.clipId.trim() !== '') return;
 
-    const lectureDate = dayjs(formData.timestamp_ms).format('YYYY-MM-DD');
-    const matchedClip = clips.find((c: any) => c.recording_date === lectureDate);
-    if (matchedClip) {
-      setFormData((prev) => {
-        if (!prev.clipId || prev.clipId.trim() === '') {
-          return { ...prev, clipId: matchedClip.id.toString() };
-        }
-        return prev;
-      });
+    const matchedClipId = getMatchedClipId(formData.timestamp_ms, clips);
+    if (matchedClipId) {
+      setFormData((prev) => ({ ...prev, clipId: matchedClipId }));
     }
   }, [seriesId, formData.timestamp_ms, clips]);
 
@@ -199,7 +204,7 @@ export function CoverageUpdater({
     setEditIndex(null);
   };
 
-  const handleSubmitForm = (formData: any) => {
+  const handleSubmitForm = (formData: FormData) => {
     const newItem: LectureEntry = {
       timestamp_ms: formData.timestamp_ms,
       sectionUri: formData.sectionUri,
@@ -233,17 +238,7 @@ export function CoverageUpdater({
 
   const handleEditDialogOpen = async (entry: FormData, index: number) => {
     console.log('setformdata', entry.slideUri);
-
-    const updatedEntry = { ...entry };
-    if (seriesId && (!entry.clipId || entry.clipId.trim() === '') && clips.length > 0) {
-      const lectureDate = dayjs(entry.timestamp_ms).format('YYYY-MM-DD');
-      const matchedClip = clips.find((c: any) => c.recording_date === lectureDate);
-      if (matchedClip) {
-        updatedEntry.clipId = matchedClip.id.toString();
-      }
-    }
-
-    setFormData(updatedEntry);
+    setFormData(entry);
     setEditIndex(index);
     setEditDialogOpen(true);
   };
