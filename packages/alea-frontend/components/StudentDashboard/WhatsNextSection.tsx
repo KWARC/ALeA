@@ -3,6 +3,7 @@ import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
@@ -92,6 +93,21 @@ export function WhatsNextSection({ quickAccess }: WhatsNextSectionProps) {
               'MMM D, HH:mm'
             )} · ${stripHtml(quickAccess.nextAssignment.data.title)}`}
             courseId={quickAccess.nextAssignment.courseId}
+          />
+        )}
+        {quickAccess.pendingCheatsheetUpload && (
+          <QuickAccessCard
+            href={quickAccess.pendingCheatsheetUpload.data.href}
+            icon={UploadFileOutlinedIcon}
+            title={t.cheatsheetUploadPending}
+            subtitle={
+              quickAccess.pendingCheatsheetUpload.data.windowEndTs
+                ? `${t.uploadBefore} ${dayjs(
+                    quickAccess.pendingCheatsheetUpload.data.windowEndTs
+                  ).format('MMM D, HH:mm')}`
+                : t.uploadPending
+            }
+            courseId={quickAccess.pendingCheatsheetUpload.courseId}
           />
         )}
         {quickAccess.nextLecture && !quickAccess.nextLecture.data.isOngoing && (

@@ -1,4 +1,5 @@
 import {
+  pathToCheatSheet,
   pathToCourseHome,
   pathToCourseNotes,
   pathToCourseResource,
@@ -6,6 +7,7 @@ import {
   pathToHomework,
 } from '@alea/utils';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
@@ -24,6 +26,7 @@ export function CourseDashboardCard({
   isLoading,
   institutionId,
   instance,
+  courseInfo,
 }: CourseDashboardCardProps) {
   const t = getLocaleObject(useRouter()).studentWelcomeScreen;
   const courseHome = pathToCourseHome(institutionId, courseId, instance);
@@ -47,6 +50,11 @@ export function CourseDashboardCard({
       href: pathToCourseView(institutionId, courseId, instance),
       icon: SlideshowOutlinedIcon,
       label: t.slides,
+    },
+    {
+      href: pathToCheatSheet(institutionId, courseId, instance),
+      icon: ArticleOutlinedIcon,
+      label: t.cheatsheet,
     },
   ];
 

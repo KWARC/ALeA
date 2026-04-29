@@ -77,6 +77,7 @@ const ExamProblemsPage = () => {
       } catch (error) {
         console.error('Error loading exam data:', error);
       } finally {
+        console.log('Finished loading exam data');
         setLoading(false);
       }
     };
