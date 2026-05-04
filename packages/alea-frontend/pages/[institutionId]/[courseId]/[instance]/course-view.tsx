@@ -24,7 +24,7 @@ import {
   CourseInfo,
   getParamFromUri,
   localStore,
-  pathToCourseNotes,
+  pathToCourseHome,
   ResourceName,
   shouldUseDrawer,
 } from '@alea/utils';
@@ -32,7 +32,7 @@ import { setSlideNumAndSectionId, ViewMode } from '../../../../utils/courseViewU
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { contentToc } from '@flexiformal/ftml-backend';
 import { VideoCameraBack } from '@mui/icons-material';
-import ArticleIcon from '@mui/icons-material/Article';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
   Box,
   Button,
@@ -239,7 +239,7 @@ const CourseViewPage: NextPage = () => {
     [timestampSec: number]: ClipMetadata;
   }>({});
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
-  const { courseView: t, home: tHome } = getLocaleObject(router);
+  const { courseView: t, home: tHome, courseHome: tCourseHome } = getLocaleObject(router);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [timestampSec, setTimestampSec] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -715,23 +715,30 @@ const CourseViewPage: NextPage = () => {
                   />
                 </Stack>
 
-                <Link href={pathToCourseNotes(institutionId, courseId, instanceId)} passHref>
+                <Link href={pathToCourseHome(institutionId, courseId, instanceId)} passHref>
                   <Button
                     variant="contained"
-                    startIcon={<ArticleIcon />}
+                    startIcon={<DashboardIcon />}
                     sx={{
                       borderRadius: 2,
                       textTransform: 'none',
                       fontWeight: 500,
-                      px: 3,
+                      fontSize: '0.85rem',
+                      px: 2,
+                      py: 0.8,
                       whiteSpace: 'nowrap',
                       bgcolor: 'blue.sky',
+                      borderColor: 'blue.sky',
+                      '& .MuiButton-startIcon': {
+                        marginRight: 0.5,
+                      },
                       '&:hover': {
+                        borderColor: 'blue.sky',
                         bgcolor: 'blue.sky',
                       },
                     }}
                   >
-                    {t.notes}
+                    {tCourseHome.title}
                   </Button>
                 </Link>
               </Stack>

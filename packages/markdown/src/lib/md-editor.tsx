@@ -20,6 +20,8 @@ interface MdEditorProps {
 
   onValueChange: (v: string) => void;
 
+  onShortcutSubmit?: () => void;
+
   editorProps?: any;
 }
 
@@ -32,6 +34,7 @@ export function MdEditor({
   editingEnabled = true,
   value,
   onValueChange,
+  onShortcutSubmit,
   defaultPreview = false,
   editorProps,
 }: MdEditorProps) {
@@ -67,6 +70,14 @@ export function MdEditor({
               const v = e.target.value;
               checkAutoPreview(v);
               onValueChange(v);
+            }}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                if (onShortcutSubmit) {
+                  e.preventDefault();
+                  onShortcutSubmit();
+                }
+              }
             }}
           />
         </Box>
