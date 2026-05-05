@@ -192,6 +192,7 @@ function renderPdfPage(
     ['Student Id', fields.studentId],
     ['Week Of', weekOf],
   ];
+  doc.lineWidth(3);
   drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
   drawWatermark(doc, fields);
   drawWriteArea(doc, WRITE_AREA_TOP, PAGE_MARGIN);

@@ -770,12 +770,6 @@ const CourseHomePage: NextPage = () => {
             {<p>{t.practiceProblems}</p>}&nbsp;
             <Image src="/practice_problems.svg" width={35} height={35} alt="" />
           </CourseComponentLink>
-          {isInstructor && (
-            <CourseComponentLink href={instructorDashLink} sx={{ backgroundColor: 'blue.300' }}>
-              {<p>{t.instructorDashBoard}</p>}&nbsp;
-              <PersonIcon fontSize="large" />
-            </CourseComponentLink>
-          )}
           {cheatsheetConfig?.hasCheatsheet &&
             (enrolled ? (
               <CourseComponentLink href={cheatSheetsLink}>
@@ -796,6 +790,12 @@ const CourseHomePage: NextPage = () => {
                 </span>
               </Tooltip>
             ))}
+          {isInstructor && (
+            <CourseComponentLink href={instructorDashLink} sx={{ backgroundColor: 'blue.300' }}>
+              {<p>{t.instructorDashBoard}</p>}&nbsp;
+              <PersonIcon fontSize="large" />
+            </CourseComponentLink>
+          )}
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && !isSemesterOver && (
