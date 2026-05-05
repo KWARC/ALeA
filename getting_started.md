@@ -6,10 +6,10 @@ This guide walks you through setting up and running the **ALeA** project, which 
 ## Prerequisites  
 Ensure you have the following installed on your system before proceeding:
 - **Node.js** (Recommended: `LTS`) – [Download](https://nodejs.org/)
-- **npm** (Recommended: `latest`) – `npm install -g npm@latest`
+- **pnpm** (Recommended: `latest`) – `pnpm install --latest`
 - **Git** – [Download](https://git-scm.com/)
 - **MySQL** & **MySQL Workbench** – [Download](https://dev.mysql.com/downloads/)
-- **nx** - `npm install -g nx`
+- **nx** - `pnpm install -g nx`
 
 ## Installation  
 
@@ -21,7 +21,7 @@ Ensure you have the following installed on your system before proceeding:
 
 2. **Install Dependencies**  
    ```sh
-   npm install
+   pnpm install
    ```
 
 ## Database Setup
@@ -46,17 +46,17 @@ The project uses **Prisma** for database migrations. Ensure MySQL is running and
 3. **Run Prisma migrations**
    - Deploy migrations to create/update tables:
      ```sh
-     npm run prisma:migrate-deploy
+     pnpm run prisma:migrate-deploy
      ```
    - For development with migration creation, use:
      ```sh
-     npm run prisma:migrate-dev
+     pnpm run prisma:migrate-dev
      ```
 
 4. **Generate Prisma client**
    - The client is generated automatically by the prebuild step. To generate manually:
      ```sh
-     npm run prisma:generate
+     pnpm run prisma:generate
      ```
 
 ## Running the Applications  
@@ -65,7 +65,7 @@ The project uses **Prisma** for database migrations. Ensure MySQL is running and
 
 #### Local Development  
 ```sh
-npm run start alea-frontend
+pnpm run start alea-frontend
 ```
 - Runs on `http://localhost:4200`  
 

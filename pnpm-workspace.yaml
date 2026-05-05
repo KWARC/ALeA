@@ -1,0 +1,16 @@
+ignoredBuiltDependencies:
+  - cypress
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/engines'
+  - '@sentry/cli'
+  - '@swc/core'
+  - bcrypt
+  - core-js-pure
+  - esbuild
+  - less
+  - nx
+  - prisma
+  - sharp
+  - unrs-resolver

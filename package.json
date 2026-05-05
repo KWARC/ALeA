@@ -2,19 +2,20 @@
   "name": "@alea/source",
   "version": "0.0.0",
   "license": "GNU AGPL",
+  "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "prebuild": "npm run prisma:generate && nx run prebuild-scripts:serve:production --watch=false",
+    "prebuild": "pnpm run prisma:generate",
     "prisma:generate": "prisma generate --schema=prisma/comments/schema.prisma",
     "prisma:migrate-deploy": "prisma migrate deploy --schema=prisma/comments/schema.prisma",
     "prisma:migrate-dev": "prisma migrate dev --schema=prisma/comments/schema.prisma",
-    "start": "npm run prebuild && nx serve ",
-    "build": "npm run prebuild && nx build alea-frontend",
+    "start": "pnpm run prebuild && nx serve ",
+    "build": "pnpm run prebuild && nx build alea-frontend",
     "test": "nx test",
     "reset": "nx reset",
     "nxgraph": "nx graph"
   },
   "private": true,
-  "dependencies": {
+   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@flexiformal/ftml": "0.0.28",
@@ -148,3 +149,4 @@
     "vitest": "^4.0.15"
   }
 }
+
