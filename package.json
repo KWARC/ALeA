@@ -4,7 +4,7 @@
   "license": "GNU AGPL",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "prebuild": "pnpm run prisma:generate",
+    "prebuild": "pnpm run prisma:generate  && nx run prebuild-scripts:serve:production --watch=false",
     "prisma:generate": "prisma generate --schema=prisma/comments/schema.prisma",
     "prisma:migrate-deploy": "prisma migrate deploy --schema=prisma/comments/schema.prisma",
     "prisma:migrate-dev": "prisma migrate dev --schema=prisma/comments/schema.prisma",
