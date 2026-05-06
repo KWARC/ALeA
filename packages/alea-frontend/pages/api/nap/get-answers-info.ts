@@ -2,21 +2,39 @@ import { GradingAnswerClass, GradingInfo, ReviewType } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkIfQueryParameterExistOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
+function sqlInPlaceholders(n: number): string {
+  return Array(Math.max(n, 1))
+    .fill('?')
+    .join(',');
+}
+
 export async function getAllGradingsOrSetError(
   subProblemToAnswerIds: Record<string, number>,
   res: NextApiResponse
 ) {
   if (Object.keys(subProblemToAnswerIds).length === 0) return {};
+  const answerIdsForIn = [
+    ...new Set(
+      Object.values(subProblemToAnswerIds)
+        .map((id) => Number(id))
+        .filter(Number.isFinite)
+    ),
+  ];
+  if (answerIdsForIn.length === 0) return {};
+  const answerIn = sqlInPlaceholders(answerIdsForIn.length);
+  // Prefer MAX(id) over MAX(updatedAt): tuple equality on updatedAt misses rows when DB/driver
+  // truncate or format TIMESTAMP differently than the aggregated MAX(updatedAt).
+  // Use explicit `(?, ?, …)` placeholders: Prisma/MySQL `$queryRawUnsafe(..., [[id]])` for `IN (?)` often binds wrong.
   const latestGrades = await executeAndEndSet500OnError<GradingInfo[]>(
-    `SELECT id, checkerId, reviewType, answerId, customFeedback, totalPoints, createdAt, updatedAt
-    FROM Grading
-    WHERE (checkerId, answerId, updatedAt) IN (
-      SELECT checkerId, answerId, MAX(updatedAt) AS updatedAt
-      FROM Grading
-      WHERE answerId IN (?)
-      GROUP BY 1, 2
+    `SELECT g.id, g.checkerId, g.reviewType, g.answerId, g.customFeedback, g.totalPoints, g.createdAt, g.updatedAt
+    FROM Grading g
+    WHERE g.id IN (
+      SELECT MAX(g2.id)
+      FROM Grading g2
+      WHERE g2.answerId IN (${answerIn})
+      GROUP BY g2.checkerId, g2.answerId
     )`,
-    [Object.values(subProblemToAnswerIds)],
+    answerIdsForIn,
     res
   );
   if (!latestGrades) return;
@@ -30,13 +48,14 @@ export async function getAllGradingsOrSetError(
     (g) => g.reviewType !== ReviewType.INSTRUCTOR || g.id === latestInstructorGrade?.id
   );
 
-  const gradesAnswerClasses = !grades.length
+  const gradingIds = grades.map((g) => g.id).filter((id) => Number.isFinite(Number(id)));
+  const gradesAnswerClasses = !gradingIds.length
     ? []
     : await executeAndEndSet500OnError<GradingAnswerClass[]>(
         `SELECT id, answerClassId, gradingId, points, isTrait, closed, title, description, count 
     FROM GradingAnswerClass 
-    WHERE gradingId in (?)`,
-        [grades.map((c) => c.id)],
+    WHERE gradingId IN (${sqlInPlaceholders(gradingIds.length)})`,
+        gradingIds,
         res
       );
   if (!gradesAnswerClasses) return;
@@ -46,8 +65,9 @@ export async function getAllGradingsOrSetError(
   }
 
   const subProblemIdToGrades: Record<string, GradingInfo[]> = {};
-  Object.entries(subProblemToAnswerIds).forEach(([subProblemId, answerId]) => {
-    subProblemIdToGrades[subProblemId] = grades.filter((g) => g.answerId === answerId);
+  Object.entries(subProblemToAnswerIds).forEach(([subProblemId, answerIdNum]) => {
+    const aid = Number(answerIdNum);
+    subProblemIdToGrades[subProblemId] = grades.filter((g) => Number(g.answerId) === aid);
   });
   return subProblemIdToGrades;
 }

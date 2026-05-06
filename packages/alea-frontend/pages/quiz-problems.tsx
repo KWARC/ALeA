@@ -12,6 +12,7 @@ import {
 
 import {
   AnswerContext,
+  fetchEncodedSolution,
   GradingContext,
   QuizDisplay,
   ShowGradingFor,
@@ -21,7 +22,10 @@ import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse: any[] = await contentFragment({ uri: problemUri });
+  const [fragmentResponse, solutionEnc] = await Promise.all([
+    contentFragment({ uri: problemUri }) as Promise<any[]>,
+    fetchEncodedSolution(problemUri),
+  ]);
   return {
     problem: {
       uri: problemUri,
@@ -29,6 +33,7 @@ async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolu
       title_html: '',
     },
     answerClasses: [],
+    ...(solutionEnc ? { solution: solutionEnc } : {}),
   };
 }
 
@@ -155,6 +160,7 @@ const QuizProblemsPage = () => {
               showPerProblemTime={false}
               isExamProblem={false}
               initialProblemIdx={initialIndex}
+              showPracticeSolutionButton
             />
           </AnswerContext.Provider>
         </GradingContext.Provider>

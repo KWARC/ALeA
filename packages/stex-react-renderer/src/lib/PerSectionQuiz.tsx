@@ -1,6 +1,6 @@
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { FTML } from '@flexiformal/ftml';
-import { sourceFile as getSourceFile, solution as flamsSolution } from '@flexiformal/ftml-backend';
+import { sourceFile as getSourceFile } from '@flexiformal/ftml-backend';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
@@ -30,6 +30,7 @@ import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
 import { getProblemState } from './ProblemDisplay';
 import { ExamSelect } from './ExamSelect';
+import { fetchEncodedSolution } from './ftmlSolutionFetch';
 
 export interface ExamRef {
   examUri: string;
@@ -99,7 +100,7 @@ export function UriProblemViewer({
 
   useEffect(() => {
     setSolution(undefined);
-    flamsSolution({ uri }).then(setSolution);
+    fetchEncodedSolution(uri).then(setSolution);
   }, [uri]);
 
   useEffect(() => {

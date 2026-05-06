@@ -74,7 +74,7 @@ export function PeerReviewGradedItemDisplay({
           r={answerText}
           uri={grade.questionId}
         ></ProblemDisplay>
-        <Box sx={{ margin: '10px' }}>
+        {/* <Box sx={{ margin: '10px' }}>
           <span>{dayjs(grade.updatedAt).fromNow()}</span>
           <IconButton
             onClick={() => onDelete(grade.id)}
@@ -84,7 +84,7 @@ export function PeerReviewGradedItemDisplay({
           >
             <DeleteIcon />
           </IconButton>
-        </Box>
+        </Box> */}
       </Box>
     </GradingContext.Provider>
   );

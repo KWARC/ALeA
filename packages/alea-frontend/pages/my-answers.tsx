@@ -6,22 +6,35 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
+  FormControl,
   IconButton,
+  InputLabel,
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
+  Select,
   Typography,
 } from '@mui/material';
 import {
+  AnswerClass,
   AnswerResponse,
   deleteAnswer,
   FTMLProblemWithSolution,
+  getAnswerInfo,
+  getGradingItems,
   getMyAnswers,
   GradingInfo,
   Tristate,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
-import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
+import {
+  appendAnswerClassesFromGradingRows,
+  answerClassesFromGradingNotesPayload,
+  mergeAnswerClassesByClassName,
+} from '@alea/quiz-utils';
+import { GradingCreator, ProblemDisplay } from '@alea/stex-react-renderer';
+import { contentFragment, gradingNotes } from '@flexiformal/ftml-backend';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { NextPage } from 'next';
@@ -29,6 +42,16 @@ import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../components/nap/MultiItemsSelector';
 import MainLayout from '../layouts/MainLayout';
+
+/** contentFragment may return [css, html] or [css, title, html] depending on server. */
+function parseContentFragmentTuple(raw: unknown): { titleHtml: string; html: string } {
+  if (!Array.isArray(raw)) return { titleHtml: '', html: '' };
+  if (raw.length >= 3) {
+    return { titleHtml: String(raw[1] ?? ''), html: String(raw[2] ?? '') };
+  }
+  return { titleHtml: '', html: String(raw[1] ?? '') };
+}
+
 const MULTI_SELECT_FIELDS = ['courseId', 'questionId', 'courseInstance'] as const;
 const ALL_SORT_FIELDS = ['courseId', 'questionTitle', 'updatedAt', 'courseInstance'] as const;
 const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
@@ -102,6 +125,15 @@ function AnswerItemOrganizer({
     </Box>
   );
 }
+function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
+  return [...grades].sort((a, b) => {
+    const ta = new Date(a.updatedAt).getTime();
+    const tb = new Date(b.updatedAt).getTime();
+    if (ta !== tb) return ta - tb;
+    return a.id - b.id;
+  });
+}
+
 function AnswerItemDisplay({
   answer,
   onDelete,
@@ -112,33 +144,105 @@ function AnswerItemDisplay({
   const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
   const [gradingInfos, setGradingInfos] = useState<GradingInfo[]>([]);
+  const [rawAnswerClassTemplate, setRawAnswerClassTemplate] = useState<AnswerClass[]>([]);
+  const [selectedReviewerIndex, setSelectedReviewerIndex] = useState(0);
   useEffect(() => {
-    // TODO ALEA4-P4
-    // getLearningObjectShtml(answer.questionId).then((p) => {
-    //  setProblem(getProblem(p, ''));
-    //});
-    // let answers = {};
-    // for (let index = 0; index <= +answer.subProblemId; index++) {
-    //   answers = { ...answers, ...{ [index]: +answer.subProblemId == index ? answer.answer : '' } };
-    // }
-    // setAnswerText({
-    //   freeTextResponses: { [answer.subProblemId]: answer.answer },
-    //   autogradableResponses: [],
-    // });
-    // getGradingItems(answer.id, +answer.subProblemId).then((g) => setGradingInfos(g));
-  }, [answer.questionId]);
+    let isMounted = true;
+    async function load() {
+      try {
+        const raw = await contentFragment({ uri: answer.questionId });
+        if (!isMounted) return;
+        const { titleHtml, html } = parseContentFragmentTuple(raw);
+        setProblem({
+          problem: {
+            uri: answer.questionId,
+            html,
+            title_html: titleHtml,
+          },
+          answerClasses: [],
+        });
+        const responses = [] as FTML.ProblemResponse['responses'];
+        const subProblemIdx = Number(answer.subProblemId);
+        if (Number.isFinite(subProblemIdx)) {
+          responses[subProblemIdx] = {
+            type: 'Fillinsol',
+            value: answer.answer,
+          };
+        }
+        setAnswerText({
+          uri: answer.questionId,
+          responses,
+        });
+        let canonicalSubProblem = String(answer.subProblemId ?? '');
+        try {
+          const meta = await getAnswerInfo(
+            answer.id,
+            answer.courseId,
+            answer.questionId
+          );
+          canonicalSubProblem = meta?.subProblemId ?? canonicalSubProblem;
+        } catch {
+          /* grading notes fallback still uses list subProblemId */
+        }
+        let mergedTemplate: AnswerClass[] = [];
+        try {
+          const notes = await gradingNotes({ uri: answer.questionId });
+          mergedTemplate = mergeAnswerClassesByClassName(
+            [],
+            answerClassesFromGradingNotesPayload(notes, canonicalSubProblem)
+          );
+        } catch {
+          mergedTemplate = [];
+        }
+        if (!isMounted) return;
+        setRawAnswerClassTemplate(mergedTemplate);
+
+        const list = await getGradingItems(answer.id, String(answer.subProblemId ?? ''));
+        if (!isMounted) return;
+        setGradingInfos(list);
+        setSelectedReviewerIndex(0);
+      } catch (e) {
+        console.error('Error loading answer item:', e);
+        if (isMounted) {
+          setGradingInfos([]);
+          setRawAnswerClassTemplate([]);
+        }
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    answer.id,
+    answer.courseId,
+    answer.questionId,
+    answer.answer,
+    answer.subProblemId,
+  ]);
+
+  const sortedGradings = useMemo(() => sortGradingsForAnonymousOrder(gradingInfos), [gradingInfos]);
+  const safeIndex = Math.min(
+    selectedReviewerIndex,
+    Math.max(0, sortedGradings.length - 1)
+  );
+  const selectedGrading = sortedGradings.length > 0 ? sortedGradings[safeIndex] : undefined;
+
+  const readOnlyClassTemplate = useMemo(
+    () => appendAnswerClassesFromGradingRows(rawAnswerClassTemplate, selectedGrading),
+    [rawAnswerClassTemplate, selectedGrading]
+  );
 
   return (
     <Box>
       <ProblemDisplay
-        showPoints={false}
+        showPoints={true}
         problem={problem}
         isFrozen={true}
         r={answerText}
         uri={answer.questionId}
-        // problem={problem} TODO ALEA4-P4
       ></ProblemDisplay>
-      <Box sx={{ margin: '10px' }}>
+      {/* <Box sx={{ margin: '10px' }}>
         <span>{dayjs(answer.updatedAt).fromNow()}</span>
         <IconButton
           onClick={() => onDelete(answer.id)}
@@ -148,15 +252,43 @@ function AnswerItemDisplay({
         >
           <DeleteIcon />
         </IconButton>
-      </Box>
+      </Box> */}
 
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, mt: 1 }}>
-        {gradingInfos.map((g, idx) => (
-          <Box sx={{ borderTop: '1px solid #ccc', borderRadius: 1, marginTop: '5px' }} key={idx}>
-            <GradingDisplay showGraderInformation={false} gradingInfo={g} key={idx} />
-          </Box>
-        ))}
-      </Box>
+      <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
+        Feedback received
+      </Typography>
+      {sortedGradings.length === 0 ? (
+        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, color: 'text.secondary' }}>
+          No feedback received yet for this submission.
+        </Box>
+      ) : (
+        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, mt: 0.5 }}>
+          <FormControl fullWidth size="small" sx={{ mb: 1 }}>
+            <InputLabel id={`reviewer-select-${answer.id}`}>Reviewer</InputLabel>
+            <Select
+              labelId={`reviewer-select-${answer.id}`}
+              label="Reviewer"
+              value={safeIndex}
+              onChange={(e) => setSelectedReviewerIndex(Number(e.target.value))}
+            >
+              {sortedGradings.map((_, idx) => (
+                <MenuItem key={idx} value={idx}>
+                  Reviewer {idx + 1}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {selectedGrading ? (
+            <GradingCreator
+              key={`grading-view-${answer.id}-${selectedGrading.id}`}
+              readOnly
+              showPoints={true}
+              rawAnswerClasses={readOnlyClassTemplate}
+              initialGrading={selectedGrading}
+            />
+          ) : null}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -176,8 +308,8 @@ function getSelectedAnswerItems(answerItems: AnswerResponse[], params: SortAndFi
         ) {
           return false;
         }
-        return true;
       }
+      return true;
     })
     .sort((a, b) => {
       for (const f of params.sortingFields) {
@@ -355,10 +487,14 @@ const MyAnswersPage: NextPage = () => {
         </Box>
         <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
           {selected ? (
-            <AnswerItemDisplay
-              answer={answerItems.find((item) => item.id === selected.answerId)}
-              onDelete={onDelete}
-            />
+            (() => {
+              const selectedAnswer = answerItems.find((item) => item.id === selected.answerId);
+              return selectedAnswer ? (
+                <AnswerItemDisplay answer={selectedAnswer} onDelete={onDelete} />
+              ) : (
+                <i>Selected answer not found.</i>
+              );
+            })()
           ) : (
             <i>Please click on a answer item on the left.</i>
           )}

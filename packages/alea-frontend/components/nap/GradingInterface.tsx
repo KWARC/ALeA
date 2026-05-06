@@ -8,7 +8,9 @@ import {
   getAnswerInfo,
   getCourseAcls,
   getCourseGradingItems,
+  getMyGradingForAnswer,
   getNextGradingItem,
+  GradingInfo,
   GradingItem,
   HomeworkInfo,
   isUserMember,
@@ -16,8 +18,12 @@ import {
   Tristate,
 } from '@alea/spec';
 import { AnswerContext, GradingCreator, ProblemDisplay } from '@alea/stex-react-renderer';
+import {
+  answerClassesFromGradingNotesPayload,
+  mergeAnswerClassesByClassName,
+} from '@alea/quiz-utils';
 import { CURRENT_TERM, getParamFromUri } from '@alea/utils';
-import { contentFragment } from '@flexiformal/ftml-backend';
+import { contentFragment, gradingNotes } from '@flexiformal/ftml-backend';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -32,6 +38,7 @@ import {
   ListItemIcon,
   ListItemText,
   Switch,
+  CircularProgress,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -128,6 +135,15 @@ function getQuestionTitle(
     getParamFromUri(questionId, 'd')?.replace(/[-_+]/g, ' ') ??
     questionId
   );
+}
+
+/** `contentFragment` may return [css, html] or [css, title, html]. */
+function parseContentFragmentTuple(raw: unknown): { titleHtml: string; html: string } {
+  const a = Array.isArray(raw) ? raw : [];
+  if (a.length >= 3) {
+    return { titleHtml: String(a[1] ?? ''), html: String(a[2] ?? '') };
+  }
+  return { titleHtml: '', html: String(a[1] ?? '') };
 }
 
 function getSelectedGradingItems(
@@ -241,13 +257,27 @@ function GradingListSortFields({
 function GradingProblem({
   onNewGrading,
   answerClasses,
+  answerId,
+  initialGrading,
+  gradesReady,
 }: {
   onNewGrading: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
   answerClasses: AnswerClass[];
+  answerId: number;
+  initialGrading: GradingInfo | null;
+  gradesReady: boolean;
 }) {
+  if (!gradesReady) {
+    return <CircularProgress size={32} sx={{ display: 'block', my: 2, mx: 'auto' }} />;
+  }
   return (
     <Box>
-      <GradingCreator onNewGrading={onNewGrading} rawAnswerClasses={answerClasses}></GradingCreator>
+      <GradingCreator
+        key={`${answerId}-${initialGrading?.id ?? 'n'}`}
+        rawAnswerClasses={answerClasses}
+        initialGrading={initialGrading}
+        onNewGrading={onNewGrading}
+      />
     </Box>
   );
 }
@@ -439,6 +469,18 @@ function GradingItemDisplay({
     getMappedProblem(questionMap, questionId)
   );
   const [answerClasses, setAnswerClasses] = useState<AnswerClass[]>();
+  const [myGrading, setMyGrading] = useState<GradingInfo | null | undefined>(undefined);
+
+  const loadMyGrading = useCallback(() => {
+    getMyGradingForAnswer(answerId)
+      .then(setMyGrading)
+      .catch(() => setMyGrading(null));
+  }, [answerId]);
+
+  useEffect(() => {
+    setMyGrading(undefined);
+    loadMyGrading();
+  }, [loadMyGrading]);
 
   const refreshGradingInfo = useCallback(() => {
     const lookupKey = getParamFromUri(questionId, 'a') ?? questionId;
@@ -469,18 +511,26 @@ function GradingItemDisplay({
         setStudentResponse(r);
       });
     }
-    getAnswerInfo(answerId, courseId, questionId).then((r) => {
+    getAnswerInfo(answerId, courseId, questionId).then(async (r) => {
       if (!problem) {
         setAnswerClasses([]);
         return;
       }
-      if (r.subProblemId === questionId || r.subProblemId === lookupKey) {
-        setAnswerClasses(problem.answerClasses || []);
-        return;
+      const baseFromProblem =
+        r.subProblemId === questionId || r.subProblemId === lookupKey
+          ? problem.answerClasses || []
+          : problem.problem?.subProblems?.find((c) => c.id === r.subProblemId)?.answerClasses || [];
+
+      let fromNotes: AnswerClass[] = [];
+      try {
+        fromNotes = answerClassesFromGradingNotesPayload(
+          await gradingNotes({ uri: questionId }),
+          r.subProblemId
+        );
+      } catch {
+        /* optional: problem still gradable with FTML / defaults */
       }
-      const subClasses =
-        problem.problem?.subProblems?.find((c) => c.id === r.subProblemId)?.answerClasses || [];
-      setAnswerClasses(subClasses);
+      setAnswerClasses(mergeAnswerClassesByClassName(baseFromProblem, fromNotes));
     });
   }, [answerId, courseId, isPeerGrading, peerResponses, problem, questionId]);
 
@@ -497,13 +547,10 @@ function GradingItemDisplay({
     setProblem(undefined);
     const fetchProblem = async () => {
       try {
-        const fragmentResponse = (await contentFragment({ uri: questionId })) as unknown[];
+        const raw = await contentFragment({ uri: questionId });
+        const { titleHtml, html } = parseContentFragmentTuple(raw);
         setProblem({
-          problem: {
-            uri: questionId,
-            html: (fragmentResponse?.[2] as string) || '',
-            title_html: (fragmentResponse?.[1] as string) || '',
-          },
+          problem: { uri: questionId, html, title_html: titleHtml },
           answerClasses: [],
         });
       } catch (error) {
@@ -519,13 +566,17 @@ function GradingItemDisplay({
         <ProblemDisplay isFrozen={true} problem={problem} />
       </AnswerContext.Provider>
       <GradingProblem
-        answerClasses={answerClasses}
+        answerId={answerId}
+        answerClasses={answerClasses ?? []}
+        initialGrading={myGrading ?? null}
+        gradesReady={myGrading !== undefined && answerClasses !== undefined}
         onNewGrading={async (acs, feedback) => {
           await createGrading({ answerId, answerClasses: acs, customFeedback: feedback });
+          loadMyGrading();
           refreshGradingInfo();
           await onAfterGrading?.();
         }}
-      ></GradingProblem>
+      />
     </Box>
   );
 }

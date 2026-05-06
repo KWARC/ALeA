@@ -155,12 +155,29 @@ export async function getMyGraded() {
     await axios.get<GradingWithAnswer[]>('/api/nap/get-my-graded')
   ).data;
 }
-export async function getGradingItems(answerId: number, subProblemId: number) {
-  return (
-    await axios.get<GradingInfo[]>('/api/nap/get-answer-grading', {
-      params: { answerId, subProblemId },
-    })
-  ).data;
+export async function getGradingItems(answerId: number, subProblemId: string): Promise<GradingInfo[]> {
+  try {
+    const { data } = await axios.get<GradingInfo[]>('/api/nap/get-answer-grading', {
+      params: { answerId, subProblemId: String(subProblemId ?? '') },
+    });
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 404) return [];
+    throw err;
+  }
+}
+
+/** Latest grading by the current user (checker) for this answer, or `null` if none. */
+export async function getMyGradingForAnswer(answerId: number): Promise<GradingInfo | null> {
+  try {
+    const { data } = await axios.get<GradingInfo>('/api/nap/get-my-grading-for-answer', {
+      params: { answerId },
+    });
+    return data;
+  } catch (e) {
+    if (axios.isAxiosError(e) && e.response?.status === 404) return null;
+    throw e;
+  }
 }
 export async function getReviewItems(courseId: string) {
   return (

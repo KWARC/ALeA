@@ -12,8 +12,9 @@ import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getPoints } from './stex-react-renderer';
+import { fetchEncodedSolution } from './ftmlSolutionFetch';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
 import { useCurrentUser } from '@alea/react-utils';
 
@@ -87,12 +88,17 @@ export function getProblemState(
 ): FTML.ProblemState {
   if (!isFrozen) return { type: 'Interactive', current_response, solution: undefined };
   if (!solution) return { type: 'Finished', current_response };
-  const sol = FTML.Solutions.from_jstring(solution.replace(/^"|"$/g, ''));
-  const feedback = current_response
-    ? sol?.check_response(current_response)
-    : sol?.default_feedback();
-  if (!feedback) return { type: 'Finished', current_response }; // Something went wrong!!
-  return { type: 'Graded', feedback: feedback.to_json() };
+  try {
+    const sol = FTML.Solutions.from_jstring(solution.replace(/^"|"$/g, ''));
+    if (!sol) return { type: 'Finished', current_response };
+    const feedback = current_response
+      ? sol.check_response(current_response)
+      : sol.default_feedback();
+    if (!feedback) return { type: 'Finished', current_response };
+    return { type: 'Graded', feedback: feedback.to_json() };
+  } catch {
+    return { type: 'Finished', current_response };
+  }
 }
 
 export function ProblemViewer({
@@ -106,37 +112,79 @@ export function ProblemViewer({
   isFrozen: boolean;
   r?: FTML.ProblemResponse;
 }) {
-  const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
+
+  const [fetchedSolution, setFetchedSolution] = useState<string | undefined>(undefined);
+  const [solutionFetchSettled, setSolutionFetchSettled] = useState(false);
+
+  useEffect(() => {
+    setFetchedSolution(undefined);
+    setSolutionFetchSettled(!!problem.solution);
+
+    if (problem.solution) return;
+
+    if (!uri) {
+      setSolutionFetchSettled(true);
+      return;
+    }
+
+    let alive = true;
+    fetchEncodedSolution(uri).then((s) => {
+      if (!alive) return;
+      setFetchedSolution(s);
+      setSolutionFetchSettled(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [uri, problem.solution]);
+
+  const effectiveSolution = problem.solution ?? fetchedSolution;
+  const problemState = getProblemState(isFrozen, effectiveSolution, r);
+
+  const fragment =
+    uri != null && uri !== ''
+      ? ({ type: 'FromBackend', uri } as const)
+      : ({ type: 'HtmlString', html, uri } as const);
+
   const problemStates = new Map([[uri, problemState]]);
   problem.problem?.subProblems?.forEach((c) => {
     problemStates.set(c.id, getProblemState(isFrozen, c.solution, r));
   });
 
   return (
-    <SafeFTMLFragment
-      key={uri}
-      fragment={{ type: 'HtmlString', html, uri }}
-      allowHovers={isFrozen}
-      problemStates={problemStates}
-      onProblemResponse={(response) => {
-        onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
-      }}
-      problemWrap={(problemUri, isSubProblem, autogradable) => {
-        if (autogradable) return undefined;
-        return (ch: React.ReactNode) => (
-          <Box>
-            {ch}
-            <AnswerAccepter
-              masterProblemId={uri}
-              problemTitle={problem.problem.title_html ?? ''}
-              isFrozen={isFrozen}
-              problemId={problemUri}
-            ></AnswerAccepter>
-          </Box>
-        );
-      }}
-    />
+    <Box>
+      <SafeFTMLFragment
+        key={`${uri}-${problemState.type}`}
+        fragment={fragment}
+        allowHovers={isFrozen}
+        problemStates={problemStates}
+        onProblemResponse={(response) => {
+          onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
+        }}
+        problemWrap={(problemUri, isSubProblem, autogradable) => {
+          if (autogradable) return undefined;
+          return (ch: React.ReactNode) => (
+            <Box>
+              {ch}
+              <AnswerAccepter
+                masterProblemId={uri}
+                problemTitle={problem.problem.title_html ?? ''}
+                isFrozen={isFrozen}
+                problemId={problemUri}
+              ></AnswerAccepter>
+            </Box>
+          );
+        }}
+      />
+      {isFrozen && problemState.type === 'Finished' && solutionFetchSettled && (
+        <Typography variant="body2" color="warning.main" sx={{ mt: 1.5 }}>
+          {!effectiveSolution
+            ? 'Could not load the solution data for this problem. Check the network tab for /content/solution or reload the page.'
+            : 'Solution data loaded but grading feedback could not be shown in the viewer.'}
+        </Typography>
+      )}
+    </Box>
   );
 }
 

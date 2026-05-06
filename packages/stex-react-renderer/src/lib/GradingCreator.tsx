@@ -7,50 +7,77 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { AnswerClass, CreateAnswerClassRequest } from '@alea/spec';
-import { DEFAULT_ANSWER_CLASSES } from '@alea/quiz-utils';
+import { AnswerClass, CreateAnswerClassRequest, GradingInfo } from '@alea/spec';
+import { DEFAULT_ANSWER_CLASSES, omitAnswerClassesDuplicatingDefaultRadioTitles } from '@alea/quiz-utils';
 import { useRouter } from 'next/router';
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
+
+type ClassRow = AnswerClass & { count: number };
+
+function applySavedToRows(base: ClassRow[], saved: GradingInfo | null): ClassRow[] {
+  if (!saved?.answerClasses?.length) return base;
+  const byId = new Map(saved.answerClasses.map((a) => [a.answerClassId, a.count]));
+  return base.map((c) => ({ ...c, count: byId.get(c.className) ?? 0 }));
+}
+
+function AnswerClassTitleLabel({ title }: { title: string }) {
+  return (
+    <Box component="span" sx={{ display: 'inline-block', maxWidth: '100%', verticalAlign: 'text-bottom' }}>
+      <SafeFTMLFragment
+        fragment={{ type: 'HtmlString', html: title.trim() || ' ', uri: undefined }}
+      />
+    </Box>
+  );
+}
 export function GradingCreator({
   rawAnswerClasses = [],
   showPoints = false,
+  readOnly = false,
   onNewGrading,
+  initialGrading = null,
 }: {
   rawAnswerClasses: AnswerClass[];
   showPoints?: boolean;
+  /** Anonymous / student view of received feedback — same layout as grading, inputs disabled; no Save. */
+  readOnly?: boolean;
   onNewGrading?: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
+  /** When set, counts / feedback are restored (e.g. peer grader reopens an already graded item). */
+  initialGrading?: GradingInfo | null;
 }) {
   const router = useRouter();
   const t = getLocaleObject(router).quiz;
-  const [answerClasses, setAnswerClasses] = useState(
-    [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c) => ({
-      count: 0,
-      ...c,
-    }))
+  const mergedBase = useMemo(
+    () =>
+      [...DEFAULT_ANSWER_CLASSES, ...omitAnswerClassesDuplicatingDefaultRadioTitles(rawAnswerClasses)].map(
+        (c) =>
+          ({
+            count: 0,
+            ...c,
+          }) as ClassRow
+      ),
+    [rawAnswerClasses]
   );
-
-  const [feedback, setFeedBack] = useState('');
+  const hydrated = useMemo(
+    () => applySavedToRows(mergedBase, initialGrading),
+    [mergedBase, initialGrading]
+  );
+  const [answerClasses, setAnswerClasses] = useState<ClassRow[]>(hydrated);
+  const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
   const isAnswerClassSelected = !!selectedAnswerClass;
 
-  const mergedAnswerClasses = useMemo(() => {
-    return [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c) => ({
-      count: 0,
-      ...c,
-    }));
-  }, [rawAnswerClasses]);
   useEffect(() => {
-    if (mergedAnswerClasses.length !== answerClasses.length) setAnswerClasses(mergedAnswerClasses);
-  }, [mergedAnswerClasses]);
+    setAnswerClasses(hydrated);
+    setFeedBack(initialGrading?.customFeedback ?? '');
+    setSelectAnswerClass(hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined);
+  }, [hydrated, initialGrading]);
   const handleAnswerClassesChange = (
     id: string,
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    console.log('g');
-
     const newAnswerClasses = answerClasses.map((answerclass) => {
-      //TODO:Check
       if (answerclass.className === id) {
         const newCount = +event.target.value;
         return { ...answerclass, count: newCount >= 0 ? newCount : 0 };
@@ -61,8 +88,6 @@ export function GradingCreator({
     setAnswerClasses(newAnswerClasses);
   };
   const handleDefaultAnswerClassesChange = (id: string) => {
-    console.log(id);
-
     const newAnswerClasses = answerClasses.map((answerclass) => {
       if (answerclass.className === id) {
         setSelectAnswerClass(answerclass);
@@ -75,35 +100,38 @@ export function GradingCreator({
   };
   async function onSaveGrading(event: SyntheticEvent) {
     event.preventDefault();
-    console.log(answerClasses);
+    if (readOnly || !onNewGrading) return;
 
     const acs: CreateAnswerClassRequest[] = answerClasses
       .map((c) => ({
         answerClassId: c.className,
         closed: c.closed,
-        description: c.description,
-        title: c.title,
+        description: c.description ?? '',
+        title: c.title ?? '',
         isTrait: c.isTrait,
         points: c.points,
         count: c.count,
       }))
       .filter((c) => c.count > 0);
-    onNewGrading?.(acs, feedback);
+    onNewGrading(acs, feedback);
     setFeedBack('');
-    setSelectAnswerClass(answerClasses[0]);
   }
   return (
     <form onSubmit={onSaveGrading}>
-      <RadioGroup>
+      <RadioGroup
+        value={selectedAnswerClass?.className ?? ''}
+        onChange={(_, v) => {
+          if (!readOnly) handleDefaultAnswerClassesChange(String(v));
+        }}
+      >
         {answerClasses
           .filter((c) => !c.isTrait)
           .map((d) => (
-            <Tooltip title={d.description} placement="top-start">
+            <Tooltip key={d.className} title={d.description} placement="top-start">
               <FormControlLabel
-                onChange={(e) => handleDefaultAnswerClassesChange(d.className)}
                 value={d.className}
-                control={<Radio />}
-                label={d.title}
+                control={<Radio disabled={readOnly} />}
+                label={<AnswerClassTitleLabel title={d.title} />}
               />
             </Tooltip>
           ))}
@@ -112,17 +140,19 @@ export function GradingCreator({
         answerClasses
           .filter((c) => c.isTrait)
           .map((d) => (
-            <Box>
+            <Box key={d.className}>
               <TextField
                 size="small"
                 onChange={(e) => handleAnswerClassesChange(d.className, e)}
                 style={{ marginLeft: '10px', width: '70px' }}
                 type="number"
-                defaultValue="0"
-              ></TextField>
+                value={d.count}
+                disabled={readOnly}
+                InputProps={{ readOnly: readOnly }}
+              />
               <Tooltip title={d.description} placement="top-start">
                 <span>
-                  {d.title}
+                  <AnswerClassTitleLabel title={d.title} />
                   {showPoints && ` (${t.point}:${d.points})`}
                 </span>
               </Tooltip>
@@ -132,16 +162,20 @@ export function GradingCreator({
       <TextField
         multiline
         fullWidth
-        placeholder={t.feedback}
+        placeholder={readOnly ? undefined : t.feedback}
         minRows={5}
         value={feedback}
         style={{ display: 'block' }}
-        onChange={(e) => setFeedBack(e.target.value)}
+        onChange={(e) => !readOnly && setFeedBack(e.target.value)}
+        disabled={readOnly}
+        InputProps={{ readOnly: readOnly }}
       />
 
-      <Button type="submit" variant="contained" disabled={!isAnswerClassSelected}>
-        {t.submit}
-      </Button>
+      {!readOnly && (
+        <Button type="submit" variant="contained" disabled={!isAnswerClassSelected}>
+          {t.submit}
+        </Button>
+      )}
     </form>
   );
 }

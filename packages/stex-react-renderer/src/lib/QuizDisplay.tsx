@@ -13,7 +13,7 @@ import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@alea/spec'
 import { isEmptyResponse } from '@alea/quiz-utils';
 import { shouldUseDrawer } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { ProblemDisplay } from './ProblemDisplay';
@@ -245,6 +245,7 @@ export function QuizDisplay({
   homeworkId,
   isExamProblem = false,
   initialProblemIdx = 0,
+  showPracticeSolutionButton = false,
 }: {
   quizEndTs?: number;
   showPerProblemTime: boolean;
@@ -260,6 +261,8 @@ export function QuizDisplay({
   homeworkId?: number;
   isExamProblem?: boolean;
   initialProblemIdx?: number;
+  /** Past-quiz practice: show "Show solution" so learners can reveal answers (no timed quiz submit). */
+  showPracticeSolutionButton?: boolean;
 }) {
   const isHomeWork = homeworkId ? true : false;
   const { quiz: t } = getLocaleObject(useRouter());
@@ -270,10 +273,17 @@ export function QuizDisplay({
   const [events, setEvents] = useState<TimerEvent[]>([]);
   const [showClock, setShowClock] = useState(true);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [revealedSolutions, setRevealedSolutions] = useState<Record<string, boolean>>({});
 
   const [, forceRerender] = useReducer((x) => x + 1, 0);
   const problemIds = Object.keys(problems ?? {});
   const currentProblemId = problemIds[problemIdx];
+
+  const problemSetKey = useMemo(() => Object.keys(problems ?? {}).sort().join('|'), [problems]);
+
+  useEffect(() => {
+    setRevealedSolutions({});
+  }, [problemSetKey]);
 
   useEffect(() => {
     if (initialProblemIdx !== undefined && initialProblemIdx !== -1) {
@@ -320,6 +330,10 @@ export function QuizDisplay({
   const response = responses[currentProblemId];
   const problem = problems[currentProblemId];
 
+  const solutionRevealed =
+    showPracticeSolutionButton && !isFrozen && !!revealedSolutions[currentProblemId];
+  const displayFrozen = isFrozen || solutionRevealed;
+
   return (
     <LayoutWithFixedMenu
       menu={
@@ -347,7 +361,7 @@ export function QuizDisplay({
             {t.problem} {problemIdx + 1} {t.of} {problemIds.length}&nbsp;
             <SafeFTMLFragment
               key={problem.problem.html ?? ''}
-              allowHovers={isFrozen}
+              allowHovers={displayFrozen}
               fragment={{
                 type: 'HtmlString',
                 html: problem.problem.title_html ?? '<i>Untitled</i>',
@@ -370,19 +384,42 @@ export function QuizDisplay({
           <ProblemDisplay
             r={response}
             problem={problem}
-            isFrozen={isFrozen}
+            isFrozen={displayFrozen}
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               forceRerender();
               const problemId = problemIds[problemIdx];
-              setResponses((prev) => {
-                prev[problemId] = response;
-                return prev;
-              });
+              setResponses((prev) => ({
+                ...prev,
+                [problemId]: response,
+              }));
               onResponse?.(problemId, response);
             }}
+            onFreezeResponse={
+              showPracticeSolutionButton && !isFrozen
+                ? () =>
+                    setRevealedSolutions((prev) => ({
+                      ...prev,
+                      [currentProblemId]: true,
+                    }))
+                : undefined
+            }
           />
         </Box>
+        {showPracticeSolutionButton && !isFrozen && !revealedSolutions[currentProblemId] && (
+          <Button
+            variant="outlined"
+            sx={{ mb: '10px' }}
+            onClick={() =>
+              setRevealedSolutions((prev) => ({
+                ...prev,
+                [currentProblemId]: true,
+              }))
+            }
+          >
+            {t.showSolution}
+          </Button>
+        )}
         <ListStepper
           idx={problemIdx}
           listSize={problemIds.length}

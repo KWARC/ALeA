@@ -63,9 +63,12 @@ export function saveAnswerToLocalStorage(questionId: string, subProblemId: strin
 export function GradingDisplay({
   gradingInfo,
   showGraderInformation = true,
+  omitFooter = false,
 }: {
   gradingInfo: GradingInfo;
   showGraderInformation?: boolean;
+  /** Hide the reviewer / review-type line (e.g. anonymous student-facing feedback list). */
+  omitFooter?: boolean;
 }) {
   return (
     <Box mt={1}>
@@ -90,13 +93,15 @@ export function GradingDisplay({
           );
         })}
       </Box>
-      <i>
-        {showGraderInformation
-          ? gradingInfo.reviewType === 'SELF'
-            ? 'Self Graded'
-            : `Graded by: ${gradingInfo.checkerId} (${gradingInfo.reviewType})`
-          : `${gradingInfo.reviewType}`}
-      </i>
+      {!omitFooter && (
+        <i>
+          {showGraderInformation
+            ? gradingInfo.reviewType === 'SELF'
+              ? 'Self Graded'
+              : `Graded by: ${gradingInfo.checkerId} (${gradingInfo.reviewType})`
+            : `${gradingInfo.reviewType}`}
+        </i>
+      )}
     </Box>
   );
 }

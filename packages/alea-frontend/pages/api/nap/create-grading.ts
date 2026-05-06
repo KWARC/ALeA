@@ -8,26 +8,21 @@ import {
   executeTxnAndEndSet500OnError,
   getUserIdOrSetError,
 } from '../comment-utils';
+import { isValidGradingAnswerClassItem } from './validate-grading-answer-class';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const graderUserId = await getUserIdOrSetError(req, res);
   if (!graderUserId) return;
   const { answerId } = req.body as CreateGradingRequest;
   let { customFeedback, answerClasses } = req.body as CreateGradingRequest;
-  answerClasses = answerClasses?.filter((c) => c.count !== 0);
+  answerClasses = answerClasses?.filter((c) => (c?.count ?? 0) > 0);
   customFeedback = customFeedback?.trim();
   if (!answerId || !answerClasses?.length) return res.status(422).end();
 
   for (const answerClassItem of answerClasses) {
-    if (
-      !answerClassItem.answerClassId ||
-      answerClassItem.closed === null ||
-      answerClassItem.isTrait === null ||
-      !answerClassItem.description ||
-      !answerClassItem.title ||
-      !answerClassItem.points === null
-    )
+    if (!isValidGradingAnswerClassItem(answerClassItem)) {
       return res.status(422).end();
+    }
   }
 
   const answerRows = await executeAndEndSet500OnError(

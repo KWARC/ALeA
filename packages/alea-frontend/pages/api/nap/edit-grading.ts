@@ -5,6 +5,7 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { UpdateGradingRequest } from '@alea/spec';
+import { isValidGradingAnswerClassItem } from './validate-grading-answer-class';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -13,23 +14,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
   const { id } = req.body as UpdateGradingRequest;
   let { customFeedback, answerClasses } = req.body as UpdateGradingRequest;
-  answerClasses = answerClasses.filter((c) => c.count != 0);
+  answerClasses = answerClasses.filter((c) => (c?.count ?? 0) > 0);
   customFeedback = customFeedback?.trim();
   if (!id || answerClasses.length == 0) {
-    res.status(422).end();
+    return res.status(422).end();
   }
-  answerClasses.forEach((element) => {
-    if (
-      !element.answerClassId ||
-      element.closed == null ||
-      element.isTrait == null ||
-      !element.description ||
-      !element.title ||
-      !element.points
-    )
-      res.status(422).end();
-    return;
-  });
+  for (const element of answerClasses) {
+    if (!isValidGradingAnswerClassItem(element)) {
+      return res.status(422).end();
+    }
+  }
 
   const values = new Array(answerClasses.length).fill('(?, ?, ?,?,?,?,?,?)');
   let totalPoints = 0;
