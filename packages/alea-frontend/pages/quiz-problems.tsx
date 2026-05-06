@@ -18,16 +18,21 @@ import {
 } from '@alea/stex-react-renderer';
 
 import MainLayout from '../layouts/MainLayout';
-import { contentFragment } from '@flexiformal/ftml-backend';
+import { contentFragment, solution as flamsSolution } from '@flexiformal/ftml-backend';
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse: any[] = await contentFragment({ uri: problemUri });
+  const [fragmentResponse, sol]: [any[], string | undefined] = await Promise.all([
+    contentFragment({ uri: problemUri }),
+    flamsSolution({ uri: problemUri }),
+  ]);
+
   return {
     problem: {
       uri: problemUri,
       html: fragmentResponse[2],
       title_html: '',
     },
+    solution: sol,
     answerClasses: [],
   };
 }
@@ -54,6 +59,7 @@ const QuizProblemsPage = () => {
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [loading, setLoading] = useState(true);
   const [initialIndex, setInitialIndex] = useState<number>(0);
+  const [frozenProblems, setFrozenProblems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!quizUri) return;
@@ -143,9 +149,9 @@ const QuizProblemsPage = () => {
           value={{
             showGradingFor: ShowGradingFor.INSTRUCTOR,
             isGrading: false,
-            showGrading: false,
-            gradingInfo: undefined,
-            studentId: undefined,
+            showGrading: true,
+            gradingInfo: {},
+            studentId: '',
           }}
         >
           <AnswerContext.Provider value={{}}>
@@ -153,6 +159,10 @@ const QuizProblemsPage = () => {
               problems={problems}
               existingResponses={{}}
               isFrozen={false}
+              frozenProblems={frozenProblems}
+              onProblemFreeze={(problemId) => {
+                setFrozenProblems((prev) => ({ ...prev, [problemId]: true }));
+              }}
               showPerProblemTime={false}
               isExamProblem={false}
               initialProblemIdx={initialIndex}
