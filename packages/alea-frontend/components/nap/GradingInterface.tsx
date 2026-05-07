@@ -5,7 +5,6 @@ import {
   createGrading,
   FTMLProblemWithSolution,
   getAnswerAdmin,
-  getAnswerInfo,
   getCourseAcls,
   getCourseGradingItems,
   getMyGradingForAnswer,
@@ -643,19 +642,17 @@ function GradingItemDisplay({
 
     void (async () => {
       try {
-        const responseSubProblemIds = await syncStudentResponses();
-        const r = await getAnswerInfo(answerId, courseId, questionId);
+        await syncStudentResponses();
         if (!problem) {
           setAnswerClasses([]);
           return;
         }
         const gradingNotesBaseUri = problem.problem?.uri || questionId;
-        const canonicalSubProblemIds =
-          responseSubProblemIds.length > 0
-            ? responseSubProblemIds
-            : [String(r.subProblemId ?? '').trim()].filter(Boolean);
 
         const subProblems = problem.problem?.subProblems ?? [];
+        const renderedSubProblemIds = Array.from(subProblemIds)
+          .map((id) => String(id ?? '').trim())
+          .filter(Boolean);
         const byProblemId: Record<string, AnswerClass[]> = {};
         let gnotesCombined: AnswerClass[] = [];
 
@@ -714,8 +711,8 @@ function GradingItemDisplay({
           }
         }
 
-        for (let i = 0; i < canonicalSubProblemIds.length; i++) {
-          const spId = canonicalSubProblemIds[i];
+        for (let i = 0; i < renderedSubProblemIds.length; i++) {
+          const spId = renderedSubProblemIds[i];
           if (!spId) continue;
           if (subProblems.some((s) => s.id === spId)) continue;
           try {
@@ -760,7 +757,7 @@ function GradingItemDisplay({
         setAnswerClassesBySubProblemId({});
       }
     })();
-  }, [answerId, courseId, isPeerGrading, peerResponses, problem, questionId]);
+  }, [answerId, courseId, isPeerGrading, peerResponses, problem, questionId, subProblemIds]);
 
   useEffect(() => {
     refreshGradingInfo();
