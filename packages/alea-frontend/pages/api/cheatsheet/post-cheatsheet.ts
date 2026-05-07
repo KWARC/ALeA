@@ -572,7 +572,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       variables: { courseId, instanceId },
     },
   ]);
-  if (isStudent) {
+  if (!isInstructor && isStudent) {
     const isWithinUploadWindow = await validateCheatsheetUploadWindowOrSetError(
       universityId,
       courseId,
@@ -582,7 +582,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     if (!isWithinUploadWindow) return;
   }
-  if (isStudent && studentId !== userId) {
+  if (!isInstructor && isStudent && studentId !== userId) {
     return res.status(403).send('You cannot upload a cheat sheet for another student.');
   }
   if (!isInstructor && !isStudent) {
