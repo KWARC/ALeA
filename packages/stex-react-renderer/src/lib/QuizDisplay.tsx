@@ -245,6 +245,8 @@ export function QuizDisplay({
   homeworkId,
   isExamProblem = false,
   initialProblemIdx = 0,
+  frozenProblems,
+  onProblemFreeze,
 }: {
   quizEndTs?: number;
   showPerProblemTime: boolean;
@@ -260,6 +262,8 @@ export function QuizDisplay({
   homeworkId?: number;
   isExamProblem?: boolean;
   initialProblemIdx?: number;
+  frozenProblems?: Record<string, boolean>;
+  onProblemFreeze?: (problemId: string) => void;
 }) {
   const isHomeWork = homeworkId ? true : false;
   const { quiz: t } = getLocaleObject(useRouter());
@@ -370,7 +374,7 @@ export function QuizDisplay({
           <ProblemDisplay
             r={response}
             problem={problem}
-            isFrozen={isFrozen}
+            isFrozen={isFrozen || !!frozenProblems?.[currentProblemId]}
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               forceRerender();
@@ -381,6 +385,9 @@ export function QuizDisplay({
               });
               onResponse?.(problemId, response);
             }}
+            onFreezeResponse={
+              onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined
+            }
           />
         </Box>
         <ListStepper

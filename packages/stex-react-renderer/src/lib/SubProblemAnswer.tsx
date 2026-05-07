@@ -21,6 +21,7 @@ import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { ListStepper } from './QuizDisplay';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 
 dayjs.extend(relativeTime);
 
@@ -226,8 +227,16 @@ export function SubProblemAnswer({
           borderColor: 'primary.main',
         }}
       >
-        {/*mmtHTMLToReact(subProblem.solution.replace(MMT_CUSTOM_ID_PREFIX, ''))*/}
-        TODO ALEA4-P4
+        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+          Solution:
+        </Typography>
+        <SafeFTMLFragment
+          fragment={{
+            type: 'HtmlString',
+            html: subProblem.solution,
+            uri: undefined,
+          }}
+        />
       </Box>
     ) : (
       <></>
