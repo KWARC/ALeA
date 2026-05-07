@@ -12,7 +12,7 @@ import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
 import { useCurrentUser } from '@alea/react-utils';
@@ -100,12 +100,21 @@ export function ProblemViewer({
   onResponseUpdate,
   isFrozen,
   r,
+  renderBelowAnswerAccepter,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
   isFrozen: boolean;
   r?: FTML.ProblemResponse;
+  renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
 }) {
+  // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
+  // even when SafeFTMLFragment caches the wrapper from the first render.
+  const renderBelowRef = useRef(renderBelowAnswerAccepter);
+  useEffect(() => {
+    renderBelowRef.current = renderBelowAnswerAccepter;
+  });
+
   const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
   const problemStates = new Map([[uri, problemState]]);
@@ -123,16 +132,18 @@ export function ProblemViewer({
         onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
       }}
       problemWrap={(problemUri, isSubProblem, autogradable) => {
-        if (autogradable) return undefined;
-        return (ch: React.ReactNode) => (
+        return (ch: ReactNode) => (
           <Box>
             {ch}
-            <AnswerAccepter
-              masterProblemId={uri}
-              problemTitle={problem.problem.title_html ?? ''}
-              isFrozen={isFrozen}
-              problemId={problemUri}
-            ></AnswerAccepter>
+            {!autogradable ? (
+              <AnswerAccepter
+                masterProblemId={uri}
+                problemTitle={problem.problem.title_html ?? ''}
+                isFrozen={isFrozen}
+                problemId={problemUri}
+              ></AnswerAccepter>
+            ) : null}
+            {renderBelowRef.current?.(problemUri, isSubProblem)}
           </Box>
         );
       }}
@@ -165,18 +176,16 @@ function AnswerAccepter({
 
   async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
-      createAnswer({
+      await createAnswer({
         answer: freeTextResponses,
         questionId: masterProblemId ? masterProblemId : problemId,
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
-        institutionId: 'FAU', // TODO(M5)
+        institutionId: 'FAU',
         homeworkId: +(router.query.id ?? 0),
       });
-      console.log('All answers saved successfully!');
-    } catch (error) {
-      console.error('Error saving answers:', error);
+    } catch {
       alert('Failed to save answers. Please try again.');
     }
   }
@@ -218,6 +227,7 @@ export function ProblemDisplay({
   showPoints = true,
   onResponseUpdate,
   onFreezeResponse,
+  renderBelowAnswerAccepter,
 }: {
   uri?: string;
   problem: FTMLProblemWithSolution | undefined;
@@ -226,9 +236,10 @@ export function ProblemDisplay({
   showPoints?: boolean;
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
+  renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
 }) {
   const { user } = useCurrentUser();
-  const userId = user?.userId ?? ''
+  const userId = user?.userId ?? '';
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 
@@ -250,6 +261,7 @@ export function ProblemDisplay({
           isFrozen={isEffectivelyFrozen}
           r={r}
           onResponseUpdate={onResponseUpdate}
+          renderBelowAnswerAccepter={renderBelowAnswerAccepter}
         />
         {onFreezeResponse && !isEffectivelyFrozen && r && (
           <Button

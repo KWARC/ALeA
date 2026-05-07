@@ -44,6 +44,14 @@ export enum ShowGradingFor {
   SELF,
   PEER,
 }
+
+function matchesReviewType(showGradingFor: ShowGradingFor, reviewType: ReviewType): boolean {
+  if (showGradingFor === ShowGradingFor.ALL) return true;
+  if (showGradingFor === ShowGradingFor.INSTRUCTOR) return reviewType === ReviewType.INSTRUCTOR;
+  if (showGradingFor === ShowGradingFor.PEER) return reviewType === ReviewType.PEER;
+  return reviewType === ReviewType.SELF;
+}
+
 export const GradingContext = createContext<GradingContextType>({
   isGrading: false,
   showGrading: false,
@@ -70,7 +78,6 @@ export function GradingDisplay({
   return (
     <Box mt={1}>
       <i>Score: </i> {gradingInfo?.totalPoints}
-      {/* /gradingInfo.maxPoints*/}
       {gradingInfo.customFeedback && (
         <Box sx={{ bgcolor: '#CCC', px: '3px', borderRadius: '3px', fontSize: 'medium' }}>
           <MdViewer content={'**Feedback:**\n\n ' + gradingInfo.customFeedback} />
@@ -110,21 +117,11 @@ export function GradingManager({
 }) {
   const { isGrading, showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
   const gradingInfo = useMemo(() => {
-    // const allGradings = g?.[problemId]?.[subProblemId] ?? [];
-    const allGradings: GradingInfo[] = [];
+    const allGradings = g?.[problemId]?.[subProblemId] ?? [];
     return isGrading
       ? allGradings
-      : allGradings.filter((c) => {
-          if (
-            showGradingFor === ShowGradingFor.INSTRUCTOR &&
-            c.reviewType === ReviewType.INSTRUCTOR
-          )
-            return c;
-          if (showGradingFor === ShowGradingFor.PEER && c.reviewType === ReviewType.PEER) return c;
-          if (showGradingFor === ShowGradingFor.SELF && c.reviewType === ReviewType.SELF) return c;
-          return c;
-        });
-  }, [g, problemId, subProblemId]);
+      : allGradings.filter((c) => matchesReviewType(showGradingFor, c.reviewType));
+  }, [g, isGrading, problemId, showGradingFor, subProblemId]);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [selectedGradingIdx, setSelectedGradingIdx] = useState(0);
 
@@ -141,12 +138,9 @@ export function GradingManager({
   if (!isGrading && !showGrading) return null;
   if (isCreatingNew) {
     return (
-      <>
-        <IconButton onClick={() => setIsCreatingNew(false)}>
-          <Cancel />
-        </IconButton>
-        {/* <GradingCreator subProblemId={subProblemId} rawAnswerClasses={[]} /> */}
-      </>
+      <IconButton onClick={() => setIsCreatingNew(false)}>
+        <Cancel />
+      </IconButton>
     );
   }
 
@@ -206,7 +200,7 @@ export function SubProblemAnswer({
       saveAnswerToLocalStorage(questionId, subProblemId, existingResponse);
     }
     setAnswer(fromLocalStore ?? existingResponse ?? '');
-  }, [questionId, subProblemId, existingResponse]);
+  }, [existingResponse, isFrozen, isGrading, questionId, subProblemId]);
 
   function onAnswerChanged(value: string): void {
     saveAnswerToLocalStorage(questionId, subProblemId, value);
@@ -226,12 +220,9 @@ export function SubProblemAnswer({
           borderColor: 'primary.main',
         }}
       >
-        {/*mmtHTMLToReact(subProblem.solution.replace(MMT_CUSTOM_ID_PREFIX, ''))*/}
-        TODO ALEA4-P4
+        <MdViewer content={subProblem.solution} />
       </Box>
-    ) : (
-      <></>
-    );
+    ) : null;
   return (
     <>
       <Box component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
@@ -279,7 +270,7 @@ export function SubProblemAnswer({
                 const prompt = existingResponse
                   ? 'Are you sure you want to discard unsaved changes to your answer?'
                   : 'Are you sure you want to discard your answer?';
-                if (!confirm(prompt)) return;
+                if (!window.confirm(prompt)) return;
                 onAnswerChanged(existingResponse ?? '');
               }}
               sx={{ color: 'red' }}
@@ -323,15 +314,15 @@ export function ShowSubProblemAnswer({
   subproblemId: string;
 }) {
   const { showGrading, gradingInfo: g, showGradingFor } = useContext(GradingContext);
-  if (!showGrading) return <></>;
-  const gradingInfo = g?.[problemId]?.[subproblemId]?.filter((c) => {
-    if (showGradingFor === ShowGradingFor.INSTRUCTOR && c.reviewType === ReviewType.INSTRUCTOR)
-      return c;
-    if (showGradingFor === ShowGradingFor.PEER && c.reviewType === ReviewType.PEER) return c;
-    if (showGradingFor === ShowGradingFor.SELF && c.reviewType === ReviewType.SELF) return c;
-    return c;
-  });
+  if (!showGrading) return null;
+  const gradingInfo = g?.[problemId]?.[subproblemId]?.filter((c) =>
+    matchesReviewType(showGradingFor, c.reviewType)
+  );
   return (
-    <Box>{showGrading ? gradingInfo?.map((c) => <GradingDisplay gradingInfo={c} />) : <></>}</Box>
+    <Box>
+      {gradingInfo?.map((c) => (
+        <GradingDisplay key={c.id} gradingInfo={c} />
+      ))}
+    </Box>
   );
 }

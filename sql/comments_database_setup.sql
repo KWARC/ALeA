@@ -220,7 +220,7 @@ CREATE TABLE GradingAnswerClass  (
   points float NOT NULL,
   isTrait boolean NOT NULL,
   closed boolean NOT NULL,
-  title varchar(255) NOT NULL,
+  title TEXT NOT NULL,
   description TEXT NULL,
   count int NULL DEFAULT 1,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

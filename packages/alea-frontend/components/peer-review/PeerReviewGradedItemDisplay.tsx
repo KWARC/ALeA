@@ -1,8 +1,10 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, IconButton } from '@mui/material';
+import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { GradingContext, ProblemDisplay, ShowGradingFor } from '@alea/stex-react-renderer';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 export function PeerReviewGradedItemDisplay({
@@ -14,16 +16,46 @@ export function PeerReviewGradedItemDisplay({
 }) {
   const [problem, setProblem] = useState<FTMLProblemWithSolution>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
+
   useEffect(() => {
-    // TODO ALEA4-P4
-    // //getLearningObjectShtml(grade.questionId).then((p) => {
-    // setProblem(getProblem(p, ''));
-    //});
-    // setAnswerText({
-    //   freeTextResponses: { [grade.subProblemId]: grade.answer },
-    //   autogradableResponses: [],
-    // });
+    let isMounted = true;
+    async function loadProblem() {
+      try {
+        const fragmentResponse = await contentFragment({ uri: grade.questionId });
+        if (!isMounted) return;
+        const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
+        setProblem({
+          problem: {
+            uri: grade.questionId,
+            html,
+            title_html: titleHtml,
+          },
+          answerClasses: [],
+        });
+        const responses = [] as FTML.ProblemResponse['responses'];
+        const subProblemIdx = Number(grade.subProblemId);
+        if (Number.isFinite(subProblemIdx)) {
+          responses[subProblemIdx] = {
+            type: 'Fillinsol',
+            value: grade.answer,
+          };
+        }
+        setAnswerText({
+          uri: grade.questionId,
+          responses,
+        });
+      } catch {
+        if (!isMounted) return;
+        setProblem(undefined);
+        setAnswerText(undefined);
+      }
+    }
+    loadProblem();
+    return () => {
+      isMounted = false;
+    };
   }, [grade]);
+
   return (
     <GradingContext.Provider
       value={{
@@ -40,8 +72,6 @@ export function PeerReviewGradedItemDisplay({
     >
       <Box>
         <ProblemDisplay
-          // problemId={grade.questionId} TODO ALEA4-P4
-          // showUnansweredProblems={false}
           showPoints={false}
           problem={problem}
           isFrozen={true}

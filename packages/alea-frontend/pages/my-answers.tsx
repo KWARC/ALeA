@@ -6,22 +6,29 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
+  FormControl,
   IconButton,
+  InputLabel,
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
+  Select,
   Typography,
 } from '@mui/material';
 import {
   AnswerResponse,
   deleteAnswer,
   FTMLProblemWithSolution,
+  getGradingItems,
   getMyAnswers,
+  GradingAnswerClass,
   GradingInfo,
-  Tristate,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
-import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
+import { ProblemDisplay } from '@alea/stex-react-renderer';
+import { contentFragment } from '@flexiformal/ftml-backend';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { NextPage } from 'next';
@@ -29,6 +36,7 @@ import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../components/nap/MultiItemsSelector';
 import MainLayout from '../layouts/MainLayout';
+
 const MULTI_SELECT_FIELDS = ['courseId', 'questionId', 'courseInstance'] as const;
 const ALL_SORT_FIELDS = ['courseId', 'questionTitle', 'updatedAt', 'courseInstance'] as const;
 const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
@@ -42,8 +50,6 @@ type MultSelectField = (typeof MULTI_SELECT_FIELDS)[number];
 type SortField = (typeof ALL_SORT_FIELDS)[number];
 interface SortAndFilterParams {
   multiSelectField: Record<MultSelectField, (string | number)[]>;
-  isGraded: Tristate;
-  isInstructorGraded: Tristate; //only switches between false and unknown
   sortingFields: SortField[];
   sortOrders: Record<SortField, 'ASC' | 'DESC'>;
 }
@@ -102,61 +108,244 @@ function AnswerItemOrganizer({
     </Box>
   );
 }
+function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
+  return [...grades].sort((a, b) => {
+    const ta = new Date(a.updatedAt).getTime();
+    const tb = new Date(b.updatedAt).getTime();
+    if (ta !== tb) return ta - tb;
+    return a.id - b.id;
+  });
+}
+
+function plainTextFromRichLabel(s: string) {
+  return s
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function summarizeGradingForStudentView(grading: GradingInfo): { labels: string[]; notes: string } {
+  const rows = grading.answerClasses ?? [];
+  const seen = new Set<string>();
+  const labels: string[] = [];
+
+  function pushDistinct(row: GradingAnswerClass) {
+    if (!row.count || row.count <= 0) return;
+    const t = plainTextFromRichLabel(
+      String(row.title || row.description || row.answerClassId).trim()
+    );
+    if (!t) return;
+    const key = t.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    labels.push(t);
+  }
+
+  for (const row of rows) if (row.isTrait) pushDistinct(row);
+  if (labels.length === 0) for (const row of rows) if (!row.isTrait) pushDistinct(row);
+
+  return {
+    labels,
+    notes: String(grading.customFeedback ?? '').trim(),
+  };
+}
+
+interface AnswerGroup {
+  questionId: string;
+  answers: AnswerResponse[];
+  questionTitle: string;
+  courseId: string;
+  courseInstance: string;
+  latestUpdatedAt: Date;
+}
+
+function groupAnswersByQuestion(items: AnswerResponse[]): AnswerGroup[] {
+  const map = new Map<string, AnswerGroup>();
+  for (const a of items) {
+    const existing = map.get(a.questionId);
+    if (existing) {
+      existing.answers.push(a);
+      if (new Date(a.updatedAt).getTime() > new Date(existing.latestUpdatedAt).getTime()) {
+        existing.latestUpdatedAt = a.updatedAt;
+      }
+    } else {
+      map.set(a.questionId, {
+        questionId: a.questionId,
+        answers: [a],
+        questionTitle: a.questionTitle,
+        courseId: a.courseId,
+        courseInstance: a.courseInstance,
+        latestUpdatedAt: a.updatedAt,
+      });
+    }
+  }
+  for (const group of map.values()) {
+    group.answers.sort((x, y) => {
+      const xn = Number(x.subProblemId);
+      const yn = Number(y.subProblemId);
+      if (Number.isFinite(xn) && Number.isFinite(yn)) return xn - yn;
+      return String(x.subProblemId).localeCompare(String(y.subProblemId));
+    });
+  }
+  return Array.from(map.values());
+}
+
 function AnswerItemDisplay({
-  answer,
+  answers,
   onDelete,
 }: {
-  answer: AnswerResponse;
+  answers: AnswerResponse[];
   onDelete: (id: number) => void;
 }) {
+  const primary = answers[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
-  const [gradingInfos, setGradingInfos] = useState<GradingInfo[]>([]);
+  const [gradingsByAnswerId, setGradingsByAnswerId] = useState<Record<number, GradingInfo[]>>({});
+  const [reviewerIdxByAnswerId, setReviewerIdxByAnswerId] = useState<Record<number, number>>({});
+
   useEffect(() => {
-    // TODO ALEA4-P4
-    // getLearningObjectShtml(answer.questionId).then((p) => {
-    //  setProblem(getProblem(p, ''));
-    //});
-    // let answers = {};
-    // for (let index = 0; index <= +answer.subProblemId; index++) {
-    //   answers = { ...answers, ...{ [index]: +answer.subProblemId == index ? answer.answer : '' } };
-    // }
-    // setAnswerText({
-    //   freeTextResponses: { [answer.subProblemId]: answer.answer },
-    //   autogradableResponses: [],
-    // });
-    // getGradingItems(answer.id, +answer.subProblemId).then((g) => setGradingInfos(g));
-  }, [answer.questionId]);
+    let isMounted = true;
+    async function load() {
+      try {
+        const raw = await contentFragment({ uri: primary.questionId });
+        if (!isMounted) return;
+        const { titleHtml, html } = parseContentFragmentTuple(raw);
+        setProblem({
+          problem: {
+            uri: primary.questionId,
+            html,
+            title_html: titleHtml,
+          },
+          answerClasses: [],
+        });
+        const responses = [] as FTML.ProblemResponse['responses'];
+        for (const a of answers) {
+          const idx = Number(a.subProblemId);
+          if (Number.isFinite(idx)) {
+            responses[idx] = {
+              type: 'Fillinsol',
+              value: a.answer,
+            };
+          }
+        }
+        setAnswerText({
+          uri: primary.questionId,
+          responses,
+        });
+
+        const all: Record<number, GradingInfo[]> = {};
+        for (const a of answers) {
+          try {
+            const list = await getGradingItems(a.id, String(a.subProblemId ?? ''));
+            all[a.id] = list;
+          } catch {
+            all[a.id] = [];
+          }
+        }
+        if (!isMounted) return;
+        setGradingsByAnswerId(all);
+        setReviewerIdxByAnswerId({});
+      } catch {
+        if (isMounted) {
+          setProblem(undefined);
+          setAnswerText(undefined);
+          setGradingsByAnswerId({});
+        }
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [primary.questionId, answers]);
 
   return (
     <Box>
       <ProblemDisplay
-        showPoints={false}
+        showPoints={true}
         problem={problem}
         isFrozen={true}
         r={answerText}
-        uri={answer.questionId}
-        // problem={problem} TODO ALEA4-P4
+        uri={primary.questionId}
       ></ProblemDisplay>
-      <Box sx={{ margin: '10px' }}>
-        <span>{dayjs(answer.updatedAt).fromNow()}</span>
-        <IconButton
-          onClick={() => onDelete(answer.id)}
-          sx={{ float: 'right', display: 'inline' }}
-          aria-label="delete"
-          color="primary"
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Box>
 
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, mt: 1 }}>
-        {gradingInfos.map((g, idx) => (
-          <Box sx={{ borderTop: '1px solid #ccc', borderRadius: 1, marginTop: '5px' }} key={idx}>
-            <GradingDisplay showGraderInformation={false} gradingInfo={g} key={idx} />
+      <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
+        Feedback received
+      </Typography>
+      {answers.map((a) => {
+        const gradings = sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? []);
+        const idx = reviewerIdxByAnswerId[a.id] ?? 0;
+        const safeIdx = Math.min(idx, Math.max(0, gradings.length - 1));
+        const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
+        const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
+        const subLabel = Number.isFinite(Number(a.subProblemId))
+          ? `Sub-problem ${Number(a.subProblemId) + 1}`
+          : `Sub-problem ${a.subProblemId}`;
+
+        return (
+          <Box key={a.id} sx={{ mt: 1.5 }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                {answers.length > 1 ? subLabel : `Answered ${dayjs(a.updatedAt).fromNow()}`}
+              </Typography>
+              <IconButton
+                onClick={() => onDelete(a.id)}
+                size="small"
+                aria-label="delete answer"
+                color="primary"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            {gradings.length === 0 ? (
+              <Box
+                sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, color: 'text.secondary' }}
+              >
+                No feedback received yet for this submission.
+              </Box>
+            ) : (
+              <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1 }}>
+                <FormControl fullWidth size="small" sx={{ mb: 1 }}>
+                  <InputLabel id={`reviewer-select-${a.id}`}>Reviewer</InputLabel>
+                  <Select
+                    labelId={`reviewer-select-${a.id}`}
+                    label="Reviewer"
+                    value={safeIdx}
+                    onChange={(e) =>
+                      setReviewerIdxByAnswerId((prev) => ({
+                        ...prev,
+                        [a.id]: Number(e.target.value),
+                      }))
+                    }
+                  >
+                    {gradings.map((_, i) => (
+                      <MenuItem key={i} value={i}>
+                        Reviewer {i + 1}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {selectedGrading && summary ? (
+                  <Box sx={{ pt: 0.5, px: 0.5 }}>
+                    <Typography variant="body2" component="div">
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        Feedback
+                      </Box>
+                      {' - '}
+                      {summary.labels.length > 0 ? summary.labels.join(', ') : '-'}
+                    </Typography>
+                    {summary.notes ? (
+                      <Typography variant="body2" sx={{ pl: 5, pt: 0.75, whiteSpace: 'pre-wrap' }}>
+                        {summary.notes}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                ) : null}
+              </Box>
+            )}
           </Box>
-        ))}
-      </Box>
+        );
+      })}
     </Box>
   );
 }
@@ -176,8 +365,8 @@ function getSelectedAnswerItems(answerItems: AnswerResponse[], params: SortAndFi
         ) {
           return false;
         }
-        return true;
       }
+      return true;
     })
     .sort((a, b) => {
       for (const f of params.sortingFields) {
@@ -192,47 +381,47 @@ function getSelectedAnswerItems(answerItems: AnswerResponse[], params: SortAndFi
 }
 function AnswerItemsList({
   onSelectItem,
-  answerItems,
+  groups,
 }: {
-  answerItems: AnswerResponse[];
-  onSelectItem: (answerId: number) => void;
+  groups: AnswerGroup[];
+  onSelectItem: (questionId: string) => void;
 }) {
   return (
     <Box maxHeight="50vh" overflow="scroll">
       <List disablePadding>
-        {answerItems.map(
-          ({ questionTitle, courseInstance, courseId, id, subProblemId, updatedAt }, idx) => (
-            <ListItemButton
-              key={`${questionTitle}-${id}-${idx}`}
-              onClick={(e) => onSelectItem(id)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? 'grey.100' : 'background.paper' }}
-            >
-              <ListItemText
-                primary={questionTitle ? <SafeHtml html={questionTitle} /> : id}
-                secondary={
+        {groups.map((group, idx) => (
+          <ListItemButton
+            key={group.questionId}
+            onClick={() => onSelectItem(group.questionId)}
+            sx={{ py: 0, bgcolor: idx % 2 === 0 ? 'grey.100' : 'background.paper' }}
+          >
+            <ListItemText
+              primary={
+                group.questionTitle ? <SafeHtml html={group.questionTitle} /> : group.questionId
+              }
+              secondary={
+                <Box>
                   <Box>
-                    <Box>
-                      <span>Sub problem: </span>
-                      <span>{+subProblemId + 1}</span>
-                    </Box>
-                    <Box>
-                      <span>Answered: </span>
-                      <span>{dayjs(updatedAt).fromNow()}</span>
-                    </Box>
-                    <Box>
-                      <span>Semester: </span>
-                      <span>{courseInstance}</span>
-                    </Box>
-                    <Box>
-                      <span>Course: </span>
-                      <span>{courseId}</span>
-                    </Box>
+                    <span>Sub-problems answered: </span>
+                    <span>{group.answers.length}</span>
                   </Box>
-                }
-              />
-            </ListItemButton>
-          )
-        )}
+                  <Box>
+                    <span>Last answered: </span>
+                    <span>{dayjs(group.latestUpdatedAt).fromNow()}</span>
+                  </Box>
+                  <Box>
+                    <span>Semester: </span>
+                    <span>{group.courseInstance}</span>
+                  </Box>
+                  <Box>
+                    <span>Course: </span>
+                    <span>{group.courseId}</span>
+                  </Box>
+                </Box>
+              }
+            />
+          </ListItemButton>
+        ))}
       </List>
     </Box>
   );
@@ -302,12 +491,10 @@ const MyAnswersPage: NextPage = () => {
       questionId: [],
       courseInstance: [],
     },
-    isGraded: Tristate.UNKNOWN,
-    isInstructorGraded: Tristate.UNKNOWN,
     sortingFields: [...ALL_SORT_FIELDS],
     sortOrders: DEFAULT_SORT_ORDER,
   });
-  const [selected, setSelected] = useState<{ answerId: number } | undefined>(undefined);
+  const [selected, setSelected] = useState<{ questionId: string } | undefined>(undefined);
   const { user, isUserLoading } = useCurrentUser();
   const router = useRouter();
 
@@ -322,6 +509,11 @@ const MyAnswersPage: NextPage = () => {
   const selectedAnswersItems = useMemo(
     () => getSelectedAnswerItems(answerItems, sortAndFilterParams),
     [answerItems, sortAndFilterParams]
+  );
+
+  const groupedAnswers = useMemo(
+    () => groupAnswersByQuestion(selectedAnswersItems),
+    [selectedAnswersItems]
   );
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this answer?')) {
@@ -344,23 +536,29 @@ const MyAnswersPage: NextPage = () => {
       />
 
       <Typography sx={{ fontStyle: 'italic' }}>
-        <b style={{ color: 'red' }}>{answerItems.length}</b> Answer Items Selected.
+        <b style={{ color: 'red' }}>{groupedAnswers.length}</b> Question Items Selected.
       </Typography>
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
         <Box sx={{ border: '1px solid #ccc' }} flex="1 1 200px" maxWidth={300}>
           <AnswerItemsList
-            answerItems={selectedAnswersItems}
-            onSelectItem={(answerId) => setSelected({ answerId })}
+            groups={groupedAnswers}
+            onSelectItem={(questionId) => setSelected({ questionId })}
           />
         </Box>
         <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
           {selected ? (
-            <AnswerItemDisplay
-              answer={answerItems.find((item) => item.id === selected.answerId)}
-              onDelete={onDelete}
-            />
+            (() => {
+              const selectedGroup = groupedAnswers.find(
+                (g) => g.questionId === selected.questionId
+              );
+              return selectedGroup ? (
+                <AnswerItemDisplay answers={selectedGroup.answers} onDelete={onDelete} />
+              ) : (
+                <i>Selected question not found.</i>
+              );
+            })()
           ) : (
-            <i>Please click on a answer item on the left.</i>
+            <i>Please click on a question on the left.</i>
           )}
         </Box>
       </Box>
