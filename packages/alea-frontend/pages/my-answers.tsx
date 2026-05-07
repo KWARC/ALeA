@@ -2,7 +2,6 @@ import { FTML } from '@flexiformal/ftml';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
@@ -18,7 +17,6 @@ import {
 } from '@mui/material';
 import {
   AnswerResponse,
-  deleteAnswer,
   FTMLProblemWithSolution,
   getGradingItems,
   getMyAnswers,
@@ -190,13 +188,7 @@ function groupAnswersByQuestion(items: AnswerResponse[]): AnswerGroup[] {
   return Array.from(map.values());
 }
 
-function AnswerItemDisplay({
-  answers,
-  onDelete,
-}: {
-  answers: AnswerResponse[];
-  onDelete: (id: number) => void;
-}) {
+function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
   const primary = answers[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
@@ -288,14 +280,6 @@ function AnswerItemDisplay({
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 {answers.length > 1 ? subLabel : `Answered ${dayjs(a.updatedAt).fromNow()}`}
               </Typography>
-              <IconButton
-                onClick={() => onDelete(a.id)}
-                size="small"
-                aria-label="delete answer"
-                color="primary"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
             </Box>
             {gradings.length === 0 ? (
               <Box
@@ -515,17 +499,6 @@ const MyAnswersPage: NextPage = () => {
     () => groupAnswersByQuestion(selectedAnswersItems),
     [selectedAnswersItems]
   );
-  const onDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this answer?')) {
-      deleteAnswer(id).then(() => {
-        getMyAnswers().then((answers) => {
-          setAnswerItems(answers);
-        });
-        setSelected(undefined);
-        alert('Answer Deleted');
-      });
-    }
-  };
   return (
     <MainLayout title={`${user?.fullName} | ALeA`}>
       {answerItems.length === 0 && <Typography>No Answer Items Found.</Typography>}
@@ -552,7 +525,7 @@ const MyAnswersPage: NextPage = () => {
                 (g) => g.questionId === selected.questionId
               );
               return selectedGroup ? (
-                <AnswerItemDisplay answers={selectedGroup.answers} onDelete={onDelete} />
+                <AnswerItemDisplay answers={selectedGroup.answers} />
               ) : (
                 <i>Selected question not found.</i>
               );
