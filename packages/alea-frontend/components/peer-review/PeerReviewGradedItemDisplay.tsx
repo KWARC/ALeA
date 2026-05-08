@@ -117,6 +117,7 @@ export function PeerReviewGradedItemDisplay({
   }, [primary, gradesToShow]);
 
   if (!primary) return null;
+  const hasSubProblems = gradesToShow.length > 1;
 
   return (
     <Box>
@@ -176,7 +177,7 @@ export function PeerReviewGradedItemDisplay({
             </AccordionSummary>
 
             <AccordionDetails sx={feedbackStyles.accordionDetails}>
-              {subProblem && (
+              {hasSubProblems && subProblem && (
                 <>
                   <SafeHtml html={subProblem.html || subProblem.titleHtml} />
                   <Box sx={feedbackStyles.answerSection}>

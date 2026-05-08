@@ -108,7 +108,9 @@ function GradedItemsList({
                 }
                 secondary={
                   <Stack direction="row" flexWrap="wrap" gap={0.5} sx={gradingListStyles.meta}>
-                    <Chip size="small" label={`${group.grades.length} sub-problems`} />
+                    {group.grades.length > 1 ? (
+                      <Chip size="small" label={`${group.grades.length} sub-problems`} />
+                    ) : null}
                     {group.courseInstance ? (
                       <Chip size="small" label={group.courseInstance} />
                     ) : null}
