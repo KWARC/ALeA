@@ -38,7 +38,7 @@ export async function resolveTargetUserIdOrsetError(
     { courseId, instanceId }
   );
   if (!authUserId) return null;
-  return targetUserId ?? authUserId;
+  return authUserId;
 }
 
 async function safeIsAuthorized(
