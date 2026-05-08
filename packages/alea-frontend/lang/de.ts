@@ -106,14 +106,10 @@ export const de = {
   quiz: {
     upcomingQuizzes: 'Kommende Quizze',
     quizDashboard: 'Quiz-Dashboard',
-    demoQuiz: 'Demo-Quiz',
     previousQuizzes: 'Vorherige Quizze',
     ongoingQuizzes: 'Laufende Quizze',
     onTimeWarning:
       'Auf dieser Seite erhalten Sie einen Überblick über die kommenden Tests in den {courseId}-Vorlesungen. Beachten Sie, dass die Start- und Endzeiten streng sind. Seien Sie also pünktlich.',
-    this: 'Dies',
-    demoQuizText:
-      'ist ein Demo-Quiz - damit Sie Ihre Hard-/Software testen (Sie benötigen einen aktuellen Chrome- oder Firefox-Browser) und die Formatierung sehen können. Insbesondere sollten Sie in der Lage sein, die mathematische Notation im Problem des Handlungsreisenden zu lesen.',
     practiceProblems: 'Übungsprobleme',
     enrollmentMessage:
       'Bitte melden Sie sich für den Kurs an, um auf Quiz und Hausaufgaben zuzugreifen.',

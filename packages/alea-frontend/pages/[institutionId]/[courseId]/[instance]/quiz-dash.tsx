@@ -260,15 +260,7 @@ const QuizDashPage: NextPage = () => {
         <Typography variant="body1" sx={{ color: '#333' }}>
           {t.onTimeWarning.replace('{courseId}', courseId.toUpperCase())}
         </Typography>
-        <Typography variant="h5" sx={{ m: '30px 0 10px' }}>
-          {t.demoQuiz}
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#333' }}>
-          <a href="/quiz/quiz-a7175e81" target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
-            {t.this}
-          </a>
-          &nbsp;{t.demoQuizText}
-        </Typography>
+
         {enrolled && (
           <>
             <QuizList header={t.ongoingQuizzes} quizList={ongoingQuizzes} />
