@@ -426,6 +426,7 @@ interface EmbeddedGradingFormState {
   classesBySubProblemId: Record<string, AnswerClass[]>;
   subProblemIds: Set<string>;
   registerSubProblem: (id: string) => void;
+  hasAnswerForSubProblem: (id: string) => boolean;
   myGrading: GradingInfo | null | undefined;
   myGradingByProblemId: Record<string, GradingInfo | null>;
   onSubmit: (
@@ -462,6 +463,13 @@ function EmbeddedGradingForm({
   if (!ctx) return null;
 
   if (!isSubProblem && ctx.subProblemIds.size > 0) return null;
+  if (isSubProblem && !ctx.hasAnswerForSubProblem(problemId)) {
+    return (
+      <Box sx={{ my: 1, p: 1, bgcolor: '#fff8c5', border: '1px solid #e0c94f', borderRadius: 1 }}>
+        No need to give feedback as user have not solved this problem.
+      </Box>
+    );
+  }
 
   const subProblemClasses = isSubProblem
     ? ctx.classesBySubProblemId[problemId] ??
@@ -566,6 +574,27 @@ function GradingItemDisplay({
       return next;
     });
   }, []);
+  const hasAnswerForSubProblem = useCallback(
+    (id: string) => {
+      if (!Array.isArray(peerResponses)) return true;
+      const submittedId = String(id ?? '').trim();
+      const submittedNorm = normalizeProblemId(submittedId);
+      if (
+        peerResponses.some((pr) => {
+          const dbId = String(pr.subProblemId ?? '').trim();
+          return dbId === submittedId || normalizeProblemId(dbId) === submittedNorm;
+        })
+      ) {
+        return true;
+      }
+      const renderedIds = Array.from(subProblemIds);
+      return (
+        peerResponses.length === renderedIds.length &&
+        renderedIds.some((rid) => rid === submittedId || normalizeProblemId(rid) === submittedNorm)
+      );
+    },
+    [peerResponses, subProblemIds]
+  );
 
   const loadMyGrading = useCallback(() => {
     getMyGradingForAnswer(answerId)
@@ -870,6 +899,7 @@ function GradingItemDisplay({
       classesBySubProblemId: answerClassesBySubProblemId,
       subProblemIds,
       registerSubProblem,
+      hasAnswerForSubProblem,
       myGrading,
       myGradingByProblemId,
       onSubmit: onSubmitGrading,
@@ -880,6 +910,7 @@ function GradingItemDisplay({
       answerClassesBySubProblemId,
       subProblemIds,
       registerSubProblem,
+      hasAnswerForSubProblem,
       myGrading,
       myGradingByProblemId,
       onSubmitGrading,

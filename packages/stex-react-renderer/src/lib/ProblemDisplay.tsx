@@ -198,7 +198,10 @@ function AnswerAccepter({
   }
   return (
     <Box display="flex" alignItems="flex-start">
-      <Box flexGrow={1}>
+      <Box
+        flexGrow={1}
+        sx={isFrozen && answer ? { bgcolor: '#fff8c5', borderRadius: 1, p: 0.5 } : undefined}
+      >
         <MdEditor
           name={name}
           editingEnabled={!isFrozen}
