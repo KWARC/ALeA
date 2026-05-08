@@ -68,13 +68,7 @@ export function saveAnswerToLocalStorage(questionId: string, subProblemId: strin
   localStore?.setItem(`answer-${questionId}-${subProblemId}`, answer);
 }
 
-export function GradingDisplay({
-  gradingInfo,
-  showGraderInformation = true,
-}: {
-  gradingInfo: GradingInfo;
-  showGraderInformation?: boolean;
-}) {
+export function GradingDisplay({ gradingInfo }: { gradingInfo: GradingInfo }) {
   return (
     <Box mt={1}>
       <i>Score: </i> {gradingInfo?.totalPoints}
@@ -83,27 +77,6 @@ export function GradingDisplay({
           <MdViewer content={'**Feedback:**\n\n ' + gradingInfo.customFeedback} />
         </Box>
       )}
-      <Box sx={{ border: '1px solid #333', borderRadius: 1, p: 1 }}>
-        <Typography sx={{ fontStyle: 'medium', fontWeight: 'bold' }}>
-          <b>Details:</b>
-        </Typography>
-        {gradingInfo.answerClasses.map((c) => {
-          const effectNum = c.points * (c.isTrait && c.count > 1 ? c.count : 1);
-          const effectStr = effectNum > 0 ? `+${effectNum}` : effectNum;
-          return (
-            <Box my={0.5} fontSize="small">
-              {c.description ?? c.title}: <b>({effectStr})</b>
-            </Box>
-          );
-        })}
-      </Box>
-      <i>
-        {showGraderInformation
-          ? gradingInfo.reviewType === 'SELF'
-            ? 'Self Graded'
-            : `Graded by: ${gradingInfo.checkerId} (${gradingInfo.reviewType})`
-          : `${gradingInfo.reviewType}`}
-      </i>
     </Box>
   );
 }

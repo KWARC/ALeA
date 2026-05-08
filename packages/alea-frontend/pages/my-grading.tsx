@@ -9,30 +9,59 @@ import {
   Typography,
 } from '@mui/material';
 import { deleteGraded, getMyGraded, GradingWithAnswer } from '@alea/spec';
-import { useCurrentUser } from '@alea/react-utils';
+import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PeerReviewGradedItemDisplay } from '../components/peer-review/PeerReviewGradedItemDisplay';
 import MainLayout from '../layouts/MainLayout';
 
-function plainTextFromHtml(html: string | undefined) {
-  return String(html ?? '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+interface FeedbackGroup {
+  questionId: string;
+  grades: GradingWithAnswer[];
+  questionTitle: string;
+  courseId: string;
+  courseInstance: string;
+}
+
+function groupGradesByQuestion(items: GradingWithAnswer[]): FeedbackGroup[] {
+  const map = new Map<string, FeedbackGroup>();
+  for (const item of items) {
+    const existing = map.get(item.questionId);
+    if (existing) {
+      existing.grades.push(item);
+    } else {
+      map.set(item.questionId, {
+        questionId: item.questionId,
+        grades: [item],
+        questionTitle: item.questionTitle,
+        courseId: item.courseId,
+        courseInstance: item.courseInstance,
+      });
+    }
+  }
+
+  for (const group of map.values()) {
+    group.grades.sort((x, y) => {
+      const xn = Number(x.subProblemId);
+      const yn = Number(y.subProblemId);
+      if (Number.isFinite(xn) && Number.isFinite(yn)) return xn - yn;
+      return String(x.subProblemId).localeCompare(String(y.subProblemId));
+    });
+  }
+  return Array.from(map.values());
 }
 
 function GradedItemsList({
-  gradedItems,
-  selectedId,
+  groups,
+  selectedQuestionId,
   onSelectItem,
 }: {
-  gradedItems: GradingWithAnswer[];
-  selectedId?: number;
-  onSelectItem: (answerId: number) => void;
+  groups: FeedbackGroup[];
+  selectedQuestionId?: string;
+  onSelectItem: (questionId: string) => void;
 }) {
-  if (gradedItems.length === 0) {
+  if (groups.length === 0) {
     return (
       <Box sx={gradingListStyles.empty}>
         <Typography color="text.secondary">No graded items found.</Typography>
@@ -43,35 +72,40 @@ function GradedItemsList({
   return (
     <Box sx={gradingListStyles.root}>
       <List disablePadding>
-        {gradedItems.map(({ questionTitle, courseId, courseInstance, customFeedback, id }, idx) => {
-          const isSelected = selectedId === id;
-          const titleText = plainTextFromHtml(questionTitle) || `Grading #${id}`;
-          const feedbackText = plainTextFromHtml(customFeedback) || 'No written feedback';
+        {groups.map((group, idx) => {
+          const isSelected = selectedQuestionId === group.questionId;
           return (
             <ListItemButton
-              key={`${questionTitle}-${id}-${idx}`}
+              key={group.questionId}
               selected={isSelected}
-              onClick={() => onSelectItem(id)}
+              onClick={() => onSelectItem(group.questionId)}
               sx={[gradingListStyles.item, isSelected && gradingListStyles.selectedItem]}
             >
               <ListItemText
                 disableTypography
                 sx={gradingListStyles.itemText}
-                primary={<Typography variant="subtitle2">{titleText}</Typography>}
-                secondary={
+                primary={
                   <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={gradingListStyles.feedbackPreview}
-                    >
-                      {feedbackText}
-                    </Typography>
-                    <Stack direction="row" flexWrap="wrap" gap={0.5} sx={gradingListStyles.meta}>
-                      {courseId ? <Chip size="small" label={courseId} /> : null}
-                      {courseInstance ? <Chip size="small" label={courseInstance} /> : null}
-                    </Stack>
+                    <Typography variant="subtitle2">{`Problem ${idx + 1}`}</Typography>
+                    {group.questionTitle ? (
+                      <Typography
+                        variant="body2"
+                        component="div"
+                        sx={gradingListStyles.questionTitle}
+                      >
+                        <SafeHtml html={group.questionTitle} />
+                      </Typography>
+                    ) : null}
                   </Box>
+                }
+                secondary={
+                  <Stack direction="row" flexWrap="wrap" gap={0.5} sx={gradingListStyles.meta}>
+                    <Chip size="small" label={`${group.grades.length} sub-problems`} />
+                    {group.courseInstance ? (
+                      <Chip size="small" label={group.courseInstance} />
+                    ) : null}
+                    {group.courseId ? <Chip size="small" label={group.courseId} /> : null}
+                  </Stack>
                 }
               />
             </ListItemButton>
@@ -85,7 +119,7 @@ function GradedItemsList({
 const MyGrading: NextPage = () => {
   const [gradingItems, setGradingItems] = useState<GradingWithAnswer[]>([]);
   const { user, isUserLoading } = useCurrentUser();
-  const [selected, setSelected] = useState<{ gradedId: number } | undefined>(undefined);
+  const [selected, setSelected] = useState<{ questionId: string } | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
     if (isUserLoading) return;
@@ -97,16 +131,23 @@ const MyGrading: NextPage = () => {
   }, [router, user, isUserLoading]);
   const onDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this grade?')) {
-      deleteGraded(id).then(() => {
-        getMyGraded().then((g) => {
+      deleteGraded(id)
+        .then(() => getMyGraded())
+        .then((g) => {
           setGradingItems(g);
+          setSelected((current) => {
+            if (!current) return undefined;
+            return g.some((item) => item.questionId === current.questionId) ? current : undefined;
+          });
+        })
+        .catch(() => {
+          alert('Failed to delete grade. Please try again.');
         });
-        setSelected(undefined);
-      });
     }
   };
-  const selectedGrade = selected
-    ? gradingItems.find((item) => item.id === selected.gradedId)
+  const feedbackGroups = useMemo(() => groupGradesByQuestion(gradingItems), [gradingItems]);
+  const selectedGroup = selected
+    ? feedbackGroups.find((group) => group.questionId === selected.questionId)
     : undefined;
 
   return (
@@ -128,14 +169,14 @@ const MyGrading: NextPage = () => {
           </Box>
           <Divider />
           <GradedItemsList
-            gradedItems={gradingItems}
-            selectedId={selected?.gradedId}
-            onSelectItem={(gradedId) => setSelected({ gradedId })}
+            groups={feedbackGroups}
+            selectedQuestionId={selected?.questionId}
+            onSelectItem={(questionId) => setSelected({ questionId })}
           />
         </Box>
         <Box sx={pageStyles.details}>
-          {selectedGrade ? (
-            <PeerReviewGradedItemDisplay grade={selectedGrade} onDelete={onDelete} />
+          {selectedGroup ? (
+            <PeerReviewGradedItemDisplay grades={selectedGroup.grades} onDelete={onDelete} />
           ) : (
             <Box sx={pageStyles.emptyDetails}>
               <Typography variant="subtitle1">Select a reviewed answer</Typography>
@@ -178,15 +219,15 @@ const gradingListStyles = {
   itemText: {
     my: 0,
   },
-  feedbackPreview: {
-    display: '-webkit-box',
-    WebkitBoxOrient: 'vertical',
-    WebkitLineClamp: 2,
-    overflow: 'hidden',
+  questionTitle: {
+    color: 'text.secondary',
     mt: 0.25,
   },
   meta: {
     mt: 0.75,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 0.5,
   },
 } as const;
 
@@ -208,8 +249,8 @@ const pageStyles = {
   sidebar: {
     flexGrow: { xs: 1, md: 0 },
     flexShrink: 0,
-    width: { xs: '100%', md: 340 },
-    maxWidth: { xs: '100%', md: 340 },
+    width: { xs: '100%', md: 320 },
+    maxWidth: { xs: '100%', md: 320 },
     border: 1,
     borderColor: 'divider',
     borderRadius: 1,

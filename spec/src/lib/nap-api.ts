@@ -62,7 +62,7 @@ export async function deleteAnswer(id: number) {
   return axios.post('/api/nap/delete-answer', { id });
 }
 export async function deleteGraded(id: number) {
-  return axios.post('/api/nap/delete-grade', { id });
+  return axios.post('/api/nap/delete-grading', { id });
 }
 
 export async function deleteReviewRequest(id: number) {
