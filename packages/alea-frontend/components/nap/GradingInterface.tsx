@@ -577,16 +577,29 @@ function GradingItemDisplay({
     if (Array.isArray(peerResponses) && peerResponses.length > 0) {
       void (async () => {
         const next: Record<string, GradingInfo | null> = {};
-        for (const pr of peerResponses) {
+        const renderedIds = Array.from(subProblemIds);
+        for (const [idx, pr] of peerResponses.entries()) {
           const spId = String(pr.subProblemId ?? '').trim();
+          const renderedId =
+            peerResponses.length === renderedIds.length ? String(renderedIds[idx] ?? '').trim() : '';
           const targetAnswerId =
             pr.answerId && Number.isFinite(Number(pr.answerId)) ? Number(pr.answerId) : undefined;
           if (!spId || !targetAnswerId) continue;
           try {
             const g = await getMyGradingForAnswer(targetAnswerId);
             next[spId] = g ?? null;
+            next[normalizeProblemId(spId)] = g ?? null;
+            if (renderedId) {
+              next[renderedId] = g ?? null;
+              next[normalizeProblemId(renderedId)] = g ?? null;
+            }
           } catch {
             next[spId] = null;
+            next[normalizeProblemId(spId)] = null;
+            if (renderedId) {
+              next[renderedId] = null;
+              next[normalizeProblemId(renderedId)] = null;
+            }
           }
         }
         setMyGradingByProblemId(next);
@@ -594,7 +607,7 @@ function GradingItemDisplay({
     } else {
       setMyGradingByProblemId({});
     }
-  }, [answerId, peerResponses]);
+  }, [answerId, peerResponses, subProblemIds]);
 
   useEffect(() => {
     setMyGrading(null);
@@ -796,12 +809,24 @@ function GradingItemDisplay({
       // each subproblem's grading against its own Answer row (not the question's MIN id).
       let targetAnswerId = answerId;
       if (isSubProblem && Array.isArray(peerResponses)) {
-        const match = peerResponses.find(
-          (pr) => String(pr.subProblemId ?? '') === String(submittedProblemId)
-        );
-        if (match?.answerId && Number.isFinite(Number(match.answerId))) {
-          targetAnswerId = Number(match.answerId);
+        const submittedId = String(submittedProblemId ?? '').trim();
+        const submittedNorm = normalizeProblemId(submittedId);
+        let match = peerResponses.find((pr) => {
+          const dbId = String(pr.subProblemId ?? '').trim();
+          return dbId === submittedId || normalizeProblemId(dbId) === submittedNorm;
+        });
+        const renderedIds = Array.from(subProblemIds);
+        if (!match && peerResponses.length === renderedIds.length) {
+          const slot = renderedIds.findIndex(
+            (id) => id === submittedId || normalizeProblemId(id) === submittedNorm
+          );
+          match = slot >= 0 ? peerResponses[slot] : undefined;
         }
+        if (!match?.answerId || !Number.isFinite(Number(match.answerId))) {
+          alert('Could not find the submitted answer row for this subproblem.');
+          return;
+        }
+        targetAnswerId = Number(match.answerId);
       }
       await createGrading({
         answerId: targetAnswerId,
