@@ -68,6 +68,13 @@ export function GradingCreator({
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
   const isAnswerClassSelected = !!selectedAnswerClass;
 
+  function feedbackText(selected: AnswerClass | undefined, rows: ClassRow[]) {
+    return [selected, ...rows.filter((c) => c.isTrait && c.count > 0)]
+      .map((c) => c?.description?.trim())
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
   useEffect(() => {
     setAnswerClasses(hydrated);
     setFeedBack(initialGrading?.customFeedback ?? '');
@@ -77,17 +84,15 @@ export function GradingCreator({
     id: string,
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    let selected: AnswerClass | undefined;
     const newAnswerClasses = answerClasses.map((answerclass) => {
       if (answerclass.className === id) {
         const newCount = +event.target.value;
-        if (newCount > 0) selected = answerclass;
         return { ...answerclass, count: newCount >= 0 ? newCount : 0 };
       }
       return answerclass;
     });
 
-    setFeedBack(selected?.description?.trim() ?? '');
+    setFeedBack(feedbackText(selectedAnswerClass, newAnswerClasses));
     setAnswerClasses(newAnswerClasses);
   };
   const handleDefaultAnswerClassesChange = (id: string) => {
@@ -100,7 +105,7 @@ export function GradingCreator({
     });
 
     setSelectAnswerClass(selected);
-    setFeedBack(selected?.description?.trim() ?? '');
+    setFeedBack(feedbackText(selected, newAnswerClasses));
     setAnswerClasses(newAnswerClasses);
   };
   async function onSaveGrading(event: SyntheticEvent) {
