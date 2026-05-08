@@ -436,7 +436,9 @@ function AnswerItemsList({
               }
               secondary={
                 <Box sx={answerListStyles.meta}>
-                  <Chip size="small" label={`${group.answers.length} sub-problems`} />
+                  {group.answers.length > 1 ? (
+                    <Chip size="small" label={`${group.answers.length} sub-problems`} />
+                  ) : null}
                   <Chip size="small" label={group.courseInstance} />
                   <Chip size="small" label={group.courseId} />
                 </Box>
