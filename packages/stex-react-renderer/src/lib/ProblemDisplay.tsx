@@ -101,12 +101,14 @@ export function ProblemViewer({
   isFrozen,
   r,
   renderBelowAnswerAccepter,
+  hideAnswerAccepter = false,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
   isFrozen: boolean;
   r?: FTML.ProblemResponse;
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
+  hideAnswerAccepter?: boolean;
 }) {
   // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
   // even when SafeFTMLFragment caches the wrapper from the first render.
@@ -135,7 +137,7 @@ export function ProblemViewer({
         return (ch: ReactNode) => (
           <Box>
             {ch}
-            {!autogradable ? (
+            {!autogradable && !hideAnswerAccepter ? (
               <AnswerAccepter
                 masterProblemId={uri}
                 problemTitle={problem.problem.title_html ?? ''}
@@ -231,6 +233,7 @@ export function ProblemDisplay({
   onResponseUpdate,
   onFreezeResponse,
   renderBelowAnswerAccepter,
+  hideAnswerAccepter = false,
 }: {
   uri?: string;
   problem: FTMLProblemWithSolution | undefined;
@@ -240,6 +243,7 @@ export function ProblemDisplay({
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
+  hideAnswerAccepter?: boolean;
 }) {
   const { user } = useCurrentUser();
   const userId = user?.userId ?? '';
@@ -265,6 +269,7 @@ export function ProblemDisplay({
           r={r}
           onResponseUpdate={onResponseUpdate}
           renderBelowAnswerAccepter={renderBelowAnswerAccepter}
+          hideAnswerAccepter={hideAnswerAccepter}
         />
         {onFreezeResponse && !isEffectivelyFrozen && r && (
           <Button

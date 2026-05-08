@@ -126,6 +126,7 @@ export function PeerReviewGradedItemDisplay({
         isFrozen={true}
         r={answerText}
         uri={primary.questionId}
+        hideAnswerAccepter
       />
       {gradesToShow.map((item, idx) => {
         const numericSubProblemId = Number(item.subProblemId);
