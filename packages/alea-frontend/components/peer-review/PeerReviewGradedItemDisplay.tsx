@@ -11,6 +11,7 @@ import {
   Chip,
   Divider,
   IconButton,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { contentFragment } from '@flexiformal/ftml-backend';
@@ -37,7 +38,6 @@ export function PeerReviewGradedItemDisplay({
   const [subProblemsByGradeId, setSubProblemsByGradeId] = useState<
     Record<number, { titleHtml: string; html: string }>
   >({});
-
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -158,19 +158,20 @@ export function PeerReviewGradedItemDisplay({
                   <Chip label={`#${idx + 1}`} size="small" sx={feedbackStyles.indexChip} />
                 )}
               </Box>
-              {/* Stop propagation so delete doesn't toggle the accordion */}
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(item.id);
-                }}
-                aria-label="delete"
-                color="primary"
-                sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
-              >
-                <DeleteIcon sx={{ fontSize: 14 }} />
-              </IconButton>
+              <Tooltip title="Delete feedback" arrow placement="top">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item.id);
+                  }}
+                  aria-label="delete"
+                  color="primary"
+                  sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
+                >
+                  <DeleteIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Tooltip>
             </AccordionSummary>
 
             <AccordionDetails sx={feedbackStyles.accordionDetails}>
@@ -215,9 +216,9 @@ const feedbackStyles = {
     borderRadius: '6px !important',
     overflow: 'hidden',
     bgcolor: 'background.paper',
-    '&:before': { display: 'none' }, // removes default MUI top border line
+    '&:before': { display: 'none' },
     '&.Mui-expanded': {
-      mt: 1, // keep consistent margin when expanded
+      mt: 1,
     },
   },
   accordionSummary: {
