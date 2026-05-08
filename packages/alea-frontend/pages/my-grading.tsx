@@ -17,6 +17,7 @@ import { PeerReviewGradedItemDisplay } from '../components/peer-review/PeerRevie
 import MainLayout from '../layouts/MainLayout';
 
 interface FeedbackGroup {
+  key: string;
   questionId: string;
   grades: GradingWithAnswer[];
   questionTitle: string;
@@ -27,11 +28,18 @@ interface FeedbackGroup {
 function groupGradesByQuestion(items: GradingWithAnswer[]): FeedbackGroup[] {
   const map = new Map<string, FeedbackGroup>();
   for (const item of items) {
-    const existing = map.get(item.questionId);
+    const key = [
+      item.questionId,
+      item.studentId ?? `answer-${item.answerId}`,
+      item.courseId,
+      item.courseInstance,
+    ].join('|');
+    const existing = map.get(key);
     if (existing) {
       existing.grades.push(item);
     } else {
-      map.set(item.questionId, {
+      map.set(key, {
+        key,
         questionId: item.questionId,
         grades: [item],
         questionTitle: item.questionTitle,
@@ -54,12 +62,12 @@ function groupGradesByQuestion(items: GradingWithAnswer[]): FeedbackGroup[] {
 
 function GradedItemsList({
   groups,
-  selectedQuestionId,
+  selectedKey,
   onSelectItem,
 }: {
   groups: FeedbackGroup[];
-  selectedQuestionId?: string;
-  onSelectItem: (questionId: string) => void;
+  selectedKey?: string;
+  onSelectItem: (key: string) => void;
 }) {
   if (groups.length === 0) {
     return (
@@ -73,12 +81,12 @@ function GradedItemsList({
     <Box sx={gradingListStyles.root}>
       <List disablePadding>
         {groups.map((group, idx) => {
-          const isSelected = selectedQuestionId === group.questionId;
+          const isSelected = selectedKey === group.key;
           return (
             <ListItemButton
-              key={group.questionId}
+              key={group.key}
               selected={isSelected}
-              onClick={() => onSelectItem(group.questionId)}
+              onClick={() => onSelectItem(group.key)}
               sx={[gradingListStyles.item, isSelected && gradingListStyles.selectedItem]}
             >
               <ListItemText
@@ -119,7 +127,7 @@ function GradedItemsList({
 const MyGrading: NextPage = () => {
   const [gradingItems, setGradingItems] = useState<GradingWithAnswer[]>([]);
   const { user, isUserLoading } = useCurrentUser();
-  const [selected, setSelected] = useState<{ questionId: string } | undefined>(undefined);
+  const [selected, setSelected] = useState<{ key: string } | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
     if (isUserLoading) return;
@@ -137,7 +145,8 @@ const MyGrading: NextPage = () => {
           setGradingItems(g);
           setSelected((current) => {
             if (!current) return undefined;
-            return g.some((item) => item.questionId === current.questionId) ? current : undefined;
+            const groups = groupGradesByQuestion(g);
+            return groups.some((group) => group.key === current.key) ? current : undefined;
           });
         })
         .catch(() => {
@@ -147,7 +156,7 @@ const MyGrading: NextPage = () => {
   };
   const feedbackGroups = useMemo(() => groupGradesByQuestion(gradingItems), [gradingItems]);
   const selectedGroup = selected
-    ? feedbackGroups.find((group) => group.questionId === selected.questionId)
+    ? feedbackGroups.find((group) => group.key === selected.key)
     : undefined;
 
   return (
@@ -170,8 +179,8 @@ const MyGrading: NextPage = () => {
           <Divider />
           <GradedItemsList
             groups={feedbackGroups}
-            selectedQuestionId={selected?.questionId}
-            onSelectItem={(questionId) => setSelected({ questionId })}
+            selectedKey={selected?.key}
+            onSelectItem={(key) => setSelected({ key })}
           />
         </Box>
         <Box sx={pageStyles.details}>
