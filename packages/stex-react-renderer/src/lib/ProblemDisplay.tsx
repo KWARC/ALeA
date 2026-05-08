@@ -200,17 +200,33 @@ function AnswerAccepter({
   }
   return (
     <Box display="flex" alignItems="flex-start">
-      <Box
-        flexGrow={1}
-        sx={isFrozen && answer ? { bgcolor: '#fff8c5', borderRadius: 1, p: 0.5 } : undefined}
-      >
-        <MdEditor
-          name={name}
-          editingEnabled={!isFrozen}
-          placeholder={'...'}
-          value={answer}
-          onValueChange={onAnswerChange}
-        />
+      <Box flexGrow={1}>
+        {isFrozen && answer ? (
+          <Box sx={problemDisplayStyles.frozenAnswerBox}>
+            <Box sx={problemDisplayStyles.frozenAnswerLabel}>
+              <Typography variant="caption" sx={problemDisplayStyles.frozenAnswerLabelText}>
+                Submitted answer
+              </Typography>
+            </Box>
+            <Box sx={problemDisplayStyles.frozenAnswerContent}>
+              <MdEditor
+                name={name}
+                editingEnabled={false}
+                placeholder={'...'}
+                value={answer}
+                onValueChange={onAnswerChange}
+              />
+            </Box>
+          </Box>
+        ) : (
+          <MdEditor
+            name={name}
+            editingEnabled={!isFrozen}
+            placeholder={'...'}
+            value={answer}
+            onValueChange={onAnswerChange}
+          />
+        )}
       </Box>
 
       <IconButton disabled={isFrozen} onClick={onSaveClick} sx={{ ml: 2 }}>
@@ -286,3 +302,28 @@ export function ProblemDisplay({
     </Card>
   );
 }
+
+const problemDisplayStyles = {
+  frozenAnswerBox: {
+    border: '1px solid',
+    borderColor: 'divider',
+    borderRadius: 1,
+    overflow: 'hidden',
+    bgcolor: '#fff8c5',
+  },
+  frozenAnswerLabel: {
+    px: 1.25,
+    py: 0.5,
+    bgcolor: 'rgba(0, 0, 0, 0.04)',
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+  },
+  frozenAnswerLabelText: {
+    fontWeight: 700,
+    color: 'text.secondary',
+  },
+  frozenAnswerContent: {
+    px: 1.25,
+    py: 0.75,
+  },
+} as const;
