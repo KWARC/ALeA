@@ -29,8 +29,6 @@ import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { ProblemDisplay } from '@alea/stex-react-renderer';
 import { contentFragment } from '@flexiformal/ftml-backend';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
@@ -314,11 +312,7 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
           <Box key={a.id} sx={answerDisplayStyles.feedbackCard}>
             <Box sx={answerDisplayStyles.feedbackHeader}>
               <Typography variant="subtitle2">
-                {answers.length > 1
-                  ? subProblem
-                    ? 'Sub-problem'
-                    : subLabel
-                  : `Answered ${dayjs(a.updatedAt).fromNow()}`}
+                {answers.length > 1 ? (subProblem ? 'Sub-problem' : subLabel) : 'Answered'}
               </Typography>
               {answers.length > 1 && subProblem ? (
                 <Box sx={answerDisplayStyles.subProblemContent}>
@@ -434,11 +428,7 @@ function AnswerItemsList({
                     {getProblemLabel(group.questionId, idx)}
                   </Typography>
                   {group.questionTitle ? (
-                    <Typography
-                      variant="body2"
-                      component="div"
-                      sx={answerListStyles.questionTitle}
-                    >
+                    <Typography variant="body2" component="div" sx={answerListStyles.questionTitle}>
                       <SafeHtml html={group.questionTitle} />
                     </Typography>
                   ) : null}
@@ -519,7 +509,6 @@ function AnswerListSortFields({
   );
 }
 const MyAnswersPage: NextPage = () => {
-  dayjs.extend(relativeTime);
   const [answerItems, setAnswerItems] = useState<AnswerResponse[]>([]);
   const [sortAndFilterParams, setSortAndFilterParams] = useState<SortAndFilterParams>({
     multiSelectField: {

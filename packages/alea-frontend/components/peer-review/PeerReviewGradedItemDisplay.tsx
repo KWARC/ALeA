@@ -5,7 +5,6 @@ import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { GradingContext, ProblemDisplay, ShowGradingFor } from '@alea/stex-react-renderer';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
-import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 export function PeerReviewGradedItemDisplay({
   grade,
@@ -78,14 +77,8 @@ export function PeerReviewGradedItemDisplay({
           r={answerText}
           uri={grade.questionId}
         ></ProblemDisplay>
-        <Box sx={{ margin: '10px' }}>
-          <span>{dayjs(grade.updatedAt).fromNow()}</span>
-          <IconButton
-            onClick={() => onDelete(grade.id)}
-            sx={{ float: 'right', display: 'inline' }}
-            aria-label="delete"
-            color="primary"
-          >
+        <Box sx={{ margin: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton onClick={() => onDelete(grade.id)} aria-label="delete" color="primary">
             <DeleteIcon />
           </IconButton>
         </Box>
