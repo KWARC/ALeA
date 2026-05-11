@@ -2,7 +2,7 @@
   "name": "@alea/source",
   "version": "0.0.0",
   "license": "GNU AGPL",
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@11.0.9",
   "scripts": {
     "prebuild": "pnpm run prisma:generate  && nx run prebuild-scripts:serve:production --watch=false",
     "prisma:generate": "prisma generate --schema=prisma/comments/schema.prisma",
@@ -15,12 +15,12 @@
     "nxgraph": "nx graph"
   },
   "private": true,
-   "dependencies": {
+  "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
-    "@flexiformal/ftml": "0.0.28",
-    "@flexiformal/ftml-backend": "^0.0.10",
-    "@flexiformal/ftml-react": "0.0.28",
+    "@flexiformal/ftml": "^0.0.32",
+    "@flexiformal/ftml-backend": "^0.0.12",
+    "@flexiformal/ftml-react": "^0.0.31",
     "@hello-pangea/dnd": "^18.0.1",
     "@jonkoops/matomo-tracker-react": "^0.7.0",
     "@mui/icons-material": "^6.4.10",
@@ -149,4 +149,3 @@
     "vitest": "^4.0.15"
   }
 }
-

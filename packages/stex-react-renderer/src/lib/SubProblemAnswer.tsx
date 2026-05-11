@@ -21,6 +21,7 @@ import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { ListStepper } from './QuizDisplay';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 
 dayjs.extend(relativeTime);
 

@@ -123,6 +123,11 @@ export function EditView({
           setInputText(v);
           saveDraft(uri ?? '', parentId, v);
         }}
+        onShortcutSubmit={() => {
+          if (inputText && !isLoading) {
+            addUpdateComment();
+          }
+        }}
       />
       {!existingComment && !parentId && !isPrivateNote && (
         <Box sx={{ mb: 2 }}>

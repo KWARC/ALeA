@@ -126,7 +126,7 @@ export function ProblemViewer({
 
   return (
     <SafeFTMLFragment
-      key={uri}
+      key={`${uri}-${problemState.type}`}
       fragment={{ type: 'HtmlString', html, uri }}
       allowHovers={isFrozen}
       problemStates={problemStates}
@@ -287,11 +287,12 @@ export function ProblemDisplay({
           renderBelowAnswerAccepter={renderBelowAnswerAccepter}
           hideAnswerAccepter={hideAnswerAccepter}
         />
-        {onFreezeResponse && !isEffectivelyFrozen && r && (
+        {onFreezeResponse && !isEffectivelyFrozen && (
           <Button
+            disabled={!r}
             onClick={() => {
               onFreezeResponse();
-              if (uri) handleSubmit(problem, uri, r, userId);
+              if (uri) handleSubmit(problem, uri, r!, userId);
             }}
             variant="contained"
           >
