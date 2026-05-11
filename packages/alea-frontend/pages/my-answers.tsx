@@ -346,18 +346,12 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
                     ))}
                   </Select>
                 </FormControl>
-                {selectedGrading && summary ? (
+                {selectedGrading && summary?.notes ? (
                   <Box sx={answerDisplayStyles.feedbackSummary}>
-                    <Typography variant="body2" component="div">
-                      <Box component="span">Feedback</Box>
-                      {' - '}
-                      {summary.labels.length > 0 ? summary.labels.join(', ') : '-'}
+                    <Typography variant="subtitle2">Feedback</Typography>
+                    <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
+                      {summary.notes}
                     </Typography>
-                    {summary.notes ? (
-                      <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
-                        {summary.notes}
-                      </Typography>
-                    ) : null}
                   </Box>
                 ) : null}
               </Box>
@@ -638,11 +632,18 @@ const answerDisplayStyles = {
     mb: 1,
   },
   feedbackSummary: {
-    pt: 0.5,
+    p: 1.5,
+    borderRadius: 1,
+    bgcolor: 'grey.50',
   },
   feedbackNotes: {
-    mt: 0.75,
-    color: 'text.secondary',
+    mt: 0.5,
+    p: 1,
+    borderLeft: 3,
+    borderColor: 'primary.main',
+    borderRadius: 0.5,
+    color: 'text.primary',
+    bgcolor: 'background.paper',
     whiteSpace: 'pre-wrap',
   },
 } as const;
