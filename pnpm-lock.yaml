@@ -14,15 +14,6 @@ importers:
       '@emotion/styled':
         specifier: ^11.13.5
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.5))(@types/react@19.2.14)(react@19.2.5)
-      '@flexiformal/ftml':
-        specifier: ^0.0.31
-        version: 0.0.31
-      '@flexiformal/ftml-backend':
-        specifier: ^0.0.12
-        version: 0.0.12
-      '@flexiformal/ftml-react':
-        specifier: ^0.0.30
-        version: 0.0.30
       '@hello-pangea/dnd':
         specifier: ^18.0.1
         version: 18.0.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -190,7 +181,7 @@ importers:
         version: 7.0.2(react@19.2.5)
       root:
         specifier: github:tanstack/react-query
-        version: git+https://git@github.com:tanstack/react-query.git#9d1ce70b39d91271356432147d16f5441f9fa892
+        version: git+https://git@github.com:tanstack/react-query.git#55c6b8ad17ef0cecf120a4af003c748fa4c59b00
       rxjs:
         specifier: ^7.8.0
         version: 7.8.2
@@ -1495,15 +1486,6 @@ packages:
 
   '@fast-csv/parse@5.0.5':
     resolution: {integrity: sha512-M0IbaXZDbxfOnpVE5Kps/a6FGlILLhtLsvWd9qNH3d2TxNnpbNkFf3KD26OmJX6MHq7PdQAl5htStDwnuwHx6w==}
-
-  '@flexiformal/ftml-backend@0.0.12':
-    resolution: {integrity: sha512-VoFIOWaTPlBJ7LHga9bZ6ZsQEgBfZK/Uwkyo9LxRj55VFeTgRdMG9+IYGxeUviOlD1z1CUwC6/xeE0FMo2MnSw==}
-
-  '@flexiformal/ftml-react@0.0.30':
-    resolution: {integrity: sha512-v8Zq/IiYh+l56iYSJxrS5afF3nDizDnyZt4uyAA+NPkd5TN4CwGiy5AHUwiGFCEoln1wm9C8RHFfYDxyktCaxg==}
-
-  '@flexiformal/ftml@0.0.31':
-    resolution: {integrity: sha512-VVN+Laa3Xb61mKv7JaIJHJeQhKDrNNo4XnpDlJV7dWbgAhh6Tt2lg8iGmUJTSW97t2HrWDwzroJy2Ts6+Dyqeg==}
 
   '@floating-ui/core@1.7.5':
     resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
@@ -10029,8 +10011,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  root@git+https://git@github.com:tanstack/react-query.git#9d1ce70b39d91271356432147d16f5441f9fa892:
-    resolution: {commit: 9d1ce70b39d91271356432147d16f5441f9fa892, repo: git@github.com:tanstack/react-query.git, type: git}
+  root@git+https://git@github.com:tanstack/react-query.git#55c6b8ad17ef0cecf120a4af003c748fa4c59b00:
+    resolution: {commit: 55c6b8ad17ef0cecf120a4af003c748fa4c59b00, repo: git@github.com:tanstack/react-query.git, type: git}
     version: 0.0.0
 
   rrweb-cssom@0.6.0:
@@ -12769,16 +12751,6 @@ snapshots:
       lodash.isnil: 4.0.0
       lodash.isundefined: 3.0.1
       lodash.uniq: 4.5.0
-
-  '@flexiformal/ftml-backend@0.0.12': {}
-
-  '@flexiformal/ftml-react@0.0.30':
-    dependencies:
-      '@flexiformal/ftml': 0.0.31
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
-
-  '@flexiformal/ftml@0.0.31': {}
 
   '@floating-ui/core@1.7.5':
     dependencies:
@@ -23204,7 +23176,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.59.0
       fsevents: 2.3.3
 
-  root@git+https://git@github.com:tanstack/react-query.git#9d1ce70b39d91271356432147d16f5441f9fa892: {}
+  root@git+https://git@github.com:tanstack/react-query.git#55c6b8ad17ef0cecf120a4af003c748fa4c59b00: {}
 
   rrweb-cssom@0.6.0: {}
 
