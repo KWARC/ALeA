@@ -137,6 +137,7 @@ export function PeerReviewGradedItemDisplay({
         const subProblem = subProblemsByGradeId[item.id];
         const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
         const isExpanded = expandedIds.has(item.id);
+        const showStudentAnswer = !hasSubProblems || Boolean(subProblem);
 
         return (
           <Accordion
@@ -177,9 +178,11 @@ export function PeerReviewGradedItemDisplay({
             </AccordionSummary>
 
             <AccordionDetails sx={feedbackStyles.accordionDetails}>
-              {hasSubProblems && subProblem && (
+              {hasSubProblems && subProblem ? (
+                <SafeHtml html={subProblem.html || subProblem.titleHtml} />
+              ) : null}
+              {showStudentAnswer ? (
                 <>
-                  <SafeHtml html={subProblem.html || subProblem.titleHtml} />
                   <Box sx={feedbackStyles.answerSection}>
                     <Box sx={feedbackStyles.answerLabel}>
                       <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
@@ -192,7 +195,7 @@ export function PeerReviewGradedItemDisplay({
                   </Box>
                   <Divider sx={{ my: 0.75 }} />
                 </>
-              )}
+              ) : null}
               <Box sx={feedbackStyles.gradingSection}>
                 <Box sx={feedbackStyles.gradingHeader}>
                   <GradeOutlinedIcon sx={{ color: 'text.secondary', fontSize: 14 }} />
