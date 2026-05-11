@@ -1,5 +1,5 @@
 import { AnswerClass, Phase, QuizWithStatus } from '@alea/spec';
-import { FTML } from '@flexiformal/ftml';
+import { FTML, injectCss } from '@flexiformal/ftml';
 
 interface GradingNoteApi {
   html?: string;
@@ -61,8 +61,13 @@ export function normalizeProblemId(id: string | undefined | null): string {
 
 export function parseContentFragmentTuple(raw: unknown): { titleHtml: string; html: string } {
   if (!Array.isArray(raw)) return { titleHtml: '', html: '' };
+  const css = Array.isArray(raw[1]) ? raw[1] : [];
+  if (css.length) injectCss(css as FTML.Css[]);
   if (raw.length >= 3) {
-    return { titleHtml: String(raw[1] ?? ''), html: String(raw[2] ?? '') };
+    return {
+      titleHtml: Array.isArray(raw[1]) ? '' : String(raw[1] ?? ''),
+      html: String(raw[2] ?? ''),
+    };
   }
   return { titleHtml: '', html: String(raw[1] ?? '') };
 }
