@@ -1,3 +1,18 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@sentry/cli': true
+  '@swc/core': true
+  bcrypt: true
+  canvas: true
+  core-js-pure: true
+  cypress: true
+  esbuild: true
+  less: true
+  nx: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+
 ignoredBuiltDependencies:
   - cypress
 
