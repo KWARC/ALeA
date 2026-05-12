@@ -300,36 +300,28 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
     const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
 
+    if (gradings.length === 0) {
+      return (
+        <Box sx={answerDisplayStyles.emptyFeedback}>
+          No feedback received yet for this submission.
+        </Box>
+      );
+    }
+    if (!selectedGrading) return null;
+
     return (
-      <Box sx={answerDisplayStyles.feedbackCard}>
-        {answers.length === 1 ? (
-          <Box sx={answerDisplayStyles.feedbackHeader}>
-            <Typography variant="subtitle2">Answered</Typography>
-          </Box>
+      <Box sx={answerDisplayStyles.feedbackSummary}>
+        <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
+        {summary?.notes ? (
+          <>
+            <Typography variant="subtitle2" sx={{ mt: 1 }}>
+              Feedback
+            </Typography>
+            <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
+              {summary.notes}
+            </Typography>
+          </>
         ) : null}
-        {gradings.length === 0 ? (
-          <Box sx={answerDisplayStyles.emptyFeedback}>
-            No feedback received yet for this submission.
-          </Box>
-        ) : (
-          <Box sx={answerDisplayStyles.feedbackBody}>
-            {selectedGrading ? (
-              <Box sx={answerDisplayStyles.feedbackSummary}>
-                <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
-                {summary?.notes ? (
-                  <>
-                    <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                      Feedback
-                    </Typography>
-                    <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
-                      {summary.notes}
-                    </Typography>
-                  </>
-                ) : null}
-              </Box>
-            ) : null}
-          </Box>
-        )}
       </Box>
     );
   }
@@ -614,36 +606,17 @@ const answerOrganizerStyles = {
 } as const;
 
 const answerDisplayStyles = {
-  feedbackTitle: {
-    mt: 2,
-    mb: 1,
-  },
-  feedbackCard: {
-    mt: 1.5,
-    border: 1,
-    borderColor: 'divider',
-    borderRadius: 1,
-    overflow: 'hidden',
-    bgcolor: 'background.paper',
-  },
-  feedbackHeader: {
-    p: 1.5,
-    bgcolor: 'grey.50',
-    borderBottom: 1,
-    borderColor: 'divider',
-  },
   emptyFeedback: {
+    mt: 1.5,
     p: 2,
     color: 'text.secondary',
     bgcolor: 'background.default',
-  },
-  feedbackBody: {
-    p: 1.5,
   },
   reviewerSelect: {
     mb: 1,
   },
   feedbackSummary: {
+    mt: 1.5,
     p: 1.5,
     borderRadius: 1,
     bgcolor: 'grey.50',
