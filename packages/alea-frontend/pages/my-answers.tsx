@@ -148,13 +148,6 @@ function summarizeGradingForStudentView(grading: GradingInfo): { labels: string[
   };
 }
 
-function getSubProblemLabel(subProblemId: string | number | null | undefined) {
-  const raw = String(subProblemId ?? '').trim();
-  const numericId = Number(raw);
-  if (Number.isFinite(numericId)) return `Sub-problem ${numericId + 1}`;
-  return `Sub-problem ${raw}`;
-}
-
 function getProblemLabel(questionId: string, fallbackIdx: number) {
   let problemId = questionId;
   try {
@@ -211,9 +204,6 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
   const primary = answers[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
-  const [subProblemsByAnswerId, setSubProblemsByAnswerId] = useState<
-    Record<number, { titleHtml: string; html: string }>
-  >({});
   const [gradingsByAnswerId, setGradingsByAnswerId] = useState<Record<number, GradingInfo[]>>({});
   const [reviewerIdx, setReviewerIdx] = useState(0);
   const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
@@ -248,21 +238,6 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
           responses,
         });
 
-        const subProblems: Record<number, { titleHtml: string; html: string }> = {};
-        for (const a of answers) {
-          const subProblemId = String(a.subProblemId ?? '').trim();
-          if (!/^https?:\/\//i.test(subProblemId)) continue;
-          try {
-            subProblems[a.id] = parseContentFragmentTuple(
-              await contentFragment({ uri: subProblemId })
-            );
-          } catch {
-            // Keep the label fallback when a sub-problem fragment is unavailable.
-          }
-        }
-        if (!isMounted) return;
-        setSubProblemsByAnswerId(subProblems);
-
         const all: Record<number, GradingInfo[]> = {};
         for (const a of answers) {
           try {
@@ -280,7 +255,6 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
         if (isMounted) {
           setProblem(undefined);
           setAnswerText(undefined);
-          setSubProblemsByAnswerId({});
           setGradingsByAnswerId({});
           setProblemSlotIds([]);
         }
@@ -325,21 +299,14 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     const safeIdx = Math.min(reviewerIdx, Math.max(0, gradings.length - 1));
     const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
     const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
-    const subLabel = getSubProblemLabel(a.subProblemId);
-    const subProblem = subProblemsByAnswerId[a.id];
 
     return (
       <Box sx={answerDisplayStyles.feedbackCard}>
-        <Box sx={answerDisplayStyles.feedbackHeader}>
-          <Typography variant="subtitle2">
-            {answers.length > 1 ? (subProblem ? 'Sub-problem' : subLabel) : 'Answered'}
-          </Typography>
-          {answers.length > 1 && subProblem ? (
-            <Box sx={answerDisplayStyles.subProblemContent}>
-              <SafeHtml html={subProblem.html || subProblem.titleHtml} />
-            </Box>
-          ) : null}
-        </Box>
+        {answers.length === 1 ? (
+          <Box sx={answerDisplayStyles.feedbackHeader}>
+            <Typography variant="subtitle2">Answered</Typography>
+          </Box>
+        ) : null}
         {gradings.length === 0 ? (
           <Box sx={answerDisplayStyles.emptyFeedback}>
             No feedback received yet for this submission.
@@ -664,9 +631,6 @@ const answerDisplayStyles = {
     bgcolor: 'grey.50',
     borderBottom: 1,
     borderColor: 'divider',
-  },
-  subProblemContent: {
-    mt: 1,
   },
   emptyFeedback: {
     p: 2,
