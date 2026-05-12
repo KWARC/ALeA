@@ -311,16 +311,23 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
 
     return (
       <Box sx={answerDisplayStyles.feedbackSummary}>
-        <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
+        <Box sx={answerDisplayStyles.feedbackMeta}>
+          <Typography variant="caption" sx={answerDisplayStyles.feedbackLabel}>
+            Score
+          </Typography>
+          <Typography variant="caption" sx={answerDisplayStyles.scorePill}>
+            {selectedGrading.totalPoints}
+          </Typography>
+        </Box>
         {summary?.notes ? (
-          <>
-            <Typography variant="subtitle2" sx={{ mt: 1 }}>
+          <Box sx={answerDisplayStyles.feedbackNotes}>
+            <Typography variant="caption" sx={answerDisplayStyles.feedbackLabel}>
               Feedback
             </Typography>
-            <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
+            <Typography variant="body2" sx={answerDisplayStyles.feedbackText}>
               {summary.notes}
             </Typography>
-          </>
+          </Box>
         ) : null}
       </Box>
     );
@@ -617,18 +624,38 @@ const answerDisplayStyles = {
   },
   feedbackSummary: {
     mt: 1.5,
-    p: 1.5,
+    p: 1.25,
     borderRadius: 1,
-    bgcolor: 'grey.50',
+    border: 1,
+    borderColor: '#c8e6c9',
+    bgcolor: '#f6fbf6',
+  },
+  feedbackMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    mb: 1,
+  },
+  feedbackLabel: {
+    fontWeight: 700,
+    color: '#2e7d32',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.4,
+  },
+  scorePill: {
+    px: 1,
+    py: 0.25,
+    borderRadius: 999,
+    color: '#1b5e20',
+    bgcolor: '#dff3e3',
+    fontWeight: 700,
   },
   feedbackNotes: {
-    mt: 0.5,
-    p: 1,
-    borderLeft: 3,
-    borderColor: 'primary.main',
-    borderRadius: 0.5,
+    display: 'grid',
+    gap: 0.5,
+  },
+  feedbackText: {
     color: 'text.primary',
-    bgcolor: 'background.paper',
     whiteSpace: 'pre-wrap',
   },
 } as const;
