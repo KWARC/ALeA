@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
-import { SafeHtml } from '@alea/react-utils';
 import { MdViewer } from '@alea/markdown';
 import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
@@ -35,9 +34,7 @@ export function PeerReviewGradedItemDisplay({
   const primary = gradesToShow[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
-  const [subProblemsByGradeId, setSubProblemsByGradeId] = useState<
-    Record<number, { titleHtml: string; html: string }>
-  >({});
+  const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -89,25 +86,12 @@ export function PeerReviewGradedItemDisplay({
           responses,
         });
 
-        const subProblems: Record<number, { titleHtml: string; html: string }> = {};
-        for (const item of gradesToShow) {
-          const subProblemId = String(item.subProblemId ?? '').trim();
-          if (!/^https?:\/\//i.test(subProblemId)) continue;
-          try {
-            subProblems[item.id] = parseContentFragmentTuple(
-              await contentFragment({ uri: subProblemId })
-            );
-          } catch {
-            // Fall back to the label when the sub-problem fragment is unavailable.
-          }
-        }
-        if (!isMounted) return;
-        setSubProblemsByGradeId(subProblems);
+        setProblemSlotIds([]);
       } catch {
         if (!isMounted) return;
         setProblem(undefined);
         setAnswerText(undefined);
-        setSubProblemsByGradeId({});
+        setProblemSlotIds([]);
       }
     }
     loadProblem();
@@ -117,98 +101,132 @@ export function PeerReviewGradedItemDisplay({
   }, [primary, gradesToShow]);
 
   if (!primary) return null;
-  const hasSubProblems = gradesToShow.length > 1;
+
+  function findGradeForProblem(problemId: string, isSubProblem: boolean) {
+    if (!isSubProblem && gradesToShow.length === 1 && problemSlotIds.length === 0) return primary;
+    const direct = gradesToShow.find(
+      (item) => String(item.subProblemId ?? '').trim() === problemId
+    );
+    if (direct) return direct;
+    const byRenderedIndex = gradesToShow.find((item) => {
+      const idx = Number(item.subProblemId);
+      return Number.isFinite(idx) && problemSlotIds[idx] === problemId;
+    });
+    if (byRenderedIndex) return byRenderedIndex;
+    const idx = problemSlotIds.indexOf(problemId);
+    if (isSubProblem && idx >= 0 && gradesToShow.length === problemSlotIds.length) {
+      return gradesToShow[idx];
+    }
+  }
+
+  function GradeFeedback({
+    problemId,
+    isSubProblem,
+  }: {
+    problemId: string;
+    isSubProblem: boolean;
+  }) {
+    useEffect(() => {
+      if (!isSubProblem) return;
+      setProblemSlotIds((prev) => (prev.includes(problemId) ? prev : [...prev, problemId]));
+    }, [problemId, isSubProblem]);
+
+    if (!isSubProblem && problemSlotIds.length > 0) return null;
+    const item = findGradeForProblem(problemId, isSubProblem);
+    if (!item) return null;
+
+    const idx = gradesToShow.findIndex((g) => g.id === item.id);
+    const numericSubProblemId = Number(item.subProblemId);
+    const subProblemLabel = Number.isFinite(numericSubProblemId)
+      ? `Sub-problem ${numericSubProblemId + 1}`
+      : `Sub-problem ${idx + 1}`;
+    const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
+    const isExpanded = expandedIds.has(item.id);
+
+    return (
+      <Accordion
+        expanded={isExpanded}
+        onChange={() => handleToggle(item.id)}
+        disableGutters
+        elevation={0}
+        sx={feedbackStyles.accordion}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon sx={{ fontSize: 16, color: 'primary.main' }} />}
+          sx={feedbackStyles.accordionSummary}
+        >
+          <Box sx={feedbackStyles.headerLeft}>
+            <CommentOutlinedIcon sx={{ color: 'primary.main', fontSize: 14 }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1 }}>
+              {label}
+            </Typography>
+            {gradesToShow.length > 1 && (
+              <Chip label={`#${idx + 1}`} size="small" sx={feedbackStyles.indexChip} />
+            )}
+          </Box>
+          <Tooltip title="Delete feedback" arrow placement="top">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item.id);
+              }}
+              aria-label="delete"
+              color="primary"
+              sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
+            >
+              <DeleteIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
+        </AccordionSummary>
+
+        <AccordionDetails sx={feedbackStyles.accordionDetails}>
+          <Box sx={feedbackStyles.answerSection}>
+            <Box sx={feedbackStyles.answerLabel}>
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Student Answer
+              </Typography>
+            </Box>
+            <Box sx={feedbackStyles.answerContent}>
+              <MdViewer content={item.answer || '*Unanswered*'} />
+            </Box>
+          </Box>
+          <Divider sx={{ my: 0.75 }} />
+          <Box sx={feedbackStyles.gradingSection}>
+            <Box sx={feedbackStyles.gradingHeader}>
+              <GradeOutlinedIcon sx={{ color: 'text.secondary', fontSize: 14 }} />
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Score &amp; Feedback
+              </Typography>
+            </Box>
+            <GradingDisplay gradingInfo={item} />
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    );
+  }
+
+  const feedbackRevision = [
+    problemSlotIds.join('|'),
+    gradesToShow
+      .map((g) => `${g.id}:${g.updatedAt}:${expandedIds.has(g.id) ? 'open' : 'closed'}`)
+      .join('|'),
+  ].join('::');
 
   return (
     <Box>
       <ProblemDisplay
+        key={`${primary.questionId}-${feedbackRevision}`}
         showPoints={false}
         problem={problem}
         isFrozen={true}
         r={answerText}
         uri={primary.questionId}
         hideAnswerAccepter
+        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+          <GradeFeedback problemId={problemId} isSubProblem={isSubProblem} />
+        )}
       />
-      {gradesToShow.map((item, idx) => {
-        const numericSubProblemId = Number(item.subProblemId);
-        const subProblemLabel = Number.isFinite(numericSubProblemId)
-          ? `Sub-problem ${numericSubProblemId + 1}`
-          : `Sub-problem ${idx + 1}`;
-        const subProblem = subProblemsByGradeId[item.id];
-        const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
-        const isExpanded = expandedIds.has(item.id);
-        const showStudentAnswer = !hasSubProblems || Boolean(subProblem);
-
-        return (
-          <Accordion
-            key={item.id}
-            expanded={isExpanded}
-            onChange={() => handleToggle(item.id)}
-            disableGutters
-            elevation={0}
-            sx={feedbackStyles.accordion}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ fontSize: 16, color: 'primary.main' }} />}
-              sx={feedbackStyles.accordionSummary}
-            >
-              <Box sx={feedbackStyles.headerLeft}>
-                <CommentOutlinedIcon sx={{ color: 'primary.main', fontSize: 14 }} />
-                <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1 }}>
-                  {label}
-                </Typography>
-                {gradesToShow.length > 1 && (
-                  <Chip label={`#${idx + 1}`} size="small" sx={feedbackStyles.indexChip} />
-                )}
-              </Box>
-              <Tooltip title="Delete feedback" arrow placement="top">
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(item.id);
-                  }}
-                  aria-label="delete"
-                  color="primary"
-                  sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
-                >
-                  <DeleteIcon sx={{ fontSize: 14 }} />
-                </IconButton>
-              </Tooltip>
-            </AccordionSummary>
-
-            <AccordionDetails sx={feedbackStyles.accordionDetails}>
-              {hasSubProblems && subProblem ? (
-                <SafeHtml html={subProblem.html || subProblem.titleHtml} />
-              ) : null}
-              {showStudentAnswer ? (
-                <>
-                  <Box sx={feedbackStyles.answerSection}>
-                    <Box sx={feedbackStyles.answerLabel}>
-                      <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-                        Student Answer
-                      </Typography>
-                    </Box>
-                    <Box sx={feedbackStyles.answerContent}>
-                      <MdViewer content={item.answer || '*Unanswered*'} />
-                    </Box>
-                  </Box>
-                  <Divider sx={{ my: 0.75 }} />
-                </>
-              ) : null}
-              <Box sx={feedbackStyles.gradingSection}>
-                <Box sx={feedbackStyles.gradingHeader}>
-                  <GradeOutlinedIcon sx={{ color: 'text.secondary', fontSize: 14 }} />
-                  <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-                    Score &amp; Feedback
-                  </Typography>
-                </Box>
-                <GradingDisplay gradingInfo={item} />
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
     </Box>
   );
 }

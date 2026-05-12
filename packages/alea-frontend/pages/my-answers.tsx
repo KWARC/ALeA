@@ -215,7 +215,8 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     Record<number, { titleHtml: string; html: string }>
   >({});
   const [gradingsByAnswerId, setGradingsByAnswerId] = useState<Record<number, GradingInfo[]>>({});
-  const [reviewerIdxByAnswerId, setReviewerIdxByAnswerId] = useState<Record<number, number>>({});
+  const [reviewerIdx, setReviewerIdx] = useState(0);
+  const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -273,13 +274,15 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
         }
         if (!isMounted) return;
         setGradingsByAnswerId(all);
-        setReviewerIdxByAnswerId({});
+        setReviewerIdx(0);
+        setProblemSlotIds([]);
       } catch {
         if (isMounted) {
           setProblem(undefined);
           setAnswerText(undefined);
           setSubProblemsByAnswerId({});
           setGradingsByAnswerId({});
+          setProblemSlotIds([]);
         }
       }
     }
@@ -289,83 +292,121 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     };
   }, [primary.questionId, answers]);
 
+  function findAnswerForProblem(problemId: string, isSubProblem: boolean) {
+    if (!isSubProblem && answers.length === 1 && problemSlotIds.length === 0) return answers[0];
+    const direct = answers.find((a) => String(a.subProblemId ?? '').trim() === problemId);
+    if (direct) return direct;
+    const byRenderedIndex = answers.find((a) => {
+      const idx = Number(a.subProblemId);
+      return Number.isFinite(idx) && problemSlotIds[idx] === problemId;
+    });
+    if (byRenderedIndex) return byRenderedIndex;
+    const idx = problemSlotIds.indexOf(problemId);
+    if (isSubProblem && idx >= 0 && answers.length === problemSlotIds.length) return answers[idx];
+  }
+
+  function AnswerFeedback({
+    problemId,
+    isSubProblem,
+  }: {
+    problemId: string;
+    isSubProblem: boolean;
+  }) {
+    useEffect(() => {
+      if (!isSubProblem) return;
+      setProblemSlotIds((prev) => (prev.includes(problemId) ? prev : [...prev, problemId]));
+    }, [problemId, isSubProblem]);
+
+    if (!isSubProblem && problemSlotIds.length > 0) return null;
+    const a = findAnswerForProblem(problemId, isSubProblem);
+    if (!a) return null;
+
+    const gradings = sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? []);
+    const safeIdx = Math.min(reviewerIdx, Math.max(0, gradings.length - 1));
+    const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
+    const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
+    const subLabel = getSubProblemLabel(a.subProblemId);
+    const subProblem = subProblemsByAnswerId[a.id];
+
+    return (
+      <Box sx={answerDisplayStyles.feedbackCard}>
+        <Box sx={answerDisplayStyles.feedbackHeader}>
+          <Typography variant="subtitle2">
+            {answers.length > 1 ? (subProblem ? 'Sub-problem' : subLabel) : 'Answered'}
+          </Typography>
+          {answers.length > 1 && subProblem ? (
+            <Box sx={answerDisplayStyles.subProblemContent}>
+              <SafeHtml html={subProblem.html || subProblem.titleHtml} />
+            </Box>
+          ) : null}
+        </Box>
+        {gradings.length === 0 ? (
+          <Box sx={answerDisplayStyles.emptyFeedback}>
+            No feedback received yet for this submission.
+          </Box>
+        ) : (
+          <Box sx={answerDisplayStyles.feedbackBody}>
+            {selectedGrading ? (
+              <Box sx={answerDisplayStyles.feedbackSummary}>
+                <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
+                {summary?.notes ? (
+                  <>
+                    <Typography variant="subtitle2" sx={{ mt: 1 }}>
+                      Feedback
+                    </Typography>
+                    <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
+                      {summary.notes}
+                    </Typography>
+                  </>
+                ) : null}
+              </Box>
+            ) : null}
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  const feedbackRevision = [
+    problemSlotIds.join('|'),
+    Object.entries(gradingsByAnswerId)
+      .map(([answerId, gradings]) => `${answerId}:${gradings.map((g) => g.id).join(',')}`)
+      .join('|'),
+    reviewerIdx,
+  ].join('::');
+  const reviewerCount = Math.max(0, ...answers.map((a) => (gradingsByAnswerId[a.id] ?? []).length));
+  const safeReviewerIdx = Math.min(reviewerIdx, Math.max(0, reviewerCount - 1));
+
   return (
     <Box>
+      {reviewerCount > 0 ? (
+        <FormControl fullWidth size="small" sx={answerDisplayStyles.reviewerSelect}>
+          <InputLabel id={`reviewer-select-${primary.id}`}>Reviewer</InputLabel>
+          <Select
+            labelId={`reviewer-select-${primary.id}`}
+            label="Reviewer"
+            value={safeReviewerIdx}
+            onChange={(e) => setReviewerIdx(Number(e.target.value))}
+          >
+            {Array.from({ length: reviewerCount }, (_, i) => (
+              <MenuItem key={i} value={i}>
+                Reviewer {i + 1}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ) : null}
       <ProblemDisplay
+        key={`${primary.questionId}-${feedbackRevision}`}
         showPoints={true}
         problem={problem}
         isFrozen={true}
         r={answerText}
         uri={primary.questionId}
+        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+          <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
+        )}
       ></ProblemDisplay>
-
-      {answers.map((a) => {
-        const gradings = sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? []);
-        const idx = reviewerIdxByAnswerId[a.id] ?? 0;
-        const safeIdx = Math.min(idx, Math.max(0, gradings.length - 1));
-        const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
-        const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
-        const subLabel = getSubProblemLabel(a.subProblemId);
-        const subProblem = subProblemsByAnswerId[a.id];
-
-        return (
-          <Box key={a.id} sx={answerDisplayStyles.feedbackCard}>
-            <Box sx={answerDisplayStyles.feedbackHeader}>
-              <Typography variant="subtitle2">
-                {answers.length > 1 ? (subProblem ? 'Sub-problem' : subLabel) : 'Answered'}
-              </Typography>
-              {answers.length > 1 && subProblem ? (
-                <Box sx={answerDisplayStyles.subProblemContent}>
-                  <SafeHtml html={subProblem.html || subProblem.titleHtml} />
-                </Box>
-              ) : null}
-            </Box>
-            {gradings.length === 0 ? (
-              <Box sx={answerDisplayStyles.emptyFeedback}>
-                No feedback received yet for this submission.
-              </Box>
-            ) : (
-              <Box sx={answerDisplayStyles.feedbackBody}>
-                <FormControl fullWidth size="small" sx={answerDisplayStyles.reviewerSelect}>
-                  <InputLabel id={`reviewer-select-${a.id}`}>Reviewer</InputLabel>
-                  <Select
-                    labelId={`reviewer-select-${a.id}`}
-                    label="Reviewer"
-                    value={safeIdx}
-                    onChange={(e) =>
-                      setReviewerIdxByAnswerId((prev) => ({
-                        ...prev,
-                        [a.id]: Number(e.target.value),
-                      }))
-                    }
-                  >
-                    {gradings.map((_, i) => (
-                      <MenuItem key={i} value={i}>
-                        Reviewer {i + 1}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {selectedGrading ? (
-                  <Box sx={answerDisplayStyles.feedbackSummary}>
-                    <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
-                    {summary?.notes ? (
-                      <>
-                        <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                          Feedback
-                        </Typography>
-                        <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
-                          {summary.notes}
-                        </Typography>
-                      </>
-                    ) : null}
-                  </Box>
-                ) : null}
-              </Box>
-            )}
-          </Box>
-        );
-      })}
     </Box>
   );
 }
