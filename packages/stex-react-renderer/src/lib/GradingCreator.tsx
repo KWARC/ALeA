@@ -6,6 +6,7 @@ import {
   RadioGroup,
   TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { AnswerClass, CreateAnswerClassRequest, GradingInfo } from '@alea/spec';
 import {
@@ -67,6 +68,10 @@ export function GradingCreator({
   const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
   const isAnswerClassSelected = !!selectedAnswerClass;
+  const totalPoints = useMemo(
+    () => answerClasses.reduce((sum, c) => sum + c.count * c.points, 0),
+    [answerClasses]
+  );
 
   function feedbackText(selected: AnswerClass | undefined, rows: ClassRow[]) {
     return [selected, ...rows.filter((c) => c.isTrait && c.count > 0)]
@@ -166,6 +171,9 @@ export function GradingCreator({
               </Tooltip>
             </Box>
           ))}
+      <Typography variant="subtitle2" sx={{ my: 1 }}>
+        Total points: {totalPoints}
+      </Typography>
       <span>{t.feedback}</span>
       <TextField
         multiline

@@ -346,12 +346,19 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
                     ))}
                   </Select>
                 </FormControl>
-                {selectedGrading && summary?.notes ? (
+                {selectedGrading ? (
                   <Box sx={answerDisplayStyles.feedbackSummary}>
-                    <Typography variant="subtitle2">Feedback</Typography>
-                    <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
-                      {summary.notes}
-                    </Typography>
+                    <Typography variant="subtitle2">Score: {selectedGrading.totalPoints}</Typography>
+                    {summary?.notes ? (
+                      <>
+                        <Typography variant="subtitle2" sx={{ mt: 1 }}>
+                          Feedback
+                        </Typography>
+                        <Typography variant="body2" sx={answerDisplayStyles.feedbackNotes}>
+                          {summary.notes}
+                        </Typography>
+                      </>
+                    ) : null}
                   </Box>
                 ) : null}
               </Box>
