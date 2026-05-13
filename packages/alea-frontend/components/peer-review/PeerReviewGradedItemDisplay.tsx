@@ -1,11 +1,7 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Chip,
   IconButton,
@@ -33,25 +29,6 @@ export function PeerReviewGradedItemDisplay({
   const [problem, setProblem] = useState<FTMLProblemWithSolution>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
   const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    if (gradesToShow.length > 0) {
-      setExpandedIds(new Set([gradesToShow[0].id]));
-    }
-  }, [gradesToShow.map((g) => g.id).join(',')]);
-
-  const handleToggle = (id: number) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (!primary) return;
@@ -139,20 +116,10 @@ export function PeerReviewGradedItemDisplay({
       ? `Sub-problem ${numericSubProblemId + 1}`
       : `Sub-problem ${idx + 1}`;
     const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
-    const isExpanded = expandedIds.has(item.id);
 
     return (
-      <Accordion
-        expanded={isExpanded}
-        onChange={() => handleToggle(item.id)}
-        disableGutters
-        elevation={0}
-        sx={feedbackStyles.accordion}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ fontSize: 16, color: 'primary.main' }} />}
-          sx={feedbackStyles.accordionSummary}
-        >
+      <Box sx={feedbackStyles.card}>
+        <Box sx={feedbackStyles.header}>
           <Box sx={feedbackStyles.headerLeft}>
             <StarBorderIcon sx={feedbackStyles.scoreIcon} />
             <Typography variant="caption" sx={feedbackStyles.scoreLabel}>
@@ -179,9 +146,9 @@ export function PeerReviewGradedItemDisplay({
               <DeleteIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
-        </AccordionSummary>
+        </Box>
 
-        <AccordionDetails sx={feedbackStyles.accordionDetails}>
+        <Box sx={feedbackStyles.details}>
           <Box sx={feedbackStyles.answerSection}>
             <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
               Student Answer
@@ -202,16 +169,14 @@ export function PeerReviewGradedItemDisplay({
               )}
             </Box>
           </Box>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Box>
     );
   }
 
   const feedbackRevision = [
     problemSlotIds.join('|'),
-    gradesToShow
-      .map((g) => `${g.id}:${g.updatedAt}:${expandedIds.has(g.id) ? 'open' : 'closed'}`)
-      .join('|'),
+    gradesToShow.map((g) => `${g.id}:${g.updatedAt}`).join('|'),
   ].join('::');
 
   return (
@@ -233,36 +198,25 @@ export function PeerReviewGradedItemDisplay({
 }
 
 const feedbackStyles = {
-  accordion: {
+  card: {
     mt: 1,
     border: 1,
     borderColor: '#b7dfbd',
     borderRadius: '6px !important',
     overflow: 'hidden',
     bgcolor: '#f7fcf8',
-    '&:before': { display: 'none' },
-    '&.Mui-expanded': {
-      mt: 1,
-    },
   },
-  accordionSummary: {
+  header: {
+    display: 'flex',
+    alignItems: 'center',
     px: 1.5,
     py: 0,
-    minHeight: '52px !important',
+    minHeight: 52,
     bgcolor: '#f7fcf8',
     borderBottom: 1,
     borderColor: '#b7dfbd',
-    '& .MuiAccordionSummary-content': {
-      display: 'flex',
-      alignItems: 'center',
-      my: 0,
-    },
-    '& .MuiAccordionSummary-expandIconWrapper': {
-      order: 3,
-      color: '#2e7d32',
-    },
   },
-  accordionDetails: {
+  details: {
     p: 0,
     bgcolor: '#f7fcf8',
   },
@@ -305,7 +259,8 @@ const feedbackStyles = {
     px: 1.5,
     py: 1.5,
     borderBottom: 1,
-    borderColor: '#b7dfbd',
+    borderColor: 'divider',
+    bgcolor: '#fff8c5',
   },
   sectionLabelText: {
     display: 'block',
