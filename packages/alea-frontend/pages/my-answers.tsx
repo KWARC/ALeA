@@ -22,7 +22,6 @@ import {
   FTMLProblemWithSolution,
   getGradingItems,
   getMyAnswers,
-  GradingAnswerClass,
   GradingInfo,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
@@ -33,6 +32,11 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../components/nap/MultiItemsSelector';
+import {
+  addProblemSlot,
+  buildProblemResponse,
+  findItemForProblemSlot,
+} from '../components/peer-review/problem-display-utils';
 import MainLayout from '../layouts/MainLayout';
 
 const MULTI_SELECT_FIELDS = ['courseId', 'questionId', 'courseInstance'] as const;
@@ -115,37 +119,8 @@ function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
   });
 }
 
-function plainTextFromRichLabel(s: string) {
-  return s
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function summarizeGradingForStudentView(grading: GradingInfo): { labels: string[]; notes: string } {
-  const rows = grading.answerClasses ?? [];
-  const seen = new Set<string>();
-  const labels: string[] = [];
-
-  function pushDistinct(row: GradingAnswerClass) {
-    if (!row.count || row.count <= 0) return;
-    const t = plainTextFromRichLabel(
-      String(row.title || row.description || row.answerClassId).trim()
-    );
-    if (!t) return;
-    const key = t.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    labels.push(t);
-  }
-
-  for (const row of rows) if (row.isTrait) pushDistinct(row);
-  if (labels.length === 0) for (const row of rows) if (!row.isTrait) pushDistinct(row);
-
-  return {
-    labels,
-    notes: String(grading.customFeedback ?? '').trim(),
-  };
+function feedbackNotes(grading: GradingInfo): string {
+  return String(grading.customFeedback ?? '').trim();
 }
 
 function getProblemLabel(questionId: string, fallbackIdx: number) {
@@ -223,20 +198,14 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
           },
           answerClasses: [],
         });
-        const responses = [] as FTML.ProblemResponse['responses'];
-        for (const a of answers) {
-          const idx = Number(a.subProblemId);
-          if (Number.isFinite(idx)) {
-            responses[idx] = {
-              type: 'Fillinsol',
-              value: a.answer,
-            };
-          }
-        }
-        setAnswerText({
-          uri: primary.questionId,
-          responses,
-        });
+        setAnswerText(
+          buildProblemResponse(
+            primary.questionId,
+            answers,
+            (a) => a.subProblemId,
+            (a) => a.answer
+          )
+        );
 
         const all: Record<number, GradingInfo[]> = {};
         for (const a of answers) {
@@ -267,16 +236,13 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
   }, [primary.questionId, answers]);
 
   function findAnswerForProblem(problemId: string, isSubProblem: boolean) {
-    if (!isSubProblem && answers.length === 1 && problemSlotIds.length === 0) return answers[0];
-    const direct = answers.find((a) => String(a.subProblemId ?? '').trim() === problemId);
-    if (direct) return direct;
-    const byRenderedIndex = answers.find((a) => {
-      const idx = Number(a.subProblemId);
-      return Number.isFinite(idx) && problemSlotIds[idx] === problemId;
-    });
-    if (byRenderedIndex) return byRenderedIndex;
-    const idx = problemSlotIds.indexOf(problemId);
-    if (isSubProblem && idx >= 0 && answers.length === problemSlotIds.length) return answers[idx];
+    return findItemForProblemSlot(
+      answers,
+      problemId,
+      isSubProblem,
+      problemSlotIds,
+      (a) => a.subProblemId
+    );
   }
 
   function AnswerFeedback({
@@ -288,7 +254,7 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
   }) {
     useEffect(() => {
       if (!isSubProblem) return;
-      setProblemSlotIds((prev) => (prev.includes(problemId) ? prev : [...prev, problemId]));
+      setProblemSlotIds((prev) => addProblemSlot(prev, problemId));
     }, [problemId, isSubProblem]);
 
     if (!isSubProblem && problemSlotIds.length > 0) return null;
@@ -298,7 +264,7 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     const gradings = sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? []);
     const safeIdx = Math.min(reviewerIdx, Math.max(0, gradings.length - 1));
     const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
-    const summary = selectedGrading ? summarizeGradingForStudentView(selectedGrading) : null;
+    const notes = selectedGrading ? feedbackNotes(selectedGrading) : '';
 
     if (gradings.length === 0) {
       return (
@@ -319,13 +285,13 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
             {selectedGrading.totalPoints}
           </Typography>
         </Box>
-        {summary?.notes ? (
+        {notes ? (
           <Box sx={answerDisplayStyles.feedbackNotes}>
             <Typography variant="caption" sx={answerDisplayStyles.feedbackLabel}>
               Feedback
             </Typography>
             <Typography variant="body2" sx={answerDisplayStyles.feedbackText}>
-              {summary.notes}
+              {notes}
             </Typography>
           </Box>
         ) : null}

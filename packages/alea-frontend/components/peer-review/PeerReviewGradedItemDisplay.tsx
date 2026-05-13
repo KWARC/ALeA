@@ -1,19 +1,18 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import {
-  Box,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { MdViewer } from '@alea/markdown';
 import { ProblemDisplay } from '@alea/stex-react-renderer';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import { useEffect, useMemo, useState } from 'react';
+import {
+  addProblemSlot,
+  buildProblemResponse,
+  findItemForProblemSlot,
+} from './problem-display-utils';
 
 export function PeerReviewGradedItemDisplay({
   grade,
@@ -46,20 +45,14 @@ export function PeerReviewGradedItemDisplay({
           },
           answerClasses: [],
         });
-        const responses = [] as FTML.ProblemResponse['responses'];
-        for (const item of gradesToShow) {
-          const subProblemIdx = Number(item.subProblemId);
-          if (Number.isFinite(subProblemIdx)) {
-            responses[subProblemIdx] = {
-              type: 'Fillinsol',
-              value: item.answer,
-            };
-          }
-        }
-        setAnswerText({
-          uri: primary.questionId,
-          responses,
-        });
+        setAnswerText(
+          buildProblemResponse(
+            primary.questionId,
+            gradesToShow,
+            (item) => item.subProblemId,
+            (item) => item.answer
+          )
+        );
 
         setProblemSlotIds([]);
       } catch {
@@ -78,20 +71,13 @@ export function PeerReviewGradedItemDisplay({
   if (!primary) return null;
 
   function findGradeForProblem(problemId: string, isSubProblem: boolean) {
-    if (!isSubProblem && gradesToShow.length === 1 && problemSlotIds.length === 0) return primary;
-    const direct = gradesToShow.find(
-      (item) => String(item.subProblemId ?? '').trim() === problemId
+    return findItemForProblemSlot(
+      gradesToShow,
+      problemId,
+      isSubProblem,
+      problemSlotIds,
+      (item) => item.subProblemId
     );
-    if (direct) return direct;
-    const byRenderedIndex = gradesToShow.find((item) => {
-      const idx = Number(item.subProblemId);
-      return Number.isFinite(idx) && problemSlotIds[idx] === problemId;
-    });
-    if (byRenderedIndex) return byRenderedIndex;
-    const idx = problemSlotIds.indexOf(problemId);
-    if (isSubProblem && idx >= 0 && gradesToShow.length === problemSlotIds.length) {
-      return gradesToShow[idx];
-    }
   }
 
   function GradeFeedback({
@@ -103,7 +89,7 @@ export function PeerReviewGradedItemDisplay({
   }) {
     useEffect(() => {
       if (!isSubProblem) return;
-      setProblemSlotIds((prev) => (prev.includes(problemId) ? prev : [...prev, problemId]));
+      setProblemSlotIds((prev) => addProblemSlot(prev, problemId));
     }, [problemId, isSubProblem]);
 
     if (!isSubProblem && problemSlotIds.length > 0) return null;
