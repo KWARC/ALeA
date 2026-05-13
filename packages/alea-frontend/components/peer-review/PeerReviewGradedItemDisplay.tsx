@@ -1,15 +1,13 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
-import GradeOutlinedIcon from '@mui/icons-material/GradeOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
   Chip,
-  Divider,
   IconButton,
   Tooltip,
   Typography,
@@ -17,7 +15,7 @@ import {
 import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { MdViewer } from '@alea/markdown';
-import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
+import { ProblemDisplay } from '@alea/stex-react-renderer';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -156,12 +154,15 @@ export function PeerReviewGradedItemDisplay({
           sx={feedbackStyles.accordionSummary}
         >
           <Box sx={feedbackStyles.headerLeft}>
-            <CommentOutlinedIcon sx={{ color: 'primary.main', fontSize: 14 }} />
-            <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1 }}>
-              {label}
+            <StarBorderIcon sx={feedbackStyles.scoreIcon} />
+            <Typography variant="caption" sx={feedbackStyles.scoreLabel}>
+              Score
+            </Typography>
+            <Typography component="span" sx={feedbackStyles.scoreChip}>
+              {item.totalPoints}
             </Typography>
             {gradesToShow.length > 1 && (
-              <Chip label={`#${idx + 1}`} size="small" sx={feedbackStyles.indexChip} />
+              <Chip label={label} size="small" sx={feedbackStyles.indexChip} />
             )}
           </Box>
           <Tooltip title="Delete feedback" arrow placement="top">
@@ -182,24 +183,24 @@ export function PeerReviewGradedItemDisplay({
 
         <AccordionDetails sx={feedbackStyles.accordionDetails}>
           <Box sx={feedbackStyles.answerSection}>
-            <Box sx={feedbackStyles.answerLabel}>
-              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-                Student Answer
-              </Typography>
-            </Box>
+            <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+              Student Answer
+            </Typography>
             <Box sx={feedbackStyles.answerContent}>
               <MdViewer content={item.answer || '*Unanswered*'} />
             </Box>
           </Box>
-          <Divider sx={{ my: 0.75 }} />
-          <Box sx={feedbackStyles.gradingSection}>
-            <Box sx={feedbackStyles.gradingHeader}>
-              <GradeOutlinedIcon sx={{ color: 'text.secondary', fontSize: 14 }} />
-              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-                Score &amp; Feedback
-              </Typography>
+          <Box sx={feedbackStyles.feedbackSection}>
+            <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+              Feedback
+            </Typography>
+            <Box sx={feedbackStyles.feedbackContent}>
+              {item.customFeedback ? (
+                <MdViewer content={item.customFeedback} />
+              ) : (
+                <Typography sx={feedbackStyles.emptyFeedback}>No feedback provided.</Typography>
+              )}
             </Box>
-            <GradingDisplay gradingInfo={item} />
           </Box>
         </AccordionDetails>
       </Accordion>
@@ -235,80 +236,109 @@ const feedbackStyles = {
   accordion: {
     mt: 1,
     border: 1,
-    borderColor: 'divider',
+    borderColor: '#b7dfbd',
     borderRadius: '6px !important',
     overflow: 'hidden',
-    bgcolor: 'background.paper',
+    bgcolor: '#f7fcf8',
     '&:before': { display: 'none' },
     '&.Mui-expanded': {
       mt: 1,
     },
   },
   accordionSummary: {
-    px: 1.25,
+    px: 1.5,
     py: 0,
-    minHeight: '32px !important',
-    bgcolor: 'grey.50',
+    minHeight: '52px !important',
+    bgcolor: '#f7fcf8',
     borderBottom: 1,
-    borderColor: 'divider',
+    borderColor: '#b7dfbd',
     '& .MuiAccordionSummary-content': {
       display: 'flex',
       alignItems: 'center',
-      my: '6px',
+      my: 0,
     },
     '& .MuiAccordionSummary-expandIconWrapper': {
       order: 3,
+      color: '#2e7d32',
     },
   },
   accordionDetails: {
-    p: 1.25,
+    p: 0,
+    bgcolor: '#f7fcf8',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: 0.5,
+    gap: 1,
     flex: 1,
   },
-  indexChip: {
-    bgcolor: 'primary.50',
-    color: 'primary.main',
-    fontWeight: 600,
-    height: 16,
-    fontSize: '0.65rem',
+  scoreIcon: {
+    color: '#2e7d32',
+    fontSize: 20,
   },
-  answerSection: {
-    mt: 0.75,
-    border: 1,
-    borderColor: 'grey.300',
-    borderRadius: 1,
-    overflow: 'hidden',
+  scoreLabel: {
+    color: '#2e7d32',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    letterSpacing: 0.4,
+    lineHeight: 1,
+    textTransform: 'uppercase' as const,
   },
-  answerLabel: {
+  scoreChip: {
     px: 1,
     py: 0.25,
-    bgcolor: 'grey.100',
+    borderRadius: 999,
+    bgcolor: '#d9f2dd',
+    color: '#1b5e20',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    lineHeight: 1,
+  },
+  indexChip: {
+    bgcolor: '#e8f5e9',
+    color: '#2e7d32',
+    fontWeight: 600,
+    height: 24,
+    fontSize: '0.75rem',
+  },
+  answerSection: {
+    px: 1.5,
+    py: 1.5,
     borderBottom: 1,
-    borderColor: 'grey.300',
+    borderColor: '#b7dfbd',
   },
   sectionLabelText: {
-    fontWeight: 600,
-    color: 'text.secondary',
+    display: 'block',
+    fontWeight: 700,
+    color: '#2e7d32',
     textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-    fontSize: '0.65rem',
+    letterSpacing: 0.4,
+    fontSize: '0.75rem',
   },
   answerContent: {
-    px: 1,
-    py: 0.5,
-    bgcolor: 'background.paper',
+    mt: 1.5,
+    color: 'text.primary',
+    fontSize: '0.875rem',
+    lineHeight: 1.45,
+    '& p': {
+      my: 0,
+    },
   },
-  gradingSection: {
-    mt: 0.25,
+  feedbackSection: {
+    px: 1.5,
+    py: 1.5,
   },
-  gradingHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 0.5,
-    mb: 0.5,
+  feedbackContent: {
+    mt: 1,
+    color: 'text.primary',
+    fontSize: '0.875rem',
+    lineHeight: 1.45,
+    '& p': {
+      my: 0,
+    },
+  },
+  emptyFeedback: {
+    color: 'text.secondary',
+    fontSize: '0.875rem',
   },
 } as const;
