@@ -104,55 +104,56 @@ export function PeerReviewGradedItemDisplay({
     const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
 
     return (
-      <Box sx={feedbackStyles.card}>
-        <Box sx={feedbackStyles.header}>
-          <Box sx={feedbackStyles.headerLeft}>
-            <StarBorderIcon sx={feedbackStyles.scoreIcon} />
-            <Typography variant="caption" sx={feedbackStyles.scoreLabel}>
-              Score
-            </Typography>
-            <Typography component="span" sx={feedbackStyles.scoreChip}>
-              {item.totalPoints}
-            </Typography>
-            {gradesToShow.length > 1 && (
-              <Chip label={label} size="small" sx={feedbackStyles.indexChip} />
-            )}
+      <Box sx={feedbackStyles.wrapper}>
+        <Box sx={feedbackStyles.answerSection}>
+          <Typography variant="caption" sx={feedbackStyles.answerLabelText}>
+            Student Answer
+          </Typography>
+          <Box sx={feedbackStyles.answerContent}>
+            <MdViewer content={item.answer || '*Unanswered*'} />
           </Box>
-          <Tooltip title="Delete feedback" arrow placement="top">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item.id);
-              }}
-              aria-label="delete"
-              color="primary"
-              sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
-            >
-              <DeleteIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
         </Box>
-
-        <Box sx={feedbackStyles.details}>
-          <Box sx={feedbackStyles.answerSection}>
-            <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-              Student Answer
-            </Typography>
-            <Box sx={feedbackStyles.answerContent}>
-              <MdViewer content={item.answer || '*Unanswered*'} />
-            </Box>
-          </Box>
-          <Box sx={feedbackStyles.feedbackSection}>
-            <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
-              Feedback
-            </Typography>
-            <Box sx={feedbackStyles.feedbackContent}>
-              {item.customFeedback ? (
-                <MdViewer content={item.customFeedback} />
-              ) : (
-                <Typography sx={feedbackStyles.emptyFeedback}>No feedback provided.</Typography>
+        <Box sx={feedbackStyles.card}>
+          <Box sx={feedbackStyles.header}>
+            <Box sx={feedbackStyles.headerLeft}>
+              <StarBorderIcon sx={feedbackStyles.scoreIcon} />
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Score
+              </Typography>
+              <Typography component="span" sx={feedbackStyles.scoreChip}>
+                {item.totalPoints}
+              </Typography>
+              {gradesToShow.length > 1 && (
+                <Chip label={label} size="small" sx={feedbackStyles.indexChip} />
               )}
+            </Box>
+            <Tooltip title="Delete feedback" arrow placement="top">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item.id);
+                }}
+                aria-label="delete"
+                color="primary"
+                sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
+              >
+                <DeleteIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box sx={feedbackStyles.details}>
+            <Box sx={feedbackStyles.feedbackSection}>
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Feedback
+              </Typography>
+              <Box sx={feedbackStyles.feedbackContent}>
+                {item.customFeedback ? (
+                  <MdViewer content={item.customFeedback} />
+                ) : (
+                  <Typography sx={feedbackStyles.emptyFeedback}>No feedback provided.</Typography>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -184,6 +185,9 @@ export function PeerReviewGradedItemDisplay({
 }
 
 const feedbackStyles = {
+  wrapper: {
+    mt: 1,
+  },
   card: {
     mt: 1,
     border: 1,
@@ -216,14 +220,6 @@ const feedbackStyles = {
     color: '#2e7d32',
     fontSize: 20,
   },
-  scoreLabel: {
-    color: '#2e7d32',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    letterSpacing: 0.4,
-    lineHeight: 1,
-    textTransform: 'uppercase' as const,
-  },
   scoreChip: {
     px: 1,
     py: 0.25,
@@ -244,9 +240,19 @@ const feedbackStyles = {
   answerSection: {
     px: 1.5,
     py: 1.5,
-    borderBottom: 1,
+    border: 1,
     borderColor: 'divider',
+    borderRadius: 1,
+    overflow: 'hidden',
     bgcolor: '#fff8c5',
+  },
+  answerLabelText: {
+    display: 'block',
+    fontWeight: 700,
+    color: 'text.secondary',
+    letterSpacing: 0.4,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase' as const,
   },
   sectionLabelText: {
     display: 'block',
