@@ -19,14 +19,16 @@ import {
 
 import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse: any[] = await contentFragment({ uri: problemUri });
+  const fragmentResponse = await contentFragment({ uri: problemUri });
+  const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
   return {
     problem: {
       uri: problemUri,
-      html: fragmentResponse[2],
-      title_html: '',
+      html,
+      title_html: titleHtml,
     },
     answerClasses: [],
   };
