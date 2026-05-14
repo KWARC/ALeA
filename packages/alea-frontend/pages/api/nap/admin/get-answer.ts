@@ -18,6 +18,7 @@ interface AdminAnswerRow {
 }
 
 interface AnswerResponseRow {
+  answerId: number;
   subProblemId: string;
   answer: string;
 }
@@ -48,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const base = answer[0];
   const allResponses = await executeAndEndSet500OnError<AnswerResponseRow[]>(
-    `SELECT subProblemId, answer
+    `SELECT id AS answerId, subProblemId, answer
      FROM Answer
      WHERE questionId = ? AND userId = ? AND courseId = ? AND courseInstance = ?
      ORDER BY subProblemId`,

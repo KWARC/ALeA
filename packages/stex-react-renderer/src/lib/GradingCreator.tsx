@@ -14,7 +14,7 @@ import {
   omitAnswerClassesDuplicatingDefaultRadioTitles,
 } from '@alea/quiz-utils';
 import { useRouter } from 'next/router';
-import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 
@@ -24,6 +24,11 @@ function applySavedToRows(base: ClassRow[], saved: GradingInfo | null): ClassRow
   if (!saved?.answerClasses?.length) return base;
   const byId = new Map(saved.answerClasses.map((a) => [a.answerClassId, a.count]));
   return base.map((c) => ({ ...c, count: byId.get(c.className) ?? 0 }));
+}
+
+function preserveCounts(base: ClassRow[], current: ClassRow[]): ClassRow[] {
+  const byId = new Map(current.map((c) => [c.className, c.count]));
+  return base.map((c) => ({ ...c, count: byId.get(c.className) ?? c.count }));
 }
 
 function AnswerClassTitleLabel({ title }: { title: string }) {
@@ -72,9 +77,18 @@ export function GradingCreator({
     () => applySavedToRows(mergedBase, initialGrading),
     [mergedBase, initialGrading]
   );
+  const initialSelectedAnswerClass = useMemo(
+    () => hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined,
+    [hydrated]
+  );
   const [answerClasses, setAnswerClasses] = useState<ClassRow[]>(hydrated);
   const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
-  const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
+  const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(
+    initialSelectedAnswerClass
+  );
+  const selectedClassNameRef = useRef<string | undefined>(
+    initialSelectedAnswerClass?.className
+  );
   const isAnswerClassSelected = !!selectedAnswerClass;
   const showTraitInputs = isAnswerClassSelected && !selectedAnswerClass.closed;
   const totalPoints = useMemo(
@@ -105,10 +119,20 @@ export function GradingCreator({
   }
 
   useEffect(() => {
+    const selectedClassName = selectedClassNameRef.current;
+    if (selectedClassName) {
+      setAnswerClasses((current) => preserveCounts(hydrated, current));
+      setSelectAnswerClass(
+        (current) => hydrated.find((c) => c.className === selectedClassName) ?? current
+      );
+      return;
+    }
+
     setAnswerClasses(hydrated);
     setFeedBack(initialGrading?.customFeedback ?? '');
-    setSelectAnswerClass(hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined);
-  }, [hydrated, initialGrading]);
+    setSelectAnswerClass(initialSelectedAnswerClass);
+    selectedClassNameRef.current = initialSelectedAnswerClass?.className;
+  }, [hydrated, initialGrading, initialSelectedAnswerClass]);
 
   useEffect(() => {
     onGradingChange?.(selectedAnswerClasses, feedback, isAnswerClassSelected);
@@ -139,6 +163,7 @@ export function GradingCreator({
     });
 
     setSelectAnswerClass(selected);
+    selectedClassNameRef.current = selected?.className;
     setFeedBack(feedbackText(selected, newAnswerClasses));
     setAnswerClasses(newAnswerClasses);
   };

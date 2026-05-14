@@ -128,6 +128,14 @@ const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
   studentId: 'ASC',
   updatedAt: 'ASC',
 };
+
+type AnswerResponseWithId = { answerId?: number; subProblemId: string; answer: string };
+type SelectedGradingItem = {
+  homeworkId: number;
+  questionId: string;
+  studentId: string;
+  answerId: number;
+};
 type MultSelectField = (typeof MULTI_SELECT_FIELDS)[number];
 type SortField = (typeof ALL_SORT_FIELDS)[number];
 
@@ -146,6 +154,19 @@ function getQuestionTitle(
     getMappedProblem(questionMap, questionId)?.problem?.title_html ??
     getParamFromUri(questionId, 'd')?.replace(/[-_+]/g, ' ') ??
     questionId
+  );
+}
+
+function isSameGradingItem(
+  item: Pick<GradingItem, 'homeworkId' | 'questionId' | 'studentId' | 'answerId'>,
+  selected?: SelectedGradingItem
+) {
+  return (
+    !!selected &&
+    (Number(item.answerId) === selected.answerId ||
+      ((item.homeworkId ?? 0) === selected.homeworkId &&
+        item.questionId === selected.questionId &&
+        item.studentId === selected.studentId))
   );
 }
 
@@ -359,6 +380,7 @@ function GradingItemsList({
   onSelectItem,
   homeworkMap,
   isPeerGrading,
+  selectedItem,
 }: {
   gradingItems: GradingItem[];
   onSelectItem: (
@@ -369,6 +391,7 @@ function GradingItemsList({
   ) => void;
   homeworkMap: Record<string, HomeworkInfo>;
   isPeerGrading: boolean;
+  selectedItem?: SelectedGradingItem;
 }) {
   return (
     <Box maxHeight="50vh" overflow="scroll">
@@ -384,36 +407,51 @@ function GradingItemsList({
               numSubProblemsInstructorGraded,
             },
             idx
-          ) => (
-            <ListItemButton
-              key={`${homeworkId}-${questionId}-${studentId}`}
-              onClick={(e) => onSelectItem(homeworkId, questionId, studentId, answerId)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? '#f0f0f0' : 'background.paper' }}
-            >
-              <ListItemIcon>
-                {numSubProblemsInstructorGraded === numSubProblemsAnswered ? (
-                  <ShieldIcon htmlColor="green" />
-                ) : (
-                  <CheckBoxOutlineBlankIcon />
-                )}
-              </ListItemIcon>
-              <ListItemText
-                primary={!isPeerGrading ? `Problem ${idx + 1}` : 'Problem'}
-                secondary={
-                  <>
-                    {!homeworkId ? (
-                      'Not Homework'
-                    ) : homeworkMap[homeworkId]?.title ? (
-                      <SafeHtml html={homeworkMap[homeworkId].title} />
-                    ) : (
-                      'HW ' + homeworkId
-                    )}
-                    &nbsp;{isPeerGrading ? '' : `(${studentId})`}
-                  </>
-                }
-              />
-            </ListItemButton>
-          )
+          ) => {
+            const isSelected = isSameGradingItem(
+              { homeworkId, questionId, studentId, answerId },
+              selectedItem
+            );
+            return (
+              <ListItemButton
+                key={`${homeworkId}-${questionId}-${studentId}-${answerId}`}
+                onClick={(e) => onSelectItem(homeworkId, questionId, studentId, answerId)}
+                sx={{
+                  py: 0,
+                  backgroundColor: isSelected
+                    ? '#dff3e4'
+                    : idx % 2 === 0
+                    ? '#f0f0f0'
+                    : 'background.paper',
+                  borderLeft: isSelected ? '5px solid #1b5e20' : '5px solid transparent',
+                  '&:hover': { backgroundColor: isSelected ? '#d0ebd7' : undefined },
+                }}
+              >
+                <ListItemIcon>
+                  {numSubProblemsInstructorGraded === numSubProblemsAnswered ? (
+                    <ShieldIcon htmlColor="green" />
+                  ) : (
+                    <CheckBoxOutlineBlankIcon />
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary={!isPeerGrading ? `Problem ${idx + 1}` : 'Problem'}
+                  secondary={
+                    <>
+                      {!homeworkId ? (
+                        'Not Homework'
+                      ) : homeworkMap[homeworkId]?.title ? (
+                        <SafeHtml html={homeworkMap[homeworkId].title} />
+                      ) : (
+                        'HW ' + homeworkId
+                      )}
+                      &nbsp;{isPeerGrading ? '' : `(${studentId})`}
+                    </>
+                  }
+                />
+              </ListItemButton>
+            );
+          }
         )}
       </List>
     </Box>
@@ -442,6 +480,7 @@ interface EmbeddedGradingFormState {
     feedback: string,
     hasSelectedAnswerClass: boolean
   ) => void;
+  getDraft: (problemId: string) => GradingDraft | undefined;
 }
 
 interface GradingDraft {
@@ -451,6 +490,22 @@ interface GradingDraft {
 }
 
 const EmbeddedGradingFormContext = createContext<EmbeddedGradingFormState | null>(null);
+
+function draftToGradingInfo(draft: GradingDraft): GradingInfo {
+  return {
+    id: -1,
+    customFeedback: draft.feedback,
+    answerClasses: draft.acs.map((c, idx) => ({
+      ...c,
+      id: idx,
+      gradingId: -1,
+    })),
+  } as GradingInfo;
+}
+
+function sameJsonValue(a: unknown, b: unknown) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
 
 function EmbeddedGradingForm({
   problemId,
@@ -505,10 +560,13 @@ function EmbeddedGradingForm({
     ? subProblemClasses ?? (Object.keys(ctx.classesBySubProblemId).length === 0 ? undefined : [])
     : ctx.rootAnswerClasses;
 
+  const draft = isSubProblem ? ctx.getDraft(problemId) : undefined;
   const initialGrading = isSubProblem
-    ? ctx.myGradingByProblemId[problemId] ??
-      ctx.myGradingByProblemId[normalizeProblemId(problemId)] ??
-      null
+    ? draft?.hasSelectedAnswerClass
+      ? draftToGradingInfo(draft)
+      : ctx.myGradingByProblemId[problemId] ??
+        ctx.myGradingByProblemId[normalizeProblemId(problemId)] ??
+        null
     : ctx.myGrading ?? null;
 
   return (
@@ -577,7 +635,7 @@ function GradingItemDisplay({
   isPeerGrading?: boolean;
   questionMap: Record<string, FTMLProblemWithSolution>;
   onAfterGrading?: () => void | Promise<void>;
-  peerResponses?: { answerId?: number; subProblemId: string; answer: string }[];
+  peerResponses?: AnswerResponseWithId[];
 }) {
   const [studentResponse, setStudentResponse] =
     useState<Record<string, ResponseWithSubProblemId>>();
@@ -601,6 +659,7 @@ function GradingItemDisplay({
     setSubProblemIds(new Set());
     setGradedSubProblemIds(new Set());
     gradingDraftsByProblemId.current = {};
+    setMyGrading(null);
     setMyGradingByProblemId({});
   }, [questionId, answerId]);
 
@@ -620,6 +679,13 @@ function GradingItemDisplay({
     },
     []
   );
+
+  const getGradingDraft = useCallback((problemId: string) => {
+    return (
+      gradingDraftsByProblemId.current[problemId] ??
+      gradingDraftsByProblemId.current[normalizeProblemId(problemId)]
+    );
+  }, []);
 
   const registerSubProblem = useCallback((id: string) => {
     setSubProblemIds((prev) => {
@@ -651,21 +717,30 @@ function GradingItemDisplay({
     [peerResponses, subProblemIds]
   );
 
+  const getResponseRows = useCallback(
+    () =>
+      Array.isArray(peerResponses)
+        ? peerResponses
+        : ((studentResponse?.[questionId]?.responses ?? []) as AnswerResponseWithId[]),
+    [peerResponses, questionId, studentResponse]
+  );
+
   const loadMyGrading = useCallback(() => {
     getMyGradingForAnswer(answerId)
-      .then(setMyGrading)
-      .catch(() => setMyGrading(null));
+      .then((next) => setMyGrading((prev) => (sameJsonValue(prev, next) ? prev : next)))
+      .catch(() => setMyGrading((prev) => (prev === null ? prev : null)));
 
-    // Load gradings for each subproblem's own answer row (peer grading
-    // submits each subproblem against its own answerId).
-    if (Array.isArray(peerResponses) && peerResponses.length > 0) {
+    const responseRows = getResponseRows();
+
+    // Load gradings for each subproblem's own answer row.
+    if (responseRows.length > 0) {
       void (async () => {
         const next: Record<string, GradingInfo | null> = {};
         const renderedIds = Array.from(subProblemIds);
-        for (const [idx, pr] of peerResponses.entries()) {
+        for (const [idx, pr] of responseRows.entries()) {
           const spId = String(pr.subProblemId ?? '').trim();
           const renderedId =
-            peerResponses.length === renderedIds.length ? String(renderedIds[idx] ?? '').trim() : '';
+            responseRows.length === renderedIds.length ? String(renderedIds[idx] ?? '').trim() : '';
           const targetAnswerId =
             pr.answerId && Number.isFinite(Number(pr.answerId)) ? Number(pr.answerId) : undefined;
           if (!spId || !targetAnswerId) continue;
@@ -686,21 +761,24 @@ function GradingItemDisplay({
             }
           }
         }
-        setMyGradingByProblemId(next);
+        setMyGradingByProblemId((prev) => (sameJsonValue(prev, next) ? prev : next));
       })();
     } else {
-      setMyGradingByProblemId({});
+      setMyGradingByProblemId((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
-  }, [answerId, peerResponses, subProblemIds]);
+  }, [answerId, getResponseRows, subProblemIds]);
 
   useEffect(() => {
-    setMyGrading(null);
-    setMyGradingByProblemId({});
     loadMyGrading();
   }, [loadMyGrading]);
 
   const refreshGradingInfo = useCallback(() => {
     const lookupKey = getParamFromUri(questionId, 'a') ?? questionId;
+    const setStudentResponseIfChanged = (
+      next: Record<string, ResponseWithSubProblemId> | undefined
+    ) => {
+      setStudentResponse((prev) => (sameJsonValue(prev, next) ? prev : next));
+    };
     const syncStudentResponses = async (): Promise<string[]> => {
       if (isPeerGrading) {
         const responses = Array.isArray(peerResponses) ? peerResponses : [];
@@ -709,30 +787,33 @@ function GradingItemDisplay({
         if (lookupKey !== questionId) {
           mapped[lookupKey] = { problemId: lookupKey, responses };
         }
-        setStudentResponse(mapped);
+        setStudentResponseIfChanged(mapped);
         return [
           ...new Set(responses.map((pr) => String(pr.subProblemId ?? '').trim()).filter(Boolean)),
         ];
       }
       try {
         const c = await getAnswerAdmin(courseId, answerId);
-        const responses: { subProblemId: string; answer: string }[] = Array.isArray(c?.responses)
-          ? (c.responses as { subProblemId?: string; answer?: string }[]).map((r) => ({
-              subProblemId: String(r.subProblemId ?? ''),
-              answer: String(r.answer ?? ''),
-            }))
+        const responses: AnswerResponseWithId[] = Array.isArray(c?.responses)
+          ? (c.responses as { answerId?: number; subProblemId?: string; answer?: string }[]).map(
+              (r) => ({
+                answerId: r.answerId,
+                subProblemId: String(r.subProblemId ?? ''),
+                answer: String(r.answer ?? ''),
+              })
+            )
           : [{ subProblemId: String(c?.subProblemId ?? ''), answer: String(c?.answer ?? '') }];
         const mapped: Record<string, ResponseWithSubProblemId> = {};
         mapped[questionId] = { problemId: questionId, responses };
         if (lookupKey !== questionId) {
           mapped[lookupKey] = { problemId: lookupKey, responses };
         }
-        setStudentResponse(mapped);
+        setStudentResponseIfChanged(mapped);
         return [
           ...new Set(responses.map((pr) => String(pr.subProblemId ?? '').trim()).filter(Boolean)),
         ];
       } catch {
-        setStudentResponse(undefined);
+        setStudentResponseIfChanged(undefined);
         return [];
       }
     };
@@ -893,19 +974,24 @@ function GradingItemDisplay({
       // Resolve the actual answerId for this subproblem so peer-grading saves
       // each subproblem's grading against its own Answer row (not the question's MIN id).
       let targetAnswerId = answerId;
-      if (isSubProblem && Array.isArray(peerResponses)) {
+      const responseRows = getResponseRows();
+      if (isSubProblem) {
+        if (responseRows.length === 0) {
+          alert('Could not find the submitted answer rows for this problem.');
+          return;
+        }
         const submittedId = String(submittedProblemId ?? '').trim();
         const submittedNorm = normalizeProblemId(submittedId);
-        let match = peerResponses.find((pr) => {
+        let match = responseRows.find((pr) => {
           const dbId = String(pr.subProblemId ?? '').trim();
           return dbId === submittedId || normalizeProblemId(dbId) === submittedNorm;
         });
         const renderedIds = Array.from(subProblemIds);
-        if (!match && peerResponses.length === renderedIds.length) {
+        if (!match && responseRows.length === renderedIds.length) {
           const slot = renderedIds.findIndex(
             (id) => id === submittedId || normalizeProblemId(id) === submittedNorm
           );
-          match = slot >= 0 ? peerResponses[slot] : undefined;
+          match = slot >= 0 ? responseRows[slot] : undefined;
         }
         if (!match?.answerId || !Number.isFinite(Number(match.answerId))) {
           alert('Could not find the submitted answer row for this subproblem.');
@@ -939,7 +1025,7 @@ function GradingItemDisplay({
     },
     [
       answerId,
-      peerResponses,
+      getResponseRows,
       loadMyGrading,
       refreshGradingInfo,
       onAfterGrading,
@@ -991,6 +1077,7 @@ function GradingItemDisplay({
       myGradingByProblemId,
       onSubmit: onSubmitGrading,
       onDraftChange: updateGradingDraft,
+      getDraft: getGradingDraft,
     }),
     [
       answerId,
@@ -1003,6 +1090,7 @@ function GradingItemDisplay({
       myGradingByProblemId,
       onSubmitGrading,
       updateGradingDraft,
+      getGradingDraft,
     ]
   );
   const hasSubProblemGrading = subProblemIds.size > 0;
@@ -1083,9 +1171,7 @@ export function GradingInterface({
   const homeworkMap = useRef<Record<string, HomeworkInfo>>({});
   const questionMap = useRef<Record<string, FTMLProblemWithSolution>>({});
 
-  const [selected, setSelected] = useState<
-    { homeworkId: number; questionId: string; studentId: string; answerId: number } | undefined
-  >(undefined);
+  const [selected, setSelected] = useState<SelectedGradingItem | undefined>(undefined);
 
   const selectedGradedItems = useMemo(
     () =>
@@ -1097,6 +1183,86 @@ export function GradingInterface({
       ),
     [gradingItems, sortAndFilterParams]
   );
+
+  const selectGradingItem = useCallback((item?: GradingItem) => {
+    const nextAnswerId = Number(item?.answerId);
+    if (!item || !Number.isFinite(nextAnswerId)) {
+      setSelected(undefined);
+      return;
+    }
+
+    setSelected({
+      homeworkId: item.homeworkId ?? 0,
+      questionId: item.questionId,
+      studentId: item.studentId,
+      answerId: nextAnswerId,
+    });
+  }, []);
+
+  const isSelectedGradingItem = useCallback(
+    (item: GradingItem) => isSameGradingItem(item, selected),
+    [selected]
+  );
+
+  const loadInstructorItems = useCallback(async () => {
+    const res = await getCourseGradingItems(courseId);
+    const nextHomeworkMap = res.homeworks.reduce((acc, c) => {
+      acc[c.id] = c;
+      return acc;
+    }, {} as Record<string, HomeworkInfo>);
+    const nextQuestionMap = res.homeworks.reduce((acc, c) => {
+      for (const [id, problem] of Object.entries(c.problems || {})) {
+        acc[id] = problem;
+      }
+      return acc;
+    }, {} as Record<string, FTMLProblemWithSolution>);
+
+    homeworkMap.current = nextHomeworkMap;
+    questionMap.current = nextQuestionMap;
+    setGradingItems(res.gradingItems);
+    return {
+      gradingItems: res.gradingItems,
+      homeworkMap: nextHomeworkMap,
+      questionMap: nextQuestionMap,
+    };
+  }, [courseId]);
+
+  const advanceInstructorSelection = useCallback(async () => {
+    const currentIndex = selected
+      ? selectedGradedItems.findIndex((item) => isSelectedGradingItem(item))
+      : -1;
+    try {
+      const refreshed = await loadInstructorItems();
+      const refreshedSelectedItems = getSelectedGradingItems(
+        refreshed.gradingItems,
+        sortAndFilterParams,
+        refreshed.homeworkMap,
+        refreshed.questionMap
+      );
+      const refreshedCurrentIndex = selected
+        ? refreshedSelectedItems.findIndex((item) => isSelectedGradingItem(item))
+        : -1;
+
+      selectGradingItem(
+        refreshedSelectedItems[
+          refreshedCurrentIndex >= 0
+            ? refreshedCurrentIndex + 1
+            : currentIndex >= 0
+            ? currentIndex
+            : 0
+        ]
+      );
+    } catch {
+      selectGradingItem(selectedGradedItems[currentIndex >= 0 ? currentIndex + 1 : 0]);
+    }
+  }, [
+    isSelectedGradingItem,
+    loadInstructorItems,
+    selectGradingItem,
+    selected,
+    selectedGradedItems,
+    sortAndFilterParams,
+  ]);
 
   const loadNextStudentItem = useCallback(
     async (skipAnswerId?: number | string) => {
@@ -1200,26 +1366,13 @@ export function GradingInterface({
       loadNextStudentItem();
       return;
     }
-    getCourseGradingItems(courseId)
-      .then((res) => {
-        setGradingItems(res.gradingItems);
-        homeworkMap.current = res.homeworks.reduce((acc, c) => {
-          acc[c.id] = c;
-          return acc;
-        }, {} as Record<string, HomeworkInfo>);
-        questionMap.current = res.homeworks.reduce((acc, c) => {
-          for (const [id, problem] of Object.entries(c.problems || {})) {
-            acc[id] = problem;
-          }
-          return acc;
-        }, {} as Record<string, FTMLProblemWithSolution>);
-      })
+    loadInstructorItems()
       .catch(() => {
         setGradingItems([]);
         homeworkMap.current = {};
         questionMap.current = {};
       });
-  }, [courseId, isInstructorUser, loadNextStudentItem, roleResolved]);
+  }, [courseId, isInstructorUser, loadInstructorItems, loadNextStudentItem, roleResolved]);
 
   const displayedGradingItems = isInstructorUser
     ? selectedGradedItems
@@ -1312,6 +1465,7 @@ export function GradingInterface({
             gradingItems={displayedGradingItems}
             homeworkMap={homeworkMap.current}
             isPeerGrading={effectiveIsPeerGrading}
+            selectedItem={selected}
             onSelectItem={(homeworkId, questionId, studentId, answerId) =>
               setSelected({ homeworkId, questionId, studentId, answerId })
             }
@@ -1354,7 +1508,9 @@ export function GradingInterface({
               isPeerGrading={effectiveIsPeerGrading}
               questionMap={questionMap.current}
               peerResponses={!isInstructorUser ? studentCurrentResponses : undefined}
-              onAfterGrading={!isInstructorUser ? () => loadNextStudentItem() : undefined}
+              onAfterGrading={
+                isInstructorUser ? advanceInstructorSelection : () => loadNextStudentItem()
+              }
             />
           ) : (
             <i>
