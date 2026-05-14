@@ -78,6 +78,7 @@ export interface GradingWithAnswer extends GradingInfo {
   questionTitle: string;
   subProblemId: string;
   questionId: string;
+  studentId?: string;
   courseInstance: string;
   courseId: string;
   answer: string;
@@ -109,4 +110,9 @@ export interface GradingItem {
   numSubProblemsAnswered: number;
   numSubProblemsGraded: number;
   numSubProblemsInstructorGraded: number;
+}
+
+export interface GetNextGradingItemResponse {
+  gradingItem: GradingItem | null;
+  responses?: { answerId: number; subProblemId: string; answer: string }[];
 }

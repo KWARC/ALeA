@@ -10,9 +10,9 @@ import {
 import { FTML } from '@flexiformal/ftml';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
+import { Box, Button, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
 import { useCurrentUser } from '@alea/react-utils';
@@ -100,12 +100,23 @@ export function ProblemViewer({
   onResponseUpdate,
   isFrozen,
   r,
+  renderBelowAnswerAccepter,
+  hideAnswerAccepter = false,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
   isFrozen: boolean;
   r?: FTML.ProblemResponse;
+  renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
+  hideAnswerAccepter?: boolean;
 }) {
+  // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
+  // even when SafeFTMLFragment caches the wrapper from the first render.
+  const renderBelowRef = useRef(renderBelowAnswerAccepter);
+  useEffect(() => {
+    renderBelowRef.current = renderBelowAnswerAccepter;
+  });
+
   const problemState = getProblemState(isFrozen, problem.solution, r);
   const { html, uri } = problem.problem;
   const problemStates = new Map([[uri, problemState]]);
@@ -123,16 +134,18 @@ export function ProblemViewer({
         onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
       }}
       problemWrap={(problemUri, isSubProblem, autogradable) => {
-        if (autogradable) return undefined;
-        return (ch: React.ReactNode) => (
+        return (ch: ReactNode) => (
           <Box>
             {ch}
-            <AnswerAccepter
-              masterProblemId={uri}
-              problemTitle={problem.problem.title_html ?? ''}
-              isFrozen={isFrozen}
-              problemId={problemUri}
-            ></AnswerAccepter>
+            {!autogradable && !hideAnswerAccepter ? (
+              <AnswerAccepter
+                masterProblemId={uri}
+                problemTitle={problem.problem.title_html ?? ''}
+                isFrozen={isFrozen}
+                problemId={problemUri}
+              ></AnswerAccepter>
+            ) : null}
+            {renderBelowRef.current?.(problemUri, isSubProblem)}
           </Box>
         );
       }}
@@ -154,52 +167,85 @@ function AnswerAccepter({
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
   let serverAnswer = '';
-  if (previousAnswer !== undefined)
-    serverAnswer =
-      previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)
-        ?.answer ?? '';
-  const [answer, setAnsewr] = useState<string>(
-    serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
-  );
+  let isAnswerGraded = false;
+  if (previousAnswer !== undefined) {
+    const previousResponse = previousAnswer[masterProblemId]?.responses?.find(
+      (c) => c.subProblemId === problemId
+    ) as ({ answer?: string; graded?: boolean } | undefined);
+    serverAnswer = previousResponse?.answer ?? '';
+    isAnswerGraded = previousResponse?.graded === true;
+  }
+  const initialAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
+  const [answer, setAnswer] = useState<string>(initialAnswer);
+  const [savedAnswer, setSavedAnswer] = useState<string>(initialAnswer);
   const router = useRouter();
+  const canSaveAnswer = !isAnswerGraded && !!answer?.trim() && answer !== savedAnswer;
+
+  useEffect(() => {
+    const nextAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
+    setAnswer(nextAnswer);
+    setSavedAnswer(nextAnswer);
+  }, [name, serverAnswer]);
 
   async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
-      createAnswer({
+      const accepted = await createAnswer({
         answer: freeTextResponses,
         questionId: masterProblemId ? masterProblemId : problemId,
         questionTitle: problemTitle,
         subProblemId: problemId ?? '',
         courseId: router.query.courseId as string,
-        institutionId: 'FAU', // TODO(M5)
+        institutionId: 'FAU',
         homeworkId: +(router.query.id ?? 0),
       });
-      console.log('All answers saved successfully!');
-    } catch (error) {
-      console.error('Error saving answers:', error);
+      return accepted;
+    } catch {
       alert('Failed to save answers. Please try again.');
+      return false;
     }
   }
   async function onSaveClick() {
-    await saveAnswer({ freeTextResponses: answer, subId: problemId });
+    const saved = await saveAnswer({ freeTextResponses: answer, subId: problemId });
+    if (saved) setSavedAnswer(answer);
   }
   function onAnswerChange(c: string) {
-    setAnsewr(c);
+    setAnswer(c);
     localStorage.setItem(name, c);
   }
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        <MdEditor
-          name={name}
-          editingEnabled={!isFrozen}
-          placeholder={'...'}
-          value={answer}
-          onValueChange={onAnswerChange}
-        />
+        {(isFrozen || isAnswerGraded) && answer ? (
+          <Tooltip title={isAnswerGraded ? 'Already graded' : ''} arrow placement="top">
+            <Box sx={problemDisplayStyles.frozenAnswerBox}>
+              <Box sx={problemDisplayStyles.frozenAnswerLabel}>
+                <Typography variant="caption" sx={problemDisplayStyles.frozenAnswerLabelText}>
+                  Submitted answer
+                </Typography>
+              </Box>
+              <Box sx={problemDisplayStyles.frozenAnswerContent}>
+                <MdEditor
+                  name={name}
+                  editingEnabled={false}
+                  placeholder={'...'}
+                  value={answer}
+                  onValueChange={onAnswerChange}
+                />
+              </Box>
+            </Box>
+          </Tooltip>
+        ) : (
+          <MdEditor
+            name={name}
+            editingEnabled={!isFrozen && !isAnswerGraded}
+            placeholder={'...'}
+            value={answer}
+            onValueChange={onAnswerChange}
+          />
+        )}
       </Box>
 
-      <IconButton disabled={isFrozen} onClick={onSaveClick} sx={{ ml: 2 }}>
+      <IconButton disabled={isFrozen || !canSaveAnswer} onClick={onSaveClick} sx={{ ml: 2 }}>
         <SaveIcon />
       </IconButton>
       <ShowSubProblemAnswer
@@ -218,6 +264,8 @@ export function ProblemDisplay({
   showPoints = true,
   onResponseUpdate,
   onFreezeResponse,
+  renderBelowAnswerAccepter,
+  hideAnswerAccepter = false,
 }: {
   uri?: string;
   problem: FTMLProblemWithSolution | undefined;
@@ -226,9 +274,11 @@ export function ProblemDisplay({
   showPoints?: boolean;
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
+  renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
+  hideAnswerAccepter?: boolean;
 }) {
   const { user } = useCurrentUser();
-  const userId = user?.userId ?? ''
+  const userId = user?.userId ?? '';
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 
@@ -250,13 +300,15 @@ export function ProblemDisplay({
           isFrozen={isEffectivelyFrozen}
           r={r}
           onResponseUpdate={onResponseUpdate}
+          renderBelowAnswerAccepter={renderBelowAnswerAccepter}
+          hideAnswerAccepter={hideAnswerAccepter}
         />
         {onFreezeResponse && !isEffectivelyFrozen && (
           <Button
             disabled={!r}
             onClick={() => {
               onFreezeResponse();
-              if (uri) handleSubmit(problem, uri, r!, userId);
+              if (uri && r) handleSubmit(problem, uri, r, userId);
             }}
             variant="contained"
           >
@@ -267,3 +319,28 @@ export function ProblemDisplay({
     </Card>
   );
 }
+
+const problemDisplayStyles = {
+  frozenAnswerBox: {
+    border: '1px solid',
+    borderColor: 'divider',
+    borderRadius: 1,
+    overflow: 'hidden',
+    bgcolor: '#fff8c5',
+  },
+  frozenAnswerLabel: {
+    px: 1.25,
+    py: 0.5,
+    bgcolor: 'rgba(0, 0, 0, 0.04)',
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+  },
+  frozenAnswerLabelText: {
+    fontWeight: 700,
+    color: 'text.secondary',
+  },
+  frozenAnswerContent: {
+    px: 1.25,
+    py: 0.75,
+  },
+} as const;

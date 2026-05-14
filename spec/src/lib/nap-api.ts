@@ -1,5 +1,4 @@
 import { FTML } from '@flexiformal/ftml';
-import { CURRENT_TERM } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import { HomeworkInfo } from './homework';
 import {
@@ -7,6 +6,7 @@ import {
   CreateAnswerRequest,
   CreateGradingRequest,
   CreateReviewRequest,
+  GetNextGradingItemResponse,
   GradingInfo,
   GradingItem,
   GradingWithAnswer,
@@ -19,11 +19,10 @@ export async function createAnswer(answer: CreateAnswerRequest) {
   } catch (err) {
     const error = err as Error | AxiosError;
     if (axios.isAxiosError(error)) {
-      if (error.response?.status === 410) {
-        // Quiz has ended
+      if (error.response?.status === 409 || error.response?.status === 410) {
+        // Answer is no longer accepted.
         return false;
       }
-      console.error('Error recording answer: ', error);
       alert(
         'Your responses are not being recorded. Check your internet connection and press okay to refresh.'
       );
@@ -33,22 +32,20 @@ export async function createAnswer(answer: CreateAnswerRequest) {
   }
 }
 
-export async function createGrading(grading: CreateGradingRequest) {
+export async function createGrading(gradingRequest: CreateGradingRequest) {
   return await axios
-    .post('/api/nap/create-grading', grading)
-    .then((c) => ({ status: c.status, data: c.data as number }));
+    .post('/api/nap/create-grading', gradingRequest)
+    .then((response) => ({ status: response.status, data: response.data as number }));
 }
 
 export async function createReviewRequest(request: CreateReviewRequest) {
-  return axios
-    .post('/api/nap/create-review-request', request)
-    .then((c) => ({ status: c.status }));
+  return axios.post('/api/nap/create-review-request', request).then((c) => ({ status: c.status }));
 }
 
-export async function getReviewRequests(courseId: string) {
+export async function getReviewRequests(courseId: string, courseInstance?: string) {
   return axios
     .get('/api/nap/get-review-requests', {
-      params: { courseId, courseInstance: CURRENT_TERM },
+      params: { courseId, courseInstance },
     })
     .then((c) => c.data);
 }
@@ -62,10 +59,10 @@ export async function getAnswerWithReviewRequestId(id: number) {
 }
 
 export async function deleteAnswer(id: number) {
-  return axios.post('/api/nap/delete-answer', { id } );
+  return axios.post('/api/nap/delete-answer', { id });
 }
 export async function deleteGraded(id: number) {
-  return axios.post('/api/nap/delete-grade', { id });
+  return axios.post('/api/nap/delete-grading', { id });
 }
 
 export async function deleteReviewRequest(id: number) {
@@ -83,7 +80,8 @@ export async function getAnswersWithGrading(
   questionId: string,
   studentId: string,
   answerId: number,
-  courseId: string
+  courseId: string,
+  courseInstance?: string
 ) {
   return axios
     .get('/api/nap/get-answers-with-grading', {
@@ -93,18 +91,20 @@ export async function getAnswersWithGrading(
         studentId,
         answerId,
         courseId,
-        courseInstance: CURRENT_TERM,
+        courseInstance,
       },
     })
     .then((c) => c.data as GetAnswersWithGradingResponse);
 }
 export async function getAnswerAdmin(courseId: string, answerId: number) {
-  return axios.get('/api/nap/admin/get-answer', {
-    params: {
-      courseId,
-      answerId,
-    },
-  }).then(c=>c.data);
+  return axios
+    .get('/api/nap/admin/get-answer', {
+      params: {
+        courseId,
+        answerId,
+      },
+    })
+    .then((c) => c.data);
 }
 export async function getAnswerInfo(answerId: number, courseId: string, questionId: string) {
   return axios
@@ -112,7 +112,6 @@ export async function getAnswerInfo(answerId: number, courseId: string, question
       params: {
         answerId,
         courseId,
-        courseInstance: CURRENT_TERM,
         questionId,
       },
     })
@@ -130,22 +129,52 @@ export async function getCourseGradingItems(courseId: string) {
   });
   return resp.data as GetCourseGradingItemsResponse;
 }
+export async function getNextGradingItem(
+  courseId: string,
+  courseInstance?: string,
+  excludeAnswerIds?: number[]
+) {
+  const response = await axios.get('/api/nap/get-next-grading-item', {
+    params: {
+      courseId,
+      courseInstance,
+      excludeAnswerIds: excludeAnswerIds?.length ? excludeAnswerIds.join(',') : undefined,
+    },
+  });
+  return response.data as GetNextGradingItemResponse;
+}
 export async function getMyAnswers() {
-  return (
-    await axios.get<AnswerResponse[]>('/api/nap/get-my-answers' )
-  ).data;
+  return (await axios.get<AnswerResponse[]>('/api/nap/get-my-answers')).data;
 }
 export async function getMyGraded() {
-  return (
-    await axios.get<GradingWithAnswer[]>('/api/nap/get-my-graded')
-  ).data;
+  return (await axios.get<GradingWithAnswer[]>('/api/nap/get-my-graded')).data;
 }
-export async function getGradingItems(answerId: number, subProblemId: number) {
-  return (
-    await axios.get<GradingInfo[]>('/api/nap/get-answer-grading', {
-      params: { answerId, subProblemId },
-    })
-  ).data;
+export async function getGradingItems(
+  answerId: number,
+  subProblemId: string
+): Promise<GradingInfo[]> {
+  try {
+    const { data } = await axios.get<GradingInfo[]>('/api/nap/get-answer-grading', {
+      params: { answerId, subProblemId: String(subProblemId ?? '') },
+    });
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 404) return [];
+    throw err;
+  }
+}
+
+/** Latest grading by the current user (checker) for this answer, or `null` if none. */
+export async function getMyGradingForAnswer(answerId: number): Promise<GradingInfo | null> {
+  try {
+    const { data } = await axios.get<GradingInfo>('/api/nap/get-my-grading-for-answer', {
+      params: { answerId },
+    });
+    return data;
+  } catch (e) {
+    if (axios.isAxiosError(e) && e.response?.status === 404) return null;
+    throw e;
+  }
 }
 export async function getReviewItems(courseId: string) {
   return (

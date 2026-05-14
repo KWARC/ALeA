@@ -118,7 +118,7 @@ model GradingAnswerClass {
   points        Float     @db.Float
   isTrait       Boolean
   closed        Boolean
-  title         String    @db.VarChar(255)
+  title         String    @db.Text
   description   String?   @db.Text
   count         Int?      @default(1)
   createdAt     DateTime? @default(now()) @db.Timestamp(0)

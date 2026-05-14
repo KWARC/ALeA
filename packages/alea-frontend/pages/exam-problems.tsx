@@ -3,11 +3,14 @@ import { useRouter } from 'next/router';
 import { Box, Chip, CircularProgress, Tooltip, Typography } from '@mui/material';
 
 import {
+  AnswerResponse,
   FTMLProblemWithSolution,
   getProblemsForExam,
   formatExamLabelShortFromUri,
   formatExamLabelFullFromUri,
   getExamMetadataByUri,
+  getGradingItems,
+  getMyAnswers,
 } from '@alea/spec';
 
 import {
@@ -19,14 +22,25 @@ import {
 
 import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
+
+type ExamAnswerContext = Record<
+  string,
+  {
+    problemId: string;
+    responses: { subProblemId: string; answer: string; graded?: boolean }[];
+  }
+>;
+type ExamMetadata = Awaited<ReturnType<typeof getExamMetadataByUri>>;
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse: any[] = await contentFragment({ uri: problemUri });
+  const fragmentResponse = await contentFragment({ uri: problemUri });
+  const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
   return {
     problem: {
       uri: problemUri,
-      html: fragmentResponse[2],
-      title_html: '',
+      html,
+      title_html: titleHtml,
     },
     answerClasses: [],
   };
@@ -44,13 +58,52 @@ async function buildExamProblems(
   return result;
 }
 
+async function buildAnswerContext(
+  problemUris: string[],
+  answers: AnswerResponse[],
+  courseId?: string
+): Promise<ExamAnswerContext> {
+  const problemSet = new Set(problemUris);
+  const latestByQuestionAndSubProblem = new Map<string, AnswerResponse>();
+
+  for (const answer of answers) {
+    if (!problemSet.has(answer.questionId)) continue;
+    if (courseId && answer.courseId !== courseId) continue;
+
+    const key = `${answer.questionId}::${answer.subProblemId}`;
+    const existing = latestByQuestionAndSubProblem.get(key);
+    if (
+      !existing ||
+      new Date(answer.updatedAt).getTime() > new Date(existing.updatedAt).getTime()
+    ) {
+      latestByQuestionAndSubProblem.set(key, answer);
+    }
+  }
+
+  const responses: ExamAnswerContext = {};
+  for (const answer of latestByQuestionAndSubProblem.values()) {
+    const gradings = await getGradingItems(answer.id, answer.subProblemId);
+    if (!responses[answer.questionId]) {
+      responses[answer.questionId] = { problemId: answer.questionId, responses: [] };
+    }
+    responses[answer.questionId].responses.push({
+      subProblemId: answer.subProblemId,
+      answer: answer.answer,
+      graded: gradings.length > 0,
+    });
+  }
+  return responses;
+}
+
 const ExamProblemsPage = () => {
   const router = useRouter();
   const examUri = router.query.examUri as string | undefined;
   const targetProblemId = router.query.problemId as string | undefined;
+  const courseId = router.query.courseId as string | undefined;
 
-  const [examMeta, setExamMeta] = useState<any>(null);
+  const [examMeta, setExamMeta] = useState<ExamMetadata>(null);
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
+  const [answers, setAnswers] = useState<ExamAnswerContext>({});
   const [loading, setLoading] = useState(true);
   const [initialIndex, setInitialIndex] = useState<number>(0);
 
@@ -74,16 +127,21 @@ const ExamProblemsPage = () => {
 
         const examProblems = await buildExamProblems(uris);
         setProblems(examProblems);
-      } catch (error) {
-        console.error('Error loading exam data:', error);
+        try {
+          const myAnswers = await getMyAnswers();
+          setAnswers(await buildAnswerContext(uris, myAnswers, courseId));
+        } catch {
+          setAnswers({});
+        }
+      } catch {
+        return;
       } finally {
-        console.log('Finished loading exam data');
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [examUri, targetProblemId]);
+  }, [courseId, examUri, targetProblemId]);
 
   const examLabelShort = useMemo(() => {
     if (!examUri || !examMeta) return '';
@@ -148,7 +206,7 @@ const ExamProblemsPage = () => {
             studentId: undefined,
           }}
         >
-          <AnswerContext.Provider value={{}}>
+          <AnswerContext.Provider value={answers}>
             <QuizDisplay
               problems={problems}
               existingResponses={{}}

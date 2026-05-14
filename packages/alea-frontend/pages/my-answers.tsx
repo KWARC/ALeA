@@ -2,33 +2,43 @@ import { FTML } from '@flexiformal/ftml';
 import { SettingsBackupRestore } from '@mui/icons-material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
+  Chip,
+  Divider,
+  FormControl,
   IconButton,
+  InputLabel,
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
+  Select,
   Typography,
 } from '@mui/material';
 import {
   AnswerResponse,
-  deleteAnswer,
   FTMLProblemWithSolution,
+  getGradingItems,
   getMyAnswers,
   GradingInfo,
-  Tristate,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
-import { GradingDisplay, ProblemDisplay } from '@alea/stex-react-renderer';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { ProblemDisplay } from '@alea/stex-react-renderer';
+import { contentFragment } from '@flexiformal/ftml-backend';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { MultiItemSelector } from '../components/nap/MultiItemsSelector';
+import {
+  addProblemSlot,
+  buildProblemResponse,
+  findItemForProblemSlot,
+} from '../components/peer-review/problem-display-utils';
 import MainLayout from '../layouts/MainLayout';
+
 const MULTI_SELECT_FIELDS = ['courseId', 'questionId', 'courseInstance'] as const;
 const ALL_SORT_FIELDS = ['courseId', 'questionTitle', 'updatedAt', 'courseInstance'] as const;
 const DEFAULT_SORT_ORDER: Record<SortField, 'ASC' | 'DESC'> = {
@@ -42,8 +52,6 @@ type MultSelectField = (typeof MULTI_SELECT_FIELDS)[number];
 type SortField = (typeof ALL_SORT_FIELDS)[number];
 interface SortAndFilterParams {
   multiSelectField: Record<MultSelectField, (string | number)[]>;
-  isGraded: Tristate;
-  isInstructorGraded: Tristate; //only switches between false and unknown
   sortingFields: SortField[];
   sortOrders: Record<SortField, 'ASC' | 'DESC'>;
 }
@@ -69,8 +77,8 @@ function AnswerItemOrganizer({
     [answerItems]
   );
   return (
-    <Box>
-      <Box display="flex" flexWrap="wrap" gap={2}>
+    <Box sx={answerOrganizerStyles.root}>
+      <Box sx={answerOrganizerStyles.filters}>
         <MultiItemSelector
           label="Courses"
           selectedValues={sortAndFilterParams.multiSelectField.courseId}
@@ -102,61 +110,235 @@ function AnswerItemOrganizer({
     </Box>
   );
 }
-function AnswerItemDisplay({
-  answer,
-  onDelete,
-}: {
-  answer: AnswerResponse;
-  onDelete: (id: number) => void;
-}) {
+function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
+  return [...grades].sort((a, b) => {
+    const ta = new Date(a.updatedAt).getTime();
+    const tb = new Date(b.updatedAt).getTime();
+    if (ta !== tb) return ta - tb;
+    return a.id - b.id;
+  });
+}
+
+function feedbackNotes(grading: GradingInfo): string {
+  return String(grading.customFeedback ?? '').trim();
+}
+
+function getProblemLabel(questionId: string, fallbackIdx: number) {
+  let problemId = questionId;
+  try {
+    problemId = new URL(questionId).searchParams.get('e') ?? questionId;
+  } catch {
+    // Keep the original id when it is not a URL.
+  }
+
+  const match = problemId.match(/problem[_/-]?(\d+)/i);
+  return match ? `Problem ${match[1]}` : `Problem ${fallbackIdx + 1}`;
+}
+
+interface AnswerGroup {
+  questionId: string;
+  answers: AnswerResponse[];
+  questionTitle: string;
+  courseId: string;
+  courseInstance: string;
+  latestUpdatedAt: Date;
+}
+
+function groupAnswersByQuestion(items: AnswerResponse[]): AnswerGroup[] {
+  const map = new Map<string, AnswerGroup>();
+  for (const a of items) {
+    const existing = map.get(a.questionId);
+    if (existing) {
+      existing.answers.push(a);
+      if (new Date(a.updatedAt).getTime() > new Date(existing.latestUpdatedAt).getTime()) {
+        existing.latestUpdatedAt = a.updatedAt;
+      }
+    } else {
+      map.set(a.questionId, {
+        questionId: a.questionId,
+        answers: [a],
+        questionTitle: a.questionTitle,
+        courseId: a.courseId,
+        courseInstance: a.courseInstance,
+        latestUpdatedAt: a.updatedAt,
+      });
+    }
+  }
+  for (const group of map.values()) {
+    group.answers.sort((x, y) => {
+      const xn = Number(x.subProblemId);
+      const yn = Number(y.subProblemId);
+      if (Number.isFinite(xn) && Number.isFinite(yn)) return xn - yn;
+      return String(x.subProblemId).localeCompare(String(y.subProblemId));
+    });
+  }
+  return Array.from(map.values());
+}
+
+function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
+  const primary = answers[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution | undefined>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
-  const [gradingInfos, setGradingInfos] = useState<GradingInfo[]>([]);
+  const [gradingsByAnswerId, setGradingsByAnswerId] = useState<Record<number, GradingInfo[]>>({});
+  const [reviewerIdx, setReviewerIdx] = useState(0);
+  const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
+
   useEffect(() => {
-    // TODO ALEA4-P4
-    // getLearningObjectShtml(answer.questionId).then((p) => {
-    //  setProblem(getProblem(p, ''));
-    //});
-    // let answers = {};
-    // for (let index = 0; index <= +answer.subProblemId; index++) {
-    //   answers = { ...answers, ...{ [index]: +answer.subProblemId == index ? answer.answer : '' } };
-    // }
-    // setAnswerText({
-    //   freeTextResponses: { [answer.subProblemId]: answer.answer },
-    //   autogradableResponses: [],
-    // });
-    // getGradingItems(answer.id, +answer.subProblemId).then((g) => setGradingInfos(g));
-  }, [answer.questionId]);
+    let isMounted = true;
+    async function load() {
+      try {
+        const raw = await contentFragment({ uri: primary.questionId });
+        if (!isMounted) return;
+        const { titleHtml, html } = parseContentFragmentTuple(raw);
+        setProblem({
+          problem: {
+            uri: primary.questionId,
+            html,
+            title_html: titleHtml,
+          },
+          answerClasses: [],
+        });
+        setAnswerText(
+          buildProblemResponse(
+            primary.questionId,
+            answers,
+            (a) => a.subProblemId,
+            (a) => a.answer
+          )
+        );
+
+        const all: Record<number, GradingInfo[]> = {};
+        for (const a of answers) {
+          try {
+            const list = await getGradingItems(a.id, String(a.subProblemId ?? ''));
+            all[a.id] = list;
+          } catch {
+            all[a.id] = [];
+          }
+        }
+        if (!isMounted) return;
+        setGradingsByAnswerId(all);
+        setReviewerIdx(0);
+        setProblemSlotIds([]);
+      } catch {
+        if (isMounted) {
+          setProblem(undefined);
+          setAnswerText(undefined);
+          setGradingsByAnswerId({});
+          setProblemSlotIds([]);
+        }
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [primary.questionId, answers]);
+
+  function findAnswerForProblem(problemId: string, isSubProblem: boolean) {
+    return findItemForProblemSlot(
+      answers,
+      problemId,
+      isSubProblem,
+      problemSlotIds,
+      (a) => a.subProblemId
+    );
+  }
+
+  function AnswerFeedback({
+    problemId,
+    isSubProblem,
+  }: {
+    problemId: string;
+    isSubProblem: boolean;
+  }) {
+    useEffect(() => {
+      if (!isSubProblem) return;
+      setProblemSlotIds((prev) => addProblemSlot(prev, problemId));
+    }, [problemId, isSubProblem]);
+
+    if (!isSubProblem && problemSlotIds.length > 0) return null;
+    const a = findAnswerForProblem(problemId, isSubProblem);
+    if (!a) return null;
+
+    const gradings = sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? []);
+    const safeIdx = Math.min(reviewerIdx, Math.max(0, gradings.length - 1));
+    const selectedGrading = gradings.length > 0 ? gradings[safeIdx] : undefined;
+    const notes = selectedGrading ? feedbackNotes(selectedGrading) : '';
+
+    if (gradings.length === 0) {
+      return (
+        <Box sx={answerDisplayStyles.emptyFeedback}>
+          No feedback received yet for this submission.
+        </Box>
+      );
+    }
+    if (!selectedGrading) return null;
+
+    return (
+      <Box sx={answerDisplayStyles.feedbackSummary}>
+        <Box sx={answerDisplayStyles.feedbackMeta}>
+          <Typography variant="caption" sx={answerDisplayStyles.feedbackLabel}>
+            Score
+          </Typography>
+          <Typography variant="caption" sx={answerDisplayStyles.scorePill}>
+            {selectedGrading.totalPoints}
+          </Typography>
+        </Box>
+        {notes ? (
+          <Box sx={answerDisplayStyles.feedbackNotes}>
+            <Typography variant="caption" sx={answerDisplayStyles.feedbackLabel}>
+              Feedback
+            </Typography>
+            <Typography variant="body2" sx={answerDisplayStyles.feedbackText}>
+              {notes}
+            </Typography>
+          </Box>
+        ) : null}
+      </Box>
+    );
+  }
+
+  const feedbackRevision = [
+    problemSlotIds.join('|'),
+    Object.entries(gradingsByAnswerId)
+      .map(([answerId, gradings]) => `${answerId}:${gradings.map((g) => g.id).join(',')}`)
+      .join('|'),
+    reviewerIdx,
+  ].join('::');
+  const reviewerCount = Math.max(0, ...answers.map((a) => (gradingsByAnswerId[a.id] ?? []).length));
+  const safeReviewerIdx = Math.min(reviewerIdx, Math.max(0, reviewerCount - 1));
 
   return (
     <Box>
+      {reviewerCount > 0 ? (
+        <FormControl fullWidth size="small" sx={answerDisplayStyles.reviewerSelect}>
+          <InputLabel id={`reviewer-select-${primary.id}`}>Reviewer</InputLabel>
+          <Select
+            labelId={`reviewer-select-${primary.id}`}
+            label="Reviewer"
+            value={safeReviewerIdx}
+            onChange={(e) => setReviewerIdx(Number(e.target.value))}
+          >
+            {Array.from({ length: reviewerCount }, (_, i) => (
+              <MenuItem key={i} value={i}>
+                Reviewer {i + 1}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ) : null}
       <ProblemDisplay
-        showPoints={false}
+        key={`${primary.questionId}-${feedbackRevision}`}
+        showPoints={true}
         problem={problem}
         isFrozen={true}
         r={answerText}
-        uri={answer.questionId}
-        // problem={problem} TODO ALEA4-P4
+        uri={primary.questionId}
+        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+          <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
+        )}
       ></ProblemDisplay>
-      <Box sx={{ margin: '10px' }}>
-        <span>{dayjs(answer.updatedAt).fromNow()}</span>
-        <IconButton
-          onClick={() => onDelete(answer.id)}
-          sx={{ float: 'right', display: 'inline' }}
-          aria-label="delete"
-          color="primary"
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Box>
-
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, mt: 1 }}>
-        {gradingInfos.map((g, idx) => (
-          <Box sx={{ borderTop: '1px solid #ccc', borderRadius: 1, marginTop: '5px' }} key={idx}>
-            <GradingDisplay showGraderInformation={false} gradingInfo={g} key={idx} />
-          </Box>
-        ))}
-      </Box>
     </Box>
   );
 }
@@ -176,8 +358,8 @@ function getSelectedAnswerItems(answerItems: AnswerResponse[], params: SortAndFi
         ) {
           return false;
         }
-        return true;
       }
+      return true;
     })
     .sort((a, b) => {
       for (const f of params.sortingFields) {
@@ -192,47 +374,52 @@ function getSelectedAnswerItems(answerItems: AnswerResponse[], params: SortAndFi
 }
 function AnswerItemsList({
   onSelectItem,
-  answerItems,
+  selectedQuestionId,
+  groups,
 }: {
-  answerItems: AnswerResponse[];
-  onSelectItem: (answerId: number) => void;
+  groups: AnswerGroup[];
+  onSelectItem: (questionId: string) => void;
+  selectedQuestionId?: string;
 }) {
   return (
-    <Box maxHeight="50vh" overflow="scroll">
+    <Box sx={answerListStyles.root}>
       <List disablePadding>
-        {answerItems.map(
-          ({ questionTitle, courseInstance, courseId, id, subProblemId, updatedAt }, idx) => (
-            <ListItemButton
-              key={`${questionTitle}-${id}-${idx}`}
-              onClick={(e) => onSelectItem(id)}
-              sx={{ py: 0, bgcolor: idx % 2 === 0 ? 'grey.100' : 'background.paper' }}
-            >
-              <ListItemText
-                primary={questionTitle ? <SafeHtml html={questionTitle} /> : id}
-                secondary={
-                  <Box>
-                    <Box>
-                      <span>Sub problem: </span>
-                      <span>{+subProblemId + 1}</span>
-                    </Box>
-                    <Box>
-                      <span>Answered: </span>
-                      <span>{dayjs(updatedAt).fromNow()}</span>
-                    </Box>
-                    <Box>
-                      <span>Semester: </span>
-                      <span>{courseInstance}</span>
-                    </Box>
-                    <Box>
-                      <span>Course: </span>
-                      <span>{courseId}</span>
-                    </Box>
-                  </Box>
-                }
-              />
-            </ListItemButton>
-          )
-        )}
+        {groups.map((group, idx) => (
+          <ListItemButton
+            key={group.questionId}
+            selected={selectedQuestionId === group.questionId}
+            onClick={() => onSelectItem(group.questionId)}
+            sx={[
+              answerListStyles.item,
+              selectedQuestionId === group.questionId && answerListStyles.selectedItem,
+            ]}
+          >
+            <ListItemText
+              sx={answerListStyles.itemText}
+              primary={
+                <Box>
+                  <Typography variant="subtitle2">
+                    {getProblemLabel(group.questionId, idx)}
+                  </Typography>
+                  {group.questionTitle ? (
+                    <Typography variant="body2" component="div" sx={answerListStyles.questionTitle}>
+                      <SafeHtml html={group.questionTitle} />
+                    </Typography>
+                  ) : null}
+                </Box>
+              }
+              secondary={
+                <Box sx={answerListStyles.meta}>
+                  {group.answers.length > 1 ? (
+                    <Chip size="small" label={`${group.answers.length} sub-problems`} />
+                  ) : null}
+                  <Chip size="small" label={group.courseInstance} />
+                  <Chip size="small" label={group.courseId} />
+                </Box>
+              }
+            />
+          </ListItemButton>
+        ))}
       </List>
     </Box>
   );
@@ -246,8 +433,10 @@ function AnswerListSortFields({
 }) {
   const { sortingFields, sortOrders } = sortAndFilterParams;
   return (
-    <Box display="flex" rowGap={1} columnGap={2} alignItems="center" flexWrap="wrap">
-      Sort:
+    <Box sx={answerSortStyles.root}>
+      <Typography variant="body2" sx={answerSortStyles.label}>
+        Sort
+      </Typography>
       {sortingFields.map((item) => (
         <Button
           key={item}
@@ -259,10 +448,11 @@ function AnswerListSortFields({
               sortingFields: [item, ...prev.sortingFields.filter((f) => f !== item)],
             }));
           }}
-          sx={{ py: 0 }}
+          sx={answerSortStyles.button}
         >
           {item}&nbsp;
           <IconButton
+            size="small"
             onClick={(e) => {
               e.stopPropagation();
 
@@ -280,6 +470,7 @@ function AnswerListSortFields({
         </Button>
       ))}
       <IconButton
+        size="small"
         onClick={() => {
           setSortAndFilterParams((prev) => ({
             ...prev,
@@ -294,7 +485,6 @@ function AnswerListSortFields({
   );
 }
 const MyAnswersPage: NextPage = () => {
-  dayjs.extend(relativeTime);
   const [answerItems, setAnswerItems] = useState<AnswerResponse[]>([]);
   const [sortAndFilterParams, setSortAndFilterParams] = useState<SortAndFilterParams>({
     multiSelectField: {
@@ -302,12 +492,10 @@ const MyAnswersPage: NextPage = () => {
       questionId: [],
       courseInstance: [],
     },
-    isGraded: Tristate.UNKNOWN,
-    isInstructorGraded: Tristate.UNKNOWN,
     sortingFields: [...ALL_SORT_FIELDS],
     sortOrders: DEFAULT_SORT_ORDER,
   });
-  const [selected, setSelected] = useState<{ answerId: number } | undefined>(undefined);
+  const [selected, setSelected] = useState<{ questionId: string } | undefined>(undefined);
   const { user, isUserLoading } = useCurrentUser();
   const router = useRouter();
 
@@ -323,17 +511,11 @@ const MyAnswersPage: NextPage = () => {
     () => getSelectedAnswerItems(answerItems, sortAndFilterParams),
     [answerItems, sortAndFilterParams]
   );
-  const onDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this answer?')) {
-      deleteAnswer(id).then(() => {
-        getMyAnswers().then((answers) => {
-          setAnswerItems(answers);
-        });
-        setSelected(undefined);
-        alert('Answer Deleted');
-      });
-    }
-  };
+
+  const groupedAnswers = useMemo(
+    () => groupAnswersByQuestion(selectedAnswersItems),
+    [selectedAnswersItems]
+  );
   return (
     <MainLayout title={`${user?.fullName} | ALeA`}>
       {answerItems.length === 0 && <Typography>No Answer Items Found.</Typography>}
@@ -343,28 +525,201 @@ const MyAnswersPage: NextPage = () => {
         setSortAndFilterParams={setSortAndFilterParams}
       />
 
-      <Typography sx={{ fontStyle: 'italic' }}>
-        <b style={{ color: 'red' }}>{answerItems.length}</b> Answer Items Selected.
-      </Typography>
-      <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
-        <Box sx={{ border: '1px solid #ccc' }} flex="1 1 200px" maxWidth={300}>
+      <Box sx={pageStyles.header}>
+        <Typography variant="h6">My answers</Typography>
+        <Chip color="primary" variant="outlined" label={`${groupedAnswers.length} questions`} />
+      </Box>
+      <Box sx={pageStyles.content}>
+        <Box sx={pageStyles.sidebar}>
+          <Box sx={pageStyles.sidebarHeader}>
+            <Typography variant="subtitle2">Questions</Typography>
+          </Box>
+          <Divider />
           <AnswerItemsList
-            answerItems={selectedAnswersItems}
-            onSelectItem={(answerId) => setSelected({ answerId })}
+            groups={groupedAnswers}
+            selectedQuestionId={selected?.questionId}
+            onSelectItem={(questionId) => setSelected({ questionId })}
           />
         </Box>
-        <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
+        <Box sx={pageStyles.details}>
           {selected ? (
-            <AnswerItemDisplay
-              answer={answerItems.find((item) => item.id === selected.answerId)}
-              onDelete={onDelete}
-            />
+            (() => {
+              const selectedGroup = groupedAnswers.find(
+                (g) => g.questionId === selected.questionId
+              );
+              return selectedGroup ? (
+                <AnswerItemDisplay answers={selectedGroup.answers} />
+              ) : (
+                <Typography color="text.secondary">Selected question not found.</Typography>
+              );
+            })()
           ) : (
-            <i>Please click on a answer item on the left.</i>
+            <Typography color="text.secondary">Select a question to view your answer.</Typography>
           )}
         </Box>
       </Box>
     </MainLayout>
   );
 };
+
+const answerOrganizerStyles = {
+  root: {
+    border: 1,
+    borderColor: 'divider',
+    borderRadius: 1,
+    p: 2,
+    mb: 1.5,
+    bgcolor: 'background.paper',
+  },
+  filters: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 2,
+  },
+} as const;
+
+const answerDisplayStyles = {
+  emptyFeedback: {
+    mt: 1.5,
+    p: 2,
+    color: 'text.secondary',
+    bgcolor: 'background.default',
+  },
+  reviewerSelect: {
+    mb: 1,
+  },
+  feedbackSummary: {
+    mt: 1.5,
+    p: 1.25,
+    borderRadius: 1,
+    border: 1,
+    borderColor: '#c8e6c9',
+    bgcolor: '#f6fbf6',
+  },
+  feedbackMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    mb: 1,
+  },
+  feedbackLabel: {
+    fontWeight: 700,
+    color: '#2e7d32',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.4,
+  },
+  scorePill: {
+    px: 1,
+    py: 0.25,
+    borderRadius: 999,
+    color: '#1b5e20',
+    bgcolor: '#dff3e3',
+    fontWeight: 700,
+  },
+  feedbackNotes: {
+    display: 'grid',
+    gap: 0.5,
+  },
+  feedbackText: {
+    color: 'text.primary',
+    whiteSpace: 'pre-wrap',
+  },
+} as const;
+
+const answerListStyles = {
+  root: {
+    maxHeight: '65vh',
+    overflow: 'auto',
+  },
+  item: {
+    alignItems: 'flex-start',
+    py: 1.25,
+    px: 1.5,
+    borderBottom: 1,
+    borderColor: 'divider',
+    bgcolor: 'background.paper',
+  },
+  selectedItem: {
+    bgcolor: 'action.selected',
+    borderLeft: 3,
+    borderLeftColor: 'primary.main',
+    pl: 1.125,
+    '&:hover': {
+      bgcolor: 'action.hover',
+    },
+  },
+  itemText: {
+    my: 0,
+  },
+  questionTitle: {
+    color: 'text.secondary',
+    mt: 0.25,
+  },
+  meta: {
+    mt: 0.75,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 0.5,
+  },
+} as const;
+
+const answerSortStyles = {
+  root: {
+    display: 'flex',
+    rowGap: 1,
+    columnGap: 1,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    mt: 1.5,
+  },
+  label: {
+    color: 'text.secondary',
+    mr: 0.5,
+  },
+  button: {
+    py: 0.25,
+  },
+} as const;
+
+const pageStyles = {
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    mb: 1,
+  },
+  content: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 2,
+    alignItems: 'stretch',
+  },
+  sidebar: {
+    flexGrow: { xs: 1, md: 0 },
+    flexShrink: 0,
+    width: { xs: '100%', md: 320 },
+    maxWidth: { xs: '100%', md: 320 },
+    border: 1,
+    borderColor: 'divider',
+    borderRadius: 1,
+    overflow: 'hidden',
+    bgcolor: 'background.paper',
+  },
+  sidebarHeader: {
+    px: 1.5,
+    py: 1,
+    bgcolor: 'grey.50',
+  },
+  details: {
+    flexGrow: 1,
+    flexBasis: { xs: '100%', md: 0 },
+    border: 1,
+    borderColor: 'divider',
+    borderRadius: 1,
+    p: 2,
+    bgcolor: 'background.paper',
+    minWidth: 0,
+  },
+} as const;
+
 export default MyAnswersPage;

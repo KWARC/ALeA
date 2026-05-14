@@ -1,5 +1,3 @@
-import { COURSES_INFO } from './courseInfo';
-
 export interface UniversityTermConfig {
   universityId: string;
   currentTerm: string;
@@ -34,6 +32,5 @@ export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
 
 export function getCurrentTermForUniversity(universityId: string): string {
   const config = UNIVERSITY_TERMS[universityId];
-  return config.currentTerm;
+  return config?.currentTerm;
 }
-
