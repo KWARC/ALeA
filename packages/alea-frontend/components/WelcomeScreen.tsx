@@ -179,7 +179,9 @@ async function getLastUpdatedQuiz(
     .sort((a, b) => a.quizStartTs - b.quizStartTs)[0];
   const toShowQuiz = firstFutureQuiz || latestQuiz;
   const toShowQuizTs = toShowQuiz?.quizStartTs;
-
+  if (!toShowQuizTs) {
+    return { description: null, timeAgo: null, timestamp: null };
+  }
   const now = Date.now();
   const nextScheduledQuiz = courseQuizData
     ?.filter((entry) => entry.isQuizScheduled && entry.timestamp_ms > now)
@@ -196,7 +198,7 @@ async function getLastUpdatedQuiz(
       },
     };
   }
-  if(!nextScheduledQuiz) {
+  if (!nextScheduledQuiz) {
     return {
       description: 'No upcoming quiz available',
       timeAgo: null,
