@@ -10,7 +10,7 @@ import {
 import { FTML } from '@flexiformal/ftml';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Typography } from '@mui/material';
+import { Box, Button, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { getPoints } from './stex-react-renderer';
@@ -167,18 +167,29 @@ function AnswerAccepter({
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
   let serverAnswer = '';
-  if (previousAnswer !== undefined)
-    serverAnswer =
-      previousAnswer[masterProblemId]?.responses?.find((c) => c.subProblemId === problemId)
-        ?.answer ?? '';
-  const [answer, setAnsewr] = useState<string>(
-    serverAnswer ? serverAnswer : localStorage.getItem(name) ?? ''
-  );
+  let isAnswerGraded = false;
+  if (previousAnswer !== undefined) {
+    const previousResponse = previousAnswer[masterProblemId]?.responses?.find(
+      (c) => c.subProblemId === problemId
+    ) as ({ answer?: string; graded?: boolean } | undefined);
+    serverAnswer = previousResponse?.answer ?? '';
+    isAnswerGraded = previousResponse?.graded === true;
+  }
+  const initialAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
+  const [answer, setAnswer] = useState<string>(initialAnswer);
+  const [savedAnswer, setSavedAnswer] = useState<string>(initialAnswer);
   const router = useRouter();
+  const canSaveAnswer = !isAnswerGraded && !!answer?.trim() && answer !== savedAnswer;
+
+  useEffect(() => {
+    const nextAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
+    setAnswer(nextAnswer);
+    setSavedAnswer(nextAnswer);
+  }, [name, serverAnswer]);
 
   async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
-      await createAnswer({
+      const accepted = await createAnswer({
         answer: freeTextResponses,
         questionId: masterProblemId ? masterProblemId : problemId,
         questionTitle: problemTitle,
@@ -187,41 +198,46 @@ function AnswerAccepter({
         institutionId: 'FAU',
         homeworkId: +(router.query.id ?? 0),
       });
+      return accepted;
     } catch {
       alert('Failed to save answers. Please try again.');
+      return false;
     }
   }
   async function onSaveClick() {
-    await saveAnswer({ freeTextResponses: answer, subId: problemId });
+    const saved = await saveAnswer({ freeTextResponses: answer, subId: problemId });
+    if (saved) setSavedAnswer(answer);
   }
   function onAnswerChange(c: string) {
-    setAnsewr(c);
+    setAnswer(c);
     localStorage.setItem(name, c);
   }
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        {isFrozen && answer ? (
-          <Box sx={problemDisplayStyles.frozenAnswerBox}>
-            <Box sx={problemDisplayStyles.frozenAnswerLabel}>
-              <Typography variant="caption" sx={problemDisplayStyles.frozenAnswerLabelText}>
-                Submitted answer
-              </Typography>
+        {(isFrozen || isAnswerGraded) && answer ? (
+          <Tooltip title={isAnswerGraded ? 'Already graded' : ''} arrow placement="top">
+            <Box sx={problemDisplayStyles.frozenAnswerBox}>
+              <Box sx={problemDisplayStyles.frozenAnswerLabel}>
+                <Typography variant="caption" sx={problemDisplayStyles.frozenAnswerLabelText}>
+                  Submitted answer
+                </Typography>
+              </Box>
+              <Box sx={problemDisplayStyles.frozenAnswerContent}>
+                <MdEditor
+                  name={name}
+                  editingEnabled={false}
+                  placeholder={'...'}
+                  value={answer}
+                  onValueChange={onAnswerChange}
+                />
+              </Box>
             </Box>
-            <Box sx={problemDisplayStyles.frozenAnswerContent}>
-              <MdEditor
-                name={name}
-                editingEnabled={false}
-                placeholder={'...'}
-                value={answer}
-                onValueChange={onAnswerChange}
-              />
-            </Box>
-          </Box>
+          </Tooltip>
         ) : (
           <MdEditor
             name={name}
-            editingEnabled={!isFrozen}
+            editingEnabled={!isFrozen && !isAnswerGraded}
             placeholder={'...'}
             value={answer}
             onValueChange={onAnswerChange}
@@ -229,7 +245,7 @@ function AnswerAccepter({
         )}
       </Box>
 
-      <IconButton disabled={isFrozen} onClick={onSaveClick} sx={{ ml: 2 }}>
+      <IconButton disabled={isFrozen || !canSaveAnswer} onClick={onSaveClick} sx={{ ml: 2 }}>
         <SaveIcon />
       </IconButton>
       <ShowSubProblemAnswer

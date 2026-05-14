@@ -31,6 +31,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   answer = answer.trim();
   const normalizedHomeworkId = Number(homeworkId || 0);
 
+  const gradedExisting = await executeAndEndSet500OnError<ExistingAnswerRow[]>(
+    `SELECT a.id
+     FROM Answer a
+     WHERE a.questionId = ?
+       AND a.userId = ?
+       AND a.subProblemId = ?
+       AND a.courseId = ?
+       AND a.courseInstance = ?
+       AND IFNULL(a.homeworkId, 0) = ?
+       AND EXISTS (SELECT 1 FROM Grading g WHERE g.answerId = a.id)
+     LIMIT 1`,
+    [questionId, userId, subProblemId, courseId, courseInstance, normalizedHomeworkId],
+    res
+  );
+  if (!gradedExisting) return;
+  if (gradedExisting.length > 0) {
+    return res.status(409).send('This answer has already been graded');
+  }
+
   const existing = await executeAndEndSet500OnError<ExistingAnswerRow[]>(
     `SELECT a.id
      FROM Answer a

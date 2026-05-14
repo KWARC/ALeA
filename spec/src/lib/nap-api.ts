@@ -19,8 +19,8 @@ export async function createAnswer(answer: CreateAnswerRequest) {
   } catch (err) {
     const error = err as Error | AxiosError;
     if (axios.isAxiosError(error)) {
-      if (error.response?.status === 410) {
-        // Quiz has ended
+      if (error.response?.status === 409 || error.response?.status === 410) {
+        // Answer is no longer accepted.
         return false;
       }
       alert(
