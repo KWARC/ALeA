@@ -435,6 +435,19 @@ interface EmbeddedGradingFormState {
     acs: CreateAnswerClassRequest[],
     feedback: string
   ) => Promise<void>;
+  onDraftChange: (
+    problemId: string,
+    isSubProblem: boolean,
+    acs: CreateAnswerClassRequest[],
+    feedback: string,
+    hasSelectedAnswerClass: boolean
+  ) => void;
+}
+
+interface GradingDraft {
+  acs: CreateAnswerClassRequest[];
+  feedback: string;
+  hasSelectedAnswerClass: boolean;
 }
 
 const EmbeddedGradingFormContext = createContext<EmbeddedGradingFormState | null>(null);
@@ -456,6 +469,17 @@ function EmbeddedGradingForm({
     async (acs: CreateAnswerClassRequest[], feedback: string) => {
       if (!ctx) return;
       await ctx.onSubmit(problemId, isSubProblem, acs, feedback);
+    },
+    [ctx, problemId, isSubProblem]
+  );
+  const handleDraftChange = useCallback(
+    (
+      acs: CreateAnswerClassRequest[],
+      feedback: string,
+      hasSelectedAnswerClass: boolean
+    ) => {
+      if (!ctx) return;
+      ctx.onDraftChange(problemId, isSubProblem, acs, feedback, hasSelectedAnswerClass);
     },
     [ctx, problemId, isSubProblem]
   );
@@ -494,6 +518,8 @@ function EmbeddedGradingForm({
       initialGrading={initialGrading}
       gradesReady={classes !== undefined}
       onNewGrading={handleSubmit}
+      onGradingChange={handleDraftChange}
+      showSubmit={!isSubProblem}
     />
   );
 }
@@ -504,12 +530,20 @@ function GradingProblem({
   answerId,
   initialGrading,
   gradesReady,
+  onGradingChange,
+  showSubmit = true,
 }: {
   onNewGrading: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
+  onGradingChange?: (
+    acs: CreateAnswerClassRequest[],
+    feedback: string,
+    hasSelectedAnswerClass: boolean
+  ) => void;
   answerClasses: AnswerClass[];
   answerId: number;
   initialGrading: GradingInfo | null;
   gradesReady: boolean;
+  showSubmit?: boolean;
 }) {
   if (!gradesReady) {
     return <CircularProgress size={32} sx={{ display: 'block', my: 2, mx: 'auto' }} />;
@@ -521,6 +555,8 @@ function GradingProblem({
         rawAnswerClasses={answerClasses}
         initialGrading={initialGrading}
         onNewGrading={onNewGrading}
+        onGradingChange={onGradingChange}
+        showSubmit={showSubmit}
       />
     </Box>
   );
@@ -554,6 +590,7 @@ function GradingItemDisplay({
   >({});
   const [subProblemIds, setSubProblemIds] = useState<Set<string>>(() => new Set());
   const [gradedSubProblemIds, setGradedSubProblemIds] = useState<Set<string>>(() => new Set());
+  const gradingDraftsByProblemId = useRef<Record<string, GradingDraft>>({});
   const [myGrading, setMyGrading] = useState<GradingInfo | null | undefined>(undefined);
   const [myGradingByProblemId, setMyGradingByProblemId] = useState<
     Record<string, GradingInfo | null>
@@ -563,8 +600,26 @@ function GradingItemDisplay({
   useEffect(() => {
     setSubProblemIds(new Set());
     setGradedSubProblemIds(new Set());
+    gradingDraftsByProblemId.current = {};
     setMyGradingByProblemId({});
   }, [questionId, answerId]);
+
+  const updateGradingDraft = useCallback(
+    (
+      problemId: string,
+      isSubProblem: boolean,
+      acs: CreateAnswerClassRequest[],
+      feedback: string,
+      hasSelectedAnswerClass: boolean
+    ) => {
+      if (!isSubProblem) return;
+      const draft = { acs, feedback, hasSelectedAnswerClass };
+      const normalizedId = normalizeProblemId(problemId);
+      gradingDraftsByProblemId.current[problemId] = draft;
+      gradingDraftsByProblemId.current[normalizedId] = draft;
+    },
+    []
+  );
 
   const registerSubProblem = useCallback((id: string) => {
     setSubProblemIds((prev) => {
@@ -832,7 +887,8 @@ function GradingItemDisplay({
       submittedProblemId: string,
       isSubProblem: boolean,
       acs: CreateAnswerClassRequest[],
-      feedback: string
+      feedback: string,
+      advanceWhenComplete = true
     ) => {
       // Resolve the actual answerId for this subproblem so peer-grading saves
       // each subproblem's grading against its own Answer row (not the question's MIN id).
@@ -877,7 +933,7 @@ function GradingItemDisplay({
       const allKnownSubs = subProblemIds;
       const allGraded =
         allKnownSubs.size > 0 && Array.from(allKnownSubs).every((id) => newGraded.has(id));
-      if (allGraded) {
+      if (advanceWhenComplete && allGraded) {
         await onAfterGrading?.();
       }
     },
@@ -892,6 +948,37 @@ function GradingItemDisplay({
     ]
   );
 
+  const answeredSubProblemIds = useMemo(
+    () => Array.from(subProblemIds).filter((id) => hasAnswerForSubProblem(id)),
+    [hasAnswerForSubProblem, subProblemIds]
+  );
+
+  const submitAllSubProblemGradings = useCallback(async () => {
+    const draftFor = (id: string) =>
+      gradingDraftsByProblemId.current[id] ??
+      gradingDraftsByProblemId.current[normalizeProblemId(id)];
+    const ungradedIds = answeredSubProblemIds.filter((id) => {
+      const draft = draftFor(id);
+      return !draft?.hasSelectedAnswerClass || draft.acs.length === 0;
+    });
+
+    if (
+      ungradedIds.length > 0 &&
+      !window.confirm(
+        `${ungradedIds.length} subproblem(s) are not graded. Do you want to submit anyway?`
+      )
+    ) {
+      return;
+    }
+
+    for (const id of answeredSubProblemIds) {
+      const draft = draftFor(id);
+      if (!draft?.hasSelectedAnswerClass || draft.acs.length === 0) continue;
+      await onSubmitGrading(id, true, draft.acs, draft.feedback, false);
+    }
+    await onAfterGrading?.();
+  }, [answeredSubProblemIds, onAfterGrading, onSubmitGrading]);
+
   const embeddedFormState = useMemo<EmbeddedGradingFormState>(
     () => ({
       answerId,
@@ -903,6 +990,7 @@ function GradingItemDisplay({
       myGrading,
       myGradingByProblemId,
       onSubmit: onSubmitGrading,
+      onDraftChange: updateGradingDraft,
     }),
     [
       answerId,
@@ -914,8 +1002,10 @@ function GradingItemDisplay({
       myGrading,
       myGradingByProblemId,
       onSubmitGrading,
+      updateGradingDraft,
     ]
   );
+  const hasSubProblemGrading = subProblemIds.size > 0;
 
   return (
     <Box maxWidth={900}>
@@ -928,6 +1018,13 @@ function GradingItemDisplay({
               <EmbeddedGradingForm problemId={problemId} isSubProblem={isSubProblem} />
             )}
           />
+          {hasSubProblemGrading && answeredSubProblemIds.length > 0 ? (
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="contained" onClick={submitAllSubProblemGradings}>
+                Submit
+              </Button>
+            </Box>
+          ) : null}
         </EmbeddedGradingFormContext.Provider>
       </AnswerContext.Provider>
     </Box>
@@ -1036,6 +1133,10 @@ export function GradingInterface({
           studentId: nextItem.studentId,
           answerId: nextAnswerId,
         });
+      } catch {
+        setSelected(undefined);
+        setStudentCurrentItem(null);
+        setStudentCurrentResponses([]);
       } finally {
         setIsLoadingNextItem(false);
       }
@@ -1099,19 +1200,25 @@ export function GradingInterface({
       loadNextStudentItem();
       return;
     }
-    getCourseGradingItems(courseId).then((res) => {
-      setGradingItems(res.gradingItems);
-      homeworkMap.current = res.homeworks.reduce((acc, c) => {
-        acc[c.id] = c;
-        return acc;
-      }, {} as Record<string, HomeworkInfo>);
-      questionMap.current = res.homeworks.reduce((acc, c) => {
-        for (const [id, problem] of Object.entries(c.problems || {})) {
-          acc[id] = problem;
-        }
-        return acc;
-      }, {} as Record<string, FTMLProblemWithSolution>);
-    });
+    getCourseGradingItems(courseId)
+      .then((res) => {
+        setGradingItems(res.gradingItems);
+        homeworkMap.current = res.homeworks.reduce((acc, c) => {
+          acc[c.id] = c;
+          return acc;
+        }, {} as Record<string, HomeworkInfo>);
+        questionMap.current = res.homeworks.reduce((acc, c) => {
+          for (const [id, problem] of Object.entries(c.problems || {})) {
+            acc[id] = problem;
+          }
+          return acc;
+        }, {} as Record<string, FTMLProblemWithSolution>);
+      })
+      .catch(() => {
+        setGradingItems([]);
+        homeworkMap.current = {};
+        questionMap.current = {};
+      });
   }, [courseId, isInstructorUser, loadNextStudentItem, roleResolved]);
 
   const displayedGradingItems = isInstructorUser
