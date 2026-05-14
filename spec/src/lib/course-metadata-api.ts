@@ -146,21 +146,29 @@ export async function updateCheatsheetConfig(
 }
 
 export async function checkLectureEntriesExist(
-  courseId: string
+  courseId: string,
+  universityId: string,
+  instanceId: string
 ): Promise<{ hasEntries: boolean; count: number }> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
-    params: { courseId },
+    params: {
+      courseId,
+      universityId,
+      instanceId,
+    },
   });
   return response.data;
 }
 
 export async function generateLectureEntry(
   courseId: string,
-  instanceId: string
+  instanceId: string,
+  universityId: string
 ): Promise<GenerateLectureEntryResponse> {
   const response = await axios.post(`${COURSE_METADATA_BASE_URL}/generate-lecture-entry`, {
     courseId,
     instanceId,
+    universityId,
   });
   return response.data;
 }
