@@ -41,12 +41,20 @@ function AnswerClassTitleLabel({ title }: { title: string }) {
 export function GradingCreator({
   rawAnswerClasses = [],
   showPoints = false,
+  showSubmit = true,
   onNewGrading,
+  onGradingChange,
   initialGrading = null,
 }: {
   rawAnswerClasses: AnswerClass[];
   showPoints?: boolean;
+  showSubmit?: boolean;
   onNewGrading?: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
+  onGradingChange?: (
+    acs: CreateAnswerClassRequest[],
+    feedback: string,
+    hasSelectedAnswerClass: boolean
+  ) => void;
   /** When set, counts / feedback are restored (e.g. peer grader reopens an already graded item). */
   initialGrading?: GradingInfo | null;
 }) {
@@ -68,8 +76,24 @@ export function GradingCreator({
   const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(undefined);
   const isAnswerClassSelected = !!selectedAnswerClass;
+  const showTraitInputs = isAnswerClassSelected && !selectedAnswerClass.closed;
   const totalPoints = useMemo(
     () => answerClasses.reduce((sum, c) => sum + c.count * c.points, 0),
+    [answerClasses]
+  );
+  const selectedAnswerClasses = useMemo(
+    () =>
+      answerClasses
+        .map((c) => ({
+          answerClassId: c.className,
+          closed: c.closed,
+          description: c.description ?? '',
+          title: c.title ?? '',
+          isTrait: c.isTrait,
+          points: c.points,
+          count: c.count,
+        }))
+        .filter((c) => c.count > 0),
     [answerClasses]
   );
 
@@ -85,6 +109,11 @@ export function GradingCreator({
     setFeedBack(initialGrading?.customFeedback ?? '');
     setSelectAnswerClass(hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined);
   }, [hydrated, initialGrading]);
+
+  useEffect(() => {
+    onGradingChange?.(selectedAnswerClasses, feedback, isAnswerClassSelected);
+  }, [feedback, isAnswerClassSelected, onGradingChange, selectedAnswerClasses]);
+
   const handleAnswerClassesChange = (
     id: string,
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -117,18 +146,7 @@ export function GradingCreator({
     event.preventDefault();
     if (!onNewGrading) return;
 
-    const acs: CreateAnswerClassRequest[] = answerClasses
-      .map((c) => ({
-        answerClassId: c.className,
-        closed: c.closed,
-        description: c.description ?? '',
-        title: c.title ?? '',
-        isTrait: c.isTrait,
-        points: c.points,
-        count: c.count,
-      }))
-      .filter((c) => c.count > 0);
-    await onNewGrading(acs, feedback);
+    await onNewGrading(selectedAnswerClasses, feedback);
     setFeedBack('');
   }
   return (
@@ -151,7 +169,7 @@ export function GradingCreator({
             </Tooltip>
           ))}
       </RadioGroup>
-      {!selectedAnswerClass?.closed &&
+      {showTraitInputs &&
         answerClasses
           .filter((c) => c.isTrait)
           .map((d) => (
@@ -171,23 +189,29 @@ export function GradingCreator({
               </Tooltip>
             </Box>
           ))}
-      <Typography variant="subtitle2" sx={{ my: 1 }}>
-        Total points: {totalPoints}
-      </Typography>
-      <span>{t.feedback}</span>
-      <TextField
-        multiline
-        fullWidth
-        placeholder={t.feedback}
-        minRows={5}
-        value={feedback}
-        style={{ display: 'block' }}
-        onChange={(e) => setFeedBack(e.target.value)}
-      />
+      {isAnswerClassSelected ? (
+        <>
+          <Typography variant="subtitle2" sx={{ my: 1 }}>
+            Total points: {totalPoints}
+          </Typography>
+          <span>{t.feedback}</span>
+          <TextField
+            multiline
+            fullWidth
+            placeholder={t.feedback}
+            minRows={5}
+            value={feedback}
+            style={{ display: 'block' }}
+            onChange={(e) => setFeedBack(e.target.value)}
+          />
+        </>
+      ) : null}
 
-      <Button type="submit" variant="contained" disabled={!isAnswerClassSelected}>
-        {t.submit}
-      </Button>
+      {showSubmit ? (
+        <Button type="submit" variant="contained" disabled={!isAnswerClassSelected}>
+          {t.submit}
+        </Button>
+      ) : null}
     </form>
   );
 }
