@@ -31,6 +31,7 @@ type ExamAnswerContext = Record<
     responses: { subProblemId: string; answer: string; graded?: boolean }[];
   }
 >;
+type ExamMetadata = Awaited<ReturnType<typeof getExamMetadataByUri>>;
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
   const fragmentResponse = await contentFragment({ uri: problemUri });
@@ -100,7 +101,7 @@ const ExamProblemsPage = () => {
   const targetProblemId = router.query.problemId as string | undefined;
   const courseId = router.query.courseId as string | undefined;
 
-  const [examMeta, setExamMeta] = useState<any>(null);
+  const [examMeta, setExamMeta] = useState<ExamMetadata>(null);
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [answers, setAnswers] = useState<ExamAnswerContext>({});
   const [loading, setLoading] = useState(true);
@@ -132,10 +133,9 @@ const ExamProblemsPage = () => {
         } catch {
           setAnswers({});
         }
-      } catch (error) {
-        console.error('Error loading exam data:', error);
+      } catch {
+        return;
       } finally {
-        console.log('Finished loading exam data');
         setLoading(false);
       }
     };

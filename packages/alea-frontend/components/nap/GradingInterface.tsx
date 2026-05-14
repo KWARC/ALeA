@@ -550,9 +550,13 @@ function EmbeddedGradingForm({
     );
   }
 
+  const subProblemSlot = Array.from(ctx.subProblemIds).findIndex(
+    (id) => id === problemId || normalizeProblemId(id) === normalizeProblemId(problemId)
+  );
   const subProblemClasses = isSubProblem
     ? ctx.classesBySubProblemId[problemId] ??
-      ctx.classesBySubProblemId[normalizeProblemId(problemId)]
+      ctx.classesBySubProblemId[normalizeProblemId(problemId)] ??
+      (subProblemSlot >= 0 ? ctx.classesBySubProblemId[`slot:${subProblemSlot + 1}`] : undefined)
     : undefined;
   // For subproblems, never fall back to combined root classes (would mix all
   // subproblems' classes). Use [] until the per-subproblem entry resolves.

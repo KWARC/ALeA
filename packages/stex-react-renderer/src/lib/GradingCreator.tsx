@@ -9,10 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { AnswerClass, CreateAnswerClassRequest, GradingInfo } from '@alea/spec';
-import {
-  DEFAULT_ANSWER_CLASSES,
-  omitAnswerClassesDuplicatingDefaultRadioTitles,
-} from '@alea/quiz-utils';
+import { DEFAULT_ANSWER_CLASSES } from '@alea/quiz-utils';
 import { useRouter } from 'next/router';
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
@@ -67,10 +64,7 @@ export function GradingCreator({
   const t = getLocaleObject(router).quiz;
   const mergedBase = useMemo(
     () =>
-      [
-        ...DEFAULT_ANSWER_CLASSES,
-        ...omitAnswerClassesDuplicatingDefaultRadioTitles(rawAnswerClasses),
-      ].map((c): ClassRow => ({ ...c, count: 0 })),
+      [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c): ClassRow => ({ ...c, count: 0 })),
     [rawAnswerClasses]
   );
   const hydrated = useMemo(

@@ -308,7 +308,7 @@ export function ProblemDisplay({
             disabled={!r}
             onClick={() => {
               onFreezeResponse();
-              if (uri) handleSubmit(problem, uri, r!, userId);
+              if (uri && r) handleSubmit(problem, uri, r, userId);
             }}
             variant="contained"
           >
