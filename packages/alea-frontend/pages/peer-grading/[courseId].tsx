@@ -26,7 +26,7 @@ const PeerGradingListPage: NextPage = () => {
         <Box
         sx={{
           width: '95%',
-          margin: '10vh auto auto auto',
+          margin: '0 auto auto auto',
         }}
       >
         <GradingInterface isPeerGrading={true} courseId={courseId} />

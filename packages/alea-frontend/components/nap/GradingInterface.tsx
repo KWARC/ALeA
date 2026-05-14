@@ -1460,18 +1460,30 @@ export function GradingInterface({
         </>
       )}
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
-        <Box sx={{ border: '1px solid', borderColor: 'divider' }} flex="1 1 200px" maxWidth={300}>
-          <GradingItemsList
-            gradingItems={displayedGradingItems}
-            homeworkMap={homeworkMap.current}
-            isPeerGrading={effectiveIsPeerGrading}
-            selectedItem={selected}
-            onSelectItem={(homeworkId, questionId, studentId, answerId) =>
-              setSelected({ homeworkId, questionId, studentId, answerId })
-            }
-          />
-        </Box>
-        <Box border="1px solid #ccc" flex="1 1 400px" p={2} maxWidth="fill-available">
+        {isInstructorUser && (
+          <Box
+            sx={{ border: '1px solid', borderColor: 'divider' }}
+            flex="1 1 200px"
+            maxWidth={300}
+          >
+            <GradingItemsList
+              gradingItems={displayedGradingItems}
+              homeworkMap={homeworkMap.current}
+              isPeerGrading={effectiveIsPeerGrading}
+              selectedItem={selected}
+              onSelectItem={(homeworkId, questionId, studentId, answerId) =>
+                setSelected({ homeworkId, questionId, studentId, answerId })
+              }
+            />
+          </Box>
+        )}
+        <Box
+          border="1px solid #ccc"
+          flex={isInstructorUser ? '1 1 400px' : '1 1 100%'}
+          p={2}
+          maxWidth={isInstructorUser ? 'fill-available' : 940}
+          mx={isInstructorUser ? undefined : 'auto'}
+        >
           {!isInstructorUser && (
             <Box mb={1} display="flex" gap={1}>
               <Tooltip title="Hide this problem for 24 hours, then it may reappear.">
