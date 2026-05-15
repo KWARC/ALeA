@@ -58,7 +58,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
@@ -671,13 +670,6 @@ const CourseHomePage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={instanceId}
-      />
 
       <Box
         fragment-uri={notes}
