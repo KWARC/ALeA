@@ -131,10 +131,12 @@ export default function MainLayout({
   title,
   children,
   bgColor,
+  hideCourseHeader = false,
 }: {
   title?: string;
   children: any;
   bgColor?: string;
+  hideCourseHeader?: boolean;
 }) {
   const { trackPageView } = useMatomo();
   const router = useRouter();
@@ -178,7 +180,7 @@ export default function MainLayout({
       <main style={{ flexGrow: 1 }}>
         <Header />
         <ReportProblemPopover />
-        {courseInfo && (
+        {!hideCourseHeader && courseInfo && (
           <CourseHeader
             courseName={courseInfo.courseName}
             imageLink={courseInfo.imageLink}
