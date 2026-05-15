@@ -23,6 +23,7 @@ import {
   getGradingItems,
   getMyAnswers,
   GradingInfo,
+  ReviewType,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { ProblemDisplay } from '@alea/stex-react-renderer';
@@ -112,6 +113,10 @@ function AnswerItemOrganizer({
 }
 function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
   return [...grades].sort((a, b) => {
+    if (a.reviewType !== b.reviewType) {
+      if (a.reviewType === ReviewType.INSTRUCTOR) return -1;
+      if (b.reviewType === ReviewType.INSTRUCTOR) return 1;
+    }
     const ta = new Date(a.updatedAt).getTime();
     const tb = new Date(b.updatedAt).getTime();
     if (ta !== tb) return ta - tb;
@@ -121,6 +126,14 @@ function sortGradingsForAnonymousOrder(grades: GradingInfo[]): GradingInfo[] {
 
 function feedbackNotes(grading: GradingInfo): string {
   return String(grading.customFeedback ?? '').trim();
+}
+
+function reviewerLabel(grading: GradingInfo | undefined, idx: number): string {
+  if (grading?.reviewType === ReviewType.INSTRUCTOR) {
+    const name = String(grading.checkerName || grading.checkerId || '').trim();
+    return `Instructor${name ? `: ${name}` : ''}`;
+  }
+  return `Reviewer ${idx + 1}`;
 }
 
 function getProblemLabel(questionId: string, fallbackIdx: number) {
@@ -308,6 +321,12 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
   ].join('::');
   const reviewerCount = Math.max(0, ...answers.map((a) => (gradingsByAnswerId[a.id] ?? []).length));
   const safeReviewerIdx = Math.min(reviewerIdx, Math.max(0, reviewerCount - 1));
+  const reviewerOptions = Array.from({ length: reviewerCount }, (_, i) => {
+    const grading = answers
+      .map((a) => sortGradingsForAnonymousOrder(gradingsByAnswerId[a.id] ?? [])[i])
+      .find(Boolean);
+    return reviewerLabel(grading, i);
+  });
 
   return (
     <Box>
@@ -320,9 +339,9 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
             value={safeReviewerIdx}
             onChange={(e) => setReviewerIdx(Number(e.target.value))}
           >
-            {Array.from({ length: reviewerCount }, (_, i) => (
+            {reviewerOptions.map((label, i) => (
               <MenuItem key={i} value={i}>
-                Reviewer {i + 1}
+                {label}
               </MenuItem>
             ))}
           </Select>

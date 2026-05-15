@@ -24,8 +24,10 @@ export async function getAllGradingsOrSetError(
   // truncate or format TIMESTAMP differently than the aggregated MAX(updatedAt).
   // Use explicit `(?, ?, ...)` placeholders: Prisma/MySQL `$queryRawUnsafe(..., [[id]])` for `IN (?)` often binds wrong.
   const latestGrades = await executeAndEndSet500OnError<GradingInfo[]>(
-    `SELECT g.id, g.checkerId, g.reviewType, g.answerId, g.customFeedback, g.totalPoints, g.createdAt, g.updatedAt
+    `SELECT g.id, g.checkerId, CONCAT_WS(' ', ui.firstName, ui.lastName) AS checkerName,
+      g.reviewType, g.answerId, g.customFeedback, g.totalPoints, g.createdAt, g.updatedAt
     FROM Grading g
+    LEFT JOIN userInfo ui ON ui.userId = g.checkerId
     WHERE g.id IN (
       SELECT MAX(g2.id)
       FROM Grading g2
