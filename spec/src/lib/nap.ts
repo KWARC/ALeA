@@ -65,6 +65,7 @@ export interface AnswerResponse {
 export interface GradingInfo {
   id: number;
   checkerId: string;
+  checkerName?: string;
   reviewType: ReviewType;
   answerId: number;
   customFeedback: string;

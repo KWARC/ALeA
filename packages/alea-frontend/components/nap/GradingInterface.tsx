@@ -657,9 +657,13 @@ function GradingItemDisplay({
   const [myGradingByProblemId, setMyGradingByProblemId] = useState<
     Record<string, GradingInfo | null>
   >({});
+  const gradingInfoRequestRef = useRef(0);
 
   // Reset detected/graded subproblem ids when switching to a different grading item.
   useEffect(() => {
+    setStudentResponse(undefined);
+    setAnswerClasses(undefined);
+    setAnswerClassesBySubProblemId({});
     setSubProblemIds(new Set());
     setGradedSubProblemIds(new Set());
     gradingDraftsByProblemId.current = {};
@@ -777,10 +781,13 @@ function GradingItemDisplay({
   }, [loadMyGrading]);
 
   const refreshGradingInfo = useCallback(() => {
+    const requestId = ++gradingInfoRequestRef.current;
+    const isCurrentRequest = () => gradingInfoRequestRef.current === requestId;
     const lookupKey = getParamFromUri(questionId, 'a') ?? questionId;
     const setStudentResponseIfChanged = (
       next: Record<string, ResponseWithSubProblemId> | undefined
     ) => {
+      if (!isCurrentRequest()) return;
       setStudentResponse((prev) => (sameJsonValue(prev, next) ? prev : next));
     };
     const syncStudentResponses = async (): Promise<string[]> => {
@@ -798,6 +805,7 @@ function GradingItemDisplay({
       }
       try {
         const c = await getAnswerAdmin(courseId, answerId);
+        if (!isCurrentRequest()) return [];
         const responses: AnswerResponseWithId[] = Array.isArray(c?.responses)
           ? (c.responses as { answerId?: number; subProblemId?: string; answer?: string }[]).map(
               (r) => ({
@@ -825,6 +833,7 @@ function GradingItemDisplay({
     void (async () => {
       try {
         await syncStudentResponses();
+        if (!isCurrentRequest()) return;
         if (!problem) {
           setAnswerClasses([]);
           return;
@@ -932,9 +941,12 @@ function GradingItemDisplay({
           baseCombined = mergeAnswerClassesByClassName(baseCombined, sub.answerClasses ?? []);
         }
 
-        setAnswerClasses(mergeAnswerClassesByClassName(gnotesCombined, baseCombined));
-        setAnswerClassesBySubProblemId(byProblemId);
+        if (isCurrentRequest()) {
+          setAnswerClasses(mergeAnswerClassesByClassName(gnotesCombined, baseCombined));
+          setAnswerClassesBySubProblemId(byProblemId);
+        }
       } catch {
+        if (!isCurrentRequest()) return;
         setAnswerClasses([]);
         setAnswerClassesBySubProblemId({});
       }
@@ -946,25 +958,33 @@ function GradingItemDisplay({
   }, [refreshGradingInfo]);
 
   useEffect(() => {
+    let cancelled = false;
     const mappedProblem = getMappedProblem(questionMap, questionId);
     if (mappedProblem) {
       setProblem(mappedProblem);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
     setProblem(undefined);
     const fetchProblem = async () => {
       try {
         const raw = await contentFragment({ uri: questionId });
+        if (cancelled) return;
         const { titleHtml, html } = parseContentFragmentTuple(raw);
         setProblem({
           problem: { uri: questionId, html, title_html: titleHtml },
           answerClasses: [],
         });
       } catch {
+        if (cancelled) return;
         setProblem(undefined);
       }
     };
     fetchProblem();
+    return () => {
+      cancelled = true;
+    };
   }, [questionId, questionMap]);
 
   const onSubmitGrading = useCallback(
