@@ -216,6 +216,11 @@ export const en = {
   },
   courseNotes: {
     notCovered: 'This section is not covered in the course',
+    comingSoon: 'Course notes coming soon',
+    unavailablePrefix: 'Notes for',
+    unavailableSuffix: 'are not available yet.',
+    exploreCourse: 'Explore Our Course',
+    backToHome: 'Back to Home',
   },
   courseView: {
     notes: 'Notes',

@@ -189,6 +189,11 @@ export const de = {
   },
   courseNotes: {
     notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
+    comingSoon: 'Kursnotizen demnächst verfügbar',
+    unavailablePrefix: 'Notizen für',
+    unavailableSuffix: 'sind noch nicht verfügbar.',
+    exploreCourse: 'Kurs erkunden',
+    backToHome: 'Zur Startseite',
   },
   courseView: {
     notes: 'Notizen',
