@@ -3,6 +3,7 @@ import {
   AnswerClass,
   CreateAnswerClassRequest,
   createGrading,
+  editGrading,
   FTMLProblemWithSolution,
   getAnswerAdmin,
   getCourseAcls,
@@ -1023,11 +1024,18 @@ function GradingItemDisplay({
         }
         targetAnswerId = Number(match.answerId);
       }
-      await createGrading({
-        answerId: targetAnswerId,
-        answerClasses: acs,
-        customFeedback: feedback,
-      });
+      const existingGradingId = await getMyGradingForAnswer(targetAnswerId)
+        .then((g) => g?.id)
+        .catch(() => undefined);
+      if (existingGradingId && existingGradingId > 0) {
+        await editGrading({ id: existingGradingId, answerClasses: acs, customFeedback: feedback });
+      } else {
+        await createGrading({
+          answerId: targetAnswerId,
+          answerClasses: acs,
+          customFeedback: feedback,
+        });
+      }
       loadMyGrading();
       refreshGradingInfo();
 
