@@ -75,6 +75,10 @@ export function GradingCreator({
     () => hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined,
     [hydrated]
   );
+  const rawAnswerClassIds = useMemo(
+    () => new Set(rawAnswerClasses.filter((c) => !c.isTrait).map((c) => c.className)),
+    [rawAnswerClasses]
+  );
   const [answerClasses, setAnswerClasses] = useState<ClassRow[]>(hydrated);
   const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(
@@ -84,7 +88,9 @@ export function GradingCreator({
     initialSelectedAnswerClass?.className
   );
   const isAnswerClassSelected = !!selectedAnswerClass;
-  const showTraitInputs = isAnswerClassSelected && !selectedAnswerClass.closed;
+  const showTraitInputs =
+    isAnswerClassSelected &&
+    (!selectedAnswerClass.closed || rawAnswerClassIds.has(selectedAnswerClass.className));
   const totalPoints = useMemo(
     () => answerClasses.reduce((sum, c) => sum + c.count * c.points, 0),
     [answerClasses]
