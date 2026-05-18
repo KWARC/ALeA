@@ -26,7 +26,7 @@ import {
   ReviewType,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
-import { ProblemDisplay } from '@alea/stex-react-renderer';
+import { AnswerContext, ProblemDisplay } from '@alea/stex-react-renderer';
 import { contentFragment } from '@flexiformal/ftml-backend';
 import { parseContentFragmentTuple } from '@alea/quiz-utils';
 import { NextPage } from 'next';
@@ -327,6 +327,20 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
       .find(Boolean);
     return reviewerLabel(grading, i);
   });
+  const answerContext = useMemo(() => {
+    const responses = answers.map((a) => {
+      const numericSubProblemId = Number(a.subProblemId);
+      const renderedSubProblemId = Number.isFinite(numericSubProblemId)
+        ? problemSlotIds[numericSubProblemId]
+        : undefined;
+      return {
+        subProblemId: renderedSubProblemId ?? a.subProblemId,
+        answer: a.answer,
+        graded: a.graded,
+      };
+    });
+    return { [primary.questionId]: { problemId: primary.questionId, responses } };
+  }, [answers, primary.questionId, problemSlotIds]);
 
   return (
     <Box>
@@ -347,17 +361,19 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
           </Select>
         </FormControl>
       ) : null}
-      <ProblemDisplay
-        key={`${primary.questionId}-${feedbackRevision}`}
-        showPoints={true}
-        problem={problem}
-        isFrozen={true}
-        r={answerText}
-        uri={primary.questionId}
-        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
-          <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
-        )}
-      ></ProblemDisplay>
+      <AnswerContext.Provider value={answerContext}>
+        <ProblemDisplay
+          key={`${primary.questionId}-${feedbackRevision}`}
+          showPoints={true}
+          problem={problem}
+          isFrozen={true}
+          r={answerText}
+          uri={primary.questionId}
+          renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+            <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
+          )}
+        ></ProblemDisplay>
+      </AnswerContext.Provider>
     </Box>
   );
 }
