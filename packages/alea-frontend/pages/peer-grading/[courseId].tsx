@@ -3,7 +3,6 @@ import { NextPage } from "next";
 import { useRouter } from "next/router";
 import { GradingInterface } from '../../components/nap/GradingInterface';
 import MainLayout from '../../layouts/MainLayout';
-import { CourseHeader } from '../../components/CourseHeader';
 
 
 const PeerGradingListPage: NextPage = () => {
@@ -13,10 +12,6 @@ const PeerGradingListPage: NextPage = () => {
   return (
     <>
       <MainLayout>
-        <CourseHeader
-          courseName=""
-          courseId={courseId}
-        />
         
         <Box
         sx={{

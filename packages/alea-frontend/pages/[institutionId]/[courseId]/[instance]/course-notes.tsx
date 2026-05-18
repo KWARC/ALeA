@@ -262,7 +262,7 @@ const CourseNotesPage: NextPage = () => {
   }
 
   return (
-    <MainLayout title={courseId.toUpperCase()}>
+    <MainLayout title={courseId.toUpperCase()} hideCourseHeader={true}>
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"
