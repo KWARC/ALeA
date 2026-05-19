@@ -57,9 +57,23 @@ import {
   useRef,
   useState,
 } from 'react';
+import Link from 'next/link';
 import { MultiItemSelector } from './MultiItemsSelector';
 
 const TIMED_SKIP_DURATION_MS = 24 * 60 * 60 * 1000;
+
+const peerShortcutButtonSx = {
+  borderRadius: 999,
+  px: 2.5,
+  textTransform: 'none',
+  fontWeight: 700,
+  backgroundColor: 'primary.main',
+  color: 'common.white',
+  boxShadow: '0 8px 18px rgba(37, 99, 235, 0.24)',
+  '&:hover': {
+    backgroundColor: 'primary.dark',
+  },
+};
 
 interface TimedSkipEntry {
   answerId: number;
@@ -1417,11 +1431,12 @@ export function GradingInterface({
       {!isInstructorUser && effectiveIsPeerGrading && (
         <Box
           sx={{
+            mt: 3,
             mb: 2,
             px: 2,
             py: 1.5,
             mx: 'auto',
-            maxWidth: 900,
+            maxWidth: 940,
             borderRadius: 2.5,
             border: '1px solid rgba(148, 163, 184, 0.28)',
             boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
@@ -1440,6 +1455,30 @@ export function GradingInterface({
             Peer grading helps you strengthen your understanding by reviewing and evaluating other
             students&apos; solutions.
           </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1.5 }}>
+            <Button
+              component={Link}
+              href="/my-answers"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="contained"
+              size="small"
+              sx={peerShortcutButtonSx}
+            >
+              My Answers
+            </Button>
+            <Button
+              component={Link}
+              href="/my-grading"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="contained"
+              size="small"
+              sx={peerShortcutButtonSx}
+            >
+              My Grading
+            </Button>
+          </Box>
         </Box>
       )}
       {isInstructorUser && (
