@@ -660,4 +660,10 @@ export const de = {
     confirmUpdateQuiz:
       'Sind Sie sicher, dass Sie die Verfügbarkeit des Quiz aktualisieren möchten?',
   },
+  courseLanding: {
+    availableSemesters: 'Verfügbare Semester',
+    latest: 'Neuestes',
+    welcomeAndCourseInfo: 'Einführung & Kursinformationen',
+    aboutThisCourse: 'Über diesen Kurs',
+  },
 };

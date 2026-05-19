@@ -683,4 +683,10 @@ export const en = {
     lecture: 'Lecture',
     tutorial: 'Tutorial',
   },
+  courseLanding: {
+    availableSemesters: 'Available Semesters',
+    latest: 'Latest',
+    welcomeAndCourseInfo: 'Welcome & Course Information',
+    aboutThisCourse: 'About this Course',
+  },
 };
