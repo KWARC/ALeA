@@ -1459,6 +1459,8 @@ export function GradingInterface({
             <Button
               component={Link}
               href="/my-answers"
+              target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
               size="small"
               sx={peerShortcutButtonSx}
@@ -1468,6 +1470,8 @@ export function GradingInterface({
             <Button
               component={Link}
               href="/my-grading"
+              target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
               size="small"
               sx={peerShortcutButtonSx}
