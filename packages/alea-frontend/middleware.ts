@@ -29,6 +29,9 @@ export function middleware(req: NextRequest) {
   if (pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.startsWith('/static/')) {
     return NextResponse.next();
   }
+  if (pathname === '/university') {
+    return NextResponse.redirect(new URL('/u/university' + search, req.url), 308);
+  }
 
   // Legacy URL redirects to new structure (308 permanent)
   const courseHomeMatch = pathname.match(/^\/course-home\/([^/]+)$/);
