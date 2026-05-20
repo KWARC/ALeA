@@ -28,7 +28,7 @@ import {
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
 import { AnswerContext, ProblemDisplay } from '@alea/stex-react-renderer';
 import { contentFragment } from '@flexiformal/ftml-backend';
-import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
@@ -200,7 +200,10 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     let isMounted = true;
     async function load() {
       try {
-        const raw = await contentFragment({ uri: primary.questionId });
+        const [raw, points] = await Promise.all([
+          contentFragment({ uri: primary.questionId }),
+          getProblemPointsFromDocument(primary.questionId),
+        ]);
         if (!isMounted) return;
         const { titleHtml, html } = parseContentFragmentTuple(raw);
         setProblem({
@@ -208,6 +211,7 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
             uri: primary.questionId,
             html,
             title_html: titleHtml,
+            total_points: points,
           },
           answerClasses: [],
         });

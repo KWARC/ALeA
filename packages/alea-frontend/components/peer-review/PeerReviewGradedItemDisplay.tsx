@@ -6,7 +6,7 @@ import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
 import { MdViewer } from '@alea/markdown';
 import { ProblemDisplay } from '@alea/stex-react-renderer';
-import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 import { useEffect, useMemo, useState } from 'react';
 import {
   addProblemSlot,
@@ -34,7 +34,10 @@ export function PeerReviewGradedItemDisplay({
     let isMounted = true;
     async function loadProblem() {
       try {
-        const fragmentResponse = await contentFragment({ uri: primary.questionId });
+        const [fragmentResponse, points] = await Promise.all([
+          contentFragment({ uri: primary.questionId }),
+          getProblemPointsFromDocument(primary.questionId),
+        ]);
         if (!isMounted) return;
         const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
         setProblem({
@@ -42,6 +45,7 @@ export function PeerReviewGradedItemDisplay({
             uri: primary.questionId,
             html,
             title_html: titleHtml,
+            total_points: points,
           },
           answerClasses: [],
         });

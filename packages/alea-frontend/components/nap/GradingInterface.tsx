@@ -20,6 +20,7 @@ import {
 import { AnswerContext, GradingCreator, ProblemDisplay } from '@alea/stex-react-renderer';
 import {
   answerClassesFromLooseGradingNotesPayload,
+  getProblemPointsFromDocument,
   gradingNotesRequestUriFromSubProblemId,
   mergeAnswerClassesByClassName,
   normalizeProblemId,
@@ -482,6 +483,9 @@ interface EmbeddedGradingFormState {
   hasAnswerForSubProblem: (id: string) => boolean;
   myGrading: GradingInfo | null | undefined;
   myGradingByProblemId: Record<string, GradingInfo | null>;
+  fallbackMaxPoints?: number;
+  problemPointsById: Record<string, number>;
+  loadProblemPoints: (id: string) => void;
   onSubmit: (
     problemId: string,
     isSubProblem: boolean,
@@ -531,9 +535,13 @@ function EmbeddedGradingForm({
 }) {
   const ctx = useContext(EmbeddedGradingFormContext);
   const register = ctx?.registerSubProblem;
+  const loadProblemPoints = ctx?.loadProblemPoints;
   useEffect(() => {
     if (isSubProblem && register) register(problemId);
   }, [isSubProblem, problemId, register]);
+  useEffect(() => {
+    loadProblemPoints?.(problemId);
+  }, [loadProblemPoints, problemId]);
 
   const handleSubmit = useCallback(
     async (acs: CreateAnswerClassRequest[], feedback: string) => {
@@ -543,11 +551,7 @@ function EmbeddedGradingForm({
     [ctx, problemId, isSubProblem]
   );
   const handleDraftChange = useCallback(
-    (
-      acs: CreateAnswerClassRequest[],
-      feedback: string,
-      hasSelectedAnswerClass: boolean
-    ) => {
+    (acs: CreateAnswerClassRequest[], feedback: string, hasSelectedAnswerClass: boolean) => {
       if (!ctx) return;
       ctx.onDraftChange(problemId, isSubProblem, acs, feedback, hasSelectedAnswerClass);
     },
@@ -587,7 +591,6 @@ function EmbeddedGradingForm({
         ctx.myGradingByProblemId[normalizeProblemId(problemId)] ??
         null
     : ctx.myGrading ?? null;
-
   return (
     <GradingProblem
       answerId={ctx.answerId}
@@ -597,6 +600,11 @@ function EmbeddedGradingForm({
       onNewGrading={handleSubmit}
       onGradingChange={handleDraftChange}
       showSubmit={!isSubProblem}
+      maxPoints={
+        ctx.problemPointsById[problemId] ??
+        ctx.problemPointsById[normalizeProblemId(problemId)] ??
+        ctx.fallbackMaxPoints
+      }
     />
   );
 }
@@ -609,6 +617,7 @@ function GradingProblem({
   gradesReady,
   onGradingChange,
   showSubmit = true,
+  maxPoints,
 }: {
   onNewGrading: (acs: CreateAnswerClassRequest[], feedback: string) => Promise<void>;
   onGradingChange?: (
@@ -621,6 +630,7 @@ function GradingProblem({
   initialGrading: GradingInfo | null;
   gradesReady: boolean;
   showSubmit?: boolean;
+  maxPoints?: number;
 }) {
   if (!gradesReady) {
     return <CircularProgress size={32} sx={{ display: 'block', my: 2, mx: 'auto' }} />;
@@ -634,6 +644,7 @@ function GradingProblem({
         onNewGrading={onNewGrading}
         onGradingChange={onGradingChange}
         showSubmit={showSubmit}
+        maxPoints={maxPoints}
       />
     </Box>
   );
@@ -672,19 +683,44 @@ function GradingItemDisplay({
   const [myGradingByProblemId, setMyGradingByProblemId] = useState<
     Record<string, GradingInfo | null>
   >({});
+  const [problemPointsById, setProblemPointsById] = useState<Record<string, number>>({});
   const gradingInfoRequestRef = useRef(0);
+  const pointRequestKeyRef = useRef(`${questionId}:${answerId}`);
 
   // Reset detected/graded subproblem ids when switching to a different grading item.
   useEffect(() => {
+    pointRequestKeyRef.current = `${questionId}:${answerId}`;
     setStudentResponse(undefined);
     setAnswerClasses(undefined);
     setAnswerClassesBySubProblemId({});
     setSubProblemIds(new Set());
     setGradedSubProblemIds(new Set());
+    setProblemPointsById({});
     gradingDraftsByProblemId.current = {};
     setMyGrading(null);
     setMyGradingByProblemId({});
   }, [questionId, answerId]);
+
+  const setProblemPoint = useCallback((id: string, points: number) => {
+    const normalizedId = normalizeProblemId(id);
+    setProblemPointsById((prev) => {
+      if (prev[id] === points && prev[normalizedId] === points) return prev;
+      return { ...prev, [id]: points, [normalizedId]: points };
+    });
+  }, []);
+
+  const loadProblemPoints = useCallback(
+    (id: string) => {
+      const requestKey = pointRequestKeyRef.current;
+      getProblemPointsFromDocument(id)
+        .then((points) => {
+          if (pointRequestKeyRef.current !== requestKey || points == null) return;
+          setProblemPoint(id, points);
+        })
+        .catch(() => undefined);
+    },
+    [setProblemPoint]
+  );
 
   const updateGradingDraft = useCallback(
     (
@@ -977,6 +1013,15 @@ function GradingItemDisplay({
     const mappedProblem = getMappedProblem(questionMap, questionId);
     if (mappedProblem) {
       setProblem(mappedProblem);
+      if (mappedProblem.problem.total_points == null) {
+        getProblemPointsFromDocument(questionId).then((points) => {
+          if (cancelled || points == null) return;
+          setProblem({
+            ...mappedProblem,
+            problem: { ...mappedProblem.problem, total_points: points },
+          });
+        });
+      }
       return () => {
         cancelled = true;
       };
@@ -984,11 +1029,14 @@ function GradingItemDisplay({
     setProblem(undefined);
     const fetchProblem = async () => {
       try {
-        const raw = await contentFragment({ uri: questionId });
+        const [raw, points] = await Promise.all([
+          contentFragment({ uri: questionId }),
+          getProblemPointsFromDocument(questionId),
+        ]);
         if (cancelled) return;
         const { titleHtml, html } = parseContentFragmentTuple(raw);
         setProblem({
-          problem: { uri: questionId, html, title_html: titleHtml },
+          problem: { uri: questionId, html, title_html: titleHtml, total_points: points },
           answerClasses: [],
         });
       } catch {
@@ -1121,6 +1169,9 @@ function GradingItemDisplay({
       hasAnswerForSubProblem,
       myGrading,
       myGradingByProblemId,
+      fallbackMaxPoints: problem?.problem.total_points,
+      problemPointsById,
+      loadProblemPoints,
       onSubmit: onSubmitGrading,
       onDraftChange: updateGradingDraft,
       getDraft: getGradingDraft,
@@ -1134,6 +1185,9 @@ function GradingItemDisplay({
       hasAnswerForSubProblem,
       myGrading,
       myGradingByProblemId,
+      problem?.problem.total_points,
+      problemPointsById,
+      loadProblemPoints,
       onSubmitGrading,
       updateGradingDraft,
       getGradingDraft,
@@ -1412,12 +1466,11 @@ export function GradingInterface({
       loadNextStudentItem();
       return;
     }
-    loadInstructorItems()
-      .catch(() => {
-        setGradingItems([]);
-        homeworkMap.current = {};
-        questionMap.current = {};
-      });
+    loadInstructorItems().catch(() => {
+      setGradingItems([]);
+      homeworkMap.current = {};
+      questionMap.current = {};
+    });
   }, [courseId, isInstructorUser, loadInstructorItems, loadNextStudentItem, roleResolved]);
 
   const displayedGradingItems = isInstructorUser
@@ -1532,11 +1585,7 @@ export function GradingInterface({
       )}
       <Box display="flex" mt={1} flexWrap="wrap" rowGap={0.5}>
         {isInstructorUser && (
-          <Box
-            sx={{ border: '1px solid', borderColor: 'divider' }}
-            flex="1 1 200px"
-            maxWidth={300}
-          >
+          <Box sx={{ border: '1px solid', borderColor: 'divider' }} flex="1 1 200px" maxWidth={300}>
             <GradingItemsList
               gradingItems={displayedGradingItems}
               homeworkMap={homeworkMap.current}
