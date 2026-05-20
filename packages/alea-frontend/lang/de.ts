@@ -661,9 +661,9 @@ export const de = {
       'Sind Sie sicher, dass Sie die Verfügbarkeit des Quiz aktualisieren möchten?',
   },
   courseLanding: {
-    availableSemesters: 'Verfügbare Semester',
+    courseInstances: 'Kursinstanzen',
     latest: 'Neuestes',
-    welcomeAndCourseInfo: 'Einführung & Kursinformationen',
+    CourseInfo: 'Kursinformationen',
     aboutThisCourse: 'Über diesen Kurs',
   },
 };

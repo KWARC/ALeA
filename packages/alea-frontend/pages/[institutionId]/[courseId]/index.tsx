@@ -99,7 +99,7 @@ const CourseGeneralLandingPage: NextPage = () => {
             <Box display="flex" alignItems="center" gap={1.5} mb={2}>
               <CalendarMonthIcon color="action" />
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {t.availableSemesters}
+                {t.courseInstances}
               </Typography>
             </Box>
 
@@ -154,22 +154,38 @@ const CourseGeneralLandingPage: NextPage = () => {
             <CircularProgress size={30} />
           </Box>
         ) : landingUri ? (
-          <Paper elevation={1} sx={landingCardSx}>
+                   <Box sx={{ width: '100%' }}>
             <Typography
               variant="h5"
               sx={{
                 fontWeight: 800,
                 mb: 3,
-                color: 'primary.main',
-                borderBottom: '2px solid',
-                borderColor: 'divider',
+                color: 'text.primary',
                 pb: 1.5,
+                textAlign: 'center',
               }}
             >
-              {t.welcomeAndCourseInfo}
+              {t.CourseInfo}
             </Typography>
 
-            <Box fragment-uri={landingUri} fragment-kind="Section">
+            <Box
+              fragment-uri={landingUri}
+              fragment-kind="Section"
+              sx={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                '& .ftml-reset': {
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#ffffff', 
+                  color: '#000000',         
+                  borderRadius: 3,            
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)', 
+                },
+              }}
+            >
               <SafeFTMLDocument
                 document={{ type: 'FromBackend', uri: landingUri }}
                 showContent={false}
@@ -178,11 +194,13 @@ const CourseGeneralLandingPage: NextPage = () => {
                 toc="None"
               />
             </Box>
-          </Paper>
+          </Box>
+
+
         ) : (
           currentCourse.teaser && (
             <Paper elevation={1} sx={landingCardSx}>
-              <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'primary.main' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}>
                 {t.aboutThisCourse}
               </Typography>
               <Typography variant="body1" sx={{ lineHeight: 1.7, color: 'text.secondary' }}>

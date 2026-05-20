@@ -684,9 +684,9 @@ export const en = {
     tutorial: 'Tutorial',
   },
   courseLanding: {
-    availableSemesters: 'Available Semesters',
+    courseInstances: 'Course Instances',
     latest: 'Latest',
-    welcomeAndCourseInfo: 'Welcome & Course Information',
+   CourseInfo: 'Course Information',
     aboutThisCourse: 'About this Course',
   },
 };
