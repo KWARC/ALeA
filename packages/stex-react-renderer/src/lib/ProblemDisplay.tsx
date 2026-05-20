@@ -80,6 +80,10 @@ function SubProblemPointsInfo({
 
 export const AnswerContext = createContext<Record<string, ResponseWithSubProblemId>>({});
 
+type PreviousAnswerResponse = ResponseWithSubProblemId['responses'][number] & {
+  graded?: boolean;
+};
+
 function hasSubProblemsInHtml(html: string) {
   return (html.match(/data-ftml-problem=/g)?.length ?? 0) > 1;
 }
@@ -92,17 +96,17 @@ function findPreviousResponse(
   responses: ResponseWithSubProblemId['responses'] | undefined,
   problemId: string,
   masterProblemId: string
-) {
+): PreviousAnswerResponse | undefined {
   if (!responses?.length) return undefined;
 
   const normalizedProblemId = normalizeAnswerProblemId(problemId);
   const exactResponse = responses.find(
     (response) => normalizeAnswerProblemId(response.subProblemId) === normalizedProblemId
   );
-  if (exactResponse) return exactResponse;
+  if (exactResponse) return exactResponse as PreviousAnswerResponse;
 
   return normalizedProblemId === normalizeAnswerProblemId(masterProblemId)
-    ? responses[0]
+    ? (responses[0] as PreviousAnswerResponse)
     : undefined;
 }
 
