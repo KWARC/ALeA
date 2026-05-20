@@ -10,22 +10,79 @@ import {
 import { FTML } from '@flexiformal/ftml';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useRouter } from 'next/router';
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { getPoints } from './stex-react-renderer';
 import { ShowSubProblemAnswer } from './SubProblemAnswer';
 import { useCurrentUser } from '@alea/react-utils';
+import { getProblemPointsFromDocument } from '@alea/quiz-utils';
 
-export function PointsInfo({ points }: { points: number | undefined }) {
+export function PointsInfo({ points, compact = false }: { points: number; compact?: boolean }) {
   return (
-    <Typography variant="h6" sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <b>{points ?? 1} pt</b>
+    <Typography
+      variant={compact ? 'body2' : 'h6'}
+      sx={{ display: 'flex', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}
+    >
+      <b>{points} pt</b>
     </Typography>
   );
 }
 
+function SubProblemPointsInfo({
+  problemUri,
+  showPoints,
+  onRender,
+}: {
+  problemUri: string;
+  showPoints: boolean;
+  onRender?: () => void;
+}) {
+  const [points, setPoints] = useState<number | undefined>();
+
+  useEffect(() => {
+    onRender?.();
+  }, [onRender]);
+
+  useEffect(() => {
+    if (!showPoints) return;
+    let cancelled = false;
+    setPoints(undefined);
+    getProblemPointsFromDocument(problemUri)
+      .then((nextPoints) => {
+        if (!cancelled) setPoints(nextPoints);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [problemUri, showPoints]);
+
+  if (!showPoints || points == null) return null;
+  return <PointsInfo points={points} compact />;
+}
+
 export const AnswerContext = createContext<Record<string, ResponseWithSubProblemId>>({});
+
+function hasSubProblemsInHtml(html: string) {
+  return (html.match(/data-ftml-problem=/g)?.length ?? 0) > 1;
+}
 
 function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdateEntry[] {
   const conceptUpdate: { [url: string]: AnswerUpdateEntry } = {};
@@ -102,6 +159,8 @@ export function ProblemViewer({
   r,
   renderBelowAnswerAccepter,
   hideAnswerAccepter = false,
+  showPoints = true,
+  onSubProblemRender,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
@@ -109,6 +168,8 @@ export function ProblemViewer({
   r?: FTML.ProblemResponse;
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
   hideAnswerAccepter?: boolean;
+  showPoints?: boolean;
+  onSubProblemRender?: () => void;
 }) {
   // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
   // even when SafeFTMLFragment caches the wrapper from the first render.
@@ -143,6 +204,15 @@ export function ProblemViewer({
                 problemTitle={problem.problem.title_html ?? ''}
                 isFrozen={isFrozen}
                 problemId={problemUri}
+                pointsNode={
+                  isSubProblem ? (
+                    <SubProblemPointsInfo
+                      problemUri={problemUri}
+                      showPoints={showPoints}
+                      onRender={onSubProblemRender}
+                    />
+                  ) : null
+                }
               ></AnswerAccepter>
             ) : null}
             {renderBelowRef.current?.(problemUri, isSubProblem)}
@@ -158,11 +228,13 @@ function AnswerAccepter({
   masterProblemId,
   isFrozen,
   problemTitle,
+  pointsNode,
 }: {
   problemId: string;
   masterProblemId: string;
   isFrozen: boolean;
   problemTitle: string;
+  pointsNode?: ReactNode;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
@@ -171,7 +243,7 @@ function AnswerAccepter({
   if (previousAnswer !== undefined) {
     const previousResponse = previousAnswer[masterProblemId]?.responses?.find(
       (c) => c.subProblemId === problemId
-    ) as ({ answer?: string; graded?: boolean } | undefined);
+    ) as { answer?: string; graded?: boolean } | undefined;
     serverAnswer = previousResponse?.answer ?? '';
     isAnswerGraded = previousResponse?.graded === true;
   }
@@ -245,7 +317,8 @@ function AnswerAccepter({
         )}
       </Box>
 
-      <IconButton disabled={isFrozen || !canSaveAnswer} onClick={onSaveClick} sx={{ ml: 2 }}>
+      {pointsNode ? <Box sx={{ ml: 1.5, mt: 0.5, minWidth: 44 }}>{pointsNode}</Box> : null}
+      <IconButton disabled={isFrozen || !canSaveAnswer} onClick={onSaveClick} sx={{ ml: 1 }}>
         <SaveIcon />
       </IconButton>
       <ShowSubProblemAnswer
@@ -279,6 +352,19 @@ export function ProblemDisplay({
 }) {
   const { user } = useCurrentUser();
   const userId = user?.userId ?? '';
+  const problemHtml = problem?.problem.html ?? '';
+  const subProblemCount = problem?.problem.subProblems?.length ?? 0;
+  const [hasRenderedSubProblem, setHasRenderedSubProblem] = useState(
+    () => subProblemCount > 0 || hasSubProblemsInHtml(problemHtml)
+  );
+  const handleSubProblemRender = useCallback(() => {
+    setHasRenderedSubProblem(true);
+  }, []);
+
+  useEffect(() => {
+    setHasRenderedSubProblem(subProblemCount > 0 || hasSubProblemsInHtml(problemHtml));
+  }, [problemHtml, subProblemCount]);
+
   if (!problem) return <CircularProgress />;
   const isEffectivelyFrozen = isFrozen;
 
@@ -293,7 +379,9 @@ export function ProblemDisplay({
       }}
     >
       <Box fontSize="20px">
-        {showPoints && <PointsInfo points={problem.problem.total_points} />}
+        {showPoints && !hasRenderedSubProblem && problem.problem.total_points != null ? (
+          <PointsInfo points={problem.problem.total_points} />
+        ) : null}
 
         <ProblemViewer
           problem={problem}
@@ -302,6 +390,8 @@ export function ProblemDisplay({
           onResponseUpdate={onResponseUpdate}
           renderBelowAnswerAccepter={renderBelowAnswerAccepter}
           hideAnswerAccepter={hideAnswerAccepter}
+          showPoints={showPoints}
+          onSubProblemRender={handleSubProblemRender}
         />
         {onFreezeResponse && !isEffectivelyFrozen && (
           <Button

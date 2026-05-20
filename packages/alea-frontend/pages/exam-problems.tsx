@@ -22,7 +22,7 @@ import {
 
 import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
-import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 
 type ExamAnswerContext = Record<
   string,
@@ -34,13 +34,17 @@ type ExamAnswerContext = Record<
 type ExamMetadata = Awaited<ReturnType<typeof getExamMetadataByUri>>;
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse = await contentFragment({ uri: problemUri });
+  const [fragmentResponse, points] = await Promise.all([
+    contentFragment({ uri: problemUri }),
+    getProblemPointsFromDocument(problemUri),
+  ]);
   const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
   return {
     problem: {
       uri: problemUri,
       html,
       title_html: titleHtml,
+      total_points: points,
     },
     answerClasses: [],
   };
