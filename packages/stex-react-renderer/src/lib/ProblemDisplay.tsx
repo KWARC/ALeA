@@ -84,6 +84,28 @@ function hasSubProblemsInHtml(html: string) {
   return (html.match(/data-ftml-problem=/g)?.length ?? 0) > 1;
 }
 
+function normalizeAnswerProblemId(problemId?: string) {
+  return (problemId ?? '').replace(/\/+$/, '');
+}
+
+function findPreviousResponse(
+  responses: ResponseWithSubProblemId['responses'] | undefined,
+  problemId: string,
+  masterProblemId: string
+) {
+  if (!responses?.length) return undefined;
+
+  const normalizedProblemId = normalizeAnswerProblemId(problemId);
+  const exactResponse = responses.find(
+    (response) => normalizeAnswerProblemId(response.subProblemId) === normalizedProblemId
+  );
+  if (exactResponse) return exactResponse;
+
+  return normalizedProblemId === normalizeAnswerProblemId(masterProblemId)
+    ? responses[0]
+    : undefined;
+}
+
 function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdateEntry[] {
   const conceptUpdate: { [url: string]: AnswerUpdateEntry } = {};
 
@@ -241,9 +263,11 @@ function AnswerAccepter({
   let serverAnswer = '';
   let isAnswerGraded = false;
   if (previousAnswer !== undefined) {
-    const previousResponse = previousAnswer[masterProblemId]?.responses?.find(
-      (c) => c.subProblemId === problemId
-    ) as { answer?: string; graded?: boolean } | undefined;
+    const previousResponse = findPreviousResponse(
+      previousAnswer[masterProblemId]?.responses ?? previousAnswer[problemId]?.responses,
+      problemId,
+      masterProblemId
+    );
     serverAnswer = previousResponse?.answer ?? '';
     isAnswerGraded = previousResponse?.graded === true;
   }
