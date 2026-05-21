@@ -298,6 +298,8 @@ export const en = {
     date: 'Date',
     topics: 'Topics',
     video: 'Video',
+    landingUrlIssue: 'there is an issue with landing utl',
+    landingNotConfigured: 'Course landing content has not been configured yet.',
   },
   studyBuddy: {
     fillForm: 'Fill in the following form to find buddies to study together.',

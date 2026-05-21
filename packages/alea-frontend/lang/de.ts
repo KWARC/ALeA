@@ -271,6 +271,8 @@ export const de = {
     date: 'Datum',
     topics: 'Themen',
     video: 'Video',
+    landingUrlIssue: 'Es gibt ein Problem mit der Landing-URL.',
+    landingNotConfigured: 'Der Landing-Inhalt des Kurses ist noch nicht konfiguriert.',
   },
   studyBuddy: {
     fillForm: 'Füllen Sie das folgende Formular aus, um Partner zum gemeinsamen Lernen zu finden.',

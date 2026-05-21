@@ -81,6 +81,16 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
   );
 }
 
+function isAbsoluteUrl(uri?: string | null) {
+  if (!uri?.trim()) return false;
+  try {
+    new URL(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function getWeekdayName(dayOfWeek: number): string {
   const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   return days[dayOfWeek] || '';
@@ -616,6 +626,8 @@ const CourseHomePage: NextPage = () => {
   const cheatsheetConfig = courseMetadata?.cheatsheetConfig;
 
   const { hasQuiz, hasHomework, notes, landing, slides } = courseInfo;
+  const hasLandingValue = Boolean(landing?.trim());
+  const hasLanding = isAbsoluteUrl(landing);
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -894,15 +906,25 @@ const CourseHomePage: NextPage = () => {
         )}
 
         <Box bgcolor={'background.paper'}>
-          <Box fragment-uri={landing} fragment-kind="Section">
-            <SafeFTMLDocument
-              document={{ type: 'FromBackend', uri: landing }}
-              showContent={false}
-              pdfLink={false}
-              chooseHighlightStyle={false}
-              toc="None"
-            />
-          </Box>
+          {hasLanding ? (
+            <Box fragment-uri={landing} fragment-kind="Section">
+              <SafeFTMLDocument
+                document={{ type: 'FromBackend', uri: landing }}
+                showContent={false}
+                pdfLink={false}
+                chooseHighlightStyle={false}
+                toc="None"
+              />
+            </Box>
+          ) : hasLandingValue ? (
+            <Alert severity="warning" sx={{ my: 2 }}>
+              {tCourseHome.landingUrlIssue}
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ my: 2 }}>
+              {tCourseHome.landingNotConfigured}
+            </Alert>
+          )}
         </Box>
         <MoreResourcesAccordion
           courseId={courseId}
