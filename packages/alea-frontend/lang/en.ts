@@ -688,4 +688,10 @@ export const en = {
     lecture: 'Lecture',
     tutorial: 'Tutorial',
   },
+  courseLanding: {
+    courseInstances: 'Course Instances',
+    latest: 'Latest',
+   CourseInfo: 'Course Information',
+    aboutThisCourse: 'About this Course',
+  },
 };

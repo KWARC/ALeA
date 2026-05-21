@@ -667,4 +667,10 @@ export const de = {
     confirmUpdateQuiz:
       'Sind Sie sicher, dass Sie die Verfügbarkeit des Quiz aktualisieren möchten?',
   },
+  courseLanding: {
+    courseInstances: 'Kursinstanzen',
+    latest: 'Neuestes',
+    CourseInfo: 'Kursinformationen',
+    aboutThisCourse: 'Über diesen Kurs',
+  },
 };
