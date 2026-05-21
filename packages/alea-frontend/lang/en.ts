@@ -5,6 +5,10 @@ export const en = {
     header: 'ALeA based Courses at FAU',
     courseSection: 'Current semester',
     otherCourses: 'Other Courses',
+    courseList: {
+      title: 'Course Catalog',
+      subtitle: 'Explore available ALeA courses across partner institutions.',
+    },
     guidedTourHeader: 'Topic-Based, Free Style Learning',
     footerInfo:
       "Active course materials incorporate learning support services based on a model that is updated with every interaction with the materials. Such models of a user's preferences and competencies contain highly sensitive personal data. Therefore the learning support services (and corresponding user model data collection) are only enabled when the user is logged-in and are kept secure and under exclusive control of the respective user in the Voll-KI Trust Zone.",
@@ -536,7 +540,8 @@ export const en = {
     confirmUpdateHomework: 'Are you sure you want to update homework availability?',
     confirmUpdateQuiz: 'Are you sure you want to update quiz availability?',
     confirmUpdateCheatsheet: 'Are you sure you want to update cheatsheet availability?',
-    confirmUpdateCanStudentUploadCheatsheet: 'Are you sure you want to update student cheatsheet upload setting?',
+    confirmUpdateCanStudentUploadCheatsheet:
+      'Are you sure you want to update student cheatsheet upload setting?',
 
     courseName: 'Course Name',
     universityId: 'University ID',

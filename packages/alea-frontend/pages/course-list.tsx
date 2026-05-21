@@ -4,11 +4,14 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Box, Typography } from '@mui/material';
 import { NextPage } from 'next';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { CourseThumb } from './u/[institution]';
 
 const CourseList: NextPage = () => {
+  const { home: t } = getLocaleObject(useRouter());
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   useEffect(() => {
     const fetchData = async () => {
@@ -48,39 +51,80 @@ const CourseList: NextPage = () => {
   ];
 
   return (
-    <MainLayout title="Course-List | ALeA">
-      <Box m="0 auto" maxWidth={800}>
-        {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
-          <Box key={universityId}>
-            <Typography variant="h1">{universityId}</Typography>
-            {universities.map((uni) => {
-              if (uni.acronym !== universityId) return null;
-              return (
-                <Box key={uni.title}>
-                  <Typography display="flex" alignItems="center" fontWeight="bold">
-                    {uni.title}{' '}
-                    <Link href={uni.url} target="_blank">
-                      <OpenInNewIcon sx={{ color: 'primary.main' }} />
-                    </Link>
-                  </Typography>
-                  <Typography>{uni.country + ', ' + uni.place}</Typography>
-                  {/* <Typography display="flex" alignItems="center">
-                    View sources
-                    <Link href={`https://gl.mathhub.info/${uni.archive}`} target="_blank">
-                      <OpenInNewIcon style={{ color: PRIMARY_COL }} />
-                    </Link>
-                  </Typography> */}
-                </Box>
-              );
-            })}
-            <Box display="flex" flexWrap="wrap">
-              {institutionCourses.map((c) => (
-                <CourseThumb key={c.courseId} course={c} />
-              ))}
-            </Box>
-            <hr style={{ width: '90%' }} />
+    <MainLayout title={`${t.courseList.title} | ALeA`} bgColor="page.background">
+      <Box sx={{ bgcolor: 'page.background', px: { xs: 2, sm: 3 }, py: { xs: 3, md: 4 } }}>
+        <Box m="0 auto" maxWidth={860}>
+          <Box mb={3}>
+            <Typography
+              component="h1"
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: 32, md: 38 },
+                fontWeight: 800,
+                lineHeight: 1.15,
+                mb: 1,
+              }}
+            >
+              {t.courseList.title}
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 17 }}>
+              {t.courseList.subtitle}
+            </Typography>
           </Box>
-        ))}
+
+          {Object.entries(groupedCourses).map(([universityId, institutionCourses]) => (
+            <Box
+              key={universityId}
+              sx={{
+                mb: { xs: 4, md: 5 },
+              }}
+            >
+              <Box
+                sx={{
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  mb: 1.5,
+                  pb: 1.5,
+                }}
+              >
+                <Typography
+                  component="h2"
+                  sx={{ color: 'text.primary', fontSize: 28, fontWeight: 800, mb: 0.25 }}
+                >
+                  {universityId}
+                </Typography>
+                {universities.map((uni) => {
+                  if (uni.acronym !== universityId) return null;
+                  return (
+                    <Box key={uni.title}>
+                      <Typography display="flex" alignItems="center" fontWeight={700}>
+                        {uni.title}{' '}
+                        <Link href={uni.url} target="_blank">
+                          <OpenInNewIcon sx={{ color: 'primary.main', fontSize: 18, ml: 0.5 }} />
+                        </Link>
+                      </Typography>
+                      <Typography sx={{ color: 'text.secondary' }}>
+                        {uni.country + ', ' + uni.place}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'center', md: 'flex-start' },
+                }}
+              >
+                {institutionCourses.map((c) => (
+                  <CourseThumb key={c.courseId} course={c} />
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </MainLayout>
   );

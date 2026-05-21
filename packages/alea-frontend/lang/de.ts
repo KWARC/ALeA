@@ -3,6 +3,10 @@ export const de = {
     header: 'ALeA basierte Kurse an der FAU',
     courseSection: 'Aktuelles Semester',
     otherCourses: 'Weitere Kurse',
+    courseList: {
+      title: 'Kurskatalog',
+      subtitle: 'Entdecken Sie verfügbare ALeA-Kurse an unseren Partnerinstitutionen.',
+    },
     guidedTourHeader: 'Themenbezogen, Freestyle-Lernen',
     studyBuddyTooltip:
       'Klicken Sie hier, um ganz einfach mit Kommiliton*Innen in Kontakt zu kommen, die gleiche Kurse besuchen',
@@ -501,8 +505,10 @@ export const de = {
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
-    confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
-    confirmUpdateCanStudentUploadCheatsheet: 'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
+    confirmUpdateCheatsheet:
+      'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCanStudentUploadCheatsheet:
+      'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -540,7 +546,8 @@ export const de = {
     failedToSave: 'Kursinformationen konnten nicht gespeichert werden',
     failedHomeworkUpdate: 'Hausaufgaben-Einstellung konnte nicht aktualisiert werden',
     failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
-    failedCanStudentUploadCheatsheetUpdate: 'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
+    failedCanStudentUploadCheatsheetUpdate:
+      'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
   },
 
   courseMetadata: {
