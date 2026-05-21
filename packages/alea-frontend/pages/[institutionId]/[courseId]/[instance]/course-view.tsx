@@ -560,7 +560,10 @@ const CourseViewPage: NextPage = () => {
     }
   };
   return (
-    <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}>
+    <MainLayout
+      title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.slides} | ALeA`}
+      hideCourseHeader={true}
+    >
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"

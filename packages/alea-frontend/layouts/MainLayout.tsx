@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useContext, useEffect, useState } from 'react';
 import { Header } from '../components/Header';
+import { CourseHeader } from '../components/CourseHeader';
+import { useAllCourses } from '../hooks/useAllCourses';
 import { getLocaleObject } from '../lang/utils';
 function SessionResetSlider() {
   const [open, setOpen] = useState(false);
@@ -129,13 +131,23 @@ export default function MainLayout({
   title,
   children,
   bgColor,
+  hideCourseHeader = false,
 }: {
   title?: string;
   children: any;
   bgColor?: string;
+  hideCourseHeader?: boolean;
 }) {
   const { trackPageView } = useMatomo();
   const router = useRouter();
+  const { institutionId, courseId, instance } = router.query as {
+    institutionId?: string;
+    courseId?: string;
+    instance?: string;
+  };
+  const { data: courses } = useAllCourses(institutionId);
+  const courseInfo = courses?.[courseId || ''];
+
   const { header: t } = getLocaleObject(router);
   const [prevLoc, setPrevLoc] = useState('');
   const [conceptTracking, setConceptTracking] = useState(false);
@@ -168,6 +180,15 @@ export default function MainLayout({
       <main style={{ flexGrow: 1 }}>
         <Header />
         <ReportProblemPopover />
+        {!hideCourseHeader && courseInfo && (
+          <CourseHeader
+            courseName={courseInfo.courseName}
+            imageLink={courseInfo.imageLink}
+            courseId={courseId!}
+            institutionId={institutionId}
+            instanceId={instance}
+          />
+        )}
         {/*<Typography
           sx={{ color: 'red', fontWeight: 'bold', textAlign: 'center' }}
         >

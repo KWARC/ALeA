@@ -15,7 +15,6 @@ import { useCurrentUser } from '@alea/react-utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import MainLayout from '../../../../layouts/MainLayout';
 import {
   createCheatSheet,
@@ -707,13 +706,6 @@ const CheatsheetsPage = ({
     if (!courseInfo) return <CourseNotFound />;
     return (
       <MainLayout title={`${courseId.toUpperCase()} · CheatSheets | ALeA`}>
-        <CourseHeader
-          courseName={courseInfo.courseName}
-          imageLink={courseInfo.imageLink}
-          courseId={courseId}
-          institutionId={institutionId}
-          instanceId={instanceId}
-        />
         <CheatSheetsContent
           {...sharedContentProps}
           isEmbedded={false}

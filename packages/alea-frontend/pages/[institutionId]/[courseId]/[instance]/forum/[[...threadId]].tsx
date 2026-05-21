@@ -8,7 +8,6 @@ import { RouteErrorDisplay } from '../../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../../components/CourseNotFound';
 import { ForumView } from '../../../../../components/ForumView';
 import { ThreadView } from '../../../../../components/ThreadView';
-import { CourseHeader } from '../../../../../components/CourseHeader';
 import { useRouteValidation } from '../../../../../hooks/useRouteValidation';
 import { getLocaleObject } from '../../../../../lang/utils';
 import MainLayout from '../../../../../layouts/MainLayout';
@@ -54,13 +53,6 @@ const ForumPage: NextPage = () => {
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${t.forum} | ALeA`}>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={resolvedInstanceId}
-      />
       <Box maxWidth="800px" m="auto" px="10px">
         {threadId ? <ThreadView threadId={threadId} courseId={courseId} /> : <ForumView />}
       </Box>
