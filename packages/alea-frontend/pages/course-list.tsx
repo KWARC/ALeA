@@ -89,9 +89,26 @@ const CourseList: NextPage = () => {
               >
                 <Typography
                   component="h2"
-                  sx={{ color: 'text.primary', fontSize: 28, fontWeight: 800, mb: 0.25 }}
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: 28,
+                    fontWeight: 800,
+                    mb: 0.25,
+                    '& a': {
+                      color: 'inherit',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      transition: 'color 0.2s ease',
+                    },
+                    '& a:hover': {
+                      color: 'primary.main',
+                      textDecoration: 'underline',
+                    },
+                  }}
                 >
-                  {universityId}
+                  <Link href={`/u/${universityId}`}>
+                    {universityId}
+                  </Link>
                 </Typography>
                 {universities.map((uni) => {
                   if (uni.acronym !== universityId) return null;
