@@ -7,8 +7,10 @@ import {
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
+  getTutorInfo,
   getSemesterInfo,
   LectureScheduleItem,
+  TutorInfo,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -107,6 +109,7 @@ function CourseScheduleSection({
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
+  const [tutorInfoById, setTutorInfoById] = useState<Record<string, TutorInfo>>({});
   const [showAllLectures, setShowAllLectures] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
@@ -168,6 +171,16 @@ function CourseScheduleSection({
 
     fetchSchedule();
   }, [courseId, currentTerm]);
+
+  useEffect(() => {
+    if (!userId || tutorialSchedule.length === 0) {
+      setTutorInfoById({});
+      return;
+    }
+    getTutorInfo(tutorialSchedule.map((entry) => entry.tutorName ?? ''))
+      .then(setTutorInfoById)
+      .catch(() => setTutorInfoById({}));
+  }, [tutorialSchedule, userId]);
 
   const { data: nextLectureStartTime } = useQuery({
     queryKey: ['next-lecture-time', courseId, lectureSchedule, currentTerm],
@@ -408,7 +421,18 @@ function CourseScheduleSection({
                         </Typography>
                         {entry.tutorName && (
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            👤 {entry.tutorName}
+                            👤 {tutorInfoById[entry.tutorName]?.name?.trim() || entry.tutorName}
+                            {tutorInfoById[entry.tutorName]?.email && (
+                              <>
+                                {' · '}
+                                <Link
+                                  href={`mailto:${tutorInfoById[entry.tutorName]?.email}`}
+                                  style={{ textDecoration: 'underline' }}
+                                >
+                                  {tutorInfoById[entry.tutorName]?.email}
+                                </Link>
+                              </>
+                            )}
                           </Typography>
                         )}
                         {entry.comments && (
