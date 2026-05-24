@@ -582,7 +582,7 @@ export const de = {
     day: 'Tag',
     venue: 'Veranstaltungsort',
     venueLink: 'Venue-Link',
-    tutorName: 'Tutor Name',
+    tutorName: 'Tutor-ID',
     comments: 'Kommentare',
     startTime: 'Startzeit',
     endTime: 'Endzeit',
