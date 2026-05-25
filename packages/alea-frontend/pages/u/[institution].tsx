@@ -4,6 +4,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -37,6 +38,35 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
     >
       {children}
     </IconButton>
+  );
+}
+
+function EmptyStateCard({ title, message }: { title: string; message: string }) {
+  return (
+    <Card
+      sx={{
+        bgcolor: 'background.card',
+        border: '1px solid ',
+        borderColor: 'divider',
+        p: 4,
+        m: 1.25,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        gap: 2,
+        borderRadius: 2,
+      }}
+    >
+      <MenuBookIcon sx={{ fontSize: 60, color: 'text.secondary', opacity: 0.5 }} />
+      <Typography variant="h5" fontWeight="bold" color="text.primary">
+        {title}
+      </Typography>
+      <Typography variant="body1" color="text.secondary">
+        {message}
+      </Typography>
+    </Card>
   );
 }
 
@@ -207,22 +237,34 @@ const StudentHomePage: NextPage = ({
               </Link>
             )}
           </Box>
-          <h2>{`${t.courseSection} (${currentTerm})`}</h2>
+          <h2>{currentTerm && currentTerm !== 'null' ? `${t.courseSection} (${currentTerm})` : t.courseSection}</h2>
           <Box display="flex" flexWrap="wrap">
-            {Object.values(courses)
-              .filter((course) => course.isCurrent)
-              .map((c) => (
-                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
-              ))}
+            {Object.values(courses).filter((course) => course.isCurrent).length > 0 ? (
+              Object.values(courses)
+                .filter((course) => course.isCurrent)
+                .map((c) => (
+                  <CourseThumb key={c.courseId} course={c} institutionId={institution} />
+                ))
+            ) : (
+              <EmptyStateCard 
+                title={t.noActiveCourses} 
+                message={`${t.noActiveCoursesMsg} ${UniversityDetail[institution]?.fullName || 'this institution'}.`} 
+              />
+            )}
           </Box>
-          <h2>{t.otherCourses}</h2>
-          <Box display="flex" flexWrap="wrap">
-            {Object.values(courses)
-              .filter((course) => !course.isCurrent)
-              .map((c) => (
-                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
-              ))}
-          </Box>
+          
+          {Object.values(courses).filter((course) => !course.isCurrent).length > 0 && (
+            <>
+              <h2>{t.otherCourses}</h2>
+              <Box display="flex" flexWrap="wrap">
+                {Object.values(courses)
+                  .filter((course) => !course.isCurrent)
+                  .map((c) => (
+                    <CourseThumb key={c.courseId} course={c} institutionId={institution} />
+                  ))}
+              </Box>
+            </>
+          )}
           <hr style={{ width: '90%' }} />
         </Box>
       </Box>
