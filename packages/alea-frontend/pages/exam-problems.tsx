@@ -159,7 +159,7 @@ const ExamProblemsPage = () => {
 
   if (loading) {
     return (
-      <MainLayout title="Exam">
+      <MainLayout title="Exam" hideCourseHeader={true}>
         <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
           <CircularProgress />
         </Box>
@@ -168,7 +168,7 @@ const ExamProblemsPage = () => {
   }
 
   return (
-    <MainLayout title={`Review: ${examLabelFull}`}>
+    <MainLayout title={`Review: ${examLabelFull}`}  hideCourseHeader={true}>
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           {examLabelShort && (
