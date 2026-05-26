@@ -5,7 +5,7 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Card, IconButton, Tooltip, Typography, SxProps, Theme } from '@mui/material';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -259,7 +259,7 @@ const StudentHomePage: NextPage = ({
 
 export default StudentHomePage;
 
-const emptyStateCardStyles = {
+const emptyStateCardStyles: Record<'card' | 'icon', SxProps<Theme>> = {
   card: {
     bgcolor: 'background.card',
     border: '1px solid',

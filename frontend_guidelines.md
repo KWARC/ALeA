@@ -29,7 +29,10 @@ To keep components clean, readable, and scalable, follow a **"static styles + lo
 Define static styles in a dedicated object **near the bottom of the file**.
 
 ```typescript
-const loListStyles = {
+import { SxProps, Theme } from '@mui/material';
+
+// Add types for compiler support
+const loListStyles: Record<'listItem' | 'listHeader', SxProps<Theme>> = {
   listItem: {
     display: 'flex',
     alignItems: 'center',
