@@ -43,23 +43,8 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
 
 function EmptyStateCard({ title, message }: { title: string; message: string }) {
   return (
-    <Card
-      sx={{
-        bgcolor: 'background.card',
-        border: '1px solid ',
-        borderColor: 'divider',
-        p: 4,
-        m: 1.25,
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: 2,
-        borderRadius: 2,
-      }}
-    >
-      <MenuBookIcon sx={{ fontSize: 60, color: 'text.secondary', opacity: 0.5 }} />
+    <Card sx={emptyStateCardStyles.card}>
+      <MenuBookIcon sx={emptyStateCardStyles.icon} />
       <Typography variant="h5" fontWeight="bold" color="text.primary">
         {title}
       </Typography>
@@ -273,6 +258,28 @@ const StudentHomePage: NextPage = ({
 };
 
 export default StudentHomePage;
+
+const emptyStateCardStyles = {
+  card: {
+    bgcolor: 'background.card',
+    border: '1px solid',
+    borderColor: 'divider',
+    p: 4,
+    m: 1.25,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: 2,
+    borderRadius: 2,
+  },
+  icon: {
+    fontSize: 60,
+    color: 'text.secondary',
+    opacity: 0.5,
+  },
+};
 
 export async function getStaticPaths() {
   const languages = ['en', 'de'];

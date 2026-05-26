@@ -17,7 +17,7 @@ const FAU_DOMAIN = process.env['NEXT_PUBLIC_FAU_DOMAIN'];
 const TARGET_DOMAIN = process.env['NEXT_PUBLIC_NON_FAU_DOMAIN'];
 const IDM_ALLOWLIST = ['/login', '/cross-domain-auth', '/api/cross-domain-auth', '/logout'];
 
-const institutionSet = new Set(Object.keys(UniversityDetail).map((c) => c.toLowerCase()));
+const INSTITUTION_SET = new Set(Object.keys(UniversityDetail).map((c) => c.toLowerCase()));
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -31,7 +31,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   const instId = pathname.match(/^\/([^/]+)$/)?.[1];
-  if (instId && institutionSet.has(instId.toLowerCase())) {
+  if (instId && INSTITUTION_SET.has(instId.toLowerCase())) {
     return NextResponse.redirect(new URL('/u/' + instId + search, req.url), 308);
   }
 
