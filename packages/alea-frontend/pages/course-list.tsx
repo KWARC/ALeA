@@ -1,7 +1,7 @@
 import { getAllCourses } from '@alea/spec';
 import { CourseInfo } from '@alea/utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, SxProps, Theme } from '@mui/material';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -87,11 +87,10 @@ const CourseList: NextPage = () => {
                   pb: 1.5,
                 }}
               >
-                <Typography
-                  component="h2"
-                  sx={{ color: 'text.primary', fontSize: 28, fontWeight: 800, mb: 0.25 }}
-                >
-                  {universityId}
+                <Typography component="h2" sx={courseListStyles.universityHeading}>
+                  <Link href={`/u/${universityId}`}>
+                    {universityId}
+                  </Link>
                 </Typography>
                 {universities.map((uni) => {
                   if (uni.acronym !== universityId) return null;
@@ -128,6 +127,24 @@ const CourseList: NextPage = () => {
       </Box>
     </MainLayout>
   );
+};
+const courseListStyles: Record<'universityHeading', SxProps<Theme>> = {
+  universityHeading: {
+    color: 'text.primary',
+    fontSize: 28,
+    fontWeight: 800,
+    mb: 0.25,
+    '& a': {
+      color: 'inherit',
+      textDecoration: 'none',
+      cursor: 'pointer',
+      transition: 'color 0.2s ease',
+    },
+    '& a:hover': {
+      color: 'primary.main',
+      textDecoration: 'underline',
+    },
+  },
 };
 
 export default CourseList;

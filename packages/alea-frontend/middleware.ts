@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  UniversityDetail,
   pathToCourseHome,
   pathToCourseNotes,
   pathToCourseView,
@@ -11,26 +12,27 @@ import {
 } from '@alea/utils';
 
 const DEFAULT_INSTITUTION = 'FAU';
-const ENABLE_REDIRECT =
-  process.env['NEXT_PUBLIC_ENABLE_FAU_REDIRECT'] === 'true';
+const ENABLE_REDIRECT = process.env['NEXT_PUBLIC_ENABLE_FAU_REDIRECT'] === 'true';
 const FAU_DOMAIN = process.env['NEXT_PUBLIC_FAU_DOMAIN'];
 const TARGET_DOMAIN = process.env['NEXT_PUBLIC_NON_FAU_DOMAIN'];
-const IDM_ALLOWLIST = [
-  '/login',
-  '/cross-domain-auth',
-  '/api/cross-domain-auth',
-  '/logout',
-];
+const IDM_ALLOWLIST = ['/login', '/cross-domain-auth', '/api/cross-domain-auth', '/logout'];
+
+const INSTITUTION_SET = new Set(Object.keys(UniversityDetail).map((c) => c.toLowerCase()));
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // Skip API and static
-  if (pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.startsWith('/static/')) {
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/')
+  ) {
     return NextResponse.next();
   }
-  if (pathname === '/university') {
-    return NextResponse.redirect(new URL('/u/university' + search, req.url), 308);
+  const instId = pathname.match(/^\/([^/]+)$/)?.[1];
+  if (instId && INSTITUTION_SET.has(instId.toLowerCase())) {
+    return NextResponse.redirect(new URL('/u/' + instId + search, req.url), 308);
   }
 
   // Legacy URL redirects to new structure (308 permanent)

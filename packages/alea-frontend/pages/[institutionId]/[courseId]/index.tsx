@@ -1,64 +1,41 @@
-import { Box, Button, CircularProgress, Typography, Paper, useTheme, Divider } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import type { NextPage } from 'next';
+import { Box, Button, Typography, Paper, useTheme, Divider } from '@mui/material';
+import type { NextPage, GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import { CourseHeader } from '../../../components/CourseHeader';
-import { CourseNotFound } from '../../../components/CourseNotFound';
-import { getAllCourses, getCourseInfoMetadata } from '@alea/spec';
-import { useCurrentTermContext } from '../../../contexts/CurrentTermContext';
 import MainLayout from '../../../layouts/MainLayout';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { getLocaleObject } from '../../../lang/utils';
+import { UNIVERSITY_TERMS } from '@alea/utils';
+import { getAllCoursesFromDb } from '../../api/get-all-courses';
+import { getCourseInfoMetadataFromDb } from '../../api/course-metadata/get-course-info-metadata';
 
 function sortSemesters(instances: any[]) {
   return [...instances].sort((a, b) => b.semester.localeCompare(a.semester));
 }
 
-const CourseGeneralLandingPage: NextPage = () => {
+interface CourseLandingPageProps {
+  institutionId: string;
+  courseId: string;
+  currentCourse: any;
+  latestInstanceId: string;
+  latestInstanceMetadata: any;
+}
+
+const CourseLandingPage: NextPage<CourseLandingPageProps> = ({
+  institutionId,
+  courseId,
+  currentCourse,
+  latestInstanceId,
+  latestInstanceMetadata,
+}) => {
   const router = useRouter();
   const theme = useTheme();
-  const { currentTermByUniversityId } = useCurrentTermContext();
 
-  const { institutionId, courseId } = router.query as { institutionId?: string; courseId?: string };
-
-  const { data: courses, isLoading: loadingCourses } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => getAllCourses(),
-  });
-
-  const instIdUpper = institutionId?.toUpperCase() || '';
-  const currentCourse =
-    courses && courseId ? courses[courseId] || courses[courseId.toLowerCase()] : null;
   const dbInstances = currentCourse?.instances || [];
   const sortedInstances = sortSemesters(dbInstances);
 
-  const currentTerm = currentTermByUniversityId[instIdUpper] || 'SS26';
-  const hasInstitutionLatest = sortedInstances.some((inst) => inst.semester === currentTerm);
-  const latestInstanceId = hasInstitutionLatest ? currentTerm : sortedInstances[0]?.semester;
-
-  const { data: latestInstanceMetadata, isLoading: loadingMetadata } = useQuery({
-    queryKey: ['course-metadata', courseId, latestInstanceId],
-    enabled: Boolean(courses && courseId && latestInstanceId),
-    queryFn: () => getCourseInfoMetadata(courseId!, latestInstanceId!),
-  });
-
   const { courseLanding: t } = getLocaleObject(router);
-
-  if (!router.isReady || loadingCourses) {
-    return (
-      <MainLayout title="Loading Course | ALeA">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress size={50} />
-        </Box>
-      </MainLayout>
-    );
-  }
-
-  if (!institutionId || !courseId || !currentCourse) {
-    return <CourseNotFound />;
-  }
 
   const landingUri = latestInstanceMetadata?.landing || currentCourse.landing;
   const courseGradient =
@@ -75,14 +52,6 @@ const CourseGeneralLandingPage: NextPage = () => {
 
   return (
     <MainLayout title={`${currentCourse.courseName} | ALeA`}>
-      <CourseHeader
-        courseName={currentCourse.courseName}
-        imageLink={currentCourse.imageLink}
-        courseId={courseId}
-        institutionId={instIdUpper}
-        instanceId={latestInstanceId}
-      />
-
       <Box
         sx={{
           maxWidth: 900,
@@ -149,12 +118,8 @@ const CourseGeneralLandingPage: NextPage = () => {
         )}
 
         <Divider sx={{ my: 1 }} />
-        {loadingMetadata ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress size={30} />
-          </Box>
-        ) : landingUri ? (
-                   <Box sx={{ width: '100%' }}>
+        {landingUri ? (
+          <Box sx={{ width: '100%' }}>
             <Typography
               variant="h5"
               sx={{
@@ -179,10 +144,10 @@ const CourseGeneralLandingPage: NextPage = () => {
                   width: '100%',
                   maxWidth: '100%',
                   boxSizing: 'border-box',
-                  backgroundColor: '#ffffff', 
-                  color: '#000000',         
-                  borderRadius: 3,            
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)', 
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 },
               }}
             >
@@ -195,8 +160,6 @@ const CourseGeneralLandingPage: NextPage = () => {
               />
             </Box>
           </Box>
-
-
         ) : (
           currentCourse.teaser && (
             <Paper elevation={1} sx={landingCardSx}>
@@ -214,4 +177,59 @@ const CourseGeneralLandingPage: NextPage = () => {
   );
 };
 
-export default CourseGeneralLandingPage;
+export const getServerSideProps: GetServerSideProps<CourseLandingPageProps> = async (context) => {
+  const t0 = performance.now();
+  const { params, res } = context;
+
+  const institutionId = String(params?.institutionId || '');
+  const courseId = String(params?.courseId || '');
+
+  try {
+    const courses = await getAllCoursesFromDb();
+    const coursesTime = performance.now() - t0;
+
+    const currentCourse = courses[courseId] || courses[courseId.toLowerCase()] || null;
+
+    if (!currentCourse) {
+      return { notFound: true };
+    }
+    const instIdUpper = institutionId.toUpperCase();
+    const currentTerm = UNIVERSITY_TERMS[instIdUpper]?.currentTerm || 'SS26';
+
+    const dbInstances = currentCourse.instances || [];
+    const sortedInstances = [...dbInstances].sort((a, b) => b.semester.localeCompare(a.semester));
+
+    const hasInstitutionLatest = sortedInstances.some((inst) => inst.semester === currentTerm);
+    const latestInstanceId = hasInstitutionLatest
+      ? currentTerm
+      : sortedInstances[0]?.semester || '';
+    let latestInstanceMetadata = null;
+    const t1 = performance.now();
+    if (latestInstanceId) {
+      latestInstanceMetadata = await getCourseInfoMetadataFromDb(courseId, latestInstanceId);
+    }
+    const metadataTime = performance.now() - t1;
+
+    res.setHeader(
+      'Server-Timing',
+      `courses;desc="Fetch All Courses";dur=${coursesTime.toFixed(
+        2
+      )}, metadata;desc="Fetch Metadata";dur=${metadataTime.toFixed(2)}`
+    );
+
+    return {
+      props: {
+        institutionId,
+        courseId,
+        currentCourse,
+        latestInstanceId,
+        latestInstanceMetadata,
+      },
+    };
+  } catch (error) {
+    console.error('Error during SSR fetch:', error);
+    return { notFound: true };
+  }
+};
+
+export default CourseLandingPage;

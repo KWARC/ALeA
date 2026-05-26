@@ -5,6 +5,8 @@ export const en = {
     header: 'ALeA based Courses at FAU',
     courseSection: 'Current semester',
     otherCourses: 'Other Courses',
+    noActiveCourses: 'No Active Courses',
+    noActiveCoursesMsg: 'There are no courses scheduled for this semester at',
     courseList: {
       title: 'Course Catalog',
       subtitle: 'Explore available ALeA courses across partner institutions.',

@@ -3,6 +3,8 @@ export const de = {
     header: 'ALeA basierte Kurse an der FAU',
     courseSection: 'Aktuelles Semester',
     otherCourses: 'Weitere Kurse',
+    noActiveCourses: 'Keine aktiven Kurse',
+    noActiveCoursesMsg: 'In diesem Semester sind keine Kurse geplant an der',
     courseList: {
       title: 'Kurskatalog',
       subtitle: 'Entdecken Sie verfügbare ALeA-Kurse an unseren Partnerinstitutionen.',
