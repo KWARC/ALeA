@@ -5,7 +5,7 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import { Box, Button, Card, IconButton, Tooltip, Typography, SxProps, Theme } from '@mui/material';
+import { Box, Button, Card, Chip, IconButton, Tooltip, Typography, SxProps, Theme } from '@mui/material';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -85,8 +85,25 @@ export function CourseThumb({
         p: 1.25,
         m: 1.25,
         maxWidth: 252,
+        position: 'relative',
       }}
     >
+      {course.isCurrent && (
+        <Chip
+          label="Active"
+          color="success"
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: '#16a34a',
+            color: '#fff',
+            fontWeight: 700,
+            boxShadow: '0 4px 10px rgba(22, 163, 74, 0.35)',
+          }}
+        />
+      )}
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
         <Box display="flex" flexDirection="column" alignItems="center">
           <Link href={homeHref} style={{ textAlign: 'center' }}>
