@@ -42,6 +42,7 @@ function parseInstructors(val: unknown): Array<{ id: string; name: string }> {
       return {
         id: v.id || v.name || '',
         name: v.name || v.id || '',
+        url: typeof v.url === 'string' ? v.url : '',
       };
     });
   }
@@ -60,6 +61,7 @@ function parseInstructors(val: unknown): Array<{ id: string; name: string }> {
           return {
             id: v.id || v.name || '',
             name: v.name || v.id || '',
+            url: typeof v.url === 'string' ? v.url : '',
           };
         });
       }
