@@ -47,7 +47,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
-import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
+import {
+  BannerSection,
+  CourseCard,
+  PartneredUniversitiesSection,
+  VollKiInfoSection,
+} from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
@@ -840,6 +845,7 @@ function WelcomeScreen({
           </Box>
         ))}
       </Box>
+      <PartneredUniversitiesSection />
       <Box
         id="courses"
         sx={{

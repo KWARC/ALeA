@@ -214,6 +214,70 @@ export function VollKiInfoSection({ bgcolor = '#F5F5F5' }: { bgcolor?: string })
   );
 }
 
+export function PartneredUniversitiesSection() {
+  const router = useRouter();
+  const {
+    home: { newHome: n },
+  } = getLocaleObject(router);
+
+  return (
+    <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
+      <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
+        <Typography
+          sx={{
+            color: 'secondary.700',
+            fontSize: 20,
+            textAlign: 'center',
+          }}
+        >
+          <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
+          <Typography component="span" sx={{ color: 'text.primary', fontSize: 20 }}>
+            <b> {n.partneredWith.split('+')[2]}</b>
+          </Typography>
+          .
+        </Typography>
+        <br />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            justifyContent: 'space-around',
+            gap: 2.5,
+          }}
+        >
+          {PARTNERED_UNIVERSITIES.map((university, index) => (
+            <Box
+              key={index}
+              sx={{
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transition: 'transform 0.3s',
+                '&:hover': {
+                  transform: 'scale(1.1)',
+                },
+              }}
+              onClick={() => router.push(`/u/${university.code}`)}
+            >
+              <Image
+                src={university.logoSrc}
+                alt={university.name + ' - logo'}
+                width={university.code === 'others' ? 160 : 140}
+                height={140}
+              />
+              <Typography sx={{ fontWeight: 500 }}>
+                {router.locale === 'de' ? university.name_de ?? university.name : university.name}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 export function CourseCard({ course, currentTerm }) {
   const { imageLink: courseImage, courseName, courseId, universityId, instructors } = course;
   const instructor = getInstructor(course, currentTerm) ?? instructors[0];
@@ -339,63 +403,7 @@ const StudentHomePage: NextPage = ({ filteredCourses }: { filteredCourses: Cours
     <MainLayout title="Courses | ALeA">
       <Box m="0 auto">
         <BannerSection />
-        <Box sx={{ backgroundColor: 'background.paper', padding: 10 }}>
-          <Box sx={{ margin: '0 auto', maxWidth: 1200 }}>
-             
-            <Typography
-              sx={{
-                color: 'secondary.700',
-                fontSize: 20,
-                textAlign: 'center',
-              }}
-            >
-              <b>{n.partneredWith.split('+')[0]}</b> {n.partneredWith.split('+')[1]}
-              <Typography component="span" sx={{ color: 'text.primary', fontSize: 20 }}>
-                <b> {n.partneredWith.split('+')[2]}</b>
-              </Typography>
-              .
-            </Typography>
-            <br />
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                justifyContent: 'space-around',
-                gap: 2.5,
-              }}
-            >
-              {PARTNERED_UNIVERSITIES.map((university, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transition: 'transform 0.3s',
-                    '&:hover': {
-                      transform: 'scale(1.1)',
-                    },
-                  }}
-                  onClick={() => router.push(`/u/${university.code}`)}
-                >
-                  <Image
-                    src={university.logoSrc}
-                    alt={university.name + ' - logo'}
-                    width={university.code === 'others' ? 160 : 140}
-                    height={140}
-                  />
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {router.locale === 'de'
-                      ? university.name_de ?? university.name
-                      : university.name}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        </Box>
+        <PartneredUniversitiesSection />
         <Box
           sx={{
             display: 'flex',

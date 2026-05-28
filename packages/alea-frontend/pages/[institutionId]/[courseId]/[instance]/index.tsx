@@ -39,6 +39,7 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import StorageIcon from '@mui/icons-material/Storage';
 import {
   Alert,
   Box,
@@ -652,6 +653,7 @@ const CourseHomePage: NextPage = () => {
   const { hasQuiz, hasHomework, notes, landing, slides } = courseInfo;
   const hasLandingValue = Boolean(landing?.trim());
   const hasLanding = isAbsoluteUrl(landing);
+  const courseLandingLink = `/${institutionId}/${courseId}`;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -824,6 +826,13 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
+          <Tooltip title="Course Archive" placement="bottom" arrow>
+            <Link href={courseLandingLink}>
+              <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
+                <StorageIcon fontSize="large" />
+              </Button>
+            </Link>
+          </Tooltip>
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && !isSemesterOver && (
