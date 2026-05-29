@@ -557,18 +557,18 @@ const MyAnswersPage: NextPage = () => {
     () => groupAnswersByQuestion(selectedAnswersItems),
     [selectedAnswersItems]
   );
-  const onDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this answer?')) {
-      const institutionId = router.query.institutionId as string;
-      deleteAnswer(id, institutionId).then(() => {
-        getMyAnswers().then((answers) => {
-          setAnswerItems(answers);
-        });
-        setSelected(undefined);
-        alert('Answer Deleted');
-      });
-    }
-  };
+  // const onDelete = (id: number) => {
+  //   if (confirm('Are you sure you want to delete this answer?')) {
+  //     const institutionId = router.query.institutionId as string;
+  //     deleteAnswer(id, institutionId).then(() => {
+  //       getMyAnswers().then((answers) => {
+  //         setAnswerItems(answers);
+  //       });
+  //       setSelected(undefined);
+  //       alert('Answer Deleted');
+  //     });
+  //   }
+  // };
   return (
     <MainLayout title={`${user?.fullName} | ALeA`}>
       {answerItems.length === 0 && <Typography>No Answer Items Found.</Typography>}
