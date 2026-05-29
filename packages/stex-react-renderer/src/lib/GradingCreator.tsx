@@ -17,6 +17,11 @@ import { SafeFTMLFragment } from './SafeFTMLComponents';
 
 type ClassRow = AnswerClass & { count: number };
 
+function scaleAnswerClassPoints(c: AnswerClass, maxPoints?: number): AnswerClass {
+  if (!maxPoints || c.points <= maxPoints || c.points < 100) return c;
+  return { ...c, points: (c.points / 1000) * maxPoints };
+}
+
 function applySavedToRows(base: ClassRow[], saved: GradingInfo | null): ClassRow[] {
   if (!saved?.answerClasses?.length) return base;
   const byId = new Map(saved.answerClasses.map((a) => [a.answerClassId, a.count]));
@@ -47,6 +52,7 @@ export function GradingCreator({
   onNewGrading,
   onGradingChange,
   initialGrading = null,
+  maxPoints,
 }: {
   rawAnswerClasses: AnswerClass[];
   showPoints?: boolean;
@@ -59,13 +65,16 @@ export function GradingCreator({
   ) => void;
   /** When set, counts / feedback are restored (e.g. peer grader reopens an already graded item). */
   initialGrading?: GradingInfo | null;
+  maxPoints?: number;
 }) {
   const router = useRouter();
   const t = getLocaleObject(router).quiz;
   const mergedBase = useMemo(
     () =>
-      [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses].map((c): ClassRow => ({ ...c, count: 0 })),
-    [rawAnswerClasses]
+      [...DEFAULT_ANSWER_CLASSES, ...rawAnswerClasses]
+        .map((c) => scaleAnswerClassPoints(c, maxPoints))
+        .map((c): ClassRow => ({ ...c, count: 0 })),
+    [maxPoints, rawAnswerClasses]
   );
   const hydrated = useMemo(
     () => applySavedToRows(mergedBase, initialGrading),
@@ -75,16 +84,20 @@ export function GradingCreator({
     () => hydrated.find((c) => !c.isTrait && c.count > 0) ?? undefined,
     [hydrated]
   );
+  const rawAnswerClassIds = useMemo(
+    () => new Set(rawAnswerClasses.filter((c) => !c.isTrait).map((c) => c.className)),
+    [rawAnswerClasses]
+  );
   const [answerClasses, setAnswerClasses] = useState<ClassRow[]>(hydrated);
   const [feedback, setFeedBack] = useState(initialGrading?.customFeedback ?? '');
   const [selectedAnswerClass, setSelectAnswerClass] = useState<AnswerClass | undefined>(
     initialSelectedAnswerClass
   );
-  const selectedClassNameRef = useRef<string | undefined>(
-    initialSelectedAnswerClass?.className
-  );
+  const selectedClassNameRef = useRef<string | undefined>(initialSelectedAnswerClass?.className);
   const isAnswerClassSelected = !!selectedAnswerClass;
-  const showTraitInputs = isAnswerClassSelected && !selectedAnswerClass.closed;
+  const showTraitInputs =
+    isAnswerClassSelected &&
+    (!selectedAnswerClass.closed || rawAnswerClassIds.has(selectedAnswerClass.className));
   const totalPoints = useMemo(
     () => answerClasses.reduce((sum, c) => sum + c.count * c.points, 0),
     [answerClasses]

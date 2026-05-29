@@ -3,6 +3,12 @@ export const de = {
     header: 'ALeA basierte Kurse an der FAU',
     courseSection: 'Aktuelles Semester',
     otherCourses: 'Weitere Kurse',
+    noActiveCourses: 'Keine aktiven Kurse',
+    noActiveCoursesMsg: 'In diesem Semester sind keine Kurse geplant an der',
+    courseList: {
+      title: 'Kurskatalog',
+      subtitle: 'Entdecken Sie verfügbare ALeA-Kurse an unseren Partnerinstitutionen.',
+    },
     guidedTourHeader: 'Themenbezogen, Freestyle-Lernen',
     studyBuddyTooltip:
       'Klicken Sie hier, um ganz einfach mit Kommiliton*Innen in Kontakt zu kommen, die gleiche Kurse besuchen',
@@ -267,6 +273,8 @@ export const de = {
     date: 'Datum',
     topics: 'Themen',
     video: 'Video',
+    landingUrlIssue: 'Es gibt ein Problem mit der Landing-URL.',
+    landingNotConfigured: 'Der Landing-Inhalt des Kurses ist noch nicht konfiguriert.',
   },
   studyBuddy: {
     fillForm: 'Füllen Sie das folgende Formular aus, um Partner zum gemeinsamen Lernen zu finden.',
@@ -501,8 +509,10 @@ export const de = {
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Hausaufgaben-Verfügbarkeit aktualisieren möchten?',
     confirmUpdateQuiz: 'Sind Sie sicher, dass Sie die Quiz-Verfügbarkeit aktualisieren möchten?',
-    confirmUpdateCheatsheet: 'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
-    confirmUpdateCanStudentUploadCheatsheet: 'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
+    confirmUpdateCheatsheet:
+      'Sind Sie sicher, dass Sie die Spickzettel-Verfügbarkeit aktualisieren möchten?',
+    confirmUpdateCanStudentUploadCheatsheet:
+      'Sind Sie sicher, dass Sie die Einstellung zum Hochladen von Spickzetteln durch Studierende aktualisieren möchten?',
 
     courseName: 'Kursname',
     universityId: 'Universitäts-ID',
@@ -540,7 +550,8 @@ export const de = {
     failedToSave: 'Kursinformationen konnten nicht gespeichert werden',
     failedHomeworkUpdate: 'Hausaufgaben-Einstellung konnte nicht aktualisiert werden',
     failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
-    failedCanStudentUploadCheatsheetUpdate: 'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
+    failedCanStudentUploadCheatsheetUpdate:
+      'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
   },
 
   courseMetadata: {
@@ -573,7 +584,7 @@ export const de = {
     day: 'Tag',
     venue: 'Veranstaltungsort',
     venueLink: 'Venue-Link',
-    tutorName: 'Tutor Name',
+    tutorName: 'Tutor-ID',
     comments: 'Kommentare',
     startTime: 'Startzeit',
     endTime: 'Endzeit',
@@ -659,5 +670,11 @@ export const de = {
       'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',
     confirmUpdateQuiz:
       'Sind Sie sicher, dass Sie die Verfügbarkeit des Quiz aktualisieren möchten?',
+  },
+  courseLanding: {
+    courseInstances: 'Kursinstanzen',
+    latest: 'Neuestes',
+    CourseInfo: 'Kursinformationen',
+    aboutThisCourse: 'Über diesen Kurs',
   },
 };

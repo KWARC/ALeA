@@ -11,7 +11,6 @@ import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { ForceFauLogin } from '../../../../components/ForceFAULogin';
 import HomeworkPerformanceTable from '../../../../components/HomeworkPerformanceTable';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import { handleEnrollment } from '../../../../components/courseHelpers';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { getLocaleObject } from '../../../../lang/utils';
@@ -94,13 +93,6 @@ const HomeworkPage: NextPage = () => {
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.homeworks} | ALeA`}>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={resolvedInstanceId}
-      />
       <Box maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{q.enrollmentMessage}</Alert>}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', m: '30px 0 15px' }}>

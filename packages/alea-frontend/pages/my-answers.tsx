@@ -26,9 +26,9 @@ import {
   ReviewType,
 } from '@alea/spec';
 import { SafeHtml, useCurrentUser } from '@alea/react-utils';
-import { ProblemDisplay } from '@alea/stex-react-renderer';
+import { AnswerContext, ProblemDisplay } from '@alea/stex-react-renderer';
 import { contentFragment } from '@flexiformal/ftml-backend';
-import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
@@ -200,7 +200,10 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
     let isMounted = true;
     async function load() {
       try {
-        const raw = await contentFragment({ uri: primary.questionId });
+        const [raw, points] = await Promise.all([
+          contentFragment({ uri: primary.questionId }),
+          getProblemPointsFromDocument(primary.questionId),
+        ]);
         if (!isMounted) return;
         const { titleHtml, html } = parseContentFragmentTuple(raw);
         setProblem({
@@ -208,6 +211,7 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
             uri: primary.questionId,
             html,
             title_html: titleHtml,
+            total_points: points,
           },
           answerClasses: [],
         });
@@ -327,6 +331,20 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
       .find(Boolean);
     return reviewerLabel(grading, i);
   });
+  const answerContext = useMemo(() => {
+    const responses = answers.map((a) => {
+      const numericSubProblemId = Number(a.subProblemId);
+      const renderedSubProblemId = Number.isFinite(numericSubProblemId)
+        ? problemSlotIds[numericSubProblemId]
+        : undefined;
+      return {
+        subProblemId: renderedSubProblemId ?? a.subProblemId,
+        answer: a.answer,
+        graded: a.graded,
+      };
+    });
+    return { [primary.questionId]: { problemId: primary.questionId, responses } };
+  }, [answers, primary.questionId, problemSlotIds]);
 
   return (
     <Box>
@@ -347,38 +365,21 @@ function AnswerItemDisplay({ answers }: { answers: AnswerResponse[] }) {
           </Select>
         </FormControl>
       ) : null}
-      {problem && (
-      <ProblemDisplay
-        key={`${primary.questionId}-${feedbackRevision}`}
-        showPoints={true}
-        problem={problem}
-        isFrozen={true}
-        r={answerText}
-        uri={primary.questionId}
-        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
-          <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
+      <AnswerContext.Provider value={answerContext}>
+        {problem && (
+        <ProblemDisplay
+          key={`${primary.questionId}-${feedbackRevision}`}
+          showPoints={true}
+          problem={problem}
+          isFrozen={true}
+          r={answerText}
+          uri={primary.questionId}
+          renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+            <AnswerFeedback problemId={problemId} isSubProblem={isSubProblem} />
+          )}
+        ></ProblemDisplay>
         )}
-      ></ProblemDisplay>
-      )}
-      <Box sx={{ margin: '10px' }}>
-        <span>{dayjs(answer.updatedAt).fromNow()}</span>
-        <IconButton
-          onClick={() => onDelete(answer.id)}
-          sx={{ float: 'right', display: 'inline' }}
-          aria-label="delete"
-          color="primary"
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Box>
-
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, mt: 1 }}>
-        {gradingInfos.map((g, idx) => (
-          <Box sx={{ borderTop: '1px solid #ccc', borderRadius: 1, marginTop: '5px' }} key={idx}>
-            <GradingDisplay showGraderInformation={false} gradingInfo={g} key={idx} />
-          </Box>
-        ))}
-      </Box>
+      </AnswerContext.Provider>
     </Box>
   );
 }

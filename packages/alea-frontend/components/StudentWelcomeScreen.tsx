@@ -9,7 +9,7 @@ import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { useAllCourses } from '../hooks/useAllCourses';
 import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
-import { BannerSection, VollKiInfoSection } from '../pages';
+import { BannerSection, PartneredUniversitiesSection, VollKiInfoSection } from '../pages';
 import {
   CourseDashboardCard,
   DEFAULT_INSTITUTION,
@@ -119,6 +119,8 @@ export default function StudentWelcomeScreen({
             ))}
           </Box>
         )}
+
+        <PartneredUniversitiesSection />
 
         <ExploreCoursesSection
           courses={filteredCourses}

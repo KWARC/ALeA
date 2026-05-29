@@ -14,7 +14,6 @@ import QuizDashboard from '../../../../components/QuizDashboard';
 import { StudyBuddyModeratorStats } from '../../../../components/StudyBuddyModeratorStats';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
@@ -246,13 +245,6 @@ const InstructorDashPage: NextPage = () => {
 
   return (
     <MainLayout>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={instanceId}
-      />
       <Box
         sx={{
           width: '100%',

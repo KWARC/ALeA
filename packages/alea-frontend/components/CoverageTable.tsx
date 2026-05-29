@@ -49,8 +49,8 @@ interface CoverageRowProps {
   entries: LectureEntry[];
 }
 
-const formatSectionWithSlide = (sectionName: string, slideNumber?: number, slideUri?: string) => {
-  if (!sectionName) return <i>-</i>;
+const formatSectionWithSlide = (sectionName?: string, slideNumber?: number, slideUri?: string) => {
+  if (!sectionName?.trim()) return <i>-</i>;
   if (!slideUri) return <Typography variant="body2">{sectionName.trim()}</Typography>;
 
   const slideTitle = getSlideTitle({ slide: { uri: slideUri } } as any, (slideNumber || 1) - 1);

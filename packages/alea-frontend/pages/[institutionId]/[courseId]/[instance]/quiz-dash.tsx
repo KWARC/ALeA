@@ -18,7 +18,6 @@ import { Fragment, useEffect, useState } from 'react';
 import { useCurrentUser } from '@alea/react-utils';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import { ForceFauLogin } from '../../../../components/ForceFAULogin';
 import QuizPerformanceTable from '../../../../components/QuizPerformanceTable';
 import { handleEnrollment } from '../../../../components/courseHelpers';
@@ -239,13 +238,6 @@ const QuizDashPage: NextPage = () => {
 
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tHome.courseThumb.quizzes} | VoLL-KI`}>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={resolvedInstanceId}
-      />
       <Box fragment-uri={notes} fragment-kind="Section" maxWidth="900px" m="auto" px="10px">
         {enrolled === false && <Alert severity="info">{t.enrollmentMessage}</Alert>}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', m: '30px 0 15px' }}>

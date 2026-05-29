@@ -31,7 +31,6 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import { StudyBuddyForm } from '../../../../components/StudyBuddyForm';
 import { StudyBuddyListing, StudyBuddyListingTable } from '../../../../components/StudyBuddyListingTable';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
@@ -150,13 +149,6 @@ const StudyBuddyPage: NextPage = () => {
       title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`}
       bgColor={theme.palette.background.default}
     >
-      <CourseHeader
-        courseName={courseName}
-        imageLink={courseInfo?.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={instanceId}
-      />
       <Box
         fragment-uri={notes}
         fragment-kind="Section"

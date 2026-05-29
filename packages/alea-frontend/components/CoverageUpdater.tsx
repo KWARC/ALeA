@@ -31,7 +31,7 @@ export function getSectionNameForUri(
   secInfo: Record<FTML.DocumentUri, SecInfo>
 ): string {
   const section = secInfo[uri];
-  return section?.title.trim() || '';
+  return section?.title?.trim() || '';
 }
 
 export function getNoonTimestampOnSameDay(timestamp: number) {

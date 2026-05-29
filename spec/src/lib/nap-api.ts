@@ -10,6 +10,7 @@ import {
   GradingInfo,
   GradingItem,
   GradingWithAnswer,
+  UpdateGradingRequest,
 } from './nap';
 
 export async function createAnswer(answer: CreateAnswerRequest) {
@@ -36,6 +37,10 @@ export async function createGrading(gradingRequest: CreateGradingRequest) {
   return await axios
     .post('/api/nap/create-grading', gradingRequest)
     .then((response) => ({ status: response.status, data: response.data as number }));
+}
+
+export async function editGrading(gradingRequest: UpdateGradingRequest) {
+  return await axios.post('/api/nap/edit-grading', gradingRequest);
 }
 
 export async function createReviewRequest(request: CreateReviewRequest) {

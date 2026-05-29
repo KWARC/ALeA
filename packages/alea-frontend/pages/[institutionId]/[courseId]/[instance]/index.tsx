@@ -7,8 +7,10 @@ import {
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
+  getTutorInfo,
   getSemesterInfo,
   LectureScheduleItem,
+  TutorInfo,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -37,6 +39,7 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import StorageIcon from '@mui/icons-material/Storage';
 import {
   Alert,
   Box,
@@ -58,7 +61,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { CourseHeader } from '../../../../components/CourseHeader';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
@@ -82,6 +84,16 @@ function CourseComponentLink({ href, children, sx }: { href: string; children: a
   );
 }
 
+function isAbsoluteUrl(uri?: string | null) {
+  if (!uri?.trim()) return false;
+  try {
+    new URL(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function getWeekdayName(dayOfWeek: number): string {
   const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   return days[dayOfWeek] || '';
@@ -98,6 +110,7 @@ function CourseScheduleSection({
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
+  const [tutorInfoById, setTutorInfoById] = useState<Record<string, TutorInfo>>({});
   const [showAllLectures, setShowAllLectures] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { calendarSection: t } = getLocaleObject(useRouter());
@@ -159,6 +172,16 @@ function CourseScheduleSection({
 
     fetchSchedule();
   }, [courseId, currentTerm]);
+
+  useEffect(() => {
+    if (!userId || tutorialSchedule.length === 0) {
+      setTutorInfoById({});
+      return;
+    }
+    getTutorInfo(tutorialSchedule.map((entry) => entry.tutorName ?? ''))
+      .then(setTutorInfoById)
+      .catch(() => setTutorInfoById({}));
+  }, [tutorialSchedule, userId]);
 
   const { data: nextLectureStartTime } = useQuery({
     queryKey: ['next-lecture-time', courseId, lectureSchedule, currentTerm],
@@ -399,7 +422,18 @@ function CourseScheduleSection({
                         </Typography>
                         {entry.tutorName && (
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            👤 {entry.tutorName}
+                            👤 {tutorInfoById[entry.tutorName]?.name?.trim() || entry.tutorName}
+                            {tutorInfoById[entry.tutorName]?.email && (
+                              <>
+                                {' · '}
+                                <Link
+                                  href={`mailto:${tutorInfoById[entry.tutorName]?.email}`}
+                                  style={{ textDecoration: 'underline' }}
+                                >
+                                  {tutorInfoById[entry.tutorName]?.email}
+                                </Link>
+                              </>
+                            )}
                           </Typography>
                         )}
                         {entry.comments && (
@@ -625,6 +659,9 @@ const CourseHomePage: NextPage = () => {
   const cheatsheetConfig = courseMetadata?.cheatsheetConfig;
 
   const { hasQuiz, hasHomework, notes, landing, slides } = courseInfo;
+  const hasLandingValue = Boolean(landing?.trim());
+  const hasLanding = isAbsoluteUrl(landing);
+  const courseLandingLink = `/${institutionId}/${courseId}`;
   const notesLink = pathToCourseNotes(institutionId, courseId, instanceId);
   const slidesLink = pathToCourseView(institutionId, courseId, instanceId);
   const cardsLink = pathToCourseResource(institutionId, courseId, instanceId, '/flash-cards');
@@ -679,13 +716,6 @@ const CourseHomePage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}>
-      <CourseHeader
-        courseName={courseInfo.courseName}
-        imageLink={courseInfo.imageLink}
-        courseId={courseId}
-        institutionId={institutionId}
-        instanceId={instanceId}
-      />
 
       <Box
         fragment-uri={notes}
@@ -804,6 +834,13 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
+          <Tooltip title="Course Archive" placement="bottom" arrow>
+            <Link href={courseLandingLink}>
+              <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
+                <StorageIcon fontSize="large" />
+              </Button>
+            </Link>
+          </Tooltip>
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && !isSemesterOver && (
@@ -914,15 +951,25 @@ const CourseHomePage: NextPage = () => {
         )}
 
         <Box bgcolor={'background.paper'}>
-          <Box fragment-uri={landing} fragment-kind="Section">
-            <SafeFTMLDocument
-              document={{ type: 'FromBackend', uri: landing }}
-              showContent={false}
-              pdfLink={false}
-              chooseHighlightStyle={false}
-              toc="None"
-            />
-          </Box>
+          {hasLanding ? (
+            <Box fragment-uri={landing} fragment-kind="Section">
+              <SafeFTMLDocument
+                document={{ type: 'FromBackend', uri: landing }}
+                showContent={false}
+                pdfLink={false}
+                chooseHighlightStyle={false}
+                toc="None"
+              />
+            </Box>
+          ) : hasLandingValue ? (
+            <Alert severity="warning" sx={{ my: 2 }}>
+              {tCourseHome.landingUrlIssue}
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ my: 2 }}>
+              {tCourseHome.landingNotConfigured}
+            </Alert>
+          )}
         </Box>
         <MoreResourcesAccordion
           courseId={courseId}

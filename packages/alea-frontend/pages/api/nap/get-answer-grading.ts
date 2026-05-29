@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { GradingInfo, ReviewType } from '@alea/spec';
 import {
   checkIfGetOrSetError,
   checkIfQueryParameterExistOrSetError,
@@ -6,6 +7,12 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { getAllGradingsOrSetError } from './get-answers-info';
+
+function hidePeerReviewerIdentity(grading: GradingInfo) {
+  if (grading.reviewType !== ReviewType.PEER) return grading;
+  const { checkerId, checkerName, ...rest } = grading;
+  return rest;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
@@ -32,5 +39,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const gradings = await getAllGradingsOrSetError({ [subProblemId]: answerId }, res);
   if (!gradings) return;
   const payload = gradings[subProblemId];
-  return res.json(Array.isArray(payload) ? payload : []);
+  return res.json(Array.isArray(payload) ? payload.map(hidePeerReviewerIdentity) : []);
 }

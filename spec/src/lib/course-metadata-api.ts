@@ -84,6 +84,12 @@ export interface LectureScheduleItem {
   comments?: string;
 }
 
+export interface TutorInfo {
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+}
+
 const COURSE_METADATA_BASE_URL = '/api/course-metadata';
 
 export async function getLectureEntry(data: Pick<CourseMetadata, 'courseId' | 'instanceId'>) {
@@ -183,6 +189,17 @@ export async function getLectureSchedule(
     params: { courseId, instanceId },
   });
   return (response.data?.schedule ?? []) as LectureScheduleItem[];
+}
+
+export async function getTutorInfo(tutorIds: string[]): Promise<Record<string, TutorInfo>> {
+  const userIds = [...new Set(tutorIds.map((id) => id.trim()).filter(Boolean))];
+  if (userIds.length === 0) return {};
+
+  const response = await axios.get(`${COURSE_METADATA_BASE_URL}/get-tutor-info`, {
+    params: { userIds: userIds.join(',') },
+  });
+  const tutors = (response.data ?? []) as TutorInfo[];
+  return Object.fromEntries(tutors.map((tutor) => [tutor.userId, tutor]));
 }
 
 export async function addCourseMetadata(data: CourseInfoMetadata) {

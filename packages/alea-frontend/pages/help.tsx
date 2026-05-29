@@ -4,7 +4,7 @@ import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 
 const HelpPage: NextPage = () => {
   return (
-    <MainLayout title="Help | ALeA">
+    <MainLayout title="Help | ALeA" >
       <SafeFTMLDocument
         document={{
           type: 'FromBackend',

@@ -4,7 +4,8 @@ import ArticleIcon from '@mui/icons-material/Article';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
-import { Box, Button, Card, IconButton, Tooltip, Typography } from '@mui/material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import { Box, Button, Card, Chip, IconButton, Tooltip, Typography, SxProps, Theme } from '@mui/material';
 import { NextPage } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -40,6 +41,20 @@ function ColoredIconButton({ children }: { children: ReactNode }) {
   );
 }
 
+function EmptyStateCard({ title, message }: { title: string; message: string }) {
+  return (
+    <Card sx={emptyStateCardStyles.card}>
+      <MenuBookIcon sx={emptyStateCardStyles.icon} />
+      <Typography variant="h5" fontWeight="bold" color="text.primary">
+        {title}
+      </Typography>
+      <Typography variant="body1" color="text.secondary">
+        {message}
+      </Typography>
+    </Card>
+  );
+}
+
 export function CourseThumb({
   course,
   institutionId,
@@ -70,8 +85,25 @@ export function CourseThumb({
         p: 1.25,
         m: 1.25,
         maxWidth: 252,
+        position: 'relative',
       }}
     >
+      {course.isCurrent && (
+        <Chip
+          label="Active"
+          color="success"
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: '#16a34a',
+            color: '#fff',
+            fontWeight: 700,
+            boxShadow: '0 4px 10px rgba(22, 163, 74, 0.35)',
+          }}
+        />
+      )}
       <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
         <Box display="flex" flexDirection="column" alignItems="center">
           <Link href={homeHref} style={{ textAlign: 'center' }}>
@@ -174,56 +206,91 @@ const StudentHomePage: NextPage = ({
 
   if (!courses) return null;
   return (
-    <MainLayout title="Courses | ALeA">
-      <Box m="0 auto" maxWidth="800px">
-        <Box mx="10px">
-          <br />
-          <Box display="flex" alignItems="center" mb={4}>
-            <Image
-              src={UniversityDetail[institution]?.logo}
-              alt={UniversityDetail[institution]?.fullName}
-              width={UniversityDetail[institution]?.fullName === 'Other Institutions' ? 170 : 150}
-              height={150}
-            />
-            <Typography fontFamily={'Roboto'} fontWeight={500} ml={2} color={'blue.800'}>
-              {UniversityDetail[institution]?.fullName}
-            </Typography>
-          </Box>
-          <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-            <Link href="/study-buddy">
-              <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
-                {institution === 'FAU' ? (
-                  <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
-                ) : null}
-              </Tooltip>
-            </Link>
-            {isUniversityAdmin && institution !== 'others' && (
-              <Link href={`/u/${institution}/university-admin`}>
-                <Tooltip title="Go to University Admin page">
-                  <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />}>
-                    University Admin
-                  </Button>
+    <MainLayout title="Courses | ALeA" bgColor="page.background">
+      <Box sx={{ bgcolor: 'page.background', px: { xs: 2, sm: 3 }, py: { xs: 3, md: 4 } }}>
+        <Box m="0 auto" maxWidth={860}>
+          <Box
+            sx={{
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              mb: 3,
+              pb: 1.5,
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Image
+                src={UniversityDetail[institution]?.logo}
+                alt={UniversityDetail[institution]?.fullName}
+                width={96}
+                height={42}
+                style={{ objectFit: 'contain' }}
+              />
+              <Box>
+                <Typography component="h1" sx={{ color: 'text.primary', fontSize: 22, fontWeight: 800 }}>
+                  {UniversityDetail[institution]?.fullName}
+                </Typography>
+              </Box>
+            </Box>
+            <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
+              <Link href="/study-buddy">
+                <Tooltip title={<Box sx={{ fontSize: 'medium' }}>{t.studyBuddyTooltip}</Box>}>
+                  {institution === 'FAU' ? (
+                    <Button variant="contained">{s.studyBuddyMasterCourse}</Button>
+                  ) : null}
                 </Tooltip>
               </Link>
+              {isUniversityAdmin && institution !== 'others' && (
+                <Link href={`/u/${institution}/university-admin`}>
+                  <Tooltip title="Go to University Admin page">
+                    <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />}>
+                      University Admin
+                    </Button>
+                  </Tooltip>
+                </Link>
+              )}
+            </Box>
+          </Box>
+
+          <Typography component="h2" sx={institutionPageStyles.sectionHeading}>
+            {currentTerm && currentTerm !== 'null'
+              ? `${t.courseSection} (${currentTerm})`
+              : t.courseSection}
+          </Typography>
+          <Box display="flex" flexWrap="wrap" justifyContent={{ xs: 'center', md: 'flex-start' }}>
+            {Object.values(courses).filter((course) => course.isCurrent).length > 0 ? (
+              Object.values(courses)
+                .filter((course) => course.isCurrent)
+                .map((c) => (
+                  <CourseThumb key={c.courseId} course={c} institutionId={institution} />
+                ))
+            ) : (
+              <EmptyStateCard
+                title={t.noActiveCourses}
+                message={`${t.noActiveCoursesMsg} ${
+                  UniversityDetail[institution]?.fullName || 'this institution'
+                }.`}
+              />
             )}
           </Box>
-          <h2>{`${t.courseSection} (${currentTerm})`}</h2>
-          <Box display="flex" flexWrap="wrap">
-            {Object.values(courses)
-              .filter((course) => course.isCurrent)
-              .map((c) => (
-                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
-              ))}
-          </Box>
-          <h2>{t.otherCourses}</h2>
-          <Box display="flex" flexWrap="wrap">
-            {Object.values(courses)
-              .filter((course) => !course.isCurrent)
-              .map((c) => (
-                <CourseThumb key={c.courseId} course={c} institutionId={institution} />
-              ))}
-          </Box>
-          <hr style={{ width: '90%' }} />
+
+          {Object.values(courses).filter((course) => !course.isCurrent).length > 0 && (
+            <>
+              <Typography component="h2" sx={{ ...institutionPageStyles.sectionHeading, mt: 4 }}>
+                {t.otherCourses}
+              </Typography>
+              <Box
+                display="flex"
+                flexWrap="wrap"
+                justifyContent={{ xs: 'center', md: 'flex-start' }}
+              >
+                {Object.values(courses)
+                  .filter((course) => !course.isCurrent)
+                  .map((c) => (
+                    <CourseThumb key={c.courseId} course={c} institutionId={institution} />
+                  ))}
+              </Box>
+            </>
+          )}
         </Box>
       </Box>
     </MainLayout>
@@ -231,6 +298,37 @@ const StudentHomePage: NextPage = ({
 };
 
 export default StudentHomePage;
+
+const emptyStateCardStyles: Record<'card' | 'icon', SxProps<Theme>> = {
+  card: {
+    bgcolor: 'background.card',
+    border: '1px solid',
+    borderColor: 'divider',
+    p: 4,
+    m: 1.25,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: 2,
+    borderRadius: 2,
+  },
+  icon: {
+    fontSize: 60,
+    color: 'text.secondary',
+    opacity: 0.5,
+  },
+};
+
+const institutionPageStyles: Record<'sectionHeading', SxProps<Theme>> = {
+  sectionHeading: {
+    color: 'text.primary',
+    fontSize: 28,
+    fontWeight: 800,
+    mb: 1.5,
+  },
+};
 
 export async function getStaticPaths() {
   const languages = ['en', 'de'];

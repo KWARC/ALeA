@@ -1,4 +1,6 @@
-import { SafeFTMLFragment } from './SafeFTMLComponents';
+import { isEmptyResponse } from '@alea/quiz-utils';
+import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@alea/spec';
+import { shouldUseDrawer } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBox from '@mui/icons-material/CheckBox';
@@ -9,16 +11,14 @@ import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Box, Button, CircularProgress, Dialog, IconButton } from '@mui/material';
-import { FTMLProblemWithSolution, TimerEvent, TimerEventType } from '@alea/spec';
-import { isEmptyResponse } from '@alea/quiz-utils';
-import { shouldUseDrawer } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { ProblemDisplay } from './ProblemDisplay';
 import { QuizSubmitConfirm } from './QuizSubmitConfirm';
 import { QuizTimer, Timer, timerEvent } from './QuizTimer';
+import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { getPoints } from './stex-react-renderer';
 
 function isNonEmptyResponse(resp: FTML.ProblemResponseType) {
@@ -230,7 +230,7 @@ function computeResult(
     const r = responses[problemId];
     const p = problems[problemId];
     points[problemId] = getPoints(p, r);
-  }
+  } 
   return points;
 }
 
@@ -275,7 +275,6 @@ export function QuizDisplay({
   const [showClock, setShowClock] = useState(true);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
-  const [, forceRerender] = useReducer((x) => x + 1, 0);
   const problemIds = Object.keys(problems ?? {});
   const currentProblemId = problemIds[problemIdx];
 
@@ -377,7 +376,6 @@ export function QuizDisplay({
             isFrozen={isFrozen || !!frozenProblems?.[currentProblemId]}
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
-              forceRerender();
               const problemId = problemIds[problemIdx];
               setResponses((prev) => {
                 prev[problemId] = response;

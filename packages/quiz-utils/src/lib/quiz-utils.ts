@@ -1,5 +1,6 @@
 import { AnswerClass, Phase, QuizWithStatus } from '@alea/spec';
 import { FTML, injectCss } from '@flexiformal/ftml';
+import { getDocument } from '@flexiformal/ftml-backend';
 
 interface GradingNoteApi {
   html?: string;
@@ -47,6 +48,117 @@ function decodeFwdSlashesInQuery(uri: string): string {
   const qi = uri.indexOf('?');
   if (qi === -1) return uri;
   return `${uri.slice(0, qi + 1)}${uri.slice(qi + 1).replace(/%2F/gi, '/')}`;
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function queryParamValue(uri: string, key: string): string {
+  const queryStart = uri.indexOf('?');
+  if (queryStart === -1) return '';
+  const queryEnd = uri.indexOf('#', queryStart);
+  const query = uri.slice(queryStart + 1, queryEnd === -1 ? undefined : queryEnd);
+  for (const part of query.split('&')) {
+    const [rawKey, ...rawValueParts] = part.split('=');
+    if (safeDecodeURIComponent(rawKey ?? '') === key) {
+      return safeDecodeURIComponent(rawValueParts.join('=') ?? '');
+    }
+  }
+  return '';
+}
+
+function removeQueryParam(uri: string, key: string): string {
+  const hashStart = uri.indexOf('#');
+  const hash = hashStart === -1 ? '' : uri.slice(hashStart);
+  const withoutHash = hashStart === -1 ? uri : uri.slice(0, hashStart);
+  const queryStart = withoutHash.indexOf('?');
+  if (queryStart === -1) return uri;
+
+  const base = withoutHash.slice(0, queryStart);
+  const query = withoutHash.slice(queryStart + 1);
+  const keptParams = query
+    .split('&')
+    .filter((part) => part && safeDecodeURIComponent(part.split('=')[0] ?? '') !== key);
+  return decodeFwdSlashesInQuery(
+    `${base}${keptParams.length ? `?${keptParams.join('&')}` : ''}${hash}`
+  );
+}
+
+function childElements(element: FTML.DocumentElement): FTML.DocumentElement[] {
+  const value = Object.values(element)[0];
+  if (Array.isArray(value)) return value as FTML.DocumentElement[];
+  if (
+    value &&
+    typeof value === 'object' &&
+    Array.isArray((value as { children?: unknown }).children)
+  ) {
+    return (value as { children: FTML.DocumentElement[] }).children;
+  }
+  return [];
+}
+
+const documentCache = new Map<string, Promise<FTML.DocumentData | undefined>>();
+
+export function documentUriFromProblemUri(problemUri: FTML.DocumentElementUri): FTML.DocumentUri {
+  return removeQueryParam(problemUri, 'e') as FTML.DocumentUri;
+}
+
+export function findProblemDataInDocument(
+  document: FTML.DocumentData | undefined,
+  problemUri: FTML.DocumentElementUri
+): FTML.ProblemData | undefined {
+  const targetUri = normalizeProblemId(problemUri);
+  const targetElementId = queryParamValue(problemUri, 'e');
+
+  function visit(elements: FTML.DocumentElement[] | undefined): FTML.ProblemData | undefined {
+    for (const element of elements ?? []) {
+      if ('Problem' in element) {
+        const problem = element.Problem;
+        const problemElementId = queryParamValue(problem.uri, 'e');
+        if (
+          normalizeProblemId(problem.uri) === targetUri ||
+          (!!targetElementId && problemElementId === targetElementId)
+        ) {
+          return problem.data;
+        }
+      }
+      const found = visit(childElements(element));
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  return visit(document?.elements);
+}
+
+export async function getProblemDataFromDocument(
+  problemUri: FTML.DocumentElementUri,
+  document?: FTML.DocumentData
+): Promise<FTML.ProblemData | undefined> {
+  if (document) {
+    return findProblemDataInDocument(document, problemUri);
+  }
+
+  const documentUri = documentUriFromProblemUri(problemUri);
+  let documentPromise = documentCache.get(documentUri);
+  if (!documentPromise) {
+    documentPromise = getDocument({ uri: documentUri });
+    documentCache.set(documentUri, documentPromise);
+  }
+  const fetchedDocument = await documentPromise;
+  return findProblemDataInDocument(fetchedDocument, problemUri);
+}
+
+export async function getProblemPointsFromDocument(
+  problemUri: FTML.DocumentElementUri,
+  document?: FTML.DocumentData
+): Promise<number | undefined> {
+  return (await getProblemDataFromDocument(problemUri, document))?.points;
 }
 
 export function normalizeProblemId(id: string | undefined | null): string {

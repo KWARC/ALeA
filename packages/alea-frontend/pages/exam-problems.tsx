@@ -22,7 +22,7 @@ import {
 
 import MainLayout from '../layouts/MainLayout';
 import { contentFragment } from '@flexiformal/ftml-backend';
-import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 
 type ExamAnswerContext = Record<
   string,
@@ -34,13 +34,17 @@ type ExamAnswerContext = Record<
 type ExamMetadata = Awaited<ReturnType<typeof getExamMetadataByUri>>;
 
 async function buildFTMLProblem(problemUri: string): Promise<FTMLProblemWithSolution> {
-  const fragmentResponse = await contentFragment({ uri: problemUri });
+  const [fragmentResponse, points] = await Promise.all([
+    contentFragment({ uri: problemUri }),
+    getProblemPointsFromDocument(problemUri),
+  ]);
   const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
   return {
     problem: {
       uri: problemUri,
       html,
       title_html: titleHtml,
+      total_points: points,
     },
     answerClasses: [],
   };
@@ -155,7 +159,7 @@ const ExamProblemsPage = () => {
 
   if (loading) {
     return (
-      <MainLayout title="Exam">
+      <MainLayout title="Exam" hideCourseHeader={true}>
         <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
           <CircularProgress />
         </Box>
@@ -164,7 +168,7 @@ const ExamProblemsPage = () => {
   }
 
   return (
-    <MainLayout title={`Review: ${examLabelFull}`}>
+    <MainLayout title={`Review: ${examLabelFull}`}  hideCourseHeader={true}>
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           {examLabelShort && (
