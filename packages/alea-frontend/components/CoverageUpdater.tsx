@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { LectureEntry } from '@alea/utils';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageForm, FormData } from './CoverageForm';
@@ -21,8 +22,9 @@ import { CoverageTable } from './CoverageTable';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AutoDetectedTooltipContent } from './AutoDetectedComponent';
 import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
-import { getAllCourses } from '@alea/spec';
+import { getAllCourses, getLectureEntry, getFauSeriesClips, FauClip } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
+import { useQuery } from '@tanstack/react-query';
 
 export function getSectionNameForUri(
   uri: string,
@@ -34,6 +36,12 @@ export function getSectionNameForUri(
 
 export function getNoonTimestampOnSameDay(timestamp: number) {
   return new Date(timestamp).setHours(12, 0, 0, 0);
+}
+
+function getMatchedClipId(timestamp: number, clips: FauClip[]): string | null {
+  const lectureDate = dayjs(timestamp).format('YYYY-MM-DD');
+  const matchedClip = clips.find((c: FauClip) => c.recording_date === lectureDate);
+  return matchedClip ? matchedClip.id.toString() : null;
 }
 
 function convertSnapToEntry(snap: LectureEntry): FormData {
@@ -64,6 +72,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 
 interface CoverageUpdaterProps {
   courseId: string;
+  instanceId: string;
   snaps: LectureEntry[];
   notCoveredSections?: string[];
   secInfo: Record<FTML.DocumentUri, SecInfo>;
@@ -74,6 +83,7 @@ interface CoverageUpdaterProps {
 
 export function CoverageUpdater({
   courseId,
+  instanceId,
   snaps,
   notCoveredSections: initialNotCoveredSections,
   secInfo,
@@ -81,6 +91,7 @@ export function CoverageUpdater({
   handleDeleteSingle,
   handleSaveNotCoveredSections,
 }: CoverageUpdaterProps) {
+  const [seriesId, setSeriesId] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
     sectionName: '',
     sectionUri: '',
@@ -101,6 +112,12 @@ export function CoverageUpdater({
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
 
   const [notCoveredSections, setNotCoveredSections] = useState<string[]>([]);
+  const { data: clips = [] } = useQuery<FauClip[]>({
+    queryKey: ['fau-series-clips', seriesId],
+    queryFn: () => (seriesId ? getFauSeriesClips(seriesId) : Promise.resolve([])),
+    enabled: !!seriesId,
+    staleTime: 1000 * 60 * 30,
+  });
 
   const theme = useTheme();
   const getSectionName = (uri: string) => getSectionNameForUri(uri, secInfo);
@@ -134,6 +151,32 @@ export function CoverageUpdater({
   }, [courseId]);
 
   useEffect(() => {
+    if (!courseId || !instanceId) return;
+    const fetchSeriesId = async () => {
+      try {
+        const data = await getLectureEntry({ courseId, instanceId });
+        if (data?.seriesId) {
+          setSeriesId(data.seriesId);
+        }
+      } catch (err) {
+        console.error('Failed to fetch seriesId:', err);
+      }
+    };
+    fetchSeriesId();
+  }, [courseId, instanceId]);
+
+
+  useEffect(() => {
+    if (!seriesId || clips.length === 0) return;
+    if (formData.clipId && formData.clipId.trim() !== '') return;
+
+    const matchedClipId = getMatchedClipId(formData.timestamp_ms, clips);
+    if (matchedClipId) {
+      setFormData((prev) => ({ ...prev, clipId: matchedClipId }));
+    }
+  }, [seriesId, formData.timestamp_ms, clips]);
+
+  useEffect(() => {
     setNotCoveredSections(initialNotCoveredSections);
   }, [initialNotCoveredSections]);
 
@@ -161,7 +204,7 @@ export function CoverageUpdater({
     setEditIndex(null);
   };
 
-  const handleSubmitForm = (formData: any) => {
+  const handleSubmitForm = (formData: FormData) => {
     const newItem: LectureEntry = {
       timestamp_ms: formData.timestamp_ms,
       sectionUri: formData.sectionUri,
@@ -193,10 +236,9 @@ export function CoverageUpdater({
     handleSaveSingle(newItem);
   };
 
-  const handleEditDialogOpen = (entry: FormData, index: number) => {
+  const handleEditDialogOpen = async (entry: FormData, index: number) => {
     console.log('setformdata', entry.slideUri);
-
-    setFormData({ ...entry });
+    setFormData(entry);
     setEditIndex(index);
     setEditDialogOpen(true);
   };

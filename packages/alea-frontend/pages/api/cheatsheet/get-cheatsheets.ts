@@ -19,7 +19,7 @@ export async function resolveTargetUserIdOrsetError(
   targetUserId?: string | string[]
 ): Promise<string | null> {
   let authUserId: string | void;
-  if (typeof targetUserId === 'string') {
+  if (typeof targetUserId === 'string' && targetUserId !== (await getUserIdOrSetError(req, res))) {
     authUserId = await getUserIdIfAuthorizedOrSetError(
       req,
       res,

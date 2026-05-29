@@ -8,6 +8,21 @@ import {
 } from '../../comment-utils';
 import { getCurrentTermForCourseId } from '../../get-current-term';
 
+interface AdminAnswerRow {
+  subProblemId: string;
+  questionId: string;
+  answer: string;
+  userId: string;
+  courseId: string;
+  courseInstance: string;
+}
+
+interface AnswerResponseRow {
+  answerId: number;
+  subProblemId: string;
+  answer: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfQueryParameterExistOrSetError(req, res, 'courseId')) return;
   const courseId = req.query.courseId as string;
@@ -25,10 +40,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
   const answerId = +(req.query.answerId as string);
-  const answer = await executeAndEndSet500OnError<any[]>(
-    'SELECT	subProblemId, questionId, answer, userId FROM Answer WHERE	id = ? ',
+  const answer = await executeAndEndSet500OnError<AdminAnswerRow[]>(
+    'SELECT subProblemId, questionId, answer, userId, courseId, courseInstance FROM Answer WHERE id = ?',
     [answerId],
     res
   );
-  res.send(answer[0]);
+  if (!answer?.length) return res.status(404).end();
+
+  const base = answer[0];
+  const allResponses = await executeAndEndSet500OnError<AnswerResponseRow[]>(
+    `SELECT id AS answerId, subProblemId, answer
+     FROM Answer
+     WHERE questionId = ? AND userId = ? AND courseId = ? AND courseInstance = ?
+     ORDER BY subProblemId`,
+    [base.questionId, base.userId, base.courseId, base.courseInstance],
+    res
+  );
+  if (!allResponses) return;
+
+  res.send({
+    ...base,
+    responses: allResponses,
+  });
 }

@@ -1,65 +1,291 @@
 import { FTML } from '@flexiformal/ftml';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Box, IconButton } from '@mui/material';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { contentFragment } from '@flexiformal/ftml-backend';
 import { FTMLProblemWithSolution, GradingWithAnswer } from '@alea/spec';
-import { GradingContext, ProblemDisplay, ShowGradingFor } from '@alea/stex-react-renderer';
-import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { MdViewer } from '@alea/markdown';
+import { ProblemDisplay } from '@alea/stex-react-renderer';
+import { parseContentFragmentTuple } from '@alea/quiz-utils';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  addProblemSlot,
+  buildProblemResponse,
+  findItemForProblemSlot,
+} from './problem-display-utils';
+
 export function PeerReviewGradedItemDisplay({
   grade,
+  grades,
   onDelete,
 }: {
-  grade: GradingWithAnswer;
+  grade?: GradingWithAnswer;
+  grades?: GradingWithAnswer[];
   onDelete: (id: number) => void;
 }) {
+  const gradesToShow = useMemo(() => grades ?? (grade ? [grade] : []), [grade, grades]);
+  const primary = gradesToShow[0];
   const [problem, setProblem] = useState<FTMLProblemWithSolution>();
   const [answerText, setAnswerText] = useState<FTML.ProblemResponse>();
+  const [problemSlotIds, setProblemSlotIds] = useState<string[]>([]);
+
   useEffect(() => {
-    // TODO ALEA4-P4
-    // //getLearningObjectShtml(grade.questionId).then((p) => {
-    // setProblem(getProblem(p, ''));
-    //});
-    // setAnswerText({
-    //   freeTextResponses: { [grade.subProblemId]: grade.answer },
-    //   autogradableResponses: [],
-    // });
-  }, [grade]);
-  return (
-    <GradingContext.Provider
-      value={{
-        isGrading: false,
-        showGrading: true,
-        showGradingFor: ShowGradingFor.ALL,
-        gradingInfo: {
-          [grade.questionId]: {
-            [grade.subProblemId]: [grade],
+    if (!primary) return;
+    let isMounted = true;
+    async function loadProblem() {
+      try {
+        const fragmentResponse = await contentFragment({ uri: primary.questionId });
+        if (!isMounted) return;
+        const { titleHtml, html } = parseContentFragmentTuple(fragmentResponse);
+        setProblem({
+          problem: {
+            uri: primary.questionId,
+            html,
+            title_html: titleHtml,
           },
-        },
-        studentId: grade.checkerId,
-      }}
-    >
-      <Box>
-        <ProblemDisplay
-          // problemId={grade.questionId} TODO ALEA4-P4
-          // showUnansweredProblems={false}
-          showPoints={false}
-          problem={problem}
-          isFrozen={true}
-          r={answerText}
-          uri={grade.questionId}
-        ></ProblemDisplay>
-        <Box sx={{ margin: '10px' }}>
-          <span>{dayjs(grade.updatedAt).fromNow()}</span>
-          <IconButton
-            onClick={() => onDelete(grade.id)}
-            sx={{ float: 'right', display: 'inline' }}
-            aria-label="delete"
-            color="primary"
-          >
-            <DeleteIcon />
-          </IconButton>
+          answerClasses: [],
+        });
+        setAnswerText(
+          buildProblemResponse(
+            primary.questionId,
+            gradesToShow,
+            (item) => item.subProblemId,
+            (item) => item.answer
+          )
+        );
+
+        setProblemSlotIds([]);
+      } catch {
+        if (!isMounted) return;
+        setProblem(undefined);
+        setAnswerText(undefined);
+        setProblemSlotIds([]);
+      }
+    }
+    loadProblem();
+    return () => {
+      isMounted = false;
+    };
+  }, [primary, gradesToShow]);
+
+  if (!primary) return null;
+
+  function findGradeForProblem(problemId: string, isSubProblem: boolean) {
+    return findItemForProblemSlot(
+      gradesToShow,
+      problemId,
+      isSubProblem,
+      problemSlotIds,
+      (item) => item.subProblemId
+    );
+  }
+
+  function GradeFeedback({
+    problemId,
+    isSubProblem,
+  }: {
+    problemId: string;
+    isSubProblem: boolean;
+  }) {
+    useEffect(() => {
+      if (!isSubProblem) return;
+      setProblemSlotIds((prev) => addProblemSlot(prev, problemId));
+    }, [problemId, isSubProblem]);
+
+    if (!isSubProblem && problemSlotIds.length > 0) return null;
+    const item = findGradeForProblem(problemId, isSubProblem);
+    if (!item) return null;
+
+    const idx = gradesToShow.findIndex((g) => g.id === item.id);
+    const numericSubProblemId = Number(item.subProblemId);
+    const subProblemLabel = Number.isFinite(numericSubProblemId)
+      ? `Sub-problem ${numericSubProblemId + 1}`
+      : `Sub-problem ${idx + 1}`;
+    const label = gradesToShow.length > 1 ? subProblemLabel : 'Feedback';
+
+    return (
+      <Box sx={feedbackStyles.wrapper}>
+        <Box sx={feedbackStyles.answerSection}>
+          <Typography variant="caption" sx={feedbackStyles.answerLabelText}>
+            Student Answer
+          </Typography>
+          <Box sx={feedbackStyles.answerContent}>
+            <MdViewer content={item.answer || '*Unanswered*'} />
+          </Box>
+        </Box>
+        <Box sx={feedbackStyles.card}>
+          <Box sx={feedbackStyles.header}>
+            <Box sx={feedbackStyles.headerLeft}>
+              <StarBorderIcon sx={feedbackStyles.scoreIcon} />
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Score
+              </Typography>
+              <Typography component="span" sx={feedbackStyles.scoreChip}>
+                {item.totalPoints}
+              </Typography>
+              {gradesToShow.length > 1 && (
+                <Chip label={label} size="small" sx={feedbackStyles.indexChip} />
+              )}
+            </Box>
+            <Tooltip title="Delete feedback" arrow placement="top">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item.id);
+                }}
+                aria-label="delete"
+                color="primary"
+                sx={{ p: 0.25, ml: 'auto', mr: 0.5 }}
+              >
+                <DeleteIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box sx={feedbackStyles.details}>
+            <Box sx={feedbackStyles.feedbackSection}>
+              <Typography variant="caption" sx={feedbackStyles.sectionLabelText}>
+                Feedback
+              </Typography>
+              <Box sx={feedbackStyles.feedbackContent}>
+                {item.customFeedback ? (
+                  <MdViewer content={item.customFeedback} />
+                ) : (
+                  <Typography sx={feedbackStyles.emptyFeedback}>No feedback provided.</Typography>
+                )}
+              </Box>
+            </Box>
+          </Box>
         </Box>
       </Box>
-    </GradingContext.Provider>
+    );
+  }
+
+  const feedbackRevision = [
+    problemSlotIds.join('|'),
+    gradesToShow.map((g) => `${g.id}:${g.updatedAt}`).join('|'),
+  ].join('::');
+
+  return (
+    <Box>
+      <ProblemDisplay
+        key={`${primary.questionId}-${feedbackRevision}`}
+        showPoints={false}
+        problem={problem}
+        isFrozen={true}
+        r={answerText}
+        uri={primary.questionId}
+        hideAnswerAccepter
+        renderBelowAnswerAccepter={(problemId, isSubProblem) => (
+          <GradeFeedback problemId={problemId} isSubProblem={isSubProblem} />
+        )}
+      />
+    </Box>
   );
 }
+
+const feedbackStyles = {
+  wrapper: {
+    mt: 1,
+  },
+  card: {
+    mt: 1,
+    border: 1,
+    borderColor: '#b7dfbd',
+    borderRadius: '6px !important',
+    overflow: 'hidden',
+    bgcolor: '#f7fcf8',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    px: 1.5,
+    py: 0,
+    minHeight: 52,
+    bgcolor: '#f7fcf8',
+    borderBottom: 1,
+    borderColor: '#b7dfbd',
+  },
+  details: {
+    p: 0,
+    bgcolor: '#f7fcf8',
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    flex: 1,
+  },
+  scoreIcon: {
+    color: '#2e7d32',
+    fontSize: 20,
+  },
+  scoreChip: {
+    px: 1,
+    py: 0.25,
+    borderRadius: 999,
+    bgcolor: '#d9f2dd',
+    color: '#1b5e20',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    lineHeight: 1,
+  },
+  indexChip: {
+    bgcolor: '#e8f5e9',
+    color: '#2e7d32',
+    fontWeight: 600,
+    height: 24,
+    fontSize: '0.75rem',
+  },
+  answerSection: {
+    px: 1.5,
+    py: 1.5,
+    border: 1,
+    borderColor: 'divider',
+    borderRadius: 1,
+    overflow: 'hidden',
+    bgcolor: '#fff8c5',
+  },
+  answerLabelText: {
+    display: 'block',
+    fontWeight: 700,
+    color: 'text.secondary',
+    letterSpacing: 0.4,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase' as const,
+  },
+  sectionLabelText: {
+    display: 'block',
+    fontWeight: 700,
+    color: '#2e7d32',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.4,
+    fontSize: '0.75rem',
+  },
+  answerContent: {
+    mt: 1.5,
+    color: 'text.primary',
+    fontSize: '0.875rem',
+    lineHeight: 1.45,
+    '& p': {
+      my: 0,
+    },
+  },
+  feedbackSection: {
+    px: 1.5,
+    py: 1.5,
+  },
+  feedbackContent: {
+    mt: 1,
+    color: 'text.primary',
+    fontSize: '0.875rem',
+    lineHeight: 1.45,
+    '& p': {
+      my: 0,
+    },
+  },
+  emptyFeedback: {
+    color: 'text.secondary',
+    fontSize: '0.875rem',
+  },
+} as const;

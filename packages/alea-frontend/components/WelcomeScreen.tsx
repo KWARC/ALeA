@@ -1,8 +1,8 @@
 import {
   CommentType,
+  getAllCourses,
   getCourseGradingItems,
   getCourseIdsForEnrolledUser,
-  getAllCourses,
   getCourseInstanceThreads,
   getCourseQuizList,
   getCoverageTimeline,
@@ -18,6 +18,7 @@ import {
   CourseResourceAction,
   isFauId,
   LectureEntry,
+  pathToCourseHome,
   ResourceName,
 } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
@@ -48,7 +49,6 @@ import { getLocaleObject } from '../lang/utils';
 import MainLayout from '../layouts/MainLayout';
 import { BannerSection, CourseCard, VollKiInfoSection } from '../pages';
 import { CourseThumb } from '../pages/u/[institution]';
-import { pathToCourseHome } from '@alea/utils';
 import { SecInfo } from '../types';
 import { getSecInfo } from './coverage-update';
 import { calculateLectureProgress } from './CoverageTable';
@@ -184,12 +184,14 @@ async function getLastUpdatedQuiz(
     .sort((a, b) => a.quizStartTs - b.quizStartTs)[0];
   const toShowQuiz = firstFutureQuiz || latestQuiz;
   const toShowQuizTs = toShowQuiz?.quizStartTs;
-
+  if (!toShowQuizTs) {
+    return { description: null, timeAgo: null, timestamp: null };
+  }
   const now = Date.now();
   const nextScheduledQuiz = courseQuizData
     ?.filter((entry) => entry.isQuizScheduled && entry.timestamp_ms > now)
     .sort((a, b) => a.timestamp_ms - b.timestamp_ms)[0];
-  if (toShowQuizTs > now - 12 * 60 * 60 * 1000 || !nextScheduledQuiz) {
+  if ((toShowQuizTs && toShowQuizTs > now - 12 * 60 * 60 * 1000) || !nextScheduledQuiz) {
     return {
       description: `${r.latestQuiz}: ${dayjs(toShowQuizTs).format('YYYY-MM-DD')}`,
       timeAgo: calculateTimeAgo(toShowQuizTs.toString()),
@@ -197,6 +199,17 @@ async function getLastUpdatedQuiz(
       quizId: toShowQuiz.quizId,
       colorInfo: {
         color: 'gray',
+        type: 'default' as const,
+      },
+    };
+  }
+  if (!nextScheduledQuiz) {
+    return {
+      description: 'No upcoming quiz available',
+      timeAgo: null,
+      timestamp: null,
+      colorInfo: {
+        color: 'text.secondary',
         type: 'default' as const,
       },
     };

@@ -7,7 +7,10 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
-import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
+import {
+  getUserIdIfAuthorizedOrSetError,
+  isUserIdAuthorizedForAny,
+} from '../access-control/resource-utils';
 import {
   Action,
   formatDateLabel,
@@ -192,6 +195,7 @@ function renderPdfPage(
     ['Student Id', fields.studentId],
     ['Week Of', weekOf],
   ];
+  doc.lineWidth(3);
   drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
   drawWatermark(doc, fields);
   drawWriteArea(doc, WRITE_AREA_TOP, PAGE_MARGIN);
@@ -275,6 +279,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required fields');
   }
   const { courseId, instanceId, universityId, scope = 'WEEK' } = req.body;
+  let { targetUserId } = req.body;
   const userId = await getUserIdIfAuthorizedOrSetError(
     req,
     res,
@@ -283,7 +288,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     { courseId, instanceId }
   );
   if (!userId) return;
-  const userProfile = await getUserProfileOrSet500OnError(userId, res);
+  const isInstructor = await isUserIdAuthorizedForAny(userId, [
+    {
+      name: ResourceName.COURSE_CHEATSHEET,
+      action: Action.MUTATE,
+      variables: { courseId, instanceId },
+    },
+  ]);
+  if (!isInstructor && targetUserId && targetUserId !== userId) {
+    return res.status(403).send('Unauthorized');
+  }
+  if (!isInstructor) targetUserId = userId;
+  if (!targetUserId) return;
+  const userProfile = await getUserProfileOrSet500OnError(targetUserId, res);
   if (!userProfile) return;
   const { firstName = '', lastName = '' } = userProfile[0] ?? {};
   const studentName = firstName || lastName ? `${firstName} ${lastName}`.trim() : 'Unknown';
@@ -291,7 +308,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const fields = req.body as CheatsheetFields;
     fields.studentName = studentName;
-    fields.studentId = userId;
+    fields.studentId = targetUserId;
     const config = await getCheatsheetConfigOrSetError(universityId, courseId, instanceId, res);
     if (!config) return;
     if (!config.cheatsheetStart || !config.cheatsheetEnd) {
@@ -305,7 +322,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const weekId = weekStart.toISOString().split('T')[0];
       fields.weekId = weekId;
       const { cheatsheetId, createdAt } = await getOrCreateCheatsheetOrSetError({
-        userId,
+        userId: targetUserId,
         studentName,
         universityId,
         courseId,
@@ -326,7 +343,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (skippedWeeks.has(weekId)) continue;
         fields.weekId = weekId;
         const { cheatsheetId, createdAt } = await getOrCreateCheatsheetOrSetError({
-          userId,
+          userId: targetUserId,
           studentName,
           universityId,
           courseId,

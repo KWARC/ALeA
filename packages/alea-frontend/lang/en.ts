@@ -138,14 +138,10 @@ export const en = {
   quiz: {
     upcomingQuizzes: 'Upcoming Quizzes',
     quizDashboard: 'Quiz Dashboard',
-    demoQuiz: 'Demo Quiz',
     previousQuizzes: 'Previous Quizzes',
     ongoingQuizzes: 'On-going Quizzes',
     onTimeWarning:
       'This page gives you an overview over the upcoming quizzes in the {courseId} lectures. Note that start and end times are strict. So be on time.',
-    this: 'This',
-    demoQuizText:
-      'is a demo quiz - so that you can test your hard/software (you will need a recent chrome or firefox browser) and see the format. In particular, you should be able to read the Math in the travelling salesperson problem.',
     practiceProblems: 'Practice Problems',
     enrollmentMessage: 'Please enroll in the course to access quizzes and homework.',
     getEnrolled: 'Get Enrolled',
@@ -220,6 +216,11 @@ export const en = {
   },
   courseNotes: {
     notCovered: 'This section is not covered in the course',
+    comingSoon: 'Course notes coming soon',
+    unavailablePrefix: 'Notes for',
+    unavailableSuffix: 'are not available yet.',
+    exploreCourse: 'Explore Our Course',
+    backToHome: 'Back to Home',
   },
   courseView: {
     notes: 'Notes',
@@ -484,6 +485,11 @@ export const en = {
     assignments: 'Assignments',
     notes: 'Notes',
     slides: 'Slides',
+    cheatsheet: 'Cheatsheet',
+    cheatsheetUploadPending: 'Cheatsheet upload pending',
+    cheatsheetEnrollmentPending: 'Get enrolled to access the CheatSheet',
+    uploadBefore: 'Upload before',
+    uploadPending: 'Upload pending',
     notEnrolled: "You're not enrolled in any courses yet",
   },
   semesterOverBanner: {

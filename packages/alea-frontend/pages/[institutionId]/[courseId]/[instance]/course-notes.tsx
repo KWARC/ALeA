@@ -7,9 +7,9 @@ import {
   SectionReview,
   TrafficLightIndicator,
 } from '@alea/stex-react-renderer';
-import { CourseInfo, LectureEntry } from '@alea/utils';
+import { CourseInfo, LectureEntry, pathToCourseHome } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
-import { contentToc } from '@flexiformal/ftml-backend';
+import { contentDocument, contentToc } from '@flexiformal/ftml-backend';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
@@ -21,8 +21,8 @@ import {
   DialogTitle,
   IconButton,
   Tooltip,
+  Typography,
 } from '@mui/material';
-import axios from 'axios';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useRef, useState } from 'react';
@@ -74,6 +74,54 @@ function getSectionUriToTitle(toc: FTML.TocElem[], uriToTitle: Record<string, st
   }
 }
 
+function NoCourseNotes({
+  courseId,
+  courseName,
+  courseHomeHref,
+}: {
+  courseId: string;
+  courseName?: string;
+  courseHomeHref: string;
+}) {
+  const router = useRouter();
+  const { courseNotes: t } = getLocaleObject(router);
+
+  return (
+    <MainLayout title={`${courseId.toUpperCase()} Course Notes | ALeA`}>
+      <Box
+        sx={{
+          maxWidth: 640,
+          mx: 'auto',
+          mt: 10,
+          px: 3,
+          py: 4,
+          textAlign: 'center',
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1,
+          boxShadow: 2,
+        }}
+      >
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+          {t.comingSoon}
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 2, color: 'text.secondary' }}>
+          {t.unavailablePrefix} {courseName || courseId.toUpperCase()} {t.unavailableSuffix}
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, mt: 3, flexWrap: 'wrap' }}>
+          <Button variant="contained" onClick={() => router.push(courseHomeHref)}>
+            {t.exploreCourse}
+          </Button>
+          <Button variant="outlined" onClick={() => router.push('/')}>
+            {t.backToHome}
+          </Button>
+        </Box>
+      </Box>
+    </MainLayout>
+  );
+}
+
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
   const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
@@ -82,6 +130,7 @@ const CourseNotesPage: NextPage = () => {
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [gottos, setGottos] = useState<{ uri: string; timestamp: number }[] | undefined>(undefined);
   const [toc, setToc] = useState<FTML.TocElem[] | undefined>(undefined);
+  const [tocLoadFailed, setTocLoadFailed] = useState(false);
   const uriToTitle = useRef<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasResults, setHasResults] = useState(false);
@@ -115,11 +164,21 @@ const CourseNotesPage: NextPage = () => {
     const notes = courses?.[courseId ?? '']?.notes;
     if (!notes) return;
     setToc(undefined);
-    contentToc({ uri: notes }).then(([_css, _, toc] = [[], { type: 'Part' }, []]) => {
-      setToc(toc);
-      uriToTitle.current = {};
-      getSectionUriToTitle(toc, uriToTitle.current);
-    });
+    setTocLoadFailed(false);
+    Promise.all([contentDocument({ uri: notes }), contentToc({ uri: notes })])
+      .then(([documentResponse, [_css, _, toc] = [[], { type: 'Part' }, []]]) => {
+        if (!documentResponse) {
+          setTocLoadFailed(true);
+          return;
+        }
+        setToc(toc ?? []);
+        uriToTitle.current = {};
+        getSectionUriToTitle(toc ?? [], uriToTitle.current);
+      })
+      .catch((error) => {
+        console.error('Failed to load course notes toc:', error);
+        setTocLoadFailed(true);
+      });
   }, [router.isReady, courses, courseId]);
 
   useEffect(() => {
@@ -178,7 +237,7 @@ const CourseNotesPage: NextPage = () => {
     return <CourseNotFound />;
   }
 
-  if (!router.isReady || !courses || !gottos || !toc) {
+  if (!router.isReady || !courses) {
     return <CircularProgress />;
   }
 
@@ -187,6 +246,20 @@ const CourseNotesPage: NextPage = () => {
     return <CourseNotFound />;
   }
   const { notes } = courseInfo;
+
+  if (!notes?.trim() || tocLoadFailed) {
+    return (
+      <NoCourseNotes
+        courseId={courseId}
+        courseName={courseInfo.courseName}
+        courseHomeHref={pathToCourseHome(institutionId, courseId, resolvedInstanceId)}
+      />
+    );
+  }
+
+  if (!gottos || !toc) {
+    return <CircularProgress />;
+  }
 
   return (
     <MainLayout title={courseId.toUpperCase()}>

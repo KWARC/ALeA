@@ -100,7 +100,7 @@ function ChosenTab({
     case 'cheatsheet':
       return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
     case 'syllabus':
-      return <CoverageUpdateTab />;
+      return <CoverageUpdateTab courseId={courseId} instanceId={instanceId} />;
     case 'course-metadata':
       return <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />;
     default:

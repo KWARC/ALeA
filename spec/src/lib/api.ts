@@ -12,6 +12,7 @@ export * from './course-material-api';
 export * from './course-metadata-api';
 export * from './didactic-api';
 export * from './exam-utils';
+export * from './fau-api';
 export * from './flams';
 export * from './flams-query-creator';
 export * from './gpt-problems';

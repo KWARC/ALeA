@@ -7,9 +7,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   const grading = await executeAndEndSet500OnError<GradingWithAnswer[]>(
-    `SELECT Grading.id, Answer.questionTitle, Answer.subProblemId, Grading.answerId, Answer.questionId, Grading.reviewType, Grading.customFeedback, Grading.totalPoints, Grading.updatedAt,Answer.courseInstance,Answer.courseId,Answer.answer 
+    `SELECT Grading.id, Answer.questionTitle, Answer.subProblemId, Grading.answerId, Answer.userId AS studentId, Answer.questionId, Grading.reviewType, Grading.customFeedback, Grading.totalPoints, Grading.updatedAt,Answer.courseInstance,Answer.courseId,Answer.answer
     FROM Answer INNER JOIN Grading ON Answer.id = Grading.answerId 
-    WHERE Grading.checkerId = ? and Answer.homeworkId IS NULL 
+    WHERE Grading.checkerId = ? AND (Answer.homeworkId IS NULL OR Answer.homeworkId = 0)
     ORDER BY Grading.updatedAt DESC`,
     [userId],
     res

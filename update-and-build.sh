@@ -2,6 +2,7 @@
 set -e
 
 git pull
+pnpm install
 NX_DAEMON=false npx nx reset
 NX_DAEMON=false npx prisma generate --schema=prisma/comments/schema.prisma
 NX_DAEMON=false npx nx build alea-frontend --outputPath=dist/packages/alea-frontend-new

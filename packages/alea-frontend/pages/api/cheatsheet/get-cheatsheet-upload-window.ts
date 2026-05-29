@@ -160,6 +160,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const now = new Date();
     for (const weekStart of weekStarts) {
       const { windowStart, windowEnd } = getUploadWindow(weekStart, config);
+      const weekId = weekStart.toISOString().split('T')[0];
       const weekStartStr = formatDateLocal(weekStart);
       const isSkipped = skippedWeeks.has(weekStartStr);
 
@@ -167,6 +168,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const isValidCurrentWindow = isWithin && !isSkipped;
 
       const window: UploadWindow = {
+        weekId,
         windowStart: windowStart.toISOString(),
         windowEnd: windowEnd.toISOString(),
         isSkipped,

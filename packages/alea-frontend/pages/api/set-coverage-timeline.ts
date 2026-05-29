@@ -1,5 +1,6 @@
 import { Action, LectureEntry, CoverageTimeline, ResourceName } from '@alea/utils';
 import fs from 'fs';
+import path from 'path';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
 import { checkIfPostOrSetError } from './comment-utils';
@@ -43,6 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (fs.existsSync(filePath)) {
       const fileData = fs.readFileSync(filePath, 'utf-8');
       existingData = JSON.parse(fileData);
+    }
+    const backupDir = path.join(process.env.RECORDED_SYLLABUS_DIR!, 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
     }
 
     // Backup before changing anything

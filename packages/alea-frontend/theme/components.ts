@@ -97,7 +97,7 @@ const components: Components = {
         const isDark = theme.palette.mode === 'dark';
 
         return {
-          backgroundColor: theme.palette.background.paper,
+          backgroundColor: theme.palette.background.default,
           borderRadius: 10,
 
           '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -121,98 +121,96 @@ const components: Components = {
       },
     },
   },
-MuiTextField: {
-  defaultProps: {
-    variant: 'outlined',
-  },
-  styleOverrides: {
-    root: ({ theme }:{theme:any}) => {
-      const isDark = theme.palette.mode === 'dark';
+  MuiTextField: {
+    defaultProps: {
+      variant: 'outlined',
+    },
+    styleOverrides: {
+      root: ({ theme }: { theme: any }) => {
+        const isDark = theme.palette.mode === 'dark';
 
-      return {
-        '& .MuiOutlinedInput-root': {
+        return {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 10,
+            backgroundColor: theme.palette.background.default,
+
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDark ? theme.palette.primary.main : theme.palette.divider,
+            },
+
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDark ? theme.palette.primary.light : theme.palette.primary.main,
+            },
+
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+            },
+          },
+        };
+      },
+    },
+  },
+
+  MuiInputLabel: {
+    styleOverrides: {
+      root: ({ theme }: { theme: any }) => ({
+        color: theme.palette.text.primary,
+
+        '&.Mui-focused': {
+          color: theme.palette.text.primary.main,
+        },
+      }),
+    },
+  },
+
+  MuiSelect: {
+    styleOverrides: {
+      select: ({ theme }: { theme: any }) => ({
+        color: theme.palette.text.primary,
+      }),
+
+      icon: ({ theme }: { theme: any }) => ({
+        color: theme.palette.text.secondary,
+      }),
+    },
+  },
+
+  MuiAutocomplete: {
+    styleOverrides: {
+      paper: ({ theme }: { theme: any }) => ({
+        borderRadius: 10,
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+        borderColor: theme.palette.primary.main,
+      }),
+      inputRoot: ({ theme }: { theme: any }) => {
+        const isDark = theme.palette.mode === 'dark';
+
+        return {
           borderRadius: 10,
-          backgroundColor: theme.palette.background.paper,
 
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: isDark
-              ? theme.palette.primary.main:theme.palette.divider,
-          },
-
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: isDark
-              ? theme.palette.primary.light
-              : theme.palette.primary.main,
+            borderColor: isDark ? theme.palette.primary.main : theme.palette.divider,
           },
 
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.palette.primary.main,
+            borderWidth: 1.5,
           },
+        };
+      },
+
+      option: ({ theme }: { theme: any }) => ({
+        '&[aria-selected="true"]': {
+          backgroundColor: theme.palette.action.selected,
         },
-      };
+
+        '&.Mui-focused': {
+          backgroundColor: theme.palette.action.hover,
+        },
+      }),
     },
   },
-},
-
-  MuiInputLabel: {
-  styleOverrides: {
-    root: ({ theme }:{theme:any}) => ({
-      color: theme.palette.text.secondary,
-
-      '&.Mui-focused': {
-        color: theme.palette.text.primary,
-      },
-    }),
-  },
-},
-
-MuiSelect: {
-  styleOverrides: {
-    select: ({ theme }:{theme:any}) => ({
-      color: theme.palette.text.primary,
-    }),
-
-    icon: ({ theme }:{theme:any}) => ({
-      color: theme.palette.text.secondary,
-    }),
-  },
-},
-
-MuiAutocomplete: {
-  styleOverrides: {
-    paper: ({ theme }:{theme:any}) => ({
-      borderRadius: 10,
-      backgroundColor: theme.palette.background.paper,
-      color: theme.palette.text.primary,
-      borderColor: theme.palette.primary.main,
-    }),
-    inputRoot: ({ theme }:{theme:any}) => {
-            const isDark = theme.palette.mode === 'dark';
-
-      return({
-      borderRadius: 10,
-
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark?theme.palette.primary.main:theme.palette.divider,
-      },
-
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: 1.5,
-      },
-    })},
-
-    option: ({ theme }:{theme:any}) => ({
-      '&[aria-selected="true"]': {
-        backgroundColor: theme.palette.action.selected,
-      },
-
-      '&.Mui-focused': {
-        backgroundColor: theme.palette.action.hover,
-      },
-    }),
-  },
-},
 
   MuiDialog: {
     styleOverrides: {
