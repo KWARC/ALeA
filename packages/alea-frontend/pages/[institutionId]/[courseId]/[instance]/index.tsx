@@ -666,7 +666,13 @@ const CourseHomePage: NextPage = () => {
   const cheatSheetsLink = pathToCheatSheet(institutionId, courseId, instanceId);
 
   const locale = router.locale || 'en';
-  const { home, courseHome: tCourseHome, calendarSection: tCal, quiz: q , studentWelcomeScreen: tCheatsheet} = getLocaleObject(router);
+  const {
+    home,
+    courseHome: tCourseHome,
+    calendarSection: tCal,
+    quiz: q,
+    studentWelcomeScreen: tCheatsheet,
+  } = getLocaleObject(router);
   const t = home.courseThumb;
 
   const showSearchBar = ['ai-1', 'ai-2', 'iwgs-1', 'iwgs-2'].includes(courseId);
@@ -708,7 +714,6 @@ const CourseHomePage: NextPage = () => {
   };
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${tCourseHome.title} | ALeA`}>
-
       <Box
         fragment-uri={notes}
         fragment-kind="Section"
@@ -826,13 +831,15 @@ const CourseHomePage: NextPage = () => {
               <PersonIcon fontSize="large" />
             </CourseComponentLink>
           )}
-          <Tooltip title="Course Archive" placement="bottom" arrow>
-            <Link href={courseLandingLink}>
-              <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
-                <StorageIcon fontSize="large" />
-              </Button>
-            </Link>
-          </Tooltip>
+          {isInstructor && (
+            <Tooltip title="Course Archive" placement="bottom" arrow>
+              <Link href={courseLandingLink}>
+                <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
+                  <StorageIcon fontSize="large" />
+                </Button>
+              </Link>
+            </Tooltip>
+          )}
         </Box>
         <InstructorDetails details={instructorDetails} />
         {enrolled === false && !isSemesterOver && (
