@@ -295,7 +295,7 @@ export function CourseCard({ course, currentTerm }) {
           p: 2,
           textAlign: 'center',
           backgroundColor: 'background.card',
-          overflowY: 'scroll',
+          overflow: 'hidden',
           transition: 'transform 0.3s',
           '&:hover': {
             transform: 'scale(1.1)',
