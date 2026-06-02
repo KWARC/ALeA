@@ -5,6 +5,7 @@ import { canUserModerateComments } from './access-control/resource-utils';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
+  executeTxnAndEndSet500OnError,
   getExistingCommentDontEnd,
   getUserIdOrSetError,
   sendNotification,
@@ -114,7 +115,8 @@ export default async function handler(req, res) {
     }
     threadId = parentComment.threadId;
   }
-  const results = await executeAndEndSet500OnError(
+  const results = await executeTxnAndEndSet500OnError(
+    res,
     `INSERT INTO comments
       (archive, filepath, statement, parentCommentId, threadId, courseId, courseTerm, institutionId, selectedText, isPrivate, commentType, questionStatus, isAnonymous, userId, userName, userEmail, isDeleted, isEdited ,uri, pageUrl)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?, ?)`,
@@ -140,10 +142,15 @@ export default async function handler(req, res) {
       uri,
       pageUrl,
     ],
-    res
+    'SELECT LAST_INSERT_ID() AS insertId',
+    []
   );
   if (!results) return;
-  const newCommentId = results['insertId'];
+  const newCommentId = Number(results[1]?.[0]?.insertId);
+  if (!newCommentId) {
+    res.status(500).json({ message: 'Failed to create comment' });
+    return;
+  }
 
   if (commentType === CommentType.QUESTION) {
     const reason = GrantReason.ASKED_QUESTION;
@@ -155,11 +162,12 @@ export default async function handler(req, res) {
   }
 
   if (!parentCommentId) {
-    await executeAndEndSet500OnError(
+    const updated = await executeAndEndSet500OnError(
       `UPDATE comments SET threadId=? WHERE commentId=?`,
       [newCommentId, newCommentId],
       res
     );
+    if (!updated) return;
   }
   res.status(200).json({ newCommentId });
   await sendCommentAlert(
