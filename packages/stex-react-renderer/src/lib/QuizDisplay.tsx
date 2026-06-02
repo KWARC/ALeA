@@ -371,16 +371,14 @@ export function QuizDisplay({
         </Box>
         <Box my="10px">
           <ProblemDisplay
+            uri={currentProblemId}
             r={response}
             problem={problem}
             isFrozen={isFrozen || !!frozenProblems?.[currentProblemId]}
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               const problemId = problemIds[problemIdx];
-              setResponses((prev) => {
-                prev[problemId] = response;
-                return prev;
-              });
+              setResponses((prev) => ({ ...prev, [problemId]: response }));
               onResponse?.(problemId, response);
             }}
             onFreezeResponse={
