@@ -4,6 +4,7 @@ import Diversity3Icon from '@mui/icons-material/Diversity3';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import { Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
@@ -44,6 +45,8 @@ export function NotificationIcon({ type }: { type: NotificationType }) {
       return <Diversity3Icon color="primary" />;
     case NotificationType.COMMENT:
       return <QuestionAnswerIcon color="primary" />;
+    case NotificationType.PEER_REVIEW:
+      return <RateReviewIcon color="primary" />;
     case NotificationType.REPORT_PROBLEM:
       return <ReportProblemIcon color="primary" />;
     case NotificationType.SUGGESTION:

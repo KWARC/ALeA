@@ -10,9 +10,19 @@ import CloseIcon from '@mui/icons-material/Close';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Box, Button, CircularProgress, Dialog, IconButton } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+} from '@mui/material';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLocaleObject } from './lang/utils';
 import { FixedPositionMenu, LayoutWithFixedMenu } from './LayoutWithFixedMenu';
 import { ProblemDisplay } from './ProblemDisplay';
@@ -21,13 +31,18 @@ import { QuizTimer, Timer, timerEvent } from './QuizTimer';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { getPoints } from './stex-react-renderer';
 
+const UNSAVED_ANSWER_CONFIRM_MESSAGE =
+  'You have unsaved answer changes. Do you want to leave without saving?';
+const UNSAVED_ANSWER_CONFIRM_TITLE = 'Leave without saving?';
+
 function isNonEmptyResponse(resp: FTML.ProblemResponseType) {
   if (resp.type === 'MultipleChoice') {
-    return resp.value.length > 0 && resp.value.some((r) => r);
+    const value = resp.value ?? [];
+    return value.length > 0 && value.some((r) => r);
   } else if (resp.type === 'SingleChoice') {
     return resp.value !== undefined;
   } else if (resp.type === 'Fillinsol') {
-    return resp.value.length > 0;
+    return (resp.value?.length ?? 0) > 0;
   }
   return false;
 }
@@ -230,7 +245,7 @@ function computeResult(
     const r = responses[problemId];
     const p = problems[problemId];
     points[problemId] = getPoints(p, r);
-  } 
+  }
   return points;
 }
 
@@ -266,7 +281,8 @@ export function QuizDisplay({
   onProblemFreeze?: (problemId: string) => void;
 }) {
   const isHomeWork = homeworkId ? true : false;
-  const { quiz: t } = getLocaleObject(useRouter());
+  const router = useRouter();
+  const { quiz: t } = getLocaleObject(router);
   const [points, setPoints] = useState<{ [problemId: string]: number }>({});
   const [responses, setResponses] = useState<Record<string, FTML.ProblemResponse | undefined>>({});
   const [problemIdx, setProblemIdx] = useState(initialProblemIdx);
@@ -274,6 +290,9 @@ export function QuizDisplay({
   const [events, setEvents] = useState<TimerEvent[]>([]);
   const [showClock, setShowClock] = useState(true);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [pendingProblemIdx, setPendingProblemIdx] = useState<number | null>(null);
+  const [pendingRouteUrl, setPendingRouteUrl] = useState<string | null>(null);
+  const unsavedAnswerIdsRef = useRef<Record<string, true>>({});
 
   const problemIds = Object.keys(problems ?? {});
   const currentProblemId = problemIds[problemIdx];
@@ -295,6 +314,7 @@ export function QuizDisplay({
       rs[problemId] = e;
     }
     setResponses(rs);
+    unsavedAnswerIdsRef.current = {};
   }, [problems, existingResponses]);
 
   useEffect(() => {
@@ -302,10 +322,93 @@ export function QuizDisplay({
     setPoints(computeResult(problems, responses));
   }, [isFrozen, problems, responses]);
 
-  function setProblemIdx2(i: number) {
+  useEffect(() => {
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      if (Object.keys(unsavedAnswerIdsRef.current).length === 0) return;
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    }
+
+    function handleRouteChangeStart(url: string) {
+      if (Object.keys(unsavedAnswerIdsRef.current).length === 0) return;
+      if (url === router.asPath) return;
+      setPendingRouteUrl(url);
+      const error = new Error('Route change aborted because answers are unsaved.');
+      (error as { cancelled?: boolean }).cancelled = true;
+      router.events.emit('routeChangeError', error, url, { shallow: false });
+      throw error;
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+    };
+  }, [router]);
+
+  function hasUnsavedAnswersForCurrentProblem() {
+    return currentProblemId
+      ? Object.keys(unsavedAnswerIdsRef.current).some((answerId) =>
+          answerId.startsWith(`${currentProblemId}::`)
+        )
+      : false;
+  }
+
+  function clearUnsavedAnswersForCurrentProblem() {
+    if (!currentProblemId) return;
+    for (const answerId of Object.keys(unsavedAnswerIdsRef.current)) {
+      if (answerId.startsWith(`${currentProblemId}::`)) {
+        delete unsavedAnswerIdsRef.current[answerId];
+      }
+    }
+  }
+
+  function navigateToProblem(i: number) {
     setProblemIdx(i);
     if (isFrozen) return;
     setEvents((prev) => [...prev, timerEvent(TimerEventType.SWITCH, i)]);
+  }
+
+  const handleUnsavedAnswerChange = useCallback((answerId: string, hasUnsavedChanges: boolean) => {
+    if (hasUnsavedChanges) {
+      unsavedAnswerIdsRef.current[answerId] = true;
+    } else {
+      delete unsavedAnswerIdsRef.current[answerId];
+    }
+  }, []);
+
+  function setProblemIdx2(i: number) {
+    if (i === problemIdx) return;
+    if (hasUnsavedAnswersForCurrentProblem()) {
+      setPendingProblemIdx(i);
+      return;
+    }
+    navigateToProblem(i);
+  }
+
+  function closeUnsavedAnswerDialog() {
+    setPendingProblemIdx(null);
+    setPendingRouteUrl(null);
+  }
+
+  function leaveWithoutSaving() {
+    const nextProblemIdx = pendingProblemIdx;
+    const nextRouteUrl = pendingRouteUrl;
+    closeUnsavedAnswerDialog();
+
+    if (nextProblemIdx !== null) {
+      clearUnsavedAnswersForCurrentProblem();
+      navigateToProblem(nextProblemIdx);
+      return;
+    }
+
+    if (nextRouteUrl) {
+      unsavedAnswerIdsRef.current = {};
+      router.push(nextRouteUrl);
+    }
   }
 
   function onPause() {
@@ -381,9 +484,8 @@ export function QuizDisplay({
               setResponses((prev) => ({ ...prev, [problemId]: response }));
               onResponse?.(problemId, response);
             }}
-            onFreezeResponse={
-              onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined
-            }
+            onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
+            onUnsavedAnswerChange={handleUnsavedAnswerChange}
           />
         </Box>
         <ListStepper
@@ -432,6 +534,21 @@ export function QuizDisplay({
           />
         </Dialog>
       )}
+      <Dialog
+        open={pendingProblemIdx !== null || pendingRouteUrl !== null}
+        onClose={closeUnsavedAnswerDialog}
+      >
+        <DialogTitle>{UNSAVED_ANSWER_CONFIRM_TITLE}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{UNSAVED_ANSWER_CONFIRM_MESSAGE}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeUnsavedAnswerDialog}>Cancel</Button>
+          <Button onClick={leaveWithoutSaving} autoFocus>
+            Leave
+          </Button>
+        </DialogActions>
+      </Dialog>
     </LayoutWithFixedMenu>
   );
 }

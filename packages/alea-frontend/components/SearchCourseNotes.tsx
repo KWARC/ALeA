@@ -3,7 +3,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useRouter } from 'next/router';
 
-import { getAllCourses, getSlideUriToIndexMapping } from '@alea/spec';
+import { getAllCourses } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
 import {
   getParamFromUri,
@@ -14,6 +14,52 @@ import {
 import { contentToc, searchDocs, TocElem, type SearchResult } from '@flexiformal/ftml-backend';
 import { useEffect, useState } from 'react';
 
+function getUriDocumentKey(uri: string) {
+  const archive = getParamFromUri(uri, 'a');
+  const path = getParamFromUri(uri, 'p') ?? '';
+  const document = getParamFromUri(uri, 'd');
+  const language = getParamFromUri(uri, 'l') ?? '';
+
+  if (!archive || !document) return undefined;
+
+  return `${archive}|${path}|${document}|${language}`;
+}
+
+function uriBelongsToTocNode(targetUri: string, nodeUri: string) {
+  if (targetUri === nodeUri) return true;
+
+  const targetDocumentKey = getUriDocumentKey(targetUri);
+  const nodeDocumentKey = getUriDocumentKey(nodeUri);
+  if (!targetDocumentKey || targetDocumentKey !== nodeDocumentKey) return false;
+
+  const targetElement = getParamFromUri(targetUri, 'e');
+  const nodeElement = getParamFromUri(nodeUri, 'e');
+
+  if (!nodeElement) return true;
+  if (!targetElement) return false;
+
+  return targetElement === nodeElement || targetElement.startsWith(`${nodeElement}/`);
+}
+
+function isSlideDocumentUri(uri: string) {
+  return (getParamFromUri(uri, 'p') ?? '').split('/').includes('slides');
+}
+
+function findFirstSectionDescendant(toc: TocElem[] | undefined): TocElem | null {
+  if (!toc) return null;
+
+  for (const node of toc) {
+    if (node.type === 'Section') return node;
+
+    if ('children' in node && node.children?.length) {
+      const found = findFirstSectionDescendant(node.children);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
 function findImmediateParentSection(
   targetUri: string,
   toc: TocElem[] | undefined,
@@ -22,42 +68,28 @@ function findImmediateParentSection(
   if (!toc) return null;
 
   for (const node of toc) {
-    if ('uri' in node && node.uri === targetUri) {
-      return parent;
+    if ('uri' in node && uriBelongsToTocNode(targetUri, node.uri)) {
+      if (node.type === 'Inputref') {
+        const children = 'children' in node ? node.children : undefined;
+        if (isSlideDocumentUri(targetUri) || isSlideDocumentUri(node.uri)) {
+          return parent ?? findFirstSectionDescendant(children) ?? node;
+        }
+        return findFirstSectionDescendant(children) ?? parent ?? node;
+      }
+      return node.type === 'Section' ? node : parent;
     }
     if ('children' in node && node.children?.length) {
-      const found = findImmediateParentSection(targetUri, node.children, node);
+      const found = findImmediateParentSection(
+        targetUri,
+        node.children,
+        node.type === 'Section' ? node : parent
+      );
 
       if (found) return found;
     }
   }
 
   return null;
-}
-
-function findParentSlideUri(targetUri: string, toc: TocElem[] | undefined): string | undefined {
-  if (!toc) return;
-
-  const targetKey = getParamFromUri(targetUri, 'a') ?? targetUri;
-
-  function walk(nodes: TocElem[]): string | undefined {
-    for (const node of nodes) {
-      if ('uri' in node && typeof node.uri === 'string') {
-        const nodeKey = getParamFromUri(node.uri, 'a') ?? node.uri;
-
-        if (nodeKey === targetKey) {
-          return node.uri;
-        }
-      }
-
-      if ('children' in node && node.children?.length) {
-        const found = walk(node.children);
-        if (found) return found;
-      }
-    }
-  }
-
-  return walk(toc);
 }
 
 function getSectionId(node: TocElem | null | undefined): string | undefined {
@@ -137,7 +169,7 @@ const SearchCourseNotes = ({
         }
 
         try {
-          const [, , toc] = (await contentToc({ uri: courseInfo.notes })) ?? [[], undefined ,[]];
+          const [, , toc] = (await contentToc({ uri: courseInfo.notes })) ?? [[], undefined, []];
           return [courseId, toc ?? []];
         } catch (err) {
           console.error(`Failed to load TOC for course ${courseId}`, err);
@@ -186,58 +218,10 @@ const SearchCourseNotes = ({
     }
   }
 
-  async function navigateToSlideFromUri(foundCourseId: string, targetUri: string) {
-    try {
-      const mapping = await getSlideUriToIndexMapping(foundCourseId);
-
-      const parentSlideUri = findParentSlideUri(targetUri, courseTocs[foundCourseId]);
-      if (!parentSlideUri) {
-        router.push(
-          `${pathToCourseView(
-            institutionId,
-            foundCourseId,
-            instance
-          )}?fragment=${encodeURIComponent(targetUri)}`
-        );
-        return;
-      }
-
-      let foundSectionId: string | undefined;
-      let foundSlideNum: number | undefined;
-      for (const [sectionId, slideMap] of Object.entries(mapping)) {
-        if (slideMap && Object.prototype.hasOwnProperty.call(slideMap, parentSlideUri)) {
-          foundSectionId = sectionId;
-          foundSlideNum = slideMap[parentSlideUri] + 1;
-          break;
-        }
-      }
-
-      if (foundSectionId && foundSlideNum !== undefined) {
-        router.push(
-          `${pathToCourseView(
-            institutionId,
-            foundCourseId,
-            instance
-          )}?sectionId=${encodeURIComponent(foundSectionId)}&slideNum=${encodeURIComponent(
-            String(foundSlideNum)
-          )}`
-        );
-        return;
-      }
-
-      router.push(
-        `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
-          targetUri
-        )}`
-      );
-    } catch (err) {
-      console.error('Failed to resolve slide via mapping, falling back to fragment route', err);
-      router.push(
-        `${pathToCourseView(institutionId, foundCourseId, instance)}?fragment=${encodeURIComponent(
-          targetUri
-        )}`
-      );
-    }
+  async function navigateToSlideFromUri(foundCourseId: string, sectionId?: string) {
+    const sectionQuery =
+      sectionId && sectionId !== '#' ? `?sectionId=${encodeURIComponent(sectionId)}` : '';
+    router.push(`${pathToCourseView(institutionId, foundCourseId, instance)}${sectionQuery}`);
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -346,7 +330,7 @@ const SearchCourseNotes = ({
                           onClick={() => {
                             onClose?.();
 
-                            navigateToSlideFromUri(foundCourseId, uri);
+                            navigateToSlideFromUri(foundCourseId, id);
                           }}
                         >
                           Slides
@@ -405,7 +389,7 @@ const SearchCourseNotes = ({
                           size="small"
                           onClick={() => {
                             onClose?.();
-                            navigateToSlideFromUri(foundCourseId, uri);
+                            navigateToSlideFromUri(foundCourseId, id);
                           }}
                         >
                           Slides
