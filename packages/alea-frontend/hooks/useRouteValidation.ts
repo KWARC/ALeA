@@ -1,7 +1,7 @@
+import { useCourses } from '@alea/react-utils';
+import type { CourseInfo } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import type { CourseInfo } from '@alea/utils';
-import { useCourses } from '@alea/react-utils';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 
 export interface RouteValidationResult {
@@ -43,6 +43,15 @@ function isValidInstanceForCourse(course: CourseInfo, instance: string): boolean
   return courseInstances.some((inst) => inst.semester === instance);
 }
 
+function isCurrentInstitutionInstance(
+  institutionId: string,
+  instance: string,
+  currentTermByUniversityId: Record<string, string>
+): boolean {
+  const currentTerm = currentTermByUniversityId[institutionId];
+  return !!currentTerm && currentTerm !== 'null' && currentTerm === instance;
+}
+
 function buildNormalizedPath(
   institutionId: string,
   courseId: string,
@@ -58,7 +67,10 @@ function removeRouteParamsFromQuery(query: Record<string, unknown>) {
   return rest;
 }
 
-function findCourse(courses: Record<string, CourseInfo> | undefined, courseId: string): CourseInfo | undefined {
+function findCourse(
+  courses: Record<string, CourseInfo> | undefined,
+  courseId: string
+): CourseInfo | undefined {
   if (!courses || !courseId) return undefined;
   return courses[courseId] ?? courses[courseId.toLowerCase()];
 }
@@ -90,7 +102,9 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
 
     const actualInstance = needsInstanceResolve ? resolvedInstanceId : instance;
     const normalizedPath = buildNormalizedPath(institutionId, courseId, actualInstance, routePath);
-    const cleanQuery = removeRouteParamsFromQuery(router.query as Record<string, unknown>) as Record<string, string | string[]>;
+    const cleanQuery = removeRouteParamsFromQuery(
+      router.query as Record<string, unknown>
+    ) as Record<string, string | string[]>;
 
     router.replace({ pathname: normalizedPath, query: cleanQuery }, undefined, { shallow: true });
   }, [
@@ -147,7 +161,10 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
         setIsValidating(false);
       }
     } else {
-      if (!isValidInstanceForCourse(course, instance)) {
+      if (
+        !isValidInstanceForCourse(course, instance) &&
+        !isCurrentInstitutionInstance(institutionId, instance, currentTermByUniversityId)
+      ) {
         console.error(`Instance "${instance}" not found for course "${courseId}"`);
         setValidationError('Invalid instanceId');
         setIsValidating(false);

@@ -187,6 +187,7 @@ export function ProblemViewer({
   hideAnswerAccepter = false,
   showPoints = true,
   onSubProblemRender,
+  onUnsavedAnswerChange,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
@@ -196,6 +197,7 @@ export function ProblemViewer({
   hideAnswerAccepter?: boolean;
   showPoints?: boolean;
   onSubProblemRender?: () => void;
+  onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
 }) {
   // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
   // even when SafeFTMLFragment caches the wrapper from the first render.
@@ -239,6 +241,7 @@ export function ProblemViewer({
                     />
                   ) : null
                 }
+                onUnsavedAnswerChange={onUnsavedAnswerChange}
               ></AnswerAccepter>
             ) : null}
             {renderBelowRef.current?.(problemUri, isSubProblem)}
@@ -249,18 +252,62 @@ export function ProblemViewer({
   );
 }
 
+function getDraftAnswer(name: string) {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(name) ?? '';
+}
+
+function getAnswerValue(name: string, serverAnswer: string) {
+  return getDraftAnswer(name) || serverAnswer || '';
+}
+
+function setDraftAnswer(name: string, answer: string) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(name, answer);
+}
+
+function getLocallySavedAnswerKey(name: string) {
+  return `${name}-saved`;
+}
+
+function getLocallySavedAnswer(name: string) {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(getLocallySavedAnswerKey(name)) ?? '';
+}
+
+function getSavedAnswerValue(name: string, serverAnswer: string) {
+  return getLocallySavedAnswer(name) || serverAnswer || '';
+}
+
+function setLocallySavedAnswer(name: string, answer: string) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(getLocallySavedAnswerKey(name), answer);
+}
+
+function getUnsavedAnswerId(masterProblemId: string, problemId: string) {
+  return `${masterProblemId || problemId}::${problemId}`;
+}
+
+function hasUnsavedAnswerChange(answer: string, savedAnswer: string, isAnswerGraded: boolean) {
+  if (isAnswerGraded) return false;
+  if (!savedAnswer.trim() && !answer.trim()) return false;
+  return answer !== savedAnswer;
+}
+
 function AnswerAccepter({
   problemId,
   masterProblemId,
   isFrozen,
   problemTitle,
   pointsNode,
+  onUnsavedAnswerChange,
 }: {
   problemId: string;
   masterProblemId: string;
   isFrozen: boolean;
   problemTitle: string;
   pointsNode?: ReactNode;
+  onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
 }) {
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
@@ -275,17 +322,23 @@ function AnswerAccepter({
     serverAnswer = previousResponse?.answer ?? '';
     isAnswerGraded = previousResponse?.graded === true;
   }
-  const initialAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
-  const [answer, setAnswer] = useState<string>(initialAnswer);
-  const [savedAnswer, setSavedAnswer] = useState<string>(initialAnswer);
+  const [answer, setAnswer] = useState<string>(() => getAnswerValue(name, serverAnswer));
+  const [savedAnswer, setSavedAnswer] = useState<string>(() =>
+    getSavedAnswerValue(name, serverAnswer)
+  );
   const router = useRouter();
-  const canSaveAnswer = !isAnswerGraded && !!answer?.trim() && answer !== savedAnswer;
+  const hasUnsavedAnswer = hasUnsavedAnswerChange(answer, savedAnswer, isAnswerGraded);
+  const canSaveAnswer = hasUnsavedAnswer && !!answer?.trim();
+  const unsavedAnswerId = getUnsavedAnswerId(masterProblemId, problemId);
 
   useEffect(() => {
-    const nextAnswer = serverAnswer ? serverAnswer : localStorage.getItem(name) ?? '';
-    setAnswer(nextAnswer);
-    setSavedAnswer(nextAnswer);
+    setAnswer(getAnswerValue(name, serverAnswer));
+    setSavedAnswer(getSavedAnswerValue(name, serverAnswer));
   }, [name, serverAnswer]);
+
+  useEffect(() => {
+    onUnsavedAnswerChange?.(unsavedAnswerId, hasUnsavedAnswer);
+  }, [hasUnsavedAnswer, onUnsavedAnswerChange, unsavedAnswerId]);
 
   async function saveAnswer({ freeTextResponses }: { subId?: string; freeTextResponses: string }) {
     try {
@@ -306,11 +359,20 @@ function AnswerAccepter({
   }
   async function onSaveClick() {
     const saved = await saveAnswer({ freeTextResponses: answer, subId: problemId });
-    if (saved) setSavedAnswer(answer);
+    if (saved) {
+      // Keep the saved value locally until the answer context is refreshed from the server.
+      setLocallySavedAnswer(name, answer);
+      setSavedAnswer(answer);
+      onUnsavedAnswerChange?.(unsavedAnswerId, false);
+    }
   }
   function onAnswerChange(c: string) {
     setAnswer(c);
-    localStorage.setItem(name, c);
+    setDraftAnswer(name, c);
+    onUnsavedAnswerChange?.(
+      unsavedAnswerId,
+      hasUnsavedAnswerChange(c, savedAnswer, isAnswerGraded)
+    );
   }
   return (
     <Box display="flex" alignItems="flex-start">
@@ -367,6 +429,7 @@ export function ProblemDisplay({
   onFreezeResponse,
   renderBelowAnswerAccepter,
   hideAnswerAccepter = false,
+  onUnsavedAnswerChange,
 }: {
   uri?: string;
   problem: FTMLProblemWithSolution | undefined;
@@ -377,6 +440,7 @@ export function ProblemDisplay({
   onFreezeResponse?: () => void;
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
   hideAnswerAccepter?: boolean;
+  onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
 }) {
   const { user } = useCurrentUser();
   const userId = user?.userId ?? '';
@@ -420,6 +484,7 @@ export function ProblemDisplay({
           hideAnswerAccepter={hideAnswerAccepter}
           showPoints={showPoints}
           onSubProblemRender={handleSubProblemRender}
+          onUnsavedAnswerChange={onUnsavedAnswerChange}
         />
         {onFreezeResponse && !isEffectivelyFrozen && (
           <Button

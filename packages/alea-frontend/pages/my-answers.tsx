@@ -31,7 +31,7 @@ import { contentFragment } from '@flexiformal/ftml-backend';
 import { getProblemPointsFromDocument, parseContentFragmentTuple } from '@alea/quiz-utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiItemSelector } from '../components/nap/MultiItemsSelector';
 import {
   addProblemSlot,
@@ -535,6 +535,7 @@ const MyAnswersPage: NextPage = () => {
     sortOrders: DEFAULT_SORT_ORDER,
   });
   const [selected, setSelected] = useState<{ questionId: string } | undefined>(undefined);
+  const lastAppliedQueryQuestionId = useRef<string | undefined>(undefined);
   const { user, isUserLoading } = useCurrentUser();
   const router = useRouter();
 
@@ -555,6 +556,18 @@ const MyAnswersPage: NextPage = () => {
     () => groupAnswersByQuestion(selectedAnswersItems),
     [selectedAnswersItems]
   );
+
+  useEffect(() => {
+    const queryQuestionId = Array.isArray(router.query.questionId)
+      ? router.query.questionId[0]
+      : router.query.questionId;
+    if (!queryQuestionId || lastAppliedQueryQuestionId.current === queryQuestionId) return;
+    if (!groupedAnswers.some((group) => group.questionId === queryQuestionId)) return;
+
+    setSelected({ questionId: queryQuestionId });
+    lastAppliedQueryQuestionId.current = queryQuestionId;
+  }, [groupedAnswers, router.query.questionId]);
+
   return (
     <MainLayout title={`${user?.fullName} | ALeA`}>
       {answerItems.length === 0 && <Typography>No Answer Items Found.</Typography>}
