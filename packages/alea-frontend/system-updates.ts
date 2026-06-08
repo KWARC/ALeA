@@ -8,6 +8,16 @@ export const SYSTEM_UPDATES = [
     postedTimestamp: '2023-02-11T00:20:00+05:30',
     }*/
   {
+    id: 'course-notes-search',
+    header: 'Search in Course Notes',
+    content:
+      'A new course-notes search is now available from course pages and notes pages. Students can search within a course, review the most relevant matches, and jump directly to the referenced material.',
+    header_de: 'Suche in Kursnotizen',
+    content_de:
+      'Eine neue Suche in Kursnotizen ist jetzt auf Kursseiten und Notizseiten verfügbar. Studierende können innerhalb eines Kurses suchen, die relevantesten Treffer prüfen und direkt zum referenzierten Material springen.',
+    postedTimestamp: '2026-06-08T00:20:00+05:30',
+  },
+  {
     id: 'course-materials',
     header: 'Course Materials',
     content:
