@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
 import { getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../utils/courseHelper';
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 
@@ -20,7 +21,8 @@ const SearchPage: NextPage = () => {
       setLoading(true);
       try {
         const courses = await getAllCourses();
-        setNotesUri(courses?.[courseId]?.notes);
+        const courseInfo = courses ? getCourseById(courses, courseId) : undefined;
+        setNotesUri(courseInfo?.notes);
       } catch (err) {
         console.error('Failed to load course notes', err);
         setNotesUri(undefined);
@@ -51,7 +53,9 @@ const SearchPage: NextPage = () => {
       )}
 
       {courseId && !loading && !notesUri && (
-        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>Course notes not found</Box>
+        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+          Course notes not found
+        </Box>
       )}
     </MainLayout>
   );

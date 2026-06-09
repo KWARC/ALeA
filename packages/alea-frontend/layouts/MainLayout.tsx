@@ -12,7 +12,9 @@ import { useContext, useEffect, useState } from 'react';
 import { Header } from '../components/Header';
 import { CourseHeader } from '../components/CourseHeader';
 import { useAllCourses } from '../hooks/useAllCourses';
+
 import { getLocaleObject } from '../lang/utils';
+import { getCourseById } from '../utils/courseHelper';
 function SessionResetSlider() {
   const [open, setOpen] = useState(false);
 
@@ -146,7 +148,7 @@ export default function MainLayout({
     instance?: string;
   };
   const { data: courses } = useAllCourses(institutionId);
-  const courseInfo = courses?.[courseId || ''];
+  const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
 
   const { header: t } = getLocaleObject(router);
   const [prevLoc, setPrevLoc] = useState('');

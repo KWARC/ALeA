@@ -18,10 +18,14 @@ interface CourseMetadataRow {
   universityId: string | null;
 }
 
-function parseInstructorsJson(val: string | object | null | undefined): Array<{ id: string; name: string }> {
+function parseInstructorsJson(
+  val: string | object | null | undefined
+): Array<{ id: string; name: string }> {
   if (val == null) return [];
   const toItem = (x: unknown) =>
-    typeof x === 'string' ? { id: x, name: x } : { id: (x as any)?.id ?? '', name: (x as any)?.name ?? (x as any)?.id ?? '' };
+    typeof x === 'string'
+      ? { id: x, name: x }
+      : { id: (x as any)?.id ?? '', name: (x as any)?.name ?? (x as any)?.id ?? '' };
   if (typeof val === 'object') return (Array.isArray(val) ? val : []).map(toItem);
   const s = String(val).trim();
   if (!s) return [];
@@ -47,10 +51,10 @@ function computeCurrentTermByCourseId(
 
   for (const row of courseMetadataRows) {
     if (!row.courseId) continue;
-    const normalizedId = row.courseId.toLowerCase();
-    if (!currentTermByCourseId[normalizedId]) {
-      const universityId = row.universityId ?? 'FAU';
-      currentTermByCourseId[normalizedId] = getCurrentTermForUniversity(universityId);
+    const universityId = row.universityId ?? 'FAU';
+    const compositeKey = `${universityId}||${row.courseId}`.toLowerCase();
+    if (!currentTermByCourseId[compositeKey]) {
+      currentTermByCourseId[compositeKey] = getCurrentTermForUniversity(universityId);
     }
   }
 
@@ -65,7 +69,8 @@ function transformMetadataToCoursesInfo(
 
   // group by courseId
   for (const row of courseMetadataRows) {
-    const id = row.courseId.toLowerCase();
+    const university = row.universityId || 'FAU';
+    const id = `${university}||${row.courseId}`.toLowerCase();
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id)!.push(row);
   }
@@ -104,7 +109,7 @@ function transformMetadataToCoursesInfo(
     const primaryInstructorNames = extractInstructorNames(primaryInstructorList) ?? undefined;
 
     coursesInfoMap[courseId] = createCourseInfo(
-      courseId,
+      primary.courseId,
       primary.courseName,
       primary.notes || '',
       primary.landing || '',
@@ -166,7 +171,6 @@ export async function getAllCoursesFromDb(
 
   return coursesInfoMap;
 }
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
 

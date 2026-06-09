@@ -7,6 +7,7 @@ import {
   SmileyCognitiveValues,
 } from '@alea/spec';
 import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCourseById } from '../../../utils/courseHelper';
 import { lmpRedirect } from '../lmp-redirect';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
@@ -81,7 +82,7 @@ export default async function handler(req, res) {
   const { courseId } = req.query;
   const token = req.cookies?.access_token;
   const courses = await getAllCoursesFromDb();
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId);
   if (!courseInfo) {
     res.status(404).json({ error: `Course not found: [${courseId}]` });
     return;

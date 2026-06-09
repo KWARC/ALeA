@@ -1,3 +1,4 @@
+import { getCourseById } from '../../utils/courseHelper';
 import { MusicNote } from '@mui/icons-material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -16,6 +17,7 @@ interface CourseViewToolbarIconsProps {
   viewMode: ViewMode;
   onAudioOnlyToggle: () => void;
   onResolutionChange: (resolution: number) => void;
+  institutionId?: string;
 }
 
 const availableResolutions = [360, 720, 1080];
@@ -28,6 +30,7 @@ export default function CourseViewToolbarIcons({
   viewMode,
   onAudioOnlyToggle,
   onResolutionChange,
+  institutionId,
 }: CourseViewToolbarIconsProps) {
   const [resolutionAnchorEl, setResolutionAnchorEl] = useState<null | HTMLElement>(null);
   const isVideoHidden = viewMode === ViewMode.SLIDE_MODE;
@@ -112,12 +115,13 @@ export default function CourseViewToolbarIcons({
         </>
       )}
 
-      {courses?.[courseId]?.slides && (
+      {getCourseById(courses || {}, courseId, institutionId)?.slides && (
         <Tooltip title="Download slides PDF" placement="bottom">
           <IconButton
             onClick={() => {
-              const slides = courses?.[courseId]?.slides;
-              const notes = courses?.[courseId]?.notes;
+              const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+              const slides = courseInfo?.slides;
+              const notes = courseInfo?.notes;
               const sourceUri = slides || notes;
               if (!sourceUri) return;
               const pdfUrl = getCoursePdfUrl(sourceUri);

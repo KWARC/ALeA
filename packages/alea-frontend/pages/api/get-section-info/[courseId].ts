@@ -1,8 +1,10 @@
 import { ClipInfo, ClipMetadata, SectionInfo } from '@alea/spec';
 import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCourseById } from '../../../utils/courseHelper';
 import { getCurrentTermForCourseId } from '../get-current-term';
-import { LectureEntry } from '@alea/utils';
+import { getCurrentTermForUniversity, LectureEntry } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
+
 import { contentToc } from '@flexiformal/ftml-backend';
 import { readdir, readFile } from 'fs/promises';
 import { convert } from 'html-to-text';
@@ -190,12 +192,16 @@ function addClipInfo(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
   const courses = await getAllCoursesFromDb();
-  const currentTerm = await getCurrentTermForCourseId(courseId);
-  if (!courseId || !courses[courseId]) {
+
+  const currentCourse = getCourseById(courses, courseId);
+
+  if (!courseId || !currentCourse) {
     res.status(404).send(`Course not found [${courseId}]`);
     return;
   }
-  const { notes } = courses[courseId];
+  const universityId = currentCourse.universityId ?? 'FAU';
+  const currentTerm = getCurrentTermForUniversity(universityId);
+  const { notes } = currentCourse;
 
   const tocContent = (await contentToc({ uri: notes }))?.[2] ?? [];
   const allSections: SectionInfo[] = [];

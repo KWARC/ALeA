@@ -1,3 +1,4 @@
+import { getCourseById } from '../../utils/courseHelper';
 import {
   Box,
   Typography,
@@ -41,6 +42,7 @@ import AclAutocompleteSelector from '../AclAutocompleteSelector';
 interface LectureScheduleTabProps {
   courseId: string;
   instanceId: string;
+  institutionId?: string;
 }
 
 type TabType = 'lecture' | 'tutorial';
@@ -60,7 +62,7 @@ const initialNewEntry: LectureScheduleUI = {
   hasQuiz: false,
 };
 
-const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId }) => {
+const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId, institutionId }) => {
   const router = useRouter();
   const { courseMetadata: t } = getLocaleObject(router);
   const weekdayOptions = WEEKDAYS_UI_ORDER;
@@ -117,7 +119,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     async function loadTimezone() {
       try {
         const courses = await getAllCourses();
-        const universityId = courses?.[courseId]?.universityId;
+        const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+        const universityId = courseInfo?.universityId;
         if (universityId && UniversityDetail[universityId]) {
           setTimezone(UniversityDetail[universityId].defaultTimezone);
         } else {

@@ -2,6 +2,7 @@ import { slides as getSlides, contentToc } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
 import { Slide, SlideType } from '@alea/spec';
 import { getAllCoursesFromDb } from './get-all-courses';
+import { getCourseById } from '../../utils/courseHelper';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const SLIDE_EXPIRY_TIME_MS = 20 * 60 * 1000; // 20 min
@@ -179,7 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
   const courses = await getAllCoursesFromDb();
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId);
   if (!courseInfo) {
     res.status(404).json({ error: 'Course not found!' });
     return;

@@ -17,10 +17,11 @@ export function CourseHeader({
 }) {
   const theme = useTheme();
   if (!courseName || !courseId) return <></>;
-  const courseHomeLink =
-    institutionId && instanceId
+  const courseHomeLink = institutionId
+    ? instanceId
       ? `/${institutionId}/${courseId}/${instanceId}`
-      : `/course-home/${courseId}`;
+      : `/${institutionId}/${courseId}`
+    : `/course-home/${courseId}`;
   if (!imageLink) {
     return (
       <Box m={2.5} textAlign="center" fontWeight="bold" fontSize={32}>
@@ -39,7 +40,11 @@ export function CourseHeader({
           maxHeight={200}
           overflow="hidden"
           borderBottom={`2px solid ${theme.palette.divider}`}
-          sx={{ backgroundImage: (theme.palette as { gradients?: Record<string, string> }).gradients?.[courseId] }}
+          sx={{
+            backgroundImage: (theme.palette as { gradients?: Record<string, string> }).gradients?.[
+              courseId
+            ],
+          }}
         >
           {allowCrop ? (
             <img

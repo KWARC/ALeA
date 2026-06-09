@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllCoursesFromDb } from './get-all-courses';
+import { getCourseById } from '../../utils/courseHelper';
 import { getCategorizedProblems } from './get-categorized-problem';
 import {
   getExamsForCourse,
@@ -18,8 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).send('Missing required query param: sectionUri/courseId');
   }
 
-  const courseInfo = await getAllCoursesFromDb();
-  const notesUri = courseInfo?.[courseId]?.notes;
+  const allCourses = await getAllCoursesFromDb();
+  const notesUri = getCourseById(allCourses, courseId)?.notes;
   if (!notesUri) return res.status(404).end();
 
   const practiceProblems = await getCategorizedProblems(

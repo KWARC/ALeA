@@ -12,6 +12,7 @@ import {
   QuizStubInfo,
   UserInfo,
 } from '@alea/spec';
+import { getCourseById } from '../utils/courseHelper';
 import {
   Action,
   CourseInfo,
@@ -283,7 +284,8 @@ export async function getLastUpdatedNotes(
 
     if (targetUsed) {
       const allCourses = await getAllCourses();
-      const notesUri = allCourses[courseId]?.notes;
+      const courseInfo = getCourseById(allCourses, courseId);
+      const notesUri = courseInfo?.notes;
 
       if (notesUri) {
         const tocResp = await contentToc({ uri: notesUri });
@@ -562,9 +564,9 @@ function MyCourses({ enrolledCourseIds }) {
       </Typography>
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap', maxWidth: 'lg' }}>
         {enrolledCourseIds
-          .filter((courseId: string) => allCourses[courseId])
+          .filter((courseId: string) => getCourseById(allCourses, courseId))
           .map((courseId: string) => (
-            <CourseThumb key={courseId} course={allCourses[courseId]} />
+            <CourseThumb key={courseId} course={getCourseById(allCourses, courseId) as any} />
           ))}
       </Box>
     </>

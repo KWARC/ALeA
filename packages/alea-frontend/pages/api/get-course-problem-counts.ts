@@ -2,6 +2,7 @@ import { contentToc } from '@flexiformal/ftml-backend';
 import { FTML } from '@flexiformal/ftml';
 import { getProblemsForSection } from '@alea/spec';
 import { getAllCoursesFromDb } from './get-all-courses';
+import { getCourseById } from '../../utils/courseHelper';
 import { NextApiRequest, NextApiResponse } from 'next';
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
 
@@ -27,7 +28,7 @@ export async function getCourseProblemsBySection(courseId: string) {
   if (cache && isCacheValid(cache)) return cache.problems;
 
   const allCourses = await getAllCoursesFromDb();
-  const courseInfo = allCourses[courseId];
+  const courseInfo = getCourseById(allCourses, courseId);
   if (!courseInfo) return null;
   const { notes } = courseInfo;
   const problems = await fetchProblems(notes);

@@ -1,12 +1,13 @@
+import { getCourseById } from '../../utils/courseHelper';
 import type { HomeworkStub, LectureSchedule, LectureScheduleItem, QuizStubInfo } from '@alea/spec';
 import {
   getCheatSheets,
   getCheatsheetUploadWindow,
   getCourseQuizList,
   getHomeworkList,
-  getLectureEntry,
   getLectureSchedule,
   getSemesterInfo,
+  getLectureEntry,
 } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
 import { pathToCheatSheet } from '@alea/utils';
@@ -149,12 +150,15 @@ export function useStudentDashboardData(
   });
 
   const courseQueries = useQueries({
-    queries: enrolledCourseIds.map((courseId) => {
-      const courseInfo = allCourses[courseId];
+    queries: enrolledCourseIds.map((compositeId) => {
+      const [institutionId, courseId] = compositeId.includes('||')
+        ? compositeId.split('||')
+        : [compositeId];
+      const courseInfo = getCourseById(allCourses, compositeId);
       return {
         queryKey: [
           'course-dashboard',
-          courseId,
+          compositeId,
           currentTerm,
           courseInfo?.cheatsheetConfig?.hasCheatsheet,
           courseInfo?.cheatsheetConfig?.canStudentUploadCheatsheet,

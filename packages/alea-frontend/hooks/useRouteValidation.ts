@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { CourseInfo } from '@alea/utils';
 import { useCourses } from '@alea/react-utils';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { getCourseById } from '../utils/courseHelper';
 
 export interface RouteValidationResult {
   institutionId: string;
@@ -58,9 +59,12 @@ function removeRouteParamsFromQuery(query: Record<string, unknown>) {
   return rest;
 }
 
-function findCourse(courses: Record<string, CourseInfo> | undefined, courseId: string): CourseInfo | undefined {
-  if (!courses || !courseId) return undefined;
-  return courses[courseId] ?? courses[courseId.toLowerCase()];
+function findCourse(
+  courses: Record<string, CourseInfo> | undefined,
+  courseId: string,
+  institutionId = 'FAU'
+): CourseInfo | undefined {
+  return getCourseById(courses || {}, courseId, institutionId);
 }
 
 export function useRouteValidation(routePath: string): RouteValidationResult {
@@ -90,7 +94,9 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
 
     const actualInstance = needsInstanceResolve ? resolvedInstanceId : instance;
     const normalizedPath = buildNormalizedPath(institutionId, courseId, actualInstance, routePath);
-    const cleanQuery = removeRouteParamsFromQuery(router.query as Record<string, unknown>) as Record<string, string | string[]>;
+    const cleanQuery = removeRouteParamsFromQuery(
+      router.query as Record<string, unknown>
+    ) as Record<string, string | string[]>;
 
     router.replace({ pathname: normalizedPath, query: cleanQuery }, undefined, { shallow: true });
   }, [
@@ -112,7 +118,7 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
     setIsValidating(true);
     setValidationError(null);
 
-    const course = findCourse(courses, courseId);
+    const course = findCourse(courses, courseId, institutionId);
     if (!course) {
       setValidationError('Invalid courseId');
       setIsValidating(false);

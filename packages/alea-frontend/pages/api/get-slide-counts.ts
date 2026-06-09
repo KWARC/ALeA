@@ -1,10 +1,11 @@
 import { getAllCoursesFromDb } from './get-all-courses';
+import { getCourseById } from '../../utils/courseHelper';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSlidesForCourse } from './get-slides';
 
 export async function getSlideCounts(courseId: string, res: NextApiResponse) {
   const courses = await getAllCoursesFromDb();
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId);
   if (!courseInfo) {
     res.status(404).json({ error: 'Course not found!' });
     return;
