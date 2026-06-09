@@ -9,7 +9,11 @@ import { Box, CircularProgress } from '@mui/material';
 
 const SearchPage: NextPage = () => {
   const router = useRouter();
-  const { query, courseId } = router.query as { query?: string; courseId?: string };
+  const { query, courseId, institutionId } = router.query as {
+    query?: string;
+    courseId?: string;
+    institutionId?: string;
+  };
 
   const [notesUri, setNotesUri] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
@@ -21,7 +25,7 @@ const SearchPage: NextPage = () => {
       setLoading(true);
       try {
         const courses = await getAllCourses();
-        const courseInfo = courses ? getCourseById(courses, courseId) : undefined;
+        const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
         setNotesUri(courseInfo?.notes);
       } catch (err) {
         console.error('Failed to load course notes', err);
@@ -32,7 +36,7 @@ const SearchPage: NextPage = () => {
     };
 
     loadNotesUri();
-  }, [courseId]);
+  }, [courseId, institutionId]);
   return (
     <MainLayout title="Search">
       {courseId && loading && (

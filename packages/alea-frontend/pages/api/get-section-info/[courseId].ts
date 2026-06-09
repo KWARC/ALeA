@@ -191,9 +191,10 @@ function addClipInfo(
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
+  const institutionId = req.query.institutionId as string | undefined;
   const courses = await getAllCoursesFromDb();
 
-  const currentCourse = getCourseById(courses, courseId);
+  const currentCourse = getCourseById(courses, courseId, institutionId);
 
   if (!courseId || !currentCourse) {
     res.status(404).send(`Course not found [${courseId}]`);

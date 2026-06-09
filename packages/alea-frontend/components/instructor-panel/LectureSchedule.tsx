@@ -62,7 +62,11 @@ const initialNewEntry: LectureScheduleUI = {
   hasQuiz: false,
 };
 
-const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, instanceId, institutionId }) => {
+const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({
+  courseId,
+  instanceId,
+  institutionId,
+}) => {
   const router = useRouter();
   const { courseMetadata: t } = getLocaleObject(router);
   const weekdayOptions = WEEKDAYS_UI_ORDER;
@@ -131,7 +135,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       }
     }
     loadTimezone();
-  }, [courseId]);
+  }, [courseId, institutionId]);
   const handleDelete = async (lecture: LectureSchedule) => {
     if (!selectedScheduleType) return;
 

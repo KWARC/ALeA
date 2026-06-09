@@ -277,6 +277,7 @@ async function getLastUpdatedHomework(
 
 export async function getLastUpdatedNotes(
   courseId: string,
+  institutionId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
@@ -290,7 +291,7 @@ export async function getLastUpdatedNotes(
 
     if (targetUsed) {
       const allCourses = await getAllCourses();
-      const courseInfo = getCourseById(allCourses, courseId);
+      const courseInfo = getCourseById(allCourses, courseId, institutionId);
       const notesUri = courseInfo?.notes;
 
       if (notesUri) {
@@ -461,6 +462,7 @@ async function getLastUpdatedDescriptions({
     case ResourceName.COURSE_SYLLABUS:
       ({ description, timeAgo, timestamp, colorInfo } = await getLastUpdatedNotes(
         courseId,
+        institutionId,
         router
       ));
       break;
@@ -759,7 +761,7 @@ function WelcomeScreen({
       const fetchPromises: Promise<void>[] = [];
       const newDescriptions: Record<string, ResourceDisplayInfo> = {};
       for (const courseId of Object.keys(groupedResources)) {
-        const institutionId = allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION;
+        const institutionId = getCourseById(allCourses, courseId)?.universityId ?? DEFAULT_INSTITUTION;
         const courseCurrentTerm = currentTermByUniversityId[institutionId] ?? currentTerm;
 
         for (const resource of groupedResources[courseId]) {
@@ -825,7 +827,7 @@ function WelcomeScreen({
           <Box key={courseId} sx={{ marginBottom: 4 }}>
             <Link
               href={pathToCourseHome(
-                allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION,
+                getCourseById(allCourses, courseId)?.universityId ?? DEFAULT_INSTITUTION,
                 courseId,
                 'latest'
               )}

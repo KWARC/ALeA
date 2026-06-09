@@ -23,16 +23,17 @@ function isCacheValid(cache: CourseCacheInfo) {
   return Date.now() - cache.lastUpdatedTs_ms < HOURS_6;
 }
 
-export async function getCourseProblemsBySection(courseId: string) {
-  const cache = CACHE.get(courseId);
+export async function getCourseProblemsBySection(courseId: string, institutionId?: string) {
+  const cacheKey = institutionId ? `${institutionId}||${courseId}` : courseId;
+  const cache = CACHE.get(cacheKey);
   if (cache && isCacheValid(cache)) return cache.problems;
 
   const allCourses = await getAllCoursesFromDb();
-  const courseInfo = getCourseById(allCourses, courseId);
+  const courseInfo = getCourseById(allCourses, courseId, institutionId);
   if (!courseInfo) return null;
   const { notes } = courseInfo;
   const problems = await fetchProblems(notes);
-  CACHE.set(courseId, { problems, lastUpdatedTs_ms: Date.now() });
+  CACHE.set(cacheKey, { problems, lastUpdatedTs_ms: Date.now() });
   return problems;
 }
 
@@ -70,7 +71,8 @@ async function fetchProblems(notesUri: string): Promise<Record<FTML.DocumentElem
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
-  const problems = await getCourseProblemsBySection(courseId);
+  const institutionId = req.query.institutionId as string | undefined;
+  const problems = await getCourseProblemsBySection(courseId, institutionId);
   if (!problems) return res.status(404).send(`Course not found: [${courseId}]`);
 
   const counts = Object.fromEntries(

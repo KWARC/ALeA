@@ -23,14 +23,14 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
   useEffect(() => {
     const checkEntries = async () => {
       try {
-        const result = await checkLectureEntriesExist(courseId);
+        const result = await checkLectureEntriesExist(courseId, universityId);
         setHasEntries(result.hasEntries);
       } catch (e) {
         console.error('Failed to check lecture entries:', e);
       }
     };
     checkEntries();
-  }, [courseId]);
+  }, [courseId, universityId]);
 
   const handleGenerateLectureEntry = async () => {
     if (hasEntries) return;
@@ -38,7 +38,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
     setGenerateLoading(true);
     setGenerateMessage('Generating lecture entries...');
     try {
-      const data = await generateLectureEntry(courseId, instanceId);
+      const data = await generateLectureEntry(courseId, instanceId, universityId);
       if (data && !data.error) {
         if (data.alreadyExists) {
           setHasEntries(true);
@@ -110,7 +110,11 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
       </Box>
 
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
-        <LectureScheduleTab courseId={courseId} instanceId={instanceId} institutionId={universityId} />
+        <LectureScheduleTab
+          courseId={courseId}
+          instanceId={instanceId}
+          institutionId={universityId}
+        />
       </Box>
       <Box mt={2} border={1} borderRadius={2} borderColor="grey.300">
         <CourseResourcesTab

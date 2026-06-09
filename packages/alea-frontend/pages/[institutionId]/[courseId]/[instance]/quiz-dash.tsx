@@ -169,14 +169,14 @@ const QuizDashPage: NextPage = () => {
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
-    getCourseQuizList(courseId, currentTerm).then((res) => {
+    getCourseQuizList(courseId, currentTerm, institutionId).then((res) => {
       const quizzes = res as QuizStubInfo[];
       for (const quiz of quizzes) {
         injectCss(quiz.css);
       }
       setQuizList(quizzes);
     });
-  }, [courseId, currentTerm]);
+  }, [courseId, currentTerm, institutionId]);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;

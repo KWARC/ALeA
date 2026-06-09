@@ -174,13 +174,15 @@ export async function getSlidesForCourse(courseId: string, notesUri: string) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const courseId = req.query.courseId as string;
+  const institutionId = req.query.institutionId as string | undefined;
   const sectionIds = req.query.sectionIds as string;
   if (!courseId || !sectionIds) {
     res.status(400).send('Course ID and section IDs are required!');
     return;
   }
   const courses = await getAllCoursesFromDb();
-  const courseInfo = getCourseById(courses, courseId);
+  const courseInfo = getCourseById(courses, courseId, institutionId);
+
   if (!courseInfo) {
     res.status(404).json({ error: 'Course not found!' });
     return;

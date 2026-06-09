@@ -80,9 +80,10 @@ async function getUriSmileysBackend(concepts: string[], token: string) {
 
 export default async function handler(req, res) {
   const { courseId } = req.query;
+  const institutionId = req.query.institutionId as string | undefined;
   const token = req.cookies?.access_token;
   const courses = await getAllCoursesFromDb();
-  const courseInfo = getCourseById(courses, courseId);
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   if (!courseInfo) {
     res.status(404).json({ error: `Course not found: [${courseId}]` });
     return;

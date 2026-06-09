@@ -350,11 +350,11 @@ const CourseViewPage: NextPage = () => {
       setCourseSections(getSections(toc));
       injectCss(css);
     });
-    getSlideCounts(courseId).then(setSlideCounts);
-    getSlideUriToIndexMapping(courseId).then((map) => {
+    getSlideCounts(courseId, institutionId).then(setSlideCounts);
+    getSlideUriToIndexMapping(courseId, institutionId).then((map) => {
       setSlidesUriToIndexMap(map);
     });
-  }, [router.isReady, courses, courseId]);
+  }, [router.isReady, courses, courseId, institutionId]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -398,7 +398,7 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
-    axios.get(`/api/get-section-info/${courseId}`).then((r) => {
+    axios.get(`/api/get-section-info/${courseId}${institutionId ? `?institutionId=${institutionId}` : ''}`).then((r) => {
       const clipIds = {};
       populateClipIds(r.data, clipIds);
       setClipIds(clipIds);

@@ -13,6 +13,7 @@ import { Language } from '@alea/utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sectionUri = req.query.sectionUri as string;
   const courseId = req.query.courseId as string;
+  const institutionId = req.query.institutionId as string | undefined;
   const languages = req.query.languages as string | undefined;
 
   if (!sectionUri || !courseId) {
@@ -20,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const allCourses = await getAllCoursesFromDb();
-  const notesUri = getCourseById(allCourses, courseId)?.notes;
+  const notesUri = getCourseById(allCourses, courseId, institutionId)?.notes;
   if (!notesUri) return res.status(404).end();
 
   const practiceProblems = await getCategorizedProblems(

@@ -67,17 +67,15 @@ export async function updateQuiz(quiz: QuizWithStatus) {
 }
 
 export async function deleteQuiz(quizId: string, courseId: string, courseTerm: string) {
-  return await axios.post(
-    '/api/quiz/delete-quiz',
-    { quizId, courseId, courseTerm }
-  );
+  return await axios.post('/api/quiz/delete-quiz', { quizId, courseId, courseTerm });
 }
 
 export async function getCourseQuizList(
   courseId: string,
-  instanceId?: string
+  instanceId?: string,
+  institutionId?: string
 ): Promise<QuizStubInfo[]> {
-  const params = instanceId ? { instanceId } : undefined;
+  const params = { instanceId, institutionId };
   return (await axios.get(`/api/quiz/get-course-quiz-list/${courseId}`, { params })).data;
 }
 
@@ -94,16 +92,13 @@ export async function recorrectQuiz(
   dryRun: boolean,
   reasons: Record<string, string>
 ) {
-  const response = await axios.post(
-    '/api/quiz/recorrect',
-    {
-      quizId,
-      courseId,
-      courseTerm,
-      dryRun,
-      reasons,
-    }
-  );
+  const response = await axios.post('/api/quiz/recorrect', {
+    quizId,
+    courseId,
+    courseTerm,
+    dryRun,
+    reasons,
+  });
   return response.data;
 }
 
@@ -114,16 +109,18 @@ export async function createExcused(
   courseInstance: string,
   institutionId: string
 ) {
-  return await axios.post(
-    '/api/quiz/create-excused',
-    { userId, quizId, courseId, courseInstance, institutionId }
-  );
+  return await axios.post('/api/quiz/create-excused', {
+    userId,
+    quizId,
+    courseId,
+    courseInstance,
+    institutionId,
+  });
 }
 
 export async function getExcused(quizId: string, courseId: string, courseInstance: string) {
   const resp = await axios.get(
-    `/api/quiz/get-excused-students?quizId=${quizId}&courseId=${courseId}&courseInstance=${courseInstance}`,
-   
+    `/api/quiz/get-excused-students?quizId=${quizId}&courseId=${courseId}&courseInstance=${courseInstance}`
   );
   return resp.data as string[];
 }
@@ -138,23 +135,17 @@ export async function generateEndSemesterSummary(
   excludeQuizzes: string[] = [],
   topN: number
 ) {
-  const response = await axios.post(
-    '/api/quiz/end-semester-summary',
-    {
-      courseId,
-      courseTerm,
-      excludeQuizzes,
-      topN,
-    }
-  );
+  const response = await axios.post('/api/quiz/end-semester-summary', {
+    courseId,
+    courseTerm,
+    excludeQuizzes,
+    topN,
+  });
   return response.data;
 }
 
 export async function checkPendingRecorrections() {
-  const response = await axios.post(
-    '/api/quiz/recorrect-all',
-    {}
-  );
+  const response = await axios.post('/api/quiz/recorrect-all', {});
 
   return response.data;
 }
