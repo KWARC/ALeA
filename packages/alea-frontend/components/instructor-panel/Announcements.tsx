@@ -66,7 +66,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      // const fetchedAnnouncements = await getAnnouncements(courseId, instanceId, 'FAU');// TODO(M5)
       const fetchedAnnouncements = await getAnnouncements(courseId, instanceId, universityId);
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
@@ -121,7 +120,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
           visibleUntil: visibleUntilSQL,
           courseId: courseId,
           instanceId: instanceId,
-          // institutionId: 'FAU', // TODO(M5)
           institutionId: universityId,
         };
         await updateAnnouncement(updateRequest);
@@ -132,7 +130,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
           content: content.trim(),
           visibleUntil: visibleUntilSQL,
           instanceId: instanceId,
-          // institutionId: 'FAU', // TODO(M5)
           institutionId: universityId,
         };
         await createAnnouncement(createRequest);
@@ -154,7 +151,6 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
           id: announcementToDelete,
           courseId: courseId,
           instanceId: instanceId,
-          // institutionId: 'FAU', // TODO(M5)
           institutionId: universityId,
         });
         setDeleteDialogOpen(false);
