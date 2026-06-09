@@ -1,7 +1,7 @@
+import { useCourses } from '@alea/react-utils';
+import type { CourseInfo } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import type { CourseInfo } from '@alea/utils';
-import { useCourses } from '@alea/react-utils';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getCourseById } from '../utils/courseHelper';
 
@@ -42,6 +42,15 @@ function resolveLatestInstance(
 function isValidInstanceForCourse(course: CourseInfo, instance: string): boolean {
   const courseInstances = course.instances || [];
   return courseInstances.some((inst) => inst.semester === instance);
+}
+
+function isCurrentInstitutionInstance(
+  institutionId: string,
+  instance: string,
+  currentTermByUniversityId: Record<string, string>
+): boolean {
+  const currentTerm = currentTermByUniversityId[institutionId];
+  return !!currentTerm && currentTerm !== 'null' && currentTerm === instance;
 }
 
 function buildNormalizedPath(
@@ -153,7 +162,10 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
         setIsValidating(false);
       }
     } else {
-      if (!isValidInstanceForCourse(course, instance)) {
+      if (
+        !isValidInstanceForCourse(course, instance) &&
+        !isCurrentInstitutionInstance(institutionId, instance, currentTermByUniversityId)
+      ) {
         console.error(`Instance "${instance}" not found for course "${courseId}"`);
         setValidationError('Invalid instanceId');
         setIsValidating(false);

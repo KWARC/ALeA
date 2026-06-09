@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
   const query = `SELECT * FROM comments WHERE (isPrivate != 1 AND isDeleted != 1) AND threadId = ?`;
 
-  const results = await executeDontEndSet500OnError(query, [threadId], res);
+  const results = await executeDontEndSet500OnError(query, [threadIdNum], res);
   if (!results) return;
   const addedPoints = await processResults(res, results as Comment[]);
   if (!addedPoints) return;

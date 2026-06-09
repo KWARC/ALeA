@@ -49,7 +49,16 @@ const ForumPage: NextPage = () => {
   return (
     <MainLayout title={(courseId || '').toUpperCase() + ` ${t.forum} | ALeA`}>
       <Box maxWidth="800px" m="auto" px="10px">
-        {threadId ? <ThreadView threadId={threadId} courseId={courseId} /> : <ForumView />}
+        {threadId ? (
+          <ThreadView
+            threadId={threadId}
+            courseId={courseId}
+            courseTerm={resolvedInstanceId}
+            institutionId={institutionId}
+          />
+        ) : (
+          <ForumView courseTerm={resolvedInstanceId} institutionId={institutionId} />
+        )}
       </Box>
     </MainLayout>
   );

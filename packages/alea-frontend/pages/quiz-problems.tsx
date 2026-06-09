@@ -103,7 +103,7 @@ const QuizProblemsPage = () => {
 
   if (loading) {
     return (
-      <MainLayout title="Quiz">
+      <MainLayout title="Quiz" hideCourseHeader>
         <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
           <CircularProgress />
         </Box>
@@ -112,7 +112,7 @@ const QuizProblemsPage = () => {
   }
 
   return (
-    <MainLayout title={`Review: ${quizLabelFull}`}>
+    <MainLayout title={`Review: ${quizLabelFull}`} hideCourseHeader>
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           {quizLabelShort && (

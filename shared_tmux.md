@@ -103,10 +103,12 @@ ls -la /var/lib/alea-ops/shared-socket-*
 
 ```
 
-### Kill a Specific Session
+### Restart a Specific Session
 
 ```bash
 sudo -u alea-service-account tmux -S /var/lib/alea-ops/shared-socket-alea-prod kill-server
+sudo su - alea-service-account -s /bin/bash
+/var/lib/alea-ops/launch-shared-tmux.sh alea-prod
 
 ```
 

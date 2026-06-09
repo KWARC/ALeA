@@ -32,10 +32,10 @@ import {
 } from '@alea/spec';
 import { MdEditor } from '@alea/markdown';
 import { DateView, useCurrentUser } from '@alea/react-utils';
+import { pathToCourseResource } from '@alea/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useReducer, useState } from 'react';
-import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 function getDraftKey(courseId: string) {
   return `question-draft-${courseId}`;
@@ -109,27 +109,31 @@ function ForumViewControls({
   showUnanswered,
   setShowUnanswered,
   markUpdate,
+  courseTerm,
+  institutionId,
 }: {
   showRemarks: boolean;
   setShowRemarks: (show: boolean) => void;
   showUnanswered: boolean;
   setShowUnanswered: (show: boolean) => void;
   markUpdate: () => void;
+  courseTerm: string;
+  institutionId: string;
 }) {
   const router = useRouter();
   const { forum: t } = getLocaleObject(router);
   const [openQuestionDialog, setOpenQuestionDialog] = useState(false);
   const courseId = router.query?.courseId as string;
-  const { currentTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
-  
+
   const { user: userInfo } = useCurrentUser();
   const [isUserAuthorized, setIsUserAuthorized] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!courseId || !currentTerm) return;
-    canModerateComment(courseId, currentTerm).then(setIsUserAuthorized);
-  }, [courseId, currentTerm]);
+    if (!courseId) return;
+    canModerateComment(courseId, courseTerm)
+      .then(setIsUserAuthorized)
+      .catch(() => setIsUserAuthorized(false));
+  }, [courseId, courseTerm]);
 
   return (
     <Box
@@ -185,8 +189,8 @@ function ForumViewControls({
             addComment({
               commentId: -1,
               courseId,
-              courseTerm: currentTerm,
-              institutionId: 'FAU',// TODO(M5)
+              courseTerm,
+              institutionId,
               isPrivate: false,
               isAnonymous,
               commentType: CommentType.QUESTION,
@@ -232,23 +236,27 @@ export function QuestionStatusIcon({ comment }: { comment: Comment }) {
   );
 }
 
-export function ForumView() {
+export function ForumView({
+  courseTerm,
+  institutionId,
+}: {
+  courseTerm: string;
+  institutionId: string;
+}) {
   const router = useRouter();
   const courseId = router.query.courseId as string;
-  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
-  
+
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [showRemarks, setShowRemarks] = useState(false);
   const [showUnanswered, setShowUnanswered] = useState(false);
   const [updateCounter, markUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
-    if (!router.isReady || !courseId || !currentTerm) return;
-    getCourseInstanceThreads(courseId, currentTerm, 'FAU').then(setThreadComments);// TODO(M5)
-  }, [courseId, router.isReady, updateCounter, currentTerm]);
+    if (!router.isReady || !courseId) return;
+    getCourseInstanceThreads(courseId, courseTerm, institutionId).then(setThreadComments);
+  }, [courseId, router.isReady, updateCounter, courseTerm, institutionId]);
 
-  if (!router.isReady || !courseId || loadingTermByCourseId) return <CircularProgress />;
+  if (!router.isReady || !courseId) return <CircularProgress />;
   const toShow = showUnanswered
     ? threadComments.filter((c) => c.questionStatus === QuestionStatus.UNANSWERED)
     : showRemarks
@@ -278,12 +286,22 @@ export function ForumView() {
         showUnanswered={showUnanswered}
         setShowUnanswered={setShowUnanswered}
         markUpdate={markUpdate}
+        courseTerm={courseTerm}
+        institutionId={institutionId}
       />
       <List sx={{ border: '1px solid #CCC' }} disablePadding>
         {toShow.map((comment, index) => (
           <Box key={index} bgcolor={index % 2 ? '#EEE' : undefined}>
             <ListItem disablePadding>
-              <Link href={`/forum/${courseId}/${comment.threadId}`} style={{ width: '100%' }}>
+              <Link
+                href={pathToCourseResource(
+                  institutionId,
+                  courseId,
+                  courseTerm,
+                  `/forum/${comment.threadId}`
+                )}
+                style={{ width: '100%' }}
+              >
                 <ListItemButton style={{ cursor: 'pointer' }}>
                   <ListItemIcon>
                     <QuestionStatusIcon comment={comment} />

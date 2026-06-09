@@ -11,14 +11,13 @@ import {
   UserInformation,
 } from '@alea/spec';
 import { SafeFTMLFragment, SafeFTMLSetup } from '@alea/stex-react-renderer';
-import { Action, getCoursePdfUrl, ResourceName } from '@alea/utils';
+import { Action, getCoursePdfUrl, pathToCourseResource, ResourceName } from '@alea/utils';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Box, Button, CircularProgress, IconButton } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { useCurrentTermContext } from '../contexts/CurrentTermContext';
 import { getLocaleObject } from '../lang/utils';
 import { QuestionStatusIcon } from './ForumView';
 
@@ -157,11 +156,19 @@ function waitForRenderedContentAndHighlight(container: HTMLElement, selectedText
   return () => observer.disconnect();
 }
 
-export function ThreadView({ courseId, threadId }: { courseId: string; threadId: number }) {
+export function ThreadView({
+  courseId,
+  threadId,
+  courseTerm,
+  institutionId,
+}: {
+  courseId: string;
+  threadId: number;
+  courseTerm: string;
+  institutionId: string;
+}) {
   const router = useRouter();
   const { forum: t } = getLocaleObject(router);
-  const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
-  const currentTerm = currentTermByCourseId[courseId];
   const [threadComments, setThreadComments] = useState<Comment[]>([]);
   const [updateCounter, doUpdate] = useReducer((x) => x + 1, 0);
   const [showContent, setShowContent] = useState(false);
@@ -189,19 +196,18 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   }, [threadId, updateCounter]);
 
   useEffect(() => {
-    if (!currentTerm) return;
     canAccessResource(ResourceName.COURSE_COMMENTS, Action.MODERATE, {
       courseId,
-      instanceId: currentTerm,
+      instanceId: courseTerm,
     })
       .then(setIsModerator)
       .catch(() => setIsModerator(false));
-  }, [courseId, currentTerm]);
+  }, [courseId, courseTerm]);
 
   const rootComment = useMemo(() => {
     return threadComments.find((c) => c.commentType === CommentType.QUESTION) || null;
   }, [threadComments]);
-  const isLoading = loadingTermByCourseId || isLoadingThread;
+  const isLoading = isLoadingThread;
   const isOwner = loggedInUser?.userId && rootComment?.userId === loggedInUser.userId;
 
   const canReopen =
@@ -238,7 +244,7 @@ export function ThreadView({ courseId, threadId }: { courseId: string; threadId:
   return (
     <>
       <Box sx={threadViewStyles.topBar}>
-        <Link href={`/forum/${courseId}`}>
+        <Link href={pathToCourseResource(institutionId, courseId, courseTerm, '/forum')}>
           <IconButton>
             <ArrowBackIcon />
           </IconButton>
