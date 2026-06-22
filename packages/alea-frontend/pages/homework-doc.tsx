@@ -87,7 +87,7 @@ const HomeworkDocPage: React.FC = () => {
   }
 
   return (
-    <MainLayout title={`${courseId ?? ''} Homework | ALeA`}>
+    <MainLayout title={`${courseId ?? ''} Homework | ALeA`} hideCourseHeader={true}>
       <Box>
         {isUserLoading || fetchingHomework ? (
           <CircularProgress />

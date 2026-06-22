@@ -199,7 +199,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       LEFT JOIN Grading g ON g.answerId = a.id
       WHERE a.courseId = ?
         AND a.courseInstance = ?
-        AND (a.homeworkId IS NULL OR a.homeworkId = 0)
         AND a.userId <> ?
         AND NOT EXISTS (
           SELECT 1
@@ -209,6 +208,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             AND ax.courseInstance = a.courseInstance
             AND ax.questionId = a.questionId
             AND ax.userId = a.userId
+            AND IFNULL(ax.homeworkId, 0) = IFNULL(a.homeworkId, 0)
             AND myg.checkerId = ?
         )
       GROUP BY a.homeworkId, a.questionId, a.userId
@@ -235,9 +235,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { userId: _authorUserId, ...gradingItem } = selectedRow;
 
   const anchorRows = await executeAndEndSet500OnError<
-    { questionId: string; userId: string; courseId: string; courseInstance: string }[]
+    {
+      questionId: string;
+      userId: string;
+      courseId: string;
+      courseInstance: string;
+      homeworkId?: number;
+    }[]
   >(
-    'SELECT questionId, userId, courseId, courseInstance FROM Answer WHERE id = ?',
+    'SELECT questionId, userId, courseId, courseInstance, homeworkId FROM Answer WHERE id = ?',
     [gradingItem.answerId],
     res
   );
@@ -250,8 +256,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `SELECT id AS answerId, subProblemId, answer
      FROM Answer
      WHERE questionId = ? AND userId = ? AND courseId = ? AND courseInstance = ?
+       AND IFNULL(homeworkId, 0) = IFNULL(?, 0)
      ORDER BY subProblemId`,
-    [anchor.questionId, anchor.userId, anchor.courseId, anchor.courseInstance],
+    [
+      anchor.questionId,
+      anchor.userId,
+      anchor.courseId,
+      anchor.courseInstance,
+      anchor.homeworkId ?? 0,
+    ],
     res
   );
   if (!responses) return;

@@ -107,14 +107,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const answerClassInsert = buildGradingAnswerClassInsert(validatedAnswerClasses);
   const transactionResult = await executeTxnAndEndSet500OnError(
     res,
-    `INSERT INTO Grading (checkerId, answerId, reviewType, customFeedback, totalPoints) 
-    VALUES (?,?,?,?,?)`,
+    `INSERT INTO Grading (checkerId, answerId, reviewType, customFeedback, totalPoints, homeworkId)
+     VALUES (?,?,?,?,?,?)`,
     [
       graderUserId,
       answerId,
       reviewType,
       customFeedback,
       totalGradingPoints(validatedAnswerClasses),
+      answerRow.homeworkId ?? null,
     ],
     'SELECT LAST_INSERT_ID() AS insertId',
     [],

@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfQueryParameterExistOrSetError(req, res, 'subProblemId')) return;
 
   const rows = await executeAndEndSet500OnError<{ id: number; subProblemId: string }[]>(
-    'SELECT id, subProblemId FROM Answer WHERE userId=? AND id=? AND (homeworkId IS NULL OR homeworkId = 0)',
+    'SELECT id, subProblemId FROM Answer WHERE userId=? AND id=?',
     [userId, answerId],
     res
   );

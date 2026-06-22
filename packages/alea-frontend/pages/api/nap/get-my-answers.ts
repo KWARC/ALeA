@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const result = await executeAndEndSet500OnError(
     `SELECT id, questionId, subProblemId, answer, questionTitle, courseId, courseInstance, updatedAt
     FROM Answer 
-    WHERE userId=? AND (homeworkId IS NULL OR homeworkId = 0)
+    WHERE userId=?
     ORDER BY updatedAt DESC`,
     [userId],
     res
