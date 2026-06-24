@@ -39,7 +39,8 @@ export function createSafeFlamsQuery(
 ) {
   let result = parameterizedQuery;
 
-  const encodeUriFn = useRdfEncodeUri ? rdfEncodeUri : encodeSpecialChars;
+  const encodeUriFn =
+    useRdfEncodeUri && typeof window !== 'undefined' ? rdfEncodeUri : encodeSpecialChars;
   // Replace multiple URI parameters
   result = result.replace(MULTIPLE_URI_PARAM_REGEX, (match, paramName) => {
     const value = uriParams[paramName];
