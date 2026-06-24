@@ -15,8 +15,8 @@ importers:
         specifier: ^11.13.5
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.5))(@types/react@19.2.14)(react@19.2.5)
       '@flexiformal/ftml':
-        specifier: 0.0.33
-        version: 0.0.33
+        specifier: 0.0.32
+        version: 0.0.32
       '@flexiformal/ftml-backend':
         specifier: 0.0.14
         version: 0.0.14
@@ -1504,9 +1504,6 @@ packages:
 
   '@flexiformal/ftml@0.0.32':
     resolution: {integrity: sha512-7OvLdVfluvlEw3Ddfh8i9EccQEhN8zaHn2qJiSjjj0LtSdiyHLA1T2T+A2lkSlTIiMsQ8vhXr0E58TYh0+5z+w==}
-
-  '@flexiformal/ftml@0.0.33':
-    resolution: {integrity: sha512-LDRqjikAjlwfrqv1SlXK/aRMpWz5rDaG2qT/J4QhU8Aix1ekPmmeH6oWzMXtHe4KndsaO13LcqreGM/43G2b9A==}
 
   '@floating-ui/core@1.7.5':
     resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
@@ -12798,8 +12795,6 @@ snapshots:
       react-dom: 19.2.5(react@19.2.5)
 
   '@flexiformal/ftml@0.0.32': {}
-
-  '@flexiformal/ftml@0.0.33': {}
 
   '@floating-ui/core@1.7.5':
     dependencies:

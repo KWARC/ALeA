@@ -14,11 +14,11 @@ import {
 import { getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
 import { convertHtmlStringToPlain, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
 import { contentToc } from '@flexiformal/ftml-backend';
-import { ContentDashboard, FTMLReadyContext } from '@alea/stex-react-renderer';
+import { ContentDashboard} from '@alea/stex-react-renderer';
 import { MenuBook } from '@mui/icons-material';
 import { useAllCourses } from '../hooks/useAllCourses';
 
@@ -55,7 +55,6 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
   const [loading, setLoading] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [toc, setToc] = useState<FTML.TocElem[]>([]);
-  const ftmlReady = useContext(FTMLReadyContext);
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -69,7 +68,6 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
 
   useEffect(() => {
     const getSections = async () => {
-      if (!ftmlReady) return;
       const courseInfo = courses?.[courseId];
       if (!courseInfo) return;
       const { notes: notesUri } = courseInfo;
@@ -111,7 +109,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
     };
 
     getSections();
-  }, [courses, courseId, ftmlReady]);
+  }, [courses, courseId]);
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;

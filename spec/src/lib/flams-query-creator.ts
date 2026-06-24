@@ -21,21 +21,6 @@ function encodeSpecialChars(value: string) {
   return value.replace(/ /g, '%20');
 }
 const useRdfEncodeUri = process.env['NEXT_PUBLIC_USE_RDF_ENCODE_URI'] !== 'false';
-let warnedAboutRdfEncodeUriFallback = false;
-
-function encodeUri(value: string) {
-  if (!useRdfEncodeUri || typeof window === 'undefined') return encodeSpecialChars(value);
-
-  try {
-    return rdfEncodeUri(value);
-  } catch (error) {
-    if (!warnedAboutRdfEncodeUriFallback) {
-      console.warn('rdfEncodeUri is unavailable; falling back to basic URI encoding.', error);
-      warnedAboutRdfEncodeUriFallback = true;
-    }
-    return encodeSpecialChars(value);
-  }
-}
 
 // This function creates a FLAMS query from a given query and parameters.
 // Single query parameters expect a string value, and are replaced with their values. `<>` or `"` are retained
@@ -46,15 +31,15 @@ function encodeUri(value: string) {
 // Eg. parameterizedQuery: `VALUES ?uri { <_multiuri_sections> }` and uriParams: { _multiuri_sections: ['uri1', 'uri2', 'uri3'] }
 // returns `VALUES ?uri { <uri1> <uri2> <uri3> }`
 //
-// The optional `useRdfEncodeUri` flag controls whether URIs prefer `rdfEncodeUri`
-// from `@flexiformal/ftml`. If the FTML WASM encoder is unavailable, this falls
-// back to the minimal space-encoding function.
+// The optional `useRdfEncodeUri` flag controls whether URIs are encoded using `rdfEncodeUri`
+// from `@flexiformal/ftml` (when true) or a minimal space-encoding function (when false / omitted).
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]>
 ) {
   let result = parameterizedQuery;
 
+  const encodeUriFn = useRdfEncodeUri ? rdfEncodeUri : encodeSpecialChars;
   // Replace multiple URI parameters
   result = result.replace(MULTIPLE_URI_PARAM_REGEX, (match, paramName) => {
     const value = uriParams[paramName];
@@ -62,7 +47,7 @@ export function createSafeFlamsQuery(
       console.warn(`Multi URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return value.map((uri) => `${match[0]}${encodeUri(uri)}${match.at(-1)}`).join(' ');
+    return value.map((uri) => `${match[0]}${encodeUriFn(uri)}${match.at(-1)}`).join(' ');
   });
 
   // Replace single URI parameters
@@ -72,7 +57,7 @@ export function createSafeFlamsQuery(
       console.warn(`Single URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return `${match[0]}${encodeUri(value)}${match.at(-1)}`;
+    return `${match[0]}${encodeUriFn(value)}${match.at(-1)}`;
   });
 
   return result;
