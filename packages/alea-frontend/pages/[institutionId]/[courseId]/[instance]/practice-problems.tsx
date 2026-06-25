@@ -5,6 +5,7 @@ import ProblemList from '../../../../components/ProblemList';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
+import { getCourseById } from '../../../../utils/courseHelper';
 import MainLayout from '../../../../layouts/MainLayout';
 import { useAllCourses } from '../../../../hooks/useAllCourses';
 import { useContentToc } from '../../../../hooks/useContentToc';
@@ -14,7 +15,8 @@ const PracticeProblemsPage: NextPage = () => {
   const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
     useRouteValidation('practice-problems');
   const { data: courses = {}, isLoading: isCourseLoading } = useAllCourses();
-  const courseInfo = courses?.[courseId];
+  const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+  const notes = courseInfo?.notes;
   const { data: sectionsData = [], isLoading: sectionDataLoading } = useContentToc(
     courseInfo?.notes
   );

@@ -13,8 +13,9 @@ export default async function handler(
     return;
   }
 
+  const institutionId = req.query.institutionId as string | undefined;
   const instanceId =
-    (req.query.instanceId as string) || (await getCurrentTermForCourseId(courseId));
+    (req.query.instanceId as string) || (await getCurrentTermForCourseId(courseId, institutionId));
   const quizzesInfo: QuizStubInfo[] = getAllQuizzes()
     .filter((q) => q.courseId === courseId && q.courseTerm === instanceId)
     .map((q) => ({

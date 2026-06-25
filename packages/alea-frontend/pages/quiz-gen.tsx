@@ -128,6 +128,7 @@ const QuizGen = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const courseId = router.query.courseId as string;
+  const institutionId = router.query.institutionId as string;
   useEffect(() => {
     if (isUserLoading) return;
     if (!user) {
@@ -160,6 +161,7 @@ const QuizGen = () => {
         </Typography>
         <CourseSectionSelector
           courseId={courseId}
+          institutionId={institutionId}
           loading={loading}
           setLoading={setLoading}
           sections={sections}

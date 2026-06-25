@@ -1,5 +1,6 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
 import { canAccessResource, getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { updateRouterQuery } from '@alea/react-utils';
 import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -49,7 +50,7 @@ const TAB_ACCESS_REQUIREMENTS: Record<TabName, { resource: ResourceName; actions
   },
   'peer-review': { resource: ResourceName.COURSE_PEERREVIEW, actions: [Action.MUTATE] },
   'study-buddy': { resource: ResourceName.COURSE_STUDY_BUDDY, actions: [Action.MODERATE] },
-  'cheatsheet': { resource: ResourceName.COURSE_CHEATSHEET, actions: [Action.MUTATE] },
+  cheatsheet: { resource: ResourceName.COURSE_CHEATSHEET, actions: [Action.MUTATE] },
   syllabus: { resource: ResourceName.COURSE_SYLLABUS, actions: [Action.MUTATE] },
   'course-metadata': { resource: ResourceName.COURSE_METADATA, actions: [Action.MUTATE] },
 };
@@ -93,9 +94,17 @@ function ChosenTab({
     case 'cheatsheet':
       return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
     case 'syllabus':
-      return <CoverageUpdateTab courseId={courseId} instanceId={instanceId} />;
+      return (
+        <CoverageUpdateTab
+          courseId={courseId}
+          instanceId={instanceId}
+          institutionId={institutionId}
+        />
+      );
     case 'course-metadata':
-      return <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />;
+      return (
+        <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />
+      );
     default:
       return null;
   }
@@ -127,7 +136,7 @@ const TAB_MAX_WIDTH: Record<TabName, string | undefined> = {
   'peer-review': undefined,
   'homework-manager': '900px',
   'quiz-dashboard': '900px',
-  'cheatsheet': '900px',
+  cheatsheet: '900px',
   'study-buddy': '900px',
   syllabus: '1200px',
   'course-metadata': '1200px',
@@ -233,7 +242,7 @@ const InstructorDashPage: NextPage = () => {
   }
   if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
 
-  const courseInfo = courses?.[courseId];
+  const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
   if (!accessibleTabs) return <CircularProgress />;
   if (!courseInfo) return <CourseNotFound />;
 
