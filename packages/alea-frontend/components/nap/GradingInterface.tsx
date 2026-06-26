@@ -1433,13 +1433,15 @@ export function GradingInterface({
     async function resolveRoleFromInstructorAcl() {
       try {
         const aclIds = await getCourseAcls(courseId, CURRENT_TERM);
-        const instructorAclIds = (aclIds || []).filter((id) => id.endsWith('-instructors'));
-        if (!instructorAclIds.length) {
+        const gradingViewAclIds = (aclIds || []).filter(
+          (id) => id.endsWith('-instructors') || id.endsWith('-tas')
+        );
+        if (!gradingViewAclIds.length) {
           if (!cancelled) setIsInstructorUser(false);
           return;
         }
         const membershipChecks = await Promise.all(
-          instructorAclIds.map((aclId) => isUserMember(aclId))
+          gradingViewAclIds.map((aclId) => isUserMember(aclId))
         );
         if (!cancelled) setIsInstructorUser(membershipChecks.some(Boolean));
       } catch {
