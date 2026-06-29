@@ -6,8 +6,8 @@ import {
   pathToCourseView,
   pathToHomework,
 } from '@alea/utils';
-import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
