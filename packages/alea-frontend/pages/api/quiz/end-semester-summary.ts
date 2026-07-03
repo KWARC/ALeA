@@ -5,6 +5,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfPostOrSetError, executeQueryAndEnd } from '../comment-utils';
 import { queryGradingDbAndEndSet500OnError } from '../grading-db-utils';
+import fs from 'fs';
+import path from 'path';
 
 export interface QuizData {
   score: number;
@@ -29,6 +31,22 @@ function calculateMaxPoints(quizzes: QuizWithStatus[]): Record<string, number> {
     }
   }
   return maxPoints;
+}
+function getArchivedQuizzes(courseId: string, courseTerm: string) {
+  const quizInfoDir = process.env.QUIZ_INFO_DIR;
+  if (!quizInfoDir) return [];
+
+  const archiveDir = path.join(quizInfoDir, 'archive', courseTerm);
+  if (!fs.existsSync(archiveDir)) return [];
+
+  return fs
+    .readdirSync(archiveDir)
+    .filter((file) => file.startsWith('quiz-') && file.endsWith('.json'))
+    .map(
+      (file) =>
+        JSON.parse(fs.readFileSync(path.join(archiveDir, file), 'utf-8')) as QuizWithStatus
+    )
+    .filter((quiz) => quiz.courseId === courseId && quiz.courseTerm === courseTerm);
 }
 
 function calculateTopNAverage(userData: UserQuizData, topN: number, excusedCount: number): number {
@@ -112,14 +130,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!instructorId) return;
 
   try {
-    const quizzes: QuizWithStatus[] = getAllQuizzes()
+    const activeQuizzes = getAllQuizzes().filter(
+      (quiz) => quiz.courseId === courseId && quiz.courseTerm === courseTerm
+    );
+    const availableQuizzes =
+      activeQuizzes.length > 0 ? activeQuizzes : getArchivedQuizzes(courseId, courseTerm);
+    const quizzes: QuizWithStatus[] = availableQuizzes
       .sort((a, b) => a.quizStartTs - b.quizStartTs)
-      .filter(
-        (quiz) =>
-          quiz.courseId === courseId &&
-          quiz.courseTerm === courseTerm &&
-          !excludeQuizzes.includes(quiz.id)
-      );
+      .filter((quiz) => !excludeQuizzes.includes(quiz.id));
+
 
     if (quizzes.length === 0) {
       return res.status(404).send('No quizzes found for the specified course');
