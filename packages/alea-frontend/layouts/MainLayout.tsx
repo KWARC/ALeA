@@ -132,11 +132,13 @@ export default function MainLayout({
   children,
   bgColor,
   hideCourseHeader = false,
+  courseTitleClickable = false,
 }: {
   title?: string;
   children: any;
   bgColor?: string;
   hideCourseHeader?: boolean;
+  courseTitleClickable?: boolean;
 }) {
   const { trackPageView } = useMatomo();
   const router = useRouter();
@@ -187,6 +189,7 @@ export default function MainLayout({
             courseId={courseId!}
             institutionId={institutionId}
             instanceId={instance}
+            isTitleClickable={courseTitleClickable}
           />
         )}
         {/*<Typography

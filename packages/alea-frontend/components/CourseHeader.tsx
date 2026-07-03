@@ -8,12 +8,14 @@ export function CourseHeader({
   imageLink,
   institutionId,
   instanceId,
+  isTitleClickable = false,
 }: {
   courseId: string;
   courseName: string;
   imageLink?: string;
   institutionId?: string;
   instanceId?: string | null;
+  isTitleClickable?: boolean;
 }) {
   const theme = useTheme();
   if (!courseName || !courseId) return <></>;
@@ -39,7 +41,11 @@ export function CourseHeader({
           maxHeight={200}
           overflow="hidden"
           borderBottom={`2px solid ${theme.palette.divider}`}
-          sx={{ backgroundImage: (theme.palette as { gradients?: Record<string, string> }).gradients?.[courseId] }}
+          sx={{
+            backgroundImage: (theme.palette as { gradients?: Record<string, string> }).gradients?.[
+              courseId
+            ],
+          }}
         >
           {allowCrop ? (
             <img
@@ -64,17 +70,38 @@ export function CourseHeader({
           )}
         </Box>
       </Link>
-      <Box
-        sx={{
-          mt: 2.5,
-          mx: 0,
-          mb: 4,
-          fontWeight: 'bold',
-          fontSize: 32,
-        }}
-      >
-        {courseName}
-      </Box>
+      {isTitleClickable ? (
+        <Link href={courseHomeLink}>
+          <Box
+            sx={{
+              mt: 2.5,
+              mx: 0,
+              mb: 4,
+              fontWeight: 'bold',
+              fontSize: 32,
+              cursor: 'pointer',
+              '&:hover': { textDecoration: 'underline' },
+
+              textDecoration: 'none',
+              color: 'inherit',
+            }}
+          >
+            {courseName}
+          </Box>
+        </Link>
+      ) : (
+        <Box
+          sx={{
+            mt: 2.5,
+            mx: 0,
+            mb: 4,
+            fontWeight: 'bold',
+            fontSize: 32,
+          }}
+        >
+          {courseName}
+        </Box>
+      )}
     </Box>
   );
 }
