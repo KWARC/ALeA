@@ -28,7 +28,6 @@ function extractCourseIds(files: string[], semester: string): Promise<string[]> 
     return Array.from(courseIds);
   });
 }
-const newQuizPatternSem=['SS25']
 function OldQuizPage() {
   const [semesters, setSemesters] = useState<string[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>('');
@@ -167,12 +166,16 @@ function OldQuizPage() {
                 typeof quizContent.problems === 'object' &&
                 Object.keys(quizContent.problems).length > 0 ? (
                   Object.entries(quizContent.problems).map(([pid, problemData]: [string, any]) => {
-                    const isNewPattern = newQuizPatternSem.includes(selectedSemester);
+                    const problem =
+                      typeof problemData === 'object' && problemData !== null
+                        ? problemData?.problem ?? problemData
+                        : undefined;
+                    const isNewPattern = !!problem?.html;
                     
                     if (isNewPattern) {
-                      const html = problemData?.problem?.html;
-                      const titleHtml = problemData?.problem?.title_html;
-                      const uri = problemData?.problem?.uri || pid;
+                      const html = problem.html;
+                      const titleHtml = problem?.title_html;
+                      const uri = problem?.uri || pid;
 
                       if (!html) {
                         return (
