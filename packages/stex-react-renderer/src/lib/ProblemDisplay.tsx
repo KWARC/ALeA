@@ -8,6 +8,7 @@ import {
   postAnswerToLMP,
 } from '@alea/spec';
 import { FTML } from '@flexiformal/ftml';
+import { solution as fetchMasterSolutionPayload } from '@flexiformal/ftml-backend';
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import SaveIcon from '@mui/icons-material/Save';
 import {
@@ -79,6 +80,7 @@ function SubProblemPointsInfo({
 }
 
 export const AnswerContext = createContext<Record<string, ResponseWithSubProblemId>>({});
+const MasterSolutionVisibilityContext = createContext(true);
 
 type PreviousAnswerResponse = ResponseWithSubProblemId['responses'][number] & {
   graded?: boolean;
@@ -186,6 +188,7 @@ export function ProblemViewer({
   renderBelowAnswerAccepter,
   hideAnswerAccepter = false,
   showPoints = true,
+  showSolution = true,
   onSubProblemRender,
   onUnsavedAnswerChange,
 }: {
@@ -196,6 +199,7 @@ export function ProblemViewer({
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
   hideAnswerAccepter?: boolean;
   showPoints?: boolean;
+  showSolution?: boolean;
   onSubProblemRender?: () => void;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
 }) {
@@ -214,41 +218,43 @@ export function ProblemViewer({
   });
 
   return (
-    <SafeFTMLFragment
-      key={`${uri}-${problemState.type}`}
-      fragment={{ type: 'HtmlString', html, uri }}
-      allowHovers={isFrozen}
-      problemStates={problemStates}
-      onProblemResponse={(response) => {
-        onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
-      }}
-      problemWrap={(problemUri, isSubProblem, autogradable) => {
-        return (ch: ReactNode) => (
-          <Box>
-            {ch}
-            {!autogradable && !hideAnswerAccepter ? (
-              <AnswerAccepter
-                masterProblemId={uri}
-                problemTitle={problem.problem.title_html ?? ''}
-                isFrozen={isFrozen}
-                problemId={problemUri}
-                pointsNode={
-                  isSubProblem ? (
-                    <SubProblemPointsInfo
-                      problemUri={problemUri}
-                      showPoints={showPoints}
-                      onRender={onSubProblemRender}
-                    />
-                  ) : null
-                }
-                onUnsavedAnswerChange={onUnsavedAnswerChange}
-              ></AnswerAccepter>
-            ) : null}
-            {renderBelowRef.current?.(problemUri, isSubProblem)}
-          </Box>
-        );
-      }}
-    />
+    <MasterSolutionVisibilityContext.Provider value={showSolution}>
+      <SafeFTMLFragment
+        key={`${uri}-${problemState.type}`}
+        fragment={{ type: 'HtmlString', html, uri }}
+        allowHovers={isFrozen}
+        problemStates={problemStates}
+        onProblemResponse={(response) => {
+          onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
+        }}
+        problemWrap={(problemUri, isSubProblem, autogradable) => {
+          return (ch: ReactNode) => (
+            <Box>
+              {ch}
+              {!autogradable && !hideAnswerAccepter ? (
+                <AnswerAccepter
+                  masterProblemId={uri}
+                  problemTitle={problem.problem.title_html ?? ''}
+                  isFrozen={isFrozen}
+                  problemId={problemUri}
+                  pointsNode={
+                    isSubProblem ? (
+                      <SubProblemPointsInfo
+                        problemUri={problemUri}
+                        showPoints={showPoints}
+                        onRender={onSubProblemRender}
+                      />
+                    ) : null
+                  }
+                  onUnsavedAnswerChange={onUnsavedAnswerChange}
+                ></AnswerAccepter>
+              ) : null}
+              {renderBelowRef.current?.(problemUri, isSubProblem)}
+            </Box>
+          );
+        }}
+      />
+    </MasterSolutionVisibilityContext.Provider>
   );
 }
 
@@ -294,6 +300,60 @@ function hasUnsavedAnswerChange(answer: string, savedAnswer: string, isAnswerGra
   return answer !== savedAnswer;
 }
 
+function getSolutionHtmlFromFtmlPayload(payload?: string): string | undefined {
+  if (!payload?.trim()) return undefined;
+  try {
+    const parsed = FTML.Solutions.from_jstring(payload.replace(/^"|"$/g, ''));
+    const html = parsed
+      ?.to_solutions()
+      .map((s) => ('Solution' in s ? s.Solution.html : undefined))
+      .filter(Boolean)
+      .join('');
+    return html?.trim() ? html : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function MasterSolutionDisplay({
+  problemId,
+  shouldShow,
+}: {
+  problemId: string;
+  shouldShow: boolean;
+}) {
+  const [solutionHtml, setSolutionHtml] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!shouldShow || !problemId) {
+      setSolutionHtml(undefined);
+      return;
+    }
+    let cancelled = false;
+    setSolutionHtml(undefined);
+    fetchMasterSolutionPayload({ uri: problemId })
+      .then((payload) => {
+        if (!cancelled) setSolutionHtml(getSolutionHtmlFromFtmlPayload(payload));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldShow, problemId]);
+
+  if (!solutionHtml) return null;
+  return (
+    <Box sx={problemDisplayStyles.solutionBox}>
+      <Typography variant="caption" sx={problemDisplayStyles.solutionLabelText}>
+        Solution
+      </Typography>
+      <Box sx={problemDisplayStyles.solutionContent}>
+        <SafeFTMLFragment fragment={{ type: 'HtmlString', html: solutionHtml, uri: problemId }} />
+      </Box>
+    </Box>
+  );
+}
+
 function AnswerAccepter({
   problemId,
   masterProblemId,
@@ -309,6 +369,7 @@ function AnswerAccepter({
   pointsNode?: ReactNode;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
 }) {
+  const showMasterSolution = useContext(MasterSolutionVisibilityContext);
   const previousAnswer = useContext(AnswerContext);
   const name = `answer-${problemId}`;
   let serverAnswer = '';
@@ -330,6 +391,7 @@ function AnswerAccepter({
   const hasUnsavedAnswer = hasUnsavedAnswerChange(answer, savedAnswer, isAnswerGraded);
   const canSaveAnswer = hasUnsavedAnswer && !!answer?.trim();
   const unsavedAnswerId = getUnsavedAnswerId(masterProblemId, problemId);
+  const shouldRenderMasterSolution = showMasterSolution && (isFrozen || isAnswerGraded) && !!answer;
 
   useEffect(() => {
     setAnswer(getAnswerValue(name, serverAnswer));
@@ -394,6 +456,10 @@ function AnswerAccepter({
                   onValueChange={onAnswerChange}
                 />
               </Box>
+              <MasterSolutionDisplay
+                problemId={problemId}
+                shouldShow={shouldRenderMasterSolution}
+              />
             </Box>
           </Tooltip>
         ) : (
@@ -425,6 +491,7 @@ export function ProblemDisplay({
   isFrozen,
   r,
   showPoints = true,
+  showSolution = true,
   onResponseUpdate,
   onFreezeResponse,
   renderBelowAnswerAccepter,
@@ -436,6 +503,7 @@ export function ProblemDisplay({
   isFrozen: boolean;
   r?: FTML.ProblemResponse;
   showPoints?: boolean;
+  showSolution?: boolean;
   onResponseUpdate?: (r: FTML.ProblemResponse) => void;
   onFreezeResponse?: () => void;
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
@@ -483,6 +551,7 @@ export function ProblemDisplay({
           renderBelowAnswerAccepter={renderBelowAnswerAccepter}
           hideAnswerAccepter={hideAnswerAccepter}
           showPoints={showPoints}
+          showSolution={showSolution}
           onSubProblemRender={handleSubProblemRender}
           onUnsavedAnswerChange={onUnsavedAnswerChange}
         />
@@ -525,5 +594,26 @@ const problemDisplayStyles = {
   frozenAnswerContent: {
     px: 1.25,
     py: 0.75,
+  },
+  solutionBox: {
+    border: '1px solid',
+    borderColor: 'success.main',
+    borderRadius: 1,
+    bgcolor: 'background.paper',
+    mt: 0.5,
+    px: 1.5,
+    py: 1,
+  },
+  solutionLabelText: {
+    display: 'block',
+    fontWeight: 700,
+    color: 'success.dark',
+    mb: 0.75,
+  },
+  solutionContent: {
+    color: 'text.primary',
+    '& p:last-child': {
+      mb: 0,
+    },
   },
 } as const;

@@ -658,11 +658,13 @@ function GradingItemDisplay({
   isPeerGrading,
   onAfterGrading,
   peerResponses,
+  showMasterSolution,
 }: {
   questionId: string;
   answerId: number;
   courseId: string;
   isPeerGrading?: boolean;
+  showMasterSolution: boolean;
   questionMap: Record<string, FTMLProblemWithSolution>;
   onAfterGrading?: () => void | Promise<void>;
   peerResponses?: AnswerResponseWithId[];
@@ -1202,6 +1204,7 @@ function GradingItemDisplay({
           <ProblemDisplay
             isFrozen={true}
             problem={problem}
+            showSolution={showMasterSolution}
             renderBelowAnswerAccepter={(problemId, isSubProblem) => (
               <EmbeddedGradingForm problemId={problemId} isSubProblem={isSubProblem} />
             )}
@@ -1243,6 +1246,7 @@ export function GradingInterface({
   const [studentCurrentResponses, setStudentCurrentResponses] = useState<
     { answerId?: number; subProblemId: string; answer: string }[]
   >([]);
+  const [showMasterSolution, setShowMasterSolution] = useState(true);
 
   const skippedAnswerIdsRef = useRef<number[]>([]);
 
@@ -1481,6 +1485,10 @@ export function GradingInterface({
     ? [studentCurrentItem]
     : [];
 
+  if (!roleResolved) {
+    return <CircularProgress size={32} sx={{ display: 'block', my: 2, mx: 'auto' }} />;
+  }
+
   return (
     <Box>
       {!isInstructorUser && effectiveIsPeerGrading && (
@@ -1536,9 +1544,9 @@ export function GradingInterface({
           </Box>
         </Box>
       )}
-      {isInstructorUser && (
-        <>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+        {isInstructorUser && (
+          <>
             <FormControlLabel
               control={
                 <Switch
@@ -1571,7 +1579,21 @@ export function GradingInterface({
               }
               label="Practice Problems Only"
             />
-          </Box>
+          </>
+        )}
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showMasterSolution}
+              onChange={() => setShowMasterSolution((show) => !show)}
+              color="primary"
+            />
+          }
+          label="Show Master Solution"
+        />
+      </Box>
+      {isInstructorUser && (
+        <>
           <GradingItemOrganizer
             questionMap={questionMap.current}
             homeworkMap={homeworkMap.current}
@@ -1640,6 +1662,7 @@ export function GradingInterface({
               {...selected}
               courseId={courseId}
               isPeerGrading={effectiveIsPeerGrading}
+              showMasterSolution={showMasterSolution}
               questionMap={questionMap.current}
               peerResponses={!isInstructorUser ? studentCurrentResponses : undefined}
               onAfterGrading={
