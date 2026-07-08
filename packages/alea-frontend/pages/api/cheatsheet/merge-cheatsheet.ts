@@ -175,7 +175,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT userId, fileName, weekId, createdAt, studentName
        FROM CheatSheet
        WHERE courseId=? AND instanceId=? AND userId=?
-       ORDER BY createdAt ASC`,
+       ORDER BY weekId ASC`,
       [courseId, instanceId, filterUserId],
       res
     );
