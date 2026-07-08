@@ -31,7 +31,21 @@ export function useVideoPlayer({
 
     if (!playerRef.current) return;
     let player = videoPlayer.current;
-
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentPlayer = videoPlayer.current;
+      if (!currentPlayer) return;
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        currentPlayer.currentTime(Math.max(0, currentPlayer.currentTime() - 10));
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        currentPlayer.currentTime(
+          Math.min(currentPlayer.duration(), currentPlayer.currentTime() + 10)
+        );
+      }
+    };
     if (!player) {
       player = videojs(playerRef.current, {
         controls: !audioOnly,
@@ -48,7 +62,7 @@ export function useVideoPlayer({
       player.ready(() => {
         const root = playerRef.current?.parentNode as HTMLElement;
         if (root) applyVideoPlayerStyles(root);
-
+        player.el().addEventListener('keydown', handleKeyDown);
         const Button = videojs.getComponent('Button');
         const controlBar = player.getChild('controlBar');
         if (!controlBar) return;
@@ -135,6 +149,7 @@ fill="currentColor"
 
     return () => {
       if (player) {
+        player.el()?.removeEventListener('keydown', handleKeyDown);
         player.pause();
         player.dispose();
         videoPlayer.current = null;
