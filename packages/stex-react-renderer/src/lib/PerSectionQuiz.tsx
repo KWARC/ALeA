@@ -18,9 +18,12 @@ import {
   formatExamLabelDropdown,
   getProblemsPerSection,
   getUserProfile,
+  postAnswerToLMP,
+  ProblemAnswerEvent,
   ProblemData,
   formatQuizLabelDropdown,
 } from '@alea/spec';
+import { useCurrentUser } from '@alea/react-utils';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
@@ -44,6 +47,7 @@ function isValidExamRef(uri?: string) {
   if (!uri) return false;
   return Boolean(getParamFromUri(uri, 'd'));
 }
+
 const commonTooltipSlotProps = {
   popper: {
     sx: {
@@ -96,6 +100,7 @@ export function UriProblemViewer({
   setQuotient?: (quotient: number | undefined) => void;
 }) {
   const [solution, setSolution] = useState<string | undefined>(undefined);
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     setSolution(undefined);
@@ -105,9 +110,28 @@ export function UriProblemViewer({
   useEffect(() => {
     const state = getProblemState(isSubmitted, solution, response);
     if (state.type === 'Graded') {
-      setQuotient?.(state.feedback?.score_fraction);
+      const scoreFraction = state.feedback?.score_fraction;
+      setQuotient?.(scoreFraction);
+
+      if (!response || scoreFraction === undefined) return;
+
+      const answerObject: ProblemAnswerEvent = {
+        type: 'problem-answer',
+        uri,
+        learner: user?.userId ?? '',
+        score: scoreFraction,
+        'max-points': 1,
+        updates: [],
+        time: new Date().toISOString(),
+        payload: '',
+        comment: ' ',
+      };
+
+      postAnswerToLMP(answerObject).catch((error) =>
+        console.error('Failed to post problem answer to LMP:', error)
+      );
     }
-  }, [isSubmitted, response, solution]);
+  }, [isSubmitted, response, solution, setQuotient, uri, user?.userId]);
 
   const problemState = getProblemState(isSubmitted, solution, response);
   return (
