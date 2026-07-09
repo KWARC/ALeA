@@ -19,16 +19,17 @@ async function getUserScoresOrSet500Error(
   res: NextApiResponse
 ): Promise<{ [quizId: string]: number } | undefined> {
   const result: Array<any> = await queryGradingDbAndEndSet500OnError(
-    `SELECT quizId, sum(points) as score
-      FROM grading
-      WHERE (quizId, userId, problemId, browserTimestamp_ms) IN (
-          SELECT quizId, userId,problemId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
+    `SELECT g.quizId, SUM(g.points) as score
+      FROM grading g
+      WHERE g.userId = ?
+      AND (g.quizId, g.userId, g.problemId, g.browserTimestamp_ms) IN (
+          SELECT quizId, userId, problemId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
           FROM grading
             WHERE userId = ?
-          GROUP BY quizId, userId,problemId
+          GROUP BY quizId, userId, problemId
       )
-      GROUP BY quizId;`,
-    [userId],
+      GROUP BY g.quizId;`,
+    [userId, userId],
     res
   );
   if (!result) return;
