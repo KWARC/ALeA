@@ -55,14 +55,13 @@ export function useVideoPlayer({
         controlBar: {
           playbackRateMenuButton: true,
         },
-        sources: [{ src: masterVideoUrl, type: 'video/mp4' }],
       });
       videoPlayer.current = player;
       player.load();
       player.ready(() => {
         const root = playerRef.current?.parentNode as HTMLElement;
         if (root) applyVideoPlayerStyles(root);
-        player.el().addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keydown', handleKeyDown);
         const Button = videojs.getComponent('Button');
         const controlBar = player.getChild('controlBar');
         if (!controlBar) return;
@@ -129,34 +128,33 @@ fill="currentColor"
 
           openBtn = controlBar.addChild('OpenInNewTabButton', {}, insertIndex);
         }
-
-        openBtn?.setClipId?.(clipId);
       });
-    } else {
+    }
+
+    return () => {
+      if (player) {
+        document.removeEventListener('keydown', handleKeyDown);
+        player.pause();
+        player.dispose();
+        videoPlayer.current = null;
+      }
+    };
+  }, [audioOnly, playerRef, applyVideoPlayerStyles]);
+  useEffect(() => {
+    if (videoPlayer.current && masterVideoUrl) {
+      const player = videoPlayer.current;
       const currentTime = player.currentTime();
       player.src({ src: masterVideoUrl, type: 'video/mp4' });
       player.load();
       player.ready(() => {
         player.currentTime(currentTime);
         player.play();
-        const root = playerRef.current?.parentNode as HTMLElement;
-        if (root) applyVideoPlayerStyles(root);
         const controlBar = player.getChild('controlBar');
         const openBtn = controlBar?.getChild('OpenInNewTabButton') as any;
         openBtn?.setClipId?.(clipId);
       });
     }
-
-    return () => {
-      if (player) {
-        player.el()?.removeEventListener('keydown', handleKeyDown);
-        player.pause();
-        player.dispose();
-        videoPlayer.current = null;
-      }
-    };
-  }, [masterVideoUrl, audioOnly, playerRef, applyVideoPlayerStyles, clipId]);
-
+  }, [masterVideoUrl, clipId]);
   useEffect(() => {
     if (videoPlayer.current && timestampSec !== undefined) {
       videoPlayer.current.currentTime(timestampSec);
