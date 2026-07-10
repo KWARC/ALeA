@@ -14,6 +14,7 @@ import {
 import { getCoverageTimeline, updateCoverageTimeline } from '@alea/spec';
 import { convertHtmlStringToPlain, CoverageTimeline, LectureEntry } from '@alea/utils';
 import { useRouter } from 'next/router';
+import { getCourseById } from '../utils/courseHelper';
 import { useEffect, useState } from 'react';
 import { SecInfo } from '../types';
 import { CoverageUpdater } from './CoverageUpdater';
@@ -44,9 +45,10 @@ export function getSecInfo(data: FTML.TocElem, level = 0): SecInfo[] {
 interface CoverageUpdateTabProps {
   courseId: string;
   instanceId: string;
+  institutionId: string;
 }
 
-const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => {
+const CoverageUpdateTab = ({ courseId, instanceId, institutionId }: CoverageUpdateTabProps) => {
   const router = useRouter();
   const [secInfo, setSecInfo] = useState<Record<FTML.DocumentUri, SecInfo>>({});
   const [snaps, setSnaps] = useState<LectureEntry[]>([]);
@@ -64,11 +66,11 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
     getCoverageTimeline(true).then(setCoverageTimeline);
   }, []);
 
-  const { data: courses = {} } = useAllCourses();
+  const { data: courses = {} } = useAllCourses(institutionId);
 
   useEffect(() => {
     const getSections = async () => {
-      const courseInfo = courses?.[courseId];
+      const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
       if (!courseInfo) return;
       const { notes: notesUri } = courseInfo;
       setLoading(true);
@@ -109,7 +111,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
     };
 
     getSections();
-  }, [courses, courseId]);
+  }, [courses, courseId, institutionId]);
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
@@ -271,6 +273,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
             <CoverageUpdater
               courseId={courseId}
               instanceId={instanceId}
+              institutionId={institutionId}
               snaps={snaps}
               notCoveredSections={notCoveredSections}
               secInfo={secInfo}

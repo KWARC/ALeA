@@ -191,7 +191,13 @@ function SyllabusTable({
   );
 }
 
-export function RecordedSyllabus({ courseId }: { courseId: string }) {
+export function RecordedSyllabus({
+  courseId,
+  institutionId,
+}: {
+  courseId: string;
+  institutionId?: string;
+}) {
   const { courseHome: t } = getLocaleObject(useRouter());
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
@@ -207,21 +213,31 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
 
   useEffect(() => {
     if (!courseId) return;
-    axios.get(`/api/get-section-info/${courseId}`).then((resp) => {
-      setLectureDescs(getLectureDescs(resp.data));
+    axios
+      .get(
+        `/api/get-section-info/${courseId}${institutionId ? `?institutionId=${institutionId}` : ''}`
+      )
+      .then((resp) => {
+        setLectureDescs(getLectureDescs(resp.data));
 
-      const clipIds = {};
-      getLectureClipIds(resp.data, clipIds);
-      setLectureClipIds(clipIds);
-    });
-  }, [courseId]);
+        const clipIds = {};
+        getLectureClipIds(resp.data, clipIds);
+        setLectureClipIds(clipIds);
+      });
+  }, [courseId, institutionId]);
 
   useEffect(() => {
     if (!courseId) return;
-    axios.get(`/api/get-historical-syllabus/${courseId}`).then((resp) => {
-      setHistoricalSyllabus(resp.data);
-    });
-  }, [courseId]);
+    axios
+      .get(
+        `/api/get-historical-syllabus/${courseId}${
+          institutionId ? `?institutionId=${institutionId}` : ''
+        }`
+      )
+      .then((resp) => {
+        setHistoricalSyllabus(resp.data);
+      });
+  }, [courseId, institutionId]);
 
   if (!courseId || loadingTermByCourseId) return null;
   const timestamps = Object.keys(lectureDescs)

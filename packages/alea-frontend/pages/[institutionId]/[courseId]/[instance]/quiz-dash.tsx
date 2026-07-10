@@ -3,12 +3,8 @@ import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import {
-  QuizStubInfo,
-  canAccessResource,
-  getAllCourses,
-  getCourseQuizList,
-} from '@alea/spec';
+import { QuizStubInfo, canAccessResource, getAllCourses, getCourseQuizList } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { Action, CourseInfo, ResourceName, isFauId } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
@@ -144,14 +140,8 @@ const PRACTICE_QUIZ_INFO: Record<
 
 const QuizDashPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('quiz-dash');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('quiz-dash');
 
   const currentTerm = resolvedInstanceId;
   const { quiz: t, home: tHome } = getLocaleObject(router);
@@ -179,14 +169,14 @@ const QuizDashPage: NextPage = () => {
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
-    getCourseQuizList(courseId, currentTerm).then((res) => {
+    getCourseQuizList(courseId, currentTerm, institutionId).then((res) => {
       const quizzes = res as QuizStubInfo[];
       for (const quiz of quizzes) {
         injectCss(quiz.css);
       }
       setQuizList(quizzes);
     });
-  }, [courseId, currentTerm]);
+  }, [courseId, currentTerm, institutionId]);
 
   useEffect(() => {
     if (!courseId || !currentTerm) return;
@@ -215,7 +205,7 @@ const QuizDashPage: NextPage = () => {
 
   if (!router.isReady || !courses) return <CircularProgress />;
 
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   const notes = courseInfo?.notes;
 
   if (!courseInfo) return <CourseNotFound />;

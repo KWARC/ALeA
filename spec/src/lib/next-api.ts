@@ -83,10 +83,11 @@ const BASE_SLIDES_DATA_URL = '';
 
 export async function getSlides(
   courseId: string,
-  sectionId: string
+  sectionId: string,
+  institutionId?: string
 ): Promise<{ slides: Slide[]; css: FTML.Css[] }> {
   const response = await axios.get<GetSlidesResponse>(`${BASE_SLIDES_DATA_URL}/api/get-slides`, {
-    params: { courseId, sectionIds: sectionId },
+    params: { courseId, sectionIds: sectionId, institutionId },
   });
   const sectionData = response.data[sectionId];
   return {
@@ -95,16 +96,16 @@ export async function getSlides(
   };
 }
 
-export async function getSlideCounts(courseId: string) {
+export async function getSlideCounts(courseId: string, institutionId?: string) {
   const response = await axios.get(`${BASE_SLIDES_DATA_URL}/api/get-slide-counts`, {
-    params: { courseId },
+    params: { courseId, institutionId },
   });
   return response.data as { [sectionId: string]: number };
 }
 
-export async function getSlideUriToIndexMapping(courseId: string) {
+export async function getSlideUriToIndexMapping(courseId: string, institutionId?: string) {
   const response = await axios.get(`${BASE_SLIDES_DATA_URL}/api/get-slide-uri-to-index-mapping`, {
-    params: { courseId },
+    params: { courseId, institutionId },
   });
   return response.data as { [sectionId: string]: { [slideUri: string]: number } };
 }

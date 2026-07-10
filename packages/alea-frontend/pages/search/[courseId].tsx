@@ -3,12 +3,17 @@ import { useRouter } from 'next/router';
 import SearchCourseNotes from '../../components/SearchCourseNotes';
 import MainLayout from '../../layouts/MainLayout';
 import { getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../utils/courseHelper';
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 
 const SearchPage: NextPage = () => {
   const router = useRouter();
-  const { query, courseId } = router.query as { query?: string; courseId?: string };
+  const { query, courseId, institutionId } = router.query as {
+    query?: string;
+    courseId?: string;
+    institutionId?: string;
+  };
 
   const [notesUri, setNotesUri] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
@@ -20,7 +25,8 @@ const SearchPage: NextPage = () => {
       setLoading(true);
       try {
         const courses = await getAllCourses();
-        setNotesUri(courses?.[courseId]?.notes);
+        const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+        setNotesUri(courseInfo?.notes);
       } catch (err) {
         console.error('Failed to load course notes', err);
         setNotesUri(undefined);
@@ -30,7 +36,7 @@ const SearchPage: NextPage = () => {
     };
 
     loadNotesUri();
-  }, [courseId]);
+  }, [courseId, institutionId]);
   return (
     <MainLayout title="Search">
       {courseId && loading && (
@@ -51,7 +57,9 @@ const SearchPage: NextPage = () => {
       )}
 
       {courseId && !loading && !notesUri && (
-        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>Course notes not found</Box>
+        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+          Course notes not found
+        </Box>
       )}
     </MainLayout>
   );

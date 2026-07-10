@@ -1,3 +1,4 @@
+import { getCourseById } from '../../../utils/courseHelper';
 import { useEffect, useState } from 'react';
 import { CircularProgress, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { Close } from '@mui/icons-material';
@@ -15,12 +16,14 @@ export const GoalQuizDialog = ({
   goalText,
   courseId,
   userInfo,
+  institutionId,
 }: {
   open: boolean;
   onClose: () => void;
   goalText: string | null;
   courseId: string;
   userInfo: UserInfo | undefined;
+  institutionId?: string;
 }) => {
   const [courses, setCourses] = useState<{ [courseId: string]: CourseInfo }>({});
   const [sections, setSections] = useState<SecInfo[]>([]);
@@ -30,13 +33,13 @@ export const GoalQuizDialog = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+    getAllCourses(institutionId).then(setCourses);
+  }, [institutionId]);
 
   useEffect(() => {
     const getSections = async () => {
       if (!courseId) return;
-      const courseInfo = courses?.[courseId as string];
+      const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
       if (!courseInfo?.notes) return;
       setLoadingSections(true);
       try {

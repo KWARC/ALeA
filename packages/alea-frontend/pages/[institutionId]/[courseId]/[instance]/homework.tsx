@@ -2,6 +2,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import { canAccessResource, getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
 import { useCurrentUser } from '@alea/react-utils';
 import type { NextPage } from 'next';
@@ -18,14 +19,8 @@ import MainLayout from '../../../../layouts/MainLayout';
 
 const HomeworkPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('homework');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('homework');
 
   const currentTerm = resolvedInstanceId;
   const { homework: t, home: tHome, quiz: q } = getLocaleObject(router);
@@ -74,7 +69,7 @@ const HomeworkPage: NextPage = () => {
 
   if (!router.isReady || !courses) return <CircularProgress />;
 
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   if (!courseInfo) return <CourseNotFound />;
 
   if (forceFauLogin) {

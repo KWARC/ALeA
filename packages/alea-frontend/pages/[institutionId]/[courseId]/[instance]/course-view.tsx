@@ -7,10 +7,11 @@ import {
   getSlideCounts,
   getSlideDetails,
   getSlideUriToIndexMapping,
+  SlidesClipInfo,
   SectionInfo,
   Slide,
-  SlidesClipInfo,
 } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { CommentNoteToggleView } from '@alea/comments';
 import { SafeHtml } from '@alea/react-utils';
 import {
@@ -341,18 +342,19 @@ const CourseViewPage: NextPage = () => {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const notes = courses?.[courseId]?.notes;
+    const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+    const notes = courseInfo?.notes;
     if (!notes) return;
     contentToc({ uri: notes }).then(([css, _, toc] = [[], { type: 'Part' }, []]) => {
       setToc(toc);
       setCourseSections(getSections(toc));
       injectCss(css);
     });
-    getSlideCounts(courseId).then(setSlideCounts);
-    getSlideUriToIndexMapping(courseId).then((map) => {
+    getSlideCounts(courseId, institutionId).then(setSlideCounts);
+    getSlideUriToIndexMapping(courseId, institutionId).then((map) => {
       setSlidesUriToIndexMap(map);
     });
-  }, [router.isReady, courses, courseId]);
+  }, [router.isReady, courses, courseId, institutionId]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -396,7 +398,7 @@ const CourseViewPage: NextPage = () => {
 
   useEffect(() => {
     if (!router.isReady || !courseId?.length) return;
-    axios.get(`/api/get-section-info/${courseId}`).then((r) => {
+    axios.get(`/api/get-section-info/${courseId}${institutionId ? `?institutionId=${institutionId}` : ''}`).then((r) => {
       const clipIds = {};
       populateClipIds(r.data, clipIds);
       setClipIds(clipIds);
@@ -532,10 +534,11 @@ const CourseViewPage: NextPage = () => {
     );
   }
 
-  if (!courses[courseId]) {
+  const courseInfo = getCourseById(courses, courseId, institutionId);
+  if (!courseInfo) {
     return <CourseNotFound />;
   }
-  const notes = courses?.[courseId]?.notes;
+  const notes = courseInfo?.notes;
 
   const onClipChange = (clip: any) => {
     setCurrentClipId(clip.video_id);
@@ -715,6 +718,7 @@ const CourseViewPage: NextPage = () => {
                       router.replace(router);
                     }}
                     onResolutionChange={(res) => setResolution(res)}
+                    institutionId={institutionId}
                   />
                 </Stack>
 

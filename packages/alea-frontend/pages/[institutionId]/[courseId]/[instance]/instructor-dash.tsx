@@ -1,5 +1,6 @@
 import { Box, CircularProgress, Tab, Tabs } from '@mui/material';
 import { canAccessResource, getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { updateRouterQuery } from '@alea/react-utils';
 import { Action, CourseInfo, ResourceName } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -93,7 +94,13 @@ function ChosenTab({
     case 'cheatsheet':
       return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
     case 'syllabus':
-      return <CoverageUpdateTab courseId={courseId} instanceId={instanceId} />;
+      return (
+        <CoverageUpdateTab
+          courseId={courseId}
+          instanceId={instanceId}
+          institutionId={institutionId}
+        />
+      );
     case 'course-metadata':
       return (
         <CourseMetadata courseId={courseId} instanceId={instanceId} universityId={institutionId} />
@@ -235,7 +242,7 @@ const InstructorDashPage: NextPage = () => {
   }
   if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
 
-  const courseInfo = courses?.[courseId];
+  const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
   if (!accessibleTabs) return <CircularProgress />;
   if (!courseInfo) return <CourseNotFound />;
 

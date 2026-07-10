@@ -105,18 +105,22 @@ export default function StudentWelcomeScreen({
               mb: 8,
             }}
           >
-            {enrolledCourses.map((course) => (
-              <CourseDashboardCard
-                key={course.courseId}
-                courseId={course.courseId}
-                courseName={course.courseName}
-                courseInfo={course}
-                data={courseData[course.courseId]}
-                isLoading={loading}
-                institutionId={DEFAULT_INSTITUTION}
-                instance={currentTerm ?? 'latest'}
-              />
-            ))}
+            {enrolledCourseIds.map((compositeId) => {
+              const course = allCourses[compositeId];
+              if (!course) return null;
+              return (
+                <CourseDashboardCard
+                  key={compositeId}
+                  courseId={course.courseId}
+                  courseName={course.courseName}
+                  courseInfo={course}
+                  data={courseData[compositeId]}
+                  isLoading={loading}
+                  institutionId={course.universityId ?? DEFAULT_INSTITUTION}
+                  instance={currentTerm ?? 'latest'}
+                />
+              );
+            })}
           </Box>
         )}
 

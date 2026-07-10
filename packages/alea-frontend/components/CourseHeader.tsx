@@ -19,10 +19,11 @@ export function CourseHeader({
 }) {
   const theme = useTheme();
   if (!courseName || !courseId) return <></>;
-  const courseHomeLink =
-    institutionId && instanceId
+  const courseHomeLink = institutionId
+    ? instanceId
       ? `/${institutionId}/${courseId}/${instanceId}`
-      : `/course-home/${courseId}`;
+      : `/${institutionId}/${courseId}`
+    : `/course-home/${courseId}`;
   if (!imageLink) {
     return (
       <Box m={2.5} textAlign="center" fontWeight="bold" fontSize={32}>
