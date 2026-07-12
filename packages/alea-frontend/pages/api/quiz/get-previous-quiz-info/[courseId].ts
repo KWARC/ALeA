@@ -11,8 +11,6 @@ import { getCurrentTermForCourseId } from '../../get-current-term';
 import { queryGradingDbAndEndSet500OnError } from '../../grading-db-utils';
 import { getAllQuizzes } from '../quiz-utils';
 
-const USER_TO_QUIZ_SCORES_CACHE = new Map<string, { [quizId: string]: number }>();
-
 // Quiz Id to (cacheTimestampMs, avgScore)
 const QUIZ_AVG_SCORES_CACHE = new Map<string, { cacheTimestampMs: number; avgScore: number }>();
 
@@ -20,29 +18,26 @@ async function getUserScoresOrSet500Error(
   userId: string,
   res: NextApiResponse
 ): Promise<{ [quizId: string]: number } | undefined> {
-  if (USER_TO_QUIZ_SCORES_CACHE.size === 0) {
-    const result: Array<any> = await queryGradingDbAndEndSet500OnError(
-      `SELECT userId, quizId, sum(points) as score
-      FROM grading
-      WHERE (quizId, userId, problemId, browserTimestamp_ms) IN (
-          SELECT quizId, userId,problemId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
+  const result: Array<any> = await queryGradingDbAndEndSet500OnError(
+    `SELECT g.quizId, SUM(g.points) as score
+      FROM grading g
+      WHERE g.userId = ?
+      AND (g.quizId, g.userId, g.problemId, g.browserTimestamp_ms) IN (
+          SELECT quizId, userId, problemId, MAX(browserTimestamp_ms) AS browserTimestamp_ms
           FROM grading
-          GROUP BY quizId, userId,problemId
+            WHERE userId = ?
+          GROUP BY quizId, userId, problemId
       )
-      GROUP BY userId,quizId;`,
-      [],
-      res
-    );
-    if (!result) return;
-    result.forEach((quiz) => {
-      const score = quiz['score'];
-      const quizId = quiz['quizId'];
-      const userId = quiz['userId'];
-      if (!USER_TO_QUIZ_SCORES_CACHE.has(userId)) USER_TO_QUIZ_SCORES_CACHE.set(userId, {});
-      USER_TO_QUIZ_SCORES_CACHE.get(userId)[quizId] = score;
-    });
-  }
-  return USER_TO_QUIZ_SCORES_CACHE.get(userId) ?? {};
+      GROUP BY g.quizId;`,
+    [userId, userId],
+    res
+  );
+  if (!result) return;
+  const userScores: { [quizId: string]: number } = {};
+  result.forEach((quiz) => {
+    userScores[quiz['quizId']] = quiz['score'];
+  });
+  return userScores;
 }
 
 async function getQuizAveragesOrSet500Error(
@@ -101,9 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const courseId = req.query.courseId as string;
   let instanceId = req.query.instanceId as string;
   if (!instanceId) instanceId = await getCurrentTermForCourseId(courseId);
-  const userScores = {}; // await getUserScoresOrSet500Error(userId, res); Disable to avoid performance issues
+  const userScores = await getUserScoresOrSet500Error(userId, res); // Disable to avoid performance issues
   if (!userScores) return;
-
   const relevantQuizzes = getAllQuizzes()
     .filter((q) => q.courseId === courseId && q.courseTerm === instanceId)
     .filter((q) => getQuizPhase(q) === Phase.FEEDBACK_RELEASED);
@@ -130,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const quizId = quiz.id;
     quizInfo[quizId] = {
-      score: userScores[quizId],
+      score: userScores[quizId] ?? 0,
       averageScore: quizAverages.get(quizId),
       maxPoints,
       recorrectionInfo,

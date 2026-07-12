@@ -28,3 +28,6 @@ SELECT * FROM grading;
 
 -- For optimizing the get-quiz API
 CREATE INDEX idx_grading_optimus ON grading (quizId, userId, problemId, browserTimestamp_ms); 
+
+-- For optimizing user-specific score lookups in get-previous-quiz-info
+CREATE INDEX idx_grading_user_quiz_problem_time ON grading(userId, quizId, problemId, browserTimestamp_ms);
