@@ -133,7 +133,7 @@ const MyNotesPage: NextPage = () => {
               mb={4}
               letterSpacing="-0.02em"
             >
-              {selectedCourse === 'all' ? 'All Notes' : `${selectedCourse.toUpperCase()} $Notes`}
+              {selectedCourse === 'all' ? 'All Notes' : `${selectedCourse.toUpperCase()} Notes`}
             </Typography>
             <Box mb={5} display="flex" flexDirection="column" gap={2}>
               <TextField
