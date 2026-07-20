@@ -36,7 +36,15 @@ export function useVideoPlayer({
       if (!currentPlayer) return;
       const activeTag = document.activeElement?.tagName;
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
-      if (e.key === 'ArrowLeft') {
+      if (e.code === 'Space') {
+        e.preventDefault();
+
+        if (currentPlayer.paused()) {
+          currentPlayer.play();
+        } else {
+          currentPlayer.pause();
+        }
+      } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         currentPlayer.currentTime(Math.max(0, currentPlayer.currentTime() - 10));
       } else if (e.key === 'ArrowRight') {
