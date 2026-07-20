@@ -285,6 +285,7 @@ export function QuizDisplay({
   const { quiz: t } = getLocaleObject(router);
   const [points, setPoints] = useState<{ [problemId: string]: number }>({});
   const [responses, setResponses] = useState<Record<string, FTML.ProblemResponse | undefined>>({});
+  const responsesRef = useRef<Record<string, FTML.ProblemResponse | undefined>>({});
   const [problemIdx, setProblemIdx] = useState(initialProblemIdx);
   const [showDashboard, setShowDashboard] = useState(!shouldUseDrawer());
   const [events, setEvents] = useState<TimerEvent[]>([]);
@@ -313,14 +314,16 @@ export function QuizDisplay({
       const e = existingResponses[problemId];
       rs[problemId] = e;
     }
+    responsesRef.current = rs;
     setResponses(rs);
     unsavedAnswerIdsRef.current = {};
   }, [problems, existingResponses]);
 
   useEffect(() => {
     if (!isFrozen) return;
-    setPoints(computeResult(problems, responses));
-  }, [isFrozen, problems, responses]);
+    setResponses(responsesRef.current);
+    setPoints(computeResult(problems, responsesRef.current));
+  }, [isFrozen, problems]);
 
   useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent) {
@@ -367,6 +370,7 @@ export function QuizDisplay({
   }
 
   function navigateToProblem(i: number) {
+    setResponses(responsesRef.current);
     setProblemIdx(i);
     if (isFrozen) return;
     setEvents((prev) => [...prev, timerEvent(TimerEventType.SWITCH, i)]);
@@ -481,7 +485,7 @@ export function QuizDisplay({
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               const problemId = problemIds[problemIdx];
-              setResponses((prev) => ({ ...prev, [problemId]: response }));
+              responsesRef.current = { ...responsesRef.current, [problemId]: response };
               onResponse?.(problemId, response);
             }}
             onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
@@ -523,12 +527,12 @@ export function QuizDisplay({
       {!!onSubmit && (
         <Dialog open={showSubmitDialog} onClose={() => setShowSubmitDialog(false)}>
           <QuizSubmitConfirm
-            left={Object.values(responses).filter((r) => !numInputsResponded(r)).length}
+            left={Object.values(responsesRef.current).filter((r) => !numInputsResponded(r)).length}
             onClose={(submit) => {
               setShowSubmitDialog(false);
               if (!submit) return;
 
-              onSubmit(events, responses, points);
+              onSubmit(events, responsesRef.current, computeResult(problems, responsesRef.current));
               setEvents((prev) => [...prev, timerEvent(TimerEventType.SUBMIT)]);
             }}
           />
