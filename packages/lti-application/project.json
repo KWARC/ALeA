@@ -1,0 +1,44 @@
+{
+  "name": "lti-application",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/lti-application",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/packages/lti-application"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "packages/lti-application"
+        },
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "lti-application:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "lti-application:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "lti-application:build:production",
+          "dev": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
