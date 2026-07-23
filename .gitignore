@@ -61,3 +61,6 @@ vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
 packages/alea-frontend/next-env.d.ts
+packages/lti-application/keys/*.pem
+packages/lti-application/keys/*.key
+packages/lti-application/tsconfig.tsbuildinfo
