@@ -9,6 +9,7 @@ import {
   isUserMember,
   isValid,
   recomputeMemberships,
+  ResourceAction,
   UpdateResourceAction,
   updateResourceAction,
 } from '@alea/spec';
@@ -18,6 +19,7 @@ import {
   ComponentType,
   CourseInfo,
   CURRENT_TERM,
+  getResourceId,
   RESOURCE_TYPE_MAP,
   ResourceIdComponent,
   ResourceName,
@@ -64,7 +66,7 @@ const SysAdmin: NextPage = () => {
   const [actionId, setActionId] = useState<Action | ''>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState('');
-  const [resourceActions, setResourceActions] = useState([]);
+  const [resourceActions, setResourceActions] = useState<ResourceAction[]>([]);
   const [isRecomputing, setIsRecomputing] = useState<boolean>(false);
   const [editing, setEditing] = useState<UpdateResourceAction | null>(null);
   const [newAclId, setNewAclId] = useState<string | null>('');
@@ -75,6 +77,7 @@ const SysAdmin: NextPage = () => {
   } | null>(null);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo }>({});
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string>(CURRENT_TERM);
   const [monitor, setMonitor] = useState<
     Record<
       string,
@@ -86,6 +89,30 @@ const SysAdmin: NextPage = () => {
   >({});
   const [isAuthorizedForSystemAlert, setIsAuthorizedForSystemAlert] = useState(false);
 
+  const selectedCourseKey = selectedCourseId ? `${selectedCourseId}::${selectedInstanceId}` : '';
+  const quickSetupCourseOptions = Object.entries(courses).flatMap(([courseId, courseInfo]) => {
+    const instances =
+      courseInfo.instances?.length ? courseInfo.instances : [{ semester: CURRENT_TERM }];
+
+    return instances
+      .filter(({ semester }) => semester !== 'legacy')
+      .map(({ semester }) => ({ courseId, courseInfo, instanceId: semester }));
+  });
+  const coursesMissingAccessControl = quickSetupCourseOptions.filter(
+    ({ courseId, instanceId }) => {
+      const courseAccessResourceId = getResourceId(ResourceName.COURSE_ACCESS, {
+        courseId,
+        instanceId,
+      });
+      const instructorAclId = `${courseId}-${instanceId}-instructors`;
+      return !resourceActions.some(
+        (resourceAction) =>
+          resourceAction.aclId === instructorAclId &&
+          resourceAction.resourceId === courseAccessResourceId &&
+          resourceAction.actionId === Action.ACCESS_CONTROL
+      );
+    }
+  );
   async function getAllResources() {
     try {
       const data = await getAllResourceActions();
@@ -94,20 +121,10 @@ const SysAdmin: NextPage = () => {
       console.error(e);
     }
   }
-  async function loadCurrentSemCourses() {
+  async function loadCourses() {
     try {
       const courseData = await getAllCourses();
-      const filteredCourses = Object.entries(courseData).reduce(
-        (acc, [courseId, courseInfo]: [string, CourseInfo]) => {
-          if (courseInfo.isCurrent) {
-            acc[courseId] = courseInfo;
-          }
-          return acc;
-        },
-        {} as { [id: string]: CourseInfo }
-      );
-
-      setCourses(filteredCourses);
+      setCourses(courseData);
     } catch (e) {
       console.error(e);
     }
@@ -118,7 +135,7 @@ const SysAdmin: NextPage = () => {
       if (!isSysAdmin) router.push('/');
     });
     getAllResources();
-    loadCurrentSemCourses();
+    loadCourses();
   }, []);
 
   useEffect(() => {
@@ -132,20 +149,41 @@ const SysAdmin: NextPage = () => {
   }, [resourceType]);
 
   useEffect(() => {
-    if (selectedCourseId && resourceType === ResourceName.COURSE_ACCESS) {
+    if (selectedCourseId && selectedInstanceId && resourceType === ResourceName.COURSE_ACCESS) {
       setResourceComponents((prevComponents) => {
         return prevComponents.map((component) => {
           if (component.name === 'courseId') {
             return { ...component, value: selectedCourseId };
           }
+          if (component.name === 'instanceId') {
+            return { ...component, value: selectedInstanceId };
+          }
           return component;
         });
       });
 
-      const aclId = `${selectedCourseId}-${CURRENT_TERM}-instructors`;
+      const aclId = `${selectedCourseId}-${selectedInstanceId}-instructors`;
       setAclId(aclId);
     }
-  }, [selectedCourseId, resourceType]);
+  }, [selectedCourseId, selectedInstanceId, resourceType]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const queryCourseId = Array.isArray(router.query.courseId)
+      ? router.query.courseId[0]
+      : router.query.courseId;
+    const queryInstanceId = Array.isArray(router.query.instanceId)
+      ? router.query.instanceId[0]
+      : router.query.instanceId;
+
+    if (!queryCourseId) return;
+
+    setSelectedCourseId(queryCourseId);
+    setSelectedInstanceId(queryInstanceId || CURRENT_TERM);
+    setResourceType(ResourceName.COURSE_ACCESS);
+    setActionId(Action.ACCESS_CONTROL);
+  }, [router.isReady, router.query.courseId, router.query.instanceId]);
 
   async function handleRecomputeClick() {
     try {
@@ -174,18 +212,21 @@ const SysAdmin: NextPage = () => {
       setResourceId(id);
 
       setIsSubmitting(true);
-      await createResourceAction({ aclId, resourceId, actionId });
+      await createResourceAction({ aclId, resourceId: id, actionId });
+      const now = new Date().toISOString();
       setResourceActions((prev) => [
         ...prev,
         {
           aclId,
-          resourceId,
+          resourceId: id,
           actionId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: now,
+          updatedAt: now,
         },
       ]);
       setAclId('');
+      setSelectedCourseId('');
+      setSelectedInstanceId(CURRENT_TERM);
       setResourceType('');
       setActionId('');
       setError('');
@@ -277,8 +318,10 @@ const SysAdmin: NextPage = () => {
   const handleActionClick = (actionId: Action) => {
     setActionId(actionId);
   };
-  const handleCourseSelection = (courseId: string) => {
+  const handleCourseSelection = (courseKey: string) => {
+    const [courseId, instanceId = CURRENT_TERM] = courseKey.split('::');
     setSelectedCourseId(courseId);
+    setSelectedInstanceId(instanceId);
     if (courseId) {
       setResourceType(ResourceName.COURSE_ACCESS);
       setActionId(Action.ACCESS_CONTROL);
@@ -448,7 +491,7 @@ const SysAdmin: NextPage = () => {
           </Typography>
           <Select
             fullWidth
-            value={selectedCourseId}
+            value={selectedCourseKey}
             onChange={(e) => handleCourseSelection(e.target.value)}
             displayEmpty
             variant="outlined"
@@ -458,9 +501,9 @@ const SysAdmin: NextPage = () => {
             <MenuItem value="">
               <em>Select a Course (Auto-fills course access forms)</em>
             </MenuItem>
-            {Object.entries(courses).map(([courseId, courseInfo]) => (
-              <MenuItem key={courseId} value={courseId}>
-                {courseId} - {courseInfo.courseName}
+            {coursesMissingAccessControl.map(({ courseId, courseInfo, instanceId }) => (
+              <MenuItem key={`${courseId}-${instanceId}`} value={`${courseId}::${instanceId}`}>
+                {courseId} - {courseInfo.courseName} ({instanceId})
               </MenuItem>
             ))}
           </Select>
@@ -476,7 +519,7 @@ const SysAdmin: NextPage = () => {
               }}
             >
               <Typography fontSize={14} fontWeight="bold" color="primary" mb="10px">
-                Course Access Setup for: <strong>{selectedCourseId}</strong>
+                Course Access Setup for: <strong>{selectedCourseId}</strong> ({selectedInstanceId})
               </Typography>
               <Typography fontSize={13} color="text.secondary" mb="15px">
                 Course access form is auto-filled when you select a course above.

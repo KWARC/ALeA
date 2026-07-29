@@ -25,6 +25,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import AclDisplay from '../AclDisplay';
 import {
@@ -35,6 +36,7 @@ import {
   createNewCourse,
   getInstructorResourceActions,
   getCourseInfoMetadata,
+  isUserMember,
 } from '@alea/spec';
 import { ResourceName, Action, getResourceId } from '@alea/utils';
 
@@ -58,6 +60,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [selectedCourseToAdd, setSelectedCourseToAdd] = useState('');
   const [newCourseDialogOpen, setNewCourseDialogOpen] = useState(false);
   const [newCourseId, setNewCourseId] = useState('');
+  const [isSysAdmin, setIsSysAdmin] = useState(false);
   const [notesConfirmationCourseId, setNotesConfirmationCourseId] = useState<string | null>(null);
   const [confirmationCourseIdInput, setConfirmationCourseIdInput] = useState('');
   const [snackbar, setSnackbar] = useState<{
@@ -77,6 +80,12 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     fetchCoursesAndAcls();
     fetchAvailableCourses();
   }, [semester, universityId]);
+
+  useEffect(() => {
+    isUserMember('sys-admin')
+      .then(setIsSysAdmin)
+      .catch(() => setIsSysAdmin(false));
+  }, []);
 
   const fetchCoursesAndAcls = async () => {
     if (!semester || !universityId) return;
@@ -386,7 +395,33 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 >
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography component="span">{courseId}</Typography>
+                      {isSysAdmin ? (
+                        <Tooltip
+                          title="Click the Course ID to approve this course in Sys Admin."
+                          arrow
+                        >
+                          <Link
+                            href={{
+                              pathname: '/sys-admin',
+                              query: { courseId, instanceId: semester },
+                            }}
+                            style={{ color: 'inherit', textDecoration: 'none' }}
+                          >
+                            <Typography
+                              component="span"
+                              sx={{
+                                color: 'primary.main',
+                                cursor: 'pointer',
+                                '&:hover': { textDecoration: 'underline' },
+                              }}
+                            >
+                              {courseId}
+                            </Typography>
+                          </Link>
+                        </Tooltip>
+                      ) : (
+                        <Typography component="span">{courseId}</Typography>
+                      )}
                       {courseAccessControl[courseId] === false && (
                         <Tooltip title={`Approve this course: ${courseId}`} arrow>
                           <InfoIcon
