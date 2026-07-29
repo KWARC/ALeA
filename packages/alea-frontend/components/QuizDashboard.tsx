@@ -288,7 +288,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
       }
     }
     loadTimezone();
-  }, [courseId]);
+  }, [courseId, institutionId]);
 
   useEffect(() => {
     async function loadLectureSchedule() {
@@ -599,6 +599,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
                 courseId: courseId || '',
                 startSectionUri: upcomingQuizSyllabus.startSecUri,
                 endSectionUri: upcomingQuizSyllabus.endSecUri,
+                institutionId: institutionId || '',
               },
             })
           }

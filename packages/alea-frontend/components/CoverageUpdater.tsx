@@ -25,6 +25,7 @@ import { NoMaxWidthTooltip } from '@alea/stex-react-renderer';
 import { getAllCourses, getLectureEntry, getFauSeriesClips, FauClip } from '@alea/spec';
 import { UniversityDetail } from '@alea/utils';
 import { useQuery } from '@tanstack/react-query';
+import { getCourseById } from '../utils/courseHelper';
 
 export function getSectionNameForUri(
   uri: string,
@@ -73,6 +74,7 @@ function convertSnapToEntry(snap: LectureEntry): FormData {
 interface CoverageUpdaterProps {
   courseId: string;
   instanceId: string;
+  institutionId: string;
   snaps: LectureEntry[];
   notCoveredSections?: string[];
   secInfo: Record<FTML.DocumentUri, SecInfo>;
@@ -84,6 +86,7 @@ interface CoverageUpdaterProps {
 export function CoverageUpdater({
   courseId,
   instanceId,
+  institutionId,
   snaps,
   notCoveredSections: initialNotCoveredSections,
   secInfo,
@@ -137,7 +140,8 @@ export function CoverageUpdater({
     async function loadTimezone() {
       try {
         const courses = await getAllCourses();
-        const universityId = courses?.[courseId]?.universityId;
+        const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+        const universityId = courseInfo?.universityId;
         if (universityId && UniversityDetail[universityId]) {
           setTimezone(UniversityDetail[universityId].defaultTimezone);
         } else {
@@ -148,7 +152,7 @@ export function CoverageUpdater({
       }
     }
     loadTimezone();
-  }, [courseId]);
+  }, [courseId, institutionId]);
 
   useEffect(() => {
     if (!courseId || !instanceId) return;
@@ -164,7 +168,6 @@ export function CoverageUpdater({
     };
     fetchSeriesId();
   }, [courseId, instanceId]);
-
 
   useEffect(() => {
     if (!seriesId || clips.length === 0) return;

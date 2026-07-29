@@ -8,6 +8,7 @@ import {
   insertQuizResponse,
   Phase,
 } from '@alea/spec';
+import { getCourseById } from '../../utils/courseHelper';
 import { QuizDisplay } from '@alea/stex-react-renderer';
 import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
 import { injectCss } from '@flexiformal/ftml';
@@ -196,7 +197,7 @@ const QuizPage: NextPage = () => {
     getAllCourses().then(setAllCourses);
   }, []);
 
-  const notesUri = allCourses?.[courseId]?.notes;
+  const notesUri = allCourses ? getCourseById(allCourses, courseId)?.notes : undefined;
 
   if (!quizId) return null;
   if (forceFauLogin) {

@@ -5,6 +5,7 @@ import { getCoverageData } from '../get-coverage-timeline';
 import { getAuthorizedCourseResources } from '../get-resources-for-user';
 import { executeQuery } from '../comment-utils';
 import { getAllCoursesFromDb } from '../get-all-courses';
+import { getCourseById } from '../../../utils/courseHelper';
 import { getCurrentTermForCourseId } from '../get-current-term';
 interface SemesterInfo {
   semesterStart: string;
@@ -128,8 +129,8 @@ async function generateSemesterAndHolidayEvents(
   });
 
   try {
-      const parsed = semesterInfo.holidays;
-      const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
+    const parsed = semesterInfo.holidays;
+    const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as any)?.holidays)
       ? (parsed as any).holidays
@@ -196,7 +197,7 @@ async function getUserEvents(
     const firstCourseId = Array.from(accessibleCourseIds)[0];
     try {
       const courses = await getAllCoursesFromDb();
-      const courseInfo = courses[firstCourseId];
+      const courseInfo = getCourseById(courses, firstCourseId);
       if (courseInfo?.universityId) {
         universityId = courseInfo.universityId;
         instanceId = await getCurrentTermForCourseId(firstCourseId);

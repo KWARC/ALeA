@@ -24,6 +24,7 @@ import {
   StudyBuddy,
   updateStudyBuddyInfo,
 } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import type { NextPage } from 'next';
 import { useTheme } from '@mui/material/styles';
 import { MaAI_COURSES } from '@alea/utils';
@@ -32,7 +33,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import { StudyBuddyForm } from '../../../../components/StudyBuddyForm';
-import { StudyBuddyListing, StudyBuddyListingTable } from '../../../../components/StudyBuddyListingTable';
+import {
+  StudyBuddyListing,
+  StudyBuddyListingTable,
+} from '../../../../components/StudyBuddyListingTable';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { useAllCourses } from '../../../../hooks/useAllCourses';
 import { useIsLoggedIn } from '@alea/react-utils';
@@ -70,14 +74,8 @@ function OptOutButton({
 const StudyBuddyPage: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('study-buddy');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('study-buddy');
 
   const instanceId = resolvedInstanceId;
   const { studyBuddy: t } = getLocaleObject(router);
@@ -107,7 +105,7 @@ const StudyBuddyPage: NextPage = () => {
   }, [courseId, fromServer?.active, institutionId, instanceId]);
 
   const { loggedIn } = useIsLoggedIn();
-  const { data: courses = {} ,isLoading:courseLoading} = useAllCourses();
+  const { data: courses = {}, isLoading: courseLoading } = useAllCourses();
 
   useEffect(() => {
     refetchStudyBuddyLists();
@@ -137,7 +135,7 @@ const StudyBuddyPage: NextPage = () => {
 
   if (!router.isReady || courseLoading) return <CircularProgress />;
 
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   const courseName = courseInfo?.courseName || masterCourses[courseId]?.courseName;
   if (!courseName) return <CourseNotFound />;
 
@@ -166,9 +164,14 @@ const StudyBuddyPage: NextPage = () => {
               <CardContent>
                 <Typography variant="h5">{t.fillForm}</Typography>
                 <br />
-                <StudyBuddyForm studyBuddy={userInput} onUpdate={(studyBuddy) => setUserInput(studyBuddy)} />
+                <StudyBuddyForm
+                  studyBuddy={userInput}
+                  onUpdate={(studyBuddy) => setUserInput(studyBuddy)}
+                />
                 <FormControlLabel
-                  control={<Checkbox value={agreed} onChange={(e) => setAgreed(e.target.checked)} />}
+                  control={
+                    <Checkbox value={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+                  }
                   label={t.agreementText}
                 />
               </CardContent>
@@ -265,10 +268,12 @@ const StudyBuddyPage: NextPage = () => {
           actionIcon={<CancelIcon color="warning" />}
           subText={t.requestSentSubtext}
           onAction={(buddy) => {
-            removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
+            removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(
+              async () => {
                 refetchStudyBuddyLists();
                 alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
-            });
+              }
+            );
           }}
         />
         <StudyBuddyListingTable

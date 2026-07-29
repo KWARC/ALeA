@@ -1,5 +1,6 @@
 import { Button, CircularProgress } from '@mui/material';
 import { getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../utils/courseHelper';
 import { DocProblemBrowser } from '@alea/stex-react-renderer';
 import { CourseInfo } from '@alea/utils';
 import type { NextPage } from 'next';
@@ -22,7 +23,7 @@ const CourseProblemsPage: NextPage = () => {
   }, []);
 
   if (!router.isReady || !courses) return <CircularProgress />;
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId);
   if (!courseInfo) {
     router.replace('/');
     return <>Course Not Found!</>;

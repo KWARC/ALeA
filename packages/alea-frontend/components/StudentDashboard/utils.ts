@@ -1,3 +1,4 @@
+import { getCourseById } from '../../utils/courseHelper';
 import type { LectureSchedule, LectureScheduleItem } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
 import { parseTimeString, pathToCheatSheet, toWeekdayIndex } from '@alea/utils';
@@ -130,7 +131,7 @@ export function getAggregatedQuickAccess(
           ts: info.nextLectureTs,
           venue: info.nextLectureVenue,
           venueLink: info.nextLectureVenueLink,
-          livestreamUrl: allCourses[courseId]?.livestreamUrl,
+          livestreamUrl: getCourseById(allCourses, courseId)?.livestreamUrl,
           isOngoing: info.isLectureOngoing,
         },
       };

@@ -12,16 +12,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return;
 
   const courses = await getAllCoursesFromDb();
-  const courseIds = Object.keys(courses);
   const enrolledCourseIds: string[] = [];
 
-  for (const courseId of courseIds) {
+  for (const [compositeKey, course] of Object.entries(courses)) {
     try {
-      const aclId = getCourseEnrollmentAcl(courseId as string, instanceId as string);
+      const aclId = getCourseEnrollmentAcl(course.courseId, instanceId as string);
       const isMember = await isMemberOfAcl(aclId, userId);
-      if (isMember) enrolledCourseIds.push(courseId);
+      if (isMember) enrolledCourseIds.push(compositeKey);
     } catch (error) {
-      console.error(`Error while checking if user is enrolled in course ${courseId}: `, error);
+      console.error(`Error while checking if user is enrolled in course ${course.courseId}: `, error);
       continue;
     }
   }

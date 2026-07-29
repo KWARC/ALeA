@@ -1,3 +1,4 @@
+import { getCourseById } from '../../utils/courseHelper';
 import { updateRouterQuery } from '@alea/react-utils';
 import {
   fetchGeneratedProblems,
@@ -40,6 +41,7 @@ export function getSectionRange(startUri: string, endUri: string, sections: SecI
 }
 export const CourseSectionSelector = ({
   courseId,
+  institutionId,
   sections,
   setSections,
   setExistingProblemUris,
@@ -49,6 +51,7 @@ export const CourseSectionSelector = ({
   setLoading,
 }: {
   courseId: string;
+  institutionId?: string;
   sections: SecInfo[];
   setSections: Dispatch<SetStateAction<SecInfo[]>>;
   setExistingProblemUris: Dispatch<React.SetStateAction<ExistingProblem[]>>;
@@ -78,8 +81,8 @@ export const CourseSectionSelector = ({
   const loadingProblemCount = isCourseProblemCountsLoading || isGeneratedProblemsLoading;
 
   useEffect(() => {
-    getAllCourses().then(setCourses);
-  }, []);
+    getAllCourses(institutionId).then(setCourses);
+  }, [institutionId]);
   useEffect(() => {
     async function fetchCoverageTimeline() {
       const coverageTimeline = await getCoverageTimeline(true);
@@ -92,7 +95,7 @@ export const CourseSectionSelector = ({
   useEffect(() => {
     const getSections = async () => {
       if (!courseId) return;
-      const courseInfo = courses?.[courseId as string];
+      const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
       if (!courseInfo?.notes) return;
       const notesUri = courseInfo.notes;
       setLoadingSections(true);
@@ -451,9 +454,10 @@ export const CourseSectionSelector = ({
           <GoalHierarchyDialog
             open={goalDialogOpen}
             onClose={() => setGoalDialogOpen(false)}
-            courseNotesUri={courses?.[courseId]?.notes}
+            courseNotesUri={getCourseById(courses || {}, courseId, institutionId)?.notes}
             courseId={courseId}
             sectionUri={startSectionUri}
+            institutionId={institutionId}
           />
         </Box>
         <SectionDetailsDialog

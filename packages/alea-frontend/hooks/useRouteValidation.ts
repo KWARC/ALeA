@@ -3,6 +3,7 @@ import type { CourseInfo } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCurrentTermContext } from '../contexts/CurrentTermContext';
+import { getCourseById } from '../utils/courseHelper';
 
 export interface RouteValidationResult {
   institutionId: string;
@@ -69,10 +70,10 @@ function removeRouteParamsFromQuery(query: Record<string, unknown>) {
 
 function findCourse(
   courses: Record<string, CourseInfo> | undefined,
-  courseId: string
+  courseId: string,
+  institutionId = 'FAU'
 ): CourseInfo | undefined {
-  if (!courses || !courseId) return undefined;
-  return courses[courseId] ?? courses[courseId.toLowerCase()];
+  return getCourseById(courses || {}, courseId, institutionId);
 }
 
 export function useRouteValidation(routePath: string): RouteValidationResult {
@@ -126,7 +127,7 @@ export function useRouteValidation(routePath: string): RouteValidationResult {
     setIsValidating(true);
     setValidationError(null);
 
-    const course = findCourse(courses, courseId);
+    const course = findCourse(courses, courseId, institutionId);
     if (!course) {
       setValidationError('Invalid courseId');
       setIsValidating(false);

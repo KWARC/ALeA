@@ -1,5 +1,6 @@
 import { Box, CircularProgress } from '@mui/material';
 import { getAllCourses } from '@alea/spec';
+import { getCourseById } from '../../../../../utils/courseHelper';
 import { CourseInfo } from '@alea/utils';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -14,14 +15,8 @@ import MainLayout from '../../../../../layouts/MainLayout';
 
 const ForumPage: NextPage = () => {
   const router = useRouter();
-  const {
-    institutionId,
-    courseId,
-    instance,
-    resolvedInstanceId,
-    validationError,
-    isValidating,
-  } = useRouteValidation('forum');
+  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
+    useRouteValidation('forum');
 
   const raw = router?.query?.threadId;
   const threadId = +(Array.isArray(raw) ? raw[0] : raw ?? 0);
@@ -48,7 +43,7 @@ const ForumPage: NextPage = () => {
 
   if (!router.isReady || !courses) return <CircularProgress />;
 
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   if (!courseInfo) return <CourseNotFound />;
 
   return (

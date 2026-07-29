@@ -20,7 +20,8 @@ function getValidActionsForResource(resourceName: ResourceName): Action[] {
 }
 
 export async function getAuthorizedCourseResources(userId: string) {
-  const courseIds = Object.keys(await getAllCoursesFromDb());
+  const courses = await getAllCoursesFromDb();
+  const courseIds = Array.from(new Set(Object.values(courses).map(c => c.courseId)));
   const resourceNames = COURSE_SPECIFIC_RESOURCENAMES;
 
   const resourceActions: CourseResourceAction[] = courseIds.flatMap((courseId) =>

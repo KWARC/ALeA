@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export function useAllCourses(universityId?: string) {
   return useQuery<Record<string, CourseInfo>>({
-    queryKey: ['all-courses', universityId ?? 'FAU'],
+    queryKey: ['all-courses', universityId ?? 'all'],
     queryFn: () => getAllCourses(universityId),
     staleTime: Infinity,
   });

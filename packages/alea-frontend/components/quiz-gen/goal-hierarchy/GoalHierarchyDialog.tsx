@@ -94,6 +94,7 @@ interface GoalHierarchyDialogProps {
   courseNotesUri: string;
   courseId: string;
   sectionUri: string;
+  institutionId?: string;
 }
 
 export default function GoalHierarchyDialog({
@@ -102,6 +103,7 @@ export default function GoalHierarchyDialog({
   courseNotesUri,
   courseId,
   sectionUri,
+  institutionId,
 }: GoalHierarchyDialogProps) {
   const [loading, setLoading] = useState(false);
   const [direction, setDirection] = useState<'BT' | 'LR'>('BT');
@@ -371,6 +373,7 @@ WHERE {
                 goalText={selectedGoal}
                 courseId={courseId}
                 userInfo={user}
+                institutionId={institutionId}
               />
               {focusedNodeId && (
                 <Button onClick={() => setFocusedNodeId(null)} variant="outlined" size="small">

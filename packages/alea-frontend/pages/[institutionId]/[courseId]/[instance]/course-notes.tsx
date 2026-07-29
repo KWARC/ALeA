@@ -1,6 +1,7 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
 import { getAllCourses, getCoverageTimeline } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import {
   NOT_COVERED_SECTIONS,
   SafeFTMLDocument,
@@ -161,7 +162,8 @@ const CourseNotesPage: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    const notes = courses?.[courseId ?? '']?.notes;
+    const courseInfo = courses ? getCourseById(courses, courseId, institutionId) : undefined;
+    const notes = courseInfo?.notes;
     if (!notes) return;
     setToc(undefined);
     setTocLoadFailed(false);
@@ -241,7 +243,7 @@ const CourseNotesPage: NextPage = () => {
     return <CircularProgress />;
   }
 
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   if (!courseInfo) {
     return <CourseNotFound />;
   }

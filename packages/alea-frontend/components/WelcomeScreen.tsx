@@ -12,6 +12,7 @@ import {
   QuizStubInfo,
   UserInfo,
 } from '@alea/spec';
+import { getCourseById } from '../utils/courseHelper';
 import {
   Action,
   CourseInfo,
@@ -276,6 +277,7 @@ async function getLastUpdatedHomework(
 
 export async function getLastUpdatedNotes(
   courseId: string,
+  institutionId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
@@ -289,7 +291,8 @@ export async function getLastUpdatedNotes(
 
     if (targetUsed) {
       const allCourses = await getAllCourses();
-      const notesUri = allCourses[courseId]?.notes;
+      const courseInfo = getCourseById(allCourses, courseId, institutionId);
+      const notesUri = courseInfo?.notes;
 
       if (notesUri) {
         const tocResp = await contentToc({ uri: notesUri });
@@ -459,6 +462,7 @@ async function getLastUpdatedDescriptions({
     case ResourceName.COURSE_SYLLABUS:
       ({ description, timeAgo, timestamp, colorInfo } = await getLastUpdatedNotes(
         courseId,
+        institutionId,
         router
       ));
       break;
@@ -571,9 +575,9 @@ function MyCourses({ enrolledCourseIds }) {
       </Typography>
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'Wrap', maxWidth: 'lg' }}>
         {enrolledCourseIds
-          .filter((courseId: string) => allCourses[courseId])
+          .filter((courseId: string) => getCourseById(allCourses, courseId))
           .map((courseId: string) => (
-            <CourseThumb key={courseId} course={allCourses[courseId]} />
+            <CourseThumb key={courseId} course={getCourseById(allCourses, courseId) as any} />
           ))}
       </Box>
     </>
@@ -757,7 +761,7 @@ function WelcomeScreen({
       const fetchPromises: Promise<void>[] = [];
       const newDescriptions: Record<string, ResourceDisplayInfo> = {};
       for (const courseId of Object.keys(groupedResources)) {
-        const institutionId = allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION;
+        const institutionId = getCourseById(allCourses, courseId)?.universityId ?? DEFAULT_INSTITUTION;
         const courseCurrentTerm = currentTermByUniversityId[institutionId] ?? currentTerm;
 
         for (const resource of groupedResources[courseId]) {
@@ -823,7 +827,7 @@ function WelcomeScreen({
           <Box key={courseId} sx={{ marginBottom: 4 }}>
             <Link
               href={pathToCourseHome(
-                allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION,
+                getCourseById(allCourses, courseId)?.universityId ?? DEFAULT_INSTITUTION,
                 courseId,
                 'latest'
               )}

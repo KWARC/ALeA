@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAllCoursesFromDb } from './get-all-courses';
+import { getCourseById } from '../../utils/courseHelper';
 import { getCurrentTermForUniversity } from '@alea/utils';
 
 export async function getCurrentTermByCourseId(): Promise<Record<string, string>> {
@@ -13,10 +14,12 @@ export async function getCurrentTermByCourseId(): Promise<Record<string, string>
   return currentTermByCourseId;
 }
 
-export async function getCurrentTermForCourseId(courseId: string): Promise<string | null> {
-  const key = courseId.toLowerCase();
+export async function getCurrentTermForCourseId(
+  courseId: string,
+  institutionId?: string
+): Promise<string | null> {
   const courseInfo = await getAllCoursesFromDb();
-  const info = courseInfo[key];
+  const info = getCourseById(courseInfo, courseId, institutionId);
   if (!info) return null;
   const universityId = info.universityId;
   if (!universityId) return null;
@@ -30,9 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const courseId = req.query.courseId as string | undefined;
+    const institutionId = req.query.institutionId as string | undefined;
 
     if (courseId) {
-      const currentTerm = await getCurrentTermForCourseId(courseId);
+      const currentTerm = await getCurrentTermForCourseId(courseId, institutionId);
       if (currentTerm === null) {
         return res.status(404).json({ error: 'Course not found' });
       }
@@ -46,4 +50,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Internal server error' });
   }
 }
-

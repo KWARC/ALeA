@@ -8,10 +8,11 @@ import {
   getLectureEntry,
   getLectureSchedule,
   getTutorInfo,
-  getSemesterInfo,
   LectureScheduleItem,
   TutorInfo,
+  getSemesterInfo,
 } from '@alea/spec';
+import { getCourseById } from '../../../../utils/courseHelper';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
   Action,
@@ -639,7 +640,7 @@ const CourseHomePage: NextPage = () => {
   if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
 
   if (!router.isReady || !courses) return <CircularProgress />;
-  const courseInfo = courses[courseId];
+  const courseInfo = getCourseById(courses, courseId, institutionId);
   if (!courseInfo) {
     return <CourseNotFound />;
   }
