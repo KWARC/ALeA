@@ -397,7 +397,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {isSysAdmin ? (
                         <Tooltip
-                          title="Click the Course ID to approve this course in Sys Admin."
+                          title={`Click the Course ID to open Sys Admin, then select "Add Course Access Assignment" to approve the course.`}
                           arrow
                         >
                           <Link
@@ -423,7 +423,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         <Typography component="span">{courseId}</Typography>
                       )}
                       {courseAccessControl[courseId] === false && (
-                        <Tooltip title={`Approve this course: ${courseId}`} arrow>
+                        <Tooltip
+                          title="Ask a System Administrator to approve this course by performing Add Course Access Assignment."
+                          arrow
+                        >
                           <InfoIcon
                             sx={{ fontSize: 18, color: 'primary.main', cursor: 'pointer' }}
                           />
