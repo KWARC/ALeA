@@ -19,6 +19,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   deleteSingleHoliday,
@@ -31,14 +33,11 @@ import React, { useEffect, useState } from 'react';
 const convertToDDMMYYYY = (isoDate: string): string => {
   if (!isoDate) return '';
   try {
-    const date = new Date(isoDate);
-    if (isNaN(date.getTime())) {
+    const [year, month, day] = isoDate.split('-');
+    if (!year || !month || !day) {
       console.error('Invalid date:', isoDate);
       return '';
     }
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   } catch (error) {
     console.error('Error converting date to DD/MM/YYYY:', error);
@@ -61,6 +60,28 @@ const convertFromDDMMYYYY = (ddmmyyyy: string): string => {
   }
 };
 
+const parseISODate = (isoDate: string): Date | null => {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+};
+
+const formatISODate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface Holiday {
   date: string;
   name: string;
@@ -80,6 +101,8 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 }) => {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [newHoliday, setNewHoliday] = useState<Holiday>({ date: '', name: '' });
+  const [newHolidayEndDate, setNewHolidayEndDate] = useState('');
+  const [isHolidayRange, setIsHolidayRange] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingHoliday, setEditingHoliday] = useState<Holiday>({ date: '', name: '' });
   const [loading, setLoading] = useState(false);
@@ -94,7 +117,8 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
   });
 
   const hasHolidays = holidays.length > 0;
-  const isAddingHoliday = !newHoliday.date || !newHoliday.name;
+  const isAddingHoliday =
+    !newHoliday.date || !newHoliday.name || (isHolidayRange && !newHolidayEndDate);
   const isEditing = editingIndex !== null;
 
   const fetchHolidays = async () => {
@@ -143,8 +167,9 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 
     setLoading(true);
     try {
-      const convertedDate = convertToDDMMYYYY(newHoliday.date);
-      if (!convertedDate) {
+      const startDate = parseISODate(newHoliday.date);
+      const endDate = parseISODate(isHolidayRange ? newHolidayEndDate : newHoliday.date);
+      if (!startDate || !endDate) {
         setSnackbar({
           open: true,
           message: 'Invalid date format. Please select a valid date.',
@@ -152,19 +177,26 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         });
         return;
       }
+      if (endDate < startDate) {
+        setSnackbar({
+          open: true,
+          message: 'End date must be on or after start date.',
+          severity: 'error',
+        });
+        return;
+      }
 
-      const holidayForAPI = {
-        ...newHoliday,
-        date: convertedDate,
-      };
+      const holidaysToAdd: Holiday[] = [];
+      for (const date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+        const isoDate = formatISODate(date);
+        holidaysToAdd.push({
+          date: isoDate,
+          name: newHoliday.name,
+          originalDate: convertToDDMMYYYY(isoDate),
+        });
+      }
 
-      const holidayForLocalState = {
-        ...newHoliday,
-        date: newHoliday.date,
-        originalDate: convertedDate,
-      };
-
-      let updatedHolidays = [...holidays, holidayForLocalState];
+      let updatedHolidays = [...holidays, ...holidaysToAdd];
       // Keep local list sorted by ISO date
       updatedHolidays = [...updatedHolidays].sort((a, b) => a.date.localeCompare(b.date));
       // Ensure ALL holidays are sent as DD/MM/YYYY to the API
@@ -181,9 +213,14 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
 
       setHolidays(updatedHolidays);
       setNewHoliday({ date: '', name: '' });
+      setNewHolidayEndDate('');
+      setIsHolidayRange(false);
       setSnackbar({
         open: true,
-        message: 'Holiday added successfully!',
+        message:
+          holidaysToAdd.length === 1
+            ? 'Holiday added successfully!'
+            : `${holidaysToAdd.length} holidays added successfully!`,
         severity: 'success',
       });
     } catch (error) {
@@ -314,9 +351,22 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
         <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
           Add New Holiday
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ flexWrap: 'wrap' }} useFlexGap>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isHolidayRange}
+                onChange={(e) => {
+                  setIsHolidayRange(e.target.checked);
+                  if (!e.target.checked) setNewHolidayEndDate('');
+                }}
+                disabled={disabled}
+              />
+            }
+            label="Date Range"
+          />
           <TextField
-            label="Date"
+            label="Start Date"
             type="date"
             value={newHoliday.date}
             onChange={(e) => setNewHoliday({ ...newHoliday, date: e.target.value })}
@@ -325,6 +375,18 @@ export const HolidayManagement: React.FC<HolidayManagementProps> = ({
             sx={{ minWidth: 150 }}
             disabled={disabled}
           />
+          {isHolidayRange && (
+            <TextField
+              label="End Date"
+              type="date"
+              value={newHolidayEndDate}
+              onChange={(e) => setNewHolidayEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ minWidth: 150 }}
+              disabled={disabled}
+            />
+          )}
           <TextField
             label="Holiday Name"
             value={newHoliday.name}
