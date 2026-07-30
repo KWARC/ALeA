@@ -368,7 +368,7 @@ const SysAdmin: NextPage = () => {
   }, []);
 
   return (
-    <MainLayout>
+    <MainLayout hideCourseHeader={true} title="Sys Admin">
       <Box
         sx={{
           m: '0 auto',
