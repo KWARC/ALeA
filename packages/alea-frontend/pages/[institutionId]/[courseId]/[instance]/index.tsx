@@ -971,7 +971,7 @@ const CourseHomePage: NextPage = () => {
           instanceId={instanceId}
           institutionId={institutionId}
         />
-        <RecordedSyllabus courseId={courseId} />
+        <RecordedSyllabus courseId={courseId} instanceId={instanceId} />
       </Box>
     </MainLayout>
   );

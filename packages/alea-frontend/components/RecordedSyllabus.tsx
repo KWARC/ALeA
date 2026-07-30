@@ -191,10 +191,11 @@ function SyllabusTable({
   );
 }
 
-export function RecordedSyllabus({ courseId }: { courseId: string }) {
+export function RecordedSyllabus({ courseId, instanceId }: { courseId: string; instanceId?: string }) {
   const { courseHome: t } = getLocaleObject(useRouter());
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
+  const isCurrentInstance = !instanceId || instanceId === currentTerm;
 
   const [lectureDescs, setLectureDescs] = useState<{
     [timestamp_ms: number]: string;
@@ -206,7 +207,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
   const [historicalSyllabus, setHistoricalSyllabus] = useState<GetHistoricalSyllabusResponse>({});
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || loadingTermByCourseId || !isCurrentInstance) return;
     axios.get(`/api/get-section-info/${courseId}`).then((resp) => {
       setLectureDescs(getLectureDescs(resp.data));
 
@@ -214,7 +215,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
       getLectureClipIds(resp.data, clipIds);
       setLectureClipIds(clipIds);
     });
-  }, [courseId]);
+  }, [courseId, isCurrentInstance, loadingTermByCourseId]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -235,7 +236,7 @@ export function RecordedSyllabus({ courseId }: { courseId: string }) {
   }));
 
   const previousSems = Object.keys(historicalSyllabus);
-  const showCurrent = currentSemRows.length > 0;
+  const showCurrent = isCurrentInstance && currentSemRows.length > 0;
   if (!showCurrent && previousSems.length == 0) return null;
   return (
     <Box>
