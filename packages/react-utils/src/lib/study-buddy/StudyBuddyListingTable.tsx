@@ -1,27 +1,19 @@
-import {
-  Box,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { Box, Divider, IconButton, List, ListItem, Paper, Typography } from '@mui/material';
 import { StudyBuddy } from '@alea/spec';
 import { Fragment } from 'react';
-import { getLocaleObject } from '../lang/utils';
-import { useRouter } from 'next/router';
+import { defaultStudyBuddyLabels, type StudyBuddyLabels } from './labels';
 
 export function StudyBuddyListing({
   studyBuddy,
+  labels = defaultStudyBuddyLabels,
   actionIcon,
   onAction,
 }: {
   studyBuddy: StudyBuddy;
+  labels?: StudyBuddyLabels;
   actionIcon?: React.ReactNode;
   onAction?: (buddy: StudyBuddy) => void;
 }) {
-  const { studyBuddy: t } = getLocaleObject(useRouter());
   return (
     <Box display="flex">
       <Box
@@ -33,9 +25,7 @@ export function StudyBuddyListing({
       >
         <Box sx={{ flex: '1 0 200px' }}>
           <Box>
-            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
-              {studyBuddy.userName}
-            </span>
+            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>{studyBuddy.userName}</span>
             {studyBuddy.email && <b>,&nbsp;{studyBuddy.email}</b>}
           </Box>
           <Box>
@@ -47,15 +37,15 @@ export function StudyBuddyListing({
         </Box>
         <Box sx={{ flex: '1 0 200px', maxWidth: '275px' }}>
           <Box display="flex" justifyContent="space-between" gap="5px">
-            <span style={{ color: 'gray' }}>{t.dayPreference}:</span>
+            <span style={{ color: 'gray' }}>{labels.dayPreference}:</span>
             <span>{studyBuddy.dayPreference}</span>
           </Box>
           <Box display="flex" justifyContent="space-between" gap="5px">
-            <span style={{ color: 'gray' }}>{t.languages}:</span>
+            <span style={{ color: 'gray' }}>{labels.languages}:</span>
             <span>{studyBuddy.languages}</span>
           </Box>{' '}
           <Box display="flex" justifyContent="space-between" gap="5px">
-            <span style={{ color: 'gray' }}>{t.meetPreference}:</span>
+            <span style={{ color: 'gray' }}>{labels.meetPreference}:</span>
             <span>{studyBuddy.meetType}</span>
           </Box>
         </Box>
@@ -78,12 +68,14 @@ export function StudyBuddyListingTable({
   studyBuddies,
   header,
   subText = '',
+  labels = defaultStudyBuddyLabels,
   actionIcon,
   onAction,
 }: {
-  studyBuddies: StudyBuddy[];
+  studyBuddies?: StudyBuddy[];
   header: string;
   subText?: string;
+  labels?: StudyBuddyLabels;
   actionIcon?: React.ReactNode;
   onAction?: (buddy: StudyBuddy) => void;
 }) {
@@ -102,6 +94,7 @@ export function StudyBuddyListingTable({
                 <Box flex="1">
                   <StudyBuddyListing
                     studyBuddy={studyBuddy}
+                    labels={labels}
                     actionIcon={actionIcon}
                     onAction={onAction}
                   />

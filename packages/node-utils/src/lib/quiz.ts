@@ -14,24 +14,32 @@ function isCacheValid() {
 function refreshCacheIfNeeded() {
   if (isCacheValid()) return true;
   refreshQuizCache();
+  return true;
+}
+
+function getQuizInfoDir() {
+  const quizInfoDir = process.env['QUIZ_INFO_DIR'];
+  if (!quizInfoDir) throw new Error('QUIZ_INFO_DIR is not set');
+  return quizInfoDir;
 }
 
 function refreshQuizCache() {
   console.log('\n\n\nRefreshing Cache: ' + dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'));
-  QUIZ_CACHE = new Map<string, QuizWithStatus>();
+  const nextCache = new Map<string, QuizWithStatus>();
   QUIZ_CACHE_TS = Date.now();
-  const quizFiles = fs.readdirSync(process.env.QUIZ_INFO_DIR);
+  const quizInfoDir = getQuizInfoDir();
+  const quizFiles = fs.readdirSync(quizInfoDir);
   quizFiles.forEach((file) => {
     if (!(file.startsWith('quiz-') && file.endsWith('.json'))) return;
-    const quiz = JSON.parse(
-      fs.readFileSync(process.env.QUIZ_INFO_DIR + '/' + file, 'utf-8')
-    ) as QuizWithStatus;
-    QUIZ_CACHE.set(quiz.id, quiz);
+    const quiz = JSON.parse(fs.readFileSync(quizInfoDir + '/' + file, 'utf-8')) as QuizWithStatus;
+    nextCache.set(quiz.id, quiz);
   });
+  QUIZ_CACHE = nextCache;
 }
 
 export function writeQuizFile(quiz: QuizWithStatus) {
   const filePath = getQuizFilePath(quiz.id);
+  if (!filePath) throw new Error('Quiz id is required');
   fs.writeFileSync(filePath, JSON.stringify(quiz, null, 2));
   invalidateQuizCache();
 }
@@ -52,28 +60,29 @@ export function invalidateQuizCache() {
 
 export function getAllQuizzes() {
   refreshCacheIfNeeded();
-  return Array.from(QUIZ_CACHE.values());
+  return Array.from(QUIZ_CACHE?.values() ?? []);
 }
 
 export function getQuizFilePath(id: string) {
   if (!id) return undefined;
-  return path.join(process.env.QUIZ_INFO_DIR, `${id}.json`);
+  return path.join(getQuizInfoDir(), `${id}.json`);
 }
 
 export function getBackupQuizFilePath(id: string, version: number) {
   if (!id) return undefined;
-  return path.join(process.env.QUIZ_INFO_DIR, `_bkp-v${version}-${id}.json`);
+  return path.join(getQuizInfoDir(), `_bkp-v${version}-${id}.json`);
 }
 
 export function doesQuizExist(id: string) {
   if (!id?.length) return false;
   const quizFileName = getQuizFilePath(id);
+  if (!quizFileName) return false;
   return fs.existsSync(quizFileName);
 }
 
 export function getQuiz(id: string) {
   refreshCacheIfNeeded();
-  return QUIZ_CACHE.get(id);
+  return QUIZ_CACHE?.get(id);
 }
 
 export function getQuizTimes(q: QuizWithStatus) {

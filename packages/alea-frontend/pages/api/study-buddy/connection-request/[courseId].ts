@@ -1,17 +1,10 @@
 import { NotificationType } from '@alea/spec';
+import { sendStudyBuddyConnectionRequestInDb } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  getUserInfo,
-  sendNotification,
-} from '../../comment-utils';
-import { getCurrentTermForCourseId } from '../../get-current-term';
+import { checkIfPostOrSetError, getUserInfo, sendNotification } from '../../comment-utils';
+import { aleaStudyBuddyDb } from '../../study-buddy-db';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const user = await getUserInfo(req);
   const userId = user?.userId;
@@ -35,21 +28,35 @@ export default async function handler(
     return;
   }
 
-  const results = await executeAndEndSet500OnError(
-    'INSERT INTO StudyBuddyConnections(senderId, receiverId, courseId, instanceId, institutionId) VALUES (?, ?, ?, ?, ?)',
-    [userId, receiverId, courseId, instanceId, institutionId],
-    res
-  );
+  try {
+    await sendStudyBuddyConnectionRequestInDb(
+      {
+        userId,
+        receiverId,
+        courseId,
+        institutionId,
+        instanceId,
+      },
+      aleaStudyBuddyDb
+    );
 
-  if (!results) return;
-  res.status(204).end();
-  sendNotification(
-    receiverId,
-    `${user.fullName} would like to study together for the ${courseId} course.`,
-    '',
-    `${user.fullName} würde gerne gemeinsam für den ${courseId}-Kurs lernen.`,
-    '',
-    NotificationType.STUDY_BUDDY,
-    `/study-buddy/${courseId}`
-  );
+    res.status(204).end();
+    sendNotification(
+      receiverId,
+      `${user.fullName} would like to study together for the ${courseId} course.`,
+      '',
+      `${user.fullName} würde gerne gemeinsam für den ${courseId}-Kurs lernen.`,
+      '',
+      NotificationType.STUDY_BUDDY,
+      `/study-buddy/${courseId}`
+    );
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(getApiErrorResponse(error));
+  }
+}
+
+function getApiErrorResponse(error: unknown) {
+  if (error instanceof Error) return { message: error.message, name: error.name };
+  return { message: String(error) };
 }

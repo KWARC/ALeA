@@ -1,15 +1,9 @@
+import { removeStudyBuddyConnectionRequestFromDb } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../../comment-utils';
-import { getCurrentTermForCourseId } from '../../get-current-term';
+import { checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
+import { aleaStudyBuddyDb } from '../../study-buddy-db';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
@@ -17,7 +11,7 @@ export default async function handler(
   const instanceId = req.query.instanceId as string;
   const institutionId = req.query.institutionId as string;
 
-if (!institutionId || !courseId || !instanceId) {
+  if (!institutionId || !courseId || !instanceId) {
     res.status(422).end('Missing required field: institutionId or courseId or instanceId');
     return;
   }
@@ -29,12 +23,26 @@ if (!institutionId || !courseId || !instanceId) {
     return;
   }
 
-  const results = await executeAndEndSet500OnError(
-    'DELETE FROM StudyBuddyConnections WHERE senderId=? AND receiverId=? AND courseId=? AND instanceId=? AND institutionId=?',
-    [userId, receiverId, courseId, instanceId, institutionId],
-    res
-  );
+  try {
+    await removeStudyBuddyConnectionRequestFromDb(
+      {
+        userId,
+        receiverId,
+        courseId,
+        institutionId,
+        instanceId,
+      },
+      aleaStudyBuddyDb
+    );
 
-  if (!results) return;
-  res.status(204).end();
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(getApiErrorResponse(error));
+  }
+}
+
+function getApiErrorResponse(error: unknown) {
+  if (error instanceof Error) return { message: error.message, name: error.name };
+  return { message: String(error) };
 }

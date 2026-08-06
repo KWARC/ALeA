@@ -47,6 +47,7 @@ const nextConfig = {
   experimental: {
     middlewareClientMaxBodySize: 2 * 1024 * 1024 * 1024, // 2GB
   },
+  transpilePackages: ['@alea/node-utils'],
 };
 
 const withSentry = (config) =>
@@ -85,4 +86,3 @@ const plugins = [
 ];
 
 module.exports = composePlugins(...plugins)(nextConfig);
-

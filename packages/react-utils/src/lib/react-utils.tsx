@@ -9,6 +9,9 @@ import { SafeHtml } from './SafeHtml';
 import { useScrollDirection } from './useScrollDirection';
 import { CourseProvider, useCourses } from './CourseContext';
 import { getIconByExtension } from './utils';
+import { StudyBuddyForm } from './study-buddy/StudyBuddyForm';
+import { StudyBuddyListing, StudyBuddyListingTable } from './study-buddy/StudyBuddyListingTable';
+import { defaultStudyBuddyLabels, type StudyBuddyLabels } from './study-buddy/labels';
 export {
   CommentRefreshProvider,
   CourseProvider,
@@ -25,4 +28,9 @@ export {
   useIsLoggedIn,
   useCourses,
   useScrollDirection,
+  StudyBuddyForm,
+  StudyBuddyListing,
+  StudyBuddyListingTable,
+  defaultStudyBuddyLabels,
 };
+export type { StudyBuddyLabels };

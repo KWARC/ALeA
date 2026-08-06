@@ -1,15 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../../comment-utils';
-import { StudyBuddy } from '@alea/spec';
-import { getCurrentTermForCourseId } from '../../get-current-term';
+import { getUserIdOrSetError } from '../../comment-utils';
+import { getStudyBuddyUserInfoFromDb } from '@alea/node-utils';
+import { aleaStudyBuddyDb } from '../../study-buddy-db';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   const instanceId = req.query.instanceId as string;
@@ -22,18 +16,30 @@ export default async function handler(
     return;
   }
 
-  // TODO: should not select *
-  const results: any[] = await executeAndEndSet500OnError(
-    'SELECT * FROM StudyBuddyUsers WHERE userId=? AND courseId=? AND instanceId=? AND institutionId=?',
-    [userId, courseId, instanceId, institutionId],
-    res
-  );
+  try {
+    const result = await getStudyBuddyUserInfoFromDb(
+      {
+        userId,
+        courseId,
+        institutionId,
+        instanceId,
+      },
+      aleaStudyBuddyDb
+    );
 
-  if (!results) return;
-  if (results.length === 0) {
-    res.status(404).end();
-    return;
+    if (!result) {
+      res.status(404).end();
+      return;
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(getApiErrorResponse(error));
   }
+}
 
-  res.status(200).json(results[0] as StudyBuddy);
+function getApiErrorResponse(error: unknown) {
+  if (error instanceof Error) return { message: error.message, name: error.name };
+  return { message: String(error) };
 }

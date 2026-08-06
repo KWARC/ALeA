@@ -1,16 +1,10 @@
 import { StudyBuddy } from '@alea/spec';
+import { updateStudyBuddyInfoInDb } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  getUserInfo,
-} from '../../comment-utils';
-import { getCurrentTermForCourseId } from '../../get-current-term';
+import { checkIfPostOrSetError, getUserInfo } from '../../comment-utils';
+import { aleaStudyBuddyDb } from '../../study-buddy-db';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const user = await getUserInfo(req);
   const userId = user?.userId;
@@ -25,40 +19,39 @@ export default async function handler(
     return;
   }
 
-  const {
-    intro,
-    studyProgram,
-    email,
-    semester,
-    meetType,
-    languages,
-    dayPreference,
-  } = req.body as StudyBuddy;
+  const { intro, studyProgram, email, semester, meetType, languages, dayPreference } =
+    req.body as StudyBuddy;
 
-  const active = true;
+  try {
+    await updateStudyBuddyInfoInDb(
+      {
+        userName: user.fullName,
+        userId,
+        courseId,
+        institutionId,
+        instanceId,
+        studyBuddy: {
+          ...(req.body as StudyBuddy),
+          intro,
+          studyProgram,
+          email,
+          semester,
+          meetType,
+          languages,
+          dayPreference,
+        },
+      },
+      aleaStudyBuddyDb
+    );
 
-  let results = undefined;
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(getApiErrorResponse(error));
+  }
+}
 
-  results = await executeAndEndSet500OnError(
-    'REPLACE INTO StudyBuddyUsers (userName, intro, studyProgram, email, semester, meetType, languages, dayPreference, active, userId, courseId, instanceId, institutionId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [
-      user.fullName,
-      intro,
-      studyProgram,
-      email,
-      semester,
-      meetType,
-      languages,
-      dayPreference,
-      active,
-      userId,
-      courseId,
-      instanceId,
-      institutionId,
-    ],
-    res
-  );
-
-  if (!results) return;
-  res.status(204).end();
+function getApiErrorResponse(error: unknown) {
+  if (error instanceof Error) return { message: error.message, name: error.name };
+  return { message: String(error) };
 }

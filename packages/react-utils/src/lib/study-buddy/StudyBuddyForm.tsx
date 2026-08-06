@@ -11,27 +11,26 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Days, Languages, MeetType, StudyBuddy } from '@alea/spec';
-import { useRouter } from 'next/router';
-import { getLocaleObject } from '../lang/utils';
-import { useCurrentUser } from '@alea/react-utils';
+import { defaultStudyBuddyLabels, type StudyBuddyLabels } from './labels';
 
 export function StudyBuddyForm({
   studyBuddy,
+  userName,
+  labels = defaultStudyBuddyLabels,
   onUpdate,
 }: {
   studyBuddy: StudyBuddy;
+  userName: string;
+  labels?: StudyBuddyLabels;
   onUpdate: (studyBuddy: StudyBuddy) => void;
 }) {
-  const { studyBuddy: t } = getLocaleObject(useRouter());
-  const { user } = useCurrentUser();
-  const userName = user?.fullName ?? '';
   return (
     <Box>
-      <TextField label={t.nameLabel} value={userName}/>
+      <TextField label={labels.nameLabel} value={userName} />
       <Box display="flex" alignItems="center">
         <TextField
           error={!studyBuddy.email?.includes('@')}
-          label={t.emailLabel}
+          label={labels.emailLabel}
           variant="outlined"
           value={studyBuddy.email}
           onChange={(e) => onUpdate({ ...studyBuddy, email: e.target.value })}
@@ -40,14 +39,12 @@ export function StudyBuddyForm({
           inputProps={{ maxLength: 250 }}
           fullWidth
         />
-        <Tooltip
-          title={<span style={{ fontSize: 'medium' }}>{t.emailWarning}</span>}
-        >
+        <Tooltip title={<span style={{ fontSize: 'medium' }}>{labels.emailWarning}</span>}>
           <InfoOutlined />
         </Tooltip>
       </Box>
       <TextField
-        label={t.introLabel}
+        label={labels.introLabel}
         variant="outlined"
         value={studyBuddy.intro}
         onChange={(e) => {
@@ -58,7 +55,7 @@ export function StudyBuddyForm({
         fullWidth
       />
       <TextField
-        label={t.studyProgramLabel}
+        label={labels.studyProgramLabel}
         variant="outlined"
         value={studyBuddy.studyProgram}
         onChange={(e) => {
@@ -69,12 +66,12 @@ export function StudyBuddyForm({
         fullWidth
       />
       <FormControl sx={{ mb: '0.5rem' }} fullWidth>
-        <InputLabel id="semester-label">{t.semesterLabel}</InputLabel>
+        <InputLabel id="semester-label">{labels.semesterLabel}</InputLabel>
         <Select
           labelId="semester-label"
           id="semester-select"
           value={studyBuddy.semester}
-          label="Semester #"
+          label={labels.semesterLabel}
           onChange={(e) => {
             onUpdate({ ...studyBuddy, semester: +e.target.value });
           }}
@@ -87,36 +84,34 @@ export function StudyBuddyForm({
         </Select>
       </FormControl>
       <FormControl sx={{ mb: '0.5rem' }} fullWidth>
-        <InputLabel id="meet-type-label">{t.meetTypeLabel}</InputLabel>
+        <InputLabel id="meet-type-label">{labels.meetTypeLabel}</InputLabel>
         <Select
           labelId="meet-type-label"
           id="meet-type-select"
-          label={t.meetTypeLabel}
+          label={labels.meetTypeLabel}
           value={studyBuddy.meetType}
           variant="outlined"
           onChange={(e) => {
-            const meetType = MeetType[e.target.value as keyof typeof MeetType];
+            const meetType = e.target.value as MeetType;
             onUpdate({ ...studyBuddy, meetType });
           }}
           fullWidth
         >
-          {Object.keys(MeetType).map((key) => (
-            <MenuItem key={key} value={key}>
-              {MeetType[key]}
+          {Object.values(MeetType).map((meetType) => (
+            <MenuItem key={meetType} value={meetType}>
+              {meetType}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
       <FormControl sx={{ mb: '0.5rem' }} fullWidth>
-        <InputLabel id="days-label">{t.preferredDays}</InputLabel>
+        <InputLabel id="days-label">{labels.preferredDays}</InputLabel>
         <Select
           labelId="days-label"
           id="days-select"
-          value={
-            studyBuddy.dayPreference ? studyBuddy.dayPreference.split(',') : []
-          }
+          value={studyBuddy.dayPreference ? studyBuddy.dayPreference.split(',') : []}
           multiple
-          label={t.preferredDays}
+          label={labels.preferredDays}
           variant="outlined"
           onChange={(e) => {
             const dayPreference = (e.target.value as string[]).join(',');
@@ -125,23 +120,23 @@ export function StudyBuddyForm({
           renderValue={(selected) => selected.join(', ')}
           fullWidth
         >
-          {Object.keys(Days).map((key) => (
-            <MenuItem key={key} value={key}>
-              <Checkbox checked={studyBuddy.dayPreference.includes(key)} />
-              <ListItemText primary={Days[key]} />
+          {Object.values(Days).map((day) => (
+            <MenuItem key={day} value={day}>
+              <Checkbox checked={studyBuddy.dayPreference.includes(day)} />
+              <ListItemText primary={day} />
             </MenuItem>
           ))}
         </Select>
       </FormControl>
 
       <FormControl sx={{ mb: '0.5rem' }} fullWidth>
-        <InputLabel id="language-label">{t.languagesLabel}</InputLabel>
+        <InputLabel id="language-label">{labels.languagesLabel}</InputLabel>
         <Select
           labelId="language-label"
           id="language-select"
           value={studyBuddy.languages ? studyBuddy.languages.split(',') : []}
           multiple
-          label={t.languagesLabel}
+          label={labels.languagesLabel}
           variant="outlined"
           onChange={(e) => {
             const languages = (e.target.value as string[]).join(',');
@@ -150,10 +145,10 @@ export function StudyBuddyForm({
           renderValue={(selected) => selected.join(', ')}
           fullWidth
         >
-          {Object.keys(Languages).map((key) => (
-            <MenuItem key={key} value={key}>
-              <Checkbox checked={studyBuddy.languages.includes(key)} />
-              <ListItemText primary={Languages[key]} />
+          {Object.values(Languages).map((language) => (
+            <MenuItem key={language} value={language}>
+              <Checkbox checked={studyBuddy.languages.includes(language)} />
+              <ListItemText primary={language} />
             </MenuItem>
           ))}
         </Select>

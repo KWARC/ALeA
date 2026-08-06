@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import {
-  getLaunchRoles,
-  getLaunchUser,
-  getRoleType,
-  launchUserToQuery,
-} from '../../../lib/lti';
+import { getLaunchDetails } from '../../../lib/lti';
+import { setLtiLaunchSessionCookie } from '../../../lib/lti-session';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,15 +16,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const payload = decodeJwtPayload(idToken);
-    const user = getLaunchUser(payload);
-    const roleType = getRoleType(getLaunchRoles(payload));
-    const query = launchUserToQuery(user, roleType);
+    const launchDetails = getLaunchDetails(payload);
+    setLtiLaunchSessionCookie(res, launchDetails);
+    const query = new URLSearchParams({
+      courseId: launchDetails.courseId,
+      institutionId: launchDetails.institutionId,
+      instanceId: launchDetails.instanceId,
+    });
 
-    return res.redirect(303, `/lti-user?${query}`);
+    return res.redirect(303, `/study-buddy?${query}`);
   } catch (error) {
-    return res
-      .status(400)
-      .send(error instanceof Error ? error.message : 'Invalid id_token');
+    return res.status(400).send(error instanceof Error ? error.message : 'Invalid id_token');
   }
 }
 
@@ -39,8 +37,5 @@ function decodeJwtPayload(idToken: string) {
     throw new Error('Invalid JWT');
   }
 
-  return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as Record<
-    string,
-    unknown
-  >;
+  return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as Record<string, unknown>;
 }

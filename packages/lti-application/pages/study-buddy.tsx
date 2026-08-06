@@ -24,24 +24,78 @@ import {
   StudyBuddy,
   updateStudyBuddyInfo,
 } from '@alea/spec';
-import type { NextPage } from 'next';
-import { useTheme } from '@mui/material/styles';
-import { MaAI_COURSES } from '@alea/utils';
-import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
-import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
-import { CourseNotFound } from '../../../../components/CourseNotFound';
-import { useRouteValidation } from '../../../../hooks/useRouteValidation';
-import { useAllCourses } from '../../../../hooks/useAllCourses';
 import {
   StudyBuddyForm,
   StudyBuddyListing,
   StudyBuddyListingTable,
-  useCurrentUser,
-  useIsLoggedIn,
+  type StudyBuddyLabels,
 } from '@alea/react-utils';
-import { getLocaleObject } from '../../../../lang/utils';
-import MainLayout from '../../../../layouts/MainLayout';
+import type { GetServerSideProps } from 'next';
+import Head from 'next/head';
+import { useCallback, useEffect, useState } from 'react';
+import { getLtiLaunchSession, type LtiLaunchSession } from '../lib/lti-session';
+
+const labels: StudyBuddyLabels = {
+  dayPreference: 'Day Preference',
+  emailLabel: 'Email',
+  emailWarning: 'Your email is only visible to connected study buddies.',
+  introLabel: 'Introduce yourself',
+  languages: 'Languages',
+  languagesLabel: 'Languages you speak',
+  meetPreference: 'Meeting Preference',
+  meetTypeLabel: 'Preferred Meeting Type',
+  nameLabel: 'Name',
+  preferredDays: 'Preferred Days',
+  semesterLabel: 'Semester',
+  studyProgramLabel: 'Study Program',
+};
+
+const text = {
+  agreementText: 'I agree that my profile is visible to other active study buddies in this course.',
+  connected: 'Connected Study Buddies',
+  connectedAlert: 'You are now connected with $1.',
+  connectedSubtext: 'You can see email addresses after both sides accept.',
+  connectionRequestCancelled: 'Connection request to $1 was cancelled.',
+  connectionRequestSent: 'Connection request sent to $1.',
+  discard: 'Discard',
+  editInfo: 'Edit Info',
+  fillForm: 'Create Your Study Buddy Profile',
+  join: 'Join',
+  lookingFor: 'Looking For Study Buddies',
+  lookingForSubtext: 'Send a request to someone you would like to study with.',
+  myProfile: 'My Profile',
+  notActive: 'Your profile is currently inactive.',
+  optOut: 'Opt Out',
+  optOutPrompt: 'Do you want to opt out of Study Buddy for $1?',
+  reJoin: 'Rejoin',
+  requestReceived: 'Requests Received',
+  requestReceivedSubtext: 'Accept requests from people who want to study with you.',
+  requestSent: 'Requests Sent',
+  requestSentSubtext: 'Cancel requests you no longer want to keep open.',
+  update: 'Update',
+};
+
+type Props = {
+  session: LtiLaunchSession;
+};
+
+export const getServerSideProps = (async ({ req }) => {
+  const session = getLtiLaunchSession(req as Parameters<typeof getLtiLaunchSession>[0]);
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      session,
+    },
+  };
+}) satisfies GetServerSideProps<Props>;
 
 function OptOutButton({
   studyBuddy,
@@ -54,31 +108,25 @@ function OptOutButton({
   institutionId: string;
   instanceId: string;
 }) {
-  const { studyBuddy: t } = getLocaleObject(useRouter());
   return (
     <Button
       variant="contained"
       onClick={async () => {
-        const prompt = t.optOutPrompt.replace('$1', courseId);
+        const prompt = text.optOutPrompt.replace('$1', courseId);
         if (studyBuddy.active && !confirm(prompt)) return;
         await setActive(courseId, !studyBuddy.active, institutionId, instanceId);
-        if (!studyBuddy.active) alert(t.haveEnrolled.replace('$1', courseId));
         location.reload();
       }}
     >
-      {studyBuddy.active ? t.optOut : t.reJoin}
+      {studyBuddy.active ? text.optOut : text.reJoin}
     </Button>
   );
 }
 
-const StudyBuddyPage: NextPage = () => {
-  const theme = useTheme();
-  const router = useRouter();
-  const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
-    useRouteValidation('study-buddy');
-
-  const instanceId = resolvedInstanceId;
-  const { studyBuddy: t } = getLocaleObject(router);
+export default function StudyBuddyPage({ session }: Props) {
+  const courseId = session.courseId;
+  const institutionId = session.institutionId;
+  const instanceId = session.instanceId;
   const [isLoading, setIsLoading] = useState(true);
   const [fromServer, setFromServer] = useState<StudyBuddy | undefined>(undefined);
   const [allBuddies, setAllBuddies] = useState<GetStudyBuddiesResponse | undefined>(undefined);
@@ -86,10 +134,10 @@ const StudyBuddyPage: NextPage = () => {
     userId: '',
     userName: '',
     intro: '',
-    courseId: '',
+    courseId,
     studyProgram: '',
     semester: 1,
-    email: '',
+    email: session.user.email === 'Not provided' ? '' : session.user.email,
     meetType: MeetType.Both,
     dayPreference: '',
     languages: Languages.Deutsch,
@@ -97,86 +145,55 @@ const StudyBuddyPage: NextPage = () => {
   });
   const [agreed, setAgreed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const masterCourses = MaAI_COURSES;
 
   const refetchStudyBuddyLists = useCallback(() => {
     if (!courseId || !fromServer?.active || !institutionId || !instanceId) return;
     getStudyBuddyList(courseId, institutionId, instanceId).then(setAllBuddies);
   }, [courseId, fromServer?.active, institutionId, instanceId]);
 
-  const { loggedIn } = useIsLoggedIn();
-  const { user } = useCurrentUser();
-  const userName = user?.fullName ?? '';
-  const { data: courses = {}, isLoading: courseLoading } = useAllCourses();
-
   useEffect(() => {
     refetchStudyBuddyLists();
   }, [refetchStudyBuddyLists]);
 
   useEffect(() => {
-    if (!courseId || !loggedIn || !institutionId || !instanceId) return;
     setIsLoading(true);
     getStudyBuddyUserInfo(courseId, institutionId, instanceId).then((data) => {
       setIsLoading(false);
       setFromServer(data);
     });
-  }, [courseId, institutionId, instanceId, loggedIn]);
-
-  if (isValidating) return null;
-  if (validationError) {
-    return (
-      <RouteErrorDisplay
-        validationError={validationError}
-        institutionId={institutionId}
-        courseId={courseId}
-        instance={instance}
-      />
-    );
-  }
-  if (!institutionId || !courseId || !resolvedInstanceId) return <CourseNotFound />;
-
-  if (!router.isReady || courseLoading) return <CircularProgress />;
-
-  const courseInfo = courses[courseId];
-  const courseName = courseInfo?.courseName || masterCourses[courseId]?.courseName;
-  if (!courseName) return <CourseNotFound />;
+  }, [courseId, institutionId, instanceId]);
 
   const notSignedUp = !fromServer;
-  const notes = courseInfo?.notes;
 
   return (
-    <MainLayout
-      title={(courseId || '').toUpperCase() + ` Study Buddy | ALeA`}
-      bgColor={theme.palette.background.default}
-    >
+    <>
+      <Head>
+        <title>{courseId} Study Buddy | ALeA LTI</title>
+      </Head>
       <Box
-        fragment-uri={notes}
-        fragment-kind="Section"
-        sx={{
-          maxWidth: '900px',
-          m: 'auto',
-          px: '10px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        sx={{ maxWidth: '900px', m: 'auto', p: '24px', display: 'flex', flexDirection: 'column' }}
       >
+        <Typography variant="h4">Study Buddy</Typography>
+        <Typography variant="subtitle1" sx={{ color: '#555' }}>
+          {session.context?.title || session.resourceLink?.title || courseId}
+        </Typography>
         {notSignedUp || isEditing ? (
           !isLoading ? (
             <Card sx={{ mt: '20px' }}>
               <CardContent>
-                <Typography variant="h5">{t.fillForm}</Typography>
+                <Typography variant="h5">{text.fillForm}</Typography>
                 <br />
                 <StudyBuddyForm
                   studyBuddy={userInput}
-                  userName={userName}
-                  labels={t}
+                  userName={session.user.name}
+                  labels={labels}
                   onUpdate={(studyBuddy) => setUserInput(studyBuddy)}
                 />
                 <FormControlLabel
                   control={
                     <Checkbox value={agreed} onChange={(e) => setAgreed(e.target.checked)} />
                   }
-                  label={t.agreementText}
+                  label={text.agreementText}
                 />
               </CardContent>
               <CardActions>
@@ -191,11 +208,11 @@ const StudyBuddyPage: NextPage = () => {
                       sx={{ mr: '10px' }}
                       disabled={!(agreed && userInput.email?.includes('@'))}
                     >
-                      {notSignedUp ? t.join : t.update}
+                      {notSignedUp ? text.join : text.update}
                     </Button>
                     {!notSignedUp && (
                       <Button variant="contained" onClick={() => setIsEditing(false)}>
-                        {t.discard}
+                        {text.discard}
                       </Button>
                     )}
                   </Box>
@@ -210,17 +227,17 @@ const StudyBuddyPage: NextPage = () => {
                 </Box>
               </CardActions>
             </Card>
-          ) : loggedIn ? (
-            <CircularProgress />
           ) : (
-            <>{t.loginToContinue}</>
+            <CircularProgress sx={{ mt: '20px' }} />
           )
         ) : (
           <>
-            <Typography variant="h4">{t.myProfile}</Typography>
+            <Typography variant="h4" mt="24px">
+              {text.myProfile}
+            </Typography>
             <Card sx={{ mt: '20px' }}>
               <CardContent>
-                <StudyBuddyListing studyBuddy={fromServer} labels={t} />
+                <StudyBuddyListing studyBuddy={fromServer} labels={labels} />
               </CardContent>
               <CardActions>
                 <Button
@@ -230,7 +247,7 @@ const StudyBuddyPage: NextPage = () => {
                     setUserInput(fromServer);
                   }}
                 >
-                  {t.editInfo}
+                  {text.editInfo}
                 </Button>
                 {!fromServer.active && (
                   <OptOutButton
@@ -246,59 +263,57 @@ const StudyBuddyPage: NextPage = () => {
         )}
         {fromServer && !fromServer.active && (
           <Typography variant="h6" mt="10px">
-            {t.notActive}
+            {text.notActive}
           </Typography>
         )}
         <StudyBuddyListingTable
           studyBuddies={allBuddies?.connected}
-          header={t.connected}
-          subText={t.connectedSubtext}
-          labels={t}
+          header={text.connected}
+          subText={text.connectedSubtext}
+          labels={labels}
         />
         <StudyBuddyListingTable
           studyBuddies={allBuddies?.requestReceived}
-          header={t.requestReceived}
+          header={text.requestReceived}
           actionIcon={<HandshakeIcon color="primary" />}
-          subText={t.requestReceivedSubtext}
-          labels={t}
+          subText={text.requestReceivedSubtext}
+          labels={labels}
           onAction={(buddy) => {
             connectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
               refetchStudyBuddyLists();
-              alert(t.connectedAlert.replace('$1', buddy.userName));
+              alert(text.connectedAlert.replace('$1', buddy.userName));
             });
           }}
         />
         <StudyBuddyListingTable
           studyBuddies={allBuddies?.requestSent}
-          header={t.requestSent}
+          header={text.requestSent}
           actionIcon={<CancelIcon color="warning" />}
-          subText={t.requestSentSubtext}
-          labels={t}
+          subText={text.requestSentSubtext}
+          labels={labels}
           onAction={(buddy) => {
             removeConnectionRequest(courseId, buddy.userId, institutionId, instanceId).then(
               async () => {
                 refetchStudyBuddyLists();
-                alert(t.connectionRequestCancelled.replace('$1', buddy.userName));
+                alert(text.connectionRequestCancelled.replace('$1', buddy.userName));
               }
             );
           }}
         />
         <StudyBuddyListingTable
           studyBuddies={allBuddies?.other}
-          header={t.lookingFor}
-          subText={t.lookingForSubtext}
+          header={text.lookingFor}
+          subText={text.lookingForSubtext}
           actionIcon={<ThumbUpAltIcon color="primary" />}
-          labels={t}
+          labels={labels}
           onAction={(buddy) => {
             connectionRequest(courseId, buddy.userId, institutionId, instanceId).then(async () => {
               refetchStudyBuddyLists();
-              alert(t.connectionRequestSent.replace('$1', buddy.userName));
+              alert(text.connectionRequestSent.replace('$1', buddy.userName));
             });
           }}
         />
       </Box>
-    </MainLayout>
+    </>
   );
-};
-
-export default StudyBuddyPage;
+}

@@ -1,10 +1,7 @@
+import { setStudyBuddyActiveInDb } from '@alea/node-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  checkIfPostOrSetError,
-  executeAndEndSet500OnError,
-  getUserIdOrSetError,
-} from '../../comment-utils';
-import { getCurrentTermForCourseId } from '../../get-current-term';
+import { checkIfPostOrSetError, getUserIdOrSetError } from '../../comment-utils';
+import { aleaStudyBuddyDb } from '../../study-buddy-db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -23,12 +20,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { active } = req.body;
   if (active === undefined) return res.status(400).send('Missing [active]');
 
-  const results = await executeAndEndSet500OnError(
-    'UPDATE StudyBuddyUsers SET active=? WHERE userId=? AND courseId=? AND instanceId=? AND institutionId=?',
-    [active, userId, courseId, instanceId, institutionId],
-    res
-  );
+  try {
+    await setStudyBuddyActiveInDb(
+      {
+        userId,
+        active,
+        courseId,
+        institutionId,
+        instanceId,
+      },
+      aleaStudyBuddyDb
+    );
 
-  if (!results) return;
-  res.status(204).end();
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(getApiErrorResponse(error));
+  }
+}
+
+function getApiErrorResponse(error: unknown) {
+  if (error instanceof Error) return { message: error.message, name: error.name };
+  return { message: String(error) };
 }

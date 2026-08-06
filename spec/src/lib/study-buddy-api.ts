@@ -8,7 +8,11 @@ import {
   UserStats,
 } from './study-buddy';
 
-export async function getStudyBuddyUserInfo(courseId: string, institutionId: string, instanceId: string) {
+export async function getStudyBuddyUserInfo(
+  courseId: string,
+  institutionId: string,
+  instanceId: string
+) {
   try {
     const resp = await axios.get(`/api/study-buddy/get-user-info/${courseId}`, {
       params: { institutionId, instanceId },
@@ -23,20 +27,44 @@ export async function getStudyBuddyUserInfo(courseId: string, institutionId: str
   }
 }
 
-export async function updateStudyBuddyInfo(courseId: string, data: StudyBuddy, institutionId: string, instanceId: string) {
-  await axios.post(`/api/study-buddy/update-info/${courseId}`, data, {
-    params: { institutionId, instanceId },
-  });
+export async function updateStudyBuddyInfo(
+  courseId: string,
+  data: StudyBuddy,
+  institutionId: string,
+  instanceId: string
+) {
+  try {
+    await axios.post(`/api/study-buddy/update-info/${courseId}`, data, {
+      params: { institutionId, instanceId },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.error('Study Buddy update failed:', err.response?.data ?? err.message);
+      const message =
+        typeof err.response?.data?.message === 'string' ? err.response.data.message : err.message;
+      throw new Error(message);
+    }
+    throw err;
+  }
 }
 
-export async function getStudyBuddyList(courseId: string, institutionId: string, instanceId: string) {
+export async function getStudyBuddyList(
+  courseId: string,
+  institutionId: string,
+  instanceId: string
+) {
   const resp = await axios.get(`/api/study-buddy/get-study-buddies/${courseId}`, {
     params: { institutionId, instanceId },
   });
   return resp.data as GetStudyBuddiesResponse;
 }
 
-export async function setActive(courseId: string, active: boolean, institutionId: string, instanceId: string) {
+export async function setActive(
+  courseId: string,
+  active: boolean,
+  institutionId: string,
+  instanceId: string
+) {
   await axios.post(
     `/api/study-buddy/set-active/${courseId}`,
     { active },
@@ -44,7 +72,12 @@ export async function setActive(courseId: string, active: boolean, institutionId
   );
 }
 
-export async function connectionRequest(courseId: string, receiverId: string, institutionId: string, instanceId: string) {
+export async function connectionRequest(
+  courseId: string,
+  receiverId: string,
+  institutionId: string,
+  instanceId: string
+) {
   await axios.post(
     `/api/study-buddy/connection-request/${courseId}`,
     { receiverId },
@@ -52,7 +85,12 @@ export async function connectionRequest(courseId: string, receiverId: string, in
   );
 }
 
-export async function removeConnectionRequest(courseId: string, receiverId: string, institutionId: string, instanceId: string) {
+export async function removeConnectionRequest(
+  courseId: string,
+  receiverId: string,
+  institutionId: string,
+  instanceId: string
+) {
   await axios.post(
     `/api/study-buddy/remove-connection-request/${courseId}`,
     { receiverId },
@@ -65,7 +103,11 @@ export async function purgeStudyBuddyData() {
   return resp.data as StudyBuddy;
 }
 
-export async function getStudyBuddyUsersStats(courseId: string, instanceId: string | undefined, institutionId: string) {
+export async function getStudyBuddyUsersStats(
+  courseId: string,
+  instanceId: string | undefined,
+  institutionId: string
+) {
   const resp = await axios.get(`/api/study-buddy/get-users-stats/${courseId}`, {
     params: { instanceId, institutionId },
   });
@@ -74,12 +116,15 @@ export async function getStudyBuddyUsersStats(courseId: string, instanceId: stri
 
 export async function getAllUsersStats(instanceId: string, institutionId: string) {
   const resp = await axios.get<AllCoursesStats>('/api/study-buddy/get-all-users-stats', {
-    params: { instanceId, institutionId }
+    params: { instanceId, institutionId },
   });
   return resp.data;
 }
 
-export async function getStudyBuddyCoursesSortedbyConnections(instanceId: string, institutionId: string) {
+export async function getStudyBuddyCoursesSortedbyConnections(
+  instanceId: string,
+  institutionId: string
+) {
   const resp = await axios.get<GetSortedCoursesByConnectionsResponse[]>(
     '/api/study-buddy/get-courses-sortedby-connections',
     { params: { instanceId, institutionId } }
