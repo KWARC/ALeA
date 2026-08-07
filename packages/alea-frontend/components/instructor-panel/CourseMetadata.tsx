@@ -23,14 +23,14 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
   useEffect(() => {
     const checkEntries = async () => {
       try {
-        const result = await checkLectureEntriesExist(courseId);
+        const result = await checkLectureEntriesExist(courseId, universityId, instanceId);
         setHasEntries(result.hasEntries);
       } catch (e) {
         console.error('Failed to check lecture entries:', e);
       }
     };
     checkEntries();
-  }, [courseId]);
+  }, [courseId, universityId, instanceId]);
 
   const handleGenerateLectureEntry = async () => {
     if (hasEntries) return;
@@ -38,7 +38,7 @@ const CourseMetadata: React.FC<CourseMetadataProps> = ({ courseId, instanceId, u
     setGenerateLoading(true);
     setGenerateMessage('Generating lecture entries...');
     try {
-      const data = await generateLectureEntry(courseId, instanceId);
+      const data = await generateLectureEntry(courseId, instanceId, universityId);
       if (data && !data.error) {
         if (data.alreadyExists) {
           setHasEntries(true);
