@@ -500,6 +500,7 @@ export const de = {
     tutorialSchedule: 'Tutorienplan',
     lecturesNotStarted: 'Die Vorlesungen haben noch nicht begonnen.',
     lecturesOver: 'Die Vorlesungen sind für dieses Semester vorbei.',
+    lecturesCommenceOn: 'Die Vorlesungen beginnen am {{date}}.',
     tutorialsNotStarted: 'Die Tutorien haben noch nicht begonnen.',
     tutorialsOver: 'Die Tutorien sind für dieses Semester vorbei.',
     howToUse: 'So verwendest du es',

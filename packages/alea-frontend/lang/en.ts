@@ -535,6 +535,7 @@ export const en = {
     tutorialSchedule: 'Tutorial Schedule',
     lecturesNotStarted: 'Lectures have not started yet.',
     lecturesOver: 'Lectures are over for this semester.',
+    lecturesCommenceOn: 'Lectures commence on {{date}}.',
     tutorialsNotStarted: 'Tutorials have not started yet.',
     tutorialsOver: 'Tutorials are over for this semester.',
     howToUse: 'How to use',

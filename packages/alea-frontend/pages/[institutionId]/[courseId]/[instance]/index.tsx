@@ -102,24 +102,29 @@ function getWeekdayName(dayOfWeek: number): string {
 
 type SchedulePeriodState = 'before' | 'active' | 'after' | 'unknown';
 
-function getSchedulePeriodState(semesterInfo?: SemesterData[]): SchedulePeriodState {
+type SchedulePeriodInfo = {
+  state: SchedulePeriodState;
+  lectureStartDate?: string;
+  lectureEndDate?: string;
+};
+
+function getSchedulePeriodInfo(semesterInfo?: SemesterData[]): SchedulePeriodInfo {
   const semester = semesterInfo?.[0];
   const lectureStartDate = semester?.lectureStartDate;
   const lectureEndDate = semester?.lectureEndDate;
 
-  if (!lectureStartDate || !lectureEndDate) return 'unknown';
+  if (!lectureStartDate || !lectureEndDate) return { state: 'unknown' };
 
   const start = new Date(lectureStartDate);
   const end = new Date(lectureEndDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'unknown';
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return { state: 'unknown' };
 
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
 
   const now = new Date();
-  if (now < start) return 'before';
-  if (now > end) return 'after';
-  return 'active';
+  const state = now < start ? 'before' : now > end ? 'after' : 'active';
+  return { state, lectureStartDate, lectureEndDate };
 }
 
 function SchedulePeriodMessage({ message }: { message: string }) {
@@ -140,16 +145,46 @@ function SchedulePeriodMessage({ message }: { message: string }) {
   );
 }
 
+function formatCommencementDate(date?: string) {
+  if (!date) return undefined;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ScheduleCommencementNotice({ message }: { message: string }) {
+  return (
+    <Box
+      sx={{
+        mb: 1,
+        p: 1,
+        borderRadius: 1,
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+        {message}
+      </Typography>
+    </Box>
+  );
+}
+
 function CourseScheduleSection({
   userId,
   courseId,
   currentTerm,
-  schedulePeriod,
+  schedulePeriodInfo,
 }: {
   userId: string | undefined;
   courseId: string;
   currentTerm: string;
-  schedulePeriod: SchedulePeriodState;
+  schedulePeriodInfo: SchedulePeriodInfo;
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
@@ -159,19 +194,12 @@ function CourseScheduleSection({
   const { calendarSection: t } = getLocaleObject(useRouter());
   const hasMoreLectures = lectureSchedule.length > 3;
   const hasMoreTutorials = tutorialSchedule.length > 3;
-  const showScheduleRows = schedulePeriod === 'active' || schedulePeriod === 'unknown';
-  const lecturePeriodMessage =
-    schedulePeriod === 'before'
-      ? t.lecturesNotStarted
-      : schedulePeriod === 'after'
-      ? t.lecturesOver
-      : undefined;
-  const tutorialPeriodMessage =
-    schedulePeriod === 'before'
-      ? t.tutorialsNotStarted
-      : schedulePeriod === 'after'
-      ? t.tutorialsOver
-      : undefined;
+  const schedulePeriod = schedulePeriodInfo.state;
+  const showScheduleRows = schedulePeriod !== 'after';
+  const commencementDate = formatCommencementDate(schedulePeriodInfo.lectureStartDate);
+  const lectureCommencementMessage = commencementDate
+    ? t.lecturesCommenceOn.replace('{{date}}', commencementDate)
+    : undefined;
 
   useEffect(() => {
     async function fetchSchedule() {
@@ -312,6 +340,10 @@ function CourseScheduleSection({
                   </Typography>
                 )}
 
+                {schedulePeriod === 'before' && lectureCommencementMessage && (
+                  <ScheduleCommencementNotice message={lectureCommencementMessage} />
+                )}
+
                 <Box
                   sx={{
                     position: 'relative',
@@ -380,7 +412,7 @@ function CourseScheduleSection({
                       </Box>
                     ))
                   ) : (
-                    <SchedulePeriodMessage message={lecturePeriodMessage ?? ''} />
+                    <SchedulePeriodMessage message={t.lecturesOver} />
                   )}
 
                   {showScheduleRows && !showAllLectures && hasMoreLectures && (
@@ -519,7 +551,7 @@ function CourseScheduleSection({
                       </Box>
                     ))
                   ) : (
-                    <SchedulePeriodMessage message={tutorialPeriodMessage ?? ''} />
+                    <SchedulePeriodMessage message={t.tutorialsOver} />
                   )}
 
                   {showScheduleRows && !showAllTutorials && hasMoreTutorials && (
@@ -698,7 +730,7 @@ const CourseHomePage: NextPage = () => {
     semesterInfo && semesterInfo.length > 0
       ? new Date() > new Date(semesterInfo[0].semesterEnd)
       : false;
-  const schedulePeriod = getSchedulePeriodState(semesterInfo);
+  const schedulePeriodInfo = getSchedulePeriodInfo(semesterInfo);
 
   if (isValidating) return null;
   if (validationError) {
@@ -985,7 +1017,7 @@ const CourseHomePage: NextPage = () => {
           courseId={courseId}
           userId={userId}
           currentTerm={currentTerm}
-          schedulePeriod={schedulePeriod}
+          schedulePeriodInfo={schedulePeriodInfo}
         />
         {showSearchBar && (
           <Box
