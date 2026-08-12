@@ -61,8 +61,9 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
   } | null>(null);
 
   useEffect(() => {
-    getCoverageTimeline(true).then(setCoverageTimeline);
-  }, []);
+    if (!instanceId) return;
+    getCoverageTimeline(true, instanceId).then(setCoverageTimeline);
+  }, [instanceId]);
 
   const { data: courses = {} } = useAllCourses();
 

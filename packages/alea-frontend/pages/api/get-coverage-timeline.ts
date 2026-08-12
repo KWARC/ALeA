@@ -32,6 +32,8 @@ export function getCoverageData(instanceId?: string): CoverageTimeline {
     filePaths = getCurrentSemesterFile(baseDir);
   } else if (instanceId) {
     filePaths = getPreviousSemesterFile(prevSemsDir, instanceId);
+    //We will do something else to handle upcoming semesters, but for now, if the file doesn't exist, we will fall back to the current semester file.
+    if (filePaths.length === 0) filePaths = getCurrentSemesterFile(baseDir);
   } else {
     filePaths = [...getAllPreviousSemesterFiles(prevSemsDir), ...getCurrentSemesterFile(baseDir)];
   }
@@ -41,7 +43,7 @@ export function getCoverageData(instanceId?: string): CoverageTimeline {
       const fileData = fs.readFileSync(filePath, 'utf-8');
       const parsed: CoverageTimeline = JSON.parse(fileData);
       for (const [courseId, entries] of Object.entries(parsed)) {
-        combinedData[courseId] = entries;
+        combinedData[courseId] = Array.isArray(entries) ? { lectures: entries } : entries;
       }
     } catch (err) {
       console.warn(`Skipping invalid file ${filePath}:`, err);
@@ -52,5 +54,6 @@ export function getCoverageData(instanceId?: string): CoverageTimeline {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).json(getCoverageData());
+  const instanceId = req.query.instanceId as string | undefined;
+  res.status(200).json(getCoverageData(instanceId));
 }
