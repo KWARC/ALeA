@@ -152,10 +152,11 @@ export async function updateCheatsheetConfig(
 }
 
 export async function checkLectureEntriesExist(
-  courseId: string
+  courseId: string,
+  instanceId: string
 ): Promise<{ hasEntries: boolean; count: number }> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
-    params: { courseId },
+    params: { courseId, instanceId },
   });
   return response.data;
 }
