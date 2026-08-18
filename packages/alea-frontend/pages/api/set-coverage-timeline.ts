@@ -4,12 +4,17 @@ import path from 'path';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from './access-control/resource-utils';
 import { checkIfPostOrSetError } from './comment-utils';
-import { CURRENT_SEM_FILE } from './get-coverage-timeline';
-import { getCurrentTermForCourseId } from './get-current-term';
+import {
+  ensureInstanceSyllabusDir,
+  getInstanceSyllabusFilePath,
+  getRecordedSyllabusDir,
+} from './get-coverage-timeline';
 
-function backupFileName() {
-  return (
-    process.env.RECORDED_SYLLABUS_DIR + '/backups/' + CURRENT_SEM_FILE + `_bkp_${Date.now()}.json`
+function backupFileName(instanceId: string) {
+  return path.join(
+    getRecordedSyllabusDir(),
+    'backups',
+    `${instanceId}_${instanceId}.json_bkp_${Date.now()}.json`
   );
 }
 
@@ -17,7 +22,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkIfPostOrSetError(req, res)) return;
 
   const courseId = req.body.courseId as string;
+  const instanceId = req.body.instanceId as string;
   const action = req.body.action || 'upsert';
+  if (!courseId || !instanceId) {
+    return res.status(400).json({ message: 'Missing courseId or instanceId.' });
+  }
   if (action !== 'upsert' && action !== 'delete') {
     return res
       .status(400)
@@ -32,12 +41,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Action.MUTATE,
       {
         courseId,
-        instanceId: await getCurrentTermForCourseId(courseId),
+        instanceId,
       }
     );
     if (!userId) return;
 
-    const filePath = process.env.RECORDED_SYLLABUS_DIR + '/' + CURRENT_SEM_FILE;
+    ensureInstanceSyllabusDir(instanceId);
+    const filePath = getInstanceSyllabusFilePath(instanceId);
 
     // Read the current file contents
     let existingData: CoverageTimeline = {};
@@ -45,13 +55,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const fileData = fs.readFileSync(filePath, 'utf-8');
       existingData = JSON.parse(fileData);
     }
-    const backupDir = path.join(process.env.RECORDED_SYLLABUS_DIR!, 'backups');
+    const backupDir = path.join(getRecordedSyllabusDir(), 'backups');
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
 
     // Backup before changing anything
-    fs.writeFileSync(backupFileName(), JSON.stringify(existingData, null, 2));
+    fs.writeFileSync(backupFileName(instanceId), JSON.stringify(existingData, null, 2));
 
     const courseData = existingData[courseId] ?? {
       lectures: [],

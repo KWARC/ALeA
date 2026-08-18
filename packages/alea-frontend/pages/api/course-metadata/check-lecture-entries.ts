@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
-import path from 'path';
+import { getInstanceSyllabusFilePath } from '../get-coverage-timeline';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -8,16 +8,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const { courseId } = req.query as { courseId?: string };
+  const { courseId, instanceId } = req.query as { courseId?: string; instanceId?: string };
 
-  if (!courseId) {
-    res.status(422).json({ error: 'Missing required field: courseId' });
+  if (!courseId || !instanceId) {
+    res.status(422).json({ error: 'Missing required field: courseId or instanceId' });
     return;
   }
 
   try {
-    const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
-    const filePath = path.join(syllabusDir, 'current-sem.json');
+    const filePath = getInstanceSyllabusFilePath(instanceId);
 
     let hasEntries = false;
     let count = 0;

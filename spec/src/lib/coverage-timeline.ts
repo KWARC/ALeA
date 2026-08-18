@@ -2,6 +2,7 @@ import { CoverageTimeline, LectureEntry } from '@alea/utils';
 import axios from 'axios';
 interface CoverageUpdatePayload {
   courseId: string;
+  instanceId: string;
   updatedEntry?: LectureEntry;
   timestamp_ms?: number;
   action?: 'upsert' | 'delete';
@@ -39,6 +40,7 @@ export async function updateCoverageTimeline(payload: CoverageUpdatePayload) {
   const finalPayload = {
     action: payload.action || 'upsert',
     courseId: payload.courseId,
+    instanceId: payload.instanceId,
     ...(payload.updatedEntry && { updatedEntry: payload.updatedEntry }),
     ...(payload.timestamp_ms && { timestamp_ms: payload.timestamp_ms }),
     ...(payload.notCoveredSections && { notCoveredSections: payload.notCoveredSections }),
