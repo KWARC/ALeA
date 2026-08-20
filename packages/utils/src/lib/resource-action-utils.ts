@@ -70,6 +70,7 @@ export const COURSE_SPECIFIC_RESOURCENAMES = [
 ];
 export interface CourseResourceAction {
   courseId: string;
+  instanceId: string;
   name: ResourceName;
   actions: Action[];
 }

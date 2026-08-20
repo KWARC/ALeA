@@ -128,9 +128,9 @@ export interface GetCourseGradingItemsResponse {
   homeworks: HomeworkInfo[];
 }
 
-export async function getCourseGradingItems(courseId: string) {
+export async function getCourseGradingItems(courseId: string, courseInstance?: string) {
   const resp = await axios.get('/api/nap/get-course-grading-items', {
-    params: { courseId },
+    params: { courseId, courseInstance },
   });
   return resp.data as GetCourseGradingItemsResponse;
 }
