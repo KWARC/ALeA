@@ -32,7 +32,6 @@ import {
   CheatSheetWindowsTable,
   EmptyState,
   FilePreviewDialog,
-  InlineStudentMergeButton,
   UserFilterBar,
 } from '../../../../components/CheatSheetComponents';
 import {
@@ -503,14 +502,6 @@ function CheatSheetsContent({
               />
             )}
           </Box>
-          {!isEmbedded && userId && (
-            <InlineStudentMergeButton
-              courseId={courseId}
-              instanceId={instanceId}
-              universityId={universityId}
-              userId={userId}
-            />
-          )}
         </Box>
       </Box>
 
