@@ -75,6 +75,7 @@ import { useStudentCount } from '../../../../hooks/useStudentCount';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import shadows from '../../../../theme/shadows';
+import { getNextOrCurrentScheduleOccurrence } from '../../../../components/StudentDashboard/utils';
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -175,6 +176,16 @@ function ScheduleCommencementNotice({ message }: { message: string }) {
   );
 }
 
+function formatScheduleTimestamp(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function CourseScheduleSection({
   userId,
   courseId,
@@ -230,6 +241,7 @@ function CourseScheduleSection({
             venueLink: item.venueLink,
             tutorName: item.tutorName,
             comments: item.comments,
+            cancelledDates: Array.isArray(item.cancelledDates) ? item.cancelledDates : undefined,
           });
 
           const lectures = Array.isArray(data?.lectureSchedule)
@@ -282,14 +294,29 @@ function CourseScheduleSection({
     },
   });
 
+  const tutorialPeriod = {
+    lectureStartDate: schedulePeriodInfo.lectureStartDate,
+    lectureEndDate: schedulePeriodInfo.lectureEndDate,
+  };
+  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, tutorialPeriod);
+  const now = new Date();
+  const todayYmd = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+  const cancelledTutorialNotices = tutorialSchedule.flatMap((entry) =>
+    (entry.cancelledDates ?? [])
+      .filter((ymd) => ymd >= todayYmd)
+      .map((ymd) => ({
+        ymd,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+      }))
+  );
+
   const nextLectureDateFormatted = nextLectureStartTime
-    ? new Date(nextLectureStartTime).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+    ? formatScheduleTimestamp(nextLectureStartTime)
     : null;
   const fontColor = 'text.primary';
   const theme = useTheme();
@@ -471,6 +498,24 @@ function CourseScheduleSection({
                     {t.tutorialSchedule}
                   </Typography>
                 </Box>
+
+                {cancelledTutorialNotices.map((notice) => (
+                  <ScheduleCommencementNotice
+                    key={`${notice.ymd}-${notice.startTime}`}
+                    message={t.tutorialCancelledNotice
+                      .replace('{{date}}', formatScheduleTimestamp(new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime()))
+                    }
+                  />
+                ))}
+
+                {nextTutorial && (
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16, mb: 1 }}
+                  >
+                    {t.upcomingTutorial.replace('{{date}}', formatScheduleTimestamp(nextTutorial.ts))}
+                  </Typography>
+                )}
 
                 <Box
                   sx={{

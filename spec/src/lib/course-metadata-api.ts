@@ -7,6 +7,7 @@ export interface LectureSchedule {
   lectureEndTime: string;
   tutorName?: string;
   comments?: string;
+  cancelledDates?: string[];
   hasQuiz?: boolean;
   quizOffsetMinutes?: number;
   quizOffsetReference?: 'lecture-start' | 'lecture-end';
@@ -82,6 +83,7 @@ export interface LectureScheduleItem {
   venueLink?: string;
   tutorName?: string;
   comments?: string;
+  cancelledDates?: string[];
 }
 
 export interface TutorInfo {

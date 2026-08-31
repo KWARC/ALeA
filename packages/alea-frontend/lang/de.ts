@@ -503,6 +503,8 @@ export const de = {
     lecturesCommenceOn: 'Die Vorlesungen beginnen am {{date}}.',
     tutorialsNotStarted: 'Die Tutorien haben noch nicht begonnen.',
     tutorialsOver: 'Die Tutorien sind für dieses Semester vorbei.',
+    upcomingTutorial: 'Bevorstehendes Tutorium: {{date}}',
+    tutorialCancelledNotice: 'Tutorium abgesagt am {{date}}',
     howToUse: 'So verwendest du es',
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
@@ -670,6 +672,14 @@ export const de = {
 
     lecture: 'Vorlesung',
     tutorial: 'Tutorium',
+
+    addCancellationDate: 'Datum hinzufügen',
+    selectCancelDate: 'Absagedaten',
+    invalidTutorialDate:
+      'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
+    dateAlreadyCancelled: 'Dieses Datum ist für dieses Tutorium bereits abgesagt.',
+    confirmRemoveCancellationDate:
+      '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
 
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',
