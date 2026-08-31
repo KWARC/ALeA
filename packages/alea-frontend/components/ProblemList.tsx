@@ -304,7 +304,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
             label="Select Quiz"
           />
 
-          <HomeworkSelect
+          {/* <HomeworkSelect
             homeworks={homeworks}
             value={selectedHomework}
             onChange={(homeworkUri) => {
@@ -314,7 +314,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
                 query: { homeworkUri, courseId },
               });
             }}
-          />
+          /> */}
         </Box>
       </Box>
 
