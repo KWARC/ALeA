@@ -77,11 +77,17 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
   });
 };
 
+const getHomeworkSortValue = (homework: HomeworkInfo): number => {
+  const termMatch = homework.term?.match(/^(SS|WS)(\d{2})/);
+  const termValue = termMatch ? Number(termMatch[2]) * 2 + (termMatch[1] === 'WS' ? 1 : 0) : 0;
+  const homeworkNumber = Number(homework.number?.match(/\d+/)?.[0] ?? 0);
+  return termValue * 100 + homeworkNumber;
+};
+
 function formatHomeworkLabel(homework: HomeworkInfo) {
   const homeworkNumber = homework.number ? `Homework ${homework.number}` : 'Homework';
   const formattedTerm = homework.term?.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
-  const date = homework.date ? new Date(homework.date).toLocaleDateString('en-GB') : '';
-  return [homeworkNumber, formattedTerm, date].filter(Boolean).join(' ');
+  return [homeworkNumber, formattedTerm].filter(Boolean).join(' ');
 }
 
 function HomeworkSelect({
@@ -169,7 +175,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
     getHomeworksForCourse(courseId)
       .then((data) => {
-        const sorted = sortExamsByDateDesc(data);
+        const sorted = [...data].sort((a, b) => getHomeworkSortValue(b) - getHomeworkSortValue(a));
         setHomeworks(sorted);
       })
       .catch(console.error);
