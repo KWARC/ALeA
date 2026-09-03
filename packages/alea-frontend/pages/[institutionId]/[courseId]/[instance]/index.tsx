@@ -320,6 +320,9 @@ function CourseScheduleSection({
     : null;
   const fontColor = 'text.primary';
   const theme = useTheme();
+  const hasSchedule = lectureSchedule.length > 0 || tutorialSchedule.length > 0;
+  if (!hasSchedule && !userId) return null;
+
   return (
     <Box
       sx={{
