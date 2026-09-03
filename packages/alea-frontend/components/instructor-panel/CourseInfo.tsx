@@ -460,34 +460,43 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
           }
           label={t.enableCheatsheet}
         />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet || false}
-              onChange={async (e) => {
-                const next = e.target.checked;
-                if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
-                await handleSaveCheatsheetConfig({
-                  canStudentUploadCheatsheet: next,
-                });
-              }}
+        {courseInfo.cheatsheetConfig?.hasCheatsheet && (
+          <>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet || false}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    if (!confirm(t.confirmUpdateCanStudentUploadCheatsheet)) return;
+                    await handleSaveCheatsheetConfig({
+                      canStudentUploadCheatsheet: next,
+                    });
+                  }}
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <span>{t.canStudentUploadCheatsheet}</span>
+                  {courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet && (
+                    <span style={{ fontSize: '0.85em', color: '#666' }}>
+                      ({courseInfo.cheatsheetConfig?.uploadStartTime} -{' '}
+                      {courseInfo.cheatsheetConfig?.uploadEndTime})
+                    </span>
+                  )}
+                </Box>
+              }
             />
-          }
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <span>{t.canStudentUploadCheatsheet}</span>
-              {courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet && (
-                <span style={{ fontSize: '0.85em', color: '#666' }}>
-                  ({courseInfo.cheatsheetConfig?.uploadStartTime} -{' '}
-                  {courseInfo.cheatsheetConfig?.uploadEndTime})
-                </span>
-              )}
-            </Box>
-          }
-        />
-        <Button variant="outlined" size="small" onClick={handleOpenCheatsheetConfig}disabled={!courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet}>
-          Configure Cheatsheet Window
-        </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleOpenCheatsheetConfig}
+              disabled={!courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet}
+            >
+              Configure Cheatsheet Window
+            </Button>
+          </>
+        )}
         <TextField
           label={t.seriesIdLabel}
           value={seriesId}

@@ -12,7 +12,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Tooltip,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import Link from 'next/link';
@@ -122,11 +121,9 @@ function HomeworkSelect({
           const label = formatHomeworkLabel(homework);
           return (
             <MenuItem key={homework.uri} value={homework.uri}>
-              <Tooltip title={homework.uri} placement="right" arrow>
-                <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
-                  {label}
-                </Typography>
-              </Tooltip>
+              <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+                {label}
+              </Typography>
             </MenuItem>
           );
         })}
