@@ -56,10 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   if (!userId) return;
 
+  const activeQuizzes = getAllQuizzes().filter((quiz) => matchesQuiz(quiz, courseId, instanceId));
   const isCurrentTerm = currentTerm?.toLowerCase() === instanceId.toLowerCase();
   const relevantQuizzes =
-    isCurrentTerm
-      ? getAllQuizzes().filter((quiz) => matchesQuiz(quiz, courseId, instanceId))
+    activeQuizzes.length || isCurrentTerm
+      ? activeQuizzes
       : getArchivedQuizzes(courseId, instanceId);
 
   res.status(200).json(relevantQuizzes);
