@@ -729,7 +729,7 @@ export async function getProblemsForQuiz(quizUri: string): Promise<string[]> {
 
 export const TEMPL_GET_PROBLEMS_FOR_HOMEWORK = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dc: <http://purl.org/dc/terms#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
 SELECT DISTINCT ?prob WHERE {
