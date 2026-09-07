@@ -76,11 +76,11 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
   });
 };
 
-const getHomeworkSortValue = (homework: HomeworkInfo): number => {
-  const termMatch = homework.term?.match(/^(SS|WS)(\d{2})/);
+const getTermNumberSortValue = (item: ExamInfo): number => {
+  const termMatch = item.term?.match(/^(SS|WS)(\d{2})/);
   const termValue = termMatch ? Number(termMatch[2]) * 2 + (termMatch[1] === 'WS' ? 1 : 0) : 0;
-  const homeworkNumber = Number(homework.number?.match(/\d+/)?.[0] ?? 0);
-  return termValue * 100 + homeworkNumber;
+  const itemNumber = Number(item.number?.match(/\d+/)?.[0] ?? 0);
+  return termValue * 100 + itemNumber;
 };
 
 function formatHomeworkLabel(homework: HomeworkInfo) {
@@ -161,7 +161,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
     getQuizzesForCourse(courseId)
       .then((data) => {
-        const sorted = sortExamsByDateDesc(data);
+        const sorted = [...data].sort((a, b) => getTermNumberSortValue(b) - getTermNumberSortValue(a));
         setQuizzes(sorted);
       })
       .catch(console.error);
@@ -172,7 +172,7 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
     getHomeworksForCourse(courseId)
       .then((data) => {
-        const sorted = [...data].sort((a, b) => getHomeworkSortValue(b) - getHomeworkSortValue(a));
+        const sorted = [...data].sort((a, b) => getTermNumberSortValue(b) - getTermNumberSortValue(a));
         setHomeworks(sorted);
       })
       .catch(console.error);
