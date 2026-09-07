@@ -409,7 +409,7 @@ export function InlineStudentMergeButton({
           </span>
         </Tooltip>
 
-        <Tooltip title="Combines all uploaded cheatsheets into one PDF — bring this to your exam">
+        <Tooltip title="Merge all cheatsheets into one document">
           <Button
             variant="contained"
             size="small"

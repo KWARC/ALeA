@@ -692,4 +692,12 @@ export const de = {
     CourseInfo: 'Kursinformationen',
     aboutThisCourse: 'Über diesen Kurs',
   },
+  cheatsheet: {
+    examInfoMerge:
+      'Die Lehrperson führt alle Ihre Spickzettel zu einem einzigen Dokument zusammen, druckt dieses (in Graustufen) und Sie können es vor der Prüfung am Orga-Schalter abholen.',
+    examInfoSelfPrint:
+      'Wenn Sie selbst drucken möchten (z. B. einen Farbausdruck), können Sie diesen zum Orga-Schalter mitbringen und von den Lehrpersonen prüfen lassen.',
+    examInfoForbidden:
+      'Ungeprüfte Spickzettel oder Spickzettel, die von dem hier erstellten zusammengeführten Spickzettel abweichen, sind in der Prüfung nicht erlaubt.',
+  },
 };
