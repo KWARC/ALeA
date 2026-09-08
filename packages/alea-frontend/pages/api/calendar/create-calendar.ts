@@ -5,7 +5,6 @@ import { getCoverageData } from '../get-coverage-timeline';
 import { getAuthorizedCourseResources } from '../get-resources-for-user';
 import { executeQuery } from '../comment-utils';
 import { getAllCoursesFromDb } from '../get-all-courses';
-import { getCurrentTermForCourseId } from '../get-current-term';
 interface SemesterInfo {
   semesterStart: string;
   semesterEnd: string;
@@ -58,7 +57,7 @@ function generateCalendarEvents(
       const type = (entry as any).type || 'Lecture';
       const lectureInfo = entry.isQuizScheduled ? `📝 ${type} and Quiz` : `📚 ${type}`;
       const location = entry.venue || undefined;
-      let summary = `${courseId} - ${lectureInfo}`;
+      const summary = `${courseId} - ${lectureInfo}`;
       let description = `Course: ${courseId}\n${lectureInfo}`;
       if (location) description += `\nLocation: ${location}`;
       if (entry.tutorName) description += `\nTutor: ${entry.tutorName}`;
@@ -128,8 +127,8 @@ async function generateSemesterAndHolidayEvents(
   });
 
   try {
-      const parsed = semesterInfo.holidays;
-      const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
+    const parsed = semesterInfo.holidays;
+    const holidaysArray: { date: string; name: string }[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as any)?.holidays)
       ? (parsed as any).holidays
@@ -153,7 +152,7 @@ async function generateSemesterAndHolidayEvents(
 
 async function getUserEvents(
   userId: string
-): Promise<{ events: ICalEventData[]; universityId?: string; instanceId?: string }> {
+): Promise<{ events: ICalEventData[]; universityId?: string; instanceIds: string[] }> {
   const coverageData = getCoverageData();
 
   const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
@@ -163,7 +162,7 @@ async function getUserEvents(
     ])
   );
 
-  const resourceAndActions = await getAuthorizedCourseResources(userId);
+  const resourceAndActions = await getAuthorizedCourseResources(userId, true);
 
   const resourceAccessToInstructor = resourceAndActions
     .map((item) => ({
@@ -173,39 +172,34 @@ async function getUserEvents(
     .filter((resource) => resource.actions.length > 0);
   const isInstructor = resourceAccessToInstructor.length > 0;
 
-  const accessibleCourseIdsForInstructor = new Set(
-    resourceAccessToInstructor.map((resource) => resource.courseId)
-  );
+  const accessibleResources = isInstructor
+    ? resourceAccessToInstructor
+    : resourceAndActions.filter((resource: any) => resource.actions.includes(Action.TAKE));
 
-  const accessibleCourseIdsForStudent = new Set(
-    resourceAndActions
-      .filter((resource: any) => resource.actions.includes(Action.TAKE))
-      .map((resource: any) => resource.courseId)
+  const accessibleCourseIds = new Set(
+    accessibleResources.map((resource: any) => resource.courseId)
   );
-
-  const accessibleCourseIds = isInstructor
-    ? accessibleCourseIdsForInstructor
-    : accessibleCourseIdsForStudent;
+  const instanceIds = Array.from(
+    new Set(accessibleResources.map((resource: any) => resource.instanceId))
+  );
   const events = generateCalendarEvents(coverageLecturesByCourseId, accessibleCourseIds);
 
-  // Get universityId and instanceId from the first accessible course
+  // Get universityId from the first accessible course
   let universityId: string | undefined;
-  let instanceId: string | undefined;
 
   if (accessibleCourseIds.size > 0) {
     const firstCourseId = Array.from(accessibleCourseIds)[0];
     try {
       const courses = await getAllCoursesFromDb();
-      const courseInfo = courses[firstCourseId];
+      const courseInfo = courses[firstCourseId] ?? courses[firstCourseId.toLowerCase()];
       if (courseInfo?.universityId) {
         universityId = courseInfo.universityId;
-        instanceId = await getCurrentTermForCourseId(firstCourseId);
       }
     } catch (error) {
-      console.error('Error getting course info for universityId and instanceId:', error);
+      console.error('Error getting course info for universityId:', error);
     }
   }
-  return { events, universityId, instanceId };
+  return { events, universityId, instanceIds };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -222,11 +216,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     timezone: 'Europe/Berlin',
   });
 
-  const { events, universityId, instanceId } = await getUserEvents(userId);
+  const { events, universityId, instanceIds } = await getUserEvents(userId);
 
   const semesterAndHolidayEvents =
-    universityId && instanceId
-      ? await generateSemesterAndHolidayEvents(universityId, instanceId)
+    universityId && instanceIds.length
+      ? (
+          await Promise.all(
+            instanceIds.map((instanceId) =>
+              generateSemesterAndHolidayEvents(universityId, instanceId)
+            )
+          )
+        ).flat()
       : [];
 
   [...events, ...semesterAndHolidayEvents].forEach((event) => {
