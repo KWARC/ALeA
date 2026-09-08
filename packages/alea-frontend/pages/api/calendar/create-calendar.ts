@@ -153,15 +153,6 @@ async function generateSemesterAndHolidayEvents(
 async function getUserEvents(
   userId: string
 ): Promise<{ events: ICalEventData[]; universityId?: string; instanceIds: string[] }> {
-  const coverageData = getCoverageData();
-
-  const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
-    Object.entries(coverageData).map(([courseId, courseData]) => [
-      courseId,
-      courseData?.lectures ?? [],
-    ])
-  );
-
   const resourceAndActions = await getAuthorizedCourseResources(userId, true);
 
   const resourceAccessToInstructor = resourceAndActions
@@ -182,7 +173,21 @@ async function getUserEvents(
   const instanceIds = Array.from(
     new Set(accessibleResources.map((resource: any) => resource.instanceId))
   );
-  const events = generateCalendarEvents(coverageLecturesByCourseId, accessibleCourseIds);
+  const events = instanceIds.flatMap((instanceId) => {
+    const courseIdsForInstance = new Set(
+      accessibleResources
+        .filter((resource: any) => resource.instanceId === instanceId)
+        .map((resource: any) => resource.courseId)
+    );
+    const coverageData = getCoverageData(instanceId);
+    const coverageLecturesByCourseId: Record<string, LectureEntry[]> = Object.fromEntries(
+      Object.entries(coverageData).map(([courseId, courseData]) => [
+        courseId,
+        courseData?.lectures ?? [],
+      ])
+    );
+    return generateCalendarEvents(coverageLecturesByCourseId, courseIdsForInstance);
+  });
 
   // Get universityId from the first accessible course
   let universityId: string | undefined;
