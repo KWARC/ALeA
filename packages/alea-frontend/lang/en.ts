@@ -714,11 +714,13 @@ export const en = {
     aboutThisCourse: 'About this Course',
   },
   cheatsheet: {
+    examInfoPrefix: 'For the exam:',
     examInfoMerge:
       'The instructor will merge all your cheatsheets into a single document, print that (grayscale) and you can pick it up at the orga counter before the exam.',
     examInfoSelfPrint:
       'If you want to print it yourself (e.g. for a color printout), you can bring that to the orga counter and have it verified by the instructors.',
     examInfoForbidden:
       'Unverified cheatsheets or cheatsheets that differ from the merged cheatsheet created here are forbidden in the exam.',
+    examInfoDetails: 'For details see the announcement in the matrix channel.',
   },
 };

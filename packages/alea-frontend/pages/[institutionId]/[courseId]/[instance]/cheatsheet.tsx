@@ -447,13 +447,17 @@ function CheatSheetsContent({
       {!isEmbedded && (
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="body2" component="p" sx={{ mb: 1 }}>
+            <strong>{t.examInfoPrefix}</strong> {' '}
             {t.examInfoMerge}
           </Typography>
           <Typography variant="body2" component="p" sx={{ mb: 1 }}>
             {t.examInfoSelfPrint}
           </Typography>
-          <Typography variant="body2" component="p">
+          <Typography variant="body2" component="p" sx={{ mb: 1 }}>
             {t.examInfoForbidden}
+          </Typography>
+          <Typography variant="body2" component="p">
+            {t.examInfoDetails}
           </Typography>
         </Alert>
       )}
