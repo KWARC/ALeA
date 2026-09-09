@@ -63,7 +63,7 @@ export function getLaunchDetails(payload: Record<string, unknown>): LaunchDetail
   const messageType = String(payload[messageTypeClaim] ?? '');
   const version = String(payload[versionClaim] ?? '');
   const targetLinkUri = String(payload[targetLinkUriClaim] ?? '');
-  const courseId = resourceLink?.id || context?.label || context?.id || 'lti-course';
+  const courseId = getCourseId(context, resourceLink);
   const instanceId = deploymentId || context?.id || 'lti-instance';
 
   return {
@@ -150,4 +150,18 @@ function getObjectClaim(value: unknown) {
   return typeof value === 'object' && value !== null
     ? (value as Record<string, unknown>)
     : undefined;
+}
+
+function getCourseId(context?: LaunchContext, resourceLink?: LaunchResourceLink) {
+  return normalizeCourseId(context?.title) || resourceLink?.id || context?.label || context?.id || 'lti-course';
+}
+
+function normalizeCourseId(value?: string) {
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized || undefined;
 }

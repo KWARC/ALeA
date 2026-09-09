@@ -11,7 +11,7 @@ export type LtiLaunchSession = LaunchDetails & {
 };
 
 export function createLtiUserId(details: LaunchDetails) {
-  return `lti:${details.platformIssuer}:${details.user.id}`;
+  return details.user.email !== 'Not provided' ? details.user.email : details.user.id;
 }
 
 export function setLtiLaunchSessionCookie(res: NextApiResponse, details: LaunchDetails) {
