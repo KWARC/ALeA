@@ -498,6 +498,13 @@ export const de = {
     schedule: 'Vorlesungsplan',
     personalCalendar: 'Persönlicher Kalender',
     tutorialSchedule: 'Tutorienplan',
+    lecturesNotStarted: 'Die Vorlesungen haben noch nicht begonnen.',
+    lecturesOver: 'Die Vorlesungen sind für dieses Semester vorbei.',
+    lecturesCommenceOn: 'Die Vorlesungen beginnen am {{date}}.',
+    tutorialsNotStarted: 'Die Tutorien haben noch nicht begonnen.',
+    tutorialsOver: 'Die Tutorien sind für dieses Semester vorbei.',
+    upcomingTutorial: 'Bevorstehendes Tutorium: {{date}}',
+    tutorialCancelledNotice: 'Tutorium abgesagt am {{date}}',
     howToUse: 'So verwendest du es',
     howToUseHintGoogle: `Öffne Google Kalender → klicke auf "+" neben "Weitere Kalender" → wähle "Aus URL" → füge den Link ein.`,
     howToUseHintApple: `Öffne Apple Kalender → Datei → Neues Kalenderabonnement → füge den Link ein → klicke auf OK.`,
@@ -666,6 +673,14 @@ export const de = {
     lecture: 'Vorlesung',
     tutorial: 'Tutorium',
 
+    addCancellationDate: 'Datum hinzufügen',
+    selectCancelDate: 'Absagedaten',
+    invalidTutorialDate:
+      'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
+    dateAlreadyCancelled: 'Dieses Datum ist für dieses Tutorium bereits abgesagt.',
+    confirmRemoveCancellationDate:
+      '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
+
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',
     confirmUpdateQuiz:
@@ -676,5 +691,15 @@ export const de = {
     latest: 'Neuestes',
     CourseInfo: 'Kursinformationen',
     aboutThisCourse: 'Über diesen Kurs',
+  },
+  cheatsheet: {
+    examInfoPrefix: 'Für die Prüfung:',
+    examInfoMerge:
+      'Die Lehrperson führt alle Ihre Spickzettel zu einem einzigen Dokument zusammen, druckt dieses (in Graustufen) und Sie können es vor der Prüfung am Orga-Schalter abholen.',
+    examInfoSelfPrint:
+      'Wenn Sie selbst drucken möchten (z. B. einen Farbausdruck), können Sie diesen zum Orga-Schalter mitbringen und von den Lehrpersonen prüfen lassen.',
+    examInfoForbidden:
+      'Ungeprüfte Spickzettel oder Spickzettel, die von dem hier erstellten zusammengeführten Spickzettel abweichen, sind in der Prüfung nicht erlaubt.',
+    examInfoDetails: 'Details finden Sie in der Ankündigung im Matrix-Kanal.',
   },
 };

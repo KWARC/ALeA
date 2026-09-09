@@ -7,6 +7,7 @@ export interface LectureSchedule {
   lectureEndTime: string;
   tutorName?: string;
   comments?: string;
+  cancelledDates?: string[];
   hasQuiz?: boolean;
   quizOffsetMinutes?: number;
   quizOffsetReference?: 'lecture-start' | 'lecture-end';
@@ -82,6 +83,7 @@ export interface LectureScheduleItem {
   venueLink?: string;
   tutorName?: string;
   comments?: string;
+  cancelledDates?: string[];
 }
 
 export interface TutorInfo {
@@ -152,10 +154,11 @@ export async function updateCheatsheetConfig(
 }
 
 export async function checkLectureEntriesExist(
-  courseId: string
+  courseId: string,
+  instanceId: string
 ): Promise<{ hasEntries: boolean; count: number }> {
   const response = await axios.get(`${COURSE_METADATA_BASE_URL}/check-lecture-entries`, {
-    params: { courseId },
+    params: { courseId, instanceId },
   });
   return response.data;
 }

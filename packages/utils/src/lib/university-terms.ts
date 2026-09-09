@@ -1,12 +1,14 @@
 export interface UniversityTermConfig {
   universityId: string;
   currentTerm: string;
+  upcomingTerm?: string;
 }
 
 export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   FAU: {
     universityId: 'FAU',
     currentTerm: 'SS26',
+    upcomingTerm: 'WS26-27',
   },
   IISc: {
     universityId: 'IISc',
@@ -15,6 +17,7 @@ export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
   Jacobs: {
     universityId: 'Jacobs',
     currentTerm: 'SS26',
+    upcomingTerm: 'WS26-27',
   },
   'Heriot Watt': {
     universityId: 'Heriot Watt',
@@ -33,4 +36,9 @@ export const UNIVERSITY_TERMS: Record<string, UniversityTermConfig> = {
 export function getCurrentTermForUniversity(universityId: string): string {
   const config = UNIVERSITY_TERMS[universityId];
   return config?.currentTerm;
+}
+
+export function getUpcomingTermForUniversity(universityId: string): string | undefined {
+  const config = UNIVERSITY_TERMS[universityId];
+  return config?.upcomingTerm;
 }

@@ -8,6 +8,10 @@ import {
   Typography,
   CircularProgress,
   useTheme,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import { SafeHtml } from '@alea/react-utils';
 import Link from 'next/link';
@@ -19,7 +23,7 @@ import { getExamsForCourse } from '@alea/spec';
 import { ExamSelect } from '@alea/stex-react-renderer';
 import { useCourseProblemCounts } from '../hooks/useCourseProblemCount';
 import shadows from '../theme/shadows';
-import { getQuizzesForCourse } from '@alea/spec';
+import { getHomeworksForCourse, getQuizzesForCourse } from '@alea/spec';
 
 interface TitleMetadata {
   uri?: string;
@@ -33,6 +37,8 @@ interface ExamInfo {
   number?: string;
   date?: string;
 }
+
+type HomeworkInfo = ExamInfo;
 
 const extractTitlesAndSectionUri = (
   toc: FTML.TocElem | null,
@@ -70,12 +76,71 @@ const sortExamsByDateDesc = (exams: ExamInfo[]): ExamInfo[] => {
   });
 };
 
+const getTermNumberSortValue = (item: ExamInfo): number => {
+  const termMatch = item.term?.match(/^(SS|WS)(\d{2})/);
+  const termValue = termMatch ? Number(termMatch[2]) * 2 + (termMatch[1] === 'WS' ? 1 : 0) : 0;
+  const itemNumber = Number(item.number?.match(/\d+/)?.[0] ?? 0);
+  return termValue * 100 + itemNumber;
+};
+
+function formatHomeworkLabel(homework: HomeworkInfo) {
+  const homeworkNumber = homework.number ? `Homework ${homework.number}` : 'Homework';
+  const formattedTerm = homework.term?.replace(/([A-Z]+)(\d{2})(\d{2})/, '$1 $2/$3');
+  return [homeworkNumber, formattedTerm].filter(Boolean).join(' ');
+}
+
+function HomeworkSelect({
+  homeworks,
+  value,
+  onChange,
+}: {
+  homeworks: HomeworkInfo[];
+  value: string;
+  onChange: (homeworkUri: string) => void;
+}) {
+  return (
+    <FormControl size="small" sx={{ minWidth: 180 }}>
+      <InputLabel sx={{ fontSize: '0.85rem' }}>Select Homework</InputLabel>
+      <Select
+        size="small"
+        value={value}
+        label="Select Homework"
+        onChange={(e) => onChange(e.target.value as string)}
+        sx={{
+          height: 32,
+          fontSize: '0.80rem',
+          '& .MuiSelect-select': {
+            py: 0.5,
+          },
+        }}
+      >
+        <MenuItem disabled value="">
+          <em>{homeworks.length ? 'Select' : 'No items available'}</em>
+        </MenuItem>
+        {homeworks.map((homework) => {
+          const label = formatHomeworkLabel(homework);
+          return (
+            <MenuItem key={homework.uri} value={homework.uri}>
+              <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+                {label}
+              </Typography>
+            </MenuItem>
+          );
+        })}
+      </Select>
+    </FormControl>
+  );
+}
+
 const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
   const [exams, setExams] = useState<ExamInfo[]>([]);
   const [selectedExam, setSelectedExam] = useState('');
 
   const [quizzes, setQuizzes] = useState<ExamInfo[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState('');
+
+  const [homeworks, setHomeworks] = useState<HomeworkInfo[]>([]);
+  const [selectedHomework, setSelectedHomework] = useState('');
   const router = useRouter();
   const { practiceProblems: t, peerGrading: g } = getLocaleObject(router);
   const theme = useTheme();
@@ -96,9 +161,19 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
 
     getQuizzesForCourse(courseId)
       .then((data) => {
-        console.log("QUIZ DATA:", data);
-        const sorted = sortExamsByDateDesc(data);
+        const sorted = [...data].sort((a, b) => getTermNumberSortValue(b) - getTermNumberSortValue(a));
         setQuizzes(sorted);
+      })
+      .catch(console.error);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    getHomeworksForCourse(courseId)
+      .then((data) => {
+        const sorted = [...data].sort((a, b) => getTermNumberSortValue(b) - getTermNumberSortValue(a));
+        setHomeworks(sorted);
       })
       .catch(console.error);
   }, [courseId]);
@@ -230,6 +305,18 @@ const ProblemList: FC<ProblemListProps> = ({ courseSections, courseId }) => {
               });
             }}
             label="Select Quiz"
+          />
+
+          <HomeworkSelect
+            homeworks={homeworks}
+            value={selectedHomework}
+            onChange={(homeworkUri) => {
+              setSelectedHomework(homeworkUri);
+              router.push({
+                pathname: '/homework-problems',
+                query: { homeworkUri, courseId },
+              });
+            }}
           />
         </Box>
       </Box>

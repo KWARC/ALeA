@@ -307,7 +307,7 @@ export function CourseCard({ course, currentTerm }) {
           width={courseId === 'iwgs-1' ? 100 : 200}
           src={courseImage}
           alt="course-image"
-          style={{ borderRadius: 2.5 }}
+          style={{ borderRadius: 2.5, objectFit: 'contain' }}
         />
         <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
           <Typography

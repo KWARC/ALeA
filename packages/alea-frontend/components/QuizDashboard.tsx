@@ -588,7 +588,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
             </MenuItem>
           ))}
         </Select>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           disabled={syllabusLoading}
@@ -605,7 +605,7 @@ const QuizDashboard: NextPage<QuizDashboardProps> = ({
           startIcon={syllabusLoading ? <CircularProgress size={20} color="inherit" /> : null}
         >
           Create Quiz
-        </Button>
+        </Button> */}
       </Box>
 
       {statsLoading ? (

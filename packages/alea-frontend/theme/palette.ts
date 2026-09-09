@@ -145,6 +145,10 @@ export const lightPalette: PaletteOptions = {
     'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
     krmt: 'radial-gradient(circle, white, #f5f5b7)',
     gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+    dplaw: 'linear-gradient(90deg, #8fc8ff 0%, #1f72c7 28%, #d7e8ff 50%, #d74642 72%, #f3b09b 100%)',
+    gdi: 'radial-gradient(circle at 50% 42%, #fff3bf 0%, #eadfd8 34%, #d8e7f7 68%, #f7f9fc 100%)',
+    elemstoch:
+      'radial-gradient(circle at 50% 42%, #ffd166 0%, #d8942e 34%, #8f5a1c 66%, #342514 100%)',
     rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
     spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
     softHighlight: 'linear-gradient(135deg, #fff3e0, #e8f4fd)',
@@ -277,6 +281,10 @@ export const darkPalette: PaletteOptions = {
     'iwgs-2': 'radial-gradient(circle, #5b6956, #8f9868)',
     krmt: 'radial-gradient(circle, white, #f5f5b7)',
     gdp: 'radial-gradient(circle, #4bffd7, #a11cff)',
+    dplaw: 'linear-gradient(90deg, #16356a 0%, #185aa8 28%, #14243f 50%, #982734 72%, #4a1821 100%)',
+    gdi: 'radial-gradient(circle at 50% 42%, #fff0b8 0%, #cfc1bb 34%, #52657f 68%, #111827 100%)',
+    elemstoch:
+      'radial-gradient(circle at 50% 42%, #f2b84b 0%, #8a551c 36%, #3c2714 68%, #171008 100%)',
     rip: 'radial-gradient(circle, #fcef6e, #3f2e86)',
     spinf: 'radial-gradient(circle, #b2bbc0, #184e6d)',
   },

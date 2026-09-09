@@ -3,9 +3,10 @@ import {
   ALL_RESOURCE_TYPES,
   COURSE_SPECIFIC_RESOURCENAMES,
   CourseResourceAction,
+  getCurrentTermForUniversity,
+  getUpcomingTermForUniversity,
   ResourceName,
 } from '@alea/utils';
-import { getCurrentTermForCourseId } from './get-current-term';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { isUserIdAuthorizedForAny } from './access-control/resource-utils';
 import { getUserIdOrSetError } from './comment-utils';
@@ -19,44 +20,54 @@ function getValidActionsForResource(resourceName: ResourceName): Action[] {
   return resource.possibleActions;
 }
 
-export async function getAuthorizedCourseResources(userId: string) {
-  const courseIds = Object.keys(await getAllCoursesFromDb());
+export async function getAuthorizedCourseResources(userId: string, includeUpcomingTerm = false) {
+  const courses = await getAllCoursesFromDb();
   const resourceNames = COURSE_SPECIFIC_RESOURCENAMES;
 
-  const resourceActions: CourseResourceAction[] = courseIds.flatMap((courseId) =>
-    resourceNames.flatMap((name) => {
-      const actions = getValidActionsForResource(name);
-      return {
-        courseId,
-        name,
-        actions,
-      };
-    })
-  );
+  const resourceActions: CourseResourceAction[] = [];
+  for (const [courseId, course] of Object.entries(courses)) {
+    const universityId = course.universityId ?? 'FAU';
+    const terms = [
+      getCurrentTermForUniversity(universityId),
+      includeUpcomingTerm ? getUpcomingTermForUniversity(universityId) : undefined,
+    ].filter((term): term is string => !!term && term !== 'null');
+
+    const uniqueTerms = [...new Set(terms)];
+    for (const instanceId of uniqueTerms) {
+      for (const name of resourceNames) {
+        resourceActions.push({
+          courseId,
+          instanceId,
+          name,
+          actions: getValidActionsForResource(name),
+        });
+      }
+    }
+  }
 
   const validResourceActions = (
     await Promise.all(
-      resourceActions.map(async ({ name, courseId, actions }) => {
-        const validActions = [];
-        const currentTerm = await getCurrentTermForCourseId(courseId);
+      resourceActions.map(async ({ name, courseId, instanceId, actions }) => {
+        const validActions: Action[] = [];
 
         for (const action of actions) {
           const isAuthorized = await isUserIdAuthorizedForAny(userId, [
-            { name, action, variables: { courseId, instanceId: currentTerm } },
+            { name, action, variables: { courseId, instanceId } },
           ]);
 
           if (isAuthorized) validActions.push(action);
         }
-        return validActions.length ? { name, courseId, actions: validActions } : null;
+        return validActions.length ? { name, courseId, instanceId, actions: validActions } : null;
       })
     )
-  ).filter((resource) => resource !== null);
+  ).filter((resource): resource is CourseResourceAction => resource !== null);
   return validResourceActions;
 }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
-  const authorizedResourceActions = await getAuthorizedCourseResources(userId);
+  const authorizedResourceActions = await getAuthorizedCourseResources(userId, true);
 
   return res.status(200).json(authorizedResourceActions);
 }

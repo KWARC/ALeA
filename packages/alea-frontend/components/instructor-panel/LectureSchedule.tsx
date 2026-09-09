@@ -15,6 +15,7 @@ import {
   Tooltip,
   CircularProgress,
   MenuItem,
+  Chip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -28,8 +29,9 @@ import {
   deleteLectureEntry,
   addLectureSchedule,
   getUserSuggestions,
+  getSemesterInfo,
 } from '@alea/spec';
-import { UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
+import { toWeekdayIndex, UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
 import { getAllCourses } from '@alea/spec';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -37,6 +39,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { getLocaleObject } from '../../lang/utils';
 import AclAutocompleteSelector from '../AclAutocompleteSelector';
+import { type SchedulePeriod } from '../StudentDashboard/utils';
 
 interface LectureScheduleTabProps {
   courseId: string;
@@ -77,7 +80,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const scheduleToShow = selectedScheduleType === 'lecture' ? lectures : tutorials;
   const [loading, setLoading] = useState(true);
   const [hasHomework, setHasHomework] = useState<boolean>(false);
-  const [hasQuiz, setHasQuiz] = useState<boolean>(false);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
   const [editEntry, setEditEntry] = useState<LectureScheduleUI | null>(null);
   const [editKeys, setEditKeys] = useState<{
@@ -86,8 +88,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
     lectureEndTime: string;
   } | null>(null);
   const [newEntry, setNewEntry] = useState<LectureScheduleUI>(initialNewEntry);
-  const [seriesId, setSeriesIdState] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabType>('lecture');
+  const [schedulePeriod, setSchedulePeriod] = useState<SchedulePeriod>({});
+  const [cancelDateByRow, setCancelDateByRow] = useState<Record<number, string>>({});
 
   const fetchLectures = useCallback(async () => {
     try {
@@ -95,8 +98,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setLectures(data.lectureSchedule || []);
       setTutorials(data.tutorialSchedule || []);
       setHasHomework(!!data.hasHomework);
-      setHasQuiz(!!data.hasQuiz);
-      setSeriesIdState(data.seriesId || '');
     } catch (err) {
       if (err.response?.status === 404) {
         console.warn('No lectures found for this course instance');
@@ -114,7 +115,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   }, [fetchLectures]);
 
   useEffect(() => {
-    async function loadTimezone() {
+    async function loadCourseContext() {
       try {
         const courses = await getAllCourses();
         const universityId = courses?.[courseId]?.universityId;
@@ -123,12 +124,22 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         } else {
           setTimezone(undefined);
         }
+        if (!universityId) return;
+        const semInfo = await getSemesterInfo(universityId, instanceId);
+        const semester = Array.isArray(semInfo) ? semInfo[0] : semInfo;
+        if (semester) {
+          setSchedulePeriod({
+            lectureStartDate: semester.lectureStartDate,
+            lectureEndDate: semester.lectureEndDate,
+          });
+        }
       } catch (err) {
-        console.error('Failed to load university timezone', err);
+        console.error('Failed to load course schedule context', err);
       }
     }
-    loadTimezone();
-  }, [courseId]);
+    loadCourseContext();
+  }, [courseId, instanceId]);
+
   const handleDelete = async (lecture: LectureSchedule) => {
     if (!selectedScheduleType) return;
 
@@ -268,6 +279,70 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       setLectureScheduleData((prev) => ({ ...prev, [field]: value }));
     } else {
       setTutorialScheduleData((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const periodMin = schedulePeriod.lectureStartDate?.slice(0, 10);
+  const periodMax = schedulePeriod.lectureEndDate?.slice(0, 10);
+
+  const saveCancelledDates = async (entry: LectureSchedule, cancelledDates: string[]) => {
+    await updateLectureEntry({
+      courseId,
+      instanceId,
+      lectureDay: entry.lectureDay,
+      lectureStartTime: entry.lectureStartTime,
+      lectureEndTime: entry.lectureEndTime,
+      updatedLectureEntry: { ...entry, cancelledDates },
+      scheduleType: 'tutorial',
+    });
+    fetchLectures();
+  };
+
+  const handleCancelTutorialOnDate = async (entry: LectureSchedule, rowIdx: number) => {
+    const ymd = cancelDateByRow[rowIdx];
+    if (!ymd) {
+      alert(t.invalidTutorialDate.replace('{{day}}', entry.lectureDay));
+      return;
+    }
+    const selected = new Date(`${ymd}T00:00:00`);
+    const expectedDay = toWeekdayIndex(entry.lectureDay);
+    if (
+      Number.isNaN(selected.getTime()) ||
+      expectedDay === undefined ||
+      selected.getDay() !== expectedDay ||
+      (periodMin && ymd < periodMin) ||
+      (periodMax && ymd > periodMax)
+    ) {
+      alert(t.invalidTutorialDate.replace('{{day}}', entry.lectureDay));
+      return;
+    }
+    if ((entry.cancelledDates ?? []).includes(ymd)) {
+      alert(t.dateAlreadyCancelled);
+      return;
+    }
+
+    try {
+      await saveCancelledDates(entry, [...(entry.cancelledDates ?? []), ymd]);
+      setCancelDateByRow((prev) => ({ ...prev, [rowIdx]: '' }));
+    } catch (err) {
+      console.error('Failed to cancel tutorial date', err);
+    }
+  };
+
+  const handleRestoreTutorialDate = async (entry: LectureSchedule, ymd: string) => {
+    const dateLabel = new Date(`${ymd}T00:00:00`).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    if (!confirm(t.confirmRemoveCancellationDate.replace('{{date}}', dateLabel))) return;
+    try {
+      await saveCancelledDates(
+        entry,
+        (entry.cancelledDates ?? []).filter((d) => d !== ymd)
+      );
+    } catch (err) {
+      console.error('Failed to restore tutorial date', err);
     }
   };
 
@@ -587,6 +662,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 <>
                   <TableCell>{t.tutorName}</TableCell>
                   <TableCell>{t.comments}</TableCell>
+                  <TableCell>{t.selectCancelDate}</TableCell>
                 </>
               )}
 
@@ -627,6 +703,39 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                           </Typography>
                         )}
                       </TableCell>
+                      <TableCell sx={{ minWidth: 260 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <TextField
+                            type="date"
+                            size="small"
+                            value={cancelDateByRow[idx] ?? ''}
+                            onChange={(e) =>
+                              setCancelDateByRow((prev) => ({ ...prev, [idx]: e.target.value }))
+                            }
+                            inputProps={{ min: periodMin, max: periodMax }}
+                            sx={{ width: 150 }}
+                          />
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleCancelTutorialOnDate(entry, idx)}
+                            sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                          >
+                            {t.addCancellationDate}
+                          </Button>
+                        </Box>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {[...(entry.cancelledDates ?? [])].sort().map((ymd) => (
+                            <Chip
+                              key={ymd}
+                              size="small"
+                              color="warning"
+                              label={ymd}
+                              onDelete={() => handleRestoreTutorialDate(entry, ymd)}
+                            />
+                          ))}
+                        </Box>
+                      </TableCell>
                     </>
                   )}
                   {selectedScheduleType === 'lecture' && (
@@ -636,33 +745,35 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                     </>
                   )}
                   <TableCell>
-                    <Tooltip title={t.edit}>
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          const signedMinutes = entry.quizOffsetMinutes ?? 0;
-                          const direction = signedMinutes < 0 ? 'before' : 'after';
-                          setEditEntry({
-                            ...entry,
-                            quizOffsetMinutes: signedMinutes,
-                            quizOffsetDirection: direction,
-                            quizOffsetReference: entry.quizOffsetReference || 'lecture-start',
-                          });
-                          setEditKeys({
-                            lectureDay: entry.lectureDay,
-                            lectureStartTime: entry.lectureStartTime,
-                            lectureEndTime: entry.lectureEndTime,
-                          });
-                        }}
-                      >
-                        <EditIcon fontSize="small" color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={t.delete}>
-                      <IconButton size="small" onClick={() => handleDelete(entry)}>
-                        <DeleteIcon fontSize="small" color="error" />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Tooltip title={t.edit}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            const signedMinutes = entry.quizOffsetMinutes ?? 0;
+                            const direction = signedMinutes < 0 ? 'before' : 'after';
+                            setEditEntry({
+                              ...entry,
+                              quizOffsetMinutes: signedMinutes,
+                              quizOffsetDirection: direction,
+                              quizOffsetReference: entry.quizOffsetReference || 'lecture-start',
+                            });
+                            setEditKeys({
+                              lectureDay: entry.lectureDay,
+                              lectureStartTime: entry.lectureStartTime,
+                              lectureEndTime: entry.lectureEndTime,
+                            });
+                          }}
+                        >
+                          <EditIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={t.delete}>
+                        <IconButton size="small" onClick={() => handleDelete(entry)}>
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

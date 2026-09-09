@@ -116,7 +116,9 @@ function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdat
   const conceptUpdate: { [url: string]: AnswerUpdateEntry } = {};
 
   dimensionAndURI.forEach((item) => {
-    const [dimension, uri] = item.split(':');
+    const separatorIdx = item.indexOf(':');
+    const dimension = item.substring(0, separatorIdx);
+    const uri = item.substring(separatorIdx + 1);
     const url = decodeURIComponent(uri);
     if (!conceptUpdate[url]) {
       conceptUpdate[url] = {
@@ -132,7 +134,7 @@ function transformData(dimensionAndURI: string[], quotient: number): AnswerUpdat
   return Object.values(conceptUpdate);
 }
 
-function getUpdates(
+export function getUpdates(
   objectives: [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined,
   quotient: number
 ) {

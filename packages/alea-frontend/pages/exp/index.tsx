@@ -96,7 +96,9 @@ const ExperimentsHome: NextPage = () => {
               <InternalButtonLink href="/exp/gpt-problems">GPT Problems page</InternalButtonLink>
               <InternalButtonLink href="/debug-section">Debug Document Sections</InternalButtonLink>
               <InternalButtonLink href="/file-browser">Article browser</InternalButtonLink>
-              <InternalButtonLink href="/exp/video-matching-dashboard">Video Slide Match Dashboard</InternalButtonLink>
+              <InternalButtonLink href="/exp/video-matching-dashboard">
+                Video Slide Match Dashboard
+              </InternalButtonLink>
               <Button
                 variant="contained"
                 onClick={() => {

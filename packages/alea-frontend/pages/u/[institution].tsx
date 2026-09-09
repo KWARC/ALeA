@@ -112,7 +112,7 @@ export function CourseThumb({
               width={width}
               height={100}
               alt={courseName}
-              style={{ display: 'block', margin: 'auto' }}
+              style={{ display: 'block', margin: 'auto', objectFit: 'contain' }}
               priority={true}
             />
             <Typography

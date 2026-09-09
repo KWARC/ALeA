@@ -1,6 +1,7 @@
 import { SafeFTMLFragment } from './SafeFTMLComponents';
 import { FTML } from '@flexiformal/ftml';
 import { sourceFile as getSourceFile, solution as flamsSolution } from '@flexiformal/ftml-backend';
+import { getProblemDataFromDocument } from '@alea/quiz-utils';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
@@ -31,7 +32,7 @@ import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
-import { getProblemState } from './ProblemDisplay';
+import { getProblemState, getUpdates } from './ProblemDisplay';
 import { ExamSelect } from './ExamSelect';
 
 export interface ExamRef {
@@ -100,6 +101,9 @@ export function UriProblemViewer({
   setQuotient?: (quotient: number | undefined) => void;
 }) {
   const [solution, setSolution] = useState<string | undefined>(undefined);
+  const [objectives, setObjectives] = useState<
+    [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined
+  >();
   const { user } = useCurrentUser();
 
   useEffect(() => {
@@ -108,12 +112,19 @@ export function UriProblemViewer({
   }, [uri]);
 
   useEffect(() => {
+    setObjectives(undefined);
+    getProblemDataFromDocument(uri)
+      .then((problemData) => setObjectives(problemData?.objectives ?? []))
+      .catch(() => setObjectives([]));
+  }, [uri]);
+
+  useEffect(() => {
     const state = getProblemState(isSubmitted, solution, response);
     if (state.type === 'Graded') {
       const scoreFraction = state.feedback?.score_fraction;
       setQuotient?.(scoreFraction);
 
-      if (!response || scoreFraction === undefined) return;
+      if (!response || scoreFraction === undefined || objectives === undefined) return;
 
       const answerObject: ProblemAnswerEvent = {
         type: 'problem-answer',
@@ -121,7 +132,7 @@ export function UriProblemViewer({
         learner: user?.userId ?? '',
         score: scoreFraction,
         'max-points': 1,
-        updates: [],
+        updates: getUpdates(objectives, scoreFraction),
         time: new Date().toISOString(),
         payload: '',
         comment: ' ',
@@ -131,7 +142,7 @@ export function UriProblemViewer({
         console.error('Failed to post problem answer to LMP:', error)
       );
     }
-  }, [isSubmitted, response, solution, setQuotient, uri, user?.userId]);
+  }, [isSubmitted, objectives, response, solution, setQuotient, uri, user?.userId]);
 
   const problemState = getProblemState(isSubmitted, solution, response);
   return (

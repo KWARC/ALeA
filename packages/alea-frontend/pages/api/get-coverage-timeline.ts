@@ -1,47 +1,42 @@
-import { CoverageTimeline, CURRENT_TERM } from '@alea/utils';
+import { CoverageTimeline } from '@alea/utils';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 
-const getCurrentSemesterFile = (baseDir: string) => {
-  const filePath = path.join(baseDir, 'current-sem.json');
-  return fs.existsSync(filePath) ? [filePath] : [];
-};
-
-const getPreviousSemesterFile = (prevSemsDir: string, instanceId: string) => {
-  const filePath = path.join(prevSemsDir, `${instanceId}-final.json`);
-  return fs.existsSync(filePath) ? [filePath] : [];
-};
-
-const getAllPreviousSemesterFiles = (prevSemsDir: string) => {
-  if (!fs.existsSync(prevSemsDir)) return [];
-  return fs
-    .readdirSync(prevSemsDir)
-    .map((f) => path.join(prevSemsDir, f))
-    .filter((f) => fs.lstatSync(f).isFile());
-};
-
-export const CURRENT_SEM_FILE = 'current-sem.json';
-export function getCoverageData(instanceId?: string): CoverageTimeline {
+export function getRecordedSyllabusDir() {
   const baseDir = process.env.RECORDED_SYLLABUS_DIR;
-  const prevSemsDir = path.join(baseDir, 'prev-sem');
+  if (!baseDir) throw new Error('RECORDED_SYLLABUS_DIR is not set');
+  return baseDir;
+}
 
-  let filePaths: string[] = [];
-  const isCurrentTerm = instanceId === CURRENT_TERM;
-  if (isCurrentTerm) {
-    filePaths = getCurrentSemesterFile(baseDir);
-  } else if (instanceId) {
-    filePaths = getPreviousSemesterFile(prevSemsDir, instanceId);
-  } else {
-    filePaths = [...getAllPreviousSemesterFiles(prevSemsDir), ...getCurrentSemesterFile(baseDir)];
-  }
+export function getInstanceSyllabusFilePath(instanceId: string) {
+  return path.join(getRecordedSyllabusDir(), instanceId, `${instanceId}.json`);
+}
+
+export function ensureInstanceSyllabusDir(instanceId: string) {
+  fs.mkdirSync(path.dirname(getInstanceSyllabusFilePath(instanceId)), { recursive: true });
+}
+
+function getAllInstanceSyllabusFiles(baseDir: string) {
+  if (!fs.existsSync(baseDir)) return [];
+  return fs
+    .readdirSync(baseDir)
+    .map((entry) => path.join(baseDir, entry, `${entry}.json`))
+    .filter((filePath) => fs.existsSync(filePath) && fs.lstatSync(filePath).isFile());
+}
+
+export function getCoverageData(instanceId?: string): CoverageTimeline {
+  const baseDir = getRecordedSyllabusDir();
+  const filePaths = instanceId
+    ? [getInstanceSyllabusFilePath(instanceId)].filter((filePath) => fs.existsSync(filePath))
+    : getAllInstanceSyllabusFiles(baseDir);
   const combinedData: CoverageTimeline = {};
   for (const filePath of filePaths) {
     try {
       const fileData = fs.readFileSync(filePath, 'utf-8');
       const parsed: CoverageTimeline = JSON.parse(fileData);
       for (const [courseId, entries] of Object.entries(parsed)) {
-        combinedData[courseId] = entries;
+        combinedData[courseId] = Array.isArray(entries) ? { lectures: entries } : entries;
       }
     } catch (err) {
       console.warn(`Skipping invalid file ${filePath}:`, err);
@@ -52,5 +47,6 @@ export function getCoverageData(instanceId?: string): CoverageTimeline {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).json(getCoverageData());
+  const instanceId = req.query.instanceId as string | undefined;
+  res.status(200).json(getCoverageData(instanceId));
 }

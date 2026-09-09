@@ -1,9 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
-import path from 'path';
 import { executeDontEndSet500OnError, executeAndEndSet500OnError } from '../comment-utils';
 import { Holiday, LectureSchedule } from '@alea/spec';
 import { toWeekdayIndex } from '@alea/utils';
+import {
+  ensureInstanceSyllabusDir,
+  getInstanceSyllabusFilePath,
+} from '../get-coverage-timeline';
 
 function parseDate(dateInput: string | Date): Date {
   if (dateInput instanceof Date) {
@@ -187,12 +190,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     generatedEntries.sort((a, b) => a.timestamp_ms - b.timestamp_ms);
 
-    const syllabusDir = process.env.RECORDED_SYLLABUS_DIR;
-    const filePath = path.join(syllabusDir, 'current-sem.json');
-
-    if (!fs.existsSync(syllabusDir)) {
-      fs.mkdirSync(syllabusDir, { recursive: true });
-    }
+    ensureInstanceSyllabusDir(instanceId);
+    const filePath = getInstanceSyllabusFilePath(instanceId);
 
     let existing: Record<string, { lectures: any[]; notCoveredSections?: any[] }> = {};
     let alreadyExists = false;

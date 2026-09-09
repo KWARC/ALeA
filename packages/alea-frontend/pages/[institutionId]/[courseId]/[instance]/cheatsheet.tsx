@@ -11,6 +11,8 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from '../../../../lang/utils';
 import { useCurrentUser } from '@alea/react-utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
@@ -32,8 +34,8 @@ import {
   CheatSheetWindowsTable,
   EmptyState,
   FilePreviewDialog,
-  InlineStudentMergeButton,
   UserFilterBar,
+  InlineStudentMergeButton,
 } from '../../../../components/CheatSheetComponents';
 import {
   Dialog,
@@ -389,6 +391,7 @@ function CheatSheetsContent({
   enrolledStudents: string[];
 }) {
   const queryClient = useQueryClient();
+  const { cheatsheet: t } = getLocaleObject(useRouter());
   const [uploadOpen, setUploadOpen] = useState(false);
   const [bulkDownloadOpen, setBulkDownloadOpen] = useState(false);
   const [downloadScope, setDownloadScope] = useState<'this-week' | 'semester'>('this-week');
@@ -441,6 +444,24 @@ function CheatSheetsContent({
 
   return (
     <Box sx={pageStyles.container}>
+      {!isEmbedded && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2" component="p" sx={{ mb: 1 }}>
+            <strong>{t.examInfoPrefix}</strong> {' '}
+            {t.examInfoMerge}
+          </Typography>
+          <Typography variant="body2" component="p" sx={{ mb: 1 }}>
+            {t.examInfoSelfPrint}
+          </Typography>
+          <Typography variant="body2" component="p" sx={{ mb: 1 }}>
+            {t.examInfoForbidden}
+          </Typography>
+          <Typography variant="body2" component="p">
+            {t.examInfoDetails}
+          </Typography>
+        </Alert>
+      )}
+
       {isEmbedded && (
         <InstructorCheatsheetStats
           files={statsFiles}
@@ -503,6 +524,7 @@ function CheatSheetsContent({
               />
             )}
           </Box>
+
           {!isEmbedded && userId && (
             <InlineStudentMergeButton
               courseId={courseId}

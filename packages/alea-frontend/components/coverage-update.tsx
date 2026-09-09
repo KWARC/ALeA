@@ -61,8 +61,9 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
   } | null>(null);
 
   useEffect(() => {
-    getCoverageTimeline(true).then(setCoverageTimeline);
-  }, []);
+    if (!instanceId) return;
+    getCoverageTimeline(true, instanceId).then(setCoverageTimeline);
+  }, [instanceId]);
 
   const { data: courses = {} } = useAllCourses();
 
@@ -122,7 +123,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
   const handleSaveSingle = async (updatedEntry: LectureEntry) => {
     setLoading(true);
     try {
-      await updateCoverageTimeline({ courseId, updatedEntry });
+      await updateCoverageTimeline({ courseId, instanceId, updatedEntry });
       setSnaps((prevSnaps) => {
         const index = prevSnaps.findIndex((s) => s.timestamp_ms === updatedEntry.timestamp_ms);
 
@@ -154,6 +155,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
     try {
       await updateCoverageTimeline({
         courseId,
+        instanceId,
         notCoveredSections: uris,
       });
 
@@ -177,7 +179,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
   const handleDeleteSingle = async (timestamp_ms: number) => {
     setLoading(true);
     try {
-      await updateCoverageTimeline({ courseId, timestamp_ms, action: 'delete' });
+      await updateCoverageTimeline({ courseId, instanceId, timestamp_ms, action: 'delete' });
       setSnaps((prev) => prev.filter((e) => e.timestamp_ms !== timestamp_ms));
       setSaveMessage({ type: 'success', message: 'Coverage deleted successfully!' });
     } catch (err) {

@@ -10,7 +10,13 @@ export function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, '').trim();
 }
 
-export function getNextOrCurrentScheduleOccurrence(schedule: LectureScheduleItem[]): {
+export type SchedulePeriod = { lectureStartDate?: string; lectureEndDate?: string };
+
+export function getNextOrCurrentScheduleOccurrence(
+  schedule: LectureScheduleItem[],
+  period?: SchedulePeriod,
+  includeCancelled = false
+): {
   ts: number;
   venue?: string;
   venueLink?: string;
@@ -18,6 +24,9 @@ export function getNextOrCurrentScheduleOccurrence(schedule: LectureScheduleItem
 } | null {
   if (!schedule?.length) return null;
   const now = dayjs();
+  const periodStart = period?.lectureStartDate ? dayjs(period.lectureStartDate).startOf('day') : null;
+  const periodEnd = period?.lectureEndDate ? dayjs(period.lectureEndDate).endOf('day') : null;
+  const ref = periodStart && periodStart.isAfter(now) ? periodStart : now;
   let nearest: { ts: number; venue?: string; venueLink?: string } | null = null;
   let current: { ts: number; venue?: string; venueLink?: string } | null = null;
 
@@ -30,14 +39,20 @@ export function getNextOrCurrentScheduleOccurrence(schedule: LectureScheduleItem
     const [endH, endM] = endParts;
     const dayjsDay = item.dayOfWeek === 7 ? 0 : item.dayOfWeek;
 
-    const start = now.day(dayjsDay).hour(startH).minute(startM).second(0).millisecond(0);
-    let end = now.day(dayjsDay).hour(endH).minute(endM).second(0).millisecond(0);
+    const start = ref.day(dayjsDay).hour(startH).minute(startM).second(0).millisecond(0);
+    let end = ref.day(dayjsDay).hour(endH).minute(endM).second(0).millisecond(0);
 
     if (end.isBefore(start)) {
       end = end.add(1, 'day');
     }
 
-    if (!now.isBefore(start) && now.isBefore(end)) {
+    const isSkipped = (d: dayjs.Dayjs) => {
+      if (periodStart && d.isBefore(periodStart, 'day')) return true;
+      if (periodEnd && d.isAfter(periodEnd, 'day')) return true;
+      return !includeCancelled && (item.cancelledDates ?? []).includes(d.format('YYYY-MM-DD'));
+    };
+
+    if (!ref.isBefore(start) && ref.isBefore(end) && !isSkipped(start)) {
       const ts = start.valueOf();
       if (!current || ts < current.ts) {
         current = { ts, venue: item.venue, venueLink: item.venueLink };
@@ -45,10 +60,17 @@ export function getNextOrCurrentScheduleOccurrence(schedule: LectureScheduleItem
     }
 
     let candidate = start;
-    if (candidate.isBefore(now)) candidate = candidate.add(1, 'week');
-    const ts = candidate.valueOf();
-    if (!nearest || ts < nearest.ts) {
-      nearest = { ts, venue: item.venue, venueLink: item.venueLink };
+    if (candidate.isBefore(ref)) candidate = candidate.add(1, 'week');
+    for (let i = 0; i < 52; i++) {
+      if (periodEnd && candidate.isAfter(periodEnd, 'day')) break;
+      if (!isSkipped(candidate)) {
+        const ts = candidate.valueOf();
+        if (!nearest || ts < nearest.ts) {
+          nearest = { ts, venue: item.venue, venueLink: item.venueLink };
+        }
+        break;
+      }
+      candidate = candidate.add(1, 'week');
     }
   }
   if (current) return { ...current, isOngoing: true };
@@ -63,6 +85,7 @@ export function normalizeLectureScheduleEntry(item: Partial<LectureSchedule>): L
     endTime: item.lectureEndTime ?? '00:00',
     venue: item.venue,
     venueLink: item.venueLink,
+    cancelledDates: item.cancelledDates,
   };
 }
 

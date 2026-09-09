@@ -612,9 +612,6 @@ WHERE {
 }
 
 export function buildGetQuizzesForCourseQuery(courseId: string): string {
-  const normalizedCourseId = courseId?.toUpperCase().split('-')[0];
-  console.log('Quiz query using course:', normalizedCourseId);
-
   return `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ulo: <http://mathhub.info/ulo#>
@@ -622,7 +619,7 @@ PREFIX ulo: <http://mathhub.info/ulo#>
 SELECT DISTINCT ?quiz ?term ?number ?date
 WHERE {
   ?quiz rdf:type ulo:quiz ;
-        ulo:has-course "${normalizedCourseId}" .
+        ulo:has-course "${courseId}" .
 
   OPTIONAL { ?quiz ulo:has-course-term ?term }
   OPTIONAL { ?quiz ulo:is-number ?number }
@@ -657,6 +654,59 @@ export async function getQuizzesForCourse(courseId: string) {
   return Array.from(seen.values());
 }
 
+interface FlamsCourseResourceInfo {
+  uri: string;
+  term?: string;
+  number?: string;
+  date?: string;
+}
+
+export function buildGetHomeworksForCourseQuery(courseId: string): string {
+  return `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?homework ?term ?number ?date
+WHERE {
+  ?homework ulo:has-course "${courseId}" .
+
+  OPTIONAL { ?homework rdf:type ?type }
+
+  FILTER(?type IN (ulo:homework, ulo:assignment) || CONTAINS(STR(?homework), "/assignments"))
+
+  OPTIONAL { ?homework ulo:has-course-term ?term }
+  OPTIONAL { ?homework ulo:is-number ?number }
+  OPTIONAL { ?homework ulo:has-date ?date }
+}
+ORDER BY DESC(?date)
+`;
+}
+
+export async function getHomeworksForCourse(courseId: string): Promise<FlamsCourseResourceInfo[]> {
+  if (!courseId) return [];
+
+  const query = buildGetHomeworksForCourseQuery(courseId);
+  const results = await getParameterizedQueryResults(query);
+
+  const seen = new Map<string, FlamsCourseResourceInfo>();
+
+  for (const b of results?.results?.bindings ?? []) {
+    const homeworkUri = b['homework']?.value;
+    if (!homeworkUri) continue;
+
+    if (!seen.has(homeworkUri)) {
+      seen.set(homeworkUri, {
+        uri: homeworkUri,
+        term: b['term']?.value,
+        number: b['number']?.value,
+        date: b['date']?.value,
+      });
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
 export const TEMPL_GET_PROBLEMS_FOR_QUIZ = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ulo: <http://mathhub.info/ulo#>
@@ -672,6 +722,27 @@ export async function getProblemsForQuiz(quizUri: string): Promise<string[]> {
 
   const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_QUIZ, {
     _uri_quiz: quizUri,
+  });
+
+  return results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
+}
+
+export const TEMPL_GET_PROBLEMS_FOR_HOMEWORK = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc: <http://purl.org/dc/terms#>
+PREFIX ulo: <http://mathhub.info/ulo#>
+
+SELECT DISTINCT ?prob WHERE {
+  <_uri_homework> (ulo:contains|dc:hasPart)* ?prob.
+  ?prob rdf:type ulo:problem.
+}
+`;
+
+export async function getProblemsForHomework(homeworkUri: string): Promise<string[]> {
+  if (!homeworkUri) return [];
+
+  const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_HOMEWORK, {
+    _uri_homework: homeworkUri,
   });
 
   return results?.results?.bindings.map((b) => b['prob']?.value) ?? [];

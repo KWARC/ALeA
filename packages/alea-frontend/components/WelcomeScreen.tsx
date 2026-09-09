@@ -19,6 +19,7 @@ import {
   isFauId,
   LectureEntry,
   pathToCourseHome,
+  pathToInstructorDash,
   ResourceName,
 } from '@alea/utils';
 import { FTML } from '@flexiformal/ftml';
@@ -165,6 +166,7 @@ async function getCommentsInfo(
 
 async function getLastUpdatedQuiz(
   courseId: string,
+  instanceId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
@@ -172,14 +174,25 @@ async function getLastUpdatedQuiz(
   let quizList: QuizStubInfo[] | undefined = undefined;
   let courseQuizData: LectureEntry[] = [];
   try {
-    quizList = await getCourseQuizList(courseId);
-    const coverageQuizData = await getCoverageTimeline();
+    quizList = await getCourseQuizList(courseId, instanceId);
+    const coverageQuizData = await getCoverageTimeline(false, instanceId);
     const courseData = coverageQuizData[courseId];
 
     courseQuizData = courseData?.lectures ?? [];
   } catch (error) {
     console.error('Error fetching course data:', error);
     return { description: null, timeAgo: null, timestamp: null };
+  }
+  if (!quizList?.length) {
+    return {
+      description: 'No upcoming quiz available',
+      timeAgo: null,
+      timestamp: null,
+      colorInfo: {
+        color: 'text.secondary',
+        type: 'default' as const,
+      },
+    };
   }
 
   const latestQuiz = quizList.reduce((acc, curr) => {
@@ -237,12 +250,13 @@ async function getLastUpdatedQuiz(
 
 async function getLastUpdatedHomework(
   courseId: string,
+  instanceId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
 
   try {
-    const homeworkList = await getHomeworkList(courseId);
+    const homeworkList = await getHomeworkList(courseId, instanceId);
     if (homeworkList.length === 0) {
       return {
         description: r.noHomeworkAvailable || 'No homework available',
@@ -276,11 +290,12 @@ async function getLastUpdatedHomework(
 
 export async function getLastUpdatedNotes(
   courseId: string,
+  instanceId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
   try {
-    const coverageData = await getCoverageTimeline();
+    const coverageData = await getCoverageTimeline(false, instanceId);
     const courseData = coverageData[courseId]?.lectures ?? [];
 
     const targetUsed = courseData.some((entry) => entry.targetSectionUri);
@@ -390,12 +405,13 @@ export async function getLastUpdatedNotes(
 
 async function getUngradedProblems(
   courseId: string,
+  instanceId: string,
   router: NextRouter
 ): Promise<ResourceDisplayInfo> {
   const { resource: r } = getLocaleObject(router);
 
   try {
-    const response = (await getCourseGradingItems(courseId)).gradingItems;
+    const response = (await getCourseGradingItems(courseId, instanceId)).gradingItems;
     const ungradedProblems = response.filter(
       (problem) => problem.numSubProblemsGraded !== problem.numSubProblemsAnswered
     );
@@ -436,17 +452,17 @@ async function getUngradedProblems(
 
 async function getLastUpdatedDescriptions({
   courseId,
+  instanceId,
   name,
   action,
   router,
-  currentTerm,
   institutionId,
 }: {
   courseId: string;
+  instanceId: string;
   name: ResourceName;
   action: Action;
   router: NextRouter;
-  currentTerm: string;
   institutionId: string;
 }): Promise<ResourceDisplayInfo> {
   let description = null;
@@ -459,6 +475,7 @@ async function getLastUpdatedDescriptions({
     case ResourceName.COURSE_SYLLABUS:
       ({ description, timeAgo, timestamp, colorInfo } = await getLastUpdatedNotes(
         courseId,
+        instanceId,
         router
       ));
       break;
@@ -466,11 +483,13 @@ async function getLastUpdatedDescriptions({
       if (action === Action.MUTATE) {
         ({ description, timeAgo, timestamp, colorInfo } = await getLastUpdatedHomework(
           courseId,
+          instanceId,
           router
         ));
       } else if (action === Action.INSTRUCTOR_GRADING) {
         ({ description, timeAgo, timestamp, colorInfo } = await getUngradedProblems(
           courseId,
+          instanceId,
           router
         ));
       }
@@ -478,6 +497,7 @@ async function getLastUpdatedDescriptions({
     case ResourceName.COURSE_QUIZ:
       ({ description, timeAgo, timestamp, quizId, colorInfo } = await getLastUpdatedQuiz(
         courseId,
+        instanceId,
         router
       ));
       if (quizId) {
@@ -487,7 +507,7 @@ async function getLastUpdatedDescriptions({
     case ResourceName.COURSE_COMMENTS:
       ({ description, timeAgo, timestamp, colorInfo } = await getCommentsInfo(
         courseId,
-        currentTerm,
+        instanceId,
         institutionId,
         router
       ));
@@ -499,21 +519,33 @@ async function getLastUpdatedDescriptions({
   return { description, timeAgo, timestamp, quizId, colorInfo };
 }
 
-const groupByCourseId = (resources: CourseResourceAction[]) => {
-  resources = resources.filter((resource) => !EXCLUDED_RESOURCES.includes(resource.name));
+const groupByInstanceAndCourseId = (resources: CourseResourceAction[]) => {
   return resources.reduce((acc, resource) => {
+    if (EXCLUDED_RESOURCES.includes(resource.name)) return acc;
+    const { instanceId } = resource;
     const { courseId } = resource;
-    if (!acc[courseId]) {
-      acc[courseId] = [];
+    if (!acc[instanceId]) {
+      acc[instanceId] = {};
     }
-    acc[courseId].push(resource);
+    if (!acc[instanceId][courseId]) {
+      acc[instanceId][courseId] = [];
+    }
+    acc[instanceId][courseId].push(resource);
     return acc;
-  }, {} as Record<string, CourseResourceAction[]>);
+  }, {} as Record<string, Record<string, CourseResourceAction[]>>);
 };
+
+const getDescriptionKey = (
+  courseId: string,
+  instanceId: string,
+  resourceName: ResourceName,
+  action: Action
+) => `${instanceId}-${courseId}-${resourceName}-${action}`;
 
 const handleResourceClick = (
   router: any,
   resource: CourseResourceAction,
+  institutionId: string,
   action?: Action,
   quizId?: string
 ) => {
@@ -526,24 +558,25 @@ const handleResourceClick = (
 
   if (action && !actionsToDisplay.includes(action)) return;
 
-  const { courseId, name } = resource;
+  const { courseId, instanceId, name } = resource;
+  const instructorDashUrl = pathToInstructorDash(institutionId, courseId, instanceId);
   let url = '';
   if (name === ResourceName.COURSE_SYLLABUS) {
-    url = `instructor-dash/${courseId}?tab=syllabus`;
+    url = `${instructorDashUrl}?tab=syllabus`;
   } else if (name === ResourceName.COURSE_HOMEWORK) {
     if (action === Action.INSTRUCTOR_GRADING) {
-      url = `instructor-dash/${courseId}?tab=homework-grading`;
+      url = `${instructorDashUrl}?tab=homework-grading`;
     } else {
-      url = `instructor-dash/${courseId}?tab=homework-manager`;
+      url = `${instructorDashUrl}?tab=homework-manager`;
     }
   } else if (name === ResourceName.COURSE_QUIZ) {
     if (action === Action.PREVIEW && quizId) {
       url = `quiz/${quizId}`;
     } else {
-      url = `instructor-dash/${courseId}?tab=quiz-dashboard`;
+      url = `${instructorDashUrl}?tab=quiz-dashboard`;
     }
   } else if (name === ResourceName.COURSE_COMMENTS) {
-    url = `forum/${courseId}`;
+    url = `${pathToCourseHome(institutionId, courseId, instanceId)}/forum`;
   }
   if (url) {
     router.push(url);
@@ -583,13 +616,14 @@ function MyCourses({ enrolledCourseIds }) {
 function ResourceCard({
   resource,
   descriptions,
-  courseId,
+  institutionId,
 }: {
   resource: CourseResourceAction;
   descriptions: Record<string, ResourceDisplayInfo>;
-  courseId: string;
+  institutionId: string;
 }) {
   const router = useRouter();
+  const { courseId } = resource;
   const isQuiz = resource.name === 'COURSE_QUIZ';
   const isHomework = resource.name === 'COURSE_HOMEWORK';
   const actionsToDisplay: Action[] = [
@@ -603,7 +637,7 @@ function ResourceCard({
   const resourceDescriptions = Object.entries(descriptions)
     .filter(([key]) => {
       return commonActions.some((action) =>
-        key.startsWith(`${courseId}-${resource.name}-${action}`)
+        key === getDescriptionKey(courseId, resource.instanceId, resource.name, action)
       );
     })
     .reduce(
@@ -637,7 +671,7 @@ function ResourceCard({
         },
       }}
     >
-      <CardActionArea onClick={() => handleResourceClick(router, resource)}>
+      <CardActionArea onClick={() => handleResourceClick(router, resource, institutionId)}>
         <CardContent sx={{ display: 'flex', alignItems: 'center', padding: '8px !important' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box display="flex" sx={{ alignItems: 'center' }}>
@@ -688,6 +722,7 @@ function ResourceCard({
                 handleResourceClick(
                   router,
                   resource,
+                  institutionId,
                   Action.PREVIEW,
                   resourceDescriptions.quizId[0]
                 );
@@ -702,7 +737,7 @@ function ResourceCard({
               sx={{ mt: 5, color: 'primary.main' }}
               onClick={(event) => {
                 event.stopPropagation();
-                handleResourceClick(router, resource, Action.INSTRUCTOR_GRADING);
+                handleResourceClick(router, resource, institutionId, Action.INSTRUCTOR_GRADING);
               }}
               aria-label="Ungraded problems"
             >
@@ -735,9 +770,23 @@ function WelcomeScreen({
     home: { newHome: n },
   } = getLocaleObject(router);
   const groupedResources = useMemo(
-    () => groupByCourseId(resourcesForInstructor),
+    () => groupByInstanceAndCourseId(resourcesForInstructor),
     [resourcesForInstructor]
   );
+  const currentTerms = useMemo(
+    () =>
+      new Set(Object.values(currentTermByUniversityId).filter((term) => term && term !== 'null')),
+    [currentTermByUniversityId]
+  );
+  const orderedResourceGroups = useMemo(() => {
+    return Object.entries(groupedResources).sort(([a], [b]) => {
+      const aIsCurrent = currentTerms.has(a);
+      const bIsCurrent = currentTerms.has(b);
+      if (aIsCurrent && !bIsCurrent) return 1;
+      if (!aIsCurrent && bIsCurrent) return -1;
+      return a.localeCompare(b);
+    });
+  }, [currentTerms, groupedResources]);
   useEffect(() => {
     getUserInfo().then((user) => setUserInfo(user));
   }, []);
@@ -756,29 +805,35 @@ function WelcomeScreen({
     const fetchDescriptions = async () => {
       const fetchPromises: Promise<void>[] = [];
       const newDescriptions: Record<string, ResourceDisplayInfo> = {};
-      for (const courseId of Object.keys(groupedResources)) {
-        const institutionId = allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION;
-        const courseCurrentTerm = currentTermByUniversityId[institutionId] ?? currentTerm;
+      for (const [instanceId, courseResources] of Object.entries(groupedResources)) {
+        for (const courseId of Object.keys(courseResources)) {
+          const institutionId = allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION;
 
-        for (const resource of groupedResources[courseId]) {
-          for (const action of resource.actions) {
-            const promise = getLastUpdatedDescriptions({
-              courseId,
-              name: resource.name,
-              action: action,
-              router,
-              currentTerm: courseCurrentTerm,
-              institutionId,
-            }).then(({ description, timeAgo, timestamp, quizId, colorInfo }) => {
-              newDescriptions[`${courseId}-${resource.name}-${action}`] = {
-                description,
-                timeAgo,
-                timestamp,
-                quizId,
-                colorInfo,
-              };
-            });
-            fetchPromises.push(promise);
+          for (const resource of courseResources[courseId]) {
+            for (const action of resource.actions) {
+              const promise = getLastUpdatedDescriptions({
+                courseId,
+                instanceId,
+                name: resource.name,
+                action: action,
+                router,
+                institutionId,
+              })
+                .then(({ description, timeAgo, timestamp, quizId, colorInfo }) => {
+                  newDescriptions[getDescriptionKey(courseId, instanceId, resource.name, action)] =
+                    {
+                      description,
+                      timeAgo,
+                      timestamp,
+                      quizId,
+                      colorInfo,
+                    };
+                })
+                .catch((error) => {
+                  console.error('Error fetching resource description:', error);
+                });
+              fetchPromises.push(promise);
+            }
           }
         }
       }
@@ -788,7 +843,7 @@ function WelcomeScreen({
     };
 
     fetchDescriptions();
-  }, [allCourses, currentTerm, currentTermByUniversityId, groupedResources, router]);
+  }, [allCourses, groupedResources, router]);
 
   return (
     <MainLayout title="Instructor Dashboard | ALeA">
@@ -819,53 +874,64 @@ function WelcomeScreen({
           </Box>
         )}
         {enrolledCourseIds.length > 0 && <MyCourses enrolledCourseIds={enrolledCourseIds} />}
-        {Object.entries(groupedResources).map(([courseId, resources]) => (
-          <Box key={courseId} sx={{ marginBottom: 4 }}>
-            <Link
-              href={pathToCourseHome(
-                allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION,
-                courseId,
-                'latest'
-              )}
-            >
-              <Typography
-                sx={{
-                  fontSize: '22px',
-                  fontWeight: 'bold',
-                  marginBottom: 2,
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  padding: '10px',
-                  textAlign: 'center',
-                  '&:hover': {
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    backgroundColor: 'secondary.main',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {courseId.toUpperCase()}
-              </Typography>
-            </Link>
-            <Box
+        {orderedResourceGroups.map(([instanceId, courseResources]) => (
+          <Box key={instanceId} sx={{ marginTop: 4 }}>
+            <Typography
               sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 1,
+                fontSize: '24px',
+                fontWeight: 'bold',
+                marginBottom: 2,
+                textAlign: 'center',
               }}
             >
-              {resources.map((resource, index) => (
-                <ResourceCard
-                  resource={resource}
-                  key={index}
-                  descriptions={descriptions}
-                  courseId={courseId}
-                />
-              ))}
-            </Box>
+              {currentTerms.has(instanceId) ? 'Current Term' : 'Upcoming Term'} ({instanceId})
+            </Typography>
+            {Object.entries(courseResources).map(([courseId, resources]) => {
+              const institutionId = allCourses[courseId]?.universityId ?? DEFAULT_INSTITUTION;
+              return (
+                <Box key={`${instanceId}-${courseId}`} sx={{ marginBottom: 4 }}>
+                  <Link href={pathToCourseHome(institutionId, courseId, instanceId)}>
+                    <Typography
+                      sx={{
+                        fontSize: '22px',
+                        fontWeight: 'bold',
+                        marginBottom: 2,
+                        backgroundColor: 'primary.main',
+                        color: 'primary.contrastText',
+                        padding: '10px',
+                        textAlign: 'center',
+                        '&:hover': {
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          backgroundColor: 'secondary.main',
+                          color: 'primary.main',
+                        },
+                      }}
+                    >
+                      {courseId.toUpperCase()} ({instanceId})
+                    </Typography>
+                  </Link>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 1,
+                    }}
+                  >
+                    {resources.map((resource, index) => (
+                      <ResourceCard
+                        resource={resource}
+                        key={`${resource.name}-${index}`}
+                        descriptions={descriptions}
+                        institutionId={institutionId}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
         ))}
       </Box>

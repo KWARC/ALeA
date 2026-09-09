@@ -10,6 +10,7 @@ import {
   getTutorInfo,
   getSemesterInfo,
   LectureScheduleItem,
+  SemesterData,
   TutorInfo,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
@@ -74,6 +75,7 @@ import { useStudentCount } from '../../../../hooks/useStudentCount';
 import { getLocaleObject } from '../../../../lang/utils';
 import MainLayout from '../../../../layouts/MainLayout';
 import shadows from '../../../../theme/shadows';
+import { getNextOrCurrentScheduleOccurrence } from '../../../../components/StudentDashboard/utils';
 function CourseComponentLink({ href, children, sx }: { href: string; children: any; sx?: any }) {
   return (
     <Link href={href}>
@@ -99,14 +101,101 @@ function getWeekdayName(dayOfWeek: number): string {
   return days[dayOfWeek] || '';
 }
 
+type SchedulePeriodState = 'before' | 'active' | 'after' | 'unknown';
+
+type SchedulePeriodInfo = {
+  state: SchedulePeriodState;
+  lectureStartDate?: string;
+  lectureEndDate?: string;
+};
+
+function getSchedulePeriodInfo(semesterInfo?: SemesterData[]): SchedulePeriodInfo {
+  const semester = semesterInfo?.[0];
+  const lectureStartDate = semester?.lectureStartDate;
+  const lectureEndDate = semester?.lectureEndDate;
+
+  if (!lectureStartDate || !lectureEndDate) return { state: 'unknown' };
+
+  const start = new Date(lectureStartDate);
+  const end = new Date(lectureEndDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return { state: 'unknown' };
+
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  const now = new Date();
+  const state = now < start ? 'before' : now > end ? 'after' : 'active';
+  return { state, lectureStartDate, lectureEndDate };
+}
+
+function SchedulePeriodMessage({ message }: { message: string }) {
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        borderRadius: 1,
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+        {message}
+      </Typography>
+    </Box>
+  );
+}
+
+function formatCommencementDate(date?: string) {
+  if (!date) return undefined;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ScheduleCommencementNotice({ message }: { message: string }) {
+  return (
+    <Box
+      sx={{
+        mb: 1,
+        p: 1,
+        borderRadius: 1,
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+        {message}
+      </Typography>
+    </Box>
+  );
+}
+
+function formatScheduleTimestamp(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function CourseScheduleSection({
   userId,
   courseId,
   currentTerm,
+  schedulePeriodInfo,
 }: {
   userId: string | undefined;
   courseId: string;
   currentTerm: string;
+  schedulePeriodInfo: SchedulePeriodInfo;
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
@@ -116,6 +205,12 @@ function CourseScheduleSection({
   const { calendarSection: t } = getLocaleObject(useRouter());
   const hasMoreLectures = lectureSchedule.length > 3;
   const hasMoreTutorials = tutorialSchedule.length > 3;
+  const schedulePeriod = schedulePeriodInfo.state;
+  const showScheduleRows = schedulePeriod !== 'after';
+  const commencementDate = formatCommencementDate(schedulePeriodInfo.lectureStartDate);
+  const lectureCommencementMessage = commencementDate
+    ? t.lecturesCommenceOn.replace('{{date}}', commencementDate)
+    : undefined;
 
   useEffect(() => {
     async function fetchSchedule() {
@@ -146,6 +241,7 @@ function CourseScheduleSection({
             venueLink: item.venueLink,
             tutorName: item.tutorName,
             comments: item.comments,
+            cancelledDates: Array.isArray(item.cancelledDates) ? item.cancelledDates : undefined,
           });
 
           const lectures = Array.isArray(data?.lectureSchedule)
@@ -198,17 +294,35 @@ function CourseScheduleSection({
     },
   });
 
+  const tutorialPeriod = {
+    lectureStartDate: schedulePeriodInfo.lectureStartDate,
+    lectureEndDate: schedulePeriodInfo.lectureEndDate,
+  };
+  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, tutorialPeriod);
+  const now = new Date();
+  const todayYmd = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+  const cancelledTutorialNotices = tutorialSchedule.flatMap((entry) =>
+    (entry.cancelledDates ?? [])
+      .filter((ymd) => ymd >= todayYmd)
+      .map((ymd) => ({
+        ymd,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+      }))
+  );
+
   const nextLectureDateFormatted = nextLectureStartTime
-    ? new Date(nextLectureStartTime).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+    ? formatScheduleTimestamp(nextLectureStartTime)
     : null;
   const fontColor = 'text.primary';
   const theme = useTheme();
+  const hasSchedule = lectureSchedule.length > 0 || tutorialSchedule.length > 0;
+  if (!hasSchedule && !userId) return null;
+
   return (
     <Box
       sx={{
@@ -256,6 +370,10 @@ function CourseScheduleSection({
                   </Typography>
                 )}
 
+                {schedulePeriod === 'before' && lectureCommencementMessage && (
+                  <ScheduleCommencementNotice message={lectureCommencementMessage} />
+                )}
+
                 <Box
                   sx={{
                     position: 'relative',
@@ -263,62 +381,71 @@ function CourseScheduleSection({
                     overflow: 'hidden',
                   }}
                 >
-                  {lectureSchedule.map((entry, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        mb: 1,
-                        p: 1,
-                        borderRadius: 1,
-                        backgroundColor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                          {getWeekdayName(entry.dayOfWeek)}
-                        </Typography>
-
-                        <Typography
-                          variant="body2"
-                          sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                  {showScheduleRows ? (
+                    lectureSchedule.map((entry, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          mb: 1,
+                          p: 1,
+                          borderRadius: 1,
+                          backgroundColor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}
                         >
-                          🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
-                        </Typography>
-
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          📍 Venue:{' '}
-                          {entry.venueLink ? (
-                            <Link
-                              href={entry.venueLink}
-                              target="_blank"
-                              style={{ textDecoration: 'underline', color: 'primary.main' }}
-                            >
-                              {entry.venue}
-                            </Link>
-                          ) : (
-                            entry.venue
-                          )}
-                        </Typography>
-                        {entry.tutorName && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            👤 {entry.tutorName}
-                          </Typography>
-                        )}
-                        {entry.comments && (
                           <Typography
-                            variant="caption"
-                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                            variant="body2"
+                            sx={{ fontWeight: 600, color: 'text.primary' }}
                           >
-                            💬 {entry.comments}
+                            {getWeekdayName(entry.dayOfWeek)}
                           </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  ))}
 
-                  {!showAllLectures && hasMoreLectures && (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                          >
+                            🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                          </Typography>
+
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            📍 Venue:{' '}
+                            {entry.venueLink ? (
+                              <Link
+                                href={entry.venueLink}
+                                target="_blank"
+                                style={{ textDecoration: 'underline', color: 'primary.main' }}
+                              >
+                                {entry.venue}
+                              </Link>
+                            ) : (
+                              entry.venue
+                            )}
+                          </Typography>
+                          {entry.tutorName && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              👤 {entry.tutorName}
+                            </Typography>
+                          )}
+                          {entry.comments && (
+                            <Typography
+                              variant="caption"
+                              sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                            >
+                              💬 {entry.comments}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))
+                  ) : (
+                    <SchedulePeriodMessage message={t.lecturesOver} />
+                  )}
+
+                  {showScheduleRows && !showAllLectures && hasMoreLectures && (
                     <Box
                       sx={{
                         position: 'absolute',
@@ -335,7 +462,7 @@ function CourseScheduleSection({
                   )}
                 </Box>
 
-                {hasMoreLectures && (
+                {showScheduleRows && hasMoreLectures && (
                   <Typography
                     onClick={() => setShowAllLectures(!showAllLectures)}
                     sx={{
@@ -371,9 +498,27 @@ function CourseScheduleSection({
                     variant="h6"
                     sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16 }}
                   >
-                    Tutorial Schedule
+                    {t.tutorialSchedule}
                   </Typography>
                 </Box>
+
+                {cancelledTutorialNotices.map((notice) => (
+                  <ScheduleCommencementNotice
+                    key={`${notice.ymd}-${notice.startTime}`}
+                    message={t.tutorialCancelledNotice
+                      .replace('{{date}}', formatScheduleTimestamp(new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime()))
+                    }
+                  />
+                ))}
+
+                {nextTutorial && (
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16, mb: 1 }}
+                  >
+                    {t.upcomingTutorial.replace('{{date}}', formatScheduleTimestamp(nextTutorial.ts))}
+                  </Typography>
+                )}
 
                 <Box
                   sx={{
@@ -382,73 +527,82 @@ function CourseScheduleSection({
                     overflow: 'hidden',
                   }}
                 >
-                  {tutorialSchedule.map((entry, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        mb: 1,
-                        p: 1,
-                        borderRadius: 1,
-                        backgroundColor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                          {getWeekdayName(entry.dayOfWeek)}
-                        </Typography>
-
-                        <Typography
-                          variant="body2"
-                          sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                  {showScheduleRows ? (
+                    tutorialSchedule.map((entry, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          mb: 1,
+                          p: 1,
+                          borderRadius: 1,
+                          backgroundColor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}
                         >
-                          🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
-                        </Typography>
-
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          📍 Venue:{' '}
-                          {entry.venueLink ? (
-                            <Link
-                              href={entry.venueLink}
-                              target="_blank"
-                              style={{ textDecoration: 'underline', color: 'primary.main' }}
-                            >
-                              {entry.venue}
-                            </Link>
-                          ) : (
-                            entry.venue
-                          )}
-                        </Typography>
-                        {entry.tutorName && (
-                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            👤 {tutorInfoById[entry.tutorName]?.name?.trim() || entry.tutorName}
-                            {tutorInfoById[entry.tutorName]?.email && (
-                              <>
-                                {' · '}
-                                <Link
-                                  href={`mailto:${tutorInfoById[entry.tutorName]?.email}`}
-                                  style={{ textDecoration: 'underline' }}
-                                >
-                                  {tutorInfoById[entry.tutorName]?.email}
-                                </Link>
-                              </>
-                            )}
-                          </Typography>
-                        )}
-                        {entry.comments && (
                           <Typography
                             variant="body2"
-                            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                            sx={{ fontWeight: 600, color: 'text.primary' }}
                           >
-                            💬 {entry.comments}
+                            {getWeekdayName(entry.dayOfWeek)}
                           </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  ))}
 
-                  {!showAllTutorials && hasMoreTutorials && (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
+                          >
+                            🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                          </Typography>
+
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            📍 Venue:{' '}
+                            {entry.venueLink ? (
+                              <Link
+                                href={entry.venueLink}
+                                target="_blank"
+                                style={{ textDecoration: 'underline', color: 'primary.main' }}
+                              >
+                                {entry.venue}
+                              </Link>
+                            ) : (
+                              entry.venue
+                            )}
+                          </Typography>
+                          {entry.tutorName && (
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              👤 {tutorInfoById[entry.tutorName]?.name?.trim() || entry.tutorName}
+                              {tutorInfoById[entry.tutorName]?.email && (
+                                <>
+                                  {' · '}
+                                  <Link
+                                    href={`mailto:${tutorInfoById[entry.tutorName]?.email}`}
+                                    style={{ textDecoration: 'underline' }}
+                                  >
+                                    {tutorInfoById[entry.tutorName]?.email}
+                                  </Link>
+                                </>
+                              )}
+                            </Typography>
+                          )}
+                          {entry.comments && (
+                            <Typography
+                              variant="body2"
+                              sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                            >
+                              💬 {entry.comments}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))
+                  ) : (
+                    <SchedulePeriodMessage message={t.tutorialsOver} />
+                  )}
+
+                  {showScheduleRows && !showAllTutorials && hasMoreTutorials && (
                     <Box
                       sx={{
                         position: 'absolute',
@@ -465,7 +619,7 @@ function CourseScheduleSection({
                   )}
                 </Box>
 
-                {hasMoreTutorials && (
+                {showScheduleRows && hasMoreTutorials && (
                   <Typography
                     onClick={() => setShowAllTutorials(!showAllTutorials)}
                     sx={{
@@ -624,6 +778,7 @@ const CourseHomePage: NextPage = () => {
     semesterInfo && semesterInfo.length > 0
       ? new Date() > new Date(semesterInfo[0].semesterEnd)
       : false;
+  const schedulePeriodInfo = getSchedulePeriodInfo(semesterInfo);
 
   if (isValidating) return null;
   if (validationError) {
@@ -906,7 +1061,12 @@ const CourseHomePage: NextPage = () => {
 
         <AnnouncementsSection courseId={courseId} instanceId={currentTerm} />
 
-        <CourseScheduleSection courseId={courseId} userId={userId} currentTerm={currentTerm} />
+        <CourseScheduleSection
+          courseId={courseId}
+          userId={userId}
+          currentTerm={currentTerm}
+          schedulePeriodInfo={schedulePeriodInfo}
+        />
         {showSearchBar && (
           <Box
             sx={{
@@ -971,7 +1131,7 @@ const CourseHomePage: NextPage = () => {
           instanceId={instanceId}
           institutionId={institutionId}
         />
-        <RecordedSyllabus courseId={courseId} />
+        <RecordedSyllabus courseId={courseId} instanceId={instanceId} />
       </Box>
     </MainLayout>
   );

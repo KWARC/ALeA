@@ -533,6 +533,13 @@ export const en = {
     schedule: 'Lecture Schedule',
     personalCalendar: 'Personal Calendar',
     tutorialSchedule: 'Tutorial Schedule',
+    lecturesNotStarted: 'Lectures have not started yet.',
+    lecturesOver: 'Lectures are over for this semester.',
+    lecturesCommenceOn: 'Lectures commence on {{date}}.',
+    tutorialsNotStarted: 'Tutorials have not started yet.',
+    tutorialsOver: 'Tutorials are over for this semester.',
+    upcomingTutorial: 'Upcoming Tutorial: {{date}}',
+    tutorialCancelledNotice: 'Tutorial cancelled on {{date}}',
     howToUse: 'How to use',
     howToUseHintGoogle: `Open Google Calendar → click "+" next to "Other calendars" → choose "From URL" → paste the link.`,
     howToUseHintApple: `Open Apple Calendar → File → New Calendar Subscription → paste the link → press OK.`,
@@ -691,11 +698,29 @@ export const en = {
 
     lecture: 'Lecture',
     tutorial: 'Tutorial',
+
+    addCancellationDate: 'Add date',
+    selectCancelDate: 'Cancelled dates',
+    invalidTutorialDate:
+      'Please pick a {{day}} between the lecture start and end dates.',
+    dateAlreadyCancelled: 'This date is already cancelled for this tutorial.',
+    confirmRemoveCancellationDate:
+      'Remove {{date}} from the cancelled dates for this tutorial?',
   },
   courseLanding: {
     courseInstances: 'Course Instances',
     latest: 'Latest',
    CourseInfo: 'Course Information',
     aboutThisCourse: 'About this Course',
+  },
+  cheatsheet: {
+    examInfoPrefix: 'For the exam:',
+    examInfoMerge:
+      'The instructor will merge all your cheatsheets into a single document, print that (grayscale) and you can pick it up at the orga counter before the exam.',
+    examInfoSelfPrint:
+      'If you want to print it yourself (e.g. for a color printout), you can bring that to the orga counter and have it verified by the instructors.',
+    examInfoForbidden:
+      'Unverified cheatsheets or cheatsheets that differ from the merged cheatsheet created here are forbidden in the exam.',
+    examInfoDetails: 'For details see the announcement in the matrix channel.',
   },
 };
