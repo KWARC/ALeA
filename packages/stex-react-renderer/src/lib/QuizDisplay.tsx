@@ -485,7 +485,9 @@ export function QuizDisplay({
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               const problemId = problemIds[problemIdx];
-              responsesRef.current = { ...responsesRef.current, [problemId]: response };
+              const nextResponses = { ...responsesRef.current, [problemId]: response };
+              responsesRef.current = nextResponses;
+              setResponses(nextResponses);
               onResponse?.(problemId, response);
             }}
             onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
