@@ -262,6 +262,7 @@ export function QuizDisplay({
   initialProblemIdx = 0,
   frozenProblems,
   onProblemFreeze,
+  revealSolutionOnSave = false,
 }: {
   quizEndTs?: number;
   showPerProblemTime: boolean;
@@ -279,6 +280,7 @@ export function QuizDisplay({
   initialProblemIdx?: number;
   frozenProblems?: Record<string, boolean>;
   onProblemFreeze?: (problemId: string) => void;
+  revealSolutionOnSave?: boolean;
 }) {
   const isHomeWork = homeworkId ? true : false;
   const router = useRouter();
@@ -492,6 +494,7 @@ export function QuizDisplay({
             }}
             onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
             onUnsavedAnswerChange={handleUnsavedAnswerChange}
+            revealSolutionOnSave={isExamProblem || revealSolutionOnSave}
           />
         </Box>
         <ListStepper

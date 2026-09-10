@@ -193,6 +193,7 @@ export function ProblemViewer({
   showSolution = true,
   onSubProblemRender,
   onUnsavedAnswerChange,
+  revealSolutionOnSave = false,
 }: {
   problem: FTMLProblemWithSolution;
   onResponseUpdate?: (response: FTML.ProblemResponse) => void;
@@ -204,6 +205,7 @@ export function ProblemViewer({
   showSolution?: boolean;
   onSubProblemRender?: () => void;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
+  revealSolutionOnSave?: boolean;
 }) {
   // Use a ref so problemWrap always calls the latest renderBelowAnswerAccepter
   // even when SafeFTMLFragment caches the wrapper from the first render.
@@ -249,6 +251,7 @@ export function ProblemViewer({
                     ) : null
                   }
                   onUnsavedAnswerChange={onUnsavedAnswerChange}
+                  revealSolutionOnSave={revealSolutionOnSave}
                 ></AnswerAccepter>
               ) : null}
               {renderBelowRef.current?.(problemUri, isSubProblem)}
@@ -363,6 +366,7 @@ function AnswerAccepter({
   problemTitle,
   pointsNode,
   onUnsavedAnswerChange,
+  revealSolutionOnSave,
 }: {
   problemId: string;
   masterProblemId: string;
@@ -370,6 +374,7 @@ function AnswerAccepter({
   problemTitle: string;
   pointsNode?: ReactNode;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
+  revealSolutionOnSave: boolean;
 }) {
   const showMasterSolution = useContext(MasterSolutionVisibilityContext);
   const previousAnswer = useContext(AnswerContext);
@@ -389,15 +394,21 @@ function AnswerAccepter({
   const [savedAnswer, setSavedAnswer] = useState<string>(() =>
     getSavedAnswerValue(name, serverAnswer)
   );
+  const [showSavedSolution, setShowSavedSolution] = useState(false);
   const router = useRouter();
   const hasUnsavedAnswer = hasUnsavedAnswerChange(answer, savedAnswer, isAnswerGraded);
   const canSaveAnswer = hasUnsavedAnswer && !!answer?.trim();
+  const hasSavedAnswer = !!savedAnswer.trim();
   const unsavedAnswerId = getUnsavedAnswerId(masterProblemId, problemId);
-  const shouldRenderMasterSolution = showMasterSolution && (isFrozen || isAnswerGraded) && !!answer;
+  const shouldRenderMasterSolution =
+    showMasterSolution &&
+    !!answer &&
+    (isFrozen || isAnswerGraded || (revealSolutionOnSave && hasSavedAnswer));
 
   useEffect(() => {
     setAnswer(getAnswerValue(name, serverAnswer));
     setSavedAnswer(getSavedAnswerValue(name, serverAnswer));
+    setShowSavedSolution(false);
   }, [name, serverAnswer]);
 
   useEffect(() => {
@@ -427,12 +438,14 @@ function AnswerAccepter({
       // Keep the saved value locally until the answer context is refreshed from the server.
       setLocallySavedAnswer(name, answer);
       setSavedAnswer(answer);
+      setShowSavedSolution(false);
       onUnsavedAnswerChange?.(unsavedAnswerId, false);
     }
   }
   function onAnswerChange(c: string) {
     setAnswer(c);
     setDraftAnswer(name, c);
+    setShowSavedSolution(false);
     onUnsavedAnswerChange?.(
       unsavedAnswerId,
       hasUnsavedAnswerChange(c, savedAnswer, isAnswerGraded)
@@ -473,6 +486,20 @@ function AnswerAccepter({
             onValueChange={onAnswerChange}
           />
         )}
+        {revealSolutionOnSave && hasSavedAnswer && !hasUnsavedAnswer ? (
+          showSavedSolution ? (
+            <MasterSolutionDisplay problemId={problemId} shouldShow={shouldRenderMasterSolution} />
+          ) : (
+            <Button
+              size="small"
+              sx={problemDisplayStyles.showSolutionButton}
+              variant="contained"
+              onClick={() => setShowSavedSolution(true)}
+            >
+              Show Master Solution
+            </Button>
+          )
+        ) : null}
       </Box>
 
       {pointsNode ? <Box sx={{ ml: 1.5, mt: 0.5, minWidth: 44 }}>{pointsNode}</Box> : null}
@@ -499,6 +526,7 @@ export function ProblemDisplay({
   renderBelowAnswerAccepter,
   hideAnswerAccepter = false,
   onUnsavedAnswerChange,
+  revealSolutionOnSave = false,
 }: {
   uri?: string;
   problem: FTMLProblemWithSolution | undefined;
@@ -511,6 +539,7 @@ export function ProblemDisplay({
   renderBelowAnswerAccepter?: (problemId: string, isSubProblem: boolean) => ReactNode;
   hideAnswerAccepter?: boolean;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
+  revealSolutionOnSave?: boolean;
 }) {
   const { user } = useCurrentUser();
   const userId = user?.userId ?? '';
@@ -556,6 +585,7 @@ export function ProblemDisplay({
           showSolution={showSolution}
           onSubProblemRender={handleSubProblemRender}
           onUnsavedAnswerChange={onUnsavedAnswerChange}
+          revealSolutionOnSave={revealSolutionOnSave}
         />
         {onFreezeResponse && !isEffectivelyFrozen && (
           <Button
@@ -616,6 +646,24 @@ const problemDisplayStyles = {
     color: 'text.primary',
     '& p:last-child': {
       mb: 0,
+    },
+  },
+  showSolutionButton: {
+    mt: -0.5,
+    mb: 0.5,
+    color: '#fff',
+    bgcolor: '#1f3566',
+    borderColor: '#1f3566',
+    fontSize: '0.75rem',
+    lineHeight: 1.4,
+    px: 1,
+    py: 0.25,
+    minHeight: 28,
+    boxShadow: 'none',
+    '&:hover': {
+      borderColor: '#17284d',
+      bgcolor: '#17284d',
+      boxShadow: 'none',
     },
   },
 } as const;
