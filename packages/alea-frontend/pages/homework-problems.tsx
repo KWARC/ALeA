@@ -69,7 +69,6 @@ const HomeworkProblemsPage = () => {
   const [problems, setProblems] = useState<Record<string, FTMLProblemWithSolution>>({});
   const [loading, setLoading] = useState(true);
   const [initialIndex, setInitialIndex] = useState<number>(0);
-  const [frozenProblems, setFrozenProblems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!homeworkUri) return;
@@ -160,13 +159,10 @@ const HomeworkProblemsPage = () => {
               problems={problems}
               existingResponses={{}}
               isFrozen={false}
-              frozenProblems={frozenProblems}
-              onProblemFreeze={(problemId) => {
-                setFrozenProblems((prev) => ({ ...prev, [problemId]: true }));
-              }}
               showPerProblemTime={false}
               isExamProblem={false}
               initialProblemIdx={initialIndex}
+              revealSolutionOnSave={true}
             />
           </AnswerContext.Provider>
         </GradingContext.Provider>
