@@ -107,6 +107,7 @@ interface SourceResult {
   mappedRowCount: number;
   unmappedRowCount: number;
   unmappedDistinctIds: number;
+  exampleUnmappedIds: string[];
   counts: IdCount[];
 }
 
@@ -123,6 +124,7 @@ interface GradingCourseTermSlice {
   mappedRowCount: number;
   unmappedRowCount: number;
   unmappedDistinctIds: number;
+  exampleUnmappedIds: string[];
 }
 
 function workspaceRoot(): string {
@@ -353,7 +355,12 @@ function aggregateGradingByCourseTerm(
 ): GradingCourseTermSlice[] {
   const byKey = new Map<
     string,
-    GradingCourseTermSlice & { mappedIds: Set<string>; unmappedIds: Set<string>; allIds: Set<string> }
+    GradingCourseTermSlice & {
+      mappedIds: Set<string>;
+      unmappedIds: Set<string>;
+      unmappedCounts: IdCount[];
+      allIds: Set<string>;
+    }
   >();
   for (const row of rows) {
     const key = `${row.courseId}\t${row.instanceId}`;
@@ -366,8 +373,10 @@ function aggregateGradingByCourseTerm(
         mappedRowCount: 0,
         unmappedRowCount: 0,
         unmappedDistinctIds: 0,
+        exampleUnmappedIds: [],
         mappedIds: new Set(),
         unmappedIds: new Set(),
+        unmappedCounts: [] as IdCount[],
         allIds: new Set(),
       });
     }
@@ -381,6 +390,7 @@ function aggregateGradingByCourseTerm(
     } else {
       slice.unmappedRowCount += row.rowCount;
       slice.unmappedIds.add(row.idmId);
+      slice.unmappedCounts.push({ idmId: row.idmId, rowCount: row.rowCount });
     }
   }
   return [...byKey.values()]
@@ -392,6 +402,7 @@ function aggregateGradingByCourseTerm(
       mappedRowCount: s.mappedRowCount,
       unmappedRowCount: s.unmappedRowCount,
       unmappedDistinctIds: s.unmappedIds.size,
+      exampleUnmappedIds: exampleUnmappedIds(s.unmappedCounts, mapping, conflictIds),
     }))
     .sort(
       (a, b) =>
@@ -428,6 +439,7 @@ function toSourceResult(
     mappedRowCount,
     unmappedRowCount,
     unmappedDistinctIds: unmappedIds.size,
+    exampleUnmappedIds: exampleUnmappedIds(counts, mapping, conflictIds),
     counts,
   };
 }
@@ -449,11 +461,29 @@ function mergeMissing(results: SourceResult[], mapping: Map<string, string>, con
     .sort((a, b) => b.totalRows - a.totalRows || a.idmId.localeCompare(b.idmId));
 }
 
-function formatUnmappedLine(label: string, unmapped: number, total: number, distinctUnmapped: number): string {
-  return `  ${label}: ${unmapped} / ${total} IdM rows unmapped (${distinctUnmapped} distinct ids) (${pct(
-    unmapped,
-    total
-  )} left)`;
+function exampleUnmappedIds(counts: IdCount[], mapping: Map<string, string>, conflictIds: Set<string>, limit = 5): string[] {
+  return counts
+    .filter(({ idmId }) => !(mapping.has(idmId) && !conflictIds.has(idmId)))
+    .slice()
+    .sort((a, b) => b.rowCount - a.rowCount || a.idmId.localeCompare(b.idmId))
+    .slice(0, limit)
+    .map(({ idmId }) => idmId);
+}
+
+function formatUnmappedLine(
+  label: string,
+  unmappedEntries: number,
+  totalEntries: number,
+  unmappedDistinct: number,
+  totalDistinct: number,
+  examples: string[]
+): string {
+  let line = `  ${label}: ${unmappedEntries} / ${totalEntries} entries unmapped. ${unmappedDistinct} (${pct(
+    unmappedDistinct,
+    totalDistinct
+  )}) distinct ids left.`;
+  if (examples.length) line += ` Eg. ${examples.join(', ')}`;
+  return line;
 }
 
 function formatMissingIdLine(idmId: string, totalRows: number, bySource: Record<string, number>): string {
@@ -504,8 +534,23 @@ function formatCoverageText(params: {
     .sort((a, b) => b.unmappedRowCount - a.unmappedRowCount);
   const clean = sourceResults.filter((r) => r.ok && r.unmappedRowCount === 0 && r.idmRowCount > 0);
 
-  p('IdM id → email mapping coverage');
-  p('================================');
+  p('IdM ids');
+  p(
+    `Total: ${allDbIdsSize}, with mapping: ${mappedDistinctInDb}, missing mapping: ${missingDistinctInDb} (${pct(
+      missingDistinctInDb,
+      allDbIdsSize
+    )})`
+  );
+  if (conflictDistinctInDb) p(`present but mapping conflict: ${conflictDistinctInDb}`);
+  p();
+  p('IdM occurrences (sum across tables)');
+  p(
+    `Total: ${idmRowTotal}, with mapping: ${mappedRowTotal}, missing mapping: ${unmappedRowTotal} (${pct(
+      unmappedRowTotal,
+      idmRowTotal
+    )} of total)`
+  );
+  p();
   p(`Enough to migrate every IdM-shaped DB value: ${enough ? 'YES' : 'NO'}`);
   p();
   p('Mapping files');
@@ -520,18 +565,18 @@ function formatCoverageText(params: {
     p(`    ${c.idmId} → ${c.emails.join(' | ')}`);
   }
   p();
-  p(`distinct IdM ids: ${allDbIdsSize}`);
-  p(`with a usable mapping: ${mappedDistinctInDb}`);
-  p(`missing from mapping: ${missingDistinctInDb}`);
-  if (conflictDistinctInDb) p(`present but mapping conflict: ${conflictDistinctInDb}`);
-  p();
-  p(`IdM occurrences (sum across tables): ${idmRowTotal}`);
-  p(`  migratable with mapping: ${mappedRowTotal}`);
-  p(`  will not be migrated: ${unmappedRowTotal} (${pct(unmappedRowTotal, idmRowTotal)} of total)`);
-  p();
   p('Per-source aggregate (rows that will not be migrated)');
   for (const r of withUnmapped) {
-    p(formatUnmappedLine(r.label, r.unmappedRowCount, r.idmRowCount, r.unmappedDistinctIds));
+    p(
+      formatUnmappedLine(
+        r.label,
+        r.unmappedRowCount,
+        r.idmRowCount,
+        r.unmappedDistinctIds,
+        r.distinctIdmIds,
+        r.exampleUnmappedIds
+      )
+    );
   }
   if (!withUnmapped.length) p('  (none)');
   p();
@@ -543,7 +588,9 @@ function formatCoverageText(params: {
         `${slice.courseId} ${slice.instanceId}`,
         slice.unmappedRowCount,
         slice.idmRowCount,
-        slice.unmappedDistinctIds
+        slice.unmappedDistinctIds,
+        slice.distinctIdmIds,
+        slice.exampleUnmappedIds
       )
     );
   }
@@ -614,6 +661,7 @@ export async function checkIdmEmailMappingCoverage() {
           mappedRowCount: 0,
           unmappedRowCount: 0,
           unmappedDistinctIds: 0,
+          exampleUnmappedIds: [],
           counts: [],
         });
       }
