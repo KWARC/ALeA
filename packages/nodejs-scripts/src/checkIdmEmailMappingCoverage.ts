@@ -1,7 +1,7 @@
 import { config as loadEnv } from 'dotenv';
 import { parse } from 'fast-csv';
 import { createReadStream } from 'node:fs';
-import { readdir, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import mysql from 'serverless-mysql';
 
@@ -12,6 +12,10 @@ export function isIdmUserId(id: string | null | undefined): boolean {
 
 const IDM_SQL = (col: string) =>
   `${col} IS NOT NULL AND TRIM(${col}) <> '' AND CHAR_LENGTH(TRIM(${col})) = 8 AND TRIM(${col}) NOT LIKE '%@%'`;
+
+const ADDITIONAL_MAPPING_FILE = 'additional_mappings.csv';
+const USERINFO_SOURCE_KEY = 'comments.userInfo.userId';
+const OMIT_FROM_MISSING_SOURCES = new Set([USERINFO_SOURCE_KEY]);
 
 type DbName = 'comments' | 'grading';
 
@@ -78,6 +82,16 @@ const ALL_SOURCES: Source[] = [
   ...GRADING_COLUMN_SOURCES,
 ];
 
+const OBVIOUS_ID_COLUMNS = new Set([
+  'userId',
+  'uploadedBy',
+  'uploadedByUserId',
+  'createdByUserId',
+  'applicantId',
+  'authorId',
+  'inviteruserId',
+]);
+
 interface IdCount {
   idmId: string;
   rowCount: number;
@@ -85,6 +99,7 @@ interface IdCount {
 
 interface SourceResult {
   source: string;
+  label: string;
   ok: boolean;
   error?: string;
   idmRowCount: number;
@@ -98,6 +113,16 @@ interface SourceResult {
 interface MappingIssue {
   idmId: string;
   emails: string[];
+}
+
+interface GradingCourseTermSlice {
+  courseId: string;
+  instanceId: string;
+  idmRowCount: number;
+  distinctIdmIds: number;
+  mappedRowCount: number;
+  unmappedRowCount: number;
+  unmappedDistinctIds: number;
 }
 
 function workspaceRoot(): string {
@@ -123,6 +148,20 @@ function createDb(database: string | undefined) {
 
 function sourceKey(s: Source): string {
   return `${s.db}.${s.table}.${s.column}`;
+}
+
+/** Short label for humans: drop db prefix and obvious userId column names. */
+export function displaySourceLabel(key: string): string {
+  const [db, table, ...rest] = key.split('.');
+  const column = rest.join('.');
+  if (db === 'grading') return 'grading';
+  if (!column || OBVIOUS_ID_COLUMNS.has(column) || column === 'instructors') return table;
+  return `${table}.${column}`;
+}
+
+function pct(part: number, total: number): string {
+  if (!total) return 'n/a';
+  return `${((100 * part) / total).toFixed(1)}%`;
 }
 
 function normalizeEmail(email: string): string {
@@ -154,6 +193,38 @@ async function parseMemberExportCsv(filePath: string): Promise<{ login: string; 
   return rows;
 }
 
+/** `email idmId` (whitespace or comma), one pair per line. */
+export function parseAdditionalMappingText(text: string): { login: string; email: string }[] {
+  const rows: { login: string; email: string }[] = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const parts = line.split(/[\s,;]+/).filter(Boolean);
+    if (parts.length < 2) continue;
+    if (parts[0].includes('@')) rows.push({ email: parts[0], login: parts[1] });
+    else if (parts[1].includes('@')) rows.push({ login: parts[0], email: parts[1] });
+  }
+  return rows;
+}
+
+function addMappingRow(
+  emailSets: Map<string, Set<string>>,
+  row: { login: string; email: string },
+  counters: { csvRowCount: number; skippedEmptyLogin: number; skippedEmptyEmail: number }
+) {
+  counters.csvRowCount++;
+  if (!row.login) {
+    counters.skippedEmptyLogin++;
+    return;
+  }
+  if (!row.email) {
+    counters.skippedEmptyEmail++;
+    return;
+  }
+  if (!emailSets.has(row.login)) emailSets.set(row.login, new Set());
+  emailSets.get(row.login)!.add(normalizeEmail(row.email));
+}
+
 export async function loadIdmEmailMapping(mappingDir: string): Promise<{
   files: string[];
   mapping: Map<string, string>;
@@ -167,25 +238,15 @@ export async function loadIdmEmailMapping(mappingDir: string): Promise<{
     .slice()
     .sort((a, b) => a.localeCompare(b));
   const emailSets = new Map<string, Set<string>>();
-  let csvRowCount = 0;
-  let skippedEmptyLogin = 0;
-  let skippedEmptyEmail = 0;
+  const counters = { csvRowCount: 0, skippedEmptyLogin: 0, skippedEmptyEmail: 0 };
 
   for (const name of names) {
-    const rows = await parseMemberExportCsv(join(mappingDir, name));
-    csvRowCount += rows.length;
-    for (const row of rows) {
-      if (!row.login) {
-        skippedEmptyLogin++;
-        continue;
-      }
-      if (!row.email) {
-        skippedEmptyEmail++;
-        continue;
-      }
-      if (!emailSets.has(row.login)) emailSets.set(row.login, new Set());
-      emailSets.get(row.login)!.add(normalizeEmail(row.email));
-    }
+    const filePath = join(mappingDir, name);
+    const rows =
+      name.toLowerCase() === ADDITIONAL_MAPPING_FILE
+        ? parseAdditionalMappingText(await readFile(filePath, 'utf8'))
+        : await parseMemberExportCsv(filePath);
+    for (const row of rows) addMappingRow(emailSets, row, counters);
   }
 
   const mapping = new Map<string, string>();
@@ -199,9 +260,9 @@ export async function loadIdmEmailMapping(mappingDir: string): Promise<{
   return {
     files: names,
     mapping,
-    csvRowCount,
-    skippedEmptyLogin,
-    skippedEmptyEmail,
+    csvRowCount: counters.csvRowCount,
+    skippedEmptyLogin: counters.skippedEmptyLogin,
+    skippedEmptyEmail: counters.skippedEmptyEmail,
     conflicts,
   };
 }
@@ -252,12 +313,92 @@ async function queryInstructorJsonCounts(
   const counts = new Map<string, number>();
   for (const row of rows) {
     const ids = extractInstructorIds(row.instructors);
-    // One courseMetadata row can list several instructors; count each id once per row.
     for (const id of new Set(ids)) {
       counts.set(id, (counts.get(id) || 0) + 1);
     }
   }
   return [...counts.entries()].map(([idmId, rowCount]) => ({ idmId, rowCount }));
+}
+
+async function queryGradingByCourseTerm(db: ReturnType<typeof createDb>): Promise<
+  { idmId: string; courseId: string; instanceId: string; rowCount: number }[]
+> {
+  const sql = `SELECT TRIM(userId) AS idmId,
+      IFNULL(NULLIF(TRIM(courseId), ''), '(empty)') AS courseId,
+      IFNULL(NULLIF(TRIM(instanceId), ''), '(empty)') AS instanceId,
+      COUNT(*) AS rowCount
+    FROM grading
+    WHERE ${IDM_SQL('userId')}
+    GROUP BY TRIM(userId),
+      IFNULL(NULLIF(TRIM(courseId), ''), '(empty)'),
+      IFNULL(NULLIF(TRIM(instanceId), ''), '(empty)')`;
+  const rows = await db.query<
+    { idmId: string; courseId: string; instanceId: string; rowCount: number | bigint }[]
+  >(sql);
+  if (!Array.isArray(rows)) {
+    throw new TypeError(JSON.stringify(rows));
+  }
+  return rows.map((r) => ({
+    idmId: String(r.idmId),
+    courseId: String(r.courseId),
+    instanceId: String(r.instanceId),
+    rowCount: Number(r.rowCount),
+  }));
+}
+
+function aggregateGradingByCourseTerm(
+  rows: { idmId: string; courseId: string; instanceId: string; rowCount: number }[],
+  mapping: Map<string, string>,
+  conflictIds: Set<string>
+): GradingCourseTermSlice[] {
+  const byKey = new Map<
+    string,
+    GradingCourseTermSlice & { mappedIds: Set<string>; unmappedIds: Set<string>; allIds: Set<string> }
+  >();
+  for (const row of rows) {
+    const key = `${row.courseId}\t${row.instanceId}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        courseId: row.courseId,
+        instanceId: row.instanceId,
+        idmRowCount: 0,
+        distinctIdmIds: 0,
+        mappedRowCount: 0,
+        unmappedRowCount: 0,
+        unmappedDistinctIds: 0,
+        mappedIds: new Set(),
+        unmappedIds: new Set(),
+        allIds: new Set(),
+      });
+    }
+    const slice = byKey.get(key)!;
+    slice.idmRowCount += row.rowCount;
+    slice.allIds.add(row.idmId);
+    const usable = mapping.has(row.idmId) && !conflictIds.has(row.idmId);
+    if (usable) {
+      slice.mappedRowCount += row.rowCount;
+      slice.mappedIds.add(row.idmId);
+    } else {
+      slice.unmappedRowCount += row.rowCount;
+      slice.unmappedIds.add(row.idmId);
+    }
+  }
+  return [...byKey.values()]
+    .map((s) => ({
+      courseId: s.courseId,
+      instanceId: s.instanceId,
+      idmRowCount: s.idmRowCount,
+      distinctIdmIds: s.allIds.size,
+      mappedRowCount: s.mappedRowCount,
+      unmappedRowCount: s.unmappedRowCount,
+      unmappedDistinctIds: s.unmappedIds.size,
+    }))
+    .sort(
+      (a, b) =>
+        b.unmappedRowCount - a.unmappedRowCount ||
+        a.courseId.localeCompare(b.courseId) ||
+        a.instanceId.localeCompare(b.instanceId)
+    );
 }
 
 function toSourceResult(
@@ -277,8 +418,10 @@ function toSourceResult(
       unmappedIds.add(idmId);
     }
   }
+  const key = sourceKey(source);
   return {
-    source: sourceKey(source),
+    source: key,
+    label: displaySourceLabel(key),
     ok: true,
     idmRowCount: counts.reduce((s, c) => s + c.rowCount, 0),
     distinctIdmIds: counts.length,
@@ -306,6 +449,131 @@ function mergeMissing(results: SourceResult[], mapping: Map<string, string>, con
     .sort((a, b) => b.totalRows - a.totalRows || a.idmId.localeCompare(b.idmId));
 }
 
+function formatUnmappedLine(label: string, unmapped: number, total: number, distinctUnmapped: number): string {
+  return `  ${label}: ${unmapped} / ${total} IdM rows unmapped (${distinctUnmapped} distinct ids) (${pct(
+    unmapped,
+    total
+  )} left)`;
+}
+
+function formatMissingIdLine(idmId: string, totalRows: number, bySource: Record<string, number>): string {
+  const parts = Object.entries(bySource)
+    .filter(([key]) => !OMIT_FROM_MISSING_SOURCES.has(key))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([key, count]) => `${displaySourceLabel(key)}=${count}`);
+  const extra = parts.length ? `  ${parts.join(', ')}` : '';
+  return `  ${idmId}  rows=${totalRows}${extra}`;
+}
+
+function formatCoverageText(params: {
+  enough: boolean;
+  mappingDir: string;
+  mappingLoad: Awaited<ReturnType<typeof loadIdmEmailMapping>>;
+  allDbIdsSize: number;
+  mappedDistinctInDb: number;
+  missingDistinctInDb: number;
+  conflictDistinctInDb: number;
+  idmRowTotal: number;
+  mappedRowTotal: number;
+  unmappedRowTotal: number;
+  sourceResults: SourceResult[];
+  gradingByCourseTerm: GradingCourseTermSlice[];
+  missing: ReturnType<typeof mergeMissing>;
+}): string {
+  const {
+    enough,
+    mappingDir,
+    mappingLoad,
+    allDbIdsSize,
+    mappedDistinctInDb,
+    missingDistinctInDb,
+    conflictDistinctInDb,
+    idmRowTotal,
+    mappedRowTotal,
+    unmappedRowTotal,
+    sourceResults,
+    gradingByCourseTerm,
+    missing,
+  } = params;
+  const lines: string[] = [];
+  const p = (line = '') => lines.push(line);
+  const failed = sourceResults.filter((r) => !r.ok);
+  const withUnmapped = sourceResults
+    .filter((r) => r.ok && r.unmappedRowCount > 0)
+    .slice()
+    .sort((a, b) => b.unmappedRowCount - a.unmappedRowCount);
+  const clean = sourceResults.filter((r) => r.ok && r.unmappedRowCount === 0 && r.idmRowCount > 0);
+
+  p('IdM id → email mapping coverage');
+  p('================================');
+  p(`Enough to migrate every IdM-shaped DB value: ${enough ? 'YES' : 'NO'}`);
+  p();
+  p('Mapping files');
+  p(`  dir: ${mappingDir}`);
+  p(`  files (${mappingLoad.files.length}): ${mappingLoad.files.join(', ') || '(none)'}`);
+  p(`  CSV rows: ${mappingLoad.csvRowCount}`);
+  p(`  unique Login values with exactly one email: ${mappingLoad.mapping.size}`);
+  p(`  rows skipped (empty Login): ${mappingLoad.skippedEmptyLogin}`);
+  p(`  rows skipped (empty E-Mail): ${mappingLoad.skippedEmptyEmail}`);
+  p(`  Login values with conflicting emails: ${mappingLoad.conflicts.length}`);
+  for (const c of mappingLoad.conflicts) {
+    p(`    ${c.idmId} → ${c.emails.join(' | ')}`);
+  }
+  p();
+  p(`distinct IdM ids: ${allDbIdsSize}`);
+  p(`with a usable mapping: ${mappedDistinctInDb}`);
+  p(`missing from mapping: ${missingDistinctInDb}`);
+  if (conflictDistinctInDb) p(`present but mapping conflict: ${conflictDistinctInDb}`);
+  p();
+  p(`IdM occurrences (sum across tables): ${idmRowTotal}`);
+  p(`  migratable with mapping: ${mappedRowTotal}`);
+  p(`  will not be migrated: ${unmappedRowTotal} (${pct(unmappedRowTotal, idmRowTotal)} of total)`);
+  p();
+  p('Per-source aggregate (rows that will not be migrated)');
+  for (const r of withUnmapped) {
+    p(formatUnmappedLine(r.label, r.unmappedRowCount, r.idmRowCount, r.unmappedDistinctIds));
+  }
+  if (!withUnmapped.length) p('  (none)');
+  p();
+  p('Grading by course / semester');
+  for (const slice of gradingByCourseTerm) {
+    if (!slice.unmappedRowCount) continue;
+    p(
+      formatUnmappedLine(
+        `${slice.courseId} ${slice.instanceId}`,
+        slice.unmappedRowCount,
+        slice.idmRowCount,
+        slice.unmappedDistinctIds
+      )
+    );
+  }
+  const gradingFullyCovered = gradingByCourseTerm.filter((s) => s.idmRowCount > 0 && s.unmappedRowCount === 0);
+  if (gradingFullyCovered.length) {
+    p('  fully covered:');
+    for (const slice of gradingByCourseTerm.filter((s) => s.unmappedRowCount === 0 && s.idmRowCount > 0)) {
+      p(`    ${slice.courseId} ${slice.instanceId}: ${slice.idmRowCount} rows, ${slice.distinctIdmIds} ids`);
+    }
+  }
+  if (!gradingByCourseTerm.length) p('  (no grading IdM rows)');
+  p();
+  p('Sources with IdM rows fully covered by mapping');
+  for (const r of clean) p(`  ${r.label}: ${r.idmRowCount} rows, ${r.distinctIdmIds} ids`);
+  if (!clean.length) p('  (none)');
+  if (failed.length) {
+    p();
+    p('Sources that failed to query (table/column may not exist)');
+    for (const r of failed) p(`  ${r.label}: ${r.error}`);
+  }
+  p();
+  p(`Missing / unusable IdM ids (${missing.length}), sorted by affected row count`);
+  const preview = missing.slice(0, 50);
+  for (const m of preview) {
+    p(formatMissingIdLine(m.idmId, m.totalRows, m.bySource));
+  }
+  if (missing.length > preview.length) p(`  … ${missing.length - preview.length} more (see JSON report)`);
+  return lines.join('\n');
+}
+
 export async function checkIdmEmailMappingCoverage() {
   loadDotenv();
 
@@ -325,6 +593,7 @@ export async function checkIdmEmailMappingCoverage() {
   const dbFor = (name: DbName) => (name === 'comments' ? commentsDb : gradingDb);
 
   const sourceResults: SourceResult[] = [];
+  let gradingByCourseTerm: GradingCourseTermSlice[] = [];
   try {
     for (const source of ALL_SOURCES) {
       try {
@@ -334,8 +603,10 @@ export async function checkIdmEmailMappingCoverage() {
             : await queryInstructorJsonCounts(dbFor(source.db), source);
         sourceResults.push(toSourceResult(source, counts, mappingLoad.mapping, conflictIds));
       } catch (e) {
+        const key = sourceKey(source);
         sourceResults.push({
-          source: sourceKey(source),
+          source: key,
+          label: displaySourceLabel(key),
           ok: false,
           error: e instanceof Error ? e.message : String(e),
           idmRowCount: 0,
@@ -346,6 +617,12 @@ export async function checkIdmEmailMappingCoverage() {
           counts: [],
         });
       }
+    }
+    try {
+      const gradingRows = await queryGradingByCourseTerm(gradingDb);
+      gradingByCourseTerm = aggregateGradingByCourseTerm(gradingRows, mappingLoad.mapping, conflictIds);
+    } catch (e) {
+      console.error('Failed to break down grading by course/semester:', e);
     }
   } finally {
     await commentsDb.end();
@@ -395,72 +672,25 @@ export async function checkIdmEmailMappingCoverage() {
       rowOccurrencesNotMigratable: unmappedRowTotal,
     },
     perSource: sourceResults.map(({ counts: _counts, ...rest }) => rest),
+    gradingByCourseTerm,
     missingIdmIds: missing,
   };
 
-  const lines: string[] = [];
-  const p = (line = '') => lines.push(line);
-
-  p('IdM id → email mapping coverage');
-  p('================================');
-  p(`Enough to migrate every IdM-shaped DB value: ${enough ? 'YES' : 'NO'}`);
-  p();
-  p('Mapping files');
-  p(`  dir: ${mappingDir}`);
-  p(`  files (${mappingLoad.files.length}): ${mappingLoad.files.join(', ') || '(none)'}`);
-  p(`  CSV rows: ${mappingLoad.csvRowCount}`);
-  p(`  unique Login values with exactly one email: ${mappingLoad.mapping.size}`);
-  p(`  rows skipped (empty Login): ${mappingLoad.skippedEmptyLogin}`);
-  p(`  rows skipped (empty E-Mail): ${mappingLoad.skippedEmptyEmail}`);
-  p(`  Login values with conflicting emails: ${mappingLoad.conflicts.length}`);
-  for (const c of mappingLoad.conflicts) {
-    p(`    ${c.idmId} → ${c.emails.join(' | ')}`);
-  }
-  p();
-  p('IdM-shaped ids in comments + grading DBs');
-  p('  (CHAR_LENGTH=8 and no "@", same rule as isFauId)');
-  p(`  distinct IdM ids: ${allDbIds.size}`);
-  p(`  with a usable mapping: ${mappedDistinctInDb}`);
-  p(`  missing from mapping: ${missingDistinctInDb}`);
-  p(`  present but mapping conflict: ${conflictDistinctInDb}`);
-  p(`  IdM-shaped cell occurrences (sum across columns): ${idmRowTotal}`);
-  p(`    migratable with mapping: ${mappedRowTotal}`);
-  p(`    will not be migrated: ${unmappedRowTotal}`);
-  p();
-  p('Per-source aggregate (rows that will not be migrated)');
-  const failed = sourceResults.filter((r) => !r.ok);
-  const withUnmapped = sourceResults.filter((r) => r.ok && r.unmappedRowCount > 0);
-  const clean = sourceResults.filter((r) => r.ok && r.unmappedRowCount === 0 && r.idmRowCount > 0);
-  const empty = sourceResults.filter((r) => r.ok && r.idmRowCount === 0);
-  for (const r of withUnmapped.sort((a, b) => b.unmappedRowCount - a.unmappedRowCount)) {
-    p(
-      `  ${r.source}: ${r.unmappedRowCount} / ${r.idmRowCount} IdM rows unmapped (${r.unmappedDistinctIds} distinct ids)`
-    );
-  }
-  if (!withUnmapped.length) p('  (none)');
-  p();
-  p('Sources with IdM rows fully covered by mapping');
-  for (const r of clean) p(`  ${r.source}: ${r.idmRowCount} rows, ${r.distinctIdmIds} ids`);
-  if (!clean.length) p('  (none)');
-  p();
-  p(`Sources with no IdM-shaped values: ${empty.length}`);
-  if (failed.length) {
-    p();
-    p('Sources that failed to query (table/column may not exist)');
-    for (const r of failed) p(`  ${r.source}: ${r.error}`);
-  }
-  p();
-  p(`Missing / unusable IdM ids (${missing.length}), sorted by affected row count`);
-  const preview = missing.slice(0, 50);
-  for (const m of preview) {
-    const sources = Object.entries(m.bySource)
-      .map(([k, v]) => `${k}=${v}`)
-      .join(', ');
-    p(`  ${m.idmId}  rows=${m.totalRows}  ${sources}`);
-  }
-  if (missing.length > preview.length) p(`  … ${missing.length - preview.length} more (see JSON report)`);
-
-  const text = lines.join('\n');
+  const text = formatCoverageText({
+    enough,
+    mappingDir,
+    mappingLoad,
+    allDbIdsSize: allDbIds.size,
+    mappedDistinctInDb,
+    missingDistinctInDb,
+    conflictDistinctInDb,
+    idmRowTotal,
+    mappedRowTotal,
+    unmappedRowTotal,
+    sourceResults,
+    gradingByCourseTerm,
+    missing,
+  });
   console.log(text);
 
   const jsonPath = join(mappingDir, 'idm-mapping-coverage-report.json');
