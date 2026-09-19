@@ -9,7 +9,6 @@ import {
   HiddenStatus,
   PostSnippet,
   QuestionStatus,
-  TempUserSignupRequest,
   UpdateCommentStateRequest,
   UpdateQuestionStateRequest,
   UserInformation,
@@ -301,10 +300,6 @@ export async function getCdnImages(): Promise<CdnImageMetadata[]> {
     return JSON.parse(val.metadata);
   });
   return values;
-}
-
-export async function anonUserSignUp(tempUserSignupRequest: TempUserSignupRequest) {
-  return await axios.post('/api/anon-login/signup', tempUserSignupRequest);
 }
 
 export async function checkIfUserIdExists(userId: string) {

@@ -165,9 +165,3 @@ export interface Image {
 
 export const ANON_USER_ID_PREFIX = '_anon_';
 
-export interface TempUserSignupRequest {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-}

@@ -50,7 +50,7 @@ model BlogPosts {
   postId            String    @db.VarChar(255)
   title             String    @db.VarChar(255)
   body              String    @db.Text
-  authorId          String    @db.VarChar(100)
+  authorId          String    @db.VarChar(255)
   authorName        String    @db.VarChar(255)
   createdAt         DateTime? @default(now()) @db.Timestamp(0)
   updatedAt         DateTime? @default(now()) @db.Timestamp(0)
@@ -79,7 +79,7 @@ model CourseMaterials {
   universityId    String                       @db.VarChar(100)
   courseId        String                       @db.VarChar(100)
   instanceId      String                       @db.VarChar(100)
-  uploadedBy      String                       @db.VarChar(100)
+  uploadedBy      String                       @db.VarChar(255)
   url             String?                      @db.Text
   checksum        String?                      @db.VarChar(64)
   validFrom       String?                      @db.VarChar(255)
@@ -296,7 +296,7 @@ model homeworkHistory {
 model jobApplication {
   id                   Int                              @id @default(autoincrement())
   jobPostId            Int
-  applicantId          String                           @db.VarChar(50)
+  applicantId          String                           @db.VarChar(255)
   applicationStatus    jobApplication_applicationStatus @default(APPLIED)
   createdAt            DateTime?                        @default(now()) @db.Timestamp(0)
   updatedAt            DateTime?                        @default(now()) @db.Timestamp(0)
@@ -312,7 +312,7 @@ model jobApplicationAction {
   id               Int                               @id @default(autoincrement())
   jobApplicationId Int
   actionByRole     jobApplicationAction_actionByRole
-  userId           String                            @db.VarChar(50)
+  userId           String                            @db.VarChar(255)
   actionType       jobApplicationAction_actionType
   message          String?                           @db.VarChar(255)
   createdAt        DateTime?                         @default(now()) @db.Timestamp(0)
@@ -357,7 +357,7 @@ model jobPost {
   facilities          String?              @db.Text
   applicationDeadline DateTime?            @db.Timestamp(0)
   workMode            String?              @db.VarChar(50)
-  createdByUserId     String?              @db.VarChar(50)
+  createdByUserId     String?              @db.VarChar(255)
   createdAt           DateTime?            @default(now()) @db.Timestamp(0)
   updatedAt           DateTime?            @default(now()) @db.Timestamp(0)
   jobApplication      jobApplication[]
@@ -387,7 +387,7 @@ model orgInvitations {
   id                  Int                 @id @default(autoincrement())
   organizationId      Int
   inviteeEmail        String              @db.VarChar(255)
-  inviteruserId       String              @db.Char(36)
+  inviteruserId       String              @db.VarChar(255)
   createdAt           DateTime?           @default(now()) @db.Timestamp(0)
   organizationProfile organizationProfile @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "orgInvitations_ibfk_1")
 
@@ -423,7 +423,7 @@ model points {
 }
 
 model recruiterProfile {
-  userId              String               @id @db.VarChar(50)
+  userId              String               @id @db.VarChar(255)
   name                String               @db.VarChar(255)
   email               String               @db.VarChar(255)
   position            String               @db.VarChar(255)
@@ -456,7 +456,7 @@ model semesterInfo {
 }
 
 model studentProfile {
-  userId           String           @id @db.VarChar(50)
+  userId           String           @id @db.VarChar(255)
   name             String           @db.VarChar(255)
   resumeUrl        String?          @db.VarChar(2083)
   email            String           @db.VarChar(255)
@@ -489,10 +489,11 @@ model updateHistory {
 }
 
 model userInfo {
-  userId                          String            @id @db.VarChar(50)
+  userId                          String            @id @db.VarChar(255)
   firstName                       String?           @db.VarChar(255)
   lastName                        String?           @db.VarChar(255)
-  email                           String?           @db.VarChar(255)
+  email                           String?           @unique(map: "userInfo_email_key") @db.VarChar(255)
+  idmId                           String?           @unique(map: "userInfo_idmId_key") @db.VarChar(255)
   notificationSeenTs              String?           @db.VarChar(255)
   showTrafficLight                Boolean?          @default(true)
   showSectionReview               Boolean?          @default(true)

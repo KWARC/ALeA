@@ -77,10 +77,11 @@ CREATE TABLE notifications (
 );
 
 CREATE TABLE userInfo (
-    userId VARCHAR(50) PRIMARY KEY,
+    userId VARCHAR(255) PRIMARY KEY,
     firstName VARCHAR(255),
     lastName VARCHAR(255),
     email VARCHAR(255),
+    idmId VARCHAR(255),
     languages VARCHAR(255),
     studyProgram VARCHAR(255),
     semester VARCHAR(255),
@@ -91,7 +92,9 @@ CREATE TABLE userInfo (
     verificationToken VARCHAR(255),
     isVerified BOOLEAN,
     passwordResetToken VARCHAR(255),
-    passwordResetRequestTimestampMs BIGINT
+    passwordResetRequestTimestampMs BIGINT,
+    UNIQUE KEY userInfo_email_key (email),
+    UNIQUE KEY userInfo_idmId_key (idmId)
 );
 
 CREATE TABLE StudyBuddyUsers (
@@ -119,7 +122,7 @@ CREATE TABLE BlogPosts (
     postId VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
-    authorId VARCHAR(100) NOT NULL,
+    authorId VARCHAR(255) NOT NULL,
     authorName VARCHAR(255) NOT NULL,
     heroImageId VARCHAR(255),
     heroImageUrl VARCHAR(255),
@@ -278,7 +281,7 @@ CREATE TABLE homeworkHistory (
 
 -- Job Portal Tables
 CREATE TABLE studentProfile (
-    userId VARCHAR(50) PRIMARY KEY, 
+    userId VARCHAR(255) PRIMARY KEY, 
     name VARCHAR(255) NOT NULL, 
     resumeUrl VARCHAR(2083), 
     email VARCHAR(255) NOT NULL, 
@@ -312,7 +315,7 @@ CREATE TABLE organizationProfile (
 
 
 CREATE TABLE recruiterProfile (
-    userId VARCHAR(50) PRIMARY KEY,
+    userId VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     position VARCHAR(255) NOT NULL, 
@@ -362,7 +365,7 @@ CREATE TABLE jobPost (
     facilities TEXT,                                              
     applicationDeadline TIMESTAMP,   
     workMode VARCHAR(50),
-    createdByUserId VARCHAR(50),                              
+    createdByUserId VARCHAR(255),                              
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id),  
@@ -373,7 +376,7 @@ CREATE TABLE jobPost (
 CREATE TABLE jobApplication (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     jobPostId INT NOT NULL, 
-    applicantId VARCHAR(50) NOT NULL, 
+    applicantId VARCHAR(255) NOT NULL, 
     applicationStatus ENUM(
         'APPLIED', 
         'APPLICATION_WITHDRAWN', 
@@ -399,7 +402,7 @@ CREATE TABLE jobApplicationAction (
         'RECRUITER',
         'ADMIN'
     ) NOT NULL,
-    userId VARCHAR(50) NOT NULL,
+    userId VARCHAR(255) NOT NULL,
     actionType ENUM(
         'CREATE_APPLICATION',
         'WITHDRAW_APPLICATION',
@@ -423,7 +426,7 @@ CREATE TABLE orgInvitations (
     id INT AUTO_INCREMENT PRIMARY KEY, 
     organizationId int NOT NULL,
     inviteeEmail VARCHAR(255) NOT NULL,
-    inviteruserId CHAR(36) NOT NULL,     
+    inviteruserId VARCHAR(255) NOT NULL,     
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizationId) REFERENCES organizationProfile(id) ON DELETE CASCADE
 );
@@ -496,7 +499,7 @@ CREATE TABLE CourseMaterials (
     universityId VARCHAR(100) NOT NULL,
     courseId VARCHAR(100) NOT NULL,
      instanceId VARCHAR(100) NOT NULL,
-    uploadedBy VARCHAR(100) NOT NULL,
+    uploadedBy VARCHAR(255) NOT NULL,
     url TEXT,
     checksum VARCHAR(64),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
