@@ -29,14 +29,6 @@ type EndpointMetrics = {
 
 const metricsByLabel: Record<string, EndpointMetrics> = {};
 
-if (!JWT) {
-  // eslint-disable-next-line no-console
-  console.error(
-    'Missing JWT. Please set one of LOADTEST_JWT, JWT, AUTH_TOKEN, or ACCESS_TOKEN environment variables.'
-  );
-  process.exit(1);
-}
-
 function createAuthHeaders() {
   return {
     Authorization: `JWT ${JWT}`,
@@ -153,6 +145,13 @@ async function requestGetPreviousQuizInfo() {
 }
 
 export async function loadTest() {
+  if (!JWT) {
+    console.error(
+      'Missing JWT. Please set one of LOADTEST_JWT, JWT, AUTH_TOKEN, or ACCESS_TOKEN environment variables.'
+    );
+    process.exit(1);
+  }
+
   // eslint-disable-next-line no-console
   console.log('Starting load test with quizId:', QUIZ_ID, 'courseId:', COURSE_ID);
 
