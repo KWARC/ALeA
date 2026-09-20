@@ -15,7 +15,7 @@ function currentSemSetup() {
   const courses = sem.courses;
 
   const lectureEntriesByCourse: CoverageTimeline = {};
-  courses.forEach((c) => (lectureEntriesByCourse[c.courseId] = []));
+  courses.forEach((c) => (lectureEntriesByCourse[c.courseId] = { lectures: [] }));
   const currentDate = new Date(startDate);
   while (currentDate <= endDate) {
     if (isHoliday(currentDate, holidays)) {
@@ -35,7 +35,7 @@ function currentSemSetup() {
       lectureEndDate.setHours(endHours, endMinutes, 0, 0);
       const lectureEndTimestamp_ms = lectureEndDate.getTime();
 
-      lectureEntriesByCourse[course.courseId].push({
+      lectureEntriesByCourse[course.courseId].lectures.push({
         timestamp_ms,
         sectionUri: '',
         targetSectionUri: '',

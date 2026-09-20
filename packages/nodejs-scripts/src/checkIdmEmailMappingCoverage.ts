@@ -285,10 +285,11 @@ function extractInstructorIds(instructors: unknown): string[] {
   if (instructors == null) return [];
   let value = instructors;
   if (typeof value === 'string') {
+    const raw = value;
     try {
       value = JSON.parse(value);
     } catch {
-      return isIdmUserId(value) ? [value] : [];
+      return isIdmUserId(raw) ? [raw] : [];
     }
   }
   if (!Array.isArray(value)) return [];

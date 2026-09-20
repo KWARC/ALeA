@@ -30,6 +30,10 @@ WHERE `idmId` IS NULL
   );
 
 CREATE UNIQUE INDEX `userInfo_idmId_key` ON `userInfo`(`idmId`);
+
+-- MySQL unique indexes allow many NULLs but only one empty string.
+UPDATE `userInfo` SET `email` = NULL WHERE TRIM(`email`) = '';
+
 CREATE UNIQUE INDEX `userInfo_email_key` ON `userInfo`(`email`);
 
 ALTER TABLE `studentProfile` ADD CONSTRAINT `fk_user` FOREIGN KEY (`userId`) REFERENCES `userInfo`(`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION;
