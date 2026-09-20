@@ -15,7 +15,7 @@ type FillSkipReason =
   | 'mapping_not_fau_de'
   | 'query_error';
 
-type FillKind = 'empty' | 'overwrite_non_fau';
+type FillKind = 'empty' | 'overwrite_non_fau' | 'mark_verified';
 
 type FillOneResult = {
   oldId: string;
@@ -112,9 +112,18 @@ function findEmailHolder(infoRows: UserInfoHit[], oldId: string, email: string):
 async function applyEmailUpdate(commentsDb: SqlDb, email: string, userId: string) {
   await query(
     commentsDb,
-    `UPDATE userInfo SET email = ?
+    `UPDATE userInfo SET email = ?, isVerified = 1
      WHERE userId = ? AND (isVerified IS NULL OR isVerified = 0)`,
     [email, userId]
+  );
+}
+
+async function applyVerifyExisting(commentsDb: SqlDb, email: string, userId: string) {
+  await query(
+    commentsDb,
+    `UPDATE userInfo SET isVerified = 1
+     WHERE userId = ? AND LOWER(TRIM(email)) = ? AND (isVerified IS NULL OR isVerified = 0)`,
+    [userId, email]
   );
 }
 
@@ -141,7 +150,25 @@ async function fillOneEmail(params: {
 
   const existing = normalizeStoredEmail(own.email);
   if (existing === email) {
-    return { oldId, email, userId: own.userId, existingEmail: existing, skipped: 'already_filled', wouldFill: false };
+    if (isVerifiedFlag(own.isVerified)) {
+      return {
+        oldId,
+        email,
+        userId: own.userId,
+        existingEmail: existing,
+        skipped: 'already_filled',
+        wouldFill: false,
+      };
+    }
+    if (!dryRun) await applyVerifyExisting(commentsDb, email, own.userId);
+    return {
+      oldId,
+      email,
+      userId: own.userId,
+      existingEmail: existing,
+      wouldFill: true,
+      fillKind: 'mark_verified',
+    };
   }
 
   if (isVerifiedFlag(own.isVerified)) {
@@ -266,7 +293,9 @@ export async function fillIdmEmailsFromMapping() {
   }
 
   const emptyFills = filled.filter((f) => f.fillKind === 'empty');
+  const markedVerified = filled.filter((f) => f.fillKind === 'mark_verified');
   console.log(`\nWould fill empty / filled empty: ${emptyFills.length}`);
+  console.log(`Would mark verified (email already matched mapping): ${markedVerified.length}`);
   console.log(`Skipped: ${skipped.length}`);
   for (const [reason, n] of Object.entries(skipCounts).sort((a, b) => a[0].localeCompare(b[0]))) {
     console.log(`  ${reason}: ${n}`);
@@ -310,6 +339,7 @@ export async function fillIdmEmailsFromMapping() {
     mappingCount: mappingLoad.mapping.size,
     conflicts: mappingLoad.conflicts,
     filledEmptyCount: emptyFills.length,
+    markedVerifiedCount: markedVerified.length,
     skipCounts,
     mappingNotFauDeCount: notFau.length,
     mappingNotFauDeDomains: Object.fromEntries(
