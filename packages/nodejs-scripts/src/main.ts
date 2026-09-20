@@ -2,6 +2,7 @@ import { addLectureSchedule } from './addLectureSchedule';
 import { checkIdmEmailMappingCoverage } from './checkIdmEmailMappingCoverage';
 import { currentSemSetupScript } from './currentSemSetup';
 import { loadTest } from './loadTest';
+import { rewriteIdmUsersFromMapping } from './rewriteIdmUsersFromMapping';
 import { wipeAnonAccounts } from './wipeAnonAccounts';
 //import { quizLmsInfoWriter } from './quizLmsInfoWriter';
 //import { exportGradingToCsv } from './exportGradingToCsv';
@@ -10,6 +11,12 @@ import { wipeAnonAccounts } from './wipeAnonAccounts';
 switch (process.env.SCRIPT_NAME) {
   case 'checkIdmEmailMappingCoverage':
     checkIdmEmailMappingCoverage().catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+    break;
+  case 'rewriteIdmUsersFromMapping':
+    rewriteIdmUsersFromMapping().catch((err) => {
       console.error(err);
       process.exit(1);
     });

@@ -1,4 +1,5 @@
 import { Comment, NotificationType, PointsGrant, lmpResponseToUserInfo } from '@alea/spec';
+import { isFauId } from '@alea/utils';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { commentsDb } from './prisma-comments';
@@ -115,7 +116,7 @@ export async function executeTxnAndEndSet500OnError(
   return results;
 }
 
-export async function getUserInfo(req: NextApiRequest) {
+export async function getJwtUserInfo(req: NextApiRequest) {
   const token = req.cookies?.access_token;
   if (!token) return undefined;
   const headers = {
@@ -126,8 +127,74 @@ export async function getUserInfo(req: NextApiRequest) {
   return lmpResponseToUserInfo(resp.data);
 }
 
+type UserInfoRow = {
+  userId: string;
+  idmId: string | null;
+  email: string | null;
+  isVerified: number | boolean | null;
+};
+
+export async function findUserInfoRowByJwtUserId(jwtUserId: string): Promise<UserInfoRow | undefined> {
+  const rows = await executeQuery<UserInfoRow[]>(
+    `SELECT userId, idmId, email, isVerified FROM userInfo WHERE idmId = ? OR userId = ?`,
+    [jwtUserId, jwtUserId]
+  );
+  if (!Array.isArray(rows) || (rows as any).error || rows.length === 0) return undefined;
+  return rows.find((r) => r.idmId === jwtUserId) ?? rows[0];
+}
+
+/** Canonical app userId: email after IdM rewrite, otherwise JWT / unre-written id. */
+export async function getUserInfo(req: NextApiRequest) {
+  const jwtInfo = await getJwtUserInfo(req);
+  if (!jwtInfo) return undefined;
+  const row = await findUserInfoRowByJwtUserId(jwtInfo.userId);
+  if (!row) return jwtInfo;
+  return { ...jwtInfo, userId: row.userId };
+}
+
 export async function getUserId(req: NextApiRequest) {
   return (await getUserInfo(req))?.userId;
+}
+
+export async function userHasIdmAccount(canonicalUserId: string): Promise<boolean> {
+  if (!canonicalUserId) return false;
+  const rows = await executeQuery<{ idmId: string | null }[]>(
+    `SELECT idmId FROM userInfo WHERE userId = ? LIMIT 1`,
+    [canonicalUserId]
+  );
+  if (!Array.isArray(rows) || (rows as any).error) return isFauId(canonicalUserId);
+  if (rows[0]?.idmId) return true;
+  return isFauId(canonicalUserId);
+}
+
+export async function persistUserInfoFromJwt(
+  req: NextApiRequest,
+  extra: Record<string, unknown> = {}
+) {
+  const jwtInfo = await getJwtUserInfo(req);
+  if (!jwtInfo) return undefined;
+  const extraCols = Object.keys(extra);
+  const extraVals = Object.values(extra);
+  const row = await findUserInfoRowByJwtUserId(jwtInfo.userId);
+  if (row) {
+    const setExtra = extraCols.map((c) => `${c}=?`).join(', ');
+    const sql = setExtra
+      ? `UPDATE userInfo SET firstName=?, lastName=?, ${setExtra} WHERE userId=?`
+      : `UPDATE userInfo SET firstName=?, lastName=? WHERE userId=?`;
+    return {
+      jwtInfo,
+      sql,
+      values: [jwtInfo.givenName, jwtInfo.sn, ...extraVals, row.userId],
+    };
+  }
+  const idmId = jwtInfo.userId.includes('@') ? null : jwtInfo.userId;
+  const cols = ['userId', 'firstName', 'lastName', 'idmId', ...extraCols];
+  const sql = `INSERT INTO userInfo (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
+  return {
+    jwtInfo,
+    sql,
+    values: [jwtInfo.userId, jwtInfo.givenName, jwtInfo.sn, idmId, ...extraVals],
+  };
 }
 
 export async function getUserIdOrSetError(req, res) {

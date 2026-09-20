@@ -9,13 +9,14 @@ It does not specify implementation code. Items that are not decided are listed u
 | Topic | Decision |
 | --- | --- |
 | IdM JWT `user_id` | Unchanged. Token still carries the IdM id (typically 8 characters, e.g. `ym23eqaw`). |
-| Canonical `userId` in this app’s DBs/APIs | Email, obtained by looking up `userInfo` via `IdMId` (the JWT `user_id`). |
-| Historical rows | Rewrite stored `userId` values from IdM id → email (comments/user DB **and** grading DB). |
-| Email allowed for IdM users | FAU email only. This repo today only special-cases `@fau.de` (password signup is blocked for that suffix). Whether other FAU suffixes are allowed is an [open item](#open-items). |
-| Email already used by another account | Reject. User is told to email a support address to resolve it. The address itself is an [open item](#open-items). |
-| Fake-login test users | Do **not** add an email-prompt gate. Use the simplest auto-provisioning, e.g. a hardcoded plus-address `some-test-address+<fakeid>@gmail.com` (exact local-part/domain is an [open item](#open-items)). This is an explicit exception to “FAU email only”. |
-| Anonymous accounts (`_anon_` prefix) | Not linked from the main login page. `/anon-login` and `POST /api/anon-login/signup` still exist and are reachable by URL. Treat as unsupported: remove the UI/API and wipe those accounts. |
-| Hard gate | IdM users cannot continue using the authenticated app until a FAU email is entered and verified. Public/unauthenticated pages stay available. |
+| Canonical `userId` in this app’s DBs/APIs | Email, obtained by looking up `userInfo` via `idmId` (the JWT `user_id`). |
+| Historical rows (mapped users) | **Bulk rewrite** using `student_data/` mappings. Those emails are treated as **already verified**. Script creates missing `userInfo` rows, sets `email` / `isVerified`, then rewrites person-keyed columns (comments DB **and** grading DB) from IdM id → email. |
+| Historical rows (unmapped users) | Stay on the IdM id until the user submits a FAU email and verifies. The **same rewrite helper** as the bulk script then runs from the verify API. |
+| Email allowed for IdM users | FAU email only. This repo today only special-cases `@fau.de` on password signup. Whether other FAU suffixes are allowed is an [open item](#open-items). |
+| Email already used by another account | Reject (bulk script skips and logs; verify API rejects). User is told to email a support address. The address itself is an [open item](#open-items). |
+| Fake-login test users | **Deferred.** Not required for the mapping bulk rewrite or the unmapped-user gate. Staging/CI fake login will be blocked by the gate until this is done. |
+| Anonymous accounts (`_anon_` prefix) | Removed from UI/API (Phase 0). Wipe remaining rows with `wipeAnonAccounts`. |
+| Hard gate | IdM users **without** a verified email cannot use authenticated APIs (allowlist: session probe, submit/verify email, logout). Mapped users skip the prompt after the bulk script. Public pages stay available. |
 
 Password / email signup already stores `userInfo.userId = email`. That path is not being redesigned here, except where it collides with IdM binding (unique email, support process).
 
@@ -95,12 +96,12 @@ After `userId` is an email, **`isFauId(userId)` is always false**. Anything that
 
 ## Target state
 
-- Every real user has a `userInfo` row.
-- `email` is mandatory (and should be unique; otherwise collision handling cannot be implemented).
-- New column `IdMId`: the identifier from the IdM/fake JWT (`user_id`), unique when present. Password-only users have `IdMId` null.
-- `userId` is the verified email (password users: already true; IdM users: after verification).
-- IdM users: prompt for FAU email → send existing-style verification mail → set `isVerified` → then rewrite historical `userId`s and change `userInfo.userId` to that email.
-- Authenticated API usage for IdM users is blocked until that verification completes. `getUserId` (or a successor) must not return an unverified IdM id as if it were the canonical email `userId`.
+- Prisma column is `userInfo.idmId` (nullable, unique). Password-only users have `idmId` null.
+- `userId` is the verified email after rewrite (password users: already true).
+- **Mapped IdM users:** bulk script uses `student_data/` (`Login` = IdM id, `E-Mail` = email, plus `additional_mappings.csv`). Treat as verified; rewrite all person-keyed rows; `userInfo.userId` = email, `idmId` = Login.
+- **Unmapped IdM users:** hard-gated until they enter and verify a FAU email; then the same rewrite helper runs.
+- `getUserId` looks up `userInfo` by JWT id (`idmId` or, before rewrite, `userId`) and returns the **current** PK (`userId`). After rewrite that is the email. If lookup is skipped, new writes keep the JWT IdM id → **split identity**.
+- Mappings fill **email + verified + rewrite**. Phase 1 already backfills `idmId` on existing `userInfo` from the 8-character `userId`. Many mapped people have grading/ACL rows but **no** `userInfo` row — the bulk script must INSERT those.
 
 ---
 
@@ -112,7 +113,7 @@ These are **not** filled in by this plan:
 2. **Allowed FAU email suffixes** beyond what the code already uses (`@fau.de`).
 3. **Exact fake-user email template** (placeholder `some-test-address+<fakeid>@gmail.com`). Need a local-part that is valid if `fake-id` contains characters that are illegal in an email local-part.
 4. **Stores besides comments DB + grading DB**: Matomo, LMP learner model, interview-response files (`write-interview-response.ts` stores `userInfo` from the JWT), any other logs. This plan only commits to rewrite in the two DBs named in the request.
-5. **Users who never return** after deploy: their rows stay keyed by IdM id until they verify. There is **no** email in the IdM JWT in this project, so a one-shot SQL rewrite of all historical IdM ids is impossible. “Rewrite all” applies **per user at verification time** (and any admin/script that has a known mapping).
+5. **Unmapped users / incomplete CSVs:** coverage is not 100%. Unmapped IdM-shaped rows stay until those users verify. Dual-key window continues until then.
 6. **JSON blobs** that may embed user ids (`courseMetadata.instructors`, possibly others): rewrite rules not specified beyond SQL columns listed above; instructors currently require `id` + `name`.
 7. Whether password-signup users who never verified should later be hard-gated the same way (currently they can log in).
 
@@ -199,86 +200,66 @@ Re-using `sendVerificationEmail` is possible; the user must be logged in via IdM
 
 ## Migration plan
 
-### Phase 0 — Stop new anon accounts; wipe existing ones
+### Phase 0 — Stop new anon accounts; wipe existing ones — **done in repo**
 
-1. Remove or disable `/anon-login` and `POST /api/anon-login/signup`.
-2. Delete `_anon_`-prefixed `userInfo` and person-keyed rows in comments DB and grading DB (same prefix).
-3. Confirm no UI entry point remains.
+`/anon-login` redirects to `/login`. Signup API removed. Wipe script: `SCRIPT_NAME=wipeAnonAccounts` (`WIPE_ANON_APPLY=1` to delete).
 
-### Phase 1 — Schema (comments/user DB) before behavior change
+### Phase 1 — Schema (comments/user DB) — **done in repo (apply migration on the DB)**
 
-1. Widen person-id columns that are shorter than the chosen email max (at least `userInfo.userId` and job-portal FK columns; `orgInvitations.inviteruserId` is `CHAR(36)` and is not a safe email container).
-2. Add `userInfo.IdMId` (`VARCHAR`, nullable, **unique**).
-3. Enforce unique `email` where `email` is not null (then later `email` NOT NULL).
-4. Backfill:
-   - Password users: leave `userId`/`email` as now; `IdMId` null.
-   - Existing IdM-shaped rows (`isFauId(userId)` or no `saltedPassword` and no `@` in `userId`): set `IdMId = userId`. Do not change `userId` yet.
-   - Fake ids: set `IdMId` to current `userId`; optionally set placeholder email/`userId` in Phase 3.
-5. Prisma migrate the comments schema. Grading DB: no new columns; still only `userId`.
+Migration `20260919170000_add_idmid_widen_user_ids`: widen person-id columns to `VARCHAR(255)`, add unique nullable `idmId` and unique `email`, backfill `idmId = userId` for IdM-shaped / fake / no-password non-email rows.
 
-Do **not** make `email` NOT NULL until every remaining row has an email (anon gone; IdM filled at first login/prompt).
+Apply with `pnpm prisma:migrate-dev` or `pnpm prisma:migrate-deploy`. Duplicate non-null emails will fail the unique index.
 
-### Phase 2 — Identity helper (behavior)
+### Phase 2 — Identity helper — **done in repo (no hard gate yet)**
 
-Replace “JWT `user_id` is `userId`” with:
+**Must ship before the bulk rewrite goes live.** After rewrite, JWT is still the IdM id; APIs must load `userInfo` where `idmId = jwt` (or `userId = jwt` if not rewritten yet) and use `userInfo.userId`.
 
-- Resolve JWT id → `userInfo` by `IdMId` or `userId`.
-- If no row: create `userInfo` with `IdMId = jwt user_id`, `userId` still the jwt id **or** a temporary placeholder — but **do not** write quiz/comments/ACL as if the user were fully migrated. Hard gate applies.
-- Return canonical email `userId` only when `email` is set and `isVerified`.
-- IdM + unverified: APIs (except allowlist) return an error the UI uses to show the email prompt (exact HTTP code not specified here; existing auth failures use 401/403).
+- Do **not** `INSERT userInfo(userId = jwt)` after a user has been rewritten (second row / split identity). Upserts match by `idmId` or existing `userId`.
+- Return canonical `userInfo.userId` (email after rewrite; IdM id before).
 - Stop treating FAU_IDM as automatically `isVerified` in `get-user-information`.
-- Stop using `isFauId(canonicalUserId)` for authorization/UX; use presence of `IdMId`.
+- Server “is this an IdM user?” uses `userInfo.idmId`, not `isFauId(canonicalUserId)`.
+- **Hard gate is not on in this phase.** Enabling it before the bulk script + email prompt would lock all current IdM users.
 
-LMP `/getuserinfo` is unchanged.
+LMP `/getuserinfo` is unchanged. Browser `getUserInfo()` still sees the JWT id until a later client change.
 
-### Phase 3 — Fake users (simplest path)
+### Phase 3 — Bulk rewrite from `student_data/` mappings — **done in repo (dry-run by default)**
 
-On fake-login resolution:
+Script: `SCRIPT_NAME=rewriteIdmUsersFromMapping` (set `REWRITE_IDM_APPLY=1` to write).
 
-- Ensure `userInfo` with `IdMId = fake jwt id`, `email`/`userId` = agreed plus-address, `isVerified = true`.
-- Rewrite any existing rows from fake id → that email (same rewrite helper as IdM, so tests do not keep two keys).
-- Skip FAU-domain check and skip UI prompt.
+Uses `rewriteIdmIdToEmail` in `packages/nodejs-scripts/src/idmUserIdRewrite.ts` (same helper Phase 4 should call). Idempotent. Skips email collisions. After apply, recompute ACL memberships.
 
-### Phase 4 — IdM email collect + verify
+Idempotent script using the shared rewrite helper:
 
-1. UI prompt for FAU email (suffix rule per open item).
-2. Persist `email` + `verificationToken` on the existing `userInfo` row (PK still IdM id). Reject if email unique constraint fails → show “contact support at \<TBD\>”.
-3. Send verification email (reuse `sendVerificationEmail` pattern).
-4. Verify endpoint: match token + email, set `isVerified`, then run **rewrite job** for that `IdMId`:
-   - Update all listed SQL columns in comments DB from old id → email.
-   - `UPDATE grading SET userId = :email WHERE userId = :idmId` on grading DB.
-   - Update `courseMetadata.instructors` JSON ids if they equal the old id (if we include JSON in rewrite; otherwise document leftover).
-   - Change `userInfo.userId` to email (FK-safe order).
-   - `email` stays the same address (`userId` and `email` match).
-   - Invalidate ACL cache for old and new ids.
-5. Job must be idempotent.
+1. Load CSVs (`Login`/`E-Mail` member exports + `additional_mappings.csv`).
+2. Skip mapping conflicts and emails that already belong to another `userInfo` row (log for support).
+3. For each Login → email: INSERT/UPDATE `userInfo` (`idmId` = Login, `email` = email, `isVerified` = true, `userId` = email after child-row updates). Create `userInfo` when the person only appears in grading/ACL.
+4. Rewrite inventory columns in comments DB + `grading.userId`.
+5. Invalidate ACL cache for old and new ids.
+6. Dry-run first.
 
-Until step 4, hard gate remains.
+### Phase 4 — Gate + email collect/verify for unmapped users
 
-### Phase 5 — Make `email` mandatory
+1. UI prompt for FAU email.
+2. Persist `email` + `verificationToken` (PK still IdM id until verify). Collision → support address.
+3. Send verification email.
+4. Verify endpoint: match token + email, set `isVerified`, run **the same rewrite helper** as Phase 3.
+5. `getUserIdOrSetError` (except allowlist) refuses IdM users who are not verified.
 
-When no `userInfo` row lacks `email` (except any leftover never-login IdM rows you accept):
+### Phase 5 — Fake users (deferred)
 
-- `email` NOT NULL.
-- Application always creates `userInfo` on first IdM login (before prompt), with `email` still null **or** you keep email nullable until they submit — **NOT NULL cannot apply to in-progress IdM users**. Practical approach: nullable until they submit the address (minutes later), then NOT NULL is only possible if unverified IdM rows store a dummy, which we are **not** assuming. So **database NOT NULL on `email` applies only after we decide unverified IdM users may not have a row, or we allow NULL until verified**.  
+Plus-address auto-provision + rewrite when the gate would break staging/CI.
 
-**Constraint without assuming a dummy email:** keep `email` nullable in SQL for unverified IdM users; enforce “mandatory” in the product (hard gate) and treat “every *verified* user has email” as the invariant. Making the column NOT NULL for all rows conflicts with “prompt then verify” unless we insert email at prompt time (before verify). **At prompt time** we can set `email` (unverified) and then NOT NULL is viable for users who have submitted an address; users who have not submitted still have NULL. Full-table `email NOT NULL` is only valid if we **create no `userInfo` row until the address is submitted**, which conflicts with “row for each user” if “each user” includes pre-prompt IdM sessions.
+### Phase 6 — `email` NOT NULL / cleanup
 
-**Resolution aligned with stated goals:** create `userInfo` on first IdM login (`IdMId` set, `email` null allowed in DB); set `email` when they submit; verified later. Do **not** claim a DB-level `email NOT NULL` on every row until there are zero pre-prompt rows (unlikely). Product rule: email required to continue. Optional later: `CHECK`/`NOT NULL` once we no longer persist pre-prompt rows.
-
-### Phase 6 — Cleanup
-
-- Grep for `isFauId`, `user_id` used as DB key, `getUserId` call sites.
-- Remove auto-verify for IdM.
-- Confirm password signup still blocks FAU emails (at least `@fau.de`).
-- Monitoring: count `userInfo` where `IdMId` is set and `userId = IdMId` (not yet rewritten); count `grading.userId` that join to `IdMId`.
+Keep `email` nullable in SQL for pre-prompt IdM rows. Product rule: verified users have email. Grep leftover `isFauId` / JWT-as-DB-key. Monitor `userInfo` where `idmId` is set and `userId = idmId`.
 
 ### Suggested order of deploy
 
-1. Phase 0 (anon) can ship independently.  
-2. Phase 1 (columns + backfill `IdMId`) with **no** hard gate.  
-3. Phase 2–4 together or 2 then 4: helper + gate + prompt, or helper first (still writing IdM ids) then gate (risk: more IdM-keyed rows). Prefer **gate as soon as lookup exists**, even if rewrite ships in the same release, so new writes after verify are emails and unverified users write nothing.  
-4. Fake auto-email in the same release as the gate so CI/personas do not get stuck.
+1. Phase 0–1 (schema applied on the target DB).
+2. **Phase 2 helper** — no gate.
+3. **Phase 3 bulk script** (dry-run, then apply).
+4. **Phase 4** gate + prompt + verify API (same rewrite helper).
+5. Fake users when the gate would break tests.
 
 ---
 
@@ -293,7 +274,7 @@ When no `userInfo` row lacks `email` (except any leftover never-login IdM rows y
 
 ## Inventory for the rewrite helper
 
-When `IdMId` `:old` becomes email `:new`, update `:old` → `:new` in:
+When `idmId` `:old` becomes email `:new`, update `:old` → `:new` in:
 
 **Comments DB:** `userInfo.userId` (last, with FKs); `ACLMembership.memberUserId`; `Answer.userId`; `Grading.checkerId`; `comments.userId` (and `comments.userEmail` if it equals `:old` or should follow `:new`); `StudyBuddyUsers.userId`; `StudyBuddyConnections.senderId` / `receiverId`; `announcement.instructorId`; `excused.userId`; `homework.updaterId`; `homeworkHistory.updaterId`; `courseMetadata.updaterId`; `semesterInfo.userId`; `notifications.userId`; `points.userId` / `granterId`; `updateHistory.ownerId` / `updaterId`; `CheatSheet.userId` / `uploadedByUserId`; `CheatSheetHistory.uploadedByUserId`; `CourseMaterials.uploadedBy`; `BlogPosts.authorId` if that table is in use; job-portal user id columns listed above; `orgInvitations.inviteruserId` if stored as a person id.
 

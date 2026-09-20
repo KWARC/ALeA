@@ -3,13 +3,13 @@ import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
   getUserIdOrSetError,
+  userHasIdmAccount,
 } from '../comment-utils';
-import { isFauId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
-  if (!userId || !isFauId(userId)) return;
+  if (!userId || !(await userHasIdmAccount(userId))) return;
 
   const {
     name,

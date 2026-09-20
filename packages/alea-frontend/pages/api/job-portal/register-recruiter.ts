@@ -4,12 +4,13 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
   getUserIdOrSetError,
+  userHasIdmAccount,
 } from '../comment-utils';
 import { unsafeCreateResourceAccessUnlessForced } from '../access-control/create-resourceaction';
 import { createAclOrSetError } from '../access-control/create-acl';
 import { deleteAclOrSetError } from '../access-control/delete-acl';
 import { RecruiterData } from '@alea/spec';
-import { getDomainFromEmail, isFauId } from '@alea/utils';
+import { getDomainFromEmail } from '@alea/utils';
 import { getRecruiterProfileByUserIdOrSet500OnError } from './get-recruiter-profile';
 import { getOrganizationProfileByIdOrSet500OnError } from './get-organization-profile';
 import { commentsDb } from '../prisma-comments';
@@ -58,7 +59,7 @@ export async function createRecruiterProfileOrSet500OnError(
   }: { name: string; userId: string; email: string; position: string; organizationId: number },
   res: NextApiResponse
 ) {
-  if (!userId || isFauId(userId)) {
+  if (!userId || (await userHasIdmAccount(userId))) {
     res.status(403).send('Invalid or unauthorized user');
     return;
   }

@@ -1,15 +1,16 @@
-import { Action, isFauId, ResourceName } from '@alea/utils';
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
+  userHasIdmAccount,
 } from '../comment-utils';
 
 export async function checkIfUserExistsOnJPOrSet500OnError(userId: string, res) {
   let tableToCheck;
-  if (isFauId(userId)) {
+  if (await userHasIdmAccount(userId)) {
     tableToCheck = 'studentProfile';
   } else {
     tableToCheck = 'recruiterProfile';
