@@ -2,7 +2,9 @@ import { addLectureSchedule } from './addLectureSchedule';
 import { checkIdmEmailMappingCoverage } from './checkIdmEmailMappingCoverage';
 import { currentSemSetupScript } from './currentSemSetup';
 import { loadTest } from './loadTest';
+import { fillIdmEmailsFromMapping } from './fillIdmEmailsFromMapping';
 import { rewriteIdmUsersFromMapping } from './rewriteIdmUsersFromMapping';
+import { summarizeIdmRewriteReport } from './summarizeIdmRewriteReport';
 import { wipeAnonAccounts } from './wipeAnonAccounts';
 //import { quizLmsInfoWriter } from './quizLmsInfoWriter';
 //import { exportGradingToCsv } from './exportGradingToCsv';
@@ -15,8 +17,20 @@ switch (process.env.SCRIPT_NAME) {
       process.exit(1);
     });
     break;
+  case 'fillIdmEmailsFromMapping':
+    fillIdmEmailsFromMapping().catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+    break;
   case 'rewriteIdmUsersFromMapping':
     rewriteIdmUsersFromMapping().catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+    break;
+  case 'summarizeIdmRewriteReport':
+    summarizeIdmRewriteReport().catch((err) => {
       console.error(err);
       process.exit(1);
     });

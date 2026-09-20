@@ -6,17 +6,21 @@ It does not specify implementation code. Items that are not decided are listed u
 
 ## Confirmed decisions
 
-| Topic | Decision |
-| --- | --- |
-| IdM JWT `user_id` | Unchanged. Token still carries the IdM id (typically 8 characters, e.g. `ym23eqaw`). |
-| Canonical `userId` in this app’s DBs/APIs | Email, obtained by looking up `userInfo` via `idmId` (the JWT `user_id`). |
-| Historical rows (mapped users) | **Bulk rewrite** using `student_data/` mappings. Those emails are treated as **already verified**. Script creates missing `userInfo` rows, sets `email` / `isVerified`, then rewrites person-keyed columns (comments DB **and** grading DB) from IdM id → email. |
-| Historical rows (unmapped users) | Stay on the IdM id until the user submits a FAU email and verifies. The **same rewrite helper** as the bulk script then runs from the verify API. |
-| Email allowed for IdM users | FAU email only. This repo today only special-cases `@fau.de` on password signup. Whether other FAU suffixes are allowed is an [open item](#open-items). |
-| Email already used by another account | Reject (bulk script skips and logs; verify API rejects). User is told to email a support address. The address itself is an [open item](#open-items). |
-| Fake-login test users | **Deferred.** Not required for the mapping bulk rewrite or the unmapped-user gate. Staging/CI fake login will be blocked by the gate until this is done. |
-| Anonymous accounts (`_anon_` prefix) | Removed from UI/API (Phase 0). Wipe remaining rows with `wipeAnonAccounts`. |
-| Hard gate | IdM users **without** a verified email cannot use authenticated APIs (allowlist: session probe, submit/verify email, logout). Mapped users skip the prompt after the bulk script. Public pages stay available. |
+
+| Topic                                     | Decision                                                                                                                                                                                                                                        |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IdM JWT `user_id`                         | Unchanged. Token still carries the IdM id (typically 8 characters, e.g. `ym23eqaw`).                                                                                                                                                            |
+| Canonical `userId` in this app’s DBs/APIs | **Eventually** email. Until the PK rewrite, IdM rows keep `userId` = IdM id. Lookup is still `userInfo` via `idmId` (JWT `user_id`) or `userId`.                                                                                                |
+| Emails on existing `userInfo` (now)       | Collect onto `userInfo.email` only. Do **not** change `userId` or other person-keyed columns. Mapping CSVs may **pre-fill** `email` where the IdM id already has a `userInfo` row and the address is free; that does **not** count as verified. |
+| Historical person-keyed rows              | Stay on the IdM id until a later bulk PK rewrite (Phase 3 apply), after most IdM users have a **verified** email.                                                                                                                               |
+| Verify API                                | Sets `email` + `isVerified` only. Does **not** rewrite `userId` to email until that later bulk step.                                                                                                                                            |
+| Email allowed for IdM users               | Real IdM: FAU email only. This repo today only special-cases `@fau.de` on password signup. Whether other FAU suffixes are allowed is an [open item](#open-items). **`fake_xxx` `idmId`s:** any verifiable email; `@fau.de` is **not** required. |
+| Email already used by another account     | Reject (fill/rewrite skips and logs; verify API rejects). User is told to email a support address. The address itself is an [open item](#open-items).                                                                                           |
+| Mapping vs verified email                 | Never overwrite a row that already has `isVerified`. If the user confirms a different address than the CSV, keep the verified one.                                                                                                              |
+| Fake-login test users                     | Allowed ids are **exactly 8 characters** and match `fake_xxx` (FAU-shaped, e.g. `fake_abc`). Same email collect + verify gate as IdM (`idmId` stored). They do **not** auto-verify and do **not** skip the prompt.                             |
+| Anonymous accounts (`_anon_` prefix)      | Removed from UI/API (Phase 0). Wipe remaining rows with `wipeAnonAccounts`.                                                                                                                                                                     |
+| Hard gate                                 | IdM and `fake_xxx` users **without** `isVerified` cannot use authenticated APIs (allowlist: session probe, submit/verify email, logout). CSV mapping does **not** skip the prompt. Public pages stay available.                                |
+
 
 Password / email signup already stores `userInfo.userId = email`. That path is not being redesigned here, except where it collides with IdM binding (unique email, support process).
 
@@ -26,14 +30,12 @@ Password / email signup already stores `userInfo.userId = email`. That path is n
 
 ### Identity sources
 
-1. **IdM (and fake-login)**  
-   Cookie `access_token` is a JWT from the auth/LMP server. Server-side `getUserInfo` in `packages/alea-frontend/pages/api/comment-utils.ts` calls `{NEXT_PUBLIC_AUTH_SERVER_URL}/getuserinfo` with `Authorization: JWT …`. `lmpResponseToUserInfo` maps `user_id` → `userId`. That value is **not** an email for IdM (8-character id) or fake-login (`fake-…` / persona ids).
-
-2. **Username/password**  
-   `packages/alea-frontend/pages/api/login.ts` checks `userInfo` by `userId`, then asks LMP for a token via `/get-email-access-token?email=${userId}`. Signup inserts `userId` and `email` as the same address (`packages/alea-frontend/pages/api/signup.ts`). `@fau.de` is rejected so FAU users are sent to IdM.
-
-3. **Anonymous**  
-   `userId` is `_anon_<personality>_<animal>`. Rows are created in `userInfo` without email.
+1. **IdM (and fake-login)**
+   Cookie `access_token` is a JWT from the auth/LMP server. Server-side `getUserInfo` in `packages/alea-frontend/pages/api/comment-utils.ts` calls `{NEXT_PUBLIC_AUTH_SERVER_URL}/getuserinfo` with `Authorization: JWT …`. `lmpResponseToUserInfo` maps `user_id` → `userId`. That value is **not** an email for IdM (8-character id). Fake-login today may mint other shapes (`fake-…` / personas); the target shape is only `fake_xxx`.
+2. **Username/password**
+  `packages/alea-frontend/pages/api/login.ts` checks `userInfo` by `userId`, then asks LMP for a token via `/get-email-access-token?email=${userId}`. Signup inserts `userId` and `email` as the same address (`packages/alea-frontend/pages/api/signup.ts`). `@fau.de` is rejected so FAU users are sent to IdM.
+3. **Anonymous**
+  `userId` is `_anon_<personality>_<animal>`. Rows are created in `userInfo` without email.
 
 ### `userInfo` today
 
@@ -43,7 +45,7 @@ Prisma model `userInfo` (comments / “user” MySQL database):
 - `email` is optional.
 - `verificationToken` / `isVerified` exist for the password path.
 - IdM users often have **no row**, or a row created later without email (`INSERT … ON DUPLICATE KEY` in `update-user-info-from-token.ts`, `update-section-review-status.ts`, `update-notificationseen-time.ts`).
-- `GET /api/get-user-information` treats “has no password” as `AuthProvider.FAU_IDM` and forces `isVerified: true`. So IdM users are **not** required to verify email today.
+- `GET /api/get-user-information` no longer forges `isVerified` for IdM. The hard gate is still **off**, so unverified IdM users can use the app.
 - Password login does **not** check `isVerified` (unchanged unless we decide otherwise; not in scope of the IdM hard gate).
 
 ACL code already notes that members may not exist in `userInfo` (`acl-common-utils.ts`).
@@ -52,27 +54,29 @@ ACL code already notes that members may not exist in `userInfo` (`acl-common-uti
 
 **Comments / user DB** (Prisma `prisma/comments/schema.prisma`). Columns that hold a person id (names vary):
 
-| Location | Column(s) | Notes |
-| --- | --- | --- |
-| `userInfo` | `userId` (PK) | `VARCHAR(50)` |
-| `ACLMembership` | `memberUserId` | `VARCHAR(255)` |
-| `Answer` | `userId` | |
-| `Grading` (this DB, NAP homework grading) | `checkerId` | |
-| `comments` | `userId` | also `userEmail` (display; may be null for anonymous posts) |
-| `StudyBuddyUsers` / `StudyBuddyConnections` | `userId`, `senderId`, `receiverId` | Study Buddy also has its own `email` column |
-| `announcement` | `instructorId` | |
-| `excused` | `userId` | |
-| `homework` / `homeworkHistory` | `updaterId` | |
-| `courseMetadata` | `updaterId`; JSON `instructors[].id` | instructor ids are not a dedicated SQL column |
-| `semesterInfo` | `userId` | |
-| `notifications` | `userId` | |
-| `points` | `userId`, `granterId` | |
-| `updateHistory` | `ownerId`, `updaterId` | |
-| `CheatSheet` / `CheatSheetHistory` | `userId`, `uploadedByUserId` | |
-| `CourseMaterials` | `uploadedBy` | `VARCHAR(100)` |
-| `BlogPosts` | `authorId` | ignored by Prisma; `VARCHAR(100)` |
-| Job portal | `studentProfile.userId`, `recruiterProfile.userId`, `jobApplication.applicantId`, `jobApplicationAction.userId`, `jobPost.createdByUserId` | several are `VARCHAR(50)`; FKs to `userInfo.userId` |
-| `orgInvitations` | `inviteruserId` | `CHAR(36)` |
+
+| Location                                    | Column(s)                                                                                                                                  | Notes                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `userInfo`                                  | `userId` (PK)                                                                                                                              | `VARCHAR(50)`                                               |
+| `ACLMembership`                             | `memberUserId`                                                                                                                             | `VARCHAR(255)`                                              |
+| `Answer`                                    | `userId`                                                                                                                                   |                                                             |
+| `Grading` (this DB, NAP homework grading)   | `checkerId`                                                                                                                                |                                                             |
+| `comments`                                  | `userId`                                                                                                                                   | also `userEmail` (display; may be null for anonymous posts) |
+| `StudyBuddyUsers` / `StudyBuddyConnections` | `userId`, `senderId`, `receiverId`                                                                                                         | Study Buddy also has its own `email` column                 |
+| `announcement`                              | `instructorId`                                                                                                                             |                                                             |
+| `excused`                                   | `userId`                                                                                                                                   |                                                             |
+| `homework` / `homeworkHistory`              | `updaterId`                                                                                                                                |                                                             |
+| `courseMetadata`                            | `updaterId`; JSON `instructors[].id`                                                                                                       | instructor ids are not a dedicated SQL column               |
+| `semesterInfo`                              | `userId`                                                                                                                                   |                                                             |
+| `notifications`                             | `userId`                                                                                                                                   |                                                             |
+| `points`                                    | `userId`, `granterId`                                                                                                                      |                                                             |
+| `updateHistory`                             | `ownerId`, `updaterId`                                                                                                                     |                                                             |
+| `CheatSheet` / `CheatSheetHistory`          | `userId`, `uploadedByUserId`                                                                                                               |                                                             |
+| `CourseMaterials`                           | `uploadedBy`                                                                                                                               | `VARCHAR(100)`                                              |
+| `BlogPosts`                                 | `authorId`                                                                                                                                 | ignored by Prisma; `VARCHAR(100)`                           |
+| Job portal                                  | `studentProfile.userId`, `recruiterProfile.userId`, `jobApplication.applicantId`, `jobApplicationAction.userId`, `jobPost.createdByUserId` | several are `VARCHAR(50)`; FKs to `userInfo.userId`         |
+| `orgInvitations`                            | `inviteruserId`                                                                                                                            | `CHAR(36)`                                                  |
+
 
 **Grading DB** (no Prisma; `sql/grading_database_setup.sql`): table `grading.userId VARCHAR(255)`. Quiz responses are inserted with `getUserIdOrSetError` (`insert-quiz-response.ts`). Separate connection from the comments DB; **no shared transaction**.
 
@@ -90,18 +94,17 @@ ACL code already notes that members may not exist in `userInfo` (`acl-common-uti
 - force FAU IdM login on homework/quiz pages;
 - treat job-portal users as student vs recruiter.
 
-After `userId` is an email, **`isFauId(userId)` is always false**. Anything that must mean “this person has an IdM account” has to use `userInfo.IdMId` (or equivalent), not the canonical `userId`.
+After `userId` is an email, `**isFauId(userId)` is always false**. Anything that must mean “this person has an IdM account” has to use `userInfo.IdMId` (or equivalent), not the canonical `userId`.
 
 ---
 
 ## Target state
 
 - Prisma column is `userInfo.idmId` (nullable, unique). Password-only users have `idmId` null.
-- `userId` is the verified email after rewrite (password users: already true).
-- **Mapped IdM users:** bulk script uses `student_data/` (`Login` = IdM id, `E-Mail` = email, plus `additional_mappings.csv`). Treat as verified; rewrite all person-keyed rows; `userInfo.userId` = email, `idmId` = Login.
-- **Unmapped IdM users:** hard-gated until they enter and verify a FAU email; then the same rewrite helper runs.
-- `getUserId` looks up `userInfo` by JWT id (`idmId` or, before rewrite, `userId`) and returns the **current** PK (`userId`). After rewrite that is the email. If lookup is skipped, new writes keep the JWT IdM id → **split identity**.
-- Mappings fill **email + verified + rewrite**. Phase 1 already backfills `idmId` on existing `userInfo` from the 8-character `userId`. Many mapped people have grading/ACL rows but **no** `userInfo` row — the bulk script must INSERT those.
+- **Until PK rewrite:** IdM `userInfo.userId` stays the IdM id. `getUserId` returns that PK. Comments, ACL, grading stay keyed by IdM id.
+- **After PK rewrite:** `userId` is the verified email; `idmId` stays the Login / JWT id. `getUserId` still looks up by `idmId` / `userId` and returns the current PK.
+- **Email collection:** every IdM or `fake_xxx` user who uses the app has `userInfo.email` set and `isVerified` true. Real IdM: user-confirmed FAU address. `fake_xxx`: user-confirmed address, any domain. Mapping CSVs are only a pre-fill for rows that already exist in `userInfo`.
+- People who appear only in grading/ACL and never log in still have **no** `userInfo` email until they log in (Phase 4) or until a later rewrite script INSERTs from mapping — that INSERT is **not** part of the email-collection step.
 
 ---
 
@@ -110,12 +113,11 @@ After `userId` is an email, **`isFauId(userId)` is always false**. Anything that
 These are **not** filled in by this plan:
 
 1. **Support email** for “this FAU address is already taken”.
-2. **Allowed FAU email suffixes** beyond what the code already uses (`@fau.de`).
-3. **Exact fake-user email template** (placeholder `some-test-address+<fakeid>@gmail.com`). Need a local-part that is valid if `fake-id` contains characters that are illegal in an email local-part.
-4. **Stores besides comments DB + grading DB**: Matomo, LMP learner model, interview-response files (`write-interview-response.ts` stores `userInfo` from the JWT), any other logs. This plan only commits to rewrite in the two DBs named in the request.
-5. **Unmapped users / incomplete CSVs:** coverage is not 100%. Unmapped IdM-shaped rows stay until those users verify. Dual-key window continues until then.
-6. **JSON blobs** that may embed user ids (`courseMetadata.instructors`, possibly others): rewrite rules not specified beyond SQL columns listed above; instructors currently require `id` + `name`.
-7. Whether password-signup users who never verified should later be hard-gated the same way (currently they can log in).
+2. **Allowed FAU email suffixes** beyond what the code already uses (`@fau.de`) for **real** IdM users.
+3. **Stores besides comments DB + grading DB**: Matomo, LMP learner model, interview-response files (`write-interview-response.ts` stores `userInfo` from the JWT), any other logs. This plan only commits to rewrite in the two DBs named in the request.
+4. **Unmapped users / incomplete CSVs / never-login:** coverage is not 100%. Email collection only touches existing `userInfo` rows. Grading/ACL-only ids stay without email until login or Phase 3b. Dual-key window starts only at 3b.
+5. **JSON blobs** that may embed user ids (`courseMetadata.instructors`, possibly others): rewrite rules not specified beyond SQL columns listed above; instructors currently require `id` + `name`.
+6. Whether password-signup users who never verified should later be hard-gated the same way (currently they can log in).
 
 ---
 
@@ -126,11 +128,11 @@ These are **not** filled in by this plan:
 IdM tokens will keep returning the 8-character id. Every authenticated request must:
 
 1. Read JWT `user_id`.
-2. Load `userInfo` where `IdMId = user_id` (or, during transition, `userId = user_id` if the row is not rewritten yet).
-3. If email is missing or `isVerified` is not true → refuse app APIs (hard gate), except the small allowlist (session info, submit email, resend/verify, logout).
-4. If verified → use `userInfo.userId` (email) for all writes and authorization.
+2. Load `userInfo` where `idmId = user_id` or `userId = user_id`.
+3. After the gate is on: if email is missing or `isVerified` is not true → refuse app APIs, except the allowlist (session info, submit email, resend/verify, logout).
+4. Use `userInfo.userId` (the **current** PK) for writes and authorization. That is still the IdM id until the PK rewrite; it is the email only after Phase 3 apply.
 
-If step 2 is skipped and code keeps using JWT `user_id`, new grading/comments rows will stay on IdM ids after other rows were rewritten → **split identity**.
+Split identity is a risk **of the PK rewrite**, not of collecting emails. If rewrite has started and code skips step 2, new rows keep the JWT IdM id while rewritten rows use email.
 
 Password tokens already have email as `user_id`; lookup can be `userId = jwt` or `email = jwt`.
 
@@ -142,13 +144,15 @@ Password tokens already have email as `user_id`; lookup can be `userId = jwt` or
 
 ### 3. Two databases, no distributed transaction
 
-At verification time we must update comments/user DB and grading DB. Failure of one leaves mixed keys for that person. The plan needs an idempotent rewrite (re-runnable `UPDATE … WHERE userId = :idmId`) and a way to detect leftover IdM ids (e.g. `userId` that matches `IdMId` still present in `grading`).
+This matters at **PK rewrite** time (comments/user DB and grading DB), not at email verify. The rewrite helper must stay idempotent (`UPDATE … WHERE userId = :idmId`) and leftover IdM ids detectable (`userId` still equal to `idmId` in `grading`).
 
 NAP `Answer.userId` / `Grading.checkerId` live in the **comments** DB, not the quiz grading DB. Both must be rewritten.
 
 ### 4. Dual-key window
 
-Until a given user verifies, their existing rows use the IdM id. After rewrite, they use email. Across the population, **both forms exist at once**. Queries that filter `WHERE userId = ?` with only the JWT id will miss rewritten users; queries that only use email will miss unverified users. Authorization (ACL membership cache included) must use the canonical id **for that user at that time**, then after rewrite invalidate ACL caches for both old and new ids.
+**Email-collection / gate period:** no dual key for person columns — everyone still uses IdM `userId`. Dual key starts only when PK rewrite runs (or if verify were allowed to rewrite per user, which this plan forbids).
+
+After PK rewrite, both forms can exist until every remaining IdM PK is rewritten. Queries that filter `WHERE userId = ?` with only the JWT id will miss rewritten users. After rewrite, invalidate ACL caches for both old and new ids.
 
 ### 5. Collision and uniqueness
 
@@ -164,7 +168,7 @@ Merging accounts is **out of scope** (support handles it offline).
 
 ### 6. ACL, caches, and operator-entered ids
 
-`ACLMembership.memberUserId` is a free string. Instructors/TAs may have been added as 8-character ids. After a member verifies, membership rows for that person must be rewritten or ACL checks against email will fail.
+`ACLMembership.memberUserId` is a free string. Instructors/TAs may have been added as 8-character ids. Membership rows stay on that id until PK rewrite. Do not start checking ACL members by email until rewrite has run for that person.
 
 `validateMemberAndAclIds` currently does **not** require `userInfo` rows. After this migration, adding ACL members by IdM id vs email will confuse operators unless the UI/search is updated (`get-user-suggestions` reads `userInfo`).
 
@@ -174,13 +178,19 @@ Student vs recruiter is inferred from id shape. That must move to `IdMId IS NOT 
 
 ### 8. Hard gate vs existing IdM behavior
 
-Today IdM users are treated as verified and can use the app with no `userInfo` email. After deploy, **all existing IdM sessions** hit the prompt. Any API that still calls `getUserId()` and writes immediately will either violate the gate or keep writing IdM ids.
+Today IdM and fake users can use the app with no verified `userInfo` email (`get-user-information` no longer forges `isVerified`). Turning the gate on without a prompt + verify allowlist **locks every IdM and `fake_xxx` user**, including those whose email was only pre-filled from CSV.
+
+Writing IdM / `fake_xxx` ids while the gate is on is intended until PK rewrite.
 
 Allowlist must include at least: token/user probe, persist email + send verification, verify callback, resend, logout. Listing every other public GET is not done here.
 
-### 9. Fake users vs FAU-only email
+### 9. Fake users (`fake_xxx`)
 
-Auto emails are not `@fau.de`. They must skip the FAU suffix check. Fake JWT ids should be stored in `IdMId` (or the column will not match its name for test users; the requested column name is still `IdMId`). Provisioning should set `email` / `userId` / `isVerified` so tests never see the IdM prompt.
+Fake login must only issue 8-character ids matching `fake_xxx` (so `isFauId` / length-8 checks treat them like IdM ids). Reject other fake shapes.
+
+They take the **same** Phase 4 path: prompt, verify, hard gate. `idmId` = `fake_xxx`. Suffix check `@fau.de` (and any later FAU allowlist) applies only when `idmId` is **not** `fake_xxx`. Collision uniqueness still applies.
+
+Do **not** auto-provision a plus-address or set `isVerified` without the user confirming mail. Staging/CI must complete verify (or a test mailbox) like a real user.
 
 ### 10. Anonymous wipe
 
@@ -188,9 +198,9 @@ Wiping `_anon_` `userInfo` rows without deleting or orphaning `comments`, `Answe
 
 ### 11. Verification UX vs JWT
 
-The existing verify link is `/verify?email=…&id=…` and keys `userInfo` by email (`verify-email.ts`). For IdM, the row’s PK is still the IdM id **until** verification succeeds. The verify handler cannot `WHERE userId = ?` with the email until after the PK swap; it should match `email` + `verificationToken` (and then run the rewrite).
+The existing verify link is `/verify?email=…&id=…` and keys `userInfo` by email (`verify-email.ts`). For IdM, the row’s PK stays the IdM id through verification. The verify handler must match `email` + `verificationToken` (or `idmId` + token), set `isVerified`, and **leave `userId` unchanged**.
 
-Re-using `sendVerificationEmail` is possible; the user must be logged in via IdM when they *request* the mail, but they may open the link in another browser. Token in DB must be enough to finish verification without the IdM cookie. After that, their next IdM login looks up `IdMId` and finds the email `userId`.
+Re-using `sendVerificationEmail` is possible; the user must be logged in via IdM when they *request* the mail, but they may open the link in another browser. Token in DB must be enough to finish verification without the IdM cookie. Next IdM login still looks up `idmId` / `userId` = JWT id.
 
 ### 12. Comments `userEmail` vs `userId`
 
@@ -218,48 +228,58 @@ Apply with `pnpm prisma:migrate-dev` or `pnpm prisma:migrate-deploy`. Duplicate 
 - Return canonical `userInfo.userId` (email after rewrite; IdM id before).
 - Stop treating FAU_IDM as automatically `isVerified` in `get-user-information`.
 - Server “is this an IdM user?” uses `userInfo.idmId`, not `isFauId(canonicalUserId)`.
-- **Hard gate is not on in this phase.** Enabling it before the bulk script + email prompt would lock all current IdM users.
+- **Hard gate is not on in this phase.** Enabling it before the email prompt + verify allowlist would lock all current IdM users.
 
 LMP `/getuserinfo` is unchanged. Browser `getUserInfo()` still sees the JWT id until a later client change.
 
-### Phase 3 — Bulk rewrite from `student_data/` mappings — **done in repo (dry-run by default)**
+### Phase 3a — Pre-fill `userInfo.email` from mappings (no PK change) — **next data step**
 
-Script: `SCRIPT_NAME=rewriteIdmUsersFromMapping` (set `REWRITE_IDM_APPLY=1` to write).
+Goal: put an email on IdM rows that **already exist** in `userInfo`, without rewriting ids.
 
-Uses `rewriteIdmIdToEmail` in `packages/nodejs-scripts/src/idmUserIdRewrite.ts` (same helper Phase 4 should call). Idempotent. Skips email collisions. After apply, recompute ACL memberships.
+1. Load CSVs (`Login`/`E-Mail` + `additional_mappings.csv`).
+2. `UPDATE userInfo SET email = :mapped` where `idmId` or `userId` is the Login, the row is not verified, and that address is not already used by another row. Empty `email` is filled. If the DB already has a **different** address: keep `@fau.de` (log both addresses); overwrite non-`@fau.de`.
+3. Do **not** set `isVerified`. Do **not** change `userId`. Do **not** INSERT `userInfo` for grading/ACL-only people. Do **not** run `REWRITE_IDM_APPLY=1`.
+4. Script: `SCRIPT_NAME=fillIdmEmailsFromMapping` (set `FILL_IDM_EMAIL_APPLY=1` to write). Do **not** use `REWRITE_IDM_APPLY=1` / `rewriteIdmUsersFromMapping` for this.
 
-Idempotent script using the shared rewrite helper:
+`SCRIPT_NAME=rewriteIdmUsersFromMapping` stays in the repo for Phase 3b. Dry-run is fine; **do not apply**.
 
-1. Load CSVs (`Login`/`E-Mail` member exports + `additional_mappings.csv`).
-2. Skip mapping conflicts and emails that already belong to another `userInfo` row (log for support).
-3. For each Login → email: INSERT/UPDATE `userInfo` (`idmId` = Login, `email` = email, `isVerified` = true, `userId` = email after child-row updates). Create `userInfo` when the person only appears in grading/ACL.
-4. Rewrite inventory columns in comments DB + `grading.userId`.
-5. Invalidate ACL cache for old and new ids.
-6. Dry-run first.
+### Phase 3b — Bulk PK rewrite IdM id → email — **deferred**
 
-### Phase 4 — Gate + email collect/verify for unmapped users
+Run when most IdM users who log in have verified email.
 
-1. UI prompt for FAU email.
-2. Persist `email` + `verificationToken` (PK still IdM id until verify). Collision → support address.
+Uses `rewriteIdmIdToEmail` / `SCRIPT_NAME=rewriteIdmUsersFromMapping` with `REWRITE_IDM_APPLY=1`.
+
+1. Prefer `userInfo.email` where `isVerified` (user-confirmed). Mapping is fallback only for rows that still have no verified email (operator decision; collisions still skip).
+2. Skip emails taken by another account.
+3. Rewrite `userInfo.userId` and inventory columns in comments DB + `grading.userId`. INSERT `userInfo` only if still missing and an email source exists.
+4. Recompute ACL memberships.
+5. Dry-run first. Phase 2 helper must already be live (it is, in repo).
+
+### Phase 4 — Gate + email collect/verify — **after 3a (or with empty pre-fill)**
+
+1. UI prompt for email (pre-fill `userInfo.email` if present from 3a; user may change it). Real IdM: FAU address. `fake_xxx`: any address.
+2. Persist `email` + `verificationToken`. PK stays IdM / `fake_xxx` id. Collision → support address.
 3. Send verification email.
-4. Verify endpoint: match token + email, set `isVerified`, run **the same rewrite helper** as Phase 3.
-5. `getUserIdOrSetError` (except allowlist) refuses IdM users who are not verified.
+4. Verify endpoint: match token + email, set `isVerified`. **Do not** call the PK rewrite helper.
+5. `getUserIdOrSetError` (except allowlist) refuses IdM / `fake_xxx` users who are not verified.
 
-### Phase 5 — Fake users (deferred)
+### Phase 5 — Fake id shape (`fake_xxx`)
 
-Plus-address auto-provision + rewrite when the gate would break staging/CI.
+Constrain fake login so new ids are only `fake_xxx` (8 characters). Existing non-conforming fake ids are not in scope here unless they still log in — then they fail the shape check.
+
+Ship with Phase 4 (suffix exception + same gate). No auto-verify.
 
 ### Phase 6 — `email` NOT NULL / cleanup
 
 Keep `email` nullable in SQL for pre-prompt IdM rows. Product rule: verified users have email. Grep leftover `isFauId` / JWT-as-DB-key. Monitor `userInfo` where `idmId` is set and `userId = idmId`.
 
-### Suggested order of deploy
+### Suggested order
 
-1. Phase 0–1 (schema applied on the target DB).
-2. **Phase 2 helper** — no gate.
-3. **Phase 3 bulk script** (dry-run, then apply).
-4. **Phase 4** gate + prompt + verify API (same rewrite helper).
-5. Fake users when the gate would break tests.
+1. Phase 0–1 (schema applied on the target DB) — **done**.
+2. Phase 2 helper — **done in repo** (no gate).
+3. **Phase 3a** fill `userInfo.email` from mapping (unverified, existing rows only).
+4. **Phase 4** gate + prompt + verify (no PK rewrite), together with **Phase 5** (`fake_xxx` only; `@fau.de` not required).
+5. **Phase 3b** bulk PK rewrite when verified-email coverage is good enough.
 
 ---
 
