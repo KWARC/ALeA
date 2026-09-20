@@ -12,6 +12,7 @@ type FillSkipReason =
   | 'keep_fau_de_mismatch'
   | 'already_verified'
   | 'email_taken_by_other_account'
+  | 'mapping_not_fau_de'
   | 'query_error';
 
 type FillKind = 'empty' | 'overwrite_non_fau';
@@ -124,6 +125,10 @@ async function fillOneEmail(params: {
   dryRun: boolean;
 }): Promise<FillOneResult> {
   const { commentsDb, oldId, email, dryRun } = params;
+  if (!isFauDeEmail(email)) {
+    return skipResult(oldId, email, 'mapping_not_fau_de');
+  }
+
   const infoRows = await query<UserInfoHit[]>(
     commentsDb,
     `SELECT userId, idmId, email, isVerified FROM userInfo
@@ -273,6 +278,30 @@ export async function fillIdmEmailsFromMapping() {
   }
   if (taken.length > 30) console.log(`  … ${taken.length - 30} more taken by other account`);
 
+  const notFau = skipped
+    .filter((s) => s.skipped === 'mapping_not_fau_de')
+    .slice()
+    .sort((a, b) => a.email.localeCompare(b.email) || a.oldId.localeCompare(b.oldId));
+  const notFauDomains = new Map<string, number>();
+  for (const s of notFau) {
+    const at = s.email.lastIndexOf('@');
+    const domain = at >= 0 ? s.email.slice(at + 1) : '(none)';
+    notFauDomains.set(domain, (notFauDomains.get(domain) ?? 0) + 1);
+  }
+  console.log(`\nMapping email not @fau.de (not written): ${notFau.length}`);
+  for (const [domain, n] of [...notFauDomains.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+    console.log(`  @${domain}: ${n}`);
+  }
+  for (const s of notFau) {
+    console.log(`  ${s.oldId}  ${s.email}`);
+  }
+  const notFauListPath = join(mappingDir, 'idm-email-fill-not-fau.de.txt');
+  await writeFile(
+    notFauListPath,
+    notFau.map((s) => `${s.oldId}\t${s.email}`).join('\n') + (notFau.length ? '\n' : '')
+  );
+  console.log(`Wrote ${notFauListPath}`);
+
   const mismatchReport = printMismatchReport(filled, skipped);
 
   const report = {
@@ -282,6 +311,11 @@ export async function fillIdmEmailsFromMapping() {
     conflicts: mappingLoad.conflicts,
     filledEmptyCount: emptyFills.length,
     skipCounts,
+    mappingNotFauDeCount: notFau.length,
+    mappingNotFauDeDomains: Object.fromEntries(
+      [...notFauDomains.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    ),
+    mappingNotFauDe: notFau.map((s) => ({ oldId: s.oldId, email: s.email })),
     ...mismatchReport,
     filled,
   };

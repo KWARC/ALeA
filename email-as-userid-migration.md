@@ -237,7 +237,7 @@ LMP `/getuserinfo` is unchanged. Browser `getUserInfo()` still sees the JWT id u
 Goal: put an email on IdM rows that **already exist** in `userInfo`, without rewriting ids.
 
 1. Load CSVs (`Login`/`E-Mail` + `additional_mappings.csv`).
-2. `UPDATE userInfo SET email = :mapped` where `idmId` or `userId` is the Login, the row is not verified, and that address is not already used by another row. Empty `email` is filled. If the DB already has a **different** address: keep `@fau.de` (log both addresses); overwrite non-`@fau.de`.
+2. `UPDATE userInfo SET email = :mapped` only when the mapping address is `@fau.de`, `idmId` or `userId` is the Login, the row is not verified, and that address is not already used by another row. Empty `email` is filled. If the DB already has a **different** address: keep `@fau.de` (log both addresses); overwrite non-`@fau.de` only when the mapping address is `@fau.de`. Mapping addresses that are not `@fau.de` are skipped (`mapping_not_fau_de`) and listed in the fill report.
 3. Do **not** set `isVerified`. Do **not** change `userId`. Do **not** INSERT `userInfo` for grading/ACL-only people. Do **not** run `REWRITE_IDM_APPLY=1`.
 4. Script: `SCRIPT_NAME=fillIdmEmailsFromMapping` (set `FILL_IDM_EMAIL_APPLY=1` to write). Do **not** use `REWRITE_IDM_APPLY=1` / `rewriteIdmUsersFromMapping` for this.
 
