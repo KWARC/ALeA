@@ -494,6 +494,7 @@ model userInfo {
   lastName                        String?           @db.VarChar(255)
   email                           String?           @unique(map: "userInfo_email_key") @db.VarChar(255)
   idmId                           String?           @unique(map: "userInfo_idmId_key") @db.VarChar(255)
+  cdiId                           String?           @unique(map: "userInfo_cdiId_key") @db.VarChar(255)
   notificationSeenTs              String?           @db.VarChar(255)
   showTrafficLight                Boolean?          @default(true)
   showSectionReview               Boolean?          @default(true)
@@ -508,6 +509,12 @@ model userInfo {
   jobPost                         jobPost[]
   recruiterProfile                recruiterProfile?
   studentProfile                  studentProfile?
+}
+
+model unverifiedUsers {
+  cdiId              String  @id @db.VarChar(255)
+  emailAddress       String? @unique(map: "unverifiedUsers_emailAddress_key") @db.VarChar(255)
+  verificationToken  String? @db.VarChar(255)
 }
 
 model CheatSheet {
