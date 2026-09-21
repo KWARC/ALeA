@@ -55,6 +55,7 @@ export const en = {
     fauLogin: 'Log in with FAU IdM',
     loginWithEmail: 'Log in with EMAIL',
     fakeLogin: 'Fake User Login',
+    fakeIdFormat: 'Fake id must be exactly 8 characters like fake_abc.',
     warning: 'Warning',
     logoutWarning: 'Logging out from FAU IdM-Portal will NOT log you out here.',
     notesHeader:
@@ -438,6 +439,16 @@ export const en = {
     sendVerifcationBtn: 'Send Verification Email',
     verificationEmail: 'Verification email sent successfully',
     somethingWentWrong: 'Something went wrong please try again',
+  },
+  collectEmail: {
+    title: 'Confirm your email',
+    bodyIdm: 'Enter your FAU email (@fau.de). We will send a verification link.',
+    bodyFake: 'Enter any email we can send a verification link to.',
+    emailLabel: 'Email',
+    submit: 'Send verification email',
+    resend: 'Resend verification email',
+    checkInbox: 'Check your inbox and open the verification link. This page will continue when the address is verified.',
+    error: 'Something went wrong. Please try again.',
   },
   practiceProblems: {
     practiceProblems: 'Practice Problems',

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { isFakeXxxId } from '@alea/utils';
 import { LoType } from './flams';
 
 export type CognitiveValueConfidence = NumericCognitiveValues;
@@ -308,6 +309,9 @@ export function fakeLoginUsingRedirect(
   returnBackUrl: string | undefined,
   persona?: string
 ) {
+  if (!isFakeXxxId(fakeId)) {
+    return;
+  }
   if (!name && !persona) {
     axios.get(`/api/fake-login/${fakeId}`).then(() => {
       window.location.replace(returnBackUrl || '/');
@@ -315,7 +319,6 @@ export function fakeLoginUsingRedirect(
     return;
   }
   if (!returnBackUrl) returnBackUrl = window.location.href;
-  fakeId = fakeId.replace(/\W/g, '');
   const encodedReturnBackUrl = encodeURIComponent(returnBackUrl);
   const target = persona
     ? encodeURIComponent(

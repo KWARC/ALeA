@@ -88,12 +88,19 @@ export interface UpdateQuestionStateRequest {
   commentType: CommentType;
 }
 
+export enum AuthProvider {
+  EMAIL_PASSWORD = 'EMAIL_PASSWORD',
+  FAU_IDM = 'FAU_IDM',
+}
+
 export interface UserInformation {
   userId: string;
+  email?: string | null;
   showTrafficLight: boolean;
   showSectionReview: boolean;
   notificationSeenTs: number;
   isVerified: boolean;
+  authProvider?: AuthProvider;
 }
 
 export interface UserSignUpDetail {
@@ -103,11 +110,6 @@ export interface UserSignUpDetail {
   password: string;
   confirmPassword: string;
   verificationToken: string;
-}
-
-export enum AuthProvider {
-  EMAIL_PASSWORD = 'EMAIL_PASSWORD',
-  FAU_IDM = 'FAU_IDM',
 }
 
 export interface BlogPost {

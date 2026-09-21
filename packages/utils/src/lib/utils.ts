@@ -194,6 +194,31 @@ export function isFauId(id: string) {
   return id?.length === 8 && !id.includes('@');
 }
 
+/** Test fake login ids: `fake_` + 3 alphanumeric chars (8 characters, FAU-shaped). */
+export function isFakeXxxId(id: string) {
+  return /^fake_[a-zA-Z0-9]{3}$/.test(id ?? '');
+}
+
+export function isFauDeEmail(email: string) {
+  return (email ?? '').trim().toLowerCase().endsWith('@fau.de');
+}
+
+export function needsIdmEmailCollect(info: {
+  userId?: string;
+  email?: string | null;
+  isVerified?: boolean;
+  authProvider?: string;
+}): boolean {
+  if (!info?.userId) return false;
+  if (info.authProvider === 'EMAIL_PASSWORD' || info.userId.includes('@')) return false;
+  const idmLike =
+    info.authProvider === 'FAU_IDM' || isFauId(info.userId) || isFakeXxxId(info.userId);
+  if (!idmLike) return false;
+  const email = (info.email ?? '').trim().toLowerCase();
+  if (!email || !info.isVerified) return true;
+  return !isFakeXxxId(info.userId) && !isFauDeEmail(email);
+}
+
 export function fixDuplicateLabels<T extends { label: string }>(RAW: T[]) {
   const fixed = [...RAW]; // create a copy;
   const labelToIndex = new Map<string, number[]>();

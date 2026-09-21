@@ -15,7 +15,7 @@ import {
   loginUsingRedirect,
   logout,
 } from '@alea/spec';
-import { IS_SERVER, setCookie } from '@alea/utils';
+import { IS_SERVER, isFakeXxxId, setCookie } from '@alea/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -33,6 +33,11 @@ const PresetPersonas = [
   { label: 'joy', info: 'Engineering background' },
   { label: 'anushka', info: 'Philosophy background' },
   { label: 'blank', info: 'Empty learner model' },
+];
+
+const FakeIdPresets = [
+  { label: 'fake_abc', info: 'test user' },
+  { label: 'fake_xyz', info: 'test user' },
 ];
 
 export function LoginInfoBox() {
@@ -149,7 +154,7 @@ const LoginPage: NextPage = () => {
                 setFakeId(newInputValue);
               }}
               sx={{ my: '10px' }}
-              options={PresetPersonas}
+              options={FakeIdPresets}
               renderInput={(params) => <TextField {...params} label="FakeId" />}
               renderOption={(props, option) => (
                 <Box component="li" {...props}>
@@ -179,8 +184,11 @@ const LoginPage: NextPage = () => {
                 size="large"
                 onClick={() => {
                   if (fakeLogin) {
-                    if (fakeId)
-                      fakeLoginUsingRedirect(fakeId, undefined, returnBackUrl);
+                    if (!isFakeXxxId(fakeId)) {
+                      alert(t.fakeIdFormat);
+                      return;
+                    }
+                    fakeLoginUsingRedirect(fakeId, undefined, returnBackUrl);
                   } else {
                     loginUsingRedirect(returnBackUrl);
                   }

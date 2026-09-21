@@ -13,6 +13,7 @@ import {
   IsLoggedInProvider,
   CourseProvider,
 } from '@alea/react-utils';
+import { EmailCollectGuard } from '../components/EmailCollectGuard';
 import { useEffect, useState, useMemo } from 'react';
 import { CurrentTermProvider } from '../contexts/CurrentTermContext';
 import { ColorModeContext } from '../contexts/ColorModeContext';
@@ -156,6 +157,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
                   <PositionProvider>
                     <UserContextProvider>
                       <IsLoggedInProvider>
+                        <EmailCollectGuard>
                         <CourseProvider>
                           <CurrentTermProvider>
                             <div
@@ -170,6 +172,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
                             </div>
                           </CurrentTermProvider>
                         </CourseProvider>
+                        </EmailCollectGuard>
                       </IsLoggedInProvider>
                     </UserContextProvider>
                   </PositionProvider>

@@ -52,6 +52,7 @@ export const de = {
     fauLogin: 'Melden Sie sich mit dem FAU-IdM an',
     loginWithEmail: 'Melden Sie sich über E-Mail an',
     fakeLogin: 'Fake-Anmeldung',
+    fakeIdFormat: 'Die Fake-Id muss genau 8 Zeichen haben, z. B. fake_abc.',
     warning: 'Warnung',
     logoutWarning: 'Durch das Abmelden vom FAU IdM-Portal werden Sie hier NICHT abgemeldet.',
     notesHeader:
@@ -412,6 +413,16 @@ export const de = {
     sendVerifcationBtn: 'Verifizierung-E-Mail senden',
     verificationEmail: 'Verifizierungs-E-Mail erfolgreich gesendet',
     somethingWentWrong: 'Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.',
+  },
+  collectEmail: {
+    title: 'E-Mail bestätigen',
+    bodyIdm: 'Geben Sie Ihre FAU-E-Mail (@fau.de) ein. Wir senden einen Bestätigungslink.',
+    bodyFake: 'Geben Sie eine E-Mail-Adresse ein, an die wir einen Bestätigungslink senden können.',
+    emailLabel: 'E-Mail',
+    submit: 'Bestätigungs-E-Mail senden',
+    resend: 'Bestätigungs-E-Mail erneut senden',
+    checkInbox: 'Prüfen Sie Ihren Posteingang und öffnen Sie den Bestätigungslink. Diese Seite bleibt, bis die Adresse bestätigt ist.',
+    error: 'Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.',
   },
   practiceProblems: {
     practiceProblems: 'Übungsaufgaben',

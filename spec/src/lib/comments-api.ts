@@ -132,7 +132,12 @@ export async function getAllMyComments() {
 
 let cachedUserInformation: UserInformation | undefined = undefined;
 
-export async function getUserInformation() {
+export function invalidateUserInformationCache() {
+  cachedUserInformation = undefined;
+}
+
+export async function getUserInformation(force = false) {
+  if (force) cachedUserInformation = undefined;
   if (!cachedUserInformation) {
     const url = '/api/get-user-information';
     const resp = await axios.get(url);
@@ -202,7 +207,13 @@ export async function logInUser(userId: string, password: string) {
   return response.data;
 }
 
+export async function setIdmEmail(email: string) {
+  invalidateUserInformationCache();
+  return await axios.post('/api/idm-set-email', { email });
+}
+
 export async function verifyEmail(email: string, verificationToken: string) {
+  invalidateUserInformationCache();
   return await axios.post('/api/verify-email', { email, verificationToken });
 }
 
