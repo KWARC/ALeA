@@ -1,15 +1,15 @@
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { isFakeXxxId } from '@alea/utils';
+import { isFakeXxxSuffix } from '@alea/utils';
 
 const ACCESS_TOKEN_PREFIX = 'access_token=';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const fakeId = String(req.query.userId || '');
-  if (!isFakeXxxId(fakeId)) {
-    return res.status(400).send('Fake id must match fake_xxx (8 characters)');
+  const fakeIdSuffix = String(req.query.fakeIdSuffix || '');
+  if (!isFakeXxxSuffix(fakeIdSuffix)) {
+    return res.status(400).send('Fake id must be 3 characters (e.g. abc)');
   }
   const resp = await axios.get(
-    `https://lms.voll-ki.fau.de/fake-login?fake-id=${encodeURIComponent(fakeId)}`,
+    `https://lms.voll-ki.fau.de/fake-login?fake-id=${encodeURIComponent(fakeIdSuffix)}`,
     {
       maxRedirects: 0,
       validateStatus: function (status) {

@@ -15,7 +15,7 @@ import {
   loginUsingRedirect,
   logout,
 } from '@alea/spec';
-import { IS_SERVER, isFakeXxxId, setCookie } from '@alea/utils';
+import { IS_SERVER, isFakeXxxSuffix, setCookie } from '@alea/utils';
 import EmailIcon from '@mui/icons-material/Email';
 import { NextPage } from 'next';
 import Image from 'next/image';
@@ -36,8 +36,8 @@ const PresetPersonas = [
 ];
 
 const FakeIdPresets = [
-  { label: 'fake_abc', info: 'test user' },
-  { label: 'fake_xyz', info: 'test user' },
+  { label: 'abc', info: 'test user' },
+  { label: 'xyz', info: 'test user' },
 ];
 
 export function LoginInfoBox() {
@@ -98,7 +98,7 @@ const LoginPage: NextPage = () => {
   const [password, setPassword] = useState('');
   const { loggedIn } = useIsLoggedIn();
   const router = useRouter();
-  const [fakeId, setFakeId] = useState('');
+  const [fakeIdSuffix, setFakeIdSuffix] = useState('');
   const returnBackUrl = router.query.target as string;
   const [clickCount, updateClickCount] = useReducer((x) => x + 1, 0);
   const fakeLogin = clickCount >= 1;
@@ -149,13 +149,19 @@ const LoginPage: NextPage = () => {
               getOptionLabel={(option) =>
                 typeof option === 'string' ? option : option.label
               }
-              inputValue={fakeId}
+              inputValue={fakeIdSuffix}
               onInputChange={(event, newInputValue) => {
-                setFakeId(newInputValue);
+                setFakeIdSuffix(newInputValue.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3));
               }}
               sx={{ my: '10px' }}
               options={FakeIdPresets}
-              renderInput={(params) => <TextField {...params} label="FakeId" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="FakeId"
+                  inputProps={{ ...params.inputProps, maxLength: 3 }}
+                />
+              )}
               renderOption={(props, option) => (
                 <Box component="li" {...props}>
                   {option.label}&nbsp;<i>({option.info})</i>
@@ -184,11 +190,11 @@ const LoginPage: NextPage = () => {
                 size="large"
                 onClick={() => {
                   if (fakeLogin) {
-                    if (!isFakeXxxId(fakeId)) {
+                    if (!isFakeXxxSuffix(fakeIdSuffix)) {
                       alert(t.fakeIdFormat);
                       return;
                     }
-                    fakeLoginUsingRedirect(fakeId, undefined, returnBackUrl);
+                    fakeLoginUsingRedirect(fakeIdSuffix, undefined, returnBackUrl);
                   } else {
                     loginUsingRedirect(returnBackUrl);
                   }

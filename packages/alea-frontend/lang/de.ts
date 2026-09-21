@@ -52,7 +52,7 @@ export const de = {
     fauLogin: 'Melden Sie sich mit dem FAU-IdM an',
     loginWithEmail: 'Melden Sie sich über E-Mail an',
     fakeLogin: 'Fake-Anmeldung',
-    fakeIdFormat: 'Die Fake-Id muss genau 8 Zeichen haben, z. B. fake_abc.',
+    fakeIdFormat: 'Die Fake-Id muss genau 3 Zeichen haben, z. B. abc.',
     warning: 'Warnung',
     logoutWarning: 'Durch das Abmelden vom FAU IdM-Portal werden Sie hier NICHT abgemeldet.',
     notesHeader:

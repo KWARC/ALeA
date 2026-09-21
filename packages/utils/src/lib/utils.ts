@@ -194,9 +194,14 @@ export function isFauId(id: string) {
   return id?.length === 8 && !id.includes('@');
 }
 
-/** Test fake login ids: `fake_` + 3 alphanumeric chars (8 characters, FAU-shaped). */
+/** JWT / DB userId for a fake login: `fake_` + 3 alphanumeric chars. */
 export function isFakeXxxId(id: string) {
   return /^fake_[a-zA-Z0-9]{3}$/.test(id ?? '');
+}
+
+/** Three-character suffix the user types and LMS `fake-id` expects (LMS prepends `fake_`). */
+export function isFakeXxxSuffix(fakeIdSuffix: string) {
+  return /^[a-zA-Z0-9]{3}$/.test(fakeIdSuffix ?? '');
 }
 
 export function isFauDeEmail(email: string) {

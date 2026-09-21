@@ -55,7 +55,7 @@ export const en = {
     fauLogin: 'Log in with FAU IdM',
     loginWithEmail: 'Log in with EMAIL',
     fakeLogin: 'Fake User Login',
-    fakeIdFormat: 'Fake id must be exactly 8 characters like fake_abc.',
+    fakeIdFormat: 'Fake id must be exactly 3 characters (e.g. abc).',
     warning: 'Warning',
     logoutWarning: 'Logging out from FAU IdM-Portal will NOT log you out here.',
     notesHeader:

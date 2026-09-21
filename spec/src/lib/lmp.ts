@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { isFakeXxxId } from '@alea/utils';
+import { isFakeXxxSuffix } from '@alea/utils';
 import { LoType } from './flams';
 
 export type CognitiveValueConfidence = NumericCognitiveValues;
@@ -304,16 +304,16 @@ export function loginUsingRedirect(returnBackUrl?: string) {
 }
 
 export function fakeLoginUsingRedirect(
-  fakeId: string,
+  fakeIdSuffix: string,
   name: string | undefined,
   returnBackUrl: string | undefined,
   persona?: string
 ) {
-  if (!isFakeXxxId(fakeId)) {
+  if (!isFakeXxxSuffix(fakeIdSuffix)) {
     return;
   }
   if (!name && !persona) {
-    axios.get(`/api/fake-login/${fakeId}`).then(() => {
+    axios.get(`/api/fake-login/${encodeURIComponent(fakeIdSuffix)}`).then(() => {
       window.location.replace(returnBackUrl || '/');
     });
     return;
@@ -326,10 +326,10 @@ export function fakeLoginUsingRedirect(
           `/reset-and-redirect?redirectPath=${encodedReturnBackUrl}&persona=${persona}`
       )
     : encodedReturnBackUrl;
-  const n = name || fakeId;
+  const n = name || `fake_${fakeIdSuffix}`;
 
   const redirectUrl =
-    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${fakeId}&target=${target}` +
+    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${encodeURIComponent(fakeIdSuffix)}&target=${target}` +
     (name ? `&name=${n}` : '');
 
   window.location.replace(redirectUrl);

@@ -15,6 +15,8 @@ const EXEMPT_PREFIXES = [
   '/anon-login',
   '/logout',
   '/auth-callback',
+  '/profile',
+  '/my-profile',
 ];
 
 function isExemptPath(path: string) {
