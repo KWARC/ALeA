@@ -2,17 +2,24 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
 import { AuthProvider, UserInformation } from '@alea/spec';
 
-function getAuthProvider(hasPassword: boolean) {
-  if (hasPassword) {
+function rowHasPassword(saltedPassword: unknown): boolean {
+  if (saltedPassword == null) return false;
+  if (typeof saltedPassword === 'string') return saltedPassword.trim().length > 0;
+  return true;
+}
+
+function getAuthProvider(saltedPassword: unknown) {
+  if (rowHasPassword(saltedPassword)) {
     return AuthProvider.EMAIL_PASSWORD;
   }
   return AuthProvider.FAU_IDM;
 }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
   if (!userId) return;
   const result = await executeAndEndSet500OnError(
-    `SELECT saltedPassword is not null as hasPassword, email, showTrafficLight, showSectionReview, notificationSeenTs, isVerified FROM userInfo WHERE userId=?`,
+    `SELECT saltedPassword, email, showTrafficLight, showSectionReview, notificationSeenTs, isVerified FROM userInfo WHERE userId=?`,
     [userId],
     res
   );
@@ -28,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       authProvider: AuthProvider.FAU_IDM,
     } as UserInformation);
   }
-  const authProvider = getAuthProvider(result[0].hasPassword);
+  const authProvider = getAuthProvider(result[0].saltedPassword);
   res.status(200).send({
     userId,
     email: result[0].email ?? null,
