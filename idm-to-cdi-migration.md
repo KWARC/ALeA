@@ -134,17 +134,30 @@ Table **`unverifiedUsers`** (comments/user DB):
 
 Child Phases 0–5 stay **done (prod)** ([email-as-userid-migration.md](./email-as-userid-migration.md)). **Do not** reuse “Phase 6” for CSV fill. Order below is the remaining program. **Phase 7 code must be live in the same downtime as Phase 6** (when LMS flips to Cdi tokens). Schema can ship earlier while IdM is still live.
 
-### Phase 5a — Schema that can ship now (IdM still live)
+### Phase 5a — Schema that can ship now (IdM still live) — **in repo**
 
-- `userInfo.cdiId` nullable **unique** (stays null).
-- Table `unverifiedUsers` as above (stays empty until Cdi tokens).
-- No change to `getUserId` / IdM persist yet.
+- `userInfo.cdiId` nullable **unique** (stays null until Cdi bind).
+- Table `unverifiedUsers` (`cdiId` PK, nullable unique `emailAddress`, `verificationToken`).
+- Migration `20260921170000_add_cdiid_unverified_users`. Apply with `pnpm prisma:migrate-deploy` (or `pnpm prisma:migrate-dev` locally).
+- No change to `getUserId` / IdM persist.
 
 ### Phase 5b — Pre-switch email on `userInfo` (child)
 
-- Keep IdM collect/verify **on**.
-- Run `fillIdmEmailsFromMapping` (CSVs → `userInfo.email` / `isVerified` on **existing** rows only). Does **not** change `userId`.
-- Coverage before Phase 6 = who keeps IdM-keyed history.
+Keep IdM collect/verify **on**. Fill **existing** `userInfo` rows from StudOn CSVs + `additional_mappings.csv`. Does **not** change `userId`. Script: `packages/nodejs-scripts/src/fillIdmEmailsFromMapping.ts`.
+
+From repo root (loads `packages/alea-frontend/.env.local` / `packages/nodejs-scripts/.env.local`):
+
+```bash
+# Dry run (default)
+SCRIPT_NAME=fillIdmEmailsFromMapping pnpm exec nx serve nodejs-scripts
+
+# Write
+FILL_IDM_EMAIL_APPLY=1 SCRIPT_NAME=fillIdmEmailsFromMapping pnpm exec nx serve nodejs-scripts
+```
+
+Optional: `IDM_MAPPING_DIR` (default `student_data/`). Writes `idm-email-fill-report.json` and `idm-email-fill-not-fau.de.txt` in that directory.
+
+Coverage before Phase 6 = who keeps IdM-keyed history. Do **not** set `REWRITE_IDM_APPLY=1`.
 
 ### Phase 6 — Switch (downtime)
 
@@ -154,9 +167,21 @@ Whole system down. LMS vs DB order: our choice, **same window**.
 2. Rewrite comments/user DB (`userInfo.userId` + **every column that stores that person id**, FK or not) and grading DB the same way.
 3. Password rows: **do not touch**. Unverified / no-email IdM keys: **not** rewritten (**lost**).
 4. Collision: **skip + support**.
-5. Export two-column CSV **`idmId`, `email`** for LMS; LMS re-keys itself.
-6. ACL: **recompute / restart** (do not patch membership strings in the rewrite script).
+5. Export two-column CSV **`idmId`, `email`** for LMS (`phase6-lms-idmid-email.csv`, rewritable rows only).
+6. ACL: **recompute / restart** (script does **not** rewrite `ACLMembership`).
 7. LMS issues Cdi tokens only (assume JWT field `userId`).
+
+Script: `packages/nodejs-scripts/src/rewriteIdmUsersFromMapping.ts` (mapping from **prod `userInfo`**, not CSVs).
+
+```bash
+# Dry run
+SCRIPT_NAME=rewriteIdmUsersFromMapping pnpm exec nx serve nodejs-scripts
+
+# Write
+REWRITE_IDM_APPLY=1 SCRIPT_NAME=rewriteIdmUsersFromMapping pnpm exec nx serve nodejs-scripts
+```
+
+Optional: `IDM_REWRITE_OUT_DIR` (default `student_data/`). Does **not** INSERT `userInfo`. Does **not** rewrite `courseMetadata.instructors` JSON.
 
 Person-keyed ALeA data is now **email**. `idmId` kept. `cdiId` still null until Phase 7 promote.
 

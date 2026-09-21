@@ -130,10 +130,6 @@ const ApplicantDemographics = ({ applicants }) => {
   };
   const { genderData, locationData, educationData, gpaData } =
     transformApplicantDetails(applicants);
-  console.log({ genderData });
-  console.log({ locationData });
-  console.log({ educationData });
-  console.log({ gpaData });
   return (
     <Box sx={{ padding: 5 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>

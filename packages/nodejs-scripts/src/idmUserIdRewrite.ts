@@ -3,7 +3,6 @@ import type mysql from 'serverless-mysql';
 export type SqlDb = ReturnType<typeof mysql>;
 
 export const COMMENT_PERSON_COLUMNS: { table: string; column: string }[] = [
-  { table: 'ACLMembership', column: 'memberUserId' },
   { table: 'Answer', column: 'userId' },
   { table: 'Grading', column: 'checkerId' },
   { table: 'comments', column: 'userId' },
@@ -37,6 +36,8 @@ export const COMMENT_PERSON_COLUMNS: { table: string; column: string }[] = [
 export type RewriteSkipReason =
   | 'email_taken_by_other_account'
   | 'idm_id_bound_to_other_email'
+  | 'no_userInfo_row'
+  | 'not_verified'
   | 'query_error';
 
 export type RewriteOneResult = {
@@ -58,8 +59,6 @@ type UserInfoHit = {
   email: string | null;
   isVerified: number | boolean | null;
 };
-
-type InstructorEdit = { courseId: string; instanceId: string; instructors: string };
 
 async function query<T>(db: SqlDb, sql: string, values: unknown[] = []): Promise<T> {
   const result = await db.query(sql, values);
@@ -104,6 +103,10 @@ function skipResult(
   return { ...base, skipped, skipDetail };
 }
 
+function isVerifiedFlag(value: number | boolean | null): boolean {
+  return value === true || value === 1;
+}
+
 async function loadUserInfoHits(
   commentsDb: SqlDb,
   oldId: string,
@@ -122,17 +125,26 @@ async function loadUserInfoHits(
   const infoRows = await query<UserInfoHit[]>(
     commentsDb,
     `SELECT userId, idmId, email, isVerified FROM userInfo
-     WHERE userId = ? OR userId = ? OR idmId = ? OR email = ?`,
+     WHERE userId = ? OR userId = ? OR idmId = ? OR LOWER(TRIM(email)) = ?`,
     [oldId, email, oldId, email]
   );
   const own = (infoRows || []).find((r) => isOwnRow(r, oldId));
   const emailHolder = (infoRows || []).find(
-    (r) => (r.userId === email || r.email === email) && !isOwnRow(r, oldId)
+    (r) =>
+      !isOwnRow(r, oldId) &&
+      (r.userId.toLowerCase() === email.toLowerCase() ||
+        (r.email ?? '').trim().toLowerCase() === email.toLowerCase())
   );
   if (emailHolder) {
     return { skip: skipResult(base, 'email_taken_by_other_account', emailHolder.userId) };
   }
-  if (own?.idmId && own.idmId !== oldId) {
+  if (!own) {
+    return { skip: skipResult(base, 'no_userInfo_row', oldId) };
+  }
+  if (!isVerifiedFlag(own.isVerified)) {
+    return { skip: skipResult(base, 'not_verified', own.userId) };
+  }
+  if (own.idmId && own.idmId !== oldId) {
     return {
       skip: skipResult(
         base,
@@ -157,80 +169,10 @@ async function countPersonColumns(commentsDb: SqlDb, oldId: string) {
   return columnUpdates;
 }
 
-function rewriteInstructorItem(item: unknown, oldId: string, email: string): { item: unknown; changed: boolean } {
-  if (typeof item === 'string' && item === oldId) return { item: email, changed: true };
-  if (item && typeof item === 'object' && (item as { id?: string }).id === oldId) {
-    return { item: { ...item, id: email }, changed: true };
-  }
-  return { item, changed: false };
-}
-
-async function collectInstructorEdits(
-  commentsDb: SqlDb,
-  oldId: string,
-  email: string
-): Promise<InstructorEdit[]> {
-  const instructorRows = await query<{ courseId: string; instanceId: string; instructors: unknown }[]>(
-    commentsDb,
-    `SELECT courseId, instanceId, instructors FROM courseMetadata
-     WHERE instructors IS NOT NULL AND CAST(instructors AS CHAR) LIKE ?`,
-    [`%${oldId}%`]
-  );
-  const instructorEdits: InstructorEdit[] = [];
-  for (const row of instructorRows || []) {
-    let value = row.instructors;
-    if (typeof value === 'string') {
-      try {
-        value = JSON.parse(value);
-      } catch {
-        continue;
-      }
-    }
-    if (!Array.isArray(value)) continue;
-    let changed = false;
-    const next = value.map((item) => {
-      const rewritten = rewriteInstructorItem(item, oldId, email);
-      if (rewritten.changed) changed = true;
-      return rewritten.item;
-    });
-    if (changed) {
-      instructorEdits.push({
-        courseId: row.courseId,
-        instanceId: row.instanceId,
-        instructors: JSON.stringify(next),
-      });
-    }
-  }
-  return instructorEdits;
-}
-
-async function upsertUserInfo(
-  commentsDb: SqlDb,
-  own: UserInfoHit | undefined,
-  oldId: string,
-  email: string
-) {
-  if (!own) {
-    await query(
-      commentsDb,
-      `INSERT INTO userInfo (userId, idmId, email, isVerified) VALUES (?, ?, ?, 1)`,
-      [email, oldId, email]
-    );
-    return;
-  }
+async function updateUserInfoPk(commentsDb: SqlDb, own: UserInfoHit, oldId: string, email: string) {
   if (own.userId === oldId) {
-    await query(
-      commentsDb,
-      `UPDATE userInfo SET userId=?, email=?, idmId=?, isVerified=1 WHERE userId=?`,
-      [email, email, oldId, oldId]
-    );
-    return;
+    await query(commentsDb, `UPDATE userInfo SET userId=? WHERE userId=?`, [email, oldId]);
   }
-  await query(
-    commentsDb,
-    `UPDATE userInfo SET email=?, idmId=?, isVerified=1 WHERE userId=?`,
-    [email, oldId, email]
-  );
 }
 
 async function applyPersonColumnUpdates(commentsDb: SqlDb, oldId: string, email: string) {
@@ -249,25 +191,17 @@ async function applyPersonColumnUpdates(commentsDb: SqlDb, oldId: string, email:
 async function applyRewrite(params: {
   commentsDb: SqlDb;
   gradingDb: SqlDb;
-  own: UserInfoHit | undefined;
+  own: UserInfoHit;
   oldId: string;
   email: string;
-  instructorEdits: InstructorEdit[];
 }) {
-  const { commentsDb, gradingDb, own, oldId, email, instructorEdits } = params;
+  const { commentsDb, gradingDb, own, oldId, email } = params;
   await query(commentsDb, 'SET FOREIGN_KEY_CHECKS=0', []);
   await query(commentsDb, 'START TRANSACTION', []);
   try {
-    await upsertUserInfo(commentsDb, own, oldId, email);
+    await updateUserInfoPk(commentsDb, own, oldId, email);
     await applyPersonColumnUpdates(commentsDb, oldId, email);
     await query(commentsDb, `UPDATE comments SET userEmail=? WHERE TRIM(userEmail)=?`, [email, oldId]);
-    for (const edit of instructorEdits) {
-      await query(
-        commentsDb,
-        `UPDATE courseMetadata SET instructors=? WHERE courseId=? AND instanceId=?`,
-        [edit.instructors, edit.courseId, edit.instanceId]
-      );
-    }
     await query(gradingDb, `UPDATE grading SET userId=? WHERE TRIM(userId)=?`, [email, oldId]);
     await query(commentsDb, 'COMMIT', []);
   } catch (e) {
@@ -293,21 +227,36 @@ export async function rewriteIdmIdToEmail(params: {
   const lookup = await loadUserInfoHits(commentsDb, oldId, email);
   if (lookup.skip) return lookup.skip;
   const own = lookup.own;
+  if (!own) {
+    return skipResult(
+      {
+        oldId,
+        email,
+        createdUserInfo: false,
+        alreadyCanonical: false,
+        columnUpdates: [],
+        gradingRows: 0,
+        instructorJsonRows: 0,
+        commentsUserEmailRows: 0,
+      },
+      'no_userInfo_row',
+      oldId
+    );
+  }
 
-  const instructorEdits = await collectInstructorEdits(commentsDb, oldId, email);
   const result: RewriteOneResult = {
     oldId,
     email,
-    createdUserInfo: !own,
-    alreadyCanonical: own?.userId === email && own?.idmId === oldId,
+    createdUserInfo: false,
+    alreadyCanonical: own.userId === email && own.idmId === oldId,
     columnUpdates: await countPersonColumns(commentsDb, oldId),
     gradingRows: await countEq(gradingDb, 'grading', 'userId', oldId),
-    instructorJsonRows: instructorEdits.length,
+    instructorJsonRows: 0,
     commentsUserEmailRows: await countEq(commentsDb, 'comments', 'userEmail', oldId),
   };
 
   if (!dryRun) {
-    await applyRewrite({ commentsDb, gradingDb, own, oldId, email, instructorEdits });
+    await applyRewrite({ commentsDb, gradingDb, own, oldId, email });
   }
   return result;
 }

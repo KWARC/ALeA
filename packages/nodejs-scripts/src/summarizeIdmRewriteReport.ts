@@ -109,8 +109,8 @@ export async function summarizeIdmRewriteReport() {
   p(`Report: ${reportPath}`);
   p(`Generated: ${report.generatedAt}  apply=${report.apply}`);
   p('');
-  p(`Mappings with a single email: ${report.mappingCount}`);
-  p(`CSV Login conflicts (same id, different emails): ${report.conflicts?.length ?? 0}`);
+  p(`Verified idmId↔email pairs from userInfo: ${report.mappingCount}`);
+  p(`Duplicate verified emails skipped as a set: ${report.conflicts?.length ?? (report as { duplicateEmails?: unknown[] }).duplicateEmails?.length ?? 0}`);
   p(`Rewritable: ${report.rewritable}`);
   p(`Would touch (listed in results): ${report.wouldTouch} / results.length=${results.length}`);
   p(`Skipped: ${skipped.length}`);
@@ -120,7 +120,7 @@ export async function summarizeIdmRewriteReport() {
   }
   p('');
   p('Among rewritable:');
-  p(`  INSERT new userInfo: ${created}`);
+  p(`  INSERT new userInfo: ${created} (Phase 6 must be 0)`);
   p(`  Already canonical (userId=email and idmId=Login): ${already}`);
   p(`  Rewrite userInfo PK only (no child/grading/instructor hits): ${userInfoOnly}`);
   p(`  At least one child/grading/instructor/userEmail row: ${withData}`);
@@ -128,7 +128,7 @@ export async function summarizeIdmRewriteReport() {
   p('Row totals that would be rewritten:');
   p(`  comments person columns: ${commentsPersonRows}`);
   p(`  comments.userEmail: ${commentsUserEmailRows}`);
-  p(`  courseMetadata instructors JSON courses: ${instructorJsonRows}`);
+  p(`  courseMetadata instructors JSON courses: ${instructorJsonRows} (Phase 6 must be 0)`);
   p(`  grading.userId: ${gradingRows}`);
   p('');
   p('Person columns with hits (users, rows):');
