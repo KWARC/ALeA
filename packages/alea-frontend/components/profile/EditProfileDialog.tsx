@@ -15,8 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { UserProfile, updateUserProfile } from '@alea/spec';
-import { isFauId, Language } from '@alea/utils';
+import { AuthProvider, UserProfile, getUserInformation, updateUserProfile } from '@alea/spec';
+import { isFauDeEmail, isFauId, isFakeXxxId, Language } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../../lang/utils';
@@ -35,6 +35,18 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [isRealIdm, setIsRealIdm] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    getUserInformation()
+      .then((info) => {
+        setIsRealIdm(info.authProvider === AuthProvider.FAU_IDM && !isFakeXxxId(info.userId));
+      })
+      .catch(() => {
+        setIsRealIdm(isFauId(userId) && !isFakeXxxId(userId));
+      });
+  }, [open, userId]);
 
   useEffect(() => {
     if (profileData) {
@@ -72,6 +84,7 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
   };
 
   const isFAUId = isFauId(userId);
+  const requireFauEmail = isRealIdm || (isFAUId && !isFakeXxxId(userId));
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -79,6 +92,12 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
 
     if (!userId) {
       setError('User ID is missing. Please refresh the page and try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (requireFauEmail && !isFauDeEmail(formData.email)) {
+      setError('Use a FAU email address (@fau.de)');
       setIsLoading(false);
       return;
     }
@@ -102,7 +121,8 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
       onClose();
     } catch (err: any) {
       console.error('Error updating profile:', err);
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+      const apiMessage = err.response?.data?.message || err.response?.data?.error;
+      setError(apiMessage || err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +186,7 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
             value={formData.email}
             onChange={handleChange}
             variant="outlined"
+            helperText={requireFauEmail ? 'Must be a @fau.de address' : undefined}
           />
           <TextField
             fullWidth

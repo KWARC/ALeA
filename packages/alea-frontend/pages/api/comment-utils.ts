@@ -1,5 +1,6 @@
 import { Comment, NotificationType, PointsGrant, lmpResponseToUserInfo } from '@alea/spec';
-import { isFauId } from '@alea/utils';
+import { isFauDeEmail, isFauId, isFakeXxxId } from '@alea/utils';
+import { randomUUID } from 'node:crypto';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { commentsDb } from './prisma-comments';
@@ -154,6 +155,100 @@ export async function getUserInfo(req: NextApiRequest) {
 
 export async function getUserId(req: NextApiRequest) {
   return (await getUserInfo(req))?.userId;
+}
+
+export function normalizeUserEmail(email: string): string {
+  return String(email ?? '')
+    .trim()
+    .toLowerCase();
+}
+
+function idmIdOfUserInfoRow(row: { userId: string; idmId: string | null } | undefined): string {
+  if (!row) return '';
+  if (row.idmId) return row.idmId;
+  if (isFauId(row.userId) || isFakeXxxId(row.userId)) return row.userId;
+  return '';
+}
+
+function isRealIdmId(idmId: string): boolean {
+  return !!idmId && !isFakeXxxId(idmId);
+}
+
+async function ensureEmailAvailableOrSetError(
+  userId: string,
+  email: string,
+  res: NextApiResponse
+): Promise<boolean> {
+  const taken = await executeDontEndSet500OnError<{ userId: string }[]>(
+    `SELECT userId FROM userInfo
+     WHERE (LOWER(TRIM(email)) = ? OR LOWER(userId) = ?) AND userId <> ?`,
+    [email, email, userId],
+    res
+  );
+  if (!taken) return false;
+  if (taken.length > 0) {
+    res.status(409).json({
+      message: 'This email is already used by another account. Contact support to resolve it.',
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Updates `userInfo.email`. Any actual address change sets `isVerified = 0`.
+ * Real IdM users (idmId / FAU-shaped id, not fake_xxx) may only use @fau.de.
+ */
+export async function setUserInfoEmailOrSetError(params: {
+  userId: string;
+  email: string;
+  res: NextApiResponse;
+  verificationToken?: string | null;
+}): Promise<{ email: string; verificationToken: string | null; unchanged: boolean } | undefined> {
+  const { userId, res } = params;
+  const email = normalizeUserEmail(params.email);
+  if (!email.includes('@') || !email.includes('.')) {
+    res.status(400).json({ message: 'Invalid email address' });
+    return undefined;
+  }
+
+  const rows = await executeDontEndSet500OnError<
+    { userId: string; email: string | null; idmId: string | null; verificationToken: string | null }[]
+  >(`SELECT userId, email, idmId, verificationToken FROM userInfo WHERE userId=?`, [userId], res);
+  if (!rows) return undefined;
+  if (!rows[0]) {
+    res.status(404).json({ message: 'User not found' });
+    return undefined;
+  }
+
+  const token = params.verificationToken ?? randomUUID();
+  const current = normalizeUserEmail(rows[0].email ?? '');
+  if (current === email) {
+    if (rows[0].verificationToken) {
+      return { email, verificationToken: rows[0].verificationToken, unchanged: true };
+    }
+    const tokenUpdated = await executeDontEndSet500OnError(
+      `UPDATE userInfo SET verificationToken=? WHERE userId=?`,
+      [token, userId],
+      res
+    );
+    if (!tokenUpdated) return undefined;
+    return { email, verificationToken: token, unchanged: true };
+  }
+
+  if (isRealIdmId(idmIdOfUserInfoRow(rows[0])) && !isFauDeEmail(email)) {
+    res.status(400).json({ message: 'Use a FAU email address (@fau.de)' });
+    return undefined;
+  }
+  if (!(await ensureEmailAvailableOrSetError(userId, email, res))) return undefined;
+
+  const updated = await executeDontEndSet500OnError(
+    `UPDATE userInfo SET email=?, isVerified=0, verificationToken=? WHERE userId=?`,
+    [email, token, userId],
+    res
+  );
+  if (!updated) return undefined;
+  return { email, verificationToken: token, unchanged: false };
 }
 
 export async function userHasIdmAccount(canonicalUserId: string): Promise<boolean> {

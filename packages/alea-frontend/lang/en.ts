@@ -445,6 +445,8 @@ export const en = {
     bodyIdm: 'Enter your FAU email (@fau.de). We will send a verification link.',
     bodyFake: 'Enter any email we can send a verification link to.',
     emailLabel: 'Email',
+    invalidEmail: 'Enter a valid email address',
+    requireFau: 'Use a FAU email address (@fau.de)',
     submit: 'Send verification email',
     resend: 'Resend verification email',
     checkInbox: 'Check your inbox and open the verification link. This page will continue when the address is verified.',

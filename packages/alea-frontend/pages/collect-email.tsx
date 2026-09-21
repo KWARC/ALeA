@@ -1,6 +1,6 @@
 import { Box, Button, TextField, Typography } from '@mui/material';
 import { getUserInformation, setIdmEmail } from '@alea/spec';
-import { isFakeXxxId, needsIdmEmailCollect } from '@alea/utils';
+import { isFakeXxxId, isFauDeEmail, needsIdmEmailCollect } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -49,7 +49,18 @@ const CollectEmailPage: NextPage = () => {
     };
   }, [router.isReady, loggedIn, loginCheckPending, router]);
 
+  const trimmed = email.trim();
+  const hasEmailShape = trimmed.includes('@') && trimmed.includes('.');
+  const emailIsValid = isFake ? hasEmailShape : isFauDeEmail(trimmed);
+  let emailHint: string | undefined;
+  if (isFake) {
+    if (trimmed && !emailIsValid) emailHint = t.invalidEmail;
+  } else if (!emailIsValid) {
+    emailHint = t.requireFau;
+  }
+
   const onSubmit = async () => {
+    if (!emailIsValid) return;
     setBusy(true);
     setError('');
     try {
@@ -79,6 +90,8 @@ const CollectEmailPage: NextPage = () => {
           label={t.emailLabel}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          error={!!trimmed && !emailIsValid}
+          helperText={emailHint}
           sx={{ mb: 2 }}
         />
         {error && (
@@ -89,7 +102,7 @@ const CollectEmailPage: NextPage = () => {
         {status === 'sent' && (
           <Typography sx={{ mb: 2 }}>{t.checkInbox}</Typography>
         )}
-        <Button variant="contained" fullWidth disabled={busy || !email.trim()} onClick={onSubmit}>
+        <Button variant="contained" fullWidth disabled={busy || !emailIsValid} onClick={onSubmit}>
           {status === 'sent' ? t.resend : t.submit}
         </Button>
       </Box>

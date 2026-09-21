@@ -177,6 +177,7 @@ export async function updateUserProfile(
   semester: string,
   languages: string
 ) {
+  invalidateUserInformationCache();
   return await axios.post('/api/update-user-profile', {
     userId,
     firstName,

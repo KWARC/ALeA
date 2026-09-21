@@ -1,11 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError, getUserIdOrSetError } from './comment-utils';
-
+import {
+  executeDontEndSet500OnError,
+  getUserIdOrSetError,
+  setUserInfoEmailOrSetError,
+} from './comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = await getUserIdOrSetError(req, res);
-  console.log(userId);
-    if (!userId) return;
+  if (!userId) return;
 
   const { firstName, lastName, email, studyProgram, semester, languages } = req.body;
 
@@ -13,12 +15,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'At least one field must be provided' });
   }
 
-  const result = await executeAndEndSet500OnError(
-    `UPDATE userInfo SET firstName = ?, lastName = ?, email = ?, studyProgram = ?, semester = ?, languages = ? WHERE userId = ?`,
-    [firstName, lastName, email, studyProgram ?? null, semester ?? null, languages ?? null, userId],
+  const result = await executeDontEndSet500OnError(
+    `UPDATE userInfo SET firstName = ?, lastName = ?, studyProgram = ?, semester = ?, languages = ? WHERE userId = ?`,
+    [firstName, lastName, studyProgram ?? null, semester ?? null, languages ?? null, userId],
     res
   );
-
   if (!result) return;
+
+  if (email != null && String(email).trim() !== '') {
+    const saved = await setUserInfoEmailOrSetError({ userId, email: String(email), res });
+    if (!saved) return;
+  }
+
   res.status(200).json({ message: 'User profile updated successfully' });
 }
