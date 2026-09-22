@@ -177,6 +177,11 @@ export default function StudyBuddyPage({ session }: Props) {
         <Typography variant="subtitle1" sx={{ color: '#555' }}>
           {session.context?.title || session.resourceLink?.title || courseId}
         </Typography>
+        <Typography variant="body1" sx={{ mt: '10px' }}>
+          Study Buddy is a tool to help you find study partners in this course. You can create a profile
+          and connect with other students who are looking for study buddies.
+        </Typography>
+
         {notSignedUp || isEditing ? (
           !isLoading ? (
             <Card sx={{ mt: '20px' }}>

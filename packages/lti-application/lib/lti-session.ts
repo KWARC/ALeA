@@ -23,7 +23,7 @@ export function setLtiLaunchSessionCookie(res: NextApiResponse, details: LaunchD
   const value = signSession(session);
 
   res.setHeader('Set-Cookie', [
-    `${cookieName}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}`,
+    `${cookieName}=${value}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAgeSeconds}`,
   ]);
 }
 

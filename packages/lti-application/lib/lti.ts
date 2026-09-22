@@ -12,6 +12,7 @@ const messageTypeClaim = 'https://purl.imsglobal.org/spec/lti/claim/message_type
 const resourceLinkClaim = 'https://purl.imsglobal.org/spec/lti/claim/resource_link';
 const targetLinkUriClaim = 'https://purl.imsglobal.org/spec/lti/claim/target_link_uri';
 const versionClaim = 'https://purl.imsglobal.org/spec/lti/claim/version';
+const customClaim = 'https://purl.imsglobal.org/spec/lti/claim/custom';
 
 export type LaunchContext = {
   id: string;
@@ -58,13 +59,15 @@ export function getLaunchDetails(payload: Record<string, unknown>): LaunchDetail
   const roleType = getRoleType(getLaunchRoles(payload));
   const context = getLaunchContext(payload);
   const resourceLink = getLaunchResourceLink(payload);
+  const custom = getLaunchCustom(payload);
   const platformIssuer = String(payload.iss ?? '');
   const deploymentId = String(payload[deploymentIdClaim] ?? '');
   const messageType = String(payload[messageTypeClaim] ?? '');
   const version = String(payload[versionClaim] ?? '');
   const targetLinkUri = String(payload[targetLinkUriClaim] ?? '');
-  const courseId = getCourseId(context, resourceLink);
-  const instanceId = deploymentId || context?.id || 'lti-instance';
+  const courseId = getCourseId(context, resourceLink, custom);
+  const institutionId = getCustomValue(custom, 'institution_id', 'institutionId') || platformIssuer || 'lti';
+  const instanceId = getCustomValue(custom, 'instance_id', 'instanceId') || deploymentId || context?.id || 'lti-instance';
 
   return {
     platformIssuer,
@@ -80,7 +83,7 @@ export function getLaunchDetails(payload: Record<string, unknown>): LaunchDetail
     context,
     resourceLink,
     courseId,
-    institutionId: platformIssuer || 'lti',
+    institutionId,
     instanceId,
   };
 }
@@ -146,14 +149,38 @@ function getLaunchResourceLink(payload: Record<string, unknown>) {
   };
 }
 
+function getLaunchCustom(payload: Record<string, unknown>) {
+  return getObjectClaim(payload[customClaim]);
+}
+
 function getObjectClaim(value: unknown) {
   return typeof value === 'object' && value !== null
     ? (value as Record<string, unknown>)
     : undefined;
 }
 
-function getCourseId(context?: LaunchContext, resourceLink?: LaunchResourceLink) {
-  return normalizeCourseId(context?.title) || resourceLink?.id || context?.label || context?.id || 'lti-course';
+function getCourseId(
+  context?: LaunchContext,
+  resourceLink?: LaunchResourceLink,
+  custom?: Record<string, unknown>
+) {
+  return (
+    normalizeCourseId(getCustomValue(custom, 'course_id', 'courseId')) ||
+    normalizeCourseId(context?.title) ||
+    resourceLink?.id ||
+    context?.label ||
+    context?.id ||
+    'lti-course'
+  );
+}
+
+function getCustomValue(custom: Record<string, unknown> | undefined, ...keys: string[]) {
+  for (const key of keys) {
+    const value = custom?.[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
 }
 
 function normalizeCourseId(value?: string) {
