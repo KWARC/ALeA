@@ -178,13 +178,29 @@ export async function findUserInfoRowForLms(jwtInfo: UserInfo): Promise<UserInfo
     return rows?.find((r) => r.userId === jwtInfo.userId);
   }
   if (jwtInfo.authKind === 'fake' && jwtInfo.userId) {
-    const rows = await findUserInfoRows(
-      `SELECT userId, idmId, cdiId, email, isVerified, saltedPassword FROM userInfo WHERE idmId = ? OR userId = ?`,
-      [jwtInfo.userId, jwtInfo.userId]
-    );
-    return rows?.find((r) => r.idmId === jwtInfo.userId) ?? rows?.find((r) => r.userId === jwtInfo.userId);
+    return ensureFakeUserRow(jwtInfo.userId);
   }
   return undefined;
+}
+
+async function findFakeUserRow(fakeId: string): Promise<UserInfoRow | undefined> {
+  const rows = await findUserInfoRows(
+    `SELECT userId, idmId, cdiId, email, isVerified, saltedPassword FROM userInfo WHERE idmId = ? OR userId = ?`,
+    [fakeId, fakeId]
+  );
+  return rows?.find((r) => r.idmId === fakeId) ?? rows?.find((r) => r.userId === fakeId);
+}
+
+async function ensureFakeUserRow(fakeId: string): Promise<UserInfoRow | undefined> {
+  const existing = await findFakeUserRow(fakeId);
+  if (existing) return existing;
+  if (!isFakeXxxId(fakeId)) return undefined;
+  await executeQuery(
+    `INSERT INTO userInfo (userId, idmId) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE idmId = IFNULL(idmId, VALUES(idmId))`,
+    [fakeId, fakeId]
+  );
+  return findFakeUserRow(fakeId);
 }
 
 export function isCdiCampusRowProvisioned(row: UserInfoRow | undefined, jwtUserId: string): boolean {
