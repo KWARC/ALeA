@@ -1,6 +1,6 @@
 # IdM id → Cdi id
 
-Parent plan: LMS will stop putting **IdM ids** in tokens and will put **Cdi ids** in new tokens. The two id spaces are disjoint. After **Phase 6 (the switch)**, **person-keyed ALeA data uses email as `userId`**. The token contains **only** the Cdi id (JWT field name **TBD**; **assume `userId` is reused** until LMS says otherwise). `userInfo.cdiId` is a **lookup** column for that token id, not the data key. **No** assumptions about Cdi id string shape.
+Parent plan: LMS will stop putting **IdM ids** in tokens. After **Phase 6 (the switch)**, **person-keyed ALeA data uses email as `userId`**. The token field `user_id` is **retired**. Campus `getuserinfo` returns `cdiId`. Email-password `getuserinfo` returns `email`. Fake-login `getuserinfo` returns `fakeId`. None of these return names. ALeA reads `getuserinfo`; it does not read the token itself. `userInfo.cdiId` is a **lookup** column for the campus token's `cdiId`, not the data key. **No** assumptions about Cdi id string shape. The switchover order for the LMS is in [idm-to-cdi-switchover.md](./idm-to-cdi-switchover.md).
 
 The child plan [email-as-userid-migration.md](./email-as-userid-migration.md) is **pre-switch**: attach verified email to IdM-keyed rows (CSV fill **and** user collect/verify) while tokens are still IdM ids. Phase 6 **does not** read CSVs. It reads the **production `userInfo` mapping** (CSV-filled **and** user-supplied verified emails) and **rewrites `userId`**.
 
@@ -29,19 +29,19 @@ That fill **does not** change `userId`. **Phase 6** (this document) **does**.
 
 | Topic | Decision |
 | --- | --- |
-| LMS / tokens | New tokens contain **Cdi id only**. IdM tokens invalid after the switch. JWT field name **TBD**; **assume `userId` reused** for now. **No** assumed Cdi id format. |
+| LMS / tokens | `user_id` is **retired**. A token or `getuserinfo` body that still has `user_id` is rejected. Campus login returns `cdiId` and `issued`. Email-password login returns `email` and `issued`. Fake-login returns `fakeId` and `issued`. Names are not returned. **No** assumed Cdi id format. |
 | Canonical data key after Phase 6 | **Email.** One re-key: IdM id → email. **No** second re-key to Cdi id. |
 | Phase 6 mapping source | **Production DB** `userInfo` only (verified email ↔ `idmId`). **Not** CSVs. That table already combines CSV fill + user-supplied verified emails. |
-| Phase 6 writes | Comments/user DB and grading DB: `userInfo.userId` and **every column that stores that person id**, **including where there is no declared FK**. **Skip + support** on collision. |
-| Phase 6 does **not** rewrite | LMS data (ALeA **provides the mapping**; LMS re-keys itself); ACL rows (fixed by **recompute / restart**); Matomo, caches-as-data, JSON instructor blobs, interview files, other stores. |
+| Phase 6 writes | Comments/user DB and grading DB only: `userInfo.userId`, **every column that stores that person id** (including `ACLMembership` and `courseMetadata.instructors` JSON), declared FK or not. **Skip + support** on collision. In-memory ACL is **recomputed on restart**, not rewritten as rows. |
+| Phase 6 does **not** rewrite | LMS data (ALeA **provides the mapping**; LMP re-keys its user model); Matomo; interview files; caches-as-data; any store that is not the comments database or the grading database. |
 | `userInfo.cdiId` | Nullable unique column. **May be added now** (stays null until post-switch bind). Set when Cdi login is bound to a row. Reject binding a Cdi id already used on another email. |
 | `userInfo.idmId` | **Keep.** |
-| Which rows Phase 6 rewrites | IdM rows with **`isVerified` email**. **Do not** rewrite password-signup rows (`userId` already email, `idmId` null). Unverified emails are **not** rewritten (those IdM keys are lost). |
-| Switch | **Downtime** (whole system down). LMS vs DB order: **our choice**. |
-| Password / email-signup users | **Unaffected** by the re-key. |
-| Fake-login (`fake_xxx`) | **Not decided.** |
+| Which rows Phase 6 rewrites | IdM rows with **`isVerified` email**. **Do not** rewrite password-signup rows (`userId` already email, `idmId` null). IdM rows with an **unverified** email: **do not** rewrite `userId`; **flag** them and **clear** `email` / `verificationToken` so post-switch promote cannot bind Cdi to that leftover IdM key. Those IdM keys are **lost**. |
+| Switch | **Downtime** (whole system down). Order is in [idm-to-cdi-switchover.md](./idm-to-cdi-switchover.md). A preparation mapping may be sent earlier for a dry run. The mapping used for the re-key is **sent again after downtime starts**. |
+| Password / email-signup users | **Unaffected** by the re-key. Their `getuserinfo` field changes from `user_id` to `email`. `@fau.de` is required for the campus flow, not for this flow. |
+| Fake-login | Token shape is **decided**: `getuserinfo` returns `fakeId` and `issued`, and does not return names or `user_id`. |
 | After switch: Cdi token, no `cdiId` yet | **Cdi login first** (replaces IdM login) → token holds Cdi id. Lookup `userInfo.cdiId`. If that Cdi id is **not** bound to a **mail-verified** email: **hard gate**, staging in **`unverifiedUsers`** (see [Staging (`unverifiedUsers`)](#staging-unverifiedusers)). Ask them to provide email and **mail-verify** (`@fau.de` for now). Then delete the staging row and either **(a)** insert `userInfo` or **(b)** set `cdiId` on the existing row. |
-| New JWT payload | After the switch, tokens **do not contain names**. **`persistUserInfoFromJwt` is not used** to fill `userInfo` from Cdi tokens. **New** users supply names themselves. Existing rows keep names already stored. |
+| New `getuserinfo` payload | After the switch, responses **do not contain names**. **`persistUserInfoFromJwt` is not used** to fill `userInfo` from Cdi tokens. **New** users supply names themselves. Existing rows keep names already stored. |
 | LMS mapping file | Two-column CSV: **`idmId`, `email`**. |
 | Grading/ACL-only IdM ids with no verified `userInfo` email | **Data lost.** |
 | Who loses the IdM-keyed account | **Not** a verified email on `userInfo` before Phase 6 (whether that email came from CSV fill or the user). |
@@ -53,13 +53,14 @@ That fill **does not** change `userId`. **Phase 6** (this document) **does**.
 
 **Downtime.** Do **not** load StudOn CSVs here.
 
-1. **Mapping** = production `userInfo` rows with `idmId` set, `isVerified`, `email` present. Join is **email ↔ `idmId`** (and today’s `userId` = IdM id for those rows).
-2. **Comments/user DB:** change `userInfo.userId` from IdM id to that email; update **every column that stores that person id**, declared FK or not (includes job-portal person columns in this DB).
-3. **Grading DB:** the same, including `grading.userId` if it is not a declared FK.
-4. **Skip + support** if two IdM ids share one email, if the email is already another row’s `userId` (e.g. password account), or composite/FK update fails.
-5. **ACL:** do not patch membership strings in this script; **recompute / restart** after cutover.
-6. **LMS:** ALeA exports a two-column CSV **`idmId`, `email`**. LMS re-keys **its** stores.
-7. `cdiId` may already exist as null. IdM tokens stop; new tokens carry Cdi id in **`userId`** until LMS names another field.
+1. **Unverified IdM emails:** list IdM `userInfo` rows (`idmId` set) that have an email with `isVerified` not true. Write them to the report (`phase6-unverified-idm-emails.csv`). **Clear** `email` and `verificationToken` on those rows (do not change `userId`). Password rows: **do not** clear. Do this **before** the verified rewrite so an unverified holder of the same mailbox cannot skip a verified re-key.
+2. **Mapping** = production `userInfo` rows with `idmId` set, `isVerified`, `email` present. Join is **email ↔ `idmId`** (and today’s `userId` = IdM id for those rows).
+3. **Comments/user DB:** change `userInfo.userId` from IdM id to that email; update **every column that stores that person id**, declared FK or not (includes job-portal person columns, `ACLMembership`, and `courseMetadata.instructors` JSON in this DB).
+4. **Grading DB:** the same, including `grading.userId` if it is not a declared FK.
+5. **Skip + support** if two IdM ids share one email, if the email is already another row’s `userId` (e.g. password account), or composite/FK update fails.
+6. **In-memory ACL:** recompute on ALeA restart. Database ACL rows are part of step 3.
+7. **LMS:** ALeA may send a two-column CSV **`idmId`, `email`** before downtime so both sides can dry-run. After downtime starts, ALeA **sends that file again**. LMP re-keys its user model from the second file.
+8. `cdiId` may already exist as null. `user_id` stops. Campus `getuserinfo` returns `cdiId`. Email-password `getuserinfo` returns `email`. Fake-login `getuserinfo` returns `fakeId`.
 
 Password rows: **do not touch**.
 
@@ -75,15 +76,16 @@ now ──► keep collecting + verifying email (IdM tokens)
         │
         ▼
      PHASE 6 — THE SWITCH (downtime; entire system down)
-        mapping := prod userInfo (verified email ↔ idmId)
-        rewrite comments DB (userInfo.userId + FK columns) and grading DB
-        give mapping to LMS; LMS re-keys itself
-        ACL: recompute / restart
-        LMS issues Cdi tokens only (assume JWT field userId)
+        flag + clear unverified emails on IdM userInfo rows (report; userId unchanged)
+        resend mapping := prod userInfo (verified email ↔ idmId)
+        rewrite comments DB (userId columns, ACL rows, instructors JSON) and grading DB
+        LMP re-keys its user model from that resent mapping
+        in-memory ACL: recompute when ALeA restarts
+        getuserinfo: cdiId | email | fakeId; user_id rejected; no names
         │
         ▼
      user logs in via Cdi flow (replaces IdM flow)
-        token contains Cdi id
+        getuserinfo.cdiId
         lookup userInfo.cdiId
         if bound to a mail-verified email → proceed (data keyed by email)
         else hard gate (unverifiedUsers): provide email + mail-verify @fau.de (for now)
@@ -95,11 +97,11 @@ now ──► keep collecting + verifying email (IdM tokens)
 
 ## Account loss (explicit)
 
-**Lost:** no **verified** `userInfo.email` before Phase 6 (and therefore not in the prod mapping Phase 6 uses). Includes grading/ACL-only IdM ids never given a `userInfo` email.
+**Lost:** no **verified** `userInfo.email` before Phase 6 (and therefore not in the prod mapping Phase 6 uses). Includes grading/ACL-only IdM ids never given a `userInfo` email. IdM rows that only had an **unverified** email: Phase 6 **clears** that address; the IdM-keyed history stays lost. Post-switch mail-verify of that mailbox is a **new** email-keyed account (or bind to an existing email/password row), not restore of the leftover IdM `userId`.
 
 **Kept:** verified email already on `userInfo` (CSV fill **or** user verify). Phase 6 rewrites those keys to email. After cutover they still cannot use the app until they **mail-verify again** and `cdiId` is set.
 
-**New email after switch:** **new** account (no old IdM rows).
+**New email after switch:** **new** account (no old IdM rows), unless that email is already a password / rewritten `userId`.
 
 No recovery path for lost accounts is in this plan.
 
@@ -163,13 +165,14 @@ Coverage before Phase 6 = who keeps IdM-keyed history. Do **not** set `REWRITE_I
 
 Whole system down. LMS vs DB order: our choice, **same window**.
 
-1. Mapping from **prod** `userInfo`: `idmId` + verified `email` (not CSVs).
-2. Rewrite comments/user DB (`userInfo.userId` + **every column that stores that person id**, FK or not) and grading DB the same way.
-3. Password rows: **do not touch**. Unverified / no-email IdM keys: **not** rewritten (**lost**).
-4. Collision: **skip + support**.
-5. Export two-column CSV **`idmId`, `email`** for LMS (`phase6-lms-idmid-email.csv`, rewritable rows only).
-6. ACL: **recompute / restart** (script does **not** rewrite `ACLMembership`).
-7. LMS issues Cdi tokens only (assume JWT field `userId`).
+1. Flag IdM `userInfo` rows with unverified email; on apply, clear `email` / `verificationToken` (`phase6-unverified-idm-emails.csv`). Password rows: do not clear.
+2. Mapping from **prod** `userInfo`: `idmId` + verified `email` (not CSVs).
+3. After downtime starts, export the two-column CSV **`idmId`, `email`** again (`phase6-lms-idmid-email.csv`, rewritable rows only). This resent file is the one LMP uses. A file sent earlier is only for the dry run.
+4. Rewrite comments/user DB (`userInfo.userId`, every person-id column including `ACLMembership` and `courseMetadata.instructors` JSON, FK or not) and grading DB the same way.
+5. Password rows: **do not touch**. Unverified / no-email IdM keys: **not** rewritten (**lost**); unverified addresses on those rows are cleared in step 1.
+6. Collision: **skip + support**.
+7. In-memory ACL: **recompute when ALeA restarts**.
+8. LMS `getuserinfo` returns `cdiId`, `email`, or `fakeId`. `user_id` is rejected.
 
 Script: `packages/nodejs-scripts/src/rewriteIdmUsersFromMapping.ts` (mapping from **prod `userInfo`**, not CSVs).
 
@@ -181,24 +184,29 @@ SCRIPT_NAME=rewriteIdmUsersFromMapping pnpm exec nx serve nodejs-scripts
 REWRITE_IDM_APPLY=1 SCRIPT_NAME=rewriteIdmUsersFromMapping pnpm exec nx serve nodejs-scripts
 ```
 
-Optional: `IDM_REWRITE_OUT_DIR` (default `student_data/`). Does **not** INSERT `userInfo`. Does **not** rewrite `courseMetadata.instructors` JSON.
+Optional: `IDM_REWRITE_OUT_DIR` (default `student_data/`). Does **not** INSERT `userInfo`. Clears unverified emails on IdM rows first. Rewrites `ACLMembership.memberUserId` and `courseMetadata.instructors` JSON. Does not rewrite Matomo or interview files.
 
 Person-keyed ALeA data is now **email**. `idmId` kept. `cdiId` still null until Phase 7 promote.
 
-### Phase 7 — Cdi identity, hard gate, promote (code; live at LMS flip)
+### Phase 7 — Cdi identity, hard gate, promote (code; **gated**, live at LMS flip)
 
-- Login is the **Cdi flow** (replaces IdM). Token Cdi id → `userInfo.cdiId` → `userInfo.userId` (email) for all real data.
-- No match / not mail-verified → **hard gate**; `unverifiedUsers`; no comments, grading, job-portal, etc.
-- Do **not** call `persistUserInfoFromJwt` to create or name Cdi users.
-- Mail verify `@fau.de` (for now) → promote as in [Staging](#staging-unverifiedusers).
-- **New** `userInfo` rows: user supplies **names** (JWT has none). Path **(b)** keeps names already on the row.
-- `isFauId(userId)` is false for rewritten users (`userId` is email). Anything that meant “campus login” must use `idmId` / `cdiId` / auth path, not `userId` length 8. Ship this with the flip or the job-portal/quiz checks break.
+**Env (default off):** `NEXT_PUBLIC_CDI_AUTH=true` (Next.js public env; rebuild after changing). Do **not** set this until Phase 6 rewrite has finished **and** LMS is issuing Cdi tokens. With the flag off, IdM `getUserId` / `persistUserInfoFromJwt` behavior is unchanged.
+
+When the flag is off, `getuserinfo.user_id` is still the IdM id. When the flag is on, a body that contains `user_id` is rejected. Campus uses `cdiId`, email-password uses `email`, and fake-login uses `fakeId`.
+
+When the flag is on:
+
+- Campus login: `getuserinfo.cdiId` → `userInfo.cdiId` → `userInfo.userId` (email). Password login: `getuserinfo.email` is the `userId`.
+- No `cdiId` match / not mail-verified → **hard gate**; `unverifiedUsers`; no comments, grading, job-portal, etc. `/api/is-logged-in` stays true so `/collect-email` works. This second mail verification is ALeA-only. It is not an LMS step.
+- Do **not** call `persistUserInfoFromJwt` to create or name Cdi users (no INSERT; names are not in `getuserinfo`).
+- Mail verify `@fau.de` (campus flow; not email-password) → promote as in [Staging](#staging-unverifiedusers). New rows collect **first and last name** on `/collect-email`.
+- `isFauId(userId)` is false for rewritten users (`userId` is email). Campus checks use `authProvider` / `idmId` / `cdiId` (`isCampusAccount`).
 
 ### Phase 8 — Aftercare (not a second re-key)
 
-- Confirm rewrite leftovers: `userInfo` where `idmId` is set and `userId` still equals `idmId` (should be unverified/lost only).
+- Confirm rewrite leftovers: `userInfo` where `idmId` is set and `userId` still equals `idmId` (lost only; `email` should be null after the unverified clear).
 - Empty `unverifiedUsers` ops (abandoned pending rows) as needed.
-- Fake-login after Cdi: **not in this plan** until [K](#open-items).
+- Fake-login token shape is decided ([K](#open-items)).
 
 ---
 
@@ -206,7 +214,7 @@ Person-keyed ALeA data is now **email**. `idmId` kept. `cdiId` still null until 
 
 ### K. Fake users
 
-Not decided. This plan does not specify fake-login after Cdi tokens.
+**Decided** for the token. After the switch, fake-login `getuserinfo` returns `fakeId` and `issued`. It does not return names or `user_id`.
 
 ### L. Support email
 
@@ -216,9 +224,9 @@ Address for collisions, skip+support, lost accounts. **TBD.**
 
 **Decided:** table **`unverifiedUsers`**. See [Staging (`unverifiedUsers`)](#staging-unverifiedusers).
 
-### O. Cdi JWT field name
+### O. Cdi field name
 
-**TBD.** Working assumption: reuse **`userId`**.
+**Decided.** Campus `getuserinfo` field is **`cdiId`**. `user_id` is not reused.
 
 ---
 
@@ -226,7 +234,7 @@ Address for collisions, skip+support, lost accounts. **TBD.**
 
 ### 1. Token key ≠ data key
 
-JWT has Cdi id; rows are keyed by **email**. Request path: token `userId` (assumed) → `userInfo.cdiId` → `userInfo.userId` (email) for data. If `cdiId` is missing: staging/hard-gate, **not** `INSERT userInfo(userId = cdiId)`.
+`getuserinfo` has `cdiId`; rows are keyed by **email**. Request path: `getuserinfo.cdiId` → `userInfo.cdiId` → `userInfo.userId` (email) for data. If `cdiId` is missing: staging/hard-gate, **not** `INSERT userInfo(userId = cdiId)`.
 
 ### 2. No IdM ↔ Cdi map
 
@@ -258,8 +266,7 @@ Cdi JWTs have no given name / surname. New users enter names at provision. Do no
 
 - Inventing an IdM id → Cdi id table that LMS does not provide.
 - Automatic merge when Phase 6 hits a collision (skip + support only).
-- ALeA rewriting LMS / Matomo / JSON instructor ids / ACL membership strings (ACL: recompute/restart; LMS: they re-key from our mapping).
-- Defining fake-login after the switch ([K](#open-items)).
+- ALeA rewriting LMS data, Matomo, or interview files (LMP re-keys its user model from ALeA's mapping).
 - Recovery UX for lost accounts.
 - A second rewrite from email to Cdi id.
 - Assumptions about Cdi id string format.
@@ -270,10 +277,10 @@ Cdi JWTs have no given name / surname. New users enter names at provision. Do no
 
 | Child (pre-switch, IdM tokens) | Phase 6 + after (this document) |
 | --- | --- |
-| JWT is IdM id | JWT is Cdi id (assume field `userId`) |
+| `getuserinfo.user_id` is the IdM id | `user_id` is retired. Campus `cdiId`, password `email`, fake-login `fakeId` |
 | `userId` stays IdM id | `userId` + FK/grading keys → **email** |
-| CSV fill + collect write `userInfo.email` | Phase 6 **reads** that prod mapping; **no CSVs** |
+| CSV fill + collect write `userInfo.email` | Phase 6 **reads** verified emails from that prod mapping; **no CSVs**. Unverified IdM emails are **cleared** (flagged in `phase6-unverified-idm-emails.csv`) |
 | Collect: client redirect; APIs still work | Cdi login first; `unverifiedUsers` + hard gate until mail-verified `@fau.de` (for now) and `cdiId` set |
 | Names from IdM JWT via `persistUserInfoFromJwt` | Cdi JWT has **no names**; new users supply them; persist-from-JWT not used for Cdi |
 | Password signup already `userId` = email | Unaffected by re-key |
-| `fake_xxx` | Not decided |
+| `fake_xxx` | Token returns `fakeId` and `issued` only |

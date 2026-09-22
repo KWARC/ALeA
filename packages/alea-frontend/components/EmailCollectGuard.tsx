@@ -1,5 +1,5 @@
 import { getUserInformation } from '@alea/spec';
-import { needsIdmEmailCollect } from '@alea/utils';
+import { needsCampusEmailCollect } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useIsLoggedIn } from '@alea/react-utils';
@@ -36,7 +36,7 @@ export function EmailCollectGuard({ children }: Readonly<{ children: React.React
     (async () => {
       try {
         const info = await getUserInformation(true);
-        if (cancelled || !info || !needsIdmEmailCollect(info)) return;
+        if (cancelled || !info || !needsCampusEmailCollect(info)) return;
         const target = router.asPath.startsWith('/') ? router.asPath : '/';
         await router.replace(`/collect-email?target=${encodeURIComponent(target)}`);
       } catch {

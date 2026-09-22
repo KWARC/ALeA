@@ -515,6 +515,8 @@ model unverifiedUsers {
   cdiId              String  @id @db.VarChar(255)
   emailAddress       String? @unique(map: "unverifiedUsers_emailAddress_key") @db.VarChar(255)
   verificationToken  String? @db.VarChar(255)
+  firstName          String? @db.VarChar(255)
+  lastName           String? @db.VarChar(255)
 }
 
 model CheatSheet {

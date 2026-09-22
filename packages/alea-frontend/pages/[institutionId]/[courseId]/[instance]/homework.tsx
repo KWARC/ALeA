@@ -1,8 +1,8 @@
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { canAccessResource, getAllCourses } from '@alea/spec';
-import { Action, CourseInfo, isFauId, ResourceName } from '@alea/utils';
+import { canAccessResource, getAllCourses, getUserInformation } from '@alea/spec';
+import { Action, CourseInfo, isCampusAccount, ResourceName } from '@alea/utils';
 import { useCurrentUser } from '@alea/react-utils';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -40,7 +40,9 @@ const HomeworkPage: NextPage = () => {
   useEffect(() => {
     const uid = user?.userId;
     if (!uid) return;
-    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+    getUserInformation()
+      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .catch(() => setForceFauLogin(true));
   }, [user]);
 
   useEffect(() => {

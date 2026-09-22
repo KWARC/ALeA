@@ -88,6 +88,7 @@ export interface UpdateQuestionStateRequest {
   commentType: CommentType;
 }
 
+/** How the account authenticates. `FAU_IDM` is any campus login with no password: IdM today, Cdi after the flip. Same value on purpose. */
 export enum AuthProvider {
   EMAIL_PASSWORD = 'EMAIL_PASSWORD',
   FAU_IDM = 'FAU_IDM',
@@ -96,11 +97,15 @@ export enum AuthProvider {
 export interface UserInformation {
   userId: string;
   email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   showTrafficLight: boolean;
   showSectionReview: boolean;
   notificationSeenTs: number;
   isVerified: boolean;
   authProvider?: AuthProvider;
+  /** Cdi mode: token is valid but this principal is not mail-verified on userInfo yet. */
+  cdiEmailPending?: boolean;
 }
 
 export interface UserSignUpDetail {

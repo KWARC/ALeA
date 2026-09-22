@@ -1,5 +1,5 @@
-import { Comment, NotificationType, PointsGrant, lmpResponseToUserInfo } from '@alea/spec';
-import { isFauDeEmail, isFauId, isFakeXxxId } from '@alea/utils';
+import { Comment, NotificationType, PointsGrant, UserInfo, lmpResponseToUserInfo } from '@alea/spec';
+import { isCdiAuthEnabled, isFauDeEmail, isFauId, isFakeXxxId } from '@alea/utils';
 import { randomUUID } from 'node:crypto';
 import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -131,30 +131,108 @@ export async function getJwtUserInfo(req: NextApiRequest) {
 type UserInfoRow = {
   userId: string;
   idmId: string | null;
+  cdiId: string | null;
   email: string | null;
   isVerified: number | boolean | null;
+  saltedPassword: string | null;
 };
 
+export function rowHasPassword(saltedPassword: unknown): boolean {
+  if (saltedPassword == null) return false;
+  if (typeof saltedPassword === 'string') return saltedPassword.trim().length > 0;
+  return true;
+}
+
+function isVerifiedFlag(v: number | boolean | null | undefined): boolean {
+  return v === true || v === 1;
+}
+
+async function findUserInfoRows(sql: string, values: string[]): Promise<UserInfoRow[] | undefined> {
+  const rows = await executeQuery<UserInfoRow[]>(sql, values);
+  if (!Array.isArray(rows) || (rows as { error?: unknown }).error) return undefined;
+  return rows;
+}
+
 export async function findUserInfoRowByJwtUserId(jwtUserId: string): Promise<UserInfoRow | undefined> {
-  const rows = await executeQuery<UserInfoRow[]>(
+  const rows = await findUserInfoRows(
     `SELECT userId, idmId, email, isVerified FROM userInfo WHERE idmId = ? OR userId = ?`,
     [jwtUserId, jwtUserId]
   );
-  if (!Array.isArray(rows) || (rows as any).error || rows.length === 0) return undefined;
+  if (!rows || rows.length === 0) return undefined;
   return rows.find((r) => r.idmId === jwtUserId) ?? rows[0];
 }
 
-/** Canonical app userId: email after IdM rewrite, otherwise JWT / unre-written id. */
+export async function findUserInfoRowForLms(jwtInfo: UserInfo): Promise<UserInfoRow | undefined> {
+  if (jwtInfo.authKind === 'cdi' && jwtInfo.cdiId) {
+    const rows = await findUserInfoRows(
+      `SELECT userId, idmId, cdiId, email, isVerified, saltedPassword FROM userInfo WHERE cdiId = ?`,
+      [jwtInfo.cdiId]
+    );
+    return rows?.find((r) => r.cdiId === jwtInfo.cdiId);
+  }
+  if (jwtInfo.authKind === 'email' && jwtInfo.userId) {
+    const rows = await findUserInfoRows(
+      `SELECT userId, idmId, cdiId, email, isVerified, saltedPassword FROM userInfo WHERE userId = ?`,
+      [jwtInfo.userId]
+    );
+    return rows?.find((r) => r.userId === jwtInfo.userId);
+  }
+  if (jwtInfo.authKind === 'fake' && jwtInfo.userId) {
+    const rows = await findUserInfoRows(
+      `SELECT userId, idmId, cdiId, email, isVerified, saltedPassword FROM userInfo WHERE idmId = ? OR userId = ?`,
+      [jwtInfo.userId, jwtInfo.userId]
+    );
+    return rows?.find((r) => r.idmId === jwtInfo.userId) ?? rows?.find((r) => r.userId === jwtInfo.userId);
+  }
+  return undefined;
+}
+
+export function isCdiCampusRowProvisioned(row: UserInfoRow | undefined, jwtUserId: string): boolean {
+  if (!row) return false;
+  if (row.cdiId === jwtUserId) return isVerifiedFlag(row.isVerified);
+  return rowHasPassword(row.saltedPassword);
+}
+
+/** Canonical app userId: email after IdM rewrite, otherwise JWT / unre-written id. Cdi id is never the data key. */
 export async function getUserInfo(req: NextApiRequest) {
   const jwtInfo = await getJwtUserInfo(req);
   if (!jwtInfo) return undefined;
+  if (isCdiAuthEnabled()) {
+    if (jwtInfo.authKind === 'email') return jwtInfo;
+    const row = await findUserInfoRowForLms(jwtInfo);
+    if (jwtInfo.authKind === 'cdi') {
+      if (row && isCdiCampusRowProvisioned(row, jwtInfo.cdiId ?? '')) {
+        return { ...jwtInfo, userId: row.userId };
+      }
+      return { ...jwtInfo, userId: '' };
+    }
+    if (jwtInfo.authKind === 'fake') {
+      if (!row) return { ...jwtInfo, userId: '' };
+      return { ...jwtInfo, userId: row.userId };
+    }
+    return undefined;
+  }
   const row = await findUserInfoRowByJwtUserId(jwtInfo.userId);
   if (!row) return jwtInfo;
   return { ...jwtInfo, userId: row.userId };
 }
 
 export async function getUserId(req: NextApiRequest) {
-  return (await getUserInfo(req))?.userId;
+  return (await getUserInfo(req))?.userId || undefined;
+}
+
+export async function getCdiJwtId(req: NextApiRequest): Promise<string | undefined> {
+  const jwtInfo = await getJwtUserInfo(req);
+  return jwtInfo?.authKind === 'cdi' ? jwtInfo.cdiId : undefined;
+}
+
+export async function upsertUnverifiedUserStub(cdiId: string, res?: NextApiResponse): Promise<boolean> {
+  const result = await executeDontEndSet500OnError(
+    `INSERT INTO unverifiedUsers (cdiId) VALUES (?) ON DUPLICATE KEY UPDATE cdiId = cdiId`,
+    [cdiId],
+    res
+  );
+  return !!result;
 }
 
 export function normalizeUserEmail(email: string): string {
@@ -253,12 +331,15 @@ export async function setUserInfoEmailOrSetError(params: {
 
 export async function userHasIdmAccount(canonicalUserId: string): Promise<boolean> {
   if (!canonicalUserId) return false;
-  const rows = await executeQuery<{ idmId: string | null }[]>(
-    `SELECT idmId FROM userInfo WHERE userId = ? LIMIT 1`,
-    [canonicalUserId]
-  );
+  const sql = isCdiAuthEnabled()
+    ? `SELECT idmId, cdiId FROM userInfo WHERE userId = ? LIMIT 1`
+    : `SELECT idmId FROM userInfo WHERE userId = ? LIMIT 1`;
+  const rows = await executeQuery<{ idmId: string | null; cdiId?: string | null }[]>(sql, [
+    canonicalUserId,
+  ]);
   if (!Array.isArray(rows) || (rows as any).error) return isFauId(canonicalUserId);
   if (rows[0]?.idmId) return true;
+  if (isCdiAuthEnabled() && rows[0]?.cdiId) return true;
   return isFauId(canonicalUserId);
 }
 
@@ -270,6 +351,24 @@ export async function persistUserInfoFromJwt(
   if (!jwtInfo) return undefined;
   const extraCols = Object.keys(extra);
   const extraVals = Object.values(extra);
+  if (isCdiAuthEnabled()) {
+    const row = await findUserInfoRowForLms(jwtInfo);
+    const canonical =
+      jwtInfo.authKind === 'email'
+        ? jwtInfo.userId
+        : jwtInfo.authKind === 'cdi'
+          ? row && isCdiCampusRowProvisioned(row, jwtInfo.cdiId ?? '')
+            ? row.userId
+            : ''
+          : row?.userId;
+    if (!canonical || extraCols.length === 0) return undefined;
+    const setExtra = extraCols.map((c) => `${c}=?`).join(', ');
+    return {
+      jwtInfo,
+      sql: `UPDATE userInfo SET ${setExtra} WHERE userId=?`,
+      values: [...extraVals, canonical],
+    };
+  }
   const row = await findUserInfoRowByJwtUserId(jwtInfo.userId);
   if (row) {
     const setExtra = extraCols.map((c) => `${c}=?`).join(', ');
@@ -294,7 +393,14 @@ export async function persistUserInfoFromJwt(
 
 export async function getUserIdOrSetError(req, res) {
   const userId = await getUserId(req);
-  if (!userId) res.status(403).send({ message: 'Could not get userId' });
+  if (!userId) {
+    const pending = isCdiAuthEnabled();
+    res.status(403).send(
+      pending
+        ? { message: 'Email verification required', cdiEmailPending: true }
+        : { message: 'Could not get userId' }
+    );
+  }
   return userId;
 }
 

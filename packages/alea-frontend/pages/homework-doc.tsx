@@ -5,6 +5,7 @@ import {
   GetHomeworkResponse,
   GradingInfo,
   ResponseWithSubProblemId,
+  getUserInformation,
 } from '@alea/spec';
 import {
   AnswerContext,
@@ -12,7 +13,7 @@ import {
   QuizDisplay,
   ShowGradingFor,
 } from '@alea/stex-react-renderer';
-import { isFauId } from '@alea/utils';
+import { isCampusAccount } from '@alea/utils';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { Box, CircularProgress } from '@mui/material';
 import { useRouter } from 'next/router';
@@ -39,7 +40,9 @@ const HomeworkDocPage: React.FC = () => {
     if (isUserLoading) return;
     const uid = user?.userId;
     if (!uid) return;
-    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+    getUserInformation()
+      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .catch(() => setForceFauLogin(true));
   }, [user,isUserLoading]);
   const courseId = hwInfo?.homework.courseId;
   const instanceId = hwInfo?.homework.courseInstance;

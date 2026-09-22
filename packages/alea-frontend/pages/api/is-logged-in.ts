@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserId } from './comment-utils';
+import { getJwtUserInfo } from './comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = req.cookies.access_token;
   try {
-    if (!token || !(await getUserId(req))) throw new Error('No token or invalid user');
+    if (!token || !(await getJwtUserInfo(req))) throw new Error('No token or invalid user');
     return res.status(200).json({ isLoggedIn: true });
   } catch (err) {
     res.setHeader('Set-Cookie', [

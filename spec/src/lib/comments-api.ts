@@ -208,9 +208,12 @@ export async function logInUser(userId: string, password: string) {
   return response.data;
 }
 
-export async function setIdmEmail(email: string) {
+export async function setIdmEmail(
+  email: string,
+  names?: { firstName?: string; lastName?: string }
+) {
   invalidateUserInformationCache();
-  return await axios.post('/api/idm-set-email', { email });
+  return await axios.post('/api/idm-set-email', { email, ...names });
 }
 
 export async function verifyEmail(email: string, verificationToken: string) {

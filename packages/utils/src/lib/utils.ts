@@ -208,20 +208,49 @@ export function isFauDeEmail(email: string) {
   return (email ?? '').trim().toLowerCase().endsWith('@fau.de');
 }
 
-export function needsIdmEmailCollect(info: {
+/** Server (and optional client build) switch. Default off. Flip only with Phase 6 rewrite + LMS Cdi tokens. */
+export function isCdiAuthEnabled(): boolean {
+  return process.env['NEXT_PUBLIC_CDI_AUTH'] === 'true';
+}
+
+/** Campus / Cdi / IdM / fake — not email-password. Requires `userInfo` (`authProvider`). */
+export function isCampusAccount(info?: { authProvider?: string }): boolean {
+  return info?.authProvider === 'FAU_IDM';
+}
+
+type CampusEmailCollectInfo = {
   userId?: string;
   email?: string | null;
   isVerified?: boolean;
   authProvider?: string;
-}): boolean {
+  cdiEmailPending?: boolean;
+};
+
+/** IdM tokens. `userId` is still an IdM id or `fake_xxx`. Delete this with the pre-switch path. */
+function needsCampusEmailCollectPreSwitch(info: CampusEmailCollectInfo): boolean {
   if (!info?.userId) return false;
-  if (info.authProvider === 'EMAIL_PASSWORD' || info.userId.includes('@')) return false;
+  if (info.authProvider === 'EMAIL_PASSWORD') return false;
+  if (info.authProvider === 'FAU_IDM' && !info.isVerified) return true;
+  if (info.userId.includes('@')) return false;
   const idmLike =
     info.authProvider === 'FAU_IDM' || isFauId(info.userId) || isFakeXxxId(info.userId);
   if (!idmLike) return false;
   const email = (info.email ?? '').trim().toLowerCase();
   if (!email || !info.isVerified) return true;
   return !isFakeXxxId(info.userId) && !isFauDeEmail(email);
+}
+
+/** Cdi tokens. Collect while `cdiEmailPending`, or when a provisioned campus row is unverified. */
+function needsCampusEmailCollectPostSwitch(info: CampusEmailCollectInfo): boolean {
+  if (info?.cdiEmailPending) return true;
+  if (!info?.userId) return false;
+  if (info.authProvider === 'EMAIL_PASSWORD') return false;
+  return info.authProvider === 'FAU_IDM' && !info.isVerified;
+}
+
+export function needsCampusEmailCollect(info: CampusEmailCollectInfo): boolean {
+  if (isCdiAuthEnabled()) return needsCampusEmailCollectPostSwitch(info);
+  return needsCampusEmailCollectPreSwitch(info);
 }
 
 export function fixDuplicateLabels<T extends { label: string }>(RAW: T[]) {

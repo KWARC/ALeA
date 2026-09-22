@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getUserInfo, UserInfo } from '@alea/spec';
+import { getUserInfo, getUserInformation, UserInfo } from '@alea/spec';
 
 interface UserContextType {
   user?: UserInfo | null;
@@ -22,7 +22,29 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
     setIsUserLoading(true);
     try {
       const u = await getUserInfo();
-      setUser(u ?? null);
+      if (!u) {
+        setUser(null);
+        return;
+      }
+      try {
+        const info = await getUserInformation(true);
+        if (info?.userId) {
+          const givenName = info.firstName ?? u.givenName;
+          const sn = info.lastName ?? u.sn;
+          setUser({
+            ...u,
+            userId: info.userId,
+            givenName,
+            sn,
+            fullName: `${givenName ?? ''} ${sn ?? ''}`.trim(),
+          });
+          return;
+        }
+      } catch {
+        /* no database account */
+      }
+      const tokenIdIsNotUserId = u.authKind === 'cdi' || u.authKind === 'fake';
+      setUser(tokenIdIsNotUserId ? { ...u, userId: '' } : u);
     } catch (err) {
       setUser(null);
     } finally {

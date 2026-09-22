@@ -5,11 +5,12 @@ import {
   getAllCourses,
   getQuiz,
   GetQuizResponse,
+  getUserInformation,
   insertQuizResponse,
   Phase,
 } from '@alea/spec';
 import { QuizDisplay } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, isFauId, localStore, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, isCampusAccount, localStore, ResourceName } from '@alea/utils';
 import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
@@ -130,7 +131,9 @@ const QuizPage: NextPage = () => {
   useEffect(() => {
     const uid = user?.userId;
     if (!uid) return;
-    isFauId(uid) ? setForceFauLogin(false) : setForceFauLogin(true);
+    getUserInformation()
+      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .catch(() => setForceFauLogin(true));
   }, [user]);
 
   useEffect(() => {

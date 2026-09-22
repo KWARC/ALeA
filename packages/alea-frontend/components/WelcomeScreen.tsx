@@ -8,6 +8,7 @@ import {
   getCoverageTimeline,
   getHomeworkList,
   getUserInfo,
+  getUserInformation,
   QuestionStatus,
   QuizStubInfo,
   UserInfo,
@@ -16,7 +17,7 @@ import {
   Action,
   CourseInfo,
   CourseResourceAction,
-  isFauId,
+  isCampusAccount,
   LectureEntry,
   pathToCourseHome,
   pathToInstructorDash,
@@ -758,6 +759,7 @@ function WelcomeScreen({
   filteredCourses: CourseInfo[];
 }) {
   const [userInfo, setUserInfo] = useState<UserInfo>(null);
+  const [isCampus, setIsCampus] = useState(false);
   const [descriptions, setDescriptions] = useState<Record<string, ResourceDisplayInfo>>({});
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const [allCourses, setAllCourses] = useState<Record<string, CourseInfo>>({});
@@ -789,6 +791,9 @@ function WelcomeScreen({
   }, [currentTerms, groupedResources]);
   useEffect(() => {
     getUserInfo().then((user) => setUserInfo(user));
+    getUserInformation()
+      .then((info) => setIsCampus(isCampusAccount(info)))
+      .catch(() => setIsCampus(false));
   }, []);
 
   useEffect(() => {
@@ -799,7 +804,7 @@ function WelcomeScreen({
     getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
   }, [currentTerm]);
 
-  const isFAUId = isFauId(userInfo?.userId);
+  const isFAUId = isCampus;
 
   useEffect(() => {
     const fetchDescriptions = async () => {

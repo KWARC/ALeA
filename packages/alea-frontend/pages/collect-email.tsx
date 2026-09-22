@@ -1,6 +1,6 @@
 import { Box, Button, TextField, Typography } from '@mui/material';
 import { getUserInformation, setIdmEmail } from '@alea/spec';
-import { isFakeXxxId, isFauDeEmail, needsIdmEmailCollect } from '@alea/utils';
+import { isFakeXxxId, isFauDeEmail, needsCampusEmailCollect } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,9 @@ const CollectEmailPage: NextPage = () => {
   const { loggedIn, loginCheckPending } = useIsLoggedIn();
   const { collectEmail: t } = getLocaleObject(router);
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [needNames, setNeedNames] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
   const [isFake, setIsFake] = useState(false);
@@ -32,8 +35,11 @@ const CollectEmailPage: NextPage = () => {
         const info = await getUserInformation(force);
         if (cancelled || !info) return;
         setIsFake(isFakeXxxId(info.userId));
+        setNeedNames(!!info.cdiEmailPending && !info.userId);
         if (info.email) setEmail((prev) => prev || info.email || '');
-        if (!needsIdmEmailCollect(info)) {
+        if (info.firstName) setFirstName((prev) => prev || info.firstName || '');
+        if (info.lastName) setLastName((prev) => prev || info.lastName || '');
+        if (!needsCampusEmailCollect(info)) {
           const target = typeof router.query.target === 'string' ? router.query.target : '/';
           router.replace(target.startsWith('/') ? target : '/');
         }
@@ -52,6 +58,7 @@ const CollectEmailPage: NextPage = () => {
   const trimmed = email.trim();
   const hasEmailShape = trimmed.includes('@') && trimmed.includes('.');
   const emailIsValid = isFake ? hasEmailShape : isFauDeEmail(trimmed);
+  const namesOk = !needNames || (!!firstName.trim() && !!lastName.trim());
   let emailHint: string | undefined;
   if (isFake) {
     if (trimmed && !emailIsValid) emailHint = t.invalidEmail;
@@ -60,11 +67,11 @@ const CollectEmailPage: NextPage = () => {
   }
 
   const onSubmit = async () => {
-    if (!emailIsValid) return;
+    if (!emailIsValid || !namesOk) return;
     setBusy(true);
     setError('');
     try {
-      await setIdmEmail(email);
+      await setIdmEmail(email, needNames ? { firstName: firstName.trim(), lastName: lastName.trim() } : undefined);
       setStatus('sent');
     } catch (e: unknown) {
       const message =
@@ -85,6 +92,24 @@ const CollectEmailPage: NextPage = () => {
         <Typography variant="body1" sx={{ mb: 2 }}>
           {isFake ? t.bodyFake : t.bodyIdm}
         </Typography>
+        {needNames && (
+          <>
+            <TextField
+              fullWidth
+              label={t.firstNameLabel}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label={t.lastNameLabel}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+          </>
+        )}
         <TextField
           fullWidth
           label={t.emailLabel}
@@ -102,7 +127,7 @@ const CollectEmailPage: NextPage = () => {
         {status === 'sent' && (
           <Typography sx={{ mb: 2 }}>{t.checkInbox}</Typography>
         )}
-        <Button variant="contained" fullWidth disabled={busy || !emailIsValid} onClick={onSubmit}>
+        <Button variant="contained" fullWidth disabled={busy || !emailIsValid || !namesOk} onClick={onSubmit}>
           {status === 'sent' ? t.resend : t.submit}
         </Button>
       </Box>

@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { isFakeXxxSuffix } from '@alea/utils';
+import { isCdiAuthEnabled, isFakeXxxSuffix } from '@alea/utils';
 import { LoType } from './flams';
 
 export type CognitiveValueConfidence = NumericCognitiveValues;
@@ -257,6 +257,9 @@ export interface UserInfo {
   sn: string;
   fullName: string;
   issued: number;
+  /** Present when `NEXT_PUBLIC_CDI_AUTH=true`. `cdi` is not a data key. */
+  authKind?: 'cdi' | 'email' | 'fake';
+  cdiId?: string;
 }
 
 const FAKE_USER_DEFAULT_COMPETENCIES: { [id: string]: string[] } = {
@@ -298,7 +301,9 @@ export function loginUsingRedirect(returnBackUrl?: string) {
     return;
   }
 
-  const redirectUrl = `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/login?target=${encodeURIComponent(returnBackUrl)}`;
+  const redirectUrl = `${
+    process.env['NEXT_PUBLIC_AUTH_SERVER_URL']
+  }/login?target=${encodeURIComponent(returnBackUrl)}`;
 
   window.location.replace(redirectUrl);
 }
@@ -329,8 +334,9 @@ export function fakeLoginUsingRedirect(
   const n = name || `fake_${fakeIdSuffix}`;
 
   const redirectUrl =
-    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${encodeURIComponent(fakeIdSuffix)}&target=${target}` +
-    (name ? `&name=${n}` : '');
+    `${process.env['NEXT_PUBLIC_AUTH_SERVER_URL']}/fake-login?fake-id=${encodeURIComponent(
+      fakeIdSuffix
+    )}&target=${target}` + (name ? `&name=${n}` : '');
 
   window.location.replace(redirectUrl);
 }
@@ -385,19 +391,41 @@ export function cleanupSmileyCognitiveValues(dim: SmileyCognitiveValues): Smiley
   };
 }
 interface UserInfoLms {
-  user_id: string;
-  given_name: string;
-  sn: string;
-  issued: number;
+  user_id?: string;
+  given_name?: string;
+  sn?: string;
+  issued?: number;
+  cdiId?: string;
+  email?: string;
+  fakeId?: string;
 }
+
 export function lmpResponseToUserInfo(lmpRespData: UserInfoLms): UserInfo | undefined {
   if (!lmpRespData) return undefined;
+  if (!isCdiAuthEnabled()) {
+    if (!lmpRespData.user_id) return undefined;
+    const givenName = lmpRespData.given_name ?? '';
+    const sn = lmpRespData.sn ?? '';
+    return {
+      userId: lmpRespData.user_id,
+      givenName,
+      sn,
+      fullName: `${givenName} ${sn}`.trim(),
+      issued: lmpRespData.issued ?? 0,
+    };
+  }
+  if (lmpRespData.user_id) return undefined;
+  const userId = lmpRespData.cdiId || lmpRespData.email || lmpRespData.fakeId;
+  if (!userId) return undefined;
+  const authKind = lmpRespData.cdiId ? 'cdi' : lmpRespData.email ? 'email' : 'fake';
   return {
-    userId: lmpRespData.user_id,
-    givenName: lmpRespData.given_name,
-    sn: lmpRespData.sn,
-    fullName: `${lmpRespData.given_name ?? ''} ${lmpRespData.sn ?? ''}`,
-    issued: lmpRespData.issued,
+    userId,
+    givenName: '',
+    sn: '',
+    fullName: '',
+    issued: lmpRespData.issued ?? 0,
+    authKind,
+    cdiId: lmpRespData.cdiId,
   };
 }
 

@@ -12,6 +12,12 @@ type MappingRow = {
   email: string;
 };
 
+type UnverifiedIdmEmailRow = {
+  userId: string;
+  idmId: string;
+  email: string;
+};
+
 function loadDotenv() {
   loadEnv({ path: join(process.cwd(), 'packages/alea-frontend/.env.local') });
   loadEnv({ path: join(process.cwd(), 'packages/nodejs-scripts/.env.local') });
@@ -99,6 +105,33 @@ async function loadVerifiedIdmEmailMapping(commentsDb: SqlDb): Promise<{
   return { mapping, duplicateEmails };
 }
 
+/** IdM-keyed rows with an address that was never mail-verified. Password rows (`idmId` null) are not included. */
+async function loadUnverifiedIdmEmails(commentsDb: SqlDb): Promise<UnverifiedIdmEmailRow[]> {
+  const rows = await query<UnverifiedIdmEmailRow[]>(
+    commentsDb,
+    `SELECT userId, idmId, email FROM userInfo
+     WHERE idmId IS NOT NULL AND TRIM(idmId) <> ''
+       AND email IS NOT NULL AND TRIM(email) <> ''
+       AND (isVerified IS NULL OR isVerified <> 1)`
+  );
+  return (rows || []).map((row) => ({
+    userId: String(row.userId),
+    idmId: String(row.idmId).trim(),
+    email: String(row.email).trim().toLowerCase(),
+  }));
+}
+
+async function clearUnverifiedIdmEmails(commentsDb: SqlDb): Promise<void> {
+  await query(
+    commentsDb,
+    `UPDATE userInfo
+     SET email = NULL, verificationToken = NULL, isVerified = 0
+     WHERE idmId IS NOT NULL AND TRIM(idmId) <> ''
+       AND email IS NOT NULL AND TRIM(email) <> ''
+       AND (isVerified IS NULL OR isVerified <> 1)`
+  );
+}
+
 async function runMappingRewrites(params: {
   mapping: Map<string, string>;
   commentsDb: SqlDb;
@@ -156,6 +189,19 @@ export async function rewriteIdmUsersFromMapping() {
   console.log('Mapping source: production userInfo (idmId + verified email). Not CSVs.');
 
   try {
+    const unverifiedIdmEmails = await loadUnverifiedIdmEmails(commentsDb);
+    console.log(`Unverified emails on IdM rows (will clear, not rewrite): ${unverifiedIdmEmails.length}`);
+    for (const row of unverifiedIdmEmails.slice(0, 30)) {
+      console.log(`  clear ${row.idmId} userId=${row.userId} email=${row.email}`);
+    }
+    if (unverifiedIdmEmails.length > 30) {
+      console.log(`  … ${unverifiedIdmEmails.length - 30} more unverified IdM emails`);
+    }
+    if (apply && unverifiedIdmEmails.length) {
+      await clearUnverifiedIdmEmails(commentsDb);
+      console.log('Cleared unverified email / verificationToken on those IdM rows.');
+    }
+
     const { mapping, duplicateEmails } = await loadVerifiedIdmEmailMapping(commentsDb);
     console.log(`Verified idmId↔email pairs: ${mapping.size}`);
     const duplicateSkips: RewriteOneResult[] = duplicateEmails.flatMap((d) =>
@@ -197,8 +243,8 @@ export async function rewriteIdmUsersFromMapping() {
       console.log(`  skip ${s.oldId} → ${s.email} (${s.skipped}) ${s.skipDetail ?? ''}`);
     }
     if (skipped.length > 30) console.log(`  … ${skipped.length - 30} more skips`);
-    console.log('\nACL: recompute memberships / restart after apply. This script does not rewrite ACLMembership.');
-    console.log('courseMetadata.instructors JSON is not rewritten.');
+    console.log('\nACLMembership.memberUserId and courseMetadata.instructors JSON are included.');
+    console.log('In-memory ACL is rebuilt when ALeA restarts. Matomo and interview files are not rewritten.');
 
     const lmsCsvPath = join(outDir, 'phase6-lms-idmid-email.csv');
     const lmsCsv =
@@ -206,11 +252,22 @@ export async function rewriteIdmUsersFromMapping() {
     await writeFile(lmsCsvPath, lmsCsv);
     console.log(`\nLMS mapping (rewritable only): ${lmsCsvPath} (${lmsRows.length} rows)`);
 
+    const unverifiedCsvPath = join(outDir, 'phase6-unverified-idm-emails.csv');
+    const unverifiedCsv =
+      'idmId,userId,email\n' +
+      unverifiedIdmEmails
+        .map((r) => `${csvCell(r.idmId)},${csvCell(r.userId)},${csvCell(r.email)}`)
+        .join('\n') +
+      (unverifiedIdmEmails.length ? '\n' : '');
+    await writeFile(unverifiedCsvPath, unverifiedCsv);
+    console.log(`Unverified IdM emails (cleared on apply): ${unverifiedCsvPath} (${unverifiedIdmEmails.length} rows)`);
+
     const report = {
       generatedAt: new Date().toISOString(),
       apply,
       mappingSource: 'userInfo',
       mappingCount: mapping.size,
+      unverifiedIdmEmailsCleared: unverifiedIdmEmails,
       duplicateEmails,
       rewritable: results.length,
       wouldTouch: wouldTouch.length,

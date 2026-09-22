@@ -31,6 +31,7 @@ export const COMMENT_PERSON_COLUMNS: { table: string; column: string }[] = [
   { table: 'jobApplicationAction', column: 'userId' },
   { table: 'jobPost', column: 'createdByUserId' },
   { table: 'orgInvitations', column: 'inviteruserId' },
+  { table: 'ACLMembership', column: 'memberUserId' },
 ];
 
 export type RewriteSkipReason =
@@ -188,6 +189,58 @@ async function applyPersonColumnUpdates(commentsDb: SqlDb, oldId: string, email:
   }
 }
 
+function replaceInstructorId(instructors: unknown, oldId: string, email: string): { next: unknown; changed: boolean } {
+  let value = instructors;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return { next: instructors, changed: false };
+    }
+  }
+  if (!Array.isArray(value)) return { next: instructors, changed: false };
+  let changed = false;
+  const next = value.map((item) => {
+    if (typeof item === 'string' && item.trim() === oldId) {
+      changed = true;
+      return email;
+    }
+    if (item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string') {
+      const id = (item as { id: string }).id.trim();
+      if (id === oldId) {
+        changed = true;
+        return { ...(item as object), id: email };
+      }
+    }
+    return item;
+  });
+  return { next, changed };
+}
+
+async function countInstructorJsonRows(commentsDb: SqlDb, oldId: string): Promise<number> {
+  const rows = await query<{ instructors: unknown }[]>(
+    commentsDb,
+    `SELECT instructors FROM courseMetadata WHERE instructors IS NOT NULL`
+  );
+  return (rows || []).filter((row) => replaceInstructorId(row.instructors, oldId, oldId).changed).length;
+}
+
+async function applyInstructorJsonUpdates(commentsDb: SqlDb, oldId: string, email: string) {
+  const rows = await query<{ courseId: string; instanceId: string; instructors: unknown }[]>(
+    commentsDb,
+    `SELECT courseId, instanceId, instructors FROM courseMetadata WHERE instructors IS NOT NULL`
+  );
+  for (const row of rows || []) {
+    const replaced = replaceInstructorId(row.instructors, oldId, email);
+    if (!replaced.changed) continue;
+    await query(
+      commentsDb,
+      `UPDATE courseMetadata SET instructors=? WHERE courseId=? AND instanceId=?`,
+      [JSON.stringify(replaced.next), row.courseId, row.instanceId]
+    );
+  }
+}
+
 async function applyRewrite(params: {
   commentsDb: SqlDb;
   gradingDb: SqlDb;
@@ -201,6 +254,7 @@ async function applyRewrite(params: {
   try {
     await updateUserInfoPk(commentsDb, own, oldId, email);
     await applyPersonColumnUpdates(commentsDb, oldId, email);
+    await applyInstructorJsonUpdates(commentsDb, oldId, email);
     await query(commentsDb, `UPDATE comments SET userEmail=? WHERE TRIM(userEmail)=?`, [email, oldId]);
     await query(gradingDb, `UPDATE grading SET userId=? WHERE TRIM(userId)=?`, [email, oldId]);
     await query(commentsDb, 'COMMIT', []);
@@ -251,7 +305,7 @@ export async function rewriteIdmIdToEmail(params: {
     alreadyCanonical: own.userId === email && own.idmId === oldId,
     columnUpdates: await countPersonColumns(commentsDb, oldId),
     gradingRows: await countEq(gradingDb, 'grading', 'userId', oldId),
-    instructorJsonRows: 0,
+    instructorJsonRows: await countInstructorJsonRows(commentsDb, oldId),
     commentsUserEmailRows: await countEq(commentsDb, 'comments', 'userEmail', oldId),
   };
 

@@ -419,6 +419,8 @@ export const de = {
     bodyIdm: 'Geben Sie Ihre FAU-E-Mail (@fau.de) ein. Wir senden einen Bestätigungslink.',
     bodyFake: 'Geben Sie eine E-Mail-Adresse ein, an die wir einen Bestätigungslink senden können.',
     emailLabel: 'E-Mail',
+    firstNameLabel: 'Vorname',
+    lastNameLabel: 'Nachname',
     invalidEmail: 'Geben Sie eine gültige E-Mail-Adresse ein',
     requireFau: 'Verwenden Sie eine FAU-E-Mail-Adresse (@fau.de)',
     submit: 'Bestätigungs-E-Mail senden',
