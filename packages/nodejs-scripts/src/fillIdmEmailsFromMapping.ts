@@ -17,17 +17,6 @@ type FillSkipReason =
 
 type FillKind = 'empty' | 'overwrite_non_fau' | 'mark_verified';
 
-type FillOneResult = {
-  oldId: string;
-  email: string;
-  userId?: string;
-  existingEmail?: string;
-  skipped?: FillSkipReason;
-  skipDetail?: string;
-  wouldFill: boolean;
-  fillKind?: FillKind;
-};
-
 type UserInfoHit = {
   userId: string;
   idmId: string | null;
@@ -40,6 +29,35 @@ type EmailMismatch = {
   userId: string;
   existingEmail: string;
   mappingEmail: string;
+};
+
+type DbClash =
+  | {
+      kind: 'same_account_different_fau_email';
+      oldId: string;
+      userId: string;
+      dbEmail: string;
+      mappingEmail: string;
+    }
+  | {
+      kind: 'mapping_email_on_other_account';
+      oldId: string;
+      userId?: string;
+      mappingEmail: string;
+      otherUserId: string;
+      otherEmail: string;
+    };
+
+type FillOneResult = {
+  oldId: string;
+  email: string;
+  userId?: string;
+  existingEmail?: string;
+  skipped?: FillSkipReason;
+  skipDetail?: string;
+  wouldFill: boolean;
+  fillKind?: FillKind;
+  dbClashes?: DbClash[];
 };
 
 function loadDotenv() {
@@ -127,6 +145,42 @@ async function applyVerifyExisting(commentsDb: SqlDb, email: string, userId: str
   );
 }
 
+function collectDbClashes(infoRows: UserInfoHit[], oldId: string, email: string): DbClash[] {
+  const clashes: DbClash[] = [];
+  const own = infoRows.find((r) => isOwnRow(r, oldId));
+  if (own) {
+    const existing = normalizeStoredEmail(own.email);
+    if (existing && isFauDeEmail(existing) && existing !== email) {
+      clashes.push({
+        kind: 'same_account_different_fau_email',
+        oldId,
+        userId: own.userId,
+        dbEmail: existing,
+        mappingEmail: email,
+      });
+    }
+  }
+  for (const holder of infoRows) {
+    if (isOwnRow(holder, oldId)) continue;
+    const holderEmail = normalizeStoredEmail(holder.email);
+    if (holderEmail === email || holder.userId.toLowerCase() === email) {
+      clashes.push({
+        kind: 'mapping_email_on_other_account',
+        oldId,
+        userId: own?.userId,
+        mappingEmail: email,
+        otherUserId: holder.userId,
+        otherEmail: holderEmail,
+      });
+    }
+  }
+  return clashes;
+}
+
+function withDbClashes(result: FillOneResult, dbClashes: DbClash[]): FillOneResult {
+  return dbClashes.length ? { ...result, dbClashes } : result;
+}
+
 async function fillOneEmail(params: {
   commentsDb: SqlDb;
   oldId: string;
@@ -144,67 +198,108 @@ async function fillOneEmail(params: {
      WHERE userId = ? OR idmId = ? OR LOWER(TRIM(email)) = ?`,
     [oldId, oldId, email]
   );
+  const rows = infoRows || [];
+  const dbClashes = collectDbClashes(rows, oldId, email);
+  const finish = (result: FillOneResult) => withDbClashes(result, dbClashes);
 
-  const own = (infoRows || []).find((r) => isOwnRow(r, oldId));
-  if (!own) return skipResult(oldId, email, 'no_userInfo_row');
+  const own = rows.find((r) => isOwnRow(r, oldId));
+  if (!own) return finish(skipResult(oldId, email, 'no_userInfo_row'));
 
   const existing = normalizeStoredEmail(own.email);
   if (existing === email) {
     if (isVerifiedFlag(own.isVerified)) {
-      return {
+      return finish({
         oldId,
         email,
         userId: own.userId,
         existingEmail: existing,
         skipped: 'already_filled',
         wouldFill: false,
-      };
+      });
     }
     if (!dryRun) await applyVerifyExisting(commentsDb, email, own.userId);
-    return {
+    return finish({
       oldId,
       email,
       userId: own.userId,
       existingEmail: existing,
       wouldFill: true,
       fillKind: 'mark_verified',
-    };
+    });
   }
 
   if (isVerifiedFlag(own.isVerified)) {
-    return skipResult(oldId, email, 'already_verified', {
-      userId: own.userId,
-      existingEmail: existing || undefined,
-      skipDetail: own.userId,
-    });
+    return finish(
+      skipResult(oldId, email, 'already_verified', {
+        userId: own.userId,
+        existingEmail: existing || undefined,
+        skipDetail: own.userId,
+      })
+    );
   }
 
-  const emailHolder = findEmailHolder(infoRows || [], oldId, email);
+  const emailHolder = findEmailHolder(rows, oldId, email);
   if (emailHolder) {
-    return skipResult(oldId, email, 'email_taken_by_other_account', {
-      userId: own.userId,
-      existingEmail: existing || undefined,
-      skipDetail: emailHolder.userId,
-    });
+    return finish(
+      skipResult(oldId, email, 'email_taken_by_other_account', {
+        userId: own.userId,
+        existingEmail: existing || undefined,
+        skipDetail: emailHolder.userId,
+      })
+    );
   }
 
   if (existing && isFauDeEmail(existing)) {
-    return skipResult(oldId, email, 'keep_fau_de_mismatch', {
-      userId: own.userId,
-      existingEmail: existing,
-      skipDetail: `${existing} vs ${email}`,
-    });
+    return finish(
+      skipResult(oldId, email, 'keep_fau_de_mismatch', {
+        userId: own.userId,
+        existingEmail: existing,
+        skipDetail: `${existing} vs ${email}`,
+      })
+    );
   }
 
   const fillKind: FillKind = existing ? 'overwrite_non_fau' : 'empty';
   if (!dryRun) await applyEmailUpdate(commentsDb, email, own.userId);
-  return {
+  return finish({
     oldId,
     email,
     userId: own.userId,
     existingEmail: existing || undefined,
     wouldFill: true,
     fillKind,
+  });
+}
+
+function printDbClashes(results: FillOneResult[]) {
+  const sameAccount: Extract<DbClash, { kind: 'same_account_different_fau_email' }>[] = [];
+  const otherAccount: Extract<DbClash, { kind: 'mapping_email_on_other_account' }>[] = [];
+  for (const result of results) {
+    for (const clash of result.dbClashes ?? []) {
+      if (clash.kind === 'same_account_different_fau_email') sameAccount.push(clash);
+      else otherAccount.push(clash);
+    }
+  }
+  sameAccount.sort((a, b) => a.dbEmail.localeCompare(b.dbEmail) || a.oldId.localeCompare(b.oldId));
+  otherAccount.sort((a, b) => a.mappingEmail.localeCompare(b.mappingEmail) || a.oldId.localeCompare(b.oldId));
+
+  console.log(`\nCSV vs database clashes (@fau.de only): ${sameAccount.length + otherAccount.length}`);
+  console.log(`  same account, different @fau.de email: ${sameAccount.length}`);
+  for (const clash of sameAccount) {
+    console.log(
+      `    ${clash.dbEmail}  (user ${clash.userId} / ${clash.oldId})  mapping ${clash.mappingEmail}`
+    );
+  }
+  console.log(`  mapping @fau.de email already on another account: ${otherAccount.length}`);
+  for (const clash of otherAccount) {
+    console.log(
+      `    ${clash.mappingEmail}  csv ${clash.oldId}  db user ${clash.otherUserId} (${clash.otherEmail || 'no email'})`
+    );
+  }
+  return {
+    dbClashCount: sameAccount.length + otherAccount.length,
+    sameAccountFauClashes: sameAccount,
+    mappingEmailOnOtherAccount: otherAccount,
   };
 }
 
@@ -256,11 +351,8 @@ export async function fillIdmEmailsFromMapping() {
   console.log(
     apply ? 'FILL_IDM_EMAIL_APPLY=1 — writing emails' : 'Dry run — set FILL_IDM_EMAIL_APPLY=1 to apply'
   );
-  console.log(`Mappings with a single email: ${mappingLoad.mapping.size}`);
-  console.log(`Conflicting Login values skipped: ${mappingLoad.conflicts.length}`);
-  for (const c of mappingLoad.conflicts) {
-    console.log(`  conflict ${c.idmId} → ${c.emails.join(' | ')}`);
-  }
+  console.log(`CSV files (including subdirectories): ${mappingLoad.files.length}`);
+  console.log(`Mappings: ${mappingLoad.mapping.size}`);
 
   const filled: FillOneResult[] = [];
   const skipped: FillOneResult[] = [];
@@ -301,6 +393,8 @@ export async function fillIdmEmailsFromMapping() {
     console.log(`  ${reason}: ${n}`);
   }
 
+  const dbClashReport = printDbClashes([...filled, ...skipped]);
+
   const taken = skipped.filter((s) => s.skipped === 'email_taken_by_other_account');
   for (const s of taken.slice(0, 30)) {
     console.log(`  skip ${s.oldId} → ${s.email} (taken by ${s.skipDetail ?? ''})`);
@@ -336,8 +430,9 @@ export async function fillIdmEmailsFromMapping() {
   const report = {
     generatedAt: new Date().toISOString(),
     apply,
+    csvFiles: mappingLoad.files,
     mappingCount: mappingLoad.mapping.size,
-    conflicts: mappingLoad.conflicts,
+    ...dbClashReport,
     filledEmptyCount: emptyFills.length,
     markedVerifiedCount: markedVerified.length,
     skipCounts,
