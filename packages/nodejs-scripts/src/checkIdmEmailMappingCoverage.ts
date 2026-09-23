@@ -5,13 +5,13 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
 import mysql from 'serverless-mysql';
 
-/** Same rule as `isFauId` in `@alea/utils`. */
+/** IdM-shaped id that still needs a mapping. `fake_xxx` test logins are ignored. */
 export function isIdmUserId(id: string | null | undefined): boolean {
-  return !!id && id.length === 8 && !id.includes('@');
+  return !!id && id.length === 8 && !id.includes('@') && !id.startsWith('fake_');
 }
 
 const IDM_SQL = (col: string) =>
-  `${col} IS NOT NULL AND TRIM(${col}) <> '' AND CHAR_LENGTH(TRIM(${col})) = 8 AND TRIM(${col}) NOT LIKE '%@%'`;
+  `${col} IS NOT NULL AND TRIM(${col}) <> '' AND CHAR_LENGTH(TRIM(${col})) = 8 AND TRIM(${col}) NOT LIKE '%@%' AND TRIM(${col}) NOT LIKE 'fake_%'`;
 
 const ADDITIONAL_MAPPING_FILE = 'additional_mappings.csv';
 const USERINFO_SOURCE_KEY = 'comments.userInfo.userId';
