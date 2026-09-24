@@ -6,7 +6,7 @@ import {
   learningObjects as flamsLearningObjects,
 } from '@flexiformal/ftml-backend';
 import axios from 'axios';
-import { createSafeFlamsQuery } from './flams-query-creator';
+import { buildUriSubstringSearchQuery, createSafeFlamsQuery } from './flams-query-creator';
 
 export async function batchGradeHex(
   submissions: [string, (FTML.ProblemResponse | undefined)[]][]
@@ -131,24 +131,6 @@ function createUriParamMapping(uris: string[], prefix = DEFAULT_URI_PARAM_PREFIX
   );
 }
 
-function buildSearchUriQuery(parts: string[]): string {
-  if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
-
-  const filterConditions = parts
-    .map(
-      (_part, idx) =>
-        `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE("${DEFAULT_URI_PARAM_PREFIX}${idx}")))`
-    )
-    .join('.\n  ');
-
-  return `
-SELECT DISTINCT ?uri WHERE {
-  ?uri ?r ?o.
-  ${filterConditions}
-}
-LIMIT 60`;
-}
-
 export async function searchUriUsingSubstr(input: string) {
   if (!input) return [];
   const parts = input
@@ -157,8 +139,9 @@ export async function searchUriUsingSubstr(input: string) {
     .filter((part) => part.length > 0);
   if (!parts.length) return [];
 
-  const query = buildSearchUriQuery(parts);
-  const results = await getParameterizedQueryResults(query, createUriParamMapping(parts));
+  // The typed text is a substring of a URI, not an FTML URI, so it is not a _uri_ parameter.
+  const query = buildUriSubstringSearchQuery(parts);
+  const results = await getParameterizedQueryResults(query);
   return results?.results?.bindings.map((binding) => binding['uri']?.value) ?? [];
 }
 

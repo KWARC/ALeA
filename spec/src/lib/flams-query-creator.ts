@@ -17,10 +17,31 @@ export function findAllUriParams(query: string) {
   return { multiParamNames: [...multiParamNames], singleParamNames: [...singleParamNames] };
 }
 
-function encodeSpecialChars(value: string) {
-  return value.replace(/ /g, '%20');
+// A search box submits a substring, not an FTML URI. Keep it out of rdfEncodeUri
+// and insert it as a SPARQL string literal.
+export function sparqlStringLiteral(value: string): string {
+  const escaped = value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+  return `"${escaped}"`;
 }
-const useRdfEncodeUri = process.env['NEXT_PUBLIC_USE_RDF_ENCODE_URI'] !== 'false';
+
+export function buildUriSubstringSearchQuery(parts: string[]): string {
+  if (parts.length === 0) return `SELECT DISTINCT ?uri WHERE { ?uri ?r ?o. } LIMIT 60`;
+
+  const filterConditions = parts
+    .map((part) => `FILTER(CONTAINS(LCASE(STR(?uri)), LCASE(${sparqlStringLiteral(part)})))`)
+    .join('.\n  ');
+
+  return `
+SELECT DISTINCT ?uri WHERE {
+  ?uri ?r ?o.
+  ${filterConditions}
+}
+LIMIT 60`;
+}
 
 // This function creates a FLAMS query from a given query and parameters.
 // Single query parameters expect a string value, and are replaced with their values. `<>` or `"` are retained
@@ -31,15 +52,12 @@ const useRdfEncodeUri = process.env['NEXT_PUBLIC_USE_RDF_ENCODE_URI'] !== 'false
 // Eg. parameterizedQuery: `VALUES ?uri { <_multiuri_sections> }` and uriParams: { _multiuri_sections: ['uri1', 'uri2', 'uri3'] }
 // returns `VALUES ?uri { <uri1> <uri2> <uri3> }`
 //
-// The optional `useRdfEncodeUri` flag controls whether URIs are encoded using `rdfEncodeUri`
-// from `@flexiformal/ftml` (when true) or a minimal space-encoding function (when false / omitted).
 export function createSafeFlamsQuery(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]>
 ) {
   let result = parameterizedQuery;
 
-  const encodeUriFn = useRdfEncodeUri ? rdfEncodeUri : encodeSpecialChars;
   // Replace multiple URI parameters
   result = result.replace(MULTIPLE_URI_PARAM_REGEX, (match, paramName) => {
     const value = uriParams[paramName];
@@ -47,7 +65,7 @@ export function createSafeFlamsQuery(
       console.warn(`Multi URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return value.map((uri) => `${match[0]}${encodeUriFn(uri)}${match.at(-1)}`).join(' ');
+    return value.map((uri) => `${match[0]}${rdfEncodeUri(uri)}${match.at(-1)}`).join(' ');
   });
 
   // Replace single URI parameters
@@ -57,7 +75,7 @@ export function createSafeFlamsQuery(
       console.warn(`Single URI parameter [${paramName}] used but it is not provided in params.`);
       return match;
     }
-    return `${match[0]}${encodeUriFn(value)}${match.at(-1)}`;
+    return `${match[0]}${rdfEncodeUri(value)}${match.at(-1)}`;
   });
 
   return result;

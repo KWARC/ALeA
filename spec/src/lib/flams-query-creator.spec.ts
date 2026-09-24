@@ -1,4 +1,7 @@
-import { createSafeFlamsQuery } from './flams-query-creator';
+import {
+  buildUriSubstringSearchQuery,
+  createSafeFlamsQuery,
+} from './flams-query-creator';
 
 describe('createFlamsQuery', () => {
   describe('single URI parameters', () => {
@@ -214,5 +217,26 @@ describe('createFlamsQuery', () => {
       expect(result).toContain('<http://mathhub.info?a=smglom&p=mod&m=system&s=section2>');
       expect(result).not.toContain('<_multiuri_section_uris>');
     });
+  });
+});
+
+describe('buildUriSubstringSearchQuery', () => {
+  it('inserts the typed text as a string literal', () => {
+    const result = buildUriSubstringSearchQuery(['course']);
+    expect(result).toContain('LCASE("course")');
+    expect(result).not.toContain('_uri_param');
+    expect(result).not.toContain('undefined');
+  });
+
+  it('keeps spaces in the search text', () => {
+    const result = buildUriSubstringSearchQuery(['information', 'processing']);
+    expect(result).toContain('LCASE("information")');
+    expect(result).toContain('LCASE("processing")');
+    expect(result).not.toContain('%20');
+  });
+
+  it('escapes quotes in the search text', () => {
+    const result = buildUriSubstringSearchQuery(['say "hi"']);
+    expect(result).toContain('LCASE("say \\"hi\\"")');
   });
 });
