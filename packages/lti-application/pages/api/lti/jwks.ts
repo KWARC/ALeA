@@ -11,7 +11,7 @@ export default function handler(_req: NextApiRequest, res: NextApiResponse) {
     keys: [
       {
         ...jwk,
-        kid: process.env.LTI_TOOL_KEY_ID ?? 'hello-world-key',
+        kid: process.env.LTI_TOOL_KEY_ID ?? 'alea-lti-2026',
         alg: 'RS256',
         use: 'sig',
       },
