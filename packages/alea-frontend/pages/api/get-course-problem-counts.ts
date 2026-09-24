@@ -18,8 +18,8 @@ if (!globalCache.COURSE_CACHE) {
 const CACHE: Map<string, CourseCacheInfo> = globalCache.COURSE_CACHE;
 
 function isCacheValid(cache: CourseCacheInfo) {
-  const HOURS_6 = 1000 * 60 * 60 * 6;
-  return Date.now() - cache.lastUpdatedTs_ms < HOURS_6;
+  const HOURS_1 = 1000 * 60 * 60 * 1;
+  return Date.now() - cache.lastUpdatedTs_ms < HOURS_1;
 }
 
 export async function getCourseProblemsBySection(courseId: string) {
