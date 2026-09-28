@@ -10,7 +10,8 @@ import { getAllCoursesFromDb } from '../get-all-courses';
 import { lmpRedirect } from '../lmp-redirect';
 
 export const EXCLUDED_CHAPTERS = ['Preface', 'Administrativa', 'Resources'];
-const CARDS_CACHE: { [courseId: string]: CourseCards } = {};
+const CARDS_CACHE_VALID_FOR_MS = 60 * 60 * 1000; // 1 hour
+const CARDS_CACHE: { [courseId: string]: { cards: CourseCards; cacheCreatedMs: number } } = {};
 
 interface CourseCards {
   [sectionTitle: string]: {
@@ -87,10 +88,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!CARDS_CACHE[courseId]) {
-    CARDS_CACHE[courseId] = await getCardsBySection(courseInfo.notes);
+  const cachedCards = CARDS_CACHE[courseId];
+  if (!cachedCards || Date.now() - cachedCards.cacheCreatedMs > CARDS_CACHE_VALID_FOR_MS) {
+    CARDS_CACHE[courseId] = {
+      cards: await getCardsBySection(courseInfo.notes),
+      cacheCreatedMs: Date.now(),
+    };
   }
-  const cards = CARDS_CACHE[courseId];
+  const cards = CARDS_CACHE[courseId].cards;
 
   const conceptUris: string[] = [];
   for (const chapter of Object.keys(cards)) {

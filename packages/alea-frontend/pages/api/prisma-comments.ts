@@ -1,14 +1,14 @@
 import { PrismaClient } from '@prisma/comments-client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
-function getCommentsDatabaseUrl(): string {
+function getCommentsDatabaseConfig() {
   const host = process.env.MYSQL_HOST;
   const port = process.env.MYSQL_PORT;
   const user = process.env.MYSQL_USER;
   const password = process.env.MYSQL_PASSWORD;
   const database = process.env.MYSQL_COMMENTS_DATABASE;
 
-  return `mysql://${user}:${password}@${host}:${port}/${database}`;
+  return { host, port: Number(port), user, password, database, timezone: 'Z' };
 }
 
 function serializeBigInt(obj: any): any {
@@ -69,7 +69,7 @@ const globalTransform = async ({ args, query }: any) => {
 };
 
 function createCommentsDbClient() {
-  const adapter = new PrismaMariaDb(getCommentsDatabaseUrl());
+  const adapter = new PrismaMariaDb(getCommentsDatabaseConfig());
   const baseClient = new PrismaClient({ adapter });
 
   return baseClient.$extends({
