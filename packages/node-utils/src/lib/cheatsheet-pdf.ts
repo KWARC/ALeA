@@ -150,17 +150,6 @@ function cropForRotation(
   return { left: 0, bottom: 0, right: width, top: height / 2 };
 }
 
-function loadAleaLogo(): Buffer | undefined {
-  const candidates = [
-    path.resolve(process.cwd(), 'public/alea-logo.png'),
-    path.resolve(process.cwd(), 'packages/alea-frontend/public/alea-logo.png'),
-  ];
-  for (const logoPath of candidates) {
-    if (fs.existsSync(logoPath)) return fs.readFileSync(logoPath);
-  }
-  return undefined;
-}
-
 function drawPageFooter(
   page: PDFPage,
   font: PDFFont,
@@ -199,7 +188,8 @@ export async function mergeCheatsheets(
   qrImage: string,
   pdfBuffers: Buffer[]
 ): Promise<Buffer> {
-  const logoImage = loadAleaLogo();
+  const logoPath = path.resolve(process.cwd(), 'public/alea-logo.png');
+  const logoImage = fs.readFileSync(logoPath);
   const headerBuffer = await new Promise<Buffer>((resolve) => {
     const buffers: Buffer[] = [];
     const PAGE_MARGIN = 10;

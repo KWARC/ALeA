@@ -198,17 +198,17 @@ export async function generateCheatsheetPrintPack() {
   const courseId = process.env.COURSE_ID;
   const instanceId = process.env.INSTANCE_ID;
   const courseName = process.env.COURSE_NAME || courseId || '';
-  const cheatsheetsDir = process.env.CHEATSHEETS_DIR;
   const commentsDbName = process.env.MYSQL_COMMENTS_DATABASE;
 
   if (!universityId || !courseId || !instanceId) {
     console.error('Set UNIVERSITY_ID, COURSE_ID, and INSTANCE_ID');
     process.exit(1);
   }
-  if (!cheatsheetsDir) {
+  if (!process.env.CHEATSHEETS_DIR) {
     console.error('CHEATSHEETS_DIR is not configured');
     process.exit(1);
   }
+  const cheatsheetsDir = path.resolve(process.env.CHEATSHEETS_DIR);
   if (!process.env.CHEATSHEET_QR_SECRET) {
     console.error('CHEATSHEET_QR_SECRET is not set');
     process.exit(1);
@@ -216,6 +216,9 @@ export async function generateCheatsheetPrintPack() {
   if (!commentsDbName) {
     console.error('MYSQL_COMMENTS_DATABASE is not set');
     process.exit(1);
+  }
+  if (fs.existsSync(join(process.cwd(), 'packages/alea-frontend/public/alea-logo.png'))) {
+    process.chdir(join(process.cwd(), 'packages/alea-frontend'));
   }
 
   const db = createDb(commentsDbName);
