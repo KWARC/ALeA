@@ -1,6 +1,4 @@
 import { createHmac } from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import {
   degrees,
   PDFDocument as PdfLibDocument,
@@ -85,9 +83,11 @@ export function drawHeader(
   qrImage: string,
   headerTop: number,
   headerHeight: number,
-  logoImage?: Buffer
+  options?: { examCode?: string; showScanNote?: boolean }
 ) {
   const { width } = doc.page;
+  const examCode = options?.examCode;
+  const showScanNote = options?.showScanNote !== false;
 
   const LEFT_X = 25;
   const CONTENT_TOP = headerTop + 30;
@@ -98,7 +98,7 @@ export function drawHeader(
   const qrY = CONTENT_TOP - 20;
   doc.rect(10, headerTop, width - 20, headerHeight).stroke();
   const textWidth = qrX - LEFT_X - 20;
-  doc.fontSize(16);
+  doc.fontSize(16).fillColor('#000');
   let y = CONTENT_TOP;
   rows.forEach(([label, value]) => {
     const text = `${label}: ${value}`;
@@ -111,7 +111,13 @@ export function drawHeader(
     y += textHeight + ROW_GAP;
   });
 
-  if (qrImage) {
+  if (examCode) {
+    doc.fontSize(96).fillColor('#000');
+    doc.text(examCode, qrX, qrY + 40, {
+      width: QR_SIZE,
+      align: 'center',
+    });
+  } else if (qrImage) {
     try {
       const base64Data = qrImage.replace(/^data:image\/png;base64,/, '');
       const imageBuffer = Buffer.from(base64Data, 'base64');
@@ -121,22 +127,17 @@ export function drawHeader(
     }
   }
 
-  if (logoImage) {
-    const LOGO_WIDTH = 100;
-    const LOGO_TOP = qrY + QR_SIZE + 8;
-    const logoX = (width - LOGO_WIDTH) / 2;
-    doc.image(logoImage, logoX, LOGO_TOP, { width: LOGO_WIDTH });
+  if (showScanNote) {
+    const note =
+      'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
+
+    doc.fontSize(10).fillColor('red');
+
+    doc.text(note, 20, headerTop + headerHeight - 40, {
+      width: width - 40,
+      align: 'center',
+    });
   }
-
-  const note =
-    'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
-
-  doc.fontSize(10).fillColor('red');
-
-  doc.text(note, 20, headerTop + headerHeight - 40, {
-    width: width - 40,
-    align: 'center',
-  });
 }
 
 function cropForRotation(
@@ -186,10 +187,10 @@ function drawPageFooter(
 export async function mergeCheatsheets(
   fields: CheatsheetFields,
   qrImage: string,
-  pdfBuffers: Buffer[]
+  pdfBuffers: Buffer[],
+  options?: { examCode?: string }
 ): Promise<Buffer> {
-  const logoPath = path.resolve(process.cwd(), 'public/alea-logo.png');
-  const logoImage = fs.readFileSync(logoPath);
+  const examCode = options?.examCode;
   const headerBuffer = await new Promise<Buffer>((resolve) => {
     const buffers: Buffer[] = [];
     const PAGE_MARGIN = 10;
@@ -212,8 +213,13 @@ export async function mergeCheatsheets(
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
     ];
-    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT, logoImage);
-    drawWatermark(doc, fields);
+    drawHeader(doc, rows, examCode ? '' : qrImage, HEADER_TOP, HEADER_HEIGHT, {
+      examCode,
+      showScanNote: !examCode,
+    });
+    if (!examCode) {
+      drawWatermark(doc, fields);
+    }
     doc.end();
   });
 

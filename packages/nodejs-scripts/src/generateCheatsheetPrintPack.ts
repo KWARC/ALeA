@@ -9,7 +9,6 @@ import {
 } from '@alea/utils';
 import {
   buildCheatsheetRosterPdf,
-  buildQrCodeSecure,
   concatPdfBuffers,
   CheatsheetPrintPackManifest,
   CheatsheetPrintPackStudent,
@@ -61,6 +60,19 @@ function createDb(database: string | undefined) {
       password: process.env.MYSQL_PASSWORD,
     },
   });
+}
+
+const EXAM_CODES: Record<string, string> = {
+  'FAU|ai-2|SS26': '013',
+};
+
+function examCodeFor(universityId: string, courseId: string, instanceId: string) {
+  const key = `${universityId}|${courseId}|${instanceId}`;
+  const code = EXAM_CODES[key];
+  if (!code) {
+    throw new Error(`No exam code mapped for ${key}. Add it to EXAM_CODES in generateCheatsheetPrintPack.ts`);
+  }
+  return code;
 }
 
 function enrollmentAclId(courseId: string, instanceId: string) {
@@ -130,6 +142,7 @@ async function mergeStudentPdf(params: {
   courseId: string;
   instanceId: string;
   universityId: string;
+  examCode: string;
   userInfo: Map<string, UserInfoRow>;
 }): Promise<{ student: CheatsheetPrintPackStudent; buffer: Buffer } | { skipped: { userId: string; reason: string } }> {
   const validPaths: string[] = [];
@@ -149,12 +162,6 @@ async function mergeStudentPdf(params: {
     return { skipped: { userId: params.userId, reason: 'No cheat sheet rows' } };
   }
   const studentName = displayName(params.userId, params.userInfo, params.rows[0]?.studentName);
-  const qrImage = await buildQrCodeSecure({
-    mergeId: `${params.universityId}|${params.courseId}|${params.instanceId}|${params.userId}|upto${lastRow.weekId}`,
-  });
-  if (!qrImage) {
-    return { skipped: { userId: params.userId, reason: 'QR generation failed' } };
-  }
   const buffer = await mergeCheatsheets(
     {
       courseName: params.courseName,
@@ -166,8 +173,9 @@ async function mergeStudentPdf(params: {
       createdAt: String(params.rows[0]?.createdAt ?? ''),
       weekId: lastRow.weekId,
     },
-    qrImage,
-    validPaths.map((p) => fs.readFileSync(p))
+    '',
+    validPaths.map((p) => fs.readFileSync(p)),
+    { examCode: params.examCode }
   );
   return {
     student: {
@@ -209,17 +217,11 @@ export async function generateCheatsheetPrintPack() {
     process.exit(1);
   }
   const cheatsheetsDir = path.resolve(process.env.CHEATSHEETS_DIR);
-  if (!process.env.CHEATSHEET_QR_SECRET) {
-    console.error('CHEATSHEET_QR_SECRET is not set');
-    process.exit(1);
-  }
   if (!commentsDbName) {
     console.error('MYSQL_COMMENTS_DATABASE is not set');
     process.exit(1);
   }
-  if (fs.existsSync(join(process.cwd(), 'packages/alea-frontend/public/alea-logo.png'))) {
-    process.chdir(join(process.cwd(), 'packages/alea-frontend'));
-  }
+  const examCode = examCodeFor(universityId, courseId, instanceId);
 
   const db = createDb(commentsDbName);
   try {
@@ -288,6 +290,7 @@ export async function generateCheatsheetPrintPack() {
         courseId,
         instanceId,
         universityId,
+        examCode,
         userInfo,
       });
       if ('skipped' in result) {
