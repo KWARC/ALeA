@@ -1,3 +1,4 @@
+import { generateCheatsheetPrintPack } from './generateCheatsheetPrintPack';
 import { addLectureSchedule } from './addLectureSchedule';
 import { checkIdmEmailMappingCoverage } from './checkIdmEmailMappingCoverage';
 import { currentSemSetupScript } from './currentSemSetup';
@@ -37,6 +38,12 @@ switch (process.env.SCRIPT_NAME) {
     break;
   case 'wipeAnonAccounts':
     wipeAnonAccounts().catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+    break;
+  case 'generateCheatsheetPrintPack':
+    generateCheatsheetPrintPack().catch((err) => {
       console.error(err);
       process.exit(1);
     });

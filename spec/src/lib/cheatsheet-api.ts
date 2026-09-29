@@ -84,3 +84,55 @@ export async function getCheatsheetUploadWindow(
   });
   return resp.data as CheatsheetUploadWindowResponse;
 }
+
+export interface CheatsheetPrintPackStudent {
+  userId: string;
+  studentName: string;
+  weekIds: string[];
+  fileName: string;
+}
+
+export interface CheatsheetPrintPackManifest {
+  generatedAt: string;
+  universityId: string;
+  courseId: string;
+  instanceId: string;
+  courseName: string;
+  uploadedCount: number;
+  noUploadCount: number;
+  mergedCount: number;
+  skipped: { userId: string; reason: string }[];
+  students: CheatsheetPrintPackStudent[];
+}
+
+export async function getCheatsheetPrintPack(
+  universityId: string,
+  courseId: string,
+  instanceId: string
+) {
+  const resp = await axios.get('/api/cheatsheet/get-print-pack', {
+    params: { universityId, courseId, instanceId },
+  });
+  return resp.data as CheatsheetPrintPackManifest;
+}
+
+export async function getCheatsheetPrintPackFile(params: {
+  universityId: string;
+  courseId: string;
+  instanceId: string;
+  file: 'combined' | 'roster' | 'student';
+  userId?: string;
+}): Promise<{ blob: Blob; filename?: string }> {
+  const resp = await axios.get('/api/cheatsheet/get-print-pack-file', {
+    params: {
+      universityId: params.universityId,
+      courseId: params.courseId,
+      instanceId: params.instanceId,
+      file: params.file,
+      userId: params.userId,
+    },
+    responseType: 'blob',
+  });
+  const filename = resp.headers['content-disposition']?.match(/filename="?([^"]+)"?/)?.[1];
+  return { blob: resp.data as Blob, filename };
+}

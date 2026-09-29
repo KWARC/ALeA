@@ -1,0 +1,397 @@
+declare module 'pdfkit';
+declare module 'qrcode';
+
+import { createHmac } from 'node:crypto';
+import { degrees, PDFDocument as PdfLibDocument, PDFEmbeddedPage } from 'pdf-lib';
+import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
+
+type PdfKitDoc = InstanceType<typeof PDFDocument>;
+
+export interface CheatsheetFields {
+  courseName: string;
+  courseId: string;
+  instanceId: string;
+  universityId: string;
+  studentName: string;
+  studentId: string;
+  weekId: string;
+  createdAt: string;
+}
+
+export interface CheatsheetRosterRow {
+  name: string;
+  userId: string;
+  uploadCount?: number;
+}
+
+function signPayload(payload: string, secret: string) {
+  return createHmac('sha256', secret).update(payload).digest('hex');
+}
+
+export async function buildQrCodeSecure(
+  data: Record<string, string>
+): Promise<string | null> {
+  const secret = process.env['CHEATSHEET_QR_SECRET'];
+  if (!secret) {
+    console.error('CHEATSHEET_QR_SECRET is not set');
+    return null;
+  }
+  const payload = JSON.stringify(data);
+  const signature = signPayload(payload, secret);
+  const finalPayload = JSON.stringify({ payload, signature });
+  return QRCode.toDataURL(finalPayload);
+}
+
+export function drawWatermark(doc: PdfKitDoc, fields: CheatsheetFields) {
+  const { width, height } = doc.page;
+  const text = `${fields.studentName} | ${fields.studentId} | ${fields.weekId}`;
+
+  doc.save();
+  doc.opacity(0.13);
+  doc.fillColor('#878484');
+  doc.fontSize(14);
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  doc.rotate(-35, { origin: [centerX, centerY] });
+
+  const textWidth = doc.widthOfString(text);
+  const stepX = textWidth + 60;
+  const stepY = 60;
+
+  const diag = Math.hypot(width, height);
+
+  for (let x = -diag; x < diag; x += stepX) {
+    for (let y = -diag; y < diag; y += stepY) {
+      doc.text(text, centerX + x, centerY + y, { lineBreak: false });
+    }
+  }
+
+  doc.restore();
+}
+
+export function drawHeader(
+  doc: PdfKitDoc,
+  rows: [string, string][],
+  qrImage: string,
+  headerTop: number,
+  headerHeight: number
+) {
+  const { width } = doc.page;
+
+  const LEFT_X = 25;
+  const CONTENT_TOP = headerTop + 30;
+  const ROW_GAP = 8;
+
+  const QR_SIZE = 275;
+  const qrX = width - QR_SIZE - 15;
+  const qrY = CONTENT_TOP - 20;
+  doc.rect(10, headerTop, width - 20, headerHeight).stroke();
+  const textWidth = qrX - LEFT_X - 20;
+  doc.fontSize(16);
+  let y = CONTENT_TOP;
+  rows.forEach(([label, value]) => {
+    const text = `${label}: ${value}`;
+    const textHeight = doc.heightOfString(text, {
+      width: textWidth,
+    });
+    doc.text(text, LEFT_X, y, {
+      width: textWidth,
+    });
+    y += textHeight + ROW_GAP;
+  });
+
+  if (qrImage) {
+    try {
+      const base64Data = qrImage.replace(/^data:image\/png;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      doc.image(imageBuffer, qrX, qrY, { width: QR_SIZE });
+    } catch (err) {
+      console.error('QR render failed:', err);
+    }
+  }
+
+  const note =
+    'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
+
+  doc.fontSize(10).fillColor('red');
+
+  doc.text(note, 20, headerTop + headerHeight - 40, {
+    width: width - 40,
+    align: 'center',
+  });
+}
+
+function cropForRotation(
+  rotation: 0 | 90 | 180 | 270,
+  width: number,
+  height: number
+) {
+  if (rotation === 90) return { left: width / 2, bottom: 0, right: width, top: height };
+  if (rotation === 180) return { left: 0, bottom: height / 2, right: width, top: height };
+  if (rotation === 270) return { left: 0, bottom: 0, right: width / 2, top: height };
+  return { left: 0, bottom: 0, right: width, top: height / 2 };
+}
+
+export async function mergeCheatsheets(
+  fields: CheatsheetFields,
+  qrImage: string,
+  pdfBuffers: Buffer[]
+): Promise<Buffer> {
+  const headerBuffer = await new Promise<Buffer>((resolve) => {
+    const buffers: Buffer[] = [];
+    const PAGE_MARGIN = 10;
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: PAGE_MARGIN,
+      autoFirstPage: false,
+    });
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+    doc.addPage();
+    const { height } = doc.page;
+    const HEADER_TOP = PAGE_MARGIN;
+    const HEADER_HEIGHT = (height - PAGE_MARGIN * 2) / 2;
+    const rows: [string, string][] = [
+      ['Course Name', fields.courseName],
+      ['Course Id', fields.courseId],
+      ['Instance Id', fields.instanceId],
+      ['University Id', fields.universityId],
+      ['Student Name', fields.studentName],
+      ['Student Id', fields.studentId],
+      ['Upto Week Of', fields.weekId],
+    ];
+    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
+    drawWatermark(doc, fields);
+    doc.end();
+  });
+
+  const finalDoc = await PdfLibDocument.create();
+  const A4_WIDTH = 595.28;
+  const A4_HEIGHT = 841.89;
+  const HALF_HEIGHT = A4_HEIGHT / 2;
+  const headerPdf = await PdfLibDocument.load(headerBuffer);
+  const headerPage = headerPdf.getPages()[0];
+  const { width: headerWidth, height: headerHeight } = headerPage.getSize();
+  const embeddedHeader = await finalDoc.embedPage(headerPage, {
+    left: 0,
+    bottom: headerHeight / 2,
+    right: headerWidth,
+    top: headerHeight,
+  });
+
+  type ContentHalf = {
+    page: PDFEmbeddedPage;
+    rotation: 0 | 90 | 180 | 270;
+  };
+
+  const contentHalves: ContentHalf[] = [];
+  for (const buffer of pdfBuffers) {
+    const src = await PdfLibDocument.load(buffer);
+    for (const page of src.getPages()) {
+      const { width, height } = page.getSize();
+      const rotation = (((page.getRotation().angle % 360) + 360) % 360) as 0 | 90 | 180 | 270;
+      const crop = cropForRotation(rotation, width, height);
+
+      contentHalves.push({
+        page: await finalDoc.embedPage(page, crop),
+        rotation,
+      });
+    }
+  }
+
+  const drawContentHalf = (
+    targetPage: ReturnType<typeof finalDoc.addPage>,
+    content: ContentHalf,
+    y: number
+  ) => {
+    if (content.rotation === 90) {
+      targetPage.drawPage(content.page, {
+        x: 0,
+        y: y + HALF_HEIGHT,
+        width: HALF_HEIGHT,
+        height: A4_WIDTH,
+        rotate: degrees(270),
+      });
+    } else if (content.rotation === 180) {
+      targetPage.drawPage(content.page, {
+        x: A4_WIDTH,
+        y: y + HALF_HEIGHT,
+        width: A4_WIDTH,
+        height: HALF_HEIGHT,
+        rotate: degrees(180),
+      });
+    } else if (content.rotation === 270) {
+      targetPage.drawPage(content.page, {
+        x: A4_WIDTH,
+        y,
+        width: HALF_HEIGHT,
+        height: A4_WIDTH,
+        rotate: degrees(90),
+      });
+    } else {
+      targetPage.drawPage(content.page, {
+        x: 0,
+        y,
+        width: A4_WIDTH,
+        height: HALF_HEIGHT,
+      });
+    }
+  };
+
+  if (contentHalves.length > 0) {
+    const firstPage = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+    firstPage.drawPage(embeddedHeader, {
+      x: 0,
+      y: HALF_HEIGHT,
+      width: A4_WIDTH,
+      height: HALF_HEIGHT,
+    });
+    drawContentHalf(firstPage, contentHalves[0], 0);
+
+    for (let index = 1; index < contentHalves.length; index += 2) {
+      const page = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+      drawContentHalf(page, contentHalves[index], HALF_HEIGHT);
+      if (contentHalves[index + 1]) {
+        drawContentHalf(page, contentHalves[index + 1], 0);
+      }
+    }
+  }
+  const bytes = await finalDoc.save();
+  return Buffer.from(bytes);
+}
+
+export async function concatPdfBuffers(buffers: Buffer[]): Promise<Buffer> {
+  const out = await PdfLibDocument.create();
+  for (const buffer of buffers) {
+    const src = await PdfLibDocument.load(buffer);
+    const pages = await out.copyPages(src, src.getPageIndices());
+    for (const page of pages) {
+      out.addPage(page);
+    }
+  }
+  return Buffer.from(await out.save());
+}
+
+function sortRosterRows(rows: CheatsheetRosterRow[]) {
+  return [...rows].sort((a, b) => {
+    const nameCmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    if (nameCmp !== 0) return nameCmp;
+    return a.userId.localeCompare(b.userId);
+  });
+}
+
+export function buildCheatsheetRosterPdf(params: {
+  courseName: string;
+  courseId: string;
+  instanceId: string;
+  universityId: string;
+  uploaded: CheatsheetRosterRow[];
+  noUploads: CheatsheetRosterRow[];
+}): Promise<Buffer> {
+  const uploaded = sortRosterRows(params.uploaded);
+  const noUploads = sortRosterRows(params.noUploads);
+
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const doc = new PDFDocument({ size: 'A4', margin: 36, autoFirstPage: true });
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const pageBottom = () => doc.page.height - doc.page.margins.bottom;
+    const contentWidth = () => doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+    const FONT = 8;
+    const HEADER_FONT = 10;
+    const TITLE_FONT = 12;
+    const ROW_H = 12;
+
+    const ensureSpace = (needed: number) => {
+      if (doc.y + needed > pageBottom()) {
+        doc.addPage();
+      }
+    };
+
+    doc.fontSize(TITLE_FONT).fillColor('#000').text('Cheatsheet roster', { align: 'left' });
+    doc.moveDown(0.3);
+    doc.fontSize(FONT).fillColor('#333');
+    doc.text(
+      `${params.courseName} (${params.courseId}) · ${params.instanceId} · ${params.universityId}`
+    );
+    doc.moveDown(0.8);
+
+    const drawTable = (
+      title: string,
+      columns: { key: string; width: number }[],
+      rows: string[][]
+    ) => {
+      ensureSpace(ROW_H * 4);
+      doc.fontSize(HEADER_FONT).fillColor('#000').text(title);
+      doc.moveDown(0.25);
+      const startX = doc.page.margins.left;
+      const totalWidth = contentWidth();
+      const colWidths = columns.map((c) => c.width * totalWidth);
+
+      const drawRow = (cells: string[], isHeader: boolean) => {
+        ensureSpace(ROW_H + 2);
+        const y = doc.y;
+        let x = startX;
+        doc.save();
+        if (isHeader) {
+          doc.rect(startX, y, totalWidth, ROW_H).fill('#eeeeee');
+        }
+        doc.strokeColor('#999').lineWidth(0.4);
+        doc.rect(startX, y, totalWidth, ROW_H).stroke();
+        doc.fontSize(FONT).fillColor('#000');
+        cells.forEach((cell, i) => {
+          const w = colWidths[i];
+          doc.rect(x, y, w, ROW_H).stroke();
+          doc.text(cell, x + 3, y + 2, {
+            width: w - 6,
+            height: ROW_H - 2,
+            ellipsis: true,
+            lineBreak: false,
+          });
+          x += w;
+        });
+        doc.restore();
+        doc.y = y + ROW_H;
+      };
+
+      drawRow(
+        columns.map((c) => c.key),
+        true
+      );
+      if (rows.length === 0) {
+        drawRow(columns.map((_, i) => (i === 0 ? 'None' : '')), false);
+      } else {
+        rows.forEach((row) => drawRow(row, false));
+      }
+      doc.moveDown(1);
+    };
+
+    drawTable(
+      `Students who uploaded (${uploaded.length})`,
+      [
+        { key: 'Name', width: 0.45 },
+        { key: 'Id', width: 0.35 },
+        { key: 'Cheatsheets uploaded', width: 0.2 },
+      ],
+      uploaded.map((r) => [r.name, r.userId, String(r.uploadCount ?? 0)])
+    );
+
+    drawTable(
+      `Enrolled students with no cheatsheet uploads (${noUploads.length})`,
+      [
+        { key: 'Name', width: 0.5 },
+        { key: 'Id', width: 0.5 },
+      ],
+      noUploads.map((r) => [r.name, r.userId])
+    );
+
+    doc.end();
+  });
+}
