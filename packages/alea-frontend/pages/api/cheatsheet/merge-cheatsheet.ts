@@ -2,11 +2,44 @@ import PDFKit from 'pdfkit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
-import { degrees, PDFDocument, PDFEmbeddedPage } from 'pdf-lib';
+import { degrees, PDFDocument, PDFEmbeddedPage, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { CheatsheetFields, drawHeader, drawWatermark } from './create-cheatsheet';
 import { buildQrCodeSecure } from './create-cheatsheet';
 import { resolveTargetUserIdOrsetError } from './get-cheatsheets';
+
+function drawPageFooter(
+  page: PDFPage,
+  font: PDFFont,
+  studentName: string,
+  pageNumber: number,
+  pageCount: number,
+  pageWidth: number,
+  margin: number,
+  y: number
+) {
+  const fontSize = 9;
+  const name =
+    (studentName || '').replace(/[^\u0020-\u007E\u00A0-\u00FF]/g, '').trim() || 'Student';
+  const pageLabel = `${pageNumber} / ${pageCount}`;
+  const color = rgb(0.25, 0.25, 0.25);
+  const pageLabelWidth = font.widthOfTextAtSize(pageLabel, fontSize);
+
+  page.drawText(name, {
+    x: margin,
+    y,
+    size: fontSize,
+    font,
+    color,
+  });
+  page.drawText(pageLabel, {
+    x: pageWidth - margin - pageLabelWidth,
+    y,
+    size: fontSize,
+    font,
+    color,
+  });
+}
 
 export async function mergeCheatsheets(
   fields: CheatsheetFields,
@@ -47,17 +80,20 @@ export async function mergeCheatsheets(
   const A4_HEIGHT = 841.89;
   const PAGE_MARGIN = 20;
   const SHEET_GAP = 14;
+  const FOOTER_FONT_SIZE = 9;
+  const FOOTER_BOTTOM_MARGIN = 24;
+  const contentBottom = FOOTER_BOTTOM_MARGIN + FOOTER_FONT_SIZE + 12;
   const contentWidth = A4_WIDTH - PAGE_MARGIN * 2;
-  const halfHeight = (A4_HEIGHT - PAGE_MARGIN * 2 - SHEET_GAP) / 2;
+  const halfHeight = (A4_HEIGHT - PAGE_MARGIN - contentBottom - SHEET_GAP) / 2;
   const bottomSlot = {
     x: PAGE_MARGIN,
-    y: PAGE_MARGIN,
+    y: contentBottom,
     width: contentWidth,
     height: halfHeight,
   };
   const topSlot = {
     x: PAGE_MARGIN,
-    y: PAGE_MARGIN + halfHeight + SHEET_GAP,
+    y: contentBottom + halfHeight + SHEET_GAP,
     width: contentWidth,
     height: halfHeight,
   };
@@ -138,19 +174,36 @@ export async function mergeCheatsheets(
     }
   };
 
+  const pages: PDFPage[] = [];
   if (contentHalves.length > 0) {
     const firstPage = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+    pages.push(firstPage);
     firstPage.drawPage(embeddedHeader, topSlot);
     drawContentHalf(firstPage, contentHalves[0], bottomSlot);
 
     for (let index = 1; index < contentHalves.length; index += 2) {
       const page = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+      pages.push(page);
       drawContentHalf(page, contentHalves[index], topSlot);
       if (contentHalves[index + 1]) {
         drawContentHalf(page, contentHalves[index + 1], bottomSlot);
       }
     }
   }
+
+  const font = await finalDoc.embedFont(StandardFonts.HelveticaBold);
+  pages.forEach((page, index) => {
+    drawPageFooter(
+      page,
+      font,
+      fields.studentName,
+      index + 1,
+      pages.length,
+      A4_WIDTH,
+      PAGE_MARGIN,
+      FOOTER_BOTTOM_MARGIN
+    );
+  });
   const bytes = await finalDoc.save();
   return Buffer.from(bytes);
 }
