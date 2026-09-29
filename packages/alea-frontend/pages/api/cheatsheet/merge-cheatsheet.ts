@@ -34,7 +34,6 @@ export async function mergeCheatsheets(
       ['University Id', fields.universityId],
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
-      ['Upto Week Of', fields.weekId],
     ];
     drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
     drawWatermark(doc, fields);
