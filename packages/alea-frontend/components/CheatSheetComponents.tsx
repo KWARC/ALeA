@@ -589,7 +589,7 @@ export function CheatsheetPrintPackCard({
           {students.length > 0 && (
             <Box
               sx={{
-                maxHeight: 220,
+                maxHeight: 550,
                 overflowY: 'auto',
                 border: '1px solid',
                 borderColor: 'divider',
