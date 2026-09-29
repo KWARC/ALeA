@@ -293,21 +293,28 @@ export function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}${expiry}${path}`;
 }
 
-export function downloadFile(data: any, fileName: string, fileType: string) {
-  // Create a blob with the data we want to download as a file
-  const blob = new Blob([data], { type: fileType });
-  // Create an anchor element and dispatch a click event on it
-  // to trigger a download
-  const a = document.createElement('a');
-  a.download = fileName;
-  a.href = window.URL.createObjectURL(blob);
-  const clickEvt = new MouseEvent('click', {
-    view: window,
-    bubbles: true,
-    cancelable: true,
-  });
-  a.dispatchEvent(clickEvt);
-  a.remove();
+export function downloadBlob(
+  data: Blob | BlobPart,
+  fileName: string,
+  mimeType = 'application/octet-stream'
+) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+export function downloadFile(data: Blob | BlobPart, fileName: string, fileType: string) {
+  downloadBlob(data, fileName, fileType);
 }
 
 // A "stable" random function generator. Stable because we can provide it a seed.

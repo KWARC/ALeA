@@ -21,6 +21,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -32,8 +33,10 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import MergeTypeIcon from '@mui/icons-material/MergeType';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useMemo, useState } from 'react';
-import { getCheatSheetFile, CheatSheet, UploadWindow } from '@alea/spec';
-import { toWeekdayIndex, WEEKDAYS } from '@alea/utils';
+import { getCheatSheetFile, CheatSheet, UploadWindow, getCheatsheetPrintPack, getCheatsheetPrintPackFile } from '@alea/spec';
+import { downloadBlob, toWeekdayIndex, WEEKDAYS } from '@alea/utils';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export interface DateRangeValue {
   start: string;
@@ -122,6 +125,31 @@ function isImageMime(mime?: string) {
   return typeof mime === 'string' && mime.startsWith('image/');
 }
 
+function toBlob(data: Blob | BlobPart, mimeType: string) {
+  return data instanceof Blob ? data : new Blob([data], { type: mimeType });
+}
+
+async function downloadUploadedCheatSheet(file: { checksum: string }, fallbackFilename: string) {
+  const { blob, filename } = await getCheatSheetFile(file.checksum);
+  downloadBlob(blob, filename ?? fallbackFilename, blob.type || 'application/pdf');
+}
+
+async function previewUploadedCheatSheet(
+  file: CheatSheet,
+  onPreview: (file: CheatSheet) => void,
+  fallbackFilename: string
+) {
+  const { blob, filename } = await getCheatSheetFile(file.checksum);
+  const mimeType = blob.type || 'application/pdf';
+  const url = URL.createObjectURL(toBlob(blob, mimeType));
+  onPreview({
+    ...file,
+    url,
+    mimeType,
+    filename: filename ?? fallbackFilename,
+  } as CheatSheet);
+}
+
 export function FilePreviewDialog({
   file,
   open,
@@ -183,10 +211,7 @@ export function CheatSheetRow({
   const handlePreview = async () => {
     setLoadingPreview(true);
     try {
-      const { blob, filename } = await getCheatSheetFile(file.checksum);
-      const mimeType = blob.type || 'application/pdf';
-      const url = window.URL.createObjectURL(blob);
-      onPreview({ ...file, url, mimeType, filename: filename ?? file.weekId });
+      await previewUploadedCheatSheet(file, onPreview, file.weekId);
     } finally {
       setLoadingPreview(false);
     }
@@ -195,17 +220,7 @@ export function CheatSheetRow({
   const handleDownload = async () => {
     setLoadingDownload(true);
     try {
-      const { blob, filename } = await getCheatSheetFile(file.checksum);
-      const mimeType = blob.type || 'application/pdf';
-      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: mimeType });
-      const url = window.URL.createObjectURL(safeBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename ?? `${file.weekId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      await downloadUploadedCheatSheet(file, `${file.weekId}.pdf`);
     } finally {
       setLoadingDownload(false);
     }
@@ -354,14 +369,11 @@ export function InlineStudentMergeButton({
       if (!res.ok) throw new Error(await res.text());
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cheatsheets-${courseId.replace(/\s+/g, '_')}-${userId}.pdf`;
-      a.click();
-
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `cheatsheets-${courseId.replace(/\s+/g, '_')}-${userId}.pdf`,
+        'application/pdf'
+      );
     } catch (err: any) {
       setError(err?.message ?? 'Merge failed');
     } finally {
@@ -441,6 +453,165 @@ export function InlineStudentMergeButton({
   );
 }
 
+export function CheatsheetPrintPackCard({
+  universityId,
+  courseId,
+  instanceId,
+}: {
+  universityId: string;
+  courseId: string;
+  instanceId: string;
+}) {
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const { data: pack, isLoading } = useQuery({
+    queryKey: ['cheatsheet-print-pack', universityId, courseId, instanceId],
+    enabled: Boolean(universityId && courseId && instanceId),
+    queryFn: async () => {
+      try {
+        return await getCheatsheetPrintPack(universityId, courseId, instanceId);
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 404) return null;
+        throw err;
+      }
+    },
+  });
+
+  const download = async (file: 'combined' | 'roster' | 'student', userId?: string) => {
+    setDownloading(userId ?? file);
+    setError(null);
+    try {
+      const { blob, filename } = await getCheatsheetPrintPackFile({
+        universityId,
+        courseId,
+        instanceId,
+        file,
+        userId,
+      });
+      downloadBlob(
+        blob,
+        filename ?? (file === 'student' ? `${userId}.pdf` : `${file}.pdf`),
+        blob.type || 'application/pdf'
+      );
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Download failed');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        mb: 2,
+        p: 2,
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: 1,
+      }}
+    >
+      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        Print pack
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        Semester-end merged PDFs generated by the print-pack script.
+      </Typography>
+      {isLoading && <CircularProgress size={22} />}
+      {!isLoading && !pack && (
+        <Alert severity="info">
+          No print pack on the server yet. Run generateCheatsheetPrintPack for this course instance.
+        </Alert>
+      )}
+      {pack && (
+        <>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Generated {new Date(pack.generatedAt).toLocaleString()} · {pack.mergedCount} merged
+            student PDF{pack.mergedCount !== 1 ? 's' : ''} · {pack.uploadedCount} uploaded ·{' '}
+            {pack.noUploadCount} enrolled with no uploads
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={downloading === 'combined' ? <CircularProgress size={14} /> : <DownloadIcon />}
+              disabled={Boolean(downloading) || pack.mergedCount === 0}
+              onClick={() => download('combined')}
+            >
+              Combined PDF
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={downloading === 'roster' ? <CircularProgress size={14} /> : <DownloadIcon />}
+              disabled={Boolean(downloading)}
+              onClick={() => download('roster')}
+            >
+              Roster PDF
+            </Button>
+          </Box>
+          {pack.students.length > 0 && (
+            <Box
+              sx={{
+                maxHeight: 220,
+                overflowY: 'auto',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              {pack.students.map((student) => (
+                <Box
+                  key={student.userId}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                    px: 1.25,
+                    py: 0.75,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {student.studentName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {student.userId} · {student.weekIds.length} week
+                      {student.weekIds.length !== 1 ? 's' : ''}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    disabled={Boolean(downloading)}
+                    onClick={() => download('student', student.userId)}
+                    aria-label={`Download merged cheatsheet for ${student.studentName}`}
+                  >
+                    {downloading === student.userId ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <DownloadIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </>
+      )}
+      {error && (
+        <Typography variant="caption" color="error">
+          {error}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 export function CheatSheetWindowsTable({
   windows,
   files,
@@ -465,15 +636,7 @@ export function CheatSheetWindowsTable({
   const handlePreview = async (file: CheatSheet) => {
     setLoadingId(file.checksum);
     try {
-      const { blob, filename } = await getCheatSheetFile(file.checksum);
-      const mimeType = blob.type || 'application/pdf';
-      const url = window.URL.createObjectURL(blob);
-      onPreview({
-        ...file,
-        url,
-        mimeType,
-        filename: filename ?? 'cheatsheet.pdf',
-      } as CheatSheet);
+      await previewUploadedCheatSheet(file, onPreview, 'cheatsheet.pdf');
     } finally {
       setLoadingId(null);
     }
@@ -482,17 +645,7 @@ export function CheatSheetWindowsTable({
   const handleDownload = async (file: CheatSheet) => {
     setLoadingId(file.checksum);
     try {
-      const { blob, filename } = await getCheatSheetFile(file.checksum);
-      const mimeType = blob.type || 'application/pdf';
-      const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: mimeType });
-      const url = window.URL.createObjectURL(safeBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename ?? 'cheatsheet.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      await downloadUploadedCheatSheet(file, 'cheatsheet.pdf');
     } finally {
       setLoadingId(null);
     }

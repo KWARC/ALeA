@@ -17,6 +17,7 @@ import { CourseNotFound } from '../../../../components/CourseNotFound';
 import CourseMetadata from '../../../../components/instructor-panel/CourseMetadata';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import MainLayout from '../../../../layouts/MainLayout';
+import { CheatsheetPrintPackCard } from '../../../../components/CheatSheetComponents';
 import CheatSheetsPage from './cheatsheet';
 
 interface TabPanelProps {
@@ -91,7 +92,20 @@ function ChosenTab({
     case 'peer-review':
       return <InstructorPeerReviewViewing courseId={courseId} />;
     case 'cheatsheet':
-      return <CheatSheetsPage courseId={courseId} instanceId={instanceId} />;
+      return (
+        <>
+          <CheatsheetPrintPackCard
+            universityId={institutionId}
+            courseId={courseId}
+            instanceId={instanceId}
+          />
+          <CheatSheetsPage
+            courseId={courseId}
+            instanceId={instanceId}
+            universityId={institutionId}
+          />
+        </>
+      );
     case 'syllabus':
       return <CoverageUpdateTab courseId={courseId} instanceId={instanceId} />;
     case 'course-metadata':

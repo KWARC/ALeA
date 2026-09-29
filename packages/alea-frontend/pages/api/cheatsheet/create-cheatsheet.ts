@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PDFDocument from 'pdfkit';
-import QRCode from 'qrcode';
-import crypto from 'crypto';
 import {
   checkIfPostOrSetError,
   executeAndEndSet500OnError,
@@ -18,6 +16,7 @@ import {
   ResourceName,
   toWeekdayIndex,
 } from '@alea/utils';
+import { CheatsheetFields, buildQrCodeSecure, drawHeader, drawWatermark } from '@alea/node-utils';
 import { getUserProfileOrSet500OnError } from '../get-user-profile';
 import { getCheatsheetConfigOrSetError } from './post-cheatsheet';
 import { CheatsheetConfig } from '@alea/spec';
@@ -28,18 +27,8 @@ import {
   getWeekStartFromDate,
 } from './get-cheatsheet-upload-window';
 
-const QR_SECRET = process.env.CHEATSHEET_QR_SECRET;
-
-export interface CheatsheetFields {
-  courseName: string;
-  courseId: string;
-  instanceId: string;
-  universityId: string;
-  studentName: string;
-  studentId: string;
-  weekId: string;
-  createdAt: string;
-}
+export type { CheatsheetFields };
+export { buildQrCodeSecure, drawHeader, drawWatermark };
 
 function validateBody(body: Partial<CheatsheetFields>) {
   const required: (keyof CheatsheetFields)[] = [
@@ -51,106 +40,11 @@ function validateBody(body: Partial<CheatsheetFields>) {
   return required.every((key) => Boolean(body[key]));
 }
 
-function signPayload(payload: string, secret: string) {
-  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
-}
-
-export async function buildQrCodeSecure(data: Record<string, any>): Promise<string | null> {
-  if (!QR_SECRET) {
-    console.error('CHEATSHEET_QR_SECRET is not set');
-    return null;
-  }
-  const payload = JSON.stringify(data);
-  const signature = signPayload(payload, QR_SECRET);
-  const finalPayload = JSON.stringify({ payload, signature });
-  return QRCode.toDataURL(finalPayload);
-}
-
 export function generateWeekIdFromSemesterStart(semesterStart: string) {
   const weekNumber = getCurrentWeekNoFromStartDate(semesterStart);
   return `W${weekNumber}`;
 }
 
-export function drawWatermark(doc: PDFDocument, fields: CheatsheetFields) {
-  const { width, height } = doc.page;
-  const text = `${fields.studentName} | ${fields.studentId} | ${fields.weekId}`;
-
-  doc.save();
-  doc.opacity(0.13);
-  doc.fillColor('#878484');
-  doc.fontSize(14);
-
-  const centerX = width / 2;
-  const centerY = height / 2;
-
-  doc.rotate(-35, { origin: [centerX, centerY] });
-
-  const textWidth = doc.widthOfString(text);
-  const stepX = textWidth + 60;
-  const stepY = 60;
-
-  const diag = Math.sqrt(width * width + height * height);
-
-  for (let x = -diag; x < diag; x += stepX) {
-    for (let y = -diag; y < diag; y += stepY) {
-      doc.text(text, centerX + x, centerY + y, { lineBreak: false });
-    }
-  }
-
-  doc.restore();
-}
-
-export function drawHeader(
-  doc: PDFDocument,
-  rows: [string, string][],
-  qrImage: string,
-  headerTop: number,
-  headerHeight: number
-) {
-  const { width } = doc.page;
-
-  const LEFT_X = 25;
-  const CONTENT_TOP = headerTop + 30;
-  const ROW_GAP = 8;
-
-  const QR_SIZE = 275;
-  const qrX = width - QR_SIZE - 15;
-  const qrY = CONTENT_TOP - 20;
-  doc.rect(10, headerTop, width - 20, headerHeight).stroke();
-  const textWidth = qrX - LEFT_X - 20;
-  doc.fontSize(16);
-  let y = CONTENT_TOP;
-  rows.forEach(([label, value]) => {
-    const text = `${label}: ${value}`;
-    const textHeight = doc.heightOfString(text, {
-      width: textWidth,
-    });
-    doc.text(text, LEFT_X, y, {
-      width: textWidth,
-    });
-    y += textHeight + ROW_GAP;
-  });
-
-  if (qrImage) {
-    try {
-      const base64Data = qrImage.replace(/^data:image\/png;base64,/, '');
-      const imageBuffer = Buffer.from(base64Data, 'base64');
-      doc.image(imageBuffer, qrX, qrY, { width: QR_SIZE });
-    } catch (err) {
-      console.error('QR render failed:', err);
-    }
-  }
-
-  const note =
-    'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
-
-  doc.fontSize(10).fillColor('red');
-
-  doc.text(note, 20, headerTop + headerHeight - 40, {
-    width: width - 40,
-    align: 'center',
-  });
-}
 function drawWriteArea(doc: PDFDocument, startY: number, margin: number) {
   const { width, height } = doc.page;
   const areaHeight = height - startY - margin;

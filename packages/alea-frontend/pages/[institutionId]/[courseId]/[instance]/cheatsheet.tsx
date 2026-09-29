@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../../../lang/utils';
 import { useCurrentUser } from '@alea/react-utils';
+import { downloadBlob } from '@alea/utils';
 import { useRouteValidation } from '../../../../hooks/useRouteValidation';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
@@ -431,15 +432,7 @@ function CheatSheetsContent({
       universityId,
       scope,
     });
-    const safeBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(safeBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename ?? 'cheatsheet.pdf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    downloadBlob(blob, filename ?? 'cheatsheet.pdf', 'application/pdf');
   };
 
   return (
@@ -632,10 +625,12 @@ const CheatsheetsPage = ({
   courseId: propCourseId,
   instanceId: propInstanceId,
   courseName: propCourseName,
+  universityId: propUniversityId,
 }: {
   courseId: string;
   instanceId: string;
   courseName?: string;
+  universityId?: string;
 }) => {
   const isEmbedded = Boolean(propCourseId && propInstanceId);
   const {
@@ -739,7 +734,11 @@ const CheatsheetsPage = ({
   }
 
   return (
-    <CheatSheetsContent {...sharedContentProps} isEmbedded universityId={institutionId ?? ''} />
+    <CheatSheetsContent
+      {...sharedContentProps}
+      isEmbedded
+      universityId={propUniversityId || institutionId || ''}
+    />
   );
 };
 
