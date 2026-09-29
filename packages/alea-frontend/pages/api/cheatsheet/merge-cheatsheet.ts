@@ -45,7 +45,22 @@ export async function mergeCheatsheets(
   const finalDoc = await PDFDocument.create();
   const A4_WIDTH = 595.28;
   const A4_HEIGHT = 841.89;
-  const HALF_HEIGHT = A4_HEIGHT / 2;
+  const PAGE_MARGIN = 20;
+  const SHEET_GAP = 14;
+  const contentWidth = A4_WIDTH - PAGE_MARGIN * 2;
+  const halfHeight = (A4_HEIGHT - PAGE_MARGIN * 2 - SHEET_GAP) / 2;
+  const bottomSlot = {
+    x: PAGE_MARGIN,
+    y: PAGE_MARGIN,
+    width: contentWidth,
+    height: halfHeight,
+  };
+  const topSlot = {
+    x: PAGE_MARGIN,
+    y: PAGE_MARGIN + halfHeight + SHEET_GAP,
+    width: contentWidth,
+    height: halfHeight,
+  };
   const headerPdf = await PDFDocument.load(headerBuffer);
   const headerPage = headerPdf.getPages()[0];
   const { width: headerWidth, height: headerHeight } = headerPage.getSize();
@@ -86,57 +101,53 @@ export async function mergeCheatsheets(
   const drawContentHalf = (
     targetPage: ReturnType<typeof finalDoc.addPage>,
     content: ContentHalf,
-    y: number
+    box: { x: number; y: number; width: number; height: number }
   ) => {
+    const { x, y, width, height } = box;
     if (content.rotation === 90) {
       targetPage.drawPage(content.page, {
-        x: 0,
-        y: y + HALF_HEIGHT,
-        width: HALF_HEIGHT,
-        height: A4_WIDTH,
+        x,
+        y: y + height,
+        width: height,
+        height: width,
         rotate: degrees(270),
       });
     } else if (content.rotation === 180) {
       targetPage.drawPage(content.page, {
-        x: A4_WIDTH,
-        y: y + HALF_HEIGHT,
-        width: A4_WIDTH,
-        height: HALF_HEIGHT,
+        x: x + width,
+        y: y + height,
+        width,
+        height,
         rotate: degrees(180),
       });
     } else if (content.rotation === 270) {
       targetPage.drawPage(content.page, {
-        x: A4_WIDTH,
+        x: x + width,
         y,
-        width: HALF_HEIGHT,
-        height: A4_WIDTH,
+        width: height,
+        height: width,
         rotate: degrees(90),
       });
     } else {
       targetPage.drawPage(content.page, {
-        x: 0,
+        x,
         y,
-        width: A4_WIDTH,
-        height: HALF_HEIGHT,
+        width,
+        height,
       });
     }
   };
 
   if (contentHalves.length > 0) {
     const firstPage = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-    firstPage.drawPage(embeddedHeader, {
-      x: 0,
-      y: HALF_HEIGHT,
-      width: A4_WIDTH,
-      height: HALF_HEIGHT,
-    });
-    drawContentHalf(firstPage, contentHalves[0], 0);
+    firstPage.drawPage(embeddedHeader, topSlot);
+    drawContentHalf(firstPage, contentHalves[0], bottomSlot);
 
     for (let index = 1; index < contentHalves.length; index += 2) {
       const page = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-      drawContentHalf(page, contentHalves[index], HALF_HEIGHT);
+      drawContentHalf(page, contentHalves[index], topSlot);
       if (contentHalves[index + 1]) {
-        drawContentHalf(page, contentHalves[index + 1], 0);
+        drawContentHalf(page, contentHalves[index + 1], bottomSlot);
       }
     }
   }
