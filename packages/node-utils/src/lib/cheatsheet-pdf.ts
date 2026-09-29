@@ -10,6 +10,7 @@ import {
 } from 'pdf-lib';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import { rotationWithUprightCorrection, uprightRotationsForPdf } from './cheatsheet-orientation';
 
 type PdfKitDoc = InstanceType<typeof PDFDocument>;
 
@@ -263,9 +264,15 @@ export async function mergeCheatsheets(
   const contentHalves: ContentHalf[] = [];
   for (const buffer of pdfBuffers) {
     const src = await PdfLibDocument.load(buffer);
-    for (const page of src.getPages()) {
+    const uprightRotations = await uprightRotationsForPdf(buffer);
+    const pages = src.getPages();
+    for (let index = 0; index < pages.length; index++) {
+      const page = pages[index];
       const { width, height } = page.getSize();
-      const rotation = (((page.getRotation().angle % 360) + 360) % 360) as 0 | 90 | 180 | 270;
+      const rotation = rotationWithUprightCorrection(
+        page.getRotation().angle,
+        uprightRotations[index]
+      );
       const crop = cropForRotation(rotation, width, height);
 
       contentHalves.push({
