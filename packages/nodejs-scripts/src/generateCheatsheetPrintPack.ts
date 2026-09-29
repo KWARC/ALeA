@@ -1,7 +1,6 @@
 import { config as loadEnv } from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
-import { join } from 'node:path';
 import mysql from 'serverless-mysql';
 import {
   getResourceId,
@@ -12,6 +11,7 @@ import {
   concatPdfBuffers,
   CheatsheetPrintPackManifest,
   CheatsheetPrintPackStudent,
+  CheatsheetRosterRow,
   getPrintPackDir,
   mergeCheatsheets,
   PRINT_PACK_COMBINED_FILE,
@@ -45,9 +45,16 @@ type UserInfoRow = {
   lastName: string | null;
 };
 
+type ExamRegistration = {
+  userId: string;
+  matriculationNumber: string;
+  firstName: string;
+  lastName: string;
+};
+
 function loadDotenv() {
-  loadEnv({ path: join(process.cwd(), 'packages/alea-frontend/.env.local') });
-  loadEnv({ path: join(process.cwd(), 'packages/nodejs-scripts/.env.local') });
+  loadEnv({ path: path.join(process.cwd(), 'packages/alea-frontend/.env.local') });
+  loadEnv({ path: path.join(process.cwd(), 'packages/nodejs-scripts/.env.local') });
 }
 
 function createDb(database: string | undefined) {
@@ -73,6 +80,52 @@ function examCodeFor(universityId: string, courseId: string, instanceId: string)
     throw new Error(`No exam code mapped for ${key}. Add it to EXAM_CODES in generateCheatsheetPrintPack.ts`);
   }
   return code;
+}
+
+function examRegistrationCsvPath(universityId: string, courseId: string, instanceId: string) {
+  const dir = process.env.EXAM_REGISTRATIONS_DIR || path.join(process.cwd(), 'student_data', 'exam-registrations');
+  return path.join(dir, `${universityId}|${courseId}|${instanceId}.csv`);
+}
+
+function parseExamRegistrationLine(line: string): ExamRegistration | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(',').map((p) => p.trim());
+  if (parts.length < 4) {
+    throw new Error(`Invalid exam registration row (expected matriculation, firstName, lastName, studentId): ${trimmed}`);
+  }
+  const matriculationNumber = parts[0];
+  const userId = parts.at(-1) ?? '';
+  const firstName = parts[1];
+  const lastName = parts.slice(2, -1).join(',');
+  if (!matriculationNumber || !userId) {
+    throw new Error(`Invalid exam registration row (missing matriculation or student id): ${trimmed}`);
+  }
+  return { userId, matriculationNumber, firstName, lastName };
+}
+
+function loadExamRegistrations(csvPath: string): Map<string, ExamRegistration> {
+  if (!fs.existsSync(csvPath)) {
+    throw new Error(`Exam registration CSV not found: ${csvPath}`);
+  }
+  const byUserId = new Map<string, ExamRegistration>();
+  const lines = fs.readFileSync(csvPath, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const row = parseExamRegistrationLine(line);
+    if (!row) continue;
+    if (byUserId.has(row.userId)) {
+      console.warn(`Duplicate student id in exam registration CSV; using last row: ${row.userId}`);
+    }
+    byUserId.set(row.userId, row);
+  }
+  if (byUserId.size === 0) {
+    throw new Error(`Exam registration CSV is empty: ${csvPath}`);
+  }
+  return byUserId;
+}
+
+function examDisplayName(reg: ExamRegistration) {
+  return [reg.firstName, reg.lastName].filter(Boolean).join(' ').trim() || reg.userId;
 }
 
 function enrollmentAclId(courseId: string, instanceId: string) {
@@ -144,6 +197,8 @@ async function mergeStudentPdf(params: {
   universityId: string;
   examCode: string;
   userInfo: Map<string, UserInfoRow>;
+  studentName?: string;
+  matriculationNumber?: string;
 }): Promise<{ student: CheatsheetPrintPackStudent; buffer: Buffer } | { skipped: { userId: string; reason: string } }> {
   const validPaths: string[] = [];
   const weekIds: string[] = [];
@@ -161,7 +216,9 @@ async function mergeStudentPdf(params: {
   if (!lastRow) {
     return { skipped: { userId: params.userId, reason: 'No cheat sheet rows' } };
   }
-  const studentName = displayName(params.userId, params.userInfo, params.rows[0]?.studentName);
+  const studentName =
+    params.studentName ||
+    displayName(params.userId, params.userInfo, params.rows[0]?.studentName);
   const buffer = await mergeCheatsheets(
     {
       courseName: params.courseName,
@@ -175,7 +232,7 @@ async function mergeStudentPdf(params: {
     },
     '',
     validPaths.map((p) => fs.readFileSync(p)),
-    { examCode: params.examCode }
+    { examCode: params.examCode, matriculationNumber: params.matriculationNumber }
   );
   return {
     student: {
@@ -222,11 +279,13 @@ export async function generateCheatsheetPrintPack() {
     process.exit(1);
   }
   const examCode = examCodeFor(universityId, courseId, instanceId);
+  const examCsvPath = examRegistrationCsvPath(universityId, courseId, instanceId);
+  const examRegistrations = loadExamRegistrations(examCsvPath);
+  console.log(`Loaded ${examRegistrations.size} exam registrations from ${examCsvPath}`);
 
   const db = createDb(commentsDbName);
   try {
     const enrolledStudents = await loadEnrolledStudentIds(db, courseId, instanceId);
-    const enrolledSet = new Set(enrolledStudents);
 
     const cheatRows = await db.query<CheatSheetRow[]>(
       `SELECT userId, studentName, fileName, weekId, createdAt
@@ -237,7 +296,7 @@ export async function generateCheatsheetPrintPack() {
     );
     const byUser = groupRowsByUser(cheatRows);
 
-    const allUserIds = new Set([...enrolledStudents, ...byUser.keys()]);
+    const allUserIds = new Set([...enrolledStudents, ...byUser.keys(), ...examRegistrations.keys()]);
     const userInfoRows =
       allUserIds.size === 0
         ? []
@@ -247,23 +306,43 @@ export async function generateCheatsheetPrintPack() {
           );
     const userInfo = new Map(userInfoRows.map((u) => [u.userId, u]));
 
-    const uploadedRows = [];
-    const noUploadRows = [];
-    for (const userId of enrolledStudents) {
-      const name = displayName(userId, userInfo, byUser.get(userId)?.[0]?.studentName);
+    const registeredWithUploads: CheatsheetRosterRow[] = [];
+    const registeredNoUploads: CheatsheetRosterRow[] = [];
+    const unregisteredWithUploads: CheatsheetRosterRow[] = [];
+    const enrolledUnregisteredNoUploads: CheatsheetRosterRow[] = [];
+
+    for (const [userId, reg] of examRegistrations) {
       const count = byUser.get(userId)?.length ?? 0;
+      const name = examDisplayName(reg);
       if (count > 0) {
-        uploadedRows.push({ name, userId, uploadCount: count });
+        registeredWithUploads.push({
+          name,
+          userId,
+          uploadCount: count,
+          matriculationNumber: reg.matriculationNumber,
+        });
       } else {
-        noUploadRows.push({ name, userId });
+        registeredNoUploads.push({
+          name,
+          userId,
+          matriculationNumber: reg.matriculationNumber,
+        });
       }
     }
     for (const [userId, rows] of byUser) {
-      if (enrolledSet.has(userId)) continue;
-      uploadedRows.push({
+      if (examRegistrations.has(userId)) continue;
+      unregisteredWithUploads.push({
         name: displayName(userId, userInfo, rows[0]?.studentName),
         userId,
         uploadCount: rows.length,
+      });
+    }
+    for (const userId of enrolledStudents) {
+      if (examRegistrations.has(userId)) continue;
+      if ((byUser.get(userId)?.length ?? 0) > 0) continue;
+      enrolledUnregisteredNoUploads.push({
+        name: displayName(userId, userInfo),
+        userId,
       });
     }
 
@@ -272,16 +351,21 @@ export async function generateCheatsheetPrintPack() {
     const baseDir = path.resolve(cheatsheetsDir);
     const skipped: { userId: string; reason: string }[] = [];
     const students: CheatsheetPrintPackStudent[] = [];
-    const mergedBuffers: Buffer[] = [];
+    const combinedBuffers: Buffer[] = [];
+
+    const nameFor = (userId: string) => {
+      const reg = examRegistrations.get(userId);
+      if (reg) return examDisplayName(reg);
+      return displayName(userId, userInfo, byUser.get(userId)?.[0]?.studentName);
+    };
 
     const mergeTargets = [...byUser.entries()].sort(([a], [b]) => {
-      const nameA = displayName(a, userInfo, byUser.get(a)?.[0]?.studentName);
-      const nameB = displayName(b, userInfo, byUser.get(b)?.[0]?.studentName);
-      const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+      const cmp = nameFor(a).localeCompare(nameFor(b), undefined, { sensitivity: 'base' });
       return cmp !== 0 ? cmp : a.localeCompare(b);
     });
 
     for (const [userId, rows] of mergeTargets) {
+      const registration = examRegistrations.get(userId);
       const result = await mergeStudentPdf({
         userId,
         rows,
@@ -292,6 +376,8 @@ export async function generateCheatsheetPrintPack() {
         universityId,
         examCode,
         userInfo,
+        studentName: registration ? examDisplayName(registration) : undefined,
+        matriculationNumber: registration?.matriculationNumber,
       });
       if ('skipped' in result) {
         skipped.push(result.skipped);
@@ -301,16 +387,18 @@ export async function generateCheatsheetPrintPack() {
         path.join(packDir, PRINT_PACK_STUDENTS_DIR, result.student.fileName),
         result.buffer
       );
-      mergedBuffers.push(result.buffer);
       students.push(result.student);
+      if (registration) {
+        combinedBuffers.push(result.buffer);
+      }
       console.log(`Merged ${userId} (${result.student.weekIds.length} weeks)`);
     }
 
-    if (mergedBuffers.length > 0) {
-      const combined = await concatPdfBuffers(mergedBuffers);
+    if (combinedBuffers.length > 0) {
+      const combined = await concatPdfBuffers(combinedBuffers);
       fs.writeFileSync(path.join(packDir, PRINT_PACK_COMBINED_FILE), combined);
     } else {
-      console.warn('No merged student PDFs; combined.pdf was not written');
+      console.warn('No exam-registered merged PDFs; combined.pdf was not written');
     }
 
     const roster = await buildCheatsheetRosterPdf({
@@ -318,8 +406,10 @@ export async function generateCheatsheetPrintPack() {
       courseId,
       instanceId,
       universityId,
-      uploaded: uploadedRows,
-      noUploads: noUploadRows,
+      registeredWithUploads,
+      registeredNoUploads,
+      unregisteredWithUploads,
+      enrolledUnregisteredNoUploads,
     });
     fs.writeFileSync(path.join(packDir, PRINT_PACK_ROSTER_FILE), roster);
 
@@ -329,8 +419,11 @@ export async function generateCheatsheetPrintPack() {
       courseId,
       instanceId,
       courseName,
-      uploadedCount: uploadedRows.length,
-      noUploadCount: noUploadRows.length,
+      registeredWithUploadsCount: registeredWithUploads.length,
+      registeredNoUploadsCount: registeredNoUploads.length,
+      unregisteredWithUploadsCount: unregisteredWithUploads.length,
+      enrolledUnregisteredNoUploadsCount: enrolledUnregisteredNoUploads.length,
+      combinedCount: combinedBuffers.length,
       mergedCount: students.length,
       skipped,
       students,
