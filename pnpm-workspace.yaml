@@ -22,6 +22,7 @@ onlyBuiltDependencies:
   - '@sentry/cli'
   - '@swc/core'
   - bcrypt
+  - canvas
   - core-js-pure
   - esbuild
   - less
