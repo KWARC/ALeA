@@ -1,6 +1,3 @@
-declare module 'pdfkit';
-declare module 'qrcode';
-
 import { createHmac } from 'node:crypto';
 import { degrees, PDFDocument as PdfLibDocument, PDFEmbeddedPage } from 'pdf-lib';
 import PDFDocument from 'pdfkit';
@@ -265,11 +262,15 @@ export async function mergeCheatsheets(
 
 export async function concatPdfBuffers(buffers: Buffer[]): Promise<Buffer> {
   const out = await PdfLibDocument.create();
+  const A4: [number, number] = [595.28, 841.89];
   for (const buffer of buffers) {
     const src = await PdfLibDocument.load(buffer);
     const pages = await out.copyPages(src, src.getPageIndices());
     for (const page of pages) {
       out.addPage(page);
+    }
+    if (pages.length % 2 === 1) {
+      out.addPage(A4);
     }
   }
   return Buffer.from(await out.save());
