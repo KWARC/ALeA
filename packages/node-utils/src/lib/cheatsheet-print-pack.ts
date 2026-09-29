@@ -11,6 +11,26 @@ export interface CheatsheetPrintPackStudent {
   studentName: string;
   weekIds: string[];
   fileName: string;
+  matriculationNumber?: string;
+}
+
+export function compareCheatsheetPrintPackStudents(
+  a: CheatsheetPrintPackStudent,
+  b: CheatsheetPrintPackStudent
+) {
+  const matA = a.matriculationNumber?.trim();
+  const matB = b.matriculationNumber?.trim();
+  if (matA && matB) {
+    const matCmp = matA.localeCompare(matB, undefined, { numeric: true, sensitivity: 'base' });
+    if (matCmp !== 0) return matCmp;
+  } else if (matA) {
+    return -1;
+  } else if (matB) {
+    return 1;
+  }
+  const nameCmp = a.studentName.localeCompare(b.studentName, undefined, { sensitivity: 'base' });
+  if (nameCmp !== 0) return nameCmp;
+  return a.userId.localeCompare(b.userId);
 }
 
 export interface CheatsheetPrintPackManifest {

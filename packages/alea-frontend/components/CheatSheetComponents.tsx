@@ -33,7 +33,14 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import MergeTypeIcon from '@mui/icons-material/MergeType';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useMemo, useState } from 'react';
-import { getCheatSheetFile, CheatSheet, UploadWindow, getCheatsheetPrintPack, getCheatsheetPrintPackFile } from '@alea/spec';
+import {
+  getCheatSheetFile,
+  CheatSheet,
+  CheatsheetPrintPackStudent,
+  UploadWindow,
+  getCheatsheetPrintPack,
+  getCheatsheetPrintPackFile,
+} from '@alea/spec';
 import { downloadBlob, toWeekdayIndex, WEEKDAYS } from '@alea/utils';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -453,6 +460,22 @@ export function InlineStudentMergeButton({
   );
 }
 
+function comparePrintPackStudents(a: CheatsheetPrintPackStudent, b: CheatsheetPrintPackStudent) {
+  const matA = a.matriculationNumber?.trim();
+  const matB = b.matriculationNumber?.trim();
+  if (matA && matB) {
+    const matCmp = matA.localeCompare(matB, undefined, { numeric: true, sensitivity: 'base' });
+    if (matCmp !== 0) return matCmp;
+  } else if (matA) {
+    return -1;
+  } else if (matB) {
+    return 1;
+  }
+  const nameCmp = a.studentName.localeCompare(b.studentName, undefined, { sensitivity: 'base' });
+  if (nameCmp !== 0) return nameCmp;
+  return a.userId.localeCompare(b.userId);
+}
+
 export function CheatsheetPrintPackCard({
   universityId,
   courseId,
@@ -477,6 +500,11 @@ export function CheatsheetPrintPackCard({
       }
     },
   });
+
+  const students = useMemo(
+    () => (pack?.students ? [...pack.students].sort(comparePrintPackStudents) : []),
+    [pack?.students]
+  );
 
   const download = async (file: 'combined' | 'roster' | 'student', userId?: string) => {
     setDownloading(userId ?? file);
@@ -558,7 +586,7 @@ export function CheatsheetPrintPackCard({
               Roster PDF
             </Button>
           </Box>
-          {pack.students.length > 0 && (
+          {students.length > 0 && (
             <Box
               sx={{
                 maxHeight: 220,
@@ -568,7 +596,7 @@ export function CheatsheetPrintPackCard({
                 borderRadius: 1,
               }}
             >
-              {pack.students.map((student) => (
+              {students.map((student) => (
                 <Box
                   key={student.userId}
                   sx={{
@@ -587,8 +615,13 @@ export function CheatsheetPrintPackCard({
                       {student.studentName}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {student.userId} · {student.weekIds.length} week
-                      {student.weekIds.length !== 1 ? 's' : ''}
+                      {[
+                        student.matriculationNumber,
+                        student.userId,
+                        `${student.weekIds.length} week${student.weekIds.length !== 1 ? 's' : ''}`,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </Typography>
                   </Box>
                   <IconButton

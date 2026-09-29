@@ -90,6 +90,7 @@ export interface CheatsheetPrintPackStudent {
   studentName: string;
   weekIds: string[];
   fileName: string;
+  matriculationNumber?: string;
 }
 
 export interface CheatsheetPrintPackManifest {

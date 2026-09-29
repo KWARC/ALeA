@@ -9,6 +9,7 @@ import {
 import {
   buildCheatsheetRosterPdf,
   concatPdfBuffers,
+  compareCheatsheetPrintPackStudents,
   compareCheatsheetRosterRows,
   CheatsheetPrintPackManifest,
   CheatsheetPrintPackStudent,
@@ -436,7 +437,13 @@ export async function generateCheatsheetPrintPack() {
       const studentName = registration
         ? examDisplayName(registration)
         : displayName(userId, userInfo, rows[0]?.studentName);
-      students.push({ userId, studentName, weekIds: result.weekIds, fileName });
+      students.push({
+        userId,
+        studentName,
+        weekIds: result.weekIds,
+        fileName,
+        matriculationNumber: registration?.matriculationNumber,
+      });
       if (registration) {
         combinedEntries.push({
           row: rosterRowForUser(userId),
@@ -481,7 +488,7 @@ export async function generateCheatsheetPrintPack() {
       combinedCount: combinedEntries.length,
       mergedCount: students.length,
       skipped,
-      students,
+      students: [...students].sort(compareCheatsheetPrintPackStudents),
     };
     fs.writeFileSync(path.join(packDir, PRINT_PACK_MANIFEST_FILE), JSON.stringify(manifest, null, 2));
     console.log(`Print pack written to ${packDir}`);
