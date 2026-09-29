@@ -2,7 +2,6 @@ overrides:
   canvas: 3.2.3
 
 allowBuilds:
-  '@parcel/watcher': set this to true or false
   '@prisma/engines': true
   '@sentry/cli': true
   '@swc/core': true
