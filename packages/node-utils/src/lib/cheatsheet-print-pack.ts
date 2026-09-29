@@ -19,8 +19,11 @@ export interface CheatsheetPrintPackManifest {
   courseId: string;
   instanceId: string;
   courseName: string;
-  uploadedCount: number;
-  noUploadCount: number;
+  registeredWithUploadsCount: number;
+  registeredNoUploadsCount: number;
+  unregisteredWithUploadsCount: number;
+  enrolledUnregisteredNoUploadsCount: number;
+  combinedCount: number;
   mergedCount: number;
   skipped: { userId: string; reason: string }[];
   students: CheatsheetPrintPackStudent[];
@@ -61,9 +64,13 @@ export function resolveSafeCheatsheetPath(baseDir: string, fileName: string): st
   return filePath;
 }
 
+export function ensurePrintPackDir(packDir: string) {
+  fs.mkdirSync(path.join(packDir, PRINT_PACK_STUDENTS_DIR), { recursive: true });
+}
+
 export function resetPrintPackDir(packDir: string) {
   fs.rmSync(packDir, { recursive: true, force: true });
-  fs.mkdirSync(path.join(packDir, PRINT_PACK_STUDENTS_DIR), { recursive: true });
+  ensurePrintPackDir(packDir);
 }
 
 export function readPrintPackManifest(packDir: string): CheatsheetPrintPackManifest | null {

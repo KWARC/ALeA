@@ -528,16 +528,19 @@ export function CheatsheetPrintPackCard({
       {pack && (
         <>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            Generated {new Date(pack.generatedAt).toLocaleString()} · {pack.mergedCount} merged
-            student PDF{pack.mergedCount !== 1 ? 's' : ''} · {pack.uploadedCount} uploaded ·{' '}
-            {pack.noUploadCount} enrolled with no uploads
+            Generated {new Date(pack.generatedAt).toLocaleString()} · {pack.combinedCount} in
+            combined PDF · {pack.mergedCount} individual PDF
+            {pack.mergedCount !== 1 ? 's' : ''} · {pack.registeredWithUploadsCount} registered with
+            uploads · {pack.registeredNoUploadsCount} registered with no uploads ·{' '}
+            {pack.unregisteredWithUploadsCount} not registered with uploads ·{' '}
+            {pack.enrolledUnregisteredNoUploadsCount} enrolled, not registered, no uploads
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
             <Button
               size="small"
               variant="contained"
               startIcon={downloading === 'combined' ? <CircularProgress size={14} /> : <DownloadIcon />}
-              disabled={Boolean(downloading) || pack.mergedCount === 0}
+              disabled={Boolean(downloading) || pack.combinedCount === 0}
               onClick={() => download('combined')}
             >
               Combined PDF

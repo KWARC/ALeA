@@ -1,6 +1,4 @@
 import { createHmac } from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import {
   degrees,
   PDFDocument as PdfLibDocument,
@@ -12,6 +10,7 @@ import {
 } from 'pdf-lib';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import { rotationWithUprightCorrection, uprightRotationsForPdf } from './cheatsheet-orientation';
 
 type PdfKitDoc = InstanceType<typeof PDFDocument>;
 
@@ -30,6 +29,7 @@ export interface CheatsheetRosterRow {
   name: string;
   userId: string;
   uploadCount?: number;
+  matriculationNumber?: string;
 }
 
 function signPayload(payload: string, secret: string) {
@@ -85,9 +85,12 @@ export function drawHeader(
   qrImage: string,
   headerTop: number,
   headerHeight: number,
-  logoImage?: Buffer
+  options?: { examCode?: string; showScanNote?: boolean; matriculationNumber?: string }
 ) {
   const { width } = doc.page;
+  const examCode = options?.examCode;
+  const showScanNote = options?.showScanNote !== false;
+  const matriculationNumber = options?.matriculationNumber?.trim();
 
   const LEFT_X = 25;
   const CONTENT_TOP = headerTop + 30;
@@ -98,7 +101,7 @@ export function drawHeader(
   const qrY = CONTENT_TOP - 20;
   doc.rect(10, headerTop, width - 20, headerHeight).stroke();
   const textWidth = qrX - LEFT_X - 20;
-  doc.fontSize(16);
+  doc.fontSize(16).fillColor('#000');
   let y = CONTENT_TOP;
   rows.forEach(([label, value]) => {
     const text = `${label}: ${value}`;
@@ -111,7 +114,20 @@ export function drawHeader(
     y += textHeight + ROW_GAP;
   });
 
-  if (qrImage) {
+  if (matriculationNumber) {
+    doc.fontSize(28).fillColor('#000');
+    doc.text(`Matriculation: ${matriculationNumber}`, LEFT_X, y, {
+      width: textWidth,
+    });
+  }
+
+  if (examCode) {
+    doc.fontSize(96).fillColor('#000');
+    doc.text(examCode, qrX, qrY + 40, {
+      width: QR_SIZE,
+      align: 'center',
+    });
+  } else if (qrImage) {
     try {
       const base64Data = qrImage.replace(/^data:image\/png;base64,/, '');
       const imageBuffer = Buffer.from(base64Data, 'base64');
@@ -121,22 +137,17 @@ export function drawHeader(
     }
   }
 
-  if (logoImage) {
-    const LOGO_WIDTH = 100;
-    const LOGO_TOP = qrY + QR_SIZE + 8;
-    const logoX = (width - LOGO_WIDTH) / 2;
-    doc.image(logoImage, logoX, LOGO_TOP, { width: LOGO_WIDTH });
+  if (showScanNote) {
+    const note =
+      'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
+
+    doc.fontSize(10).fillColor('red');
+
+    doc.text(note, 20, headerTop + headerHeight - 40, {
+      width: width - 40,
+      align: 'center',
+    });
   }
-
-  const note =
-    'NOTE: Only the lower box should contain your cheatsheet. The top part is reserved for reference and will not appear after scanning.';
-
-  doc.fontSize(10).fillColor('red');
-
-  doc.text(note, 20, headerTop + headerHeight - 40, {
-    width: width - 40,
-    align: 'center',
-  });
 }
 
 function cropForRotation(
@@ -186,10 +197,11 @@ function drawPageFooter(
 export async function mergeCheatsheets(
   fields: CheatsheetFields,
   qrImage: string,
-  pdfBuffers: Buffer[]
+  pdfBuffers: Buffer[],
+  options?: { examCode?: string; matriculationNumber?: string }
 ): Promise<Buffer> {
-  const logoPath = path.resolve(process.cwd(), 'public/alea-logo.png');
-  const logoImage = fs.readFileSync(logoPath);
+  const examCode = options?.examCode;
+  const matriculationNumber = options?.matriculationNumber;
   const headerBuffer = await new Promise<Buffer>((resolve) => {
     const buffers: Buffer[] = [];
     const PAGE_MARGIN = 10;
@@ -212,8 +224,14 @@ export async function mergeCheatsheets(
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
     ];
-    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT, logoImage);
-    drawWatermark(doc, fields);
+    drawHeader(doc, rows, examCode ? '' : qrImage, HEADER_TOP, HEADER_HEIGHT, {
+      examCode,
+      showScanNote: !examCode,
+      matriculationNumber,
+    });
+    if (!examCode) {
+      drawWatermark(doc, fields);
+    }
     doc.end();
   });
 
@@ -257,9 +275,15 @@ export async function mergeCheatsheets(
   const contentHalves: ContentHalf[] = [];
   for (const buffer of pdfBuffers) {
     const src = await PdfLibDocument.load(buffer);
-    for (const page of src.getPages()) {
+    const uprightRotations = await uprightRotationsForPdf(buffer);
+    const pages = src.getPages();
+    for (let index = 0; index < pages.length; index++) {
+      const page = pages[index];
       const { width, height } = page.getSize();
-      const rotation = (((page.getRotation().angle % 360) + 360) % 360) as 0 | 90 | 180 | 270;
+      const rotation = rotationWithUprightCorrection(
+        page.getRotation().angle,
+        uprightRotations[index]
+      );
       const crop = cropForRotation(rotation, width, height);
 
       contentHalves.push({
@@ -359,12 +383,23 @@ export async function concatPdfBuffers(buffers: Buffer[]): Promise<Buffer> {
   return Buffer.from(await out.save());
 }
 
-function sortRosterRows(rows: CheatsheetRosterRow[]) {
-  return [...rows].sort((a, b) => {
-    const nameCmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-    if (nameCmp !== 0) return nameCmp;
+const ROSTER_SORT_OPTS: Intl.CollatorOptions = { numeric: true, sensitivity: 'base' };
+
+export function compareCheatsheetRosterRows(a: CheatsheetRosterRow, b: CheatsheetRosterRow) {
+  const matA = a.matriculationNumber?.trim();
+  const matB = b.matriculationNumber?.trim();
+  if (matA && matB) {
+    const matCmp = matA.localeCompare(matB, undefined, ROSTER_SORT_OPTS);
+    if (matCmp !== 0) return matCmp;
     return a.userId.localeCompare(b.userId);
-  });
+  }
+  const nameCmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  if (nameCmp !== 0) return nameCmp;
+  return a.userId.localeCompare(b.userId);
+}
+
+function sortRosterRows(rows: CheatsheetRosterRow[]) {
+  return [...rows].sort(compareCheatsheetRosterRows);
 }
 
 export function buildCheatsheetRosterPdf(params: {
@@ -372,11 +407,15 @@ export function buildCheatsheetRosterPdf(params: {
   courseId: string;
   instanceId: string;
   universityId: string;
-  uploaded: CheatsheetRosterRow[];
-  noUploads: CheatsheetRosterRow[];
+  registeredWithUploads: CheatsheetRosterRow[];
+  registeredNoUploads: CheatsheetRosterRow[];
+  unregisteredWithUploads: CheatsheetRosterRow[];
+  enrolledUnregisteredNoUploads: CheatsheetRosterRow[];
 }): Promise<Buffer> {
-  const uploaded = sortRosterRows(params.uploaded);
-  const noUploads = sortRosterRows(params.noUploads);
+  const registeredWithUploads = sortRosterRows(params.registeredWithUploads);
+  const registeredNoUploads = sortRosterRows(params.registeredNoUploads);
+  const unregisteredWithUploads = sortRosterRows(params.unregisteredWithUploads);
+  const enrolledUnregisteredNoUploads = sortRosterRows(params.enrolledUnregisteredNoUploads);
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -458,22 +497,48 @@ export function buildCheatsheetRosterPdf(params: {
     };
 
     drawTable(
-      `Students who uploaded (${uploaded.length})`,
+      `Registered for exam, with cheatsheet submissions (${registeredWithUploads.length})`,
+      [
+        { key: 'Matriculation', width: 0.2 },
+        { key: 'Name', width: 0.35 },
+        { key: 'Id', width: 0.25 },
+        { key: 'Cheatsheets uploaded', width: 0.2 },
+      ],
+      registeredWithUploads.map((r) => [
+        r.matriculationNumber ?? '',
+        r.name,
+        r.userId,
+        String(r.uploadCount ?? 0),
+      ])
+    );
+
+    drawTable(
+      `Registered for exam, no cheatsheet submissions (${registeredNoUploads.length})`,
+      [
+        { key: 'Matriculation', width: 0.25 },
+        { key: 'Name', width: 0.4 },
+        { key: 'Id', width: 0.35 },
+      ],
+      registeredNoUploads.map((r) => [r.matriculationNumber ?? '', r.name, r.userId])
+    );
+
+    drawTable(
+      `Not registered for exam, with cheatsheet submissions (${unregisteredWithUploads.length})`,
       [
         { key: 'Name', width: 0.45 },
         { key: 'Id', width: 0.35 },
         { key: 'Cheatsheets uploaded', width: 0.2 },
       ],
-      uploaded.map((r) => [r.name, r.userId, String(r.uploadCount ?? 0)])
+      unregisteredWithUploads.map((r) => [r.name, r.userId, String(r.uploadCount ?? 0)])
     );
 
     drawTable(
-      `Enrolled students with no cheatsheet uploads (${noUploads.length})`,
+      `Enrolled in ALeA, not registered, no cheatsheets (${enrolledUnregisteredNoUploads.length})`,
       [
         { key: 'Name', width: 0.5 },
         { key: 'Id', width: 0.5 },
       ],
-      noUploads.map((r) => [r.name, r.userId])
+      enrolledUnregisteredNoUploads.map((r) => [r.name, r.userId])
     );
 
     doc.end();

@@ -98,8 +98,11 @@ export interface CheatsheetPrintPackManifest {
   courseId: string;
   instanceId: string;
   courseName: string;
-  uploadedCount: number;
-  noUploadCount: number;
+  registeredWithUploadsCount: number;
+  registeredNoUploadsCount: number;
+  unregisteredWithUploadsCount: number;
+  enrolledUnregisteredNoUploadsCount: number;
+  combinedCount: number;
   mergedCount: number;
   skipped: { userId: string; reason: string }[];
   students: CheatsheetPrintPackStudent[];

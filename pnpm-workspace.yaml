@@ -1,3 +1,6 @@
+overrides:
+  canvas: 3.2.3
+
 allowBuilds:
   '@prisma/engines': true
   '@sentry/cli': true
@@ -22,6 +25,7 @@ onlyBuiltDependencies:
   - '@sentry/cli'
   - '@swc/core'
   - bcrypt
+  - canvas
   - core-js-pure
   - esbuild
   - less
