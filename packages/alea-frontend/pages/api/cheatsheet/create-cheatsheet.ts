@@ -105,7 +105,8 @@ export function drawHeader(
   rows: [string, string][],
   qrImage: string,
   headerTop: number,
-  headerHeight: number
+  headerHeight: number,
+  logoImage?: Buffer
 ) {
   const { width } = doc.page;
 
@@ -139,6 +140,13 @@ export function drawHeader(
     } catch (err) {
       console.error('QR render failed:', err);
     }
+  }
+
+  if (logoImage) {
+    const LOGO_WIDTH = 100;
+    const LOGO_TOP = qrY + QR_SIZE + 8;
+    const logoX = (width - LOGO_WIDTH) / 2;
+    doc.image(logoImage, logoX, LOGO_TOP, { width: LOGO_WIDTH });
   }
 
   const note =

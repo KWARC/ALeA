@@ -13,6 +13,8 @@ export async function mergeCheatsheets(
   qrImage: string,
   pdfBuffers: Buffer[]
 ): Promise<Buffer> {
+  const logoPath = path.resolve(process.cwd(), 'public/alea-logo.png');
+  const logoImage = fs.readFileSync(logoPath);
   const headerBuffer = await new Promise<Buffer>((resolve) => {
     const buffers: Buffer[] = [];
     const PAGE_MARGIN = 10;
@@ -35,7 +37,7 @@ export async function mergeCheatsheets(
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
     ];
-    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
+    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT, logoImage);
     drawWatermark(doc, fields);
     doc.end();
   });
