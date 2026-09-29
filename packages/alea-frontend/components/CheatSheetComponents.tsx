@@ -536,15 +536,18 @@ export function CheatsheetPrintPackCard({
             {pack.enrolledUnregisteredNoUploadsCount} enrolled, not registered, no uploads
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={downloading === 'combined' ? <CircularProgress size={14} /> : <DownloadIcon />}
-              disabled={Boolean(downloading) || pack.combinedCount === 0}
-              onClick={() => download('combined')}
-            >
-              Combined PDF
-            </Button>
+            <Tooltip title="This file is too big. Contact Abhishek Chugh for the PDF.">
+              <span>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<DownloadIcon />}
+                  disabled
+                >
+                  Combined PDF
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               size="small"
               variant="outlined"
