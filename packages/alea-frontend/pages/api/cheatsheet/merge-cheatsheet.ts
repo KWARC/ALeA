@@ -2,17 +2,52 @@ import PDFKit from 'pdfkit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
-import { degrees, PDFDocument, PDFEmbeddedPage } from 'pdf-lib';
+import { degrees, PDFDocument, PDFEmbeddedPage, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 import { CheatsheetFields, drawHeader, drawWatermark } from './create-cheatsheet';
 import { buildQrCodeSecure } from './create-cheatsheet';
 import { resolveTargetUserIdOrsetError } from './get-cheatsheets';
+
+function drawPageFooter(
+  page: PDFPage,
+  font: PDFFont,
+  studentName: string,
+  pageNumber: number,
+  pageCount: number,
+  pageWidth: number,
+  margin: number,
+  y: number
+) {
+  const fontSize = 9;
+  const name =
+    (studentName || '').replace(/[^\u0020-\u007E\u00A0-\u00FF]/g, '').trim() || 'Student';
+  const pageLabel = `${pageNumber} / ${pageCount}`;
+  const color = rgb(0.25, 0.25, 0.25);
+  const pageLabelWidth = font.widthOfTextAtSize(pageLabel, fontSize);
+
+  page.drawText(name, {
+    x: margin,
+    y,
+    size: fontSize,
+    font,
+    color,
+  });
+  page.drawText(pageLabel, {
+    x: pageWidth - margin - pageLabelWidth,
+    y,
+    size: fontSize,
+    font,
+    color,
+  });
+}
 
 export async function mergeCheatsheets(
   fields: CheatsheetFields,
   qrImage: string,
   pdfBuffers: Buffer[]
 ): Promise<Buffer> {
+  const logoPath = path.resolve(process.cwd(), 'public/alea-logo.png');
+  const logoImage = fs.readFileSync(logoPath);
   const headerBuffer = await new Promise<Buffer>((resolve) => {
     const buffers: Buffer[] = [];
     const PAGE_MARGIN = 10;
@@ -34,9 +69,8 @@ export async function mergeCheatsheets(
       ['University Id', fields.universityId],
       ['Student Name', fields.studentName],
       ['Student Id', fields.studentId],
-      ['Upto Week Of', fields.weekId],
     ];
-    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT);
+    drawHeader(doc, rows, qrImage, HEADER_TOP, HEADER_HEIGHT, logoImage);
     drawWatermark(doc, fields);
     doc.end();
   });
@@ -44,7 +78,25 @@ export async function mergeCheatsheets(
   const finalDoc = await PDFDocument.create();
   const A4_WIDTH = 595.28;
   const A4_HEIGHT = 841.89;
-  const HALF_HEIGHT = A4_HEIGHT / 2;
+  const PAGE_MARGIN = 20;
+  const SHEET_GAP = 14;
+  const FOOTER_FONT_SIZE = 9;
+  const FOOTER_BOTTOM_MARGIN = 24;
+  const contentBottom = FOOTER_BOTTOM_MARGIN + FOOTER_FONT_SIZE + 12;
+  const contentWidth = A4_WIDTH - PAGE_MARGIN * 2;
+  const halfHeight = (A4_HEIGHT - PAGE_MARGIN - contentBottom - SHEET_GAP) / 2;
+  const bottomSlot = {
+    x: PAGE_MARGIN,
+    y: contentBottom,
+    width: contentWidth,
+    height: halfHeight,
+  };
+  const topSlot = {
+    x: PAGE_MARGIN,
+    y: contentBottom + halfHeight + SHEET_GAP,
+    width: contentWidth,
+    height: halfHeight,
+  };
   const headerPdf = await PDFDocument.load(headerBuffer);
   const headerPage = headerPdf.getPages()[0];
   const { width: headerWidth, height: headerHeight } = headerPage.getSize();
@@ -85,60 +137,73 @@ export async function mergeCheatsheets(
   const drawContentHalf = (
     targetPage: ReturnType<typeof finalDoc.addPage>,
     content: ContentHalf,
-    y: number
+    box: { x: number; y: number; width: number; height: number }
   ) => {
+    const { x, y, width, height } = box;
     if (content.rotation === 90) {
       targetPage.drawPage(content.page, {
-        x: 0,
-        y: y + HALF_HEIGHT,
-        width: HALF_HEIGHT,
-        height: A4_WIDTH,
+        x,
+        y: y + height,
+        width: height,
+        height: width,
         rotate: degrees(270),
       });
     } else if (content.rotation === 180) {
       targetPage.drawPage(content.page, {
-        x: A4_WIDTH,
-        y: y + HALF_HEIGHT,
-        width: A4_WIDTH,
-        height: HALF_HEIGHT,
+        x: x + width,
+        y: y + height,
+        width,
+        height,
         rotate: degrees(180),
       });
     } else if (content.rotation === 270) {
       targetPage.drawPage(content.page, {
-        x: A4_WIDTH,
+        x: x + width,
         y,
-        width: HALF_HEIGHT,
-        height: A4_WIDTH,
+        width: height,
+        height: width,
         rotate: degrees(90),
       });
     } else {
       targetPage.drawPage(content.page, {
-        x: 0,
+        x,
         y,
-        width: A4_WIDTH,
-        height: HALF_HEIGHT,
+        width,
+        height,
       });
     }
   };
 
+  const pages: PDFPage[] = [];
   if (contentHalves.length > 0) {
     const firstPage = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-    firstPage.drawPage(embeddedHeader, {
-      x: 0,
-      y: HALF_HEIGHT,
-      width: A4_WIDTH,
-      height: HALF_HEIGHT,
-    });
-    drawContentHalf(firstPage, contentHalves[0], 0);
+    pages.push(firstPage);
+    firstPage.drawPage(embeddedHeader, topSlot);
+    drawContentHalf(firstPage, contentHalves[0], bottomSlot);
 
     for (let index = 1; index < contentHalves.length; index += 2) {
       const page = finalDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-      drawContentHalf(page, contentHalves[index], HALF_HEIGHT);
+      pages.push(page);
+      drawContentHalf(page, contentHalves[index], topSlot);
       if (contentHalves[index + 1]) {
-        drawContentHalf(page, contentHalves[index + 1], 0);
+        drawContentHalf(page, contentHalves[index + 1], bottomSlot);
       }
     }
   }
+
+  const font = await finalDoc.embedFont(StandardFonts.HelveticaBold);
+  pages.forEach((page, index) => {
+    drawPageFooter(
+      page,
+      font,
+      fields.studentName,
+      index + 1,
+      pages.length,
+      A4_WIDTH,
+      PAGE_MARGIN,
+      FOOTER_BOTTOM_MARGIN
+    );
+  });
   const bytes = await finalDoc.save();
   return Buffer.from(bytes);
 }
