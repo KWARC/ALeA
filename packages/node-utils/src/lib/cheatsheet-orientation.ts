@@ -1,33 +1,9 @@
-import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { createCanvas } from 'canvas';
 import jsQR from 'jsqr';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
 
 export type QuarterTurn = 0 | 90 | 180 | 270;
-
-type CreateCanvas = (width: number, height: number) => {
-  getContext(type: '2d'): {
-    getImageData(sx: number, sy: number, sw: number, sh: number): ImageData;
-  };
-};
-
-let cachedCreateCanvas: CreateCanvas | null | undefined;
-
-function loadCreateCanvas(): CreateCanvas | null {
-  if (cachedCreateCanvas !== undefined) return cachedCreateCanvas;
-  try {
-    const req = createRequire(join(process.cwd(), 'package.json'));
-    cachedCreateCanvas = (req('canvas') as { createCanvas: CreateCanvas }).createCanvas;
-  } catch (err) {
-    console.warn(
-      'canvas native module unavailable; skipping cheatsheet orientation detection:',
-      err
-    );
-    cachedCreateCanvas = null;
-  }
-  return cachedCreateCanvas;
-}
 
 const QUARTER_TURNS: QuarterTurn[] = [0, 90, 180, 270];
 
@@ -80,10 +56,7 @@ export function extraRotationForQr(
   );
 }
 
-async function extraRotationForPage(
-  page: PDFPageProxy,
-  createCanvas: CreateCanvas
-): Promise<QuarterTurn> {
+async function extraRotationForPage(page: PDFPageProxy): Promise<QuarterTurn> {
   const viewport = page.getViewport({ scale: 1 });
   const width = Math.ceil(viewport.width);
   const height = Math.ceil(viewport.height);
@@ -107,9 +80,6 @@ async function extraRotationForPage(
 }
 
 export async function uprightRotationsForPdf(buffer: Buffer): Promise<QuarterTurn[]> {
-  const createCanvas = loadCreateCanvas();
-  if (!createCanvas) return [];
-
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
     verbosity: 0,
@@ -122,7 +92,7 @@ export async function uprightRotationsForPdf(buffer: Buffer): Promise<QuarterTur
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
       try {
         const page = await pdf.getPage(pageNumber);
-        rotations.push(await extraRotationForPage(page, createCanvas));
+        rotations.push(await extraRotationForPage(page));
       } catch (err) {
         console.warn(`Cheatsheet orientation check failed on page ${pageNumber}:`, err);
         rotations.push(0);
