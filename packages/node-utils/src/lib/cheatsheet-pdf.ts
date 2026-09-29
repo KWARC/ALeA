@@ -383,12 +383,23 @@ export async function concatPdfBuffers(buffers: Buffer[]): Promise<Buffer> {
   return Buffer.from(await out.save());
 }
 
-function sortRosterRows(rows: CheatsheetRosterRow[]) {
-  return [...rows].sort((a, b) => {
-    const nameCmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-    if (nameCmp !== 0) return nameCmp;
+const ROSTER_SORT_OPTS: Intl.CollatorOptions = { numeric: true, sensitivity: 'base' };
+
+export function compareCheatsheetRosterRows(a: CheatsheetRosterRow, b: CheatsheetRosterRow) {
+  const matA = a.matriculationNumber?.trim();
+  const matB = b.matriculationNumber?.trim();
+  if (matA && matB) {
+    const matCmp = matA.localeCompare(matB, undefined, ROSTER_SORT_OPTS);
+    if (matCmp !== 0) return matCmp;
     return a.userId.localeCompare(b.userId);
-  });
+  }
+  const nameCmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  if (nameCmp !== 0) return nameCmp;
+  return a.userId.localeCompare(b.userId);
+}
+
+function sortRosterRows(rows: CheatsheetRosterRow[]) {
+  return [...rows].sort(compareCheatsheetRosterRows);
 }
 
 export function buildCheatsheetRosterPdf(params: {
@@ -488,14 +499,14 @@ export function buildCheatsheetRosterPdf(params: {
     drawTable(
       `Registered for exam, with cheatsheet submissions (${registeredWithUploads.length})`,
       [
-        { key: 'Name', width: 0.35 },
         { key: 'Matriculation', width: 0.2 },
+        { key: 'Name', width: 0.35 },
         { key: 'Id', width: 0.25 },
         { key: 'Cheatsheets uploaded', width: 0.2 },
       ],
       registeredWithUploads.map((r) => [
-        r.name,
         r.matriculationNumber ?? '',
+        r.name,
         r.userId,
         String(r.uploadCount ?? 0),
       ])
@@ -504,11 +515,11 @@ export function buildCheatsheetRosterPdf(params: {
     drawTable(
       `Registered for exam, no cheatsheet submissions (${registeredNoUploads.length})`,
       [
-        { key: 'Name', width: 0.4 },
         { key: 'Matriculation', width: 0.25 },
+        { key: 'Name', width: 0.4 },
         { key: 'Id', width: 0.35 },
       ],
-      registeredNoUploads.map((r) => [r.name, r.matriculationNumber ?? '', r.userId])
+      registeredNoUploads.map((r) => [r.matriculationNumber ?? '', r.name, r.userId])
     );
 
     drawTable(

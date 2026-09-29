@@ -64,9 +64,13 @@ export function resolveSafeCheatsheetPath(baseDir: string, fileName: string): st
   return filePath;
 }
 
+export function ensurePrintPackDir(packDir: string) {
+  fs.mkdirSync(path.join(packDir, PRINT_PACK_STUDENTS_DIR), { recursive: true });
+}
+
 export function resetPrintPackDir(packDir: string) {
   fs.rmSync(packDir, { recursive: true, force: true });
-  fs.mkdirSync(path.join(packDir, PRINT_PACK_STUDENTS_DIR), { recursive: true });
+  ensurePrintPackDir(packDir);
 }
 
 export function readPrintPackManifest(packDir: string): CheatsheetPrintPackManifest | null {

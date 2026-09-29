@@ -9,16 +9,17 @@ import {
 import {
   buildCheatsheetRosterPdf,
   concatPdfBuffers,
+  compareCheatsheetRosterRows,
   CheatsheetPrintPackManifest,
   CheatsheetPrintPackStudent,
   CheatsheetRosterRow,
+  ensurePrintPackDir,
   getPrintPackDir,
   mergeCheatsheets,
   PRINT_PACK_COMBINED_FILE,
   PRINT_PACK_MANIFEST_FILE,
   PRINT_PACK_ROSTER_FILE,
   PRINT_PACK_STUDENTS_DIR,
-  resetPrintPackDir,
   resolveSafeCheatsheetPath,
   safeStudentPdfName,
 } from '@alea/node-utils';
@@ -187,6 +188,48 @@ function groupRowsByUser(cheatRows: CheatSheetRow[]) {
   return byUser;
 }
 
+function existingWeekFiles(rows: CheatSheetRow[], baseDir: string) {
+  const validPaths: string[] = [];
+  const weekIds: string[] = [];
+  for (const row of rows) {
+    if (!row.fileName) continue;
+    const filePath = resolveSafeCheatsheetPath(baseDir, row.fileName);
+    if (!filePath || !fs.existsSync(filePath)) continue;
+    validPaths.push(filePath);
+    weekIds.push(row.weekId);
+  }
+  return { validPaths, weekIds };
+}
+
+async function resolveStudentPackPdf(params: {
+  userId: string;
+  rows: CheatSheetRow[];
+  baseDir: string;
+  studentPath: string;
+  courseName: string;
+  courseId: string;
+  instanceId: string;
+  universityId: string;
+  examCode: string;
+  userInfo: Map<string, UserInfoRow>;
+  studentName?: string;
+  matriculationNumber?: string;
+}): Promise<
+  | { skipped: { userId: string; reason: string } }
+  | { buffer: Buffer; weekIds: string[]; reused: boolean }
+> {
+  if (fs.existsSync(params.studentPath)) {
+    return {
+      buffer: fs.readFileSync(params.studentPath),
+      weekIds: existingWeekFiles(params.rows, params.baseDir).weekIds,
+      reused: true,
+    };
+  }
+  const result = await mergeStudentPdf(params);
+  if ('skipped' in result) return result;
+  return { buffer: result.buffer, weekIds: result.student.weekIds, reused: false };
+}
+
 async function mergeStudentPdf(params: {
   userId: string;
   rows: CheatSheetRow[];
@@ -200,15 +243,7 @@ async function mergeStudentPdf(params: {
   studentName?: string;
   matriculationNumber?: string;
 }): Promise<{ student: CheatsheetPrintPackStudent; buffer: Buffer } | { skipped: { userId: string; reason: string } }> {
-  const validPaths: string[] = [];
-  const weekIds: string[] = [];
-  for (const row of params.rows) {
-    if (!row.fileName) continue;
-    const filePath = resolveSafeCheatsheetPath(params.baseDir, row.fileName);
-    if (!filePath || !fs.existsSync(filePath)) continue;
-    validPaths.push(filePath);
-    weekIds.push(row.weekId);
-  }
+  const { validPaths, weekIds } = existingWeekFiles(params.rows, params.baseDir);
   if (validPaths.length === 0) {
     return { skipped: { userId: params.userId, reason: 'No cheat sheet files found on disk' } };
   }
@@ -347,29 +382,37 @@ export async function generateCheatsheetPrintPack() {
     }
 
     const packDir = getPrintPackDir(cheatsheetsDir, universityId, courseId, instanceId);
-    resetPrintPackDir(packDir);
+    ensurePrintPackDir(packDir);
     const baseDir = path.resolve(cheatsheetsDir);
     const skipped: { userId: string; reason: string }[] = [];
     const students: CheatsheetPrintPackStudent[] = [];
-    const combinedBuffers: Buffer[] = [];
+    const combinedEntries: { row: CheatsheetRosterRow; buffer: Buffer }[] = [];
 
-    const nameFor = (userId: string) => {
+    const rosterRowForUser = (userId: string): CheatsheetRosterRow => {
       const reg = examRegistrations.get(userId);
-      if (reg) return examDisplayName(reg);
-      return displayName(userId, userInfo, byUser.get(userId)?.[0]?.studentName);
+      return {
+        userId,
+        name: reg
+          ? examDisplayName(reg)
+          : displayName(userId, userInfo, byUser.get(userId)?.[0]?.studentName),
+        matriculationNumber: reg?.matriculationNumber,
+        uploadCount: byUser.get(userId)?.length,
+      };
     };
 
-    const mergeTargets = [...byUser.entries()].sort(([a], [b]) => {
-      const cmp = nameFor(a).localeCompare(nameFor(b), undefined, { sensitivity: 'base' });
-      return cmp !== 0 ? cmp : a.localeCompare(b);
-    });
+    const mergeTargets = [...byUser.entries()].sort(([a], [b]) =>
+      compareCheatsheetRosterRows(rosterRowForUser(a), rosterRowForUser(b))
+    );
 
     for (const [userId, rows] of mergeTargets) {
       const registration = examRegistrations.get(userId);
-      const result = await mergeStudentPdf({
+      const fileName = safeStudentPdfName(userId);
+      const studentPath = path.join(packDir, PRINT_PACK_STUDENTS_DIR, fileName);
+      const result = await resolveStudentPackPdf({
         userId,
         rows,
         baseDir,
+        studentPath,
         courseName,
         courseId,
         instanceId,
@@ -383,20 +426,32 @@ export async function generateCheatsheetPrintPack() {
         skipped.push(result.skipped);
         continue;
       }
-      fs.writeFileSync(
-        path.join(packDir, PRINT_PACK_STUDENTS_DIR, result.student.fileName),
-        result.buffer
-      );
-      students.push(result.student);
-      if (registration) {
-        combinedBuffers.push(result.buffer);
+      if (!result.reused) {
+        fs.writeFileSync(studentPath, result.buffer);
       }
-      console.log(`Merged ${userId} (${result.student.weekIds.length} weeks)`);
+      console.log(
+        `${result.reused ? 'Reused' : 'Merged'} ${userId} (${result.weekIds.length} weeks)`
+      );
+
+      const studentName = registration
+        ? examDisplayName(registration)
+        : displayName(userId, userInfo, rows[0]?.studentName);
+      students.push({ userId, studentName, weekIds: result.weekIds, fileName });
+      if (registration) {
+        combinedEntries.push({
+          row: rosterRowForUser(userId),
+          buffer: result.buffer,
+        });
+      }
     }
 
-    if (combinedBuffers.length > 0) {
-      const combined = await concatPdfBuffers(combinedBuffers);
-      fs.writeFileSync(path.join(packDir, PRINT_PACK_COMBINED_FILE), combined);
+    const combinedPath = path.join(packDir, PRINT_PACK_COMBINED_FILE);
+    if (fs.existsSync(combinedPath)) {
+      console.log('combined.pdf already present; skipping combination');
+    } else if (combinedEntries.length > 0) {
+      combinedEntries.sort((a, b) => compareCheatsheetRosterRows(a.row, b.row));
+      const combined = await concatPdfBuffers(combinedEntries.map((e) => e.buffer));
+      fs.writeFileSync(combinedPath, combined);
     } else {
       console.warn('No exam-registered merged PDFs; combined.pdf was not written');
     }
@@ -423,7 +478,7 @@ export async function generateCheatsheetPrintPack() {
       registeredNoUploadsCount: registeredNoUploads.length,
       unregisteredWithUploadsCount: unregisteredWithUploads.length,
       enrolledUnregisteredNoUploadsCount: enrolledUnregisteredNoUploads.length,
-      combinedCount: combinedBuffers.length,
+      combinedCount: combinedEntries.length,
       mergedCount: students.length,
       skipped,
       students,
