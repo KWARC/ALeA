@@ -10,7 +10,11 @@ import {
 } from 'pdf-lib';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
-import { rotationWithUprightCorrection, uprightRotationsForPdf } from './cheatsheet-orientation';
+import {
+  rasterizePdfPages,
+  rotationWithUprightCorrection,
+  uprightRotationsForPdf,
+} from './cheatsheet-orientation';
 
 type PdfKitDoc = InstanceType<typeof PDFDocument>;
 
@@ -277,8 +281,37 @@ export async function mergeCheatsheets(
     const src = await PdfLibDocument.load(buffer);
     const uprightRotations = await uprightRotationsForPdf(buffer);
     const pages = src.getPages();
+    const annotatedPageIndexes = pages.flatMap((page, index) =>
+      page.node.Annots()?.size() ? [index] : []
+    );
+    const rasterizedPages = await rasterizePdfPages(
+      buffer,
+      annotatedPageIndexes,
+      uprightRotations
+    );
     for (let index = 0; index < pages.length; index++) {
       const page = pages[index];
+      const rasterized = rasterizedPages.get(index);
+      if (rasterized) {
+        const rasterDoc = await PdfLibDocument.create();
+        const image = await rasterDoc.embedPng(rasterized.png);
+        const rasterPage = rasterDoc.addPage([rasterized.width, rasterized.height]);
+        rasterPage.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: rasterized.width,
+          height: rasterized.height,
+        });
+        const stableRasterDoc = await PdfLibDocument.load(await rasterDoc.save());
+        contentHalves.push({
+          page: await finalDoc.embedPage(
+            stableRasterDoc.getPage(0),
+            cropForRotation(0, rasterized.width, rasterized.height)
+          ),
+          rotation: 0,
+        });
+        continue;
+      }
       const { width, height } = page.getSize();
       const rotation = rotationWithUprightCorrection(
         page.getRotation().angle,
