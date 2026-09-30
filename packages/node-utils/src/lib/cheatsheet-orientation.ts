@@ -79,6 +79,50 @@ async function extraRotationForPage(page: PDFPageProxy): Promise<QuarterTurn> {
   return extraRotationForQr(image.width, image.height, qrX, qrY);
 }
 
+export async function rasterizePdfPages(
+  buffer: Buffer,
+  pageIndexes: number[],
+  extraRotations: QuarterTurn[]
+): Promise<Map<number, { png: Buffer; width: number; height: number }>> {
+  const indexes = new Set(pageIndexes);
+  const rasterized = new Map<number, RasterizedPdfPage>();
+  if (indexes.size === 0) return rasterized;
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    verbosity: 0,
+    disableWorker: true,
+  } as Parameters<typeof pdfjsLib.getDocument>[0]);
+
+  try {
+    const pdf = await loadingTask.promise;
+    for (const index of indexes) {
+      const page = await pdf.getPage(index + 1);
+      const viewport = page.getViewport({
+        scale: 2.5,
+        rotation: page.rotate + (extraRotations[index] ?? 0),
+      });
+      const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+      const context = canvas.getContext('2d');
+      const renderParams = {
+        canvasContext: context,
+        viewport,
+        background: 'white',
+      } as unknown as Parameters<PDFPageProxy['render']>[0];
+      await page.render(renderParams).promise;
+
+      rasterized.set(index, {
+        png: canvas.toBuffer('image/png'),
+        width: canvas.width,
+        height: canvas.height,
+      });
+    }
+    return rasterized;
+  } finally {
+    await loadingTask.destroy().catch(() => undefined);
+  }
+}
+
 export async function uprightRotationsForPdf(buffer: Buffer): Promise<QuarterTurn[]> {
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
