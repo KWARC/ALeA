@@ -85,7 +85,7 @@ export async function rasterizePdfPages(
   extraRotations: QuarterTurn[]
 ): Promise<Map<number, { png: Buffer; width: number; height: number }>> {
   const indexes = new Set(pageIndexes);
-  const rasterized = new Map<number, RasterizedPdfPage>();
+  const rasterized = new Map<number, { png: Buffer; width: number; height: number }>();
   if (indexes.size === 0) return rasterized;
 
   const loadingTask = pdfjsLib.getDocument({
