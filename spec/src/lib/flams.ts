@@ -99,6 +99,8 @@ export interface SparqlResponse {
   };
 }
 
+const SPARQL_QUERY_TIMEOUT_MS = 60_000;
+
 export async function getParameterizedQueryResults(
   parameterizedQuery: string,
   uriParams: Record<string, string | string[]> = {}
@@ -110,6 +112,7 @@ export async function getParameterizedQueryResults(
       new URLSearchParams({ query }),
       {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: SPARQL_QUERY_TIMEOUT_MS,
         // Allow all status codes so we can forward them as-is instead of throwing on non-2xx.
         validateStatus: () => true,
       }
@@ -452,25 +455,55 @@ ORDER BY DESC(?date)
 
 export const TEMPL_GET_PROBLEMS_FOR_EXAM = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc: <http://purl.org/dc/terms#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
-
-  SELECT DISTINCT  ?prob WHERE {
-<_uri_exam>  (ulo:contains|dc:hasPart)* ?prob.
-?prob rdf:type ulo:problem.
+SELECT DISTINCT ?exam ?prob WHERE {
+  VALUES ?exam { <_multiuri_exams> }
+  ?exam (ulo:contains|dc:hasPart)* ?prob.
+  ?prob rdf:type ulo:problem.
 }
 `;
 
-export async function getProblemsForExam(examUri: string): Promise<string[]> {
-  if (!examUri) return [];
+function groupProblemsByResourceUri(
+  resourceUris: string[],
+  bindings: NonNullable<SparqlResponse['results']>['bindings'] | undefined,
+  resourceVar: string
+): Map<string, string[]> {
+  const byReturned = new Map<string, string[]>();
+  for (const binding of bindings ?? []) {
+    const resourceUri = binding[resourceVar]?.value;
+    const problemUri = binding['prob']?.value;
+    if (!resourceUri || !problemUri) continue;
+    const existing = byReturned.get(resourceUri) ?? [];
+    existing.push(problemUri);
+    byReturned.set(resourceUri, existing);
+  }
+
+  const result = new Map<string, string[]>();
+  for (const uri of resourceUris) {
+    result.set(
+      uri,
+      byReturned.get(uri) ?? byReturned.get(decodeURIComponent(uri)) ?? []
+    );
+  }
+  return result;
+}
+
+export async function getProblemsForExams(examUris: string[]): Promise<Map<string, string[]>> {
+  const uris = examUris.filter(Boolean);
+  if (!uris.length) return new Map();
 
   const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_EXAM, {
-    _uri_exam: examUri,
+    _multiuri_exams: uris,
   });
 
-  const problems = results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
+  return groupProblemsByResourceUri(uris, results?.results?.bindings, 'exam');
+}
 
-  return problems;
+export async function getProblemsForExam(examUri: string): Promise<string[]> {
+  if (!examUri) return [];
+  return (await getProblemsForExams([examUri])).get(examUri) ?? [];
 }
 
 export async function getExamsForCourse(courseId: string) {
@@ -692,22 +725,30 @@ export async function getHomeworksForCourse(courseId: string): Promise<FlamsCour
 
 export const TEMPL_GET_PROBLEMS_FOR_QUIZ = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc: <http://purl.org/dc/terms#>
 PREFIX ulo: <http://mathhub.info/ulo#>
 
-SELECT DISTINCT ?prob WHERE {
-  <_uri_quiz> (ulo:contains|dc:hasPart)* ?prob.
+SELECT DISTINCT ?quiz ?prob WHERE {
+  VALUES ?quiz { <_multiuri_quizzes> }
+  ?quiz (ulo:contains|dc:hasPart)* ?prob.
   ?prob rdf:type ulo:problem.
 }
 `;
 
-export async function getProblemsForQuiz(quizUri: string): Promise<string[]> {
-  if (!quizUri) return [];
+export async function getProblemsForQuizzes(quizUris: string[]): Promise<Map<string, string[]>> {
+  const uris = quizUris.filter(Boolean);
+  if (!uris.length) return new Map();
 
   const results = await getParameterizedQueryResults(TEMPL_GET_PROBLEMS_FOR_QUIZ, {
-    _uri_quiz: quizUri,
+    _multiuri_quizzes: uris,
   });
 
-  return results?.results?.bindings.map((b) => b['prob']?.value) ?? [];
+  return groupProblemsByResourceUri(uris, results?.results?.bindings, 'quiz');
+}
+
+export async function getProblemsForQuiz(quizUri: string): Promise<string[]> {
+  if (!quizUri) return [];
+  return (await getProblemsForQuizzes([quizUri])).get(quizUri) ?? [];
 }
 
 export const TEMPL_GET_PROBLEMS_FOR_HOMEWORK = `
