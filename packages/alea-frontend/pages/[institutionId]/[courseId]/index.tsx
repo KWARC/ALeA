@@ -194,7 +194,7 @@ export const getServerSideProps: GetServerSideProps<CourseLandingPageProps> = as
       return { notFound: true };
     }
     const instIdUpper = institutionId.toUpperCase();
-    const currentTerm = UNIVERSITY_TERMS[instIdUpper]?.currentTerm || 'SS26';
+    const currentTerm = UNIVERSITY_TERMS[instIdUpper]?.currentTerm || 'WS26-27';
 
     const dbInstances = currentCourse.instances || [];
     const sortedInstances = [...dbInstances].sort((a, b) => b.semester.localeCompare(a.semester));
