@@ -1,5 +1,5 @@
 import { addRemoveMember, getUserInformation } from '@alea/spec';
-import { isCampusAccount } from '@alea/utils';
+import { isCampusAccount, isEnrollableStudentId } from '@alea/utils';
 
 export function getCourseEnrollmentAcl(courseId: string, instanceId: string) {
   return `${courseId}-${instanceId}-enrollments`;
@@ -11,7 +11,7 @@ export async function handleEnrollment(
   currentTerm: string
 ): Promise<boolean> {
   const info = await getUserInformation().catch(() => undefined);
-  if (!userId || !isCampusAccount(info)) {
+  if (!userId || !(isCampusAccount(info) || isEnrollableStudentId(userId))) {
     alert('Please Login Using FAU Id.');
     return false;
   }
@@ -38,7 +38,7 @@ export async function handleUnEnrollment(
   currentTerm: string
 ): Promise<boolean> {
   const info = await getUserInformation().catch(() => undefined);
-  if (!userId || !isCampusAccount(info)) {
+  if (!userId || !(isCampusAccount(info) || isEnrollableStudentId(userId))) {
     alert('Please Login Using FAU Id.');
     return false;
   }

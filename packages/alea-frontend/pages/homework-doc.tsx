@@ -13,7 +13,7 @@ import {
   QuizDisplay,
   ShowGradingFor,
 } from '@alea/stex-react-renderer';
-import { isCampusAccount } from '@alea/utils';
+import { isCampusAccount, isEnrollableStudentId } from '@alea/utils';
 import { FTML, injectCss } from '@flexiformal/ftml';
 import { Box, CircularProgress } from '@mui/material';
 import { useRouter } from 'next/router';
@@ -41,7 +41,7 @@ const HomeworkDocPage: React.FC = () => {
     const uid = user?.userId;
     if (!uid) return;
     getUserInformation()
-      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .then((info) => setForceFauLogin(!(isCampusAccount(info) || isEnrollableStudentId(uid))))
       .catch(() => setForceFauLogin(true));
   }, [user,isUserLoading]);
   const courseId = hwInfo?.homework.courseId;

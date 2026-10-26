@@ -1,4 +1,4 @@
-import { Action, ResourceName } from '@alea/utils';
+import { Action, isEnrollableStudentId, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import {
@@ -10,7 +10,7 @@ import {
 
 export async function checkIfUserExistsOnJPOrSet500OnError(userId: string, res) {
   let tableToCheck;
-  if (await userHasIdmAccount(userId)) {
+  if ((await userHasIdmAccount(userId)) || isEnrollableStudentId(userId)) {
     tableToCheck = 'studentProfile';
   } else {
     tableToCheck = 'recruiterProfile';

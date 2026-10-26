@@ -10,7 +10,7 @@ import {
   getCourseQuizList,
   getUserInformation,
 } from '@alea/spec';
-import { Action, CourseInfo, ResourceName, isCampusAccount } from '@alea/utils';
+import { Action, CourseInfo, ResourceName, isCampusAccount, isEnrollableStudentId } from '@alea/utils';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next';
 import Link from 'next/link';
@@ -172,7 +172,7 @@ const QuizDashPage: NextPage = () => {
   useEffect(() => {
     if (!userId) return;
     getUserInformation()
-      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .then((info) => setForceFauLogin(!(isCampusAccount(info) || isEnrollableStudentId(userId))))
       .catch(() => setForceFauLogin(true));
   }, [user]);
 

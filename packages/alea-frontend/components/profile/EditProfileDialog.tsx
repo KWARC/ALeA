@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { AuthProvider, UserProfile, getUserInformation, updateUserProfile } from '@alea/spec';
-import { isFauDeEmail, isFauId, isFakeXxxId, Language } from '@alea/utils';
+import { isEnrollableStudentId, isFauDeEmail, isFauId, isFakeXxxId, Language } from '@alea/utils';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getLocaleObject } from '../../lang/utils';
@@ -83,8 +83,8 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
     }));
   };
 
-  const isFAUId = isFauId(userId);
-  const requireFauEmail = isRealIdm || (isFAUId && !isFakeXxxId(userId));
+  const isStudentAccount = isEnrollableStudentId(userId);
+  const requireFauEmail = isRealIdm || (isFauId(userId) && !isFakeXxxId(userId));
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -168,7 +168,7 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
             value={formData.firstName}
             onChange={handleChange}
             variant="outlined"
-            disabled={isFAUId}
+            disabled={isStudentAccount}
           />
           <TextField
             fullWidth
@@ -177,7 +177,7 @@ export function EditProfileDialog({ open, onClose, profileData, userId, onSave }
             value={formData.lastName}
             onChange={handleChange}
             variant="outlined"
-            disabled={isFAUId}
+            disabled={isStudentAccount}
           />
           <TextField
             fullWidth

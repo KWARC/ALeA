@@ -2,7 +2,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import { canAccessResource, getAllCourses, getUserInformation } from '@alea/spec';
-import { Action, CourseInfo, isCampusAccount, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, isCampusAccount, isEnrollableStudentId, ResourceName } from '@alea/utils';
 import { useCurrentUser } from '@alea/react-utils';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -41,7 +41,7 @@ const HomeworkPage: NextPage = () => {
     const uid = user?.userId;
     if (!uid) return;
     getUserInformation()
-      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .then((info) => setForceFauLogin(!(isCampusAccount(info) || isEnrollableStudentId(uid))))
       .catch(() => setForceFauLogin(true));
   }, [user]);
 

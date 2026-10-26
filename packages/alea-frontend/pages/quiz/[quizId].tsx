@@ -10,7 +10,7 @@ import {
   Phase,
 } from '@alea/spec';
 import { QuizDisplay } from '@alea/stex-react-renderer';
-import { Action, CourseInfo, isCampusAccount, localStore, ResourceName } from '@alea/utils';
+import { Action, CourseInfo, isCampusAccount, isEnrollableStudentId, localStore, ResourceName } from '@alea/utils';
 import { injectCss } from '@flexiformal/ftml';
 import SchoolIcon from '@mui/icons-material/School';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
@@ -132,7 +132,7 @@ const QuizPage: NextPage = () => {
     const uid = user?.userId;
     if (!uid) return;
     getUserInformation()
-      .then((info) => setForceFauLogin(!isCampusAccount(info)))
+      .then((info) => setForceFauLogin(!(isCampusAccount(info) || isEnrollableStudentId(uid))))
       .catch(() => setForceFauLogin(true));
   }, [user]);
 

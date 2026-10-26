@@ -18,6 +18,7 @@ import {
   CourseInfo,
   CourseResourceAction,
   isCampusAccount,
+  isEnrollableStudentId,
   LectureEntry,
   pathToCourseHome,
   pathToInstructorDash,
@@ -804,7 +805,7 @@ function WelcomeScreen({
     getCourseIdsForEnrolledUser(currentTerm).then((c) => setEnrolledCourseIds(c.enrolledCourseIds));
   }, [currentTerm]);
 
-  const isFAUId = isCampus;
+  const isStudentAccount = isCampus || isEnrollableStudentId(userInfo?.userId);
 
   useEffect(() => {
     const fetchDescriptions = async () => {
@@ -871,7 +872,7 @@ function WelcomeScreen({
         <Typography variant="h2" textAlign="center" fontWeight="bold">
           {r.welcome}, {userInfo?.fullName}
         </Typography>
-        {isFAUId && (
+        {isStudentAccount && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2 }}>
             <Link href="/study-buddy" style={{ textDecoration: 'none' }}>
               <Button variant="contained">{r.studyBuddy}</Button>

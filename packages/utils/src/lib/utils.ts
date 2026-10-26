@@ -190,8 +190,16 @@ export function PathToTour2(tourId: string) {
   return `/guided-tour2/${encoded}`;
 }
 
-export function isFauId(id: string) {
+export function isFauId(id?: string) {
   return id?.length === 8 && !id.includes('@');
+}
+
+export const EXTRA_ENROLLABLE_STUDENT_IDS = ['xiaochuan.li@utn.de'];
+
+export function isEnrollableStudentId(id?: string) {
+  const normalizedId = id?.trim().toLowerCase();
+  if (!normalizedId) return false;
+  return isFauId(normalizedId) || EXTRA_ENROLLABLE_STUDENT_IDS.includes(normalizedId);
 }
 
 /** JWT / DB userId for a fake login: `fake_` + 3 alphanumeric chars. */

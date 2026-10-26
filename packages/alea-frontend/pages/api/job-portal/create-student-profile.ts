@@ -5,11 +5,12 @@ import {
   getUserIdOrSetError,
   userHasIdmAccount,
 } from '../comment-utils';
+import { isEnrollableStudentId } from '@alea/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const userId = await getUserIdOrSetError(req, res);
-  if (!userId || !(await userHasIdmAccount(userId))) return;
+  if (!userId || !((await userHasIdmAccount(userId)) || isEnrollableStudentId(userId))) return;
 
   const {
     name,

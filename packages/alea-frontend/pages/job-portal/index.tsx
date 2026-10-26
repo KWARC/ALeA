@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import { addRemoveMember, canAccessResource, checkIfUserRegisteredOnJP, getUserInformation } from '@alea/spec';
-import { Action, CURRENT_TERM, isCampusAccount, ResourceName } from '@alea/utils';
+import { Action, CURRENT_TERM, isCampusAccount, isEnrollableStudentId, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -22,8 +22,9 @@ const JobPortal: NextPage = () => {
 
   const userId = user?.userId;
   const roleInfo = campusInfo === 'pending' ? undefined : campusInfo;
-  const isStudent = !!userId && !!roleInfo && isCampusAccount(roleInfo);
-  const isRecruiter = !!userId && !!roleInfo && !isCampusAccount(roleInfo);
+  const isStudent =
+    !!userId && (isEnrollableStudentId(userId) || (!!roleInfo && isCampusAccount(roleInfo)));
+  const isRecruiter = !!userId && !!roleInfo && !isStudent;
 
   useEffect(() => {
     if (isUserLoading) return;
