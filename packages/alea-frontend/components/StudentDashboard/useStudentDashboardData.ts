@@ -53,6 +53,7 @@ async function fetchCourseDashboardData(
   }).catch(() => null);
   courseResult.hasQuiz = entry?.hasQuiz;
   courseResult.hasHomework = entry?.hasHomework;
+  courseResult.livestreamUrl = entry?.livestreamUrl ?? undefined;
 
   const [quizList, homeworkList, uploadWindowResponse, cheatSheets] = await Promise.all([
     getCourseQuizList(courseId),
@@ -93,7 +94,7 @@ async function fetchCourseDashboardData(
     courseResult.nextLectureTs = nextLecture.ts;
     courseResult.isLectureOngoing = nextLecture.isOngoing;
     courseResult.nextLectureVenue = nextLecture.venue;
-    courseResult.nextLectureVenueLink = entry?.livestreamUrl || nextLecture.venueLink;
+    courseResult.nextLectureVenueLink = nextLecture.venueLink;
   }
 
   const tutorialSchedule = normalizeSchedule(entry?.tutorialSchedule);

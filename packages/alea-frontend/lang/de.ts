@@ -448,6 +448,8 @@ export const de = {
     joinNow: 'Jetzt beitreten',
     ongoingLecture: 'Laufende Vorlesung',
     ongoingTutorial: 'Laufendes Tutorium',
+    venueLink: 'Venue-Link',
+    joinLivestream: 'Livestream beitreten',
     upcomingQuiz: 'Bevorstehendes Quiz',
     upcomingLecture: 'Bevorstehende Vorlesung',
     upcomingTutorial: 'Bevorstehendes Tutorium',

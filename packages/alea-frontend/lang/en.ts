@@ -499,6 +499,8 @@ export const en = {
     joinNow: 'Join now',
     ongoingLecture: 'Ongoing Lecture',
     ongoingTutorial: 'Ongoing Tutorial',
+    venueLink: 'Venue link',
+    joinLivestream: 'Join livestream',
     upcomingQuiz: 'Upcoming Quiz',
     upcomingLecture: 'Upcoming Lecture',
     upcomingTutorial: 'Upcoming Tutorial',

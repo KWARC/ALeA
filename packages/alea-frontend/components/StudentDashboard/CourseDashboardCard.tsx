@@ -76,7 +76,7 @@ export function CourseDashboardCard({
   return (
     <Card sx={[courseCardStyles.root, courseCardStyles.cardHover]}>
       <Link href={courseHome} style={{ textDecoration: 'none' }}>
-        <Typography variant="h6" fontWeight={700} color="primary.main" sx={courseCardStyles.title}>
+        <Typography variant="h6" fontWeight={700} color="text.primary" sx={courseCardStyles.title}>
           {courseName || courseId.toUpperCase()}
         </Typography>
       </Link>
@@ -161,7 +161,7 @@ const courseCardStyles = {
     letterSpacing: '-0.01em',
     lineHeight: 1.3,
     transition: 'color 0.2s',
-    '&:hover': { color: 'primary.dark', textDecoration: 'underline' },
+    '&:hover': { textDecoration: 'underline' },
   },
   linksWrapper: {
     display: 'flex',
@@ -183,7 +183,7 @@ const courseCardStyles = {
   enabledLinkRow: {
     '&:hover': {
       bgcolor: 'action.hover',
-      color: 'primary.main',
+      color: 'text.primary',
     },
     '&:hover .icon-box': {
       bgcolor: 'primary.dark',
@@ -191,7 +191,7 @@ const courseCardStyles = {
     },
     '&:hover .chevron': {
       transform: 'translateX(2px)',
-      color: 'primary.main',
+      color: 'text.primary',
     },
   },
   disabledLinkRow: {

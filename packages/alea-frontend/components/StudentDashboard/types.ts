@@ -8,6 +8,7 @@ export interface CourseStudentData {
   courseId: string;
   hasQuiz?: boolean;
   hasHomework?: boolean;
+  livestreamUrl?: string;
   liveQuiz: QuizStubInfo | null;
   upcomingQuiz: QuizStubInfo | null;
   nextHomework: HomeworkStub | null;
@@ -63,6 +64,7 @@ export interface QuickAccessCardProps {
   subtitle?: string;
   courseId: string;
   isLive?: boolean;
+  liveActions?: { venueLink?: string; livestreamUrl?: string };
 }
 
 export interface WhatsNextSectionProps {

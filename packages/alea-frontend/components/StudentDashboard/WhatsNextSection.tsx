@@ -55,6 +55,7 @@ export function WhatsNextSection({ quickAccess }: WhatsNextSectionProps) {
             )}
             courseId={quickAccess.nextLecture.courseId}
             isLive
+            liveActions={quickAccess.nextLecture.data}
           />
         )}
         {quickAccess.nextTutorial?.data.isOngoing && (
@@ -68,6 +69,7 @@ export function WhatsNextSection({ quickAccess }: WhatsNextSectionProps) {
             )}
             courseId={quickAccess.nextTutorial.courseId}
             isLive
+            liveActions={quickAccess.nextTutorial.data}
           />
         )}
         {!quickAccess.liveQuiz && quickAccess.upcomingQuiz && (
