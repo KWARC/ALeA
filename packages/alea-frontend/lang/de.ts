@@ -458,6 +458,7 @@ export const de = {
     notes: 'Skript',
     slides: 'Folien',
     cheatsheet: 'Spickzettel',
+    notEnabledForCourse: 'Nicht aktiviert',
     cheatsheetUploadPending: 'Spickzettel-Upload ausstehend',
     cheatsheetEnrollmentPending: 'Einschreiben erforderlich, um auf den Spickzettel zuzugreifen',
     uploadBefore: 'Hochladen vor',

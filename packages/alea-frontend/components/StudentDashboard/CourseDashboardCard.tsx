@@ -35,26 +35,31 @@ export function CourseDashboardCard({
       href: pathToCourseResource(institutionId, courseId, instance, '/quiz-dash'),
       icon: QuizOutlinedIcon,
       label: t.quizSchedule,
+      enabled: data?.hasQuiz,
     },
     {
       href: pathToHomework(institutionId, courseId, instance),
       icon: AssignmentOutlinedIcon,
       label: t.assignments,
+      enabled: data?.hasHomework,
     },
     {
       href: pathToCourseNotes(institutionId, courseId, instance),
       icon: MenuBookOutlinedIcon,
       label: t.notes,
+      enabled: true,
     },
     {
       href: pathToCourseView(institutionId, courseId, instance),
       icon: SlideshowOutlinedIcon,
       label: t.slides,
+      enabled: true,
     },
     {
       href: pathToCheatSheet(institutionId, courseId, instance),
       icon: ArticleOutlinedIcon,
       label: t.cheatsheet,
+      enabled: !!courseInfo?.cheatsheetConfig?.hasCheatsheet,
     },
   ];
 
@@ -79,19 +84,41 @@ export function CourseDashboardCard({
       {data.isSemesterOver && <SemesterOverBanner courseHomeHref={courseHome} />}
 
       <Box sx={courseCardStyles.linksWrapper}>
-        {navLinks.map(({ href, icon: Icon, label }) => (
-          <Link key={label} href={href} style={{ textDecoration: 'none' }}>
-            <Box sx={courseCardStyles.linkRow}>
+        {navLinks.map(({ href, icon: Icon, label, enabled }) => {
+          const row = (
+            <Box
+              key={label}
+              aria-disabled={!enabled || undefined}
+              sx={[
+                courseCardStyles.linkRow,
+                enabled ? courseCardStyles.enabledLinkRow : courseCardStyles.disabledLinkRow,
+              ]}
+            >
               <Box className="icon-box" sx={courseCardStyles.iconBox}>
                 <Icon />
               </Box>
-              <Typography component="span" variant="body2" fontWeight={500}>
-                {label}
-              </Typography>
-              <ChevronRightIcon className="chevron" sx={courseCardStyles.chevron} />
+              <Box>
+                <Typography component="span" variant="body2" fontWeight={500}>
+                  {label}
+                </Typography>
+                {!enabled && (
+                  <Typography component="span" variant="caption" display="block">
+                    {t.notEnabledForCourse}
+                  </Typography>
+                )}
+              </Box>
+              {enabled && <ChevronRightIcon className="chevron" sx={courseCardStyles.chevron} />}
             </Box>
-          </Link>
-        ))}
+          );
+
+          return enabled ? (
+            <Link key={label} href={href} style={{ textDecoration: 'none' }}>
+              {row}
+            </Link>
+          ) : (
+            row
+          );
+        })}
       </Box>
     </Card>
   );
@@ -152,6 +179,8 @@ const courseCardStyles = {
     textDecoration: 'none',
     color: 'text.primary',
     transition: 'background-color 0.2s, color 0.2s, transform 0.2s',
+  },
+  enabledLinkRow: {
     '&:hover': {
       bgcolor: 'action.hover',
       color: 'primary.main',
@@ -163,6 +192,15 @@ const courseCardStyles = {
     '&:hover .chevron': {
       transform: 'translateX(2px)',
       color: 'primary.main',
+    },
+  },
+  disabledLinkRow: {
+    color: 'text.secondary',
+    '& .icon-box': {
+      bgcolor: 'transparent',
+      color: 'text.secondary',
+      border: '1px solid',
+      borderColor: 'text.secondary',
     },
   },
   iconBox: {

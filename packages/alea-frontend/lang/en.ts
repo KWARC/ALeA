@@ -509,6 +509,7 @@ export const en = {
     notes: 'Notes',
     slides: 'Slides',
     cheatsheet: 'Cheatsheet',
+    notEnabledForCourse: 'Not enabled',
     cheatsheetUploadPending: 'Cheatsheet upload pending',
     cheatsheetEnrollmentPending: 'Get enrolled to access the CheatSheet',
     uploadBefore: 'Upload before',

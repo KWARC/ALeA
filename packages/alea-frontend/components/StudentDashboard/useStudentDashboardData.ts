@@ -20,6 +20,8 @@ import { getNextOrCurrentScheduleOccurrence, normalizeLectureScheduleEntry } fro
 dayjs.extend(utc);
 
 type LectureEntry = {
+  hasQuiz?: boolean;
+  hasHomework?: boolean;
   lectureSchedule?: LectureSchedule[];
   tutorialSchedule?: LectureSchedule[];
   livestreamUrl?: string | null;
@@ -49,6 +51,8 @@ async function fetchCourseDashboardData(
     courseId,
     instanceId: currentTerm,
   }).catch(() => null);
+  courseResult.hasQuiz = entry?.hasQuiz;
+  courseResult.hasHomework = entry?.hasHomework;
 
   const [quizList, homeworkList, uploadWindowResponse, cheatSheets] = await Promise.all([
     getCourseQuizList(courseId),
