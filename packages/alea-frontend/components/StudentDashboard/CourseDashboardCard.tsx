@@ -61,7 +61,7 @@ export function CourseDashboardCard({
       label: t.cheatsheet,
       enabled: !!courseInfo?.cheatsheetConfig?.hasCheatsheet,
     },
-  ];
+  ].sort((a, b) => Number(Boolean(b.enabled)) - Number(Boolean(a.enabled)));
 
   if (isLoading || !data) {
     return (
