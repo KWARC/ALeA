@@ -35,13 +35,13 @@ export function CourseDashboardCard({
       href: pathToCourseResource(institutionId, courseId, instance, '/quiz-dash'),
       icon: QuizOutlinedIcon,
       label: t.quizSchedule,
-      enabled: data?.hasQuiz,
+      enabled: courseInfo?.hasQuiz,
     },
     {
       href: pathToHomework(institutionId, courseId, instance),
       icon: AssignmentOutlinedIcon,
       label: t.assignments,
-      enabled: data?.hasHomework,
+      enabled: courseInfo?.hasHomework,
     },
     {
       href: pathToCourseNotes(institutionId, courseId, instance),

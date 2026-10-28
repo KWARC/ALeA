@@ -6,8 +6,6 @@ export const DEFAULT_INSTITUTION = 'FAU';
 
 export interface CourseStudentData {
   courseId: string;
-  hasQuiz?: boolean;
-  hasHomework?: boolean;
   livestreamUrl?: string;
   liveQuiz: QuizStubInfo | null;
   upcomingQuiz: QuizStubInfo | null;

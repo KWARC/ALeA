@@ -51,8 +51,6 @@ async function fetchCourseDashboardData(
     courseId,
     instanceId: currentTerm,
   }).catch(() => null);
-  courseResult.hasQuiz = entry?.hasQuiz ?? courseInfo?.hasQuiz;
-  courseResult.hasHomework = entry?.hasHomework ?? courseInfo?.hasHomework;
   courseResult.livestreamUrl = entry?.livestreamUrl ?? undefined;
 
   const [quizList, homeworkList, uploadWindowResponse, cheatSheets] = await Promise.all([
