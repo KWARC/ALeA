@@ -7,6 +7,7 @@ import {
   executeAndEndSet500OnError,
   executeDontEndSet500OnError,
 } from '../comment-utils';
+import { toMySQLTimestamp } from '../common-homework-utils';
 
 export type DbHomeworkInfo = HomeworkInfo & {
   versionNo: number;
@@ -84,9 +85,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [
       newVersionNo,
       title,
-      givenTs,
-      dueTs,
-      feedbackReleaseTs,
+      toMySQLTimestamp(givenTs),
+      toMySQLTimestamp(dueTs),
+      toMySQLTimestamp(feedbackReleaseTs),
       JSON.stringify(css),
       JSON.stringify(problems),
       id,
