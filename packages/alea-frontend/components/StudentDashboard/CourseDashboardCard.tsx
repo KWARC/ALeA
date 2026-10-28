@@ -88,10 +88,11 @@ export function CourseDashboardCard({
           const row = (
             <Box
               key={label}
-              aria-disabled={!enabled || undefined}
+              aria-hidden={!enabled || undefined}
               sx={[
                 courseCardStyles.linkRow,
-                enabled ? courseCardStyles.enabledLinkRow : courseCardStyles.disabledLinkRow,
+                courseCardStyles.enabledLinkRow,
+                { visibility: enabled ? 'visible' : 'hidden' },
               ]}
             >
               <Box className="icon-box" sx={courseCardStyles.iconBox}>
@@ -192,15 +193,6 @@ const courseCardStyles = {
     '&:hover .chevron': {
       transform: 'translateX(2px)',
       color: 'text.primary',
-    },
-  },
-  disabledLinkRow: {
-    color: 'text.secondary',
-    '& .icon-box': {
-      bgcolor: 'transparent',
-      color: 'text.secondary',
-      border: '1px solid',
-      borderColor: 'text.secondary',
     },
   },
   iconBox: {

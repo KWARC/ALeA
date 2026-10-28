@@ -59,8 +59,6 @@ export function QuickAccessCard({
           '&:hover': { borderColor: 'success.dark' },
         }),
         ...(liveActions && {
-          gridColumn: { xs: 'auto', sm: 'span 2' },
-          width: { xs: '100%', md: 300 },
           containerType: 'inline-size',
           cursor: 'default',
           '& .MuiChip-root': { flexShrink: 0 },
