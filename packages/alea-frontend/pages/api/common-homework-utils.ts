@@ -2,6 +2,14 @@ import { GradingItem, ReviewType } from '@alea/spec';
 import { NextApiResponse } from 'next';
 import { executeAndEndSet500OnError } from './comment-utils';
 
+/** MySQL TIMESTAMP via Prisma `$executeRawUnsafe` rejects ISO strings like `2026-10-28T19:41:38+05:30`. */
+export function toMySQLTimestamp(value: string | Date | null | undefined) {
+  if (value == null || value === '') return value ?? null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
 interface PerSubProblemGradingType {
   homeworkId: number;
   questionId: string;
