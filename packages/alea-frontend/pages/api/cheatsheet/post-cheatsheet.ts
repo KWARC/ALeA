@@ -536,7 +536,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ({ fields, diagnostics } = await extractFields(buffer, file.mimetype));
   } catch (err) {
     console.error('Error extracting fields:', err);
-    return res.status(500).send('Failed to extract fields.');
+    return res.status(500).send('Failed to read QR code information.');
   }
   const cheatsheetId = fields.cheatsheetId;
   if (!cheatsheetId) {

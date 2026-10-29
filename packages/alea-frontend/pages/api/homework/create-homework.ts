@@ -3,6 +3,7 @@ import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-ut
 import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { Action, ResourceName } from '@alea/utils';
 import { CreateHomeworkRequest } from '@alea/spec';
+import { toMySQLTimestamp } from '../common-homework-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
@@ -21,9 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     [
       0,
       title,
-      givenTs,
-      dueTs,
-      feedbackReleaseTs,
+      toMySQLTimestamp(givenTs),
+      toMySQLTimestamp(dueTs),
+      toMySQLTimestamp(feedbackReleaseTs),
       courseId,
       courseInstance,
       institutionId,
