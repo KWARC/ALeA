@@ -9,7 +9,7 @@ import {
   getSemesterInfo,
 } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
-import { pathToCheatSheet, UniversityDetail } from '@alea/utils';
+import { pathToCheatSheet } from '@alea/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -85,9 +85,7 @@ async function fetchCourseDashboardData(
     lectureSchedule = Array.isArray(schedule) ? schedule : [];
   }
 
-  const timezone =
-    UniversityDetail[courseInfo?.universityId ?? institutionId]?.defaultTimezone ?? 'UTC';
-  const nextLecture = getNextOrCurrentScheduleOccurrence(lectureSchedule, timezone);
+  const nextLecture = getNextOrCurrentScheduleOccurrence(lectureSchedule);
   if (nextLecture) {
     courseResult.nextLectureTs = nextLecture.ts;
     courseResult.isLectureOngoing = nextLecture.isOngoing;
@@ -96,7 +94,7 @@ async function fetchCourseDashboardData(
   }
 
   const tutorialSchedule = normalizeSchedule(entry?.tutorialSchedule);
-  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, timezone);
+  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule);
   if (nextTutorial) {
     courseResult.nextTutorialTs = nextTutorial.ts;
     courseResult.isTutorialOngoing = nextTutorial.isOngoing;
