@@ -20,8 +20,6 @@ import { getNextOrCurrentScheduleOccurrence, normalizeLectureScheduleEntry } fro
 dayjs.extend(utc);
 
 type LectureEntry = {
-  hasQuiz?: boolean;
-  hasHomework?: boolean;
   lectureSchedule?: LectureSchedule[];
   tutorialSchedule?: LectureSchedule[];
   livestreamUrl?: string | null;
