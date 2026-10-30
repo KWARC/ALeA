@@ -27,7 +27,6 @@ import {
   pathToPracticeProblems,
   pathToStudyBuddy,
   ResourceName,
-  UniversityDetail,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -192,13 +191,11 @@ function CourseScheduleSection({
   courseId,
   currentTerm,
   schedulePeriodInfo,
-  timezone,
 }: {
   userId: string | undefined;
   courseId: string;
   currentTerm: string;
   schedulePeriodInfo: SchedulePeriodInfo;
-  timezone: string;
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
@@ -301,7 +298,7 @@ function CourseScheduleSection({
     lectureStartDate: schedulePeriodInfo.lectureStartDate,
     lectureEndDate: schedulePeriodInfo.lectureEndDate,
   };
-  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, timezone, tutorialPeriod);
+  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, tutorialPeriod);
   const now = new Date();
   const todayYmd = [
     now.getFullYear(),
@@ -1069,9 +1066,6 @@ const CourseHomePage: NextPage = () => {
           userId={userId}
           currentTerm={currentTerm}
           schedulePeriodInfo={schedulePeriodInfo}
-          timezone={
-            UniversityDetail[courseInfo.universityId ?? institutionId]?.defaultTimezone ?? 'UTC'
-          }
         />
         {showSearchBar && (
           <Box

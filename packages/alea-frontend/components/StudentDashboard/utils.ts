@@ -2,13 +2,8 @@ import type { LectureSchedule, LectureScheduleItem } from '@alea/spec';
 import type { CourseInfo } from '@alea/utils';
 import { parseTimeString, pathToCheatSheet, toWeekdayIndex } from '@alea/utils';
 import dayjs from 'dayjs';
-import timezonePlugin from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
 import type { CourseStudentData, QuickAccessData } from './types';
 import { DEFAULT_INSTITUTION } from './types';
-
-dayjs.extend(utc);
-dayjs.extend(timezonePlugin);
 
 export function stripHtml(html: string): string {
   if (typeof html !== 'string') return '';
@@ -19,7 +14,6 @@ export type SchedulePeriod = { lectureStartDate?: string; lectureEndDate?: strin
 
 export function getNextOrCurrentScheduleOccurrence(
   schedule: LectureScheduleItem[],
-  timezone: string,
   period?: SchedulePeriod,
   includeCancelled = false
 ): {
@@ -29,16 +23,10 @@ export function getNextOrCurrentScheduleOccurrence(
   isOngoing: boolean;
 } | null {
   if (!schedule?.length) return null;
-  const now = dayjs().tz(timezone);
-  const periodStart = period?.lectureStartDate
-    ? dayjs.tz(period.lectureStartDate, timezone).startOf('day')
-    : null;
-  const periodEnd = period?.lectureEndDate
-    ? dayjs.tz(period.lectureEndDate, timezone).endOf('day')
-    : null;
+  const now = dayjs();
+  const periodStart = period?.lectureStartDate ? dayjs(period.lectureStartDate).startOf('day') : null;
+  const periodEnd = period?.lectureEndDate ? dayjs(period.lectureEndDate).endOf('day') : null;
   const ref = periodStart && periodStart.isAfter(now) ? periodStart : now;
-  const atTime = (date: dayjs.Dayjs, [hour, minute]: [number, number]) =>
-    dayjs.tz(date.hour(hour).minute(minute).format('YYYY-MM-DD HH:mm'), timezone);
   let nearest: { ts: number; venue?: string; venueLink?: string } | null = null;
   let current: { ts: number; venue?: string; venueLink?: string } | null = null;
 
@@ -47,15 +35,15 @@ export function getNextOrCurrentScheduleOccurrence(
     const endParts = parseTimeString(item.endTime ?? item.startTime);
     if (!startParts || !endParts) continue;
 
+    const [startH, startM] = startParts;
+    const [endH, endM] = endParts;
     const dayjsDay = item.dayOfWeek === 7 ? 0 : item.dayOfWeek;
 
-    // Advance calendar dates separately so each occurrence resolves its own DST offset.
-    const startDate = dayjs.utc(ref.format('YYYY-MM-DD')).day(dayjsDay);
-    const start = atTime(startDate, startParts);
-    let end = atTime(startDate, endParts);
+    const start = ref.day(dayjsDay).hour(startH).minute(startM).second(0).millisecond(0);
+    let end = ref.day(dayjsDay).hour(endH).minute(endM).second(0).millisecond(0);
 
     if (end.isBefore(start)) {
-      end = atTime(startDate.add(1, 'day'), endParts);
+      end = end.add(1, 'day');
     }
 
     const isSkipped = (d: dayjs.Dayjs) => {
@@ -71,10 +59,9 @@ export function getNextOrCurrentScheduleOccurrence(
       }
     }
 
-    let candidateDate = startDate;
-    if (start.isBefore(ref)) candidateDate = candidateDate.add(1, 'week');
+    let candidate = start;
+    if (candidate.isBefore(ref)) candidate = candidate.add(1, 'week');
     for (let i = 0; i < 52; i++) {
-      const candidate = atTime(candidateDate, startParts);
       if (periodEnd && candidate.isAfter(periodEnd, 'day')) break;
       if (!isSkipped(candidate)) {
         const ts = candidate.valueOf();
@@ -83,7 +70,7 @@ export function getNextOrCurrentScheduleOccurrence(
         }
         break;
       }
-      candidateDate = candidateDate.add(1, 'week');
+      candidate = candidate.add(1, 'week');
     }
   }
   if (current) return { ...current, isOngoing: true };
@@ -166,7 +153,7 @@ export function getAggregatedQuickAccess(
           ts: info.nextLectureTs,
           venue: info.nextLectureVenue,
           venueLink: info.nextLectureVenueLink,
-          livestreamUrl: allCourses[courseId]?.livestreamUrl,
+          livestreamUrl: info.livestreamUrl,
           isOngoing: info.isLectureOngoing,
         },
       };
