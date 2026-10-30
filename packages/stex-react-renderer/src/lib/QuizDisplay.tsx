@@ -487,9 +487,11 @@ export function QuizDisplay({
             onResponseUpdate={(response) => {
               if (isEmptyResponse(response)) return;
               const problemId = problemIds[problemIdx];
-              const nextResponses = { ...responsesRef.current, [problemId]: response };
-              responsesRef.current = nextResponses;
-              setResponses(nextResponses);
+              // Keep answers on the ref only. Do not setResponses() here.
+              // That re-renders ProblemDisplay; problemWrap then remounts the
+              // FTML fill-in portal and the input loses focus on every keystroke.
+              // Nav checkmarks refresh when switching problems (see navigateToProblem).
+              responsesRef.current = { ...responsesRef.current, [problemId]: response };
               onResponse?.(problemId, response);
             }}
             onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
