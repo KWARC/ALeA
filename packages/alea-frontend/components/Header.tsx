@@ -20,6 +20,7 @@ import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 export const HIDE_BANNER_ITEM = 'hide-survey-banner';
 
 function ThemeToggleButton() {
+  const { header: t } = getLocaleObject(useRouter());
   const { mode, setMode } = useColorMode();
 
   const handleModeChange = () => {
@@ -32,7 +33,7 @@ function ThemeToggleButton() {
     }
   };
 
-  const title = `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`;
+  const title = t.themeModes[mode];
 
   return (
     <Tooltip title={title}>

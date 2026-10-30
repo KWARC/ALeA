@@ -1,8 +1,8 @@
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import LinkIcon from '@mui/icons-material/Link';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Alert,
   Box,
@@ -14,12 +14,14 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getMaterials, getMaterialFileUrl } from '@alea/spec';
-import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
+import { getMaterialFileUrl, getMaterials } from '@alea/spec';
+import { getExtensionFromMime } from '@alea/utils';
 import { InsertDriveFile } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 
 interface MoreResourcesAccordionProps {
   courseId: string;
@@ -34,6 +36,7 @@ export function MoreResourcesAccordion({
   instanceId,
   institutionId,
 }: MoreResourcesAccordionProps) {
+  const { courseHome: t } = getLocaleObject(useRouter());
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
 
@@ -70,7 +73,7 @@ export function MoreResourcesAccordion({
       <Card sx={styles.card}>
         <Button variant="contained" onClick={handleExpand} sx={styles.expandButton}>
           <Typography variant="h6" sx={styles.typographyTitle}>
-            More Resources
+            {t.moreResources}
           </Typography>
           <ExpandMoreIcon />
         </Button>
@@ -88,7 +91,7 @@ export function MoreResourcesAccordion({
               </Box>
             ) : resources.length === 0 ? (
               <Typography color="text.secondary" component="div">
-                No resources available for this course.
+                {t.noResources}
               </Typography>
             ) : (
               <Box sx={styles.resourceList}>

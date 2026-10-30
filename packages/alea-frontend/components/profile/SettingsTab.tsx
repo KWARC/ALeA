@@ -35,6 +35,7 @@ export const SettingsTab = ({
             >
               <Typography fontWeight="medium">Show Traffic Light on Notes</Typography>
               <Switch
+                size="small"
                 checked={trafficLightStatus}
                 onChange={() => handleTrafficLight(!trafficLightStatus)}
                 color="primary"
@@ -52,6 +53,7 @@ export const SettingsTab = ({
             >
               <Typography fontWeight="medium">Show Review Section on Notes</Typography>
               <Switch
+                size="small"
                 checked={sectionReviewStatus}
                 onChange={() => handleSectionReviewStatus(!sectionReviewStatus)}
                 color="primary"

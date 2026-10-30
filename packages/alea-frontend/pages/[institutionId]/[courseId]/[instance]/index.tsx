@@ -505,9 +505,12 @@ function CourseScheduleSection({
                 {cancelledTutorialNotices.map((notice) => (
                   <ScheduleCommencementNotice
                     key={`${notice.ymd}-${notice.startTime}`}
-                    message={t.tutorialCancelledNotice
-                      .replace('{{date}}', formatScheduleTimestamp(new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime()))
-                    }
+                    message={t.tutorialCancelledNotice.replace(
+                      '{{date}}',
+                      formatScheduleTimestamp(
+                        new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime()
+                      )
+                    )}
                   />
                 ))}
 
@@ -516,7 +519,10 @@ function CourseScheduleSection({
                     variant="h6"
                     sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16, mb: 1 }}
                   >
-                    {t.upcomingTutorial.replace('{{date}}', formatScheduleTimestamp(nextTutorial.ts))}
+                    {t.upcomingTutorial.replace(
+                      '{{date}}',
+                      formatScheduleTimestamp(nextTutorial.ts)
+                    )}
                   </Typography>
                 )}
 
@@ -987,7 +993,7 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
           {isInstructor && (
-            <Tooltip title="Course Archive" placement="bottom" arrow>
+            <Tooltip title={tCourseHome.courseArchive} placement="bottom" arrow>
               <Link href={courseLandingLink}>
                 <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
                   <StorageIcon fontSize="large" />

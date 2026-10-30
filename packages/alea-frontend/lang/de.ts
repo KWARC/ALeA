@@ -120,7 +120,7 @@ export const de = {
     practiceProblems: 'Übungsprobleme',
     enrollmentMessage:
       'Bitte melden Sie sich für den Kurs an, um auf Quiz und Hausaufgaben zuzugreifen.',
-    getEnrolled: 'sich einschreiben',
+    getEnrolled: 'einschreiben',
     numberofStudentEnrolled: 'Studenten sind bereits eingeschrieben',
   },
   homework: {
@@ -232,6 +232,11 @@ export const de = {
     privacyPolicy: 'Datenschutz-Bestimmungen',
     legalNotice: 'Impressum',
     changeLanguage: 'Sprache ändern',
+    themeModes: {
+      dark: 'dunkles Design',
+      light: 'helles Design',
+      system: 'Systemdesign',
+    },
   },
   learnerModelPriming: {
     learnerModelPriming: 'Lernermodell-Fundierung',
@@ -269,6 +274,10 @@ export const de = {
   },
   courseHome: {
     title: 'Kurs-Startseite',
+    instructors: 'Lehrkräfte',
+    courseArchive: 'Kursarchiv',
+    moreResources: 'Weitere Ressourcen',
+    noResources: 'Für diesen Kurs sind keine Ressourcen verfügbar.',
     currentSemester: 'Aktuelles Semester',
     recordedSyllabus: 'Aufgezeichneter Lehrplan',
     date: 'Datum',
@@ -425,7 +434,8 @@ export const de = {
     requireFau: 'Verwenden Sie eine FAU-E-Mail-Adresse (@fau.de)',
     submit: 'Bestätigungs-E-Mail senden',
     resend: 'Bestätigungs-E-Mail erneut senden',
-    checkInbox: 'Prüfen Sie Ihren Posteingang und öffnen Sie den Bestätigungslink. Diese Seite bleibt, bis die Adresse bestätigt ist.',
+    checkInbox:
+      'Prüfen Sie Ihren Posteingang und öffnen Sie den Bestätigungslink. Diese Seite bleibt, bis die Adresse bestätigt ist.',
     error: 'Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.',
   },
   practiceProblems: {
@@ -512,6 +522,7 @@ export const de = {
   calendarSection: {
     schedule: 'Vorlesungsplan',
     personalCalendar: 'Persönlicher Kalender',
+    copyPersonalCalendarLink: 'Persönlichen Kalenderlink kopieren',
     tutorialSchedule: 'Tutorienplan',
     lecturesNotStarted: 'Die Vorlesungen haben noch nicht begonnen.',
     lecturesOver: 'Die Vorlesungen sind für dieses Semester vorbei.',
@@ -690,11 +701,9 @@ export const de = {
 
     addCancellationDate: 'Datum hinzufügen',
     selectCancelDate: 'Absagedaten',
-    invalidTutorialDate:
-      'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
+    invalidTutorialDate: 'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
     dateAlreadyCancelled: 'Dieses Datum ist für dieses Tutorium bereits abgesagt.',
-    confirmRemoveCancellationDate:
-      '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
+    confirmRemoveCancellationDate: '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
 
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',

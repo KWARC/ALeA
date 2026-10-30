@@ -1,5 +1,3 @@
-import CourseMetadata from '../components/instructor-panel/CourseMetadata';
-
 export const en = {
   home: {
     header: 'ALeA based Courses at FAU',
@@ -259,6 +257,11 @@ export const en = {
     privacyPolicy: 'Privacy Policy',
     legalNotice: 'Legal Notice',
     changeLanguage: 'Change Language',
+    themeModes: {
+      dark: 'Dark mode',
+      light: 'Light mode',
+      system: 'System mode',
+    },
   },
   learnerModelPriming: {
     learnerModelPriming: 'Learner Model Priming',
@@ -296,6 +299,10 @@ export const en = {
   },
   courseHome: {
     title: 'Course Home',
+    instructors: 'Instructors',
+    courseArchive: 'Course Archive',
+    moreResources: 'More Resources',
+    noResources: 'No resources available for this course.',
     currentSemester: 'Current Semester',
     recordedSyllabus: 'Recorded Syllabus',
     date: 'Date',
@@ -451,7 +458,8 @@ export const en = {
     requireFau: 'Use a FAU email address (@fau.de)',
     submit: 'Send verification email',
     resend: 'Resend verification email',
-    checkInbox: 'Check your inbox and open the verification link. This page will continue when the address is verified.',
+    checkInbox:
+      'Check your inbox and open the verification link. This page will continue when the address is verified.',
     error: 'Something went wrong. Please try again.',
   },
   practiceProblems: {
@@ -547,6 +555,7 @@ export const en = {
   calendarSection: {
     schedule: 'Lecture Schedule',
     personalCalendar: 'Personal Calendar',
+    copyPersonalCalendarLink: 'Copy Personal Calendar Link',
     tutorialSchedule: 'Tutorial Schedule',
     lecturesNotStarted: 'Lectures have not started yet.',
     lecturesOver: 'Lectures are over for this semester.',
@@ -716,16 +725,14 @@ export const en = {
 
     addCancellationDate: 'Add date',
     selectCancelDate: 'Cancelled dates',
-    invalidTutorialDate:
-      'Please pick a {{day}} between the lecture start and end dates.',
+    invalidTutorialDate: 'Please pick a {{day}} between the lecture start and end dates.',
     dateAlreadyCancelled: 'This date is already cancelled for this tutorial.',
-    confirmRemoveCancellationDate:
-      'Remove {{date}} from the cancelled dates for this tutorial?',
+    confirmRemoveCancellationDate: 'Remove {{date}} from the cancelled dates for this tutorial?',
   },
   courseLanding: {
     courseInstances: 'Course Instances',
     latest: 'Latest',
-   CourseInfo: 'Course Information',
+    CourseInfo: 'Course Information',
     aboutThisCourse: 'About this Course',
   },
   cheatsheet: {
