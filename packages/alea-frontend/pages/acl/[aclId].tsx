@@ -51,6 +51,9 @@ const AclId: NextPage = () => {
   const [showAllMembers, setShowAllMembers] = useState<boolean>(false);
   const [hasAssociatedResources, setHasAssociatedResources] = useState<boolean>(false);
   const [resourceActions, setResourceActions] = useState<any[]>([]);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [aclLoaded, setAclLoaded] = useState(false);
 
   const handleOpenDeleteDialog = () => {
     setDeleteError('');
@@ -80,19 +83,43 @@ const AclId: NextPage = () => {
     setDeleteError('');
   };
 
-  async function getMembers() {
+  async function getMembers(): Promise<boolean> {
     try {
       const acl = await getAcl(aclId);
+      setAccessDenied(false);
+      setLoadError('');
+      setAclLoaded(true);
       setDesc(acl?.description ?? null);
       setUpdaterACLId(acl?.updaterACLId);
       setIsOpen(acl?.isOpen);
+      setIsUpdaterMember(true);
       const aclIds = new Set<string>();
       const aclUserDetails = await getAclUserDetails(aclId);
       acl.memberACLIds.forEach((m) => aclIds.add(m));
       setDirectMembersNamesAndIds(aclUserDetails);
       setAcls(Array.from(aclIds));
-    } catch (e) {
+      return true;
+    } catch (e: any) {
       console.error('Error fetching ACL members:', e);
+      setDesc(null);
+      setUpdaterACLId(null);
+      setIsOpen(false);
+      setIsUpdaterMember(false);
+      setDirectMembersNamesAndIds([]);
+      setAcls([]);
+      setAclLoaded(false);
+      const status = e?.response?.status;
+      if (status === 403) {
+        setAccessDenied(true);
+        setLoadError('');
+      } else if (status === 404) {
+        setAccessDenied(false);
+        setLoadError('No ACL with this id was found.');
+      } else {
+        setAccessDenied(false);
+        setLoadError('Failed to load ACL.');
+      }
+      return false;
     }
   }
 
@@ -123,35 +150,39 @@ const AclId: NextPage = () => {
   }
 
   useEffect(() => {
-    if (aclId) {
-      getMembers();
-
-      const fetchStatusAndResources = async () => {
-        try {
-          const [userMemberStatus, hasResources, updaterMemberStatus, allResourceActions] =
-            await Promise.all([
-              isUserMember(aclId),
-              hasAclAssociatedResources(aclId),
-              updaterACLId ? isUserMember(updaterACLId) : Promise.resolve(false),
-              getAllResourceActions(),
-            ]);
-          setUserIsMember(userMemberStatus);
-          setHasAssociatedResources(hasResources);
-          setIsUpdaterMember(updaterMemberStatus);
-
-          const linked = allResourceActions.filter((entry: any) => entry.aclId === aclId);
-          setResourceActions(linked);
-        } catch (error) {
-          console.error('Error fetching ACL status or resources:', error);
-          setUserIsMember(false);
-          setIsUpdaterMember(false);
-          setHasAssociatedResources(false);
-        }
-      };
-      fetchStatusAndResources();
-    }
+    if (!aclId) return;
     setShowAllMembers(false);
-  }, [aclId, updaterACLId]);
+    setAllMemberNamesAndIds([]);
+    setResourceActions([]);
+    setAclLoaded(false);
+    setAccessDenied(false);
+    setLoadError('');
+
+    const load = async () => {
+      const canView = await getMembers();
+      if (!canView) {
+        setUserIsMember(false);
+        setHasAssociatedResources(false);
+        return;
+      }
+      try {
+        const [userMemberStatus, hasResources, allResourceActions] = await Promise.all([
+          isUserMember(aclId),
+          hasAclAssociatedResources(aclId),
+          getAllResourceActions().catch(() => []),
+        ]);
+        setUserIsMember(userMemberStatus);
+        setHasAssociatedResources(hasResources);
+        const linked = (allResourceActions || []).filter((entry: any) => entry.aclId === aclId);
+        setResourceActions(linked);
+      } catch (error) {
+        console.error('Error fetching ACL status or resources:', error);
+        setUserIsMember(false);
+        setHasAssociatedResources(false);
+      }
+    };
+    load();
+  }, [aclId]);
 
   return (
     <MainLayout>
@@ -171,6 +202,18 @@ const AclId: NextPage = () => {
             fontFamily: 'Arial, sans-serif',
           }}
         >
+          {accessDenied && (
+            <Typography variant="h6" color="error" sx={{ mb: 2 }}>
+              You do not have access to this ACL. Only members of its updater ACL can view it.
+            </Typography>
+          )}
+          {loadError && (
+            <Typography variant="h6" color="error" sx={{ mb: 2 }}>
+              {loadError}
+            </Typography>
+          )}
+          {aclLoaded && !accessDenied && !loadError && (
+            <>
           <Box
             sx={{
               display: 'flex',
@@ -418,6 +461,8 @@ const AclId: NextPage = () => {
                 No resources are currently linked to this ACL.
               </Typography>
             </Box>
+          )}
+            </>
           )}
         </Box>
       </Box>

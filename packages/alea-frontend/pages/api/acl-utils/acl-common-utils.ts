@@ -1,5 +1,5 @@
 import { AccessControlList } from '@alea/spec';
-import { NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { executeAndEndSet500OnError, executeQuery, getUserId } from '../comment-utils';
 import { CACHE_STORE } from './cache-store';
 
@@ -27,6 +27,16 @@ export async function isCurrentUserMemberOfAClupdater(aclId: string, res, req): 
   )?.[0];
   if (!queryResult?.updaterACLId) return false;
   return await isMemberOfAcl(queryResult.updaterACLId, userId);
+}
+
+export async function requireCurrentUserIsAclUpdater(
+  aclId: string,
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<boolean> {
+  if (await isCurrentUserMemberOfAClupdater(aclId, res, req)) return true;
+  res.status(403).send({ message: 'Only ACL updaters can access this ACL.' });
+  return false;
 }
 
 export async function validateMemberAndAclIds(

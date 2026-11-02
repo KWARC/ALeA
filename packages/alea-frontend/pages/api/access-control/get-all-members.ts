@@ -1,11 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCacheKey } from '../acl-utils/acl-common-utils';
+import { getCacheKey, requireCurrentUserIsAclUpdater } from '../acl-utils/acl-common-utils';
 import { checkIfGetOrSetError, executeDontEndSet500OnError } from '../comment-utils';
 import { CACHE_STORE } from '../acl-utils/cache-store';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) return;
   const aclId = req.query.id as string;
+  if (!aclId) return res.status(422).send(`Missing param id.`);
+  if (!(await requireCurrentUserIsAclUpdater(aclId, req, res))) return;
   const members = await CACHE_STORE.getFromSet(getCacheKey(aclId));
 
   if (!members || members.length === 0) {

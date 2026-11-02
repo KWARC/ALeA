@@ -1,10 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError, executeDontEndSet500OnError } from '../comment-utils';
+import { requireCurrentUserIsAclUpdater } from '../acl-utils/acl-common-utils';
+import {
+  checkIfGetOrSetError,
+  executeAndEndSet500OnError,
+  executeDontEndSet500OnError,
+} from '../comment-utils';
 import { ACLMembership } from './acl-membership';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!checkIfGetOrSetError(req, res)) return;
   const id = req.query.id as string;
   if (!id) return res.status(422).send(`Missing param id.`);
+  if (!(await requireCurrentUserIsAclUpdater(id, req, res))) return;
   const acls: any[] = await executeAndEndSet500OnError(
     `SELECT id FROM AccessControlList where id = ?`,
     [id],
