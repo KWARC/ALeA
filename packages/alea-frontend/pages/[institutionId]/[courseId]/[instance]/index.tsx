@@ -864,7 +864,7 @@ const CourseHomePage: NextPage = () => {
       return router.push('/login');
     }
 
-    const confirmed = window.confirm('Are you sure you want to un-enroll?');
+    const confirmed = window.confirm(tCourseHome.confirmUnEnroll);
     if (!confirmed) return;
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
@@ -1044,7 +1044,8 @@ const CourseHomePage: NextPage = () => {
                 component="div"
                 sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                You and {Math.max(studentCount - 1, 0)} other learners are enrolled.{' '}
+                {tCourseHome.youAnd} {Math.max(studentCount - 1, 0)}{' '}
+                {tCourseHome.otherLearnersEnrolled}{' '}
                 <Box
                   component="span"
                   onClick={unEnrollFromCourse}
@@ -1058,7 +1059,7 @@ const CourseHomePage: NextPage = () => {
                     },
                   }}
                 >
-                  Un-Enroll
+                  {tCourseHome.unEnroll}
                 </Box>
               </Typography>
             )}
