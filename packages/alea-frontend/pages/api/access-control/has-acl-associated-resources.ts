@@ -1,11 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfGetOrSetError } from '../comment-utils';
+import { checkIfGetOrSetError, getUserIdOrSetError } from '../comment-utils';
 import { checkResourceAssociatedOrSet500OnError } from '../acl-utils/acl-common-utils';
 
 export default async function handleCheckAclResources(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfGetOrSetError(req, res)) {
     return;
   }
+  if (!(await getUserIdOrSetError(req, res))) return;
   const aclId = req.query.aclId as string;
   if (!aclId || typeof aclId !== 'string') {
     return res.status(422).send('Missing or invalid aclId parameter.');

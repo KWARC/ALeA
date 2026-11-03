@@ -39,6 +39,18 @@ export async function requireCurrentUserIsAclUpdater(
   return false;
 }
 
+export async function requireCurrentUserIsSysAdmin(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<boolean> {
+  const userId = await getUserId(req);
+  if (!userId || !(await isMemberOfAcl('sys-admin', userId))) {
+    res.status(403).send({ message: 'Only sys-admins can access this.' });
+    return false;
+  }
+  return true;
+}
+
 export async function validateMemberAndAclIds(
   memberUserIds: string[],
   memberACLIds: string[]
