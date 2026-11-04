@@ -39,8 +39,12 @@ export default function AclAutocompleteSelector({
   useEffect(() => {
     const t = setTimeout(async () => {
       if (input.trim().length > 0) {
-        const result = await fetchSuggestions(input);
-        setSuggestions(result ?? []);
+        try {
+          const result = await fetchSuggestions(input);
+          setSuggestions(result ?? []);
+        } catch {
+          setSuggestions([]);
+        }
         onTypingChange?.(true);
       } else {
         setSuggestions([]);

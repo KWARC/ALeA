@@ -3,6 +3,7 @@ import {
   createAcl,
   getAclSuggestions,
   getUserSuggestions,
+  isUserMember,
   isValid,
 } from '@alea/spec';
 import {
@@ -16,7 +17,7 @@ import {
 } from '@mui/material';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AclAutocompleteSelector from '../../components/AclAutocompleteSelector';
 import MainLayout from '../../layouts/MainLayout';
 
@@ -31,8 +32,13 @@ const CreateACl: NextPage = () => {
   const [isUpdaterACLValid, setIsUpdaterACLValid] = useState<boolean>(true);
   const [isTypingMemberId, setIsTypingMemberId] = useState(false);
   const [isTypingMemberACL, setIsTypingMemberACL] = useState(false);
+  const [isSysAdmin, setIsSysAdmin] = useState<boolean | null>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    isUserMember('sys-admin').then(setIsSysAdmin);
+  }, []);
 
   const handleSubmit = async () => {
     setError('');
@@ -72,6 +78,12 @@ const CreateACl: NextPage = () => {
           boxSizing: 'border-box',
         }}
       >
+        {isSysAdmin === false ? (
+          <Typography variant="h6" color="error">
+            You do not have access to create ACLs here. Only sys-admins can use this page.
+          </Typography>
+        ) : isSysAdmin ? (
+          <>
         <Typography fontSize={24} m="10px 0px">
           Create ACL
         </Typography>
@@ -149,6 +161,8 @@ const CreateACl: NextPage = () => {
             Create
           </Button>
         </Box>
+          </>
+        ) : null}
       </Box>
     </MainLayout>
   );

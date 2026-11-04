@@ -28,7 +28,7 @@ import {
 import { useCurrentUser } from '@alea/react-utils';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { ForMe } from './ForMe';
 import { getLocaleObject } from './lang/utils';
 import { ProblemFilter } from './ProblemFilter';
@@ -202,6 +202,10 @@ export function UriProblemViewer({
     [FTML.CognitiveDimension, FTML.SymbolUri][] | undefined
   >();
   const { user } = useCurrentUser();
+  const responseRef = useRef(response);
+  const setResponseRef = useRef(setResponse);
+  setResponseRef.current = setResponse;
+  if (response !== undefined) responseRef.current = response;
 
   useEffect(() => {
     setSolution(undefined);
@@ -216,12 +220,25 @@ export function UriProblemViewer({
   }, [uri]);
 
   useEffect(() => {
-    const state = getProblemState(isSubmitted, solution, response);
+    return () => {
+      setResponseRef.current?.(responseRef.current);
+    };
+  }, [uri]);
+
+  useEffect(() => {
+    if (!isSubmitted) return;
+    setResponseRef.current?.(responseRef.current);
+  }, [isSubmitted]);
+
+  const latestResponse = isSubmitted ? response ?? responseRef.current : undefined;
+
+  useEffect(() => {
+    const state = getProblemState(isSubmitted, solution, latestResponse);
     if (state.type === 'Graded') {
       const scoreFraction = state.feedback?.score_fraction;
       setQuotient?.(scoreFraction);
 
-      if (!response || scoreFraction === undefined || objectives === undefined) return;
+      if (!latestResponse || scoreFraction === undefined || objectives === undefined) return;
 
       const answerObject: ProblemAnswerEvent = {
         type: 'problem-answer',
@@ -239,9 +256,11 @@ export function UriProblemViewer({
         console.error('Failed to post problem answer to LMP:', error)
       );
     }
-  }, [isSubmitted, objectives, response, solution, setQuotient, uri, user?.userId]);
+  }, [isSubmitted, objectives, latestResponse, solution, setQuotient, uri, user?.userId]);
 
-  const problemState = getProblemState(isSubmitted, solution, response);
+  // While interactive, omit current_response so parent answer state is not fed
+  // back into FTML on each keystroke (that remounts the fill-in portal).
+  const problemState = getProblemState(isSubmitted, solution, latestResponse);
   return (
     <Box fragment-uri={uri} fragment-kind="Problem">
       <SafeFTMLFragment
@@ -249,8 +268,11 @@ export function UriProblemViewer({
         fragment={{ type: 'FromBackend', uri }}
         allowHovers={isSubmitted}
         problemStates={new Map([[uri, problemState]])}
-        onProblemResponse={(response) => {
-          setResponse?.(response);
+        onProblemResponse={(next) => {
+          // Keep answers on the ref only. Do not setResponse() here.
+          // That re-renders this viewer; problemWrap then remounts the FTML
+          // fill-in portal and the input loses focus on every keystroke.
+          responseRef.current = next;
         }}
         problemWrap={(problemUri, _isSubProblem, autogradable) => {
           return function WrappedProblem(ch) {
@@ -267,7 +289,14 @@ export function UriProblemViewer({
         }}
       />
       {setIsSubmitted && (
-        <Button onClick={() => setIsSubmitted(true)} disabled={isSubmitted} variant="contained">
+        <Button
+          onClick={() => {
+            setResponse?.(responseRef.current);
+            setIsSubmitted(true);
+          }}
+          disabled={isSubmitted}
+          variant="contained"
+        >
           Submit
         </Button>
       )}

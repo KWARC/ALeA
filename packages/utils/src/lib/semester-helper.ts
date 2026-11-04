@@ -2,8 +2,8 @@ import {
   createAcl,
   CreateACLRequest,
   createResourceAction,
-  getAcl,
   getInstructorResourceActions,
+  isValid,
 } from '@alea/spec';
 import { Action, CURRENT_TERM } from '@alea/utils';
 
@@ -19,8 +19,7 @@ function isAclOpen(role: string): boolean {
 
 export async function aclExists(aclId: string): Promise<boolean> {
   try {
-    await getAcl(aclId);
-    return true;
+    return await isValid(aclId);
   } catch (error) {
     return false;
   }

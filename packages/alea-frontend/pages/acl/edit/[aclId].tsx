@@ -59,9 +59,16 @@ const UpdateAcl: NextPage = () => {
           setIsOpen(acl.isOpen);
           const hasResources = await hasAclAssociatedResources(acl.id);
           setAclHasResources(hasResources);
-        } catch (e) {
+        } catch (e: any) {
           console.error('Error fetching ACL details:', e);
-          setError('Failed to load ACL details.');
+          const status = e?.response?.status;
+          if (status === 403) {
+            setError('You do not have access to this ACL. Only members of its updater ACL can edit it.');
+          } else if (status === 404) {
+            setError('No ACL with this id was found.');
+          } else {
+            setError('Failed to load ACL details.');
+          }
         }
       }
     };

@@ -17,20 +17,29 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
   const [directMembersNamesAndIds, setDirectMembersNamesAndIds] = useState<
     { fullName: string; userId: string }[]
   >([]);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     async function fetchAclDetails() {
-      const acl = await getAcl(aclId as string);
       setLoading(true);
-      setAclDetails({
-        isOpen: acl.isOpen,
-        description: acl.description,
-        updaterACLId: acl.updaterACLId,
-        memberAcls: acl.memberACLIds || [],
-      });
-      const userDetails = await getAclUserDetails(aclId);
-      setDirectMembersNamesAndIds(userDetails);
-      setLoading(false);
+      setAccessDenied(false);
+      try {
+        const acl = await getAcl(aclId as string);
+        setAclDetails({
+          isOpen: acl.isOpen,
+          description: acl.description,
+          updaterACLId: acl.updaterACLId,
+          memberAcls: acl.memberACLIds || [],
+        });
+        const userDetails = await getAclUserDetails(aclId);
+        setDirectMembersNamesAndIds(userDetails);
+      } catch (e: any) {
+        setAclDetails(null);
+        setDirectMembersNamesAndIds([]);
+        if (e?.response?.status === 403) setAccessDenied(true);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchAclDetails();
   }, [aclId]);
@@ -39,6 +48,24 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <CircularProgress size={16} />
+      </Box>
+    );
+  }
+  if (accessDenied || !aclDetails) {
+    return (
+      <Box
+        maxWidth="600px"
+        color="black"
+        border="1px solid #CCC"
+        p="8px"
+        borderRadius="5px"
+        boxShadow="1px 4px 10px 4px rgba(0,0,0,0.33)"
+      >
+        <Typography variant="body2">
+          {accessDenied
+            ? 'Only members of the updater ACL can view these details.'
+            : 'Unable to load ACL details.'}
+        </Typography>
       </Box>
     );
   }

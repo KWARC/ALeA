@@ -153,7 +153,7 @@ export function getAggregatedQuickAccess(
           ts: info.nextLectureTs,
           venue: info.nextLectureVenue,
           venueLink: info.nextLectureVenueLink,
-          livestreamUrl: allCourses[courseId]?.livestreamUrl,
+          livestreamUrl: info.livestreamUrl,
           isOngoing: info.isLectureOngoing,
         },
       };

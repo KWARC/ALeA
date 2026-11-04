@@ -1,7 +1,11 @@
 import { AccessControlList } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { validateMemberAndAclIds } from '../acl-utils/acl-common-utils';
-import { checkIfPostOrSetError, executeAndEndSet500OnError } from '../comment-utils';
+import {
+  checkIfPostOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
 
 
 
@@ -54,6 +58,7 @@ export async function createAclOrSetError(
 }
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
+  if (!(await getUserIdOrSetError(req, res))) return;
   const acl = req.body as AccessControlList;
   const { id, description, isOpen, updaterACLId, memberUserIds, memberACLIds } = acl;
   const result = await createAclOrSetError(

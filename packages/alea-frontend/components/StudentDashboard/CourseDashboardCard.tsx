@@ -35,28 +35,33 @@ export function CourseDashboardCard({
       href: pathToCourseResource(institutionId, courseId, instance, '/quiz-dash'),
       icon: QuizOutlinedIcon,
       label: t.quizSchedule,
+      enabled: courseInfo?.hasQuiz,
     },
     {
       href: pathToHomework(institutionId, courseId, instance),
       icon: AssignmentOutlinedIcon,
       label: t.assignments,
+      enabled: courseInfo?.hasHomework,
     },
     {
       href: pathToCourseNotes(institutionId, courseId, instance),
       icon: MenuBookOutlinedIcon,
       label: t.notes,
+      enabled: true,
     },
     {
       href: pathToCourseView(institutionId, courseId, instance),
       icon: SlideshowOutlinedIcon,
       label: t.slides,
+      enabled: true,
     },
     {
       href: pathToCheatSheet(institutionId, courseId, instance),
       icon: ArticleOutlinedIcon,
       label: t.cheatsheet,
+      enabled: !!courseInfo?.cheatsheetConfig?.hasCheatsheet,
     },
-  ];
+  ].sort((a, b) => Number(Boolean(b.enabled)) - Number(Boolean(a.enabled)));
 
   if (isLoading || !data) {
     return (
@@ -71,7 +76,7 @@ export function CourseDashboardCard({
   return (
     <Card sx={[courseCardStyles.root, courseCardStyles.cardHover]}>
       <Link href={courseHome} style={{ textDecoration: 'none' }}>
-        <Typography variant="h6" fontWeight={700} color="primary.main" sx={courseCardStyles.title}>
+        <Typography variant="h6" fontWeight={700} color="text.primary" sx={courseCardStyles.title}>
           {courseName || courseId.toUpperCase()}
         </Typography>
       </Link>
@@ -79,19 +84,42 @@ export function CourseDashboardCard({
       {data.isSemesterOver && <SemesterOverBanner courseHomeHref={courseHome} />}
 
       <Box sx={courseCardStyles.linksWrapper}>
-        {navLinks.map(({ href, icon: Icon, label }) => (
-          <Link key={label} href={href} style={{ textDecoration: 'none' }}>
-            <Box sx={courseCardStyles.linkRow}>
+        {navLinks.map(({ href, icon: Icon, label, enabled }) => {
+          const row = (
+            <Box
+              key={label}
+              aria-hidden={!enabled || undefined}
+              sx={[
+                courseCardStyles.linkRow,
+                courseCardStyles.enabledLinkRow,
+                { visibility: enabled ? 'visible' : 'hidden' },
+              ]}
+            >
               <Box className="icon-box" sx={courseCardStyles.iconBox}>
                 <Icon />
               </Box>
-              <Typography component="span" variant="body2" fontWeight={500}>
-                {label}
-              </Typography>
-              <ChevronRightIcon className="chevron" sx={courseCardStyles.chevron} />
+              <Box>
+                <Typography component="span" variant="body2" fontWeight={500}>
+                  {label}
+                </Typography>
+                {!enabled && (
+                  <Typography component="span" variant="caption" display="block">
+                    {t.notEnabledForCourse}
+                  </Typography>
+                )}
+              </Box>
+              {enabled && <ChevronRightIcon className="chevron" sx={courseCardStyles.chevron} />}
             </Box>
-          </Link>
-        ))}
+          );
+
+          return enabled ? (
+            <Link key={label} href={href} style={{ textDecoration: 'none' }}>
+              {row}
+            </Link>
+          ) : (
+            row
+          );
+        })}
       </Box>
     </Card>
   );
@@ -134,7 +162,7 @@ const courseCardStyles = {
     letterSpacing: '-0.01em',
     lineHeight: 1.3,
     transition: 'color 0.2s',
-    '&:hover': { color: 'primary.dark', textDecoration: 'underline' },
+    '&:hover': { textDecoration: 'underline' },
   },
   linksWrapper: {
     display: 'flex',
@@ -152,9 +180,11 @@ const courseCardStyles = {
     textDecoration: 'none',
     color: 'text.primary',
     transition: 'background-color 0.2s, color 0.2s, transform 0.2s',
+  },
+  enabledLinkRow: {
     '&:hover': {
       bgcolor: 'action.hover',
-      color: 'primary.main',
+      color: 'text.primary',
     },
     '&:hover .icon-box': {
       bgcolor: 'primary.dark',
@@ -162,7 +192,7 @@ const courseCardStyles = {
     },
     '&:hover .chevron': {
       transform: 'translateX(2px)',
-      color: 'primary.main',
+      color: 'text.primary',
     },
   },
   iconBox: {
