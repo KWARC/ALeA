@@ -220,6 +220,8 @@ export const en = {
       ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in ALeA.',
   },
   courseNotes: {
+    searchPlaceholder: 'Search in {{courseId}} notes',
+    close: 'Close',
     notCovered: 'This section is not covered in the course',
     comingSoon: 'Course notes coming soon',
     unavailablePrefix: 'Notes for',
@@ -301,6 +303,7 @@ export const en = {
     title: 'Course Home',
     instructors: 'Instructors',
     courseArchive: 'Course Archive',
+    viewAsPdf: 'View as PDF',
     moreResources: 'More Resources',
     noResources: 'No resources available for this course.',
     youAnd: 'You and',
@@ -558,6 +561,9 @@ export const en = {
   },
   calendarSection: {
     schedule: 'Lecture Schedule',
+    upcomingLecture: 'Upcoming Lecture',
+    timeZone: 'Europe/Berlin',
+    weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     personalCalendar: 'Personal Calendar',
     copyPersonalCalendarLink: 'Copy Personal Calendar Link',
     tutorialSchedule: 'Tutorial Schedule',

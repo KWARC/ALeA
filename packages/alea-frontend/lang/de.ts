@@ -195,6 +195,8 @@ export const de = {
       ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch Lernenden-Modell) wird in allen semantischen Diensten in ALeA verwendet.',
   },
   courseNotes: {
+    searchPlaceholder: 'In {{courseId}}-Skript suchen',
+    close: 'Schließen',
     notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
     comingSoon: 'Kursnotizen demnächst verfügbar',
     unavailablePrefix: 'Notizen für',
@@ -276,6 +278,7 @@ export const de = {
     title: 'Kurs-Startseite',
     instructors: 'Lehrkräfte',
     courseArchive: 'Kursarchiv',
+    viewAsPdf: 'als PDF anzeigen',
     moreResources: 'Weitere Ressourcen',
     noResources: 'Für diesen Kurs sind keine Ressourcen verfügbar.',
     youAnd: 'Sie und',
@@ -525,6 +528,9 @@ export const de = {
   },
   calendarSection: {
     schedule: 'Vorlesungsplan',
+    upcomingLecture: 'Nächste Vorlesung',
+    timeZone: 'Europa/Berlin',
+    weekdays: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
     personalCalendar: 'Persönlicher Kalender',
     copyPersonalCalendarLink: 'Persönlichen Kalenderlink kopieren',
     tutorialSchedule: 'Tutorienplan',

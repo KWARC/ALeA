@@ -36,7 +36,7 @@ export function MoreResourcesAccordion({
   instanceId,
   institutionId,
 }: MoreResourcesAccordionProps) {
-  const { courseHome: t } = getLocaleObject(useRouter());
+  const { courseHome: t, courseResources: tResources } = getLocaleObject(useRouter());
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(0);
 
@@ -157,7 +157,7 @@ export function MoreResourcesAccordion({
                         </Tooltip>
                       </Box>
                     ) : (
-                      <Tooltip title="Open Link">
+                      <Tooltip title={tResources.openLink}>
                         <IconButton
                           size="small"
                           href={resource.url}

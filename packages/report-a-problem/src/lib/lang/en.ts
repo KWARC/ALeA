@@ -8,7 +8,8 @@ export const en = {
   reportProblem: 'Report Problem',
 
   // dialog
-  titleLabel: 'Title (Optional)',
+  viewSource: 'View Source',
+  titleLabel: 'Issue Title (optional)',
   issueCategoryPrompt: 'This issue is',
   information: 'information related',
   display: 'display related',

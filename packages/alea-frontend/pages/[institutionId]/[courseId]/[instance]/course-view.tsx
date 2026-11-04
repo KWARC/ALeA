@@ -237,7 +237,12 @@ const CourseViewPage: NextPage = () => {
     [timestampSec: number]: ClipMetadata;
   }>({});
   const [currentSlideClipInfo, setCurrentSlideClipInfo] = useState<ClipInfo>(null);
-  const { courseView: t, home: tHome, courseHome: tCourseHome } = getLocaleObject(router);
+  const {
+    courseView: t,
+    home: tHome,
+    courseHome: tCourseHome,
+    courseNotes: tNotes,
+  } = getLocaleObject(router);
   const [courses, setCourses] = useState<{ [id: string]: CourseInfo } | undefined>(undefined);
   const [timestampSec, setTimestampSec] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -604,7 +609,7 @@ const CourseViewPage: NextPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} variant="contained">
-            Close
+            {tNotes.close}
           </Button>
         </DialogActions>
       </Dialog>
