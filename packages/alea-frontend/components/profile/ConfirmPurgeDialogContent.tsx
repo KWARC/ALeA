@@ -1,12 +1,13 @@
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
-    Button,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    TextField,
-    Typography,
+  Alert,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -34,6 +35,16 @@ export function ConfirmPurgeDialogContent({ onClose }) {
           onChange={(e) => setText(e.target.value)}
           variant="outlined"
         />
+        {text.toLocaleLowerCase() === t.confirmText.toLocaleLowerCase() && (
+          <Alert severity="info" sx={{ mt: 2, mb: 2, fontSize: '0.85rem' }}>
+            Purging may take some time. If it still isn&apos;t completed after 12 hours, please
+            contact{' '}
+            <a href="mailto:jonas.betzendahl@fau.de" style={{ color: 'inherit', fontWeight: 600 }}>
+              jonas.betzendahl@fau.de
+            </a>
+            .
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onClose(false)}>{t.cancel}</Button>
