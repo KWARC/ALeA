@@ -25,6 +25,7 @@ import {
   getSkippedWeeksSet,
   getUploadWindow,
   getWeekStartFromDate,
+  isNowWithinWindow,
 } from './get-cheatsheet-upload-window';
 
 export type { CheatsheetFields };
@@ -209,6 +210,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const weekStarts = getCheatsheetWeekStarts(config);
     const skippedWeeks = getSkippedWeeksSet(config);
+    if (scope === 'WEEK') {
+      const hasCurrentWindow = weekStarts.some((weekStart) => {
+        const weekId = weekStart.toISOString().split('T')[0];
+        const { windowStart, windowEnd } = getUploadWindow(weekStart, config);
+        return !skippedWeeks.has(weekId) && isNowWithinWindow(windowStart, windowEnd);
+      });
+      if (!hasCurrentWindow) return res.status(403).send('Current week window is not open.');
+    }
     const doc = buildPdf();
     if (scope === 'WEEK') {
       const weekStart = getEffectiveWeekStart(new Date(), config);
