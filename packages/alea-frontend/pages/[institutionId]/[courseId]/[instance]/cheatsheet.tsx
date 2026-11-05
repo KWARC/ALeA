@@ -271,6 +271,7 @@ export function CheatsheetDownloadDialog({
   onScopeChange,
   onDownload,
   isDownloading = false,
+  downloadDisabled = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -278,14 +279,17 @@ export function CheatsheetDownloadDialog({
   onScopeChange: (value: 'this-week' | 'semester') => void;
   onDownload: () => void;
   isDownloading?: boolean;
+  downloadDisabled?: boolean;
 }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Download Cheatsheets</DialogTitle>
 
       <DialogContent sx={{ mt: 2 }}>
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Download blank cheatsheet and write it in your own handwriting.{' '}
+        <Alert severity={downloadDisabled ? 'warning' : 'info'} sx={{ mb: 3 }}>
+          {downloadDisabled
+            ? 'Current week downloads are available only during an open cheatsheet window. You can still choose Entire semester.'
+            : 'Download blank cheatsheet and write it in your own handwriting.'}
         </Alert>
 
         <Typography variant="subtitle2" fontWeight="bold" mb={2}>
@@ -305,7 +309,7 @@ export function CheatsheetDownloadDialog({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
 
-        <Button onClick={onDownload} variant="contained" disabled={isDownloading}>
+        <Button onClick={onDownload} variant="contained" disabled={isDownloading || downloadDisabled}>
           {isDownloading ? 'Downloading...' : 'Download'}
         </Button>
       </DialogActions>
@@ -488,6 +492,7 @@ function CheatSheetsContent({
         onScopeChange={setDownloadScope}
         onDownload={handleDownload}
         isDownloading={isDownloading}
+        downloadDisabled={downloadScope === 'this-week' && !uploadWindowInfo?.currentWindow}
       />
 
       <Box sx={pageStyles.titleBar}>
