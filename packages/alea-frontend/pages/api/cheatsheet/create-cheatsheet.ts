@@ -192,8 +192,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!isInstructor && targetUserId && targetUserId !== userId) {
     return res.status(403).send('Unauthorized');
   }
-  if (!isInstructor) targetUserId = userId;
-  if (!targetUserId) return;
+  if (!isInstructor || !targetUserId) targetUserId = userId;
   const userProfile = await getUserProfileOrSet500OnError(targetUserId, res);
   if (!userProfile) return;
   const { firstName = '', lastName = '' } = userProfile[0] ?? {};
