@@ -260,17 +260,6 @@ const components: Components = {
     },
   },
 
-  MuiSwitch: {
-    styleOverrides: {
-      root: {
-        width: 42,
-        height: 26,
-        padding: 0,
-        marginLeft: 12,
-        marginRight: 12,
-      },
-    },
-  },
   MuiAccordion: {
     styleOverrides: {
       root: {

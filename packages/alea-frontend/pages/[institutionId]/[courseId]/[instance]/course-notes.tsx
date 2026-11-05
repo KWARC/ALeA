@@ -124,6 +124,7 @@ function NoCourseNotes({
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
+  const { courseNotes: t } = getLocaleObject(router);
   const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
     useRouteValidation('course-notes');
 
@@ -302,7 +303,7 @@ const CourseNotesPage: NextPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} variant="contained">
-            Close
+            {t.close}
           </Button>
         </DialogActions>
       </Dialog>

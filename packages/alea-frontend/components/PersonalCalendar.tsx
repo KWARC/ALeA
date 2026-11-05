@@ -1,6 +1,8 @@
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography, useTheme } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 
 export function PersonalCalendarSection({
   userId,
@@ -11,6 +13,7 @@ export function PersonalCalendarSection({
   hintGoogle: string;
   hintApple: string;
 }) {
+  const { calendarSection: t } = getLocaleObject(useRouter());
   const theme = useTheme();
   const calendarURL = `${window.location.origin}/api/calendar/create-calendar?userId=${userId}`;
   const [calendarLinkCopied, setCalendarLinkCopied] = useState(false);
@@ -45,7 +48,7 @@ export function PersonalCalendarSection({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CalendarMonthIcon sx={{ fontSize: 20, color: 'blue.sky' }} />
           <Typography variant="h6" sx={{ fontWeight: 600, color: 'blue.sky', fontSize: '1rem' }}>
-            Copy Personal Calendar Link
+            {t.copyPersonalCalendarLink}
           </Typography>
         </Box>
 

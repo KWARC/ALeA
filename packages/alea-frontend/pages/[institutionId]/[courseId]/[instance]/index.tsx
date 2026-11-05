@@ -96,11 +96,6 @@ function isAbsoluteUrl(uri?: string | null) {
   }
 }
 
-function getWeekdayName(dayOfWeek: number): string {
-  const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  return days[dayOfWeek] || '';
-}
-
 type SchedulePeriodState = 'before' | 'active' | 'after' | 'unknown';
 
 type SchedulePeriodInfo = {
@@ -146,13 +141,13 @@ function SchedulePeriodMessage({ message }: { message: string }) {
   );
 }
 
-function formatCommencementDate(date?: string) {
+function formatCommencementDate(date: string | undefined, locale: string) {
   if (!date) return undefined;
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return undefined;
-  return parsed.toLocaleDateString(undefined, {
+  return parsed.toLocaleDateString(locale, {
     day: 'numeric',
-    month: 'short',
+    month: locale === 'de' ? 'long' : 'short',
     year: 'numeric',
   });
 }
@@ -176,8 +171,22 @@ function ScheduleCommencementNotice({ message }: { message: string }) {
   );
 }
 
-function formatScheduleTimestamp(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
+function formatScheduleTimestamp(ts: number, locale: string) {
+  const date = new Date(ts);
+  if (locale === 'de') {
+    const day = date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const time = date.toLocaleTimeString(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `${day}, ${time} Uhr`;
+  }
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -202,12 +211,13 @@ function CourseScheduleSection({
   const [tutorInfoById, setTutorInfoById] = useState<Record<string, TutorInfo>>({});
   const [showAllLectures, setShowAllLectures] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
-  const { calendarSection: t } = getLocaleObject(useRouter());
+  const { locale = 'en' } = useRouter();
+  const { calendarSection: t, courseMetadata: tm } = getLocaleObject({ locale });
   const hasMoreLectures = lectureSchedule.length > 3;
   const hasMoreTutorials = tutorialSchedule.length > 3;
   const schedulePeriod = schedulePeriodInfo.state;
   const showScheduleRows = schedulePeriod !== 'after';
-  const commencementDate = formatCommencementDate(schedulePeriodInfo.lectureStartDate);
+  const commencementDate = formatCommencementDate(schedulePeriodInfo.lectureStartDate, locale);
   const lectureCommencementMessage = commencementDate
     ? t.lecturesCommenceOn.replace('{{date}}', commencementDate)
     : undefined;
@@ -316,7 +326,7 @@ function CourseScheduleSection({
   );
 
   const nextLectureDateFormatted = nextLectureStartTime
-    ? formatScheduleTimestamp(nextLectureStartTime)
+    ? formatScheduleTimestamp(nextLectureStartTime, locale)
     : null;
   const fontColor = 'text.primary';
   const theme = useTheme();
@@ -366,7 +376,7 @@ function CourseScheduleSection({
                     variant="h6"
                     sx={{ fontWeight: 600, color: fontColor, fontSize: 16, mb: 1 }}
                   >
-                    Upcoming Lecture: {nextLectureDateFormatted}
+                    {t.upcomingLecture}: {nextLectureDateFormatted}
                   </Typography>
                 )}
 
@@ -401,18 +411,18 @@ function CourseScheduleSection({
                             variant="body2"
                             sx={{ fontWeight: 600, color: 'text.primary' }}
                           >
-                            {getWeekdayName(entry.dayOfWeek)}
+                            {t.weekdays[entry.dayOfWeek - 1] || ''}
                           </Typography>
 
                           <Typography
                             variant="body2"
                             sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
                           >
-                            🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                            🕒 {entry.startTime} – {entry.endTime} ({t.timeZone})
                           </Typography>
 
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            📍 Venue:{' '}
+                            📍 {tm.venue}:{' '}
                             {entry.venueLink ? (
                               <Link
                                 href={entry.venueLink}
@@ -505,9 +515,13 @@ function CourseScheduleSection({
                 {cancelledTutorialNotices.map((notice) => (
                   <ScheduleCommencementNotice
                     key={`${notice.ymd}-${notice.startTime}`}
-                    message={t.tutorialCancelledNotice
-                      .replace('{{date}}', formatScheduleTimestamp(new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime()))
-                    }
+                    message={t.tutorialCancelledNotice.replace(
+                      '{{date}}',
+                      formatScheduleTimestamp(
+                        new Date(`${notice.ymd}T${notice.startTime || '00:00'}:00`).getTime(),
+                        locale
+                      )
+                    )}
                   />
                 ))}
 
@@ -516,7 +530,10 @@ function CourseScheduleSection({
                     variant="h6"
                     sx={{ fontWeight: 600, color: 'text.primary', fontSize: 16, mb: 1 }}
                   >
-                    {t.upcomingTutorial.replace('{{date}}', formatScheduleTimestamp(nextTutorial.ts))}
+                    {t.upcomingTutorial.replace(
+                      '{{date}}',
+                      formatScheduleTimestamp(nextTutorial.ts, locale)
+                    )}
                   </Typography>
                 )}
 
@@ -547,18 +564,18 @@ function CourseScheduleSection({
                             variant="body2"
                             sx={{ fontWeight: 600, color: 'text.primary' }}
                           >
-                            {getWeekdayName(entry.dayOfWeek)}
+                            {t.weekdays[entry.dayOfWeek - 1] || ''}
                           </Typography>
 
                           <Typography
                             variant="body2"
                             sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
                           >
-                            🕒 {entry.startTime} – {entry.endTime} (Europe/Berlin)
+                            🕒 {entry.startTime} – {entry.endTime} ({t.timeZone})
                           </Typography>
 
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            📍 Venue:{' '}
+                            📍 {tm.venue}:{' '}
                             {entry.venueLink ? (
                               <Link
                                 href={entry.venueLink}
@@ -858,7 +875,7 @@ const CourseHomePage: NextPage = () => {
       return router.push('/login');
     }
 
-    const confirmed = window.confirm('Are you sure you want to un-enroll?');
+    const confirmed = window.confirm(tCourseHome.confirmUnEnroll);
     if (!confirmed) return;
     const success = await handleUnEnrollment(userId, courseId, currentTerm);
     if (success) {
@@ -896,7 +913,7 @@ const CourseHomePage: NextPage = () => {
               <ArticleIcon fontSize="large" />
             </Button>
             {notes && (
-              <Tooltip title="View as PDF" arrow>
+              <Tooltip title={tCourseHome.viewAsPdf} arrow>
                 <Button
                   onClick={() => {
                     const pdfUrl = getCoursePdfUrl(notes);
@@ -919,7 +936,7 @@ const CourseHomePage: NextPage = () => {
               <SlideshowIcon fontSize="large" />
             </Button>
             {slides && (
-              <Tooltip title="View as PDF" arrow>
+              <Tooltip title={tCourseHome.viewAsPdf} arrow>
                 <Button
                   onClick={() => {
                     const pdfUrl = getCoursePdfUrl(slides);
@@ -987,7 +1004,7 @@ const CourseHomePage: NextPage = () => {
             </CourseComponentLink>
           )}
           {isInstructor && (
-            <Tooltip title="Course Archive" placement="bottom" arrow>
+            <Tooltip title={tCourseHome.courseArchive} placement="bottom" arrow>
               <Link href={courseLandingLink}>
                 <Button variant="contained" sx={{ minWidth: 48, height: 48 }}>
                   <StorageIcon fontSize="large" />
@@ -1038,7 +1055,8 @@ const CourseHomePage: NextPage = () => {
                 component="div"
                 sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                You and {Math.max(studentCount - 1, 0)} other learners are enrolled.{' '}
+                {tCourseHome.youAnd} {Math.max(studentCount - 1, 0)}{' '}
+                {tCourseHome.otherLearnersEnrolled}{' '}
                 <Box
                   component="span"
                   onClick={unEnrollFromCourse}
@@ -1052,7 +1070,7 @@ const CourseHomePage: NextPage = () => {
                     },
                   }}
                 >
-                  Un-Enroll
+                  {tCourseHome.unEnroll}
                 </Box>
               </Typography>
             )}

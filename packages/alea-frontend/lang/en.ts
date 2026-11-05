@@ -1,5 +1,3 @@
-import CourseMetadata from '../components/instructor-panel/CourseMetadata';
-
 export const en = {
   home: {
     header: 'ALeA based Courses at FAU',
@@ -222,6 +220,8 @@ export const en = {
       ', which classifies learner competencies in six cognitive dimensions for every concept. As a consequence, you see six probability values representing the predicted competency of that concept. This competency model (a.k.a. learner model) is used in all of the semantic services in ALeA.',
   },
   courseNotes: {
+    searchPlaceholder: 'Search in {{courseId}} notes',
+    close: 'Close',
     notCovered: 'This section is not covered in the course',
     comingSoon: 'Course notes coming soon',
     unavailablePrefix: 'Notes for',
@@ -259,6 +259,11 @@ export const en = {
     privacyPolicy: 'Privacy Policy',
     legalNotice: 'Legal Notice',
     changeLanguage: 'Change Language',
+    themeModes: {
+      dark: 'Dark mode',
+      light: 'Light mode',
+      system: 'System mode',
+    },
   },
   learnerModelPriming: {
     learnerModelPriming: 'Learner Model Priming',
@@ -296,6 +301,15 @@ export const en = {
   },
   courseHome: {
     title: 'Course Home',
+    instructors: 'Instructors',
+    courseArchive: 'Course Archive',
+    viewAsPdf: 'View as PDF',
+    moreResources: 'More Resources',
+    noResources: 'No resources available for this course.',
+    youAnd: 'You and',
+    otherLearnersEnrolled: 'other learners are enrolled.',
+    unEnroll: 'Un-Enroll',
+    confirmUnEnroll: 'Are you sure you want to un-enroll?',
     currentSemester: 'Current Semester',
     recordedSyllabus: 'Recorded Syllabus',
     date: 'Date',
@@ -451,7 +465,8 @@ export const en = {
     requireFau: 'Use a FAU email address (@fau.de)',
     submit: 'Send verification email',
     resend: 'Resend verification email',
-    checkInbox: 'Check your inbox and open the verification link. This page will continue when the address is verified.',
+    checkInbox:
+      'Check your inbox and open the verification link. This page will continue when the address is verified.',
     error: 'Something went wrong. Please try again.',
   },
   practiceProblems: {
@@ -549,7 +564,11 @@ export const en = {
   },
   calendarSection: {
     schedule: 'Lecture Schedule',
+    upcomingLecture: 'Upcoming Lecture',
+    timeZone: 'Europe/Berlin',
+    weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     personalCalendar: 'Personal Calendar',
+    copyPersonalCalendarLink: 'Copy Personal Calendar Link',
     tutorialSchedule: 'Tutorial Schedule',
     lecturesNotStarted: 'Lectures have not started yet.',
     lecturesOver: 'Lectures are over for this semester.',
@@ -609,6 +628,39 @@ export const en = {
     failedHomeworkUpdate: 'Failed to update homework setting',
     failedQuizUpdate: 'Failed to update quiz setting',
     failedCanStudentUploadCheatsheetUpdate: 'Failed to update student cheatsheet upload setting',
+  },
+
+  courseResources: {
+    title: 'Course Resources',
+    resourceName: 'Resource Name',
+    resourceType: 'Resource Type',
+    file: 'File',
+    link: 'Link',
+    availabilityWindow: 'Availability Window',
+    validFrom: 'Valid From',
+    validTill: 'Valid Till',
+    uploading: 'Uploading...',
+    uploadResource: 'Upload Resource',
+    noResources: 'No resources uploaded yet.',
+    enterName: 'Please enter a name',
+    selectFile: 'Please select a file',
+    enterUrl: 'Please enter a URL',
+    uploadSuccess: 'Resource uploaded successfully!',
+    uploadFailed: 'Failed to upload resource',
+    duplicateInSemester: 'This resource already exists in {{semester}}.',
+    duplicateResource: 'This resource has already been uploaded/added.',
+    deleteSuccess: 'Resource deleted',
+    deleteFailed: 'Failed to delete resource',
+    copySuccess: 'Resource copied to {{semester}} successfully!',
+    copyFailed: 'Failed to copy resource',
+    duplicateInCurrentSemester: 'This resource already exists in the current semester.',
+    confirmCopy: 'Copy to current semester?',
+    copyToCurrentSemester: 'Copy to current semester',
+    view: 'View',
+    openLink: 'Open Link',
+    confirmDelete: 'Are you sure?',
+    previousPage: 'Previous page',
+    nextPage: 'Next page',
   },
 
   courseMetadata: {
@@ -719,16 +771,14 @@ export const en = {
 
     addCancellationDate: 'Add date',
     selectCancelDate: 'Cancelled dates',
-    invalidTutorialDate:
-      'Please pick a {{day}} between the lecture start and end dates.',
+    invalidTutorialDate: 'Please pick a {{day}} between the lecture start and end dates.',
     dateAlreadyCancelled: 'This date is already cancelled for this tutorial.',
-    confirmRemoveCancellationDate:
-      'Remove {{date}} from the cancelled dates for this tutorial?',
+    confirmRemoveCancellationDate: 'Remove {{date}} from the cancelled dates for this tutorial?',
   },
   courseLanding: {
     courseInstances: 'Course Instances',
     latest: 'Latest',
-   CourseInfo: 'Course Information',
+    CourseInfo: 'Course Information',
     aboutThisCourse: 'About this Course',
   },
   cheatsheet: {

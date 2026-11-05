@@ -79,7 +79,7 @@ export function ReportProblemDialog({
               endIcon={<OpenInNewIcon />}
               sx={{ padding: '2px 6px', minHeight: '24px', fontSize: '0.75rem', mb: 0.5 }}
             >
-              View Source
+              {t.viewSource}
             </Button>
           )}
         </Box>
@@ -103,7 +103,7 @@ export function ReportProblemDialog({
         <Box sx={{ mb: 2 }}>
           <TextField
             fullWidth
-            label="Issue Title (optional)"
+            label={t.titleLabel}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />

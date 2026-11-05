@@ -1,13 +1,16 @@
 import PersonIcon from '@mui/icons-material/Person';
 import { Box, Typography } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from '../lang/utils';
 
 function InstructorDetails({ details = [] }) {
+  const { courseHome: t } = getLocaleObject(useRouter());
   if (!details.length) return;
   return (
     <Box display="flex" alignItems="center" gap={1} my={1}>
       <Typography variant="h5" sx={{ color: 'text.primary', fontWeight: 800 }}>
-        Instructors:
+        {t.instructors}:
       </Typography>
 
       {details.map((item, index) => (

@@ -8,7 +8,8 @@ export const de = {
   reportProblem: 'Problem melden',
 
   // dialog
-  titleLabel: 'Titel (Optional)',
+  viewSource: 'Quellcode anzeigen',
+  titleLabel: 'Fehlertitel (optional)',
   issueCategoryPrompt: 'Dieses Problem ist',
   information: 'informationsbezogen',
   display: 'anzeigebedingt',

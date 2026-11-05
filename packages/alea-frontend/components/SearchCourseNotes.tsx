@@ -13,6 +13,7 @@ import {
 } from '@alea/utils';
 import { contentToc, searchDocs, TocElem, type SearchResult } from '@flexiformal/ftml-backend';
 import { useEffect, useState } from 'react';
+import { getLocaleObject } from '../lang/utils';
 
 function getUriDocumentKey(uri: string) {
   const archive = getParamFromUri(uri, 'a');
@@ -120,6 +121,7 @@ const SearchCourseNotes = ({
   instance?: string;
 }) => {
   const router = useRouter();
+  const { courseNotes: t } = getLocaleObject(router);
   const [searchQuery, setSearchQuery] = useState<string>(query || '');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -261,7 +263,7 @@ const SearchCourseNotes = ({
           fullWidth
           variant="outlined"
           value={searchQuery}
-          placeholder={`Search in ${courseId.toUpperCase() || 'the'} notes`}
+          placeholder={t.searchPlaceholder.replace('{{courseId}}', courseId.toUpperCase())}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">

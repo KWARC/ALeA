@@ -39,6 +39,8 @@ import {
 import { getExtensionFromMime } from '@alea/utils';
 import { getIconByExtension } from '@alea/react-utils';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useRouter } from 'next/router';
+import { getLocaleObject } from '../lang/utils';
 
 interface CourseResourcesTabProps {
   courseId: string;
@@ -51,6 +53,8 @@ export default function CourseResourcesTab({
   instanceId,
   universityId,
 }: CourseResourcesTabProps) {
+  const router = useRouter();
+  const { courseResources: t, courseMetadata: tm, courseHome: tc } = getLocaleObject(router);
   const queryClient = useQueryClient();
   const [confirmCopyId, setConfirmCopyId] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<{ id: string; message: string } | null>(null);
@@ -108,7 +112,7 @@ export default function CourseResourcesTab({
 
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(router.locale);
   };
 
   const [validFrom, setValidFrom] = useState('');
@@ -131,7 +135,7 @@ export default function CourseResourcesTab({
 
   const handleUpload = async () => {
     if (!materialName.trim()) {
-      setToast({ type: 'error', text: 'Please enter a name' });
+      setToast({ type: 'error', text: t.enterName });
       return;
     }
 
@@ -152,14 +156,14 @@ export default function CourseResourcesTab({
       if (type === 'FILE') {
         const file = fileInputRef.current?.files?.[0];
         if (!file) {
-          setToast({ type: 'error', text: 'Please select a file' });
+          setToast({ type: 'error', text: t.selectFile });
           setUploading(false);
           return;
         }
         formData.append('file', file);
       } else {
         if (!url.trim()) {
-          setToast({ type: 'error', text: 'Please enter a URL' });
+          setToast({ type: 'error', text: t.enterUrl });
           setUploading(false);
           return;
         }
@@ -169,7 +173,7 @@ export default function CourseResourcesTab({
       await postMaterial(formData);
 
       setDuplicateError('');
-      setToast({ type: 'success', text: 'Resource uploaded successfully!' });
+      setToast({ type: 'success', text: t.uploadSuccess });
       setMaterialName('');
       setUrl('');
       setValidFrom('');
@@ -183,13 +187,13 @@ export default function CourseResourcesTab({
         const existingInst = error.response.data?.existingInstance;
         setDuplicateError(
           existingInst
-            ? `This resource is already existing in ${existingInst}.`
-            : 'This resource has already been uploaded/added.'
+            ? t.duplicateInSemester.replace('{{semester}}', existingInst)
+            : t.duplicateResource
         );
       } else {
         setToast({
           type: 'error',
-          text: error?.response?.data || error.message || 'Failed to upload resource',
+          text: t.uploadFailed,
         });
       }
     } finally {
@@ -202,13 +206,13 @@ export default function CourseResourcesTab({
       await deleteMaterial(resourceId);
 
       setConfirmDeleteId(null);
-      setToast({ type: 'success', text: 'Resource deleted' });
+      setToast({ type: 'success', text: t.deleteSuccess });
       await queryClient.invalidateQueries({
         queryKey: ['materials', universityId, courseId],
       });
     } catch (error: any) {
       console.error('Delete error:', error);
-      setToast({ type: 'error', text: error.message || 'Failed to delete resource' });
+      setToast({ type: 'error', text: t.deleteFailed });
     }
   };
 
@@ -217,18 +221,18 @@ export default function CourseResourcesTab({
       setCopyError(null);
       await copyPrevSemMaterial(resourceId, courseId, universityId);
       setDuplicateError('');
-      setToast({ type: 'success', text: `Resource copied to ${targetSem} successfully!` });
+      setToast({ type: 'success', text: t.copySuccess.replace('{{semester}}', targetSem) });
       queryClient.invalidateQueries({
         queryKey: ['materials', universityId, courseId, targetSem],
       });
       await fetchResources();
       setConfirmCopyId(null);
     } catch (error: any) {
-      const message = error?.response?.data?.message || error.message || 'Failed to copy resource';
+      console.error('Copy error:', error);
       if (error?.response?.status === 409) {
-        setCopyError({ id: resourceId, message });
+        setCopyError({ id: resourceId, message: t.duplicateInCurrentSemester });
       } else {
-        setToast({ type: 'error', text: message });
+        setToast({ type: 'error', text: t.copyFailed });
         setConfirmCopyId(null);
       }
     }
@@ -237,11 +241,11 @@ export default function CourseResourcesTab({
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mt: 2 }}>
       <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
-        Course Resources
+        {t.title}
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
         <TextField
-          label="Resource Name"
+          label={t.resourceName}
           value={materialName}
           onChange={(e) => setMaterialName(e.target.value)}
           fullWidth
@@ -249,14 +253,14 @@ export default function CourseResourcesTab({
         />
 
         <FormControl size="small" fullWidth>
-          <InputLabel>Resource Type</InputLabel>
+          <InputLabel>{t.resourceType}</InputLabel>
           <Select
             value={type}
-            label="Resource Type"
+            label={t.resourceType}
             onChange={(e) => setType(e.target.value as 'FILE' | 'LINK')}
           >
-            <MenuItem value="FILE">File</MenuItem>
-            <MenuItem value="LINK">Link</MenuItem>
+            <MenuItem value="FILE">{t.file}</MenuItem>
+            <MenuItem value="LINK">{t.link}</MenuItem>
           </Select>
         </FormControl>
 
@@ -268,12 +272,12 @@ export default function CourseResourcesTab({
               size="small"
             />
           }
-          label={<Typography variant="body2">Availability Window</Typography>}
+          label={<Typography variant="body2">{t.availabilityWindow}</Typography>}
         />
         {showValidity && (
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Valid From"
+              label={t.validFrom}
               type="date"
               value={validFrom}
               onChange={(e) => setValidFrom(e.target.value)}
@@ -285,7 +289,7 @@ export default function CourseResourcesTab({
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Valid Till"
+              label={t.validTill}
               type="date"
               value={validTill}
               onChange={(e) => setValidTill(e.target.value)}
@@ -305,6 +309,7 @@ export default function CourseResourcesTab({
           <>
             <input
               type="file"
+              aria-label={t.selectFile}
               accept=".pdf,.txt,.json,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg,.gif"
               ref={fileInputRef}
               onChange={() => setDuplicateError('')}
@@ -342,7 +347,7 @@ export default function CourseResourcesTab({
           onClick={handleUpload}
           disabled={uploading}
         >
-          {uploading ? 'Uploading...' : 'Upload Resource'}
+          {uploading ? t.uploading : t.uploadResource}
         </Button>
       </Box>
 
@@ -361,7 +366,7 @@ export default function CourseResourcesTab({
               key={sem}
               label={
                 <Typography variant="body2" fontWeight={700}>
-                  {instanceId === sem ? 'Current Semester' : sem}
+                  {instanceId === sem ? tc.currentSemester : sem}
                 </Typography>
               }
             />
@@ -375,7 +380,7 @@ export default function CourseResourcesTab({
         </Box>
       ) : filteredResources.length === 0 ? (
         <Typography color="text.secondary" component="div">
-          No resources uploaded yet.
+          {t.noResources}
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -423,16 +428,12 @@ export default function CourseResourcesTab({
                   </Typography>
                 </Box>
                 {(resource.validFrom || resource.validTill) && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block' }}
-                  >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {resource.validFrom &&
-                      `Valid-From:${formatDateForDisplay(resource.validFrom)}`}
+                      `${t.validFrom}: ${formatDateForDisplay(resource.validFrom)}`}
                     {resource.validFrom && resource.validTill && ' | '}
                     {resource.validTill &&
-                      `Valid-Till:${formatDateForDisplay(resource.validTill)}`}
+                      `${t.validTill}: ${formatDateForDisplay(resource.validTill)}`}
                   </Typography>
                 )}
               </Box>
@@ -443,7 +444,7 @@ export default function CourseResourcesTab({
                     {confirmCopyId === resource.id ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Typography variant="caption" color="text.secondary" noWrap>
-                          Copy to current semester?
+                          {t.confirmCopy}
                         </Typography>
                         <Button
                           size="small"
@@ -451,7 +452,7 @@ export default function CourseResourcesTab({
                           sx={{ minWidth: 0, px: 1, py: 0, fontSize: '0.7rem' }}
                           onClick={() => handleCopyToSemester(SEMESTERS[0], resource.id)}
                         >
-                          Yes
+                          {tm.yes}
                         </Button>
                         <Button
                           size="small"
@@ -462,7 +463,7 @@ export default function CourseResourcesTab({
                             setCopyError(null);
                           }}
                         >
-                          No
+                          {tm.no}
                         </Button>
                       </Box>
                     ) : (
@@ -472,7 +473,7 @@ export default function CourseResourcesTab({
                           setConfirmCopyId(resource.id);
                           setCopyError(null);
                         }}
-                        title="Copy to current semester"
+                        title={t.copyToCurrentSemester}
                         sx={{ color: 'text.secondary' }}
                       >
                         <ContentCopyIcon fontSize="small" />
@@ -492,7 +493,7 @@ export default function CourseResourcesTab({
                     onClick={() => {
                       window.open(getMaterialFileUrl(resource.id), '_blank');
                     }}
-                    title="View"
+                    title={t.view}
                     sx={{ color: 'palette.secondary.main' }}
                   >
                     <VisibilityIcon fontSize="small" />
@@ -501,7 +502,7 @@ export default function CourseResourcesTab({
                   <IconButton
                     size="small"
                     onClick={() => window.open(resource.url, '_blank')}
-                    title="Open Link"
+                    title={t.openLink}
                     sx={{ color: 'palette.info.main' }}
                   >
                     <LinkIcon fontSize="small" />
@@ -510,16 +511,21 @@ export default function CourseResourcesTab({
                 {confirmDeleteId === resource.id ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Typography variant="caption" color="text.secondary" noWrap>
-                      Are you sure?
+                      {t.confirmDelete}
                     </Typography>
                     <IconButton
                       size="small"
                       color="error"
+                      title={tm.delete}
                       onClick={() => handleDelete(resource.id)}
                     >
                       <DeleteIcon />
                     </IconButton>
-                    <IconButton size="small" onClick={() => setConfirmDeleteId(null)}>
+                    <IconButton
+                      size="small"
+                      title={tm.cancel}
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
                       ×
                     </IconButton>
                   </Box>
@@ -527,6 +533,7 @@ export default function CourseResourcesTab({
                   <IconButton
                     size="small"
                     color="error"
+                    title={tm.delete}
                     onClick={() => setConfirmDeleteId(resource.id)}
                   >
                     <DeleteIcon />
@@ -542,6 +549,7 @@ export default function CourseResourcesTab({
           sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}
         >
           <IconButton
+            title={t.previousPage}
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 0}
             size="small"
@@ -561,6 +569,7 @@ export default function CourseResourcesTab({
           </Typography>
 
           <IconButton
+            title={t.nextPage}
             onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages - 1}
             size="small"

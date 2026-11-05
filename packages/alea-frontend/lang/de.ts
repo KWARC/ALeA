@@ -120,7 +120,7 @@ export const de = {
     practiceProblems: 'Übungsprobleme',
     enrollmentMessage:
       'Bitte melden Sie sich für den Kurs an, um auf Quiz und Hausaufgaben zuzugreifen.',
-    getEnrolled: 'sich einschreiben',
+    getEnrolled: 'einschreiben',
     numberofStudentEnrolled: 'Studenten sind bereits eingeschrieben',
   },
   homework: {
@@ -195,6 +195,8 @@ export const de = {
       ', welches Lernerkompetenzen für jedes Konzept in sechs kognitive Dimensionen einteilt. Als Folge sehen Sie Werte, die die vorhergesagte Kompetenz dieses Konzepts darstellen. Dieses Kompetenzmodell (auch Lernenden-Modell) wird in allen semantischen Diensten in ALeA verwendet.',
   },
   courseNotes: {
+    searchPlaceholder: 'In {{courseId}}-Skript suchen',
+    close: 'Schließen',
     notCovered: 'Dieser Abschnitt ist nicht im Kurs enthalten',
     comingSoon: 'Kursnotizen demnächst verfügbar',
     unavailablePrefix: 'Notizen für',
@@ -232,6 +234,11 @@ export const de = {
     privacyPolicy: 'Datenschutz-Bestimmungen',
     legalNotice: 'Impressum',
     changeLanguage: 'Sprache ändern',
+    themeModes: {
+      dark: 'dunkles Design',
+      light: 'helles Design',
+      system: 'Systemdesign',
+    },
   },
   learnerModelPriming: {
     learnerModelPriming: 'Lernermodell-Fundierung',
@@ -269,6 +276,15 @@ export const de = {
   },
   courseHome: {
     title: 'Kurs-Startseite',
+    instructors: 'Lehrkräfte',
+    courseArchive: 'Kursarchiv',
+    viewAsPdf: 'als PDF anzeigen',
+    moreResources: 'Weitere Ressourcen',
+    noResources: 'Für diesen Kurs sind keine Ressourcen verfügbar.',
+    youAnd: 'Sie und',
+    otherLearnersEnrolled: 'weitere Personen sind eingeschrieben.',
+    unEnroll: 'Abmelden',
+    confirmUnEnroll: 'Möchten Sie sich wirklich vom Kurs abmelden?',
     currentSemester: 'Aktuelles Semester',
     recordedSyllabus: 'Aufgezeichneter Lehrplan',
     date: 'Datum',
@@ -425,7 +441,8 @@ export const de = {
     requireFau: 'Verwenden Sie eine FAU-E-Mail-Adresse (@fau.de)',
     submit: 'Bestätigungs-E-Mail senden',
     resend: 'Bestätigungs-E-Mail erneut senden',
-    checkInbox: 'Prüfen Sie Ihren Posteingang und öffnen Sie den Bestätigungslink. Diese Seite bleibt, bis die Adresse bestätigt ist.',
+    checkInbox:
+      'Prüfen Sie Ihren Posteingang und öffnen Sie den Bestätigungslink. Diese Seite bleibt, bis die Adresse bestätigt ist.',
     error: 'Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.',
   },
   practiceProblems: {
@@ -514,7 +531,11 @@ export const de = {
   },
   calendarSection: {
     schedule: 'Vorlesungsplan',
+    upcomingLecture: 'Nächste Vorlesung',
+    timeZone: 'Europa/Berlin',
+    weekdays: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
     personalCalendar: 'Persönlicher Kalender',
+    copyPersonalCalendarLink: 'Persönlichen Kalenderlink kopieren',
     tutorialSchedule: 'Tutorienplan',
     lecturesNotStarted: 'Die Vorlesungen haben noch nicht begonnen.',
     lecturesOver: 'Die Vorlesungen sind für dieses Semester vorbei.',
@@ -577,6 +598,39 @@ export const de = {
     failedQuizUpdate: 'Quiz-Einstellung konnte nicht aktualisiert werden',
     failedCanStudentUploadCheatsheetUpdate:
       'Spickzettel-Upload-Einstellung für Studierende konnte nicht aktualisiert werden',
+  },
+
+  courseResources: {
+    title: 'Kursressourcen',
+    resourceName: 'Name der Ressource',
+    resourceType: 'Art der Ressource',
+    file: 'Datei',
+    link: 'Link',
+    availabilityWindow: 'Verfügbarkeitszeitraum',
+    validFrom: 'Gültig ab',
+    validTill: 'Gültig bis',
+    uploading: 'Wird hochgeladen...',
+    uploadResource: 'Ressource hochladen',
+    noResources: 'Noch keine Ressourcen hochgeladen.',
+    enterName: 'Bitte geben Sie einen Namen ein',
+    selectFile: 'Bitte wählen Sie eine Datei aus',
+    enterUrl: 'Bitte geben Sie eine URL ein',
+    uploadSuccess: 'Ressource erfolgreich hochgeladen!',
+    uploadFailed: 'Ressource konnte nicht hochgeladen werden',
+    duplicateInSemester: 'Diese Ressource ist bereits in {{semester}} vorhanden.',
+    duplicateResource: 'Diese Ressource wurde bereits hochgeladen/hinzugefügt.',
+    deleteSuccess: 'Ressource gelöscht',
+    deleteFailed: 'Ressource konnte nicht gelöscht werden',
+    copySuccess: 'Ressource erfolgreich nach {{semester}} kopiert!',
+    copyFailed: 'Ressource konnte nicht kopiert werden',
+    duplicateInCurrentSemester: 'Diese Ressource ist bereits im aktuellen Semester vorhanden.',
+    confirmCopy: 'Ins aktuelle Semester kopieren?',
+    copyToCurrentSemester: 'Ins aktuelle Semester kopieren',
+    view: 'Ansehen',
+    openLink: 'Link öffnen',
+    confirmDelete: 'Sind Sie sicher?',
+    previousPage: 'Vorherige Seite',
+    nextPage: 'Nächste Seite',
   },
 
   courseMetadata: {
@@ -693,11 +747,9 @@ export const de = {
 
     addCancellationDate: 'Datum hinzufügen',
     selectCancelDate: 'Absagedaten',
-    invalidTutorialDate:
-      'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
+    invalidTutorialDate: 'Bitte wählen Sie einen {{day}} zwischen Vorlesungsbeginn und -ende.',
     dateAlreadyCancelled: 'Dieses Datum ist für dieses Tutorium bereits abgesagt.',
-    confirmRemoveCancellationDate:
-      '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
+    confirmRemoveCancellationDate: '{{date}} von den Absagedaten für dieses Tutorium entfernen?',
 
     confirmUpdateHomework:
       'Sind Sie sicher, dass Sie die Verfügbarkeit der Hausaufgaben aktualisieren möchten?',
