@@ -69,7 +69,7 @@
     "mathjax-full": "^3.2.2",
     "next": "^15.5.29",
     "next-plugin-preval": "^1.2.6",
-    "nodemailer": "^7.0.11",
+    "nodemailer": "^10.4.0",
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^3.11.174",
