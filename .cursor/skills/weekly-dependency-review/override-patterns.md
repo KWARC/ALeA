@@ -102,4 +102,4 @@ If installed satisfies the floor but audit still flags it, the floor is behind �
 
 Append dated entries for **this** repo; delete ones that searches prove obsolete. Do not copy cycle notes from other monorepos.
 
-*(No local cycles recorded yet.)*
+- **2026-11-08 — axios does not move follow-redirects.** `axios@1.21.0` still depends on `follow-redirects@^1.16.0`. A direct axios bump to the patched line (≥1.20.0) leaves `follow-redirects@1.16.0` installed and audit-high. Floor `follow-redirects` ≥1.16.2 (and `form-data` ≥4.0.6 for the axios/Cypress path) in all three override blocks. Do not treat the parent bump as sufficient.

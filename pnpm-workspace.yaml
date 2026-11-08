@@ -2,6 +2,10 @@ overrides:
   canvas: 3.2.3
   next: 15.5.29
   sharp: '>=0.35.5'
+  # High: GHSA-mrwp-f3q8-3g9p — axios still depends on follow-redirects ^1.16.0
+  follow-redirects: '>=1.16.2'
+  # High: GHSA-hmw2-7cc7-3qxx — axios + Cypress
+  form-data: '>=4.0.6'
 
 allowBuilds:
   '@parcel/watcher': true

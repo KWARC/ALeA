@@ -18,7 +18,9 @@
   "overrides": {
     "canvas": "3.2.3",
     "next": "15.5.29",
-    "sharp": ">=0.35.5"
+    "sharp": ">=0.35.5",
+    "follow-redirects": ">=1.16.2",
+    "form-data": ">=4.0.6"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",
@@ -43,7 +45,7 @@
     "@types/htmlparser2": "^3.10.4",
     "@types/jsonwebtoken": "^9.0.7",
     "@xyflow/react": "^12.9.0",
-    "axios": "^1.13.2",
+    "axios": "^1.21.0",
     "bcrypt": "^5.1.1",
     "canvas": "^3.2.3",
     "crypto": "^1.0.1",
@@ -157,7 +159,9 @@
     "overrides": {
       "canvas": "3.2.3",
       "next": "15.5.29",
-      "sharp": ">=0.35.5"
+      "sharp": ">=0.35.5",
+      "follow-redirects": ">=1.16.2",
+      "form-data": ">=4.0.6"
     }
   }
 }
