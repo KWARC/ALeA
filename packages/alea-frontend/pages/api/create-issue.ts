@@ -1,11 +1,8 @@
 import { NotificationType } from '@alea/spec';
 import { extractRepoAndFilepath as extractProjectAndFilepath } from '@alea/utils';
 import axios, { RawAxiosRequestHeaders } from 'axios';
-import { OpenAI } from 'openai';
 import { sendAlert } from './add-comment';
 import { checkIfPostOrSetError, getUserId, sendNotification } from './comment-utils';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 enum IssueCategory {
   CONTENT = 'CONTENT',
@@ -93,7 +90,7 @@ Respond with a valid JSON object in this exact format:
 Keep the title neutral, readable by educators and developers, and don't repeat the user's words verbatim.`;
 
   try {
-    const response = await openai.chat.completions.create({
+    /*const response = await openai.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
@@ -117,7 +114,8 @@ Keep the title neutral, readable by educators and developers, and don't repeat t
     }
 
     classification.title = classification.title.replace(/^["']|["']$/g, '').substring(0, 60);
-    return classification;
+    return classification;*/
+    throw new Error('OpenAI classification disabled');
   } catch (err) {
     console.error('Issue classification error:', err);
     const { filepath } = extractProjectAndFilepath(context);
@@ -153,7 +151,9 @@ export default async function handler(req, res) {
   );
 
   const finalTitle = issueTitle || classification.title;
-  issueCategory = classification.category;
+  // issueCategory = classification.category;
+  // GenAI classification disabled: always CONTENT (GitLab), never DISPLAY (GitHub).
+  issueCategory = IssueCategory.CONTENT;
   const isGitlab = isGitlabIssue({ category: issueCategory } as IssueClassification, body.context);
 
   const issuePayload = isGitlab
