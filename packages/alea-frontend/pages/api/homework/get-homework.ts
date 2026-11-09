@@ -8,6 +8,7 @@ import {
   HomeworkInfo,
   HomeworkPhase,
   ResponseWithSubProblemId,
+  ReviewType,
 } from '@alea/spec';
 import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -19,6 +20,14 @@ import {
   getUserIdOrSetError,
 } from '../comment-utils';
 import { convertToSubProblemIdToAnswerId, getAllGradingsOrSetError } from '../nap/get-answers-info';
+
+/** Students never get checker ids; peer reviewers are fully anonymous, instructors keep their name. */
+function hideCheckerIdentity(grading: GradingInfo): GradingInfo {
+  const { checkerId: _checkerId, checkerName, ...rest } = grading;
+  return (
+    grading.reviewType === ReviewType.INSTRUCTOR ? { ...rest, checkerName } : rest
+  ) as GradingInfo;
+}
 
 function getPhaseAppropriateProblems(
   problems: { [problemId: string]: FTMLProblemWithSolution },
@@ -169,6 +178,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const subProblemIdToAnswerId = convertToSubProblemIdToAnswerId(answers[problemId]);
       const grades = await getAllGradingsOrSetError(subProblemIdToAnswerId, res);
       if (!grades) return;
+      if (!isModerator) {
+        for (const gradesOfSubProblem of Object.values(grades)) {
+          for (let i = 0; i < gradesOfSubProblem.length; i++) {
+            gradesOfSubProblem[i] = hideCheckerIdentity(gradesOfSubProblem[i]);
+          }
+        }
+      }
       gradingInfo[problemId] = grades;
     }
   }

@@ -317,11 +317,6 @@ export async function getCdnImages(): Promise<CdnImageMetadata[]> {
   return values;
 }
 
-export async function checkIfUserIdExists(userId: string) {
-  const response = await axios.post('/api/userid-exists', { userId });
-  return response.data as { exists: boolean };
-}
-
 export async function generateApfelToken(userId: string, time: number) {
   const response = await axios.post('/api/generate-apfel-token', { userId, time });
   return response.data;

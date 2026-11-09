@@ -9,9 +9,9 @@ import {
 import { getAllGradingsOrSetError } from './get-answers-info';
 
 function hidePeerReviewerIdentity(grading: GradingInfo) {
-  if (grading.reviewType !== ReviewType.PEER) return grading;
   const { checkerId, checkerName, ...rest } = grading;
-  return rest;
+  // Peer reviewers are fully anonymous; instructors keep their name but never their id.
+  return (grading.reviewType === ReviewType.INSTRUCTOR ? { ...rest, checkerName } : rest) as GradingInfo;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

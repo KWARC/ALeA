@@ -12,6 +12,9 @@ export interface Announcement {
   visibleUntil: string;
 }
 
+/** Shape returned by the public active-announcements API (no instructorId). */
+export type PublicAnnouncement = Omit<Announcement, 'instructorId'>;
+
 export type CreateAnnouncementRequest = Omit<
   Announcement,
   'id' | 'instructorId' | 'createdAt' | 'updatedAt'
@@ -53,7 +56,7 @@ export async function getActiveAnnouncements(
     params: { courseId, instanceId, institutionId },
   });
 
-  return resp.data as Announcement[];
+  return resp.data as PublicAnnouncement[];
 }
 
 export async function deleteAnnouncement(details: DeleteAnnouncementRequest) {

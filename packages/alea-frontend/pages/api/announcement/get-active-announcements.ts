@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const announcements = await executeAndEndSet500OnError(
-    `SELECT courseId, instructorId, instanceId, institutionId, title, content, createdAt, updatedAt, visibleUntil
+    `SELECT courseId, instanceId, institutionId, title, content, createdAt, updatedAt, visibleUntil
      FROM announcement
      WHERE courseId = ? AND instanceId = ? AND institutionId = ? AND (visibleUntil IS NULL OR visibleUntil > NOW())
      ORDER BY createdAt DESC`,
