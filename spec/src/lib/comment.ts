@@ -131,6 +131,9 @@ export interface BlogPost {
   authorName: string;
 }
 
+/** Shape returned by public blog APIs (no authorId). */
+export type PublicBlogPost = Omit<BlogPost, 'authorId'>;
+
 export interface PostSnippet {
   postId: string;
   title: string;

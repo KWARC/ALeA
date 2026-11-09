@@ -1,11 +1,12 @@
-import { BlogPost } from '@alea/spec';
+import { PublicBlogPost } from '@alea/spec';
 import { executeDontEndSet500OnError } from '../comment-utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { postId } = req.query;
-  const posts: BlogPost[] = await executeDontEndSet500OnError(
-    `SELECT * FROM BlogPosts WHERE postId = ?`,
+  const posts: PublicBlogPost[] = await executeDontEndSet500OnError(
+    `SELECT title, body, postId, authorName, heroImageId, heroImageUrl, heroImagePosition, createdAt, updatedAt
+     FROM BlogPosts WHERE postId = ?`,
     [postId],
     res
   );

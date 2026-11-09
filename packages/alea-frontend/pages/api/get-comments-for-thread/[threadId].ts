@@ -1,6 +1,6 @@
 import { Comment } from '@alea/spec';
-import { executeDontEndSet500OnError } from '../comment-utils';
-import { processResults } from '../get-comments';
+import { executeDontEndSet500OnError, getUserId } from '../comment-utils';
+import { processResults, redactCommentIdentityForViewer } from '../get-comments';
 
 export default async function handler(req, res) {
   const { threadId } = req.query;
@@ -16,5 +16,7 @@ export default async function handler(req, res) {
   if (!results) return;
   const addedPoints = await processResults(res, results as Comment[]);
   if (!addedPoints) return;
+  const viewerUserId = (await getUserId(req)) || '';
+  redactCommentIdentityForViewer(results as Comment[], viewerUserId);
   res.status(200).json(results);
 }

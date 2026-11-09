@@ -52,6 +52,15 @@ export async function processResults(
   return true;
 }
 
+/** Drop email always. Keep userId only on the viewer's own comments (edit/delete menu). */
+export function redactCommentIdentityForViewer(comments: Comment[], viewerUserId?: string) {
+  const viewer = viewerUserId || '';
+  for (const c of comments) {
+    delete c.userEmail;
+    if (c.userId !== viewer) delete c.userId;
+  }
+}
+
 export default async function handler(req, res) {
   const { uris } = req.body as GetCommentsRequest;
   if (!uris?.length) {
@@ -73,5 +82,6 @@ export default async function handler(req, res) {
   if (!results) return;
   const addedPoints = await processResults(res, results as Comment[]);
   if (!addedPoints) return;
+  redactCommentIdentityForViewer(results as Comment[], userId);
   res.status(200).json(results);
 }

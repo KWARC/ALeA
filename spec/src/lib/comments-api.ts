@@ -1,13 +1,13 @@
 import { CourseResourceAction, isLoggedInViaCookie } from '@alea/utils';
 import axios, { AxiosError } from 'axios';
 import {
-  BlogPost,
   CdnImageMetadata,
   Comment,
   CommentType,
   EditCommentRequest,
   HiddenStatus,
   PostSnippet,
+  PublicBlogPost,
   QuestionStatus,
   UpdateCommentStateRequest,
   UpdateQuestionStateRequest,
@@ -271,7 +271,7 @@ export async function getPostById(
   forSSR = false,
   protocol?: string,
   host?: string
-): Promise<BlogPost> {
+): Promise<PublicBlogPost> {
   const apiUrl = forSSR
     ? `${protocol}://${host}/api/blog/get-post-by-id`
     : '/api/blog/get-post-by-id';

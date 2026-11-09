@@ -1,5 +1,7 @@
+import { Action, ResourceName } from '@alea/utils';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfGetOrSetError, executeQuery } from '../comment-utils';
+import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
+import { checkIfGetOrSetError, executeQuery, getUserId } from '../comment-utils';
 
 function safeParseJson<T>(val: unknown, fallback: T): T {
   if (val == null) return fallback;
@@ -54,6 +56,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!data) {
     return res.status(404).end('Course metadata not found');
   }
+
+  const viewerId = await getUserId(req);
+  const canSeeInstructorIds = viewerId
+    ? await isUserIdAuthorizedForAny(viewerId, [
+        {
+          name: ResourceName.COURSE_METADATA,
+          action: Action.MUTATE,
+          variables: { courseId: courseId as string, instanceId: instanceId as string },
+        },
+      ])
+    : false;
+
+  if (!canSeeInstructorIds && Array.isArray(data.instructors)) {
+    data.instructors = data.instructors.map(({ name, url }: { name?: string; url?: string }) => ({
+      name,
+      url,
+    }));
+  }
+
+  const omitTutorName = (entries: unknown) =>
+    Array.isArray(entries)
+      ? entries.map((entry) => {
+          if (!entry || typeof entry !== 'object') return entry;
+          const { tutorName: _tutorName, ...rest } = entry as Record<string, unknown>;
+          return rest;
+        })
+      : entries;
+  data.lectureSchedule = omitTutorName(data.lectureSchedule);
+  data.tutorialSchedule = omitTutorName(data.tutorialSchedule);
 
   res.status(200).json(data);
 }

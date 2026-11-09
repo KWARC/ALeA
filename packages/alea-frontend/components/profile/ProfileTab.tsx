@@ -9,7 +9,7 @@ import { UserInfo, UserProfile } from '@alea/spec';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../lang/utils';
-import { PersonalCalendarSection } from '../PersonalCalendar';
+// import { PersonalCalendarSection } from '../PersonalCalendar';
 import { EditProfileDialog } from './EditProfileDialog';
 
 export const ProfileTab = ({
@@ -25,7 +25,7 @@ export const ProfileTab = ({
   openEditDialog: boolean;
   handleProfileUpdate: (updatedData: UserProfile) => void;
 }) => {
-  const { myProfile: t, calendarSection: c } = getLocaleObject(useRouter());
+  const { myProfile: t } = getLocaleObject(useRouter());
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
       <Box sx={{ flex: '1 1 50%' }}>
@@ -80,6 +80,7 @@ export const ProfileTab = ({
                     </Typography>
                   </Box>
                 ))}
+                {/* Calendar feed disabled (API returns 501)
                 {userInfo?.userId && (
                   <Box sx={{ mt: 2 }}>
                     <PersonalCalendarSection
@@ -89,6 +90,7 @@ export const ProfileTab = ({
                     />
                   </Box>
                 )}
+                */}
               </Stack>
             ) : (
               <Typography sx={{ color: 'text.secondary' }}>Loading...</Typography>

@@ -18,10 +18,14 @@ interface CourseMetadataRow {
   universityId: string | null;
 }
 
-function parseInstructorsJson(val: string | object | null | undefined): Array<{ id: string; name: string }> {
+function parseInstructorsJson(
+  val: string | object | null | undefined
+): Array<{ name: string }> {
   if (val == null) return [];
   const toItem = (x: unknown) =>
-    typeof x === 'string' ? { id: x, name: x } : { id: (x as any)?.id ?? '', name: (x as any)?.name ?? (x as any)?.id ?? '' };
+    typeof x === 'string'
+      ? { name: x }
+      : { name: String((x as { name?: unknown })?.name ?? '').trim() };
   if (typeof val === 'object') return (Array.isArray(val) ? val : []).map(toItem);
   const s = String(val).trim();
   if (!s) return [];
@@ -34,10 +38,10 @@ function parseInstructorsJson(val: string | object | null | undefined): Array<{ 
 }
 
 function extractInstructorNames(
-  instructorList: Array<{ id: string; name: string }> | null | undefined
+  instructorList: Array<{ name: string }> | null | undefined
 ): string[] | null {
   if (!instructorList || !Array.isArray(instructorList)) return null;
-  return instructorList.map((instructor) => instructor.name || instructor.id).filter(Boolean);
+  return instructorList.map((instructor) => instructor.name).filter(Boolean);
 }
 
 function computeCurrentTermByCourseId(

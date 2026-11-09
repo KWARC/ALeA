@@ -28,7 +28,6 @@ import {
   updateLectureEntry,
   deleteLectureEntry,
   addLectureSchedule,
-  getUserSuggestions,
   getSemesterInfo,
 } from '@alea/spec';
 import { toWeekdayIndex, UniversityDetail, WEEKDAYS_UI_ORDER } from '@alea/utils';
@@ -38,7 +37,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { getLocaleObject } from '../../lang/utils';
-import AclAutocompleteSelector from '../AclAutocompleteSelector';
 import { type SchedulePeriod } from '../StudentDashboard/utils';
 
 interface LectureScheduleTabProps {
@@ -58,7 +56,6 @@ const initialNewEntry: LectureScheduleUI = {
   lectureEndTime: '',
   venue: '',
   venueLink: '',
-  tutorName: '',
   comments: '',
   hasQuiz: false,
 };
@@ -186,7 +183,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
       const unsignedMinutes = Math.abs(editEntry.quizOffsetMinutes || 0);
       const direction = editEntry.quizOffsetDirection || 'before';
       const signedOffset = direction === 'before' ? -unsignedMinutes : unsignedMinutes;
-      const { quizOffsetDirection: _discard, ...rest } = editEntry;
+      const { quizOffsetDirection: _discard, tutorName: _tutorName, ...rest } = editEntry;
       const updatedEntry: LectureSchedule = {
         ...rest,
         quizOffsetMinutes: signedOffset,
@@ -229,7 +226,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         const unsignedMinutes = Math.abs(entryToSave.quizOffsetMinutes || 0);
         const direction = entryToSave.quizOffsetDirection || 'before';
         const signedOffset = direction === 'before' ? -unsignedMinutes : unsignedMinutes;
-        const { quizOffsetDirection: _discard, ...rest } = entryToSave;
+        const { quizOffsetDirection: _discard, tutorName: _tutorName, ...rest } = entryToSave;
         cleanEntry = {
           ...rest,
           quizOffsetMinutes: signedOffset,
@@ -241,7 +238,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           lectureEndTime: entryToSave.lectureEndTime,
           venue: entryToSave.venue,
           venueLink: entryToSave.venueLink,
-          tutorName: entryToSave.tutorName,
           comments: entryToSave.comments,
         };
       }
@@ -286,13 +282,14 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   const periodMax = schedulePeriod.lectureEndDate?.slice(0, 10);
 
   const saveCancelledDates = async (entry: LectureSchedule, cancelledDates: string[]) => {
+    const { tutorName: _tutorName, ...entryWithoutTutor } = entry;
     await updateLectureEntry({
       courseId,
       instanceId,
       lectureDay: entry.lectureDay,
       lectureStartTime: entry.lectureStartTime,
       lectureEndTime: entry.lectureEndTime,
-      updatedLectureEntry: { ...entry, cancelledDates },
+      updatedLectureEntry: { ...entryWithoutTutor, cancelledDates },
       scheduleType: 'tutorial',
     });
     fetchLectures();
@@ -455,31 +452,13 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             />
 
             {selectedScheduleType === 'tutorial' && (
-              <>
-                <Box sx={{ width: 120, mt: 0.8 }}>
-                  <AclAutocompleteSelector
-                    label={t.tutorName}
-                    fetchSuggestions={getUserSuggestions}
-                    values={tutorialScheduleData.tutorName ? [tutorialScheduleData.tutorName] : []}
-                    setValues={(vals) =>
-                      setTutorialScheduleData((prev) => ({
-                        ...prev,
-                        tutorName: vals[vals.length - 1] ?? '',
-                      }))
-                    }
-                    chipLabel={(userId) => userId}
-                    errorMessage="Duplicate or invalid user"
-                    sx={{ mb: 0 }}
-                  />
-                </Box>
-                <TextField
-                  label={t.comments}
-                  value={tutorialScheduleData.comments || ''}
-                  onChange={(e) => handleFieldChange('comments', e.target.value)}
-                  size="small"
-                  sx={{ width: 120 }}
-                />
-              </>
+              <TextField
+                label={t.comments}
+                value={tutorialScheduleData.comments || ''}
+                onChange={(e) => handleFieldChange('comments', e.target.value)}
+                size="small"
+                sx={{ width: 120 }}
+              />
             )}
 
             <TextField
@@ -660,7 +639,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
 
               {selectedScheduleType === 'tutorial' && (
                 <>
-                  <TableCell>{t.tutorName}</TableCell>
                   <TableCell>{t.comments}</TableCell>
                   <TableCell>{t.selectCancelDate}</TableCell>
                 </>
@@ -691,7 +669,6 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   </TableCell>
                   {selectedScheduleType === 'tutorial' && (
                     <>
-                      <TableCell>{entry.tutorName}</TableCell>
                       <TableCell>
                         {entry.comments && (
                           <Typography
@@ -815,28 +792,13 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
             onChange={(e) => setEditEntry((prev) => prev && { ...prev, venueLink: e.target.value })}
           />
           {selectedScheduleType === 'tutorial' && (
-            <>
-              <AclAutocompleteSelector
-                label={t.tutorName}
-                fetchSuggestions={getUserSuggestions}
-                values={editEntry?.tutorName ? [editEntry.tutorName] : []}
-                setValues={(vals) =>
-                  setEditEntry((prev) =>
-                    prev ? { ...prev, tutorName: vals[vals.length - 1] ?? '' } : prev
-                  )
-                }
-                chipLabel={(userId) => userId}
-                errorMessage="Duplicate or invalid user"
-                sx={{ mb: 0 }}
-              />
-              <TextField
-                label={t.comments}
-                value={editEntry?.comments || ''}
-                onChange={(e) =>
-                  setEditEntry((prev) => prev && { ...prev, comments: e.target.value })
-                }
-              />
-            </>
+            <TextField
+              label={t.comments}
+              value={editEntry?.comments || ''}
+              onChange={(e) =>
+                setEditEntry((prev) => prev && { ...prev, comments: e.target.value })
+              }
+            />
           )}
           <TextField
             label={t.startTime}

@@ -1,6 +1,11 @@
 import { GradingAnswerClass, GradingInfo, ReviewType } from '@alea/spec';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkIfQueryParameterExistOrSetError, executeAndEndSet500OnError } from '../comment-utils';
+import {
+  checkIfGetOrSetError,
+  checkIfQueryParameterExistOrSetError,
+  executeAndEndSet500OnError,
+  getUserIdOrSetError,
+} from '../comment-utils';
 
 function sqlInPlaceholders(n: number): string {
   return Array(Math.max(n, 1)).fill('?').join(',');
@@ -82,14 +87,22 @@ export function convertToSubProblemIdToAnswerId(
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!checkIfQueryParameterExistOrSetError(req, res, ['questionId'])) return;
+  if (!checkIfGetOrSetError(req, res)) return;
+  if (!checkIfQueryParameterExistOrSetError(req, res, ['answerId'])) return;
+  const userId = await getUserIdOrSetError(req, res);
+  if (!userId) return;
+
   const answerId = +(req.query.answerId as string);
+  if (!Number.isFinite(answerId)) return res.status(400).send('Invalid answerId');
 
   const answerInfo = await executeAndEndSet500OnError<{ userId: string; subProblemId: string }[]>(
-    `select userId,subProblemId from Answer where id = ?`,
+    `select userId, subProblemId from Answer where id = ?`,
     [answerId],
     res
   );
+  if (!answerInfo) return;
+  if (!answerInfo.length) return res.status(404).send('Answer not found');
+  if (answerInfo[0].userId !== userId) return res.status(403).send('unauthorized');
 
-  res.send(answerInfo[0]);
+  res.send({ subProblemId: answerInfo[0].subProblemId });
 }
