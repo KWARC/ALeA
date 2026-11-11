@@ -44,7 +44,7 @@ const nextConfig = {
 
     return config;
   },
-  serverExternalPackages: ['canvas'],
+  serverExternalPackages: ['canvas', 'pdfjs-dist'],
   experimental: {
     middlewareClientMaxBodySize: 2 * 1024 * 1024 * 1024, // 2GB
   },
