@@ -11,10 +11,13 @@ import {
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import {
+  pdfjsLib,
   rasterizePdfPages,
   rotationWithUprightCorrection,
   uprightRotationsForPdf,
 } from './cheatsheet-orientation';
+
+export { pdfjsLib };
 
 type PdfKitDoc = InstanceType<typeof PDFDocument>;
 

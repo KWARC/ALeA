@@ -10,14 +10,13 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import sharp from 'sharp';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import { pdfjsLib } from '@alea/node-utils';
 import jsQR from 'jsqr';
 import { isUserIdAuthorizedForAny } from '../access-control/resource-utils';
 import { Action, formatDateLabel, ResourceName } from '@alea/utils';
 import { getUploadWindow } from './get-cheatsheet-upload-window';
 import { CheatsheetConfig } from '@alea/spec';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/legacy/build/pdf.worker.js');
 const CHEATSHEETS_DIR = process.env.CHEATSHEETS_DIR;
 const TEMP_CHEATSHEETS_DIR = path.resolve(
   process.env.TEMP_CHEATSHEETS_DIR || path.join(process.cwd(), 'cheatsheets_temp')
@@ -283,7 +282,10 @@ function savePDF(filepath: string, cheatsheetDir: string, fileName: string): voi
   fs.renameSync(filepath, dest);
 }
 async function extractQRFromPDF(buffer: Buffer): Promise<QRData> {
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) } as any).promise;
+  const pdf = await pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    isEvalSupported: false,
+  }).promise;
 
   for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 3); pageNum++) {
     const page = await pdf.getPage(pageNum);
