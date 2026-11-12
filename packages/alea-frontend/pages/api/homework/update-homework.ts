@@ -9,6 +9,14 @@ import {
 } from '../comment-utils';
 import { toMySQLTimestamp } from '../common-homework-utils';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4mb',
+    },
+  },
+};
+
 export type DbHomeworkInfo = HomeworkInfo & {
   versionNo: number;
   updaterId: string;
