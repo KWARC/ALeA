@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+import nodeModule from 'module';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { createCanvas } from 'canvas';
@@ -6,8 +6,9 @@ import jsQR from 'jsqr';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFPageProxy } from 'pdfjs-dist';
 
-const require = createRequire(__filename);
-const pdfjsRoot = path.dirname(require.resolve('pdfjs-dist/package.json'));
+const { createRequire } = nodeModule;
+const nodeRequire = createRequire(path.join(process.cwd(), 'package.json'));
+const pdfjsRoot = path.dirname(nodeRequire.resolve('pdfjs-dist/package.json'));
 pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
   path.join(pdfjsRoot, 'legacy/build/pdf.worker.mjs')
 ).href;
