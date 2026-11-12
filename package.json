@@ -34,6 +34,7 @@
     "@mui/lab": "^6.0.1-beta.33",
     "@mui/material": "^6.4.10",
     "@mui/system": "^7.0.2",
+    "@napi-rs/canvas": "0.1.100",
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@sentry/nextjs": "^8.42.0",

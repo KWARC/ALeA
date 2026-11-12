@@ -48,6 +48,9 @@ importers:
       '@mui/system':
         specifier: ^7.0.2
         version: 7.3.10(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.7))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.7))(@types/react@19.2.14)(react@19.2.7))(@types/react@19.2.14)(react@19.2.7)
+      '@napi-rs/canvas':
+        specifier: 0.1.100
+        version: 0.1.100
       '@prisma/adapter-mariadb':
         specifier: ^7.10.1
         version: 7.10.1
@@ -14326,7 +14329,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-musl': 0.1.100
       '@napi-rs/canvas-win32-arm64-msvc': 0.1.100
       '@napi-rs/canvas-win32-x64-msvc': 0.1.100
-    optional: true
 
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
