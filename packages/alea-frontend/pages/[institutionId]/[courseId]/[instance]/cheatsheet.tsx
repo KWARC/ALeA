@@ -683,10 +683,10 @@ const CheatsheetsPage = ({
     [allFiles]
   );
   const visibleFiles = useMemo(() => {
-    if (!isEmbedded) return allFiles;
+    if (!isEmbedded) return allFiles.filter((f) => f.userId === userId);
     if (!selectedUserId) return [];
     return allFiles.filter((f) => f.userId === selectedUserId);
-  }, [allFiles, isEmbedded, selectedUserId]);
+  }, [allFiles, isEmbedded, selectedUserId, userId]);
 
   const [previewFile, setPreviewFile] = useState<CheatSheet | null>(null);
 
