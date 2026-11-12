@@ -344,7 +344,7 @@ export function UserFilterBar({
     </Box>
   );
 }
-const CHEATSHEET_MERGE_ENABLED = false;
+
 
 export function InlineStudentMergeButton({
   courseId,
@@ -362,7 +362,6 @@ export function InlineStudentMergeButton({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  if (!CHEATSHEET_MERGE_ENABLED) return null;
 
   const buildUrl = () =>
     `/api/cheatsheet/merge-cheatsheet?courseId=${encodeURIComponent(

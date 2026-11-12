@@ -1,7 +1,7 @@
 import nodeModule from 'module';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { createCanvas } from 'canvas';
+import { createCanvas } from '@napi-rs/canvas';
 import jsQR from 'jsqr';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFPageProxy } from 'pdfjs-dist';
@@ -16,6 +16,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
 export { pdfjsLib };
 
 const PDFJS_LOAD_OPTIONS = {
+  standardFontDataUrl: path.join(pdfjsRoot, 'standard_fonts') + path.sep,
   verbosity: 0,
   isEvalSupported: false,
 };
