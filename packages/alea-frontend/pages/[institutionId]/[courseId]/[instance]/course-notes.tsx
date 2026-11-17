@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name, react/no-children-prop */
 import { CommentButton } from '@alea/comments';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import { getAllCourses, getCoverageTimeline } from '@alea/spec';
 import {
   NOT_COVERED_SECTIONS,
@@ -124,7 +125,7 @@ function NoCourseNotes({
 
 const CourseNotesPage: NextPage = () => {
   const router = useRouter();
-  const { courseNotes: t } = getLocaleObject(router);
+  const { courseNotes: t, courseHome: tCourseHome } = getLocaleObject(router);
   const { institutionId, courseId, instance, resolvedInstanceId, validationError, isValidating } =
     useRouteValidation('course-notes');
 
@@ -264,6 +265,59 @@ const CourseNotesPage: NextPage = () => {
 
   return (
     <MainLayout title={courseId.toUpperCase()} hideCourseHeader={true}>
+      <Button
+        onClick={() => router.push(pathToCourseHome(institutionId, courseId, resolvedInstanceId))}
+        sx={{
+          position: 'fixed',
+          top: 76,
+          left: 24,
+          zIndex: 1100,
+          minWidth: 44,
+          height: 44,
+          borderRadius: '22px',
+          bgcolor: 'primary.main',
+          color: '#fff',
+          border: '1px solid',
+          borderColor: 'primary.main',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          px: 1.3,
+          overflow: 'hidden',
+          maxWidth: 44,
+          whiteSpace: 'nowrap',
+          textTransform: 'none',
+          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            maxWidth: 165,
+            px: 2,
+            bgcolor: 'primary.dark',
+            borderColor: 'primary.dark',
+            boxShadow: '0 6px 18px rgba(0, 0, 0, 0.14)',
+          },
+
+          '& .hover-label': {
+            opacity: 0,
+            transform: 'translateX(-6px)',
+            transition: 'opacity 0.2s ease, transform 0.25s ease',
+            ml: 1,
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            color: '#fff',
+          },
+          '&:hover .hover-label': {
+            opacity: 1,
+            transform: 'translateX(0)',
+          },
+        }}
+      >
+        <HomeRoundedIcon fontSize="small" sx={{ color: '#fff' }} />
+        <Box component="span" className="hover-label">
+          {tCourseHome?.title || 'Course Home'}
+        </Box>
+      </Button>
+
       <Tooltip title="Search (Ctrl+Shift+F)" placement="left-start">
         <IconButton
           color="primary"

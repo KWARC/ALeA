@@ -4,7 +4,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckIcon from '@mui/icons-material/Check';
 import { IconButton, Menu, MenuItem, Tooltip, useMediaQuery, useTheme } from '@mui/material';
-import { CourseInfo, getCoursePdfUrl, localStore } from '@alea/utils';
+import { CourseInfo, getCoursePdfUrl, hasSlidesPdf, localStore } from '@alea/utils';
 import { useState } from 'react';
 import { ViewMode } from '../../utils/courseViewUtils';
 
@@ -112,7 +112,7 @@ export default function CourseViewToolbarIcons({
         </>
       )}
 
-      {courses?.[courseId]?.slides && (
+      {courses?.[courseId]?.slides && hasSlidesPdf(courseId) && (
         <Tooltip title="Download slides PDF" placement="bottom">
           <IconButton
             onClick={() => {
