@@ -113,15 +113,6 @@ export interface ProblemInfo {
   response: FTML.ProblemResponse;
 }
 
-export interface QuizResult {
-  resultId: string;
-  quizName: string;
-  quizTakerName: string;
-  events: TimerEvent[];
-  duration_ms: number;
-  problemInfo: ProblemInfo[];
-}
-
 export interface GetQuizResponse {
   courseId: string;
   courseTerm: string;

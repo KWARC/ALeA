@@ -1,18 +1,21 @@
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { Alert, Box, IconButton, Snackbar, Tooltip, Typography, useTheme } from '@mui/material';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
-import { getLocaleObject } from '../lang/utils';
+// import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+// import { Alert, Box, IconButton, Snackbar, Tooltip, Typography, useTheme } from '@mui/material';
+// import { useRouter } from 'next/router';
+// import { useState } from 'react';
+// import { getLocaleObject } from '../lang/utils';
 
 export function PersonalCalendarSection({
-  userId,
-  hintGoogle,
-  hintApple,
+  userId: _userId,
+  hintGoogle: _hintGoogle,
+  hintApple: _hintApple,
 }: {
   userId: string;
   hintGoogle: string;
   hintApple: string;
 }) {
+  // Calendar feed disabled (API returns 501)
+  return null;
+  /*
   const { calendarSection: t } = getLocaleObject(useRouter());
   const theme = useTheme();
   const calendarURL = `${window.location.origin}/api/calendar/create-calendar?userId=${userId}`;
@@ -107,4 +110,5 @@ export function PersonalCalendarSection({
       </Snackbar>
     </Box>
   );
+  */
 }

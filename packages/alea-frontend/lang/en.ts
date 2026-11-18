@@ -693,7 +693,6 @@ export const en = {
     day: 'Day',
     venue: 'Venue',
     venueLink: 'Venue Link',
-    tutorName: 'Tutor ID',
     comments: 'Comments',
     startTime: 'Start Time',
     endTime: 'End Time',

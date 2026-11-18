@@ -44,6 +44,7 @@ export function expectedComment(commentId, userId, providedInput: Comment) {
     ...providedInput,
     commentId,
     userId,
+    userEmail: null,
     isDeleted: false,
     isEdited: false,
     hiddenJustification: null,

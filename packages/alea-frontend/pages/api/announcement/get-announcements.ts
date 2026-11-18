@@ -1,4 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { Action, ResourceName } from '@alea/utils';
+import { getUserIdIfAuthorizedOrSetError } from '../access-control/resource-utils';
 import { checkIfGetOrSetError, executeAndEndSet500OnError } from '../comment-utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,6 +12,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(422).end('Missing courseId or instanceId');
     return;
   }
+
+  // Staff listing (includes instructorId); students use get-active-announcements.
+  const userId = await getUserIdIfAuthorizedOrSetError(
+    req,
+    res,
+    ResourceName.COURSE_METADATA,
+    Action.MUTATE,
+    { courseId: courseId as string, instanceId: instanceId as string }
+  );
+  if (!userId) return;
 
   const announcements = await executeAndEndSet500OnError(
     `SELECT id, courseId, instructorId, instanceId, institutionId, title, content, createdAt, updatedAt, visibleUntil

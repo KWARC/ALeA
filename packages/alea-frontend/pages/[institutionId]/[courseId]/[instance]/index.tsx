@@ -7,11 +7,9 @@ import {
   getCoverageTimeline,
   getLectureEntry,
   getLectureSchedule,
-  getTutorInfo,
   getSemesterInfo,
   LectureScheduleItem,
   SemesterData,
-  TutorInfo,
 } from '@alea/spec';
 import { SafeFTMLDocument } from '@alea/stex-react-renderer';
 import {
@@ -27,6 +25,7 @@ import {
   pathToPracticeProblems,
   pathToStudyBuddy,
   ResourceName,
+  UniversityDetail,
 } from '@alea/utils';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -65,7 +64,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
-import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
+// import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
@@ -200,15 +199,16 @@ function CourseScheduleSection({
   courseId,
   currentTerm,
   schedulePeriodInfo,
+  timezone,
 }: {
   userId: string | undefined;
   courseId: string;
   currentTerm: string;
   schedulePeriodInfo: SchedulePeriodInfo;
+  timezone: string;
 }) {
   const [lectureSchedule, setLectureSchedule] = useState<LectureScheduleItem[]>([]);
   const [tutorialSchedule, setTutorialSchedule] = useState<LectureScheduleItem[]>([]);
-  const [tutorInfoById, setTutorInfoById] = useState<Record<string, TutorInfo>>({});
   const [showAllLectures, setShowAllLectures] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
   const { locale = 'en' } = useRouter();
@@ -249,7 +249,6 @@ function CourseScheduleSection({
             endTime: item.lectureEndTime ?? item.endTime ?? '',
             venue: item.venue,
             venueLink: item.venueLink,
-            tutorName: item.tutorName,
             comments: item.comments,
             cancelledDates: Array.isArray(item.cancelledDates) ? item.cancelledDates : undefined,
           });
@@ -279,16 +278,6 @@ function CourseScheduleSection({
     fetchSchedule();
   }, [courseId, currentTerm]);
 
-  useEffect(() => {
-    if (!userId || tutorialSchedule.length === 0) {
-      setTutorInfoById({});
-      return;
-    }
-    getTutorInfo(tutorialSchedule.map((entry) => entry.tutorName ?? ''))
-      .then(setTutorInfoById)
-      .catch(() => setTutorInfoById({}));
-  }, [tutorialSchedule, userId]);
-
   const { data: nextLectureStartTime } = useQuery({
     queryKey: ['next-lecture-time', courseId, lectureSchedule, currentTerm],
     enabled: Boolean(courseId),
@@ -308,7 +297,11 @@ function CourseScheduleSection({
     lectureStartDate: schedulePeriodInfo.lectureStartDate,
     lectureEndDate: schedulePeriodInfo.lectureEndDate,
   };
-  const nextTutorial = getNextOrCurrentScheduleOccurrence(tutorialSchedule, tutorialPeriod);
+  const nextTutorial = getNextOrCurrentScheduleOccurrence(
+    tutorialSchedule,
+    timezone,
+    tutorialPeriod
+  );
   const now = new Date();
   const todayYmd = [
     now.getFullYear(),
@@ -435,11 +428,6 @@ function CourseScheduleSection({
                               entry.venue
                             )}
                           </Typography>
-                          {entry.tutorName && (
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              👤 {entry.tutorName}
-                            </Typography>
-                          )}
                           {entry.comments && (
                             <Typography
                               variant="caption"
@@ -588,22 +576,6 @@ function CourseScheduleSection({
                               entry.venue
                             )}
                           </Typography>
-                          {entry.tutorName && (
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              👤 {tutorInfoById[entry.tutorName]?.name?.trim() || entry.tutorName}
-                              {tutorInfoById[entry.tutorName]?.email && (
-                                <>
-                                  {' · '}
-                                  <Link
-                                    href={`mailto:${tutorInfoById[entry.tutorName]?.email}`}
-                                    style={{ textDecoration: 'underline' }}
-                                  >
-                                    {tutorInfoById[entry.tutorName]?.email}
-                                  </Link>
-                                </>
-                              )}
-                            </Typography>
-                          )}
                           {entry.comments && (
                             <Typography
                               variant="body2"
@@ -655,6 +627,7 @@ function CourseScheduleSection({
           )}
         </Box>
 
+        {/* Calendar feed disabled (API returns 501)
         {userId && (
           <PersonalCalendarSection
             userId={userId}
@@ -662,6 +635,7 @@ function CourseScheduleSection({
             hintApple={t.howToUseHintApple}
           />
         )}
+        */}
       </Box>
     </Box>
   );
@@ -841,7 +815,6 @@ const CourseHomePage: NextPage = () => {
   const {
     home,
     courseHome: tCourseHome,
-    calendarSection: tCal,
     quiz: q,
     studentWelcomeScreen: tCheatsheet,
   } = getLocaleObject(router);
@@ -1084,6 +1057,9 @@ const CourseHomePage: NextPage = () => {
           userId={userId}
           currentTerm={currentTerm}
           schedulePeriodInfo={schedulePeriodInfo}
+          timezone={
+            UniversityDetail[courseInfo.universityId ?? institutionId]?.defaultTimezone ?? 'UTC'
+          }
         />
         {showSearchBar && (
           <Box

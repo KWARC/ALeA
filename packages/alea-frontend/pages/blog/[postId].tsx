@@ -11,7 +11,7 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import { BlogPost, canAccessResource, deleteBlogPost, getPostById } from '@alea/spec';
+import { canAccessResource, deleteBlogPost, getPostById, PublicBlogPost } from '@alea/spec';
 import fs from 'fs';
 import { NextPage } from 'next';
 import Link from 'next/link';
@@ -21,11 +21,11 @@ import MainLayout from '../../layouts/MainLayout';
 import { MdViewer } from '@alea/markdown';
 import { Action, getResourceId, ResourceName } from '@alea/utils';
 
-const BlogPostPage: NextPage = ({ post }: { post: BlogPost }) => {
+const BlogPostPage: NextPage = ({ post }: { post: PublicBlogPost }) => {
   const router = useRouter();
   const postId = router.query.postId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [blogPost, setBlogPost] = useState<BlogPost>(post);
+  const [blogPost, setBlogPost] = useState<PublicBlogPost>(post);
   const [canEditOrDelete, setCanEditOrDelete] = useState<boolean>(false);
 
   useEffect(() => {
@@ -150,7 +150,7 @@ export async function getStaticPaths() {
   }
   const data = fs.readFileSync('../../static/blogData.json', 'utf-8');
   const jsonData = JSON.parse(data);
-  const paths = jsonData.map((blog: BlogPost) => ({
+  const paths = jsonData.map((blog: PublicBlogPost) => ({
     params: { postId: blog.postId },
   }));
   return { paths, fallback: true };
@@ -160,7 +160,7 @@ export async function getStaticProps({ params }: { params: { postId: string } })
   try {
     const data = fs.readFileSync('../../static/blogData.json', 'utf-8');
     const jsonData = JSON.parse(data);
-    const post = jsonData.find((blog: BlogPost) => blog.postId === params.postId);
+    const post = jsonData.find((blog: PublicBlogPost) => blog.postId === params.postId);
     if (!post) {
       return { props: { post: null } };
     }

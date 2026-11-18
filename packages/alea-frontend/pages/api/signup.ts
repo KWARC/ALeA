@@ -1,10 +1,18 @@
 import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { executeAndEndSet500OnError } from './comment-utils';
+import { executeAndEndSet500OnError, executeDontEndSet500OnError } from './comment-utils';
 import { sendEmail } from './email-utils';
-import { doesUserIdExist } from './userid-exists';
 
 export const SALT_ROUNDS = 10;
+
+async function doesUserIdExist(userId: string, res: NextApiResponse) {
+  const rows = await executeDontEndSet500OnError<any[]>(
+    `SELECT userId FROM userInfo WHERE userId = ?`,
+    [userId],
+    res
+  );
+  return !!rows?.length;
+}
 
 export async function sendVerificationEmail(
   email: string,

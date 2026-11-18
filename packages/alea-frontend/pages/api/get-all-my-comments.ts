@@ -4,7 +4,7 @@ import {
   executeAndEndSet500OnError,
   getUserIdOrSetError,
 } from './comment-utils';
-import { processResults } from './get-comments';
+import { processResults, redactCommentIdentityForViewer } from './get-comments';
 
 export default async function handler(req, res) {
   const userId = await getUserIdOrSetError(req, res);
@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   if (!comments) return;
   const addedPoints = await processResults(res, comments);
   if (!addedPoints) return;
+  redactCommentIdentityForViewer(comments, userId);
 
   const history = await executeAndEndSet500OnError(
     `SELECT * FROM updateHistory WHERE ownerId = ?`,

@@ -1,7 +1,25 @@
-import { createCanvas } from 'canvas';
+import nodeModule from 'module';
+import path from 'path';
+import { pathToFileURL } from 'url';
+import { createCanvas } from '@napi-rs/canvas';
 import jsQR from 'jsqr';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
-import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import type { PDFPageProxy } from 'pdfjs-dist';
+
+const { createRequire } = nodeModule;
+const nodeRequire = createRequire(path.join(process.cwd(), 'package.json'));
+const pdfjsRoot = path.dirname(nodeRequire.resolve('pdfjs-dist/package.json'));
+pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
+  path.join(pdfjsRoot, 'legacy/build/pdf.worker.mjs')
+).href;
+
+export { pdfjsLib };
+
+const PDFJS_LOAD_OPTIONS = {
+  standardFontDataUrl: path.join(pdfjsRoot, 'standard_fonts') + path.sep,
+  verbosity: 0,
+  isEvalSupported: false,
+};
 
 export type QuarterTurn = 0 | 90 | 180 | 270;
 
@@ -90,9 +108,8 @@ export async function rasterizePdfPages(
 
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
-    verbosity: 0,
-    disableWorker: true,
-  } as Parameters<typeof pdfjsLib.getDocument>[0]);
+    ...PDFJS_LOAD_OPTIONS,
+  });
 
   try {
     const pdf = await loadingTask.promise;
@@ -126,9 +143,8 @@ export async function rasterizePdfPages(
 export async function uprightRotationsForPdf(buffer: Buffer): Promise<QuarterTurn[]> {
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
-    verbosity: 0,
-    disableWorker: true,
-  } as Parameters<typeof pdfjsLib.getDocument>[0]);
+    ...PDFJS_LOAD_OPTIONS,
+  });
 
   try {
     const pdf = await loadingTask.promise;

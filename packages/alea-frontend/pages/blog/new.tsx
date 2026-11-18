@@ -1,6 +1,6 @@
 import { Box, Button, TextField, Typography } from '@mui/material';
 import {
-  BlogPost,
+  PublicBlogPost,
   canAccessResource,
   CdnImageMetadata,
   createBlogPost,
@@ -27,7 +27,7 @@ function generatePostId(title: string): string {
 const DRAFT_BLOG_TITLE_KEY = 'draft-blogTitle';
 const DRAFT_BLOG_BODY_KEY = 'draft-blogBody';
 
-export function EditPostComponent({ existingPost }: { existingPost?: BlogPost }) {
+export function EditPostComponent({ existingPost }: { existingPost?: PublicBlogPost }) {
   const router = useRouter();
   const [title, setTitle] = useState(
     existingPost?.title ?? localStore?.getItem(DRAFT_BLOG_TITLE_KEY) ?? ''

@@ -180,7 +180,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             lectureEndTimestamp_ms: endTime.getTime(),
             venue: item.venue || '',
             venueLink: item.venueLink || '',
-            tutorName: item.tutorName || '',
             comments: item.comments || '',
             type: schedule.type,
           });

@@ -5,6 +5,14 @@ import { Action, ResourceName } from '@alea/utils';
 import { CreateHomeworkRequest } from '@alea/spec';
 import { toMySQLTimestamp } from '../common-homework-utils';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4mb',
+    },
+  },
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkIfPostOrSetError(req, res)) return;
   const { title, givenTs, dueTs, feedbackReleaseTs, courseId, courseInstance, institutionId, css, problems } =

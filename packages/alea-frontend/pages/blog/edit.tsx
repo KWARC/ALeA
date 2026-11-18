@@ -1,4 +1,4 @@
-import { BlogPost, canAccessResource, getPostById } from '@alea/spec';
+import { canAccessResource, getPostById, PublicBlogPost } from '@alea/spec';
 import { Action, ResourceName } from '@alea/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -9,7 +9,7 @@ import { EditPostComponent } from './new';
 const EditPostPage: NextPage = () => {
   const router = useRouter();
   const { postId } = router.query;
-  const [existingPostInfo, setExistingPostInfo] = useState<BlogPost>(undefined);
+  const [existingPostInfo, setExistingPostInfo] = useState<PublicBlogPost>(undefined);
 
   useEffect(() => {
     async function isUserAuthorized() {

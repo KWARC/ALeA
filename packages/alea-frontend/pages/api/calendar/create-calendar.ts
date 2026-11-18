@@ -63,7 +63,6 @@ function generateCalendarEvents(
       const summary = `${courseId} - ${lectureInfo}`;
       let description = `Course: ${courseId}\n${lectureInfo}`;
       if (location) description += `\nLocation: ${location}`;
-      if (entry.tutorName) description += `\nTutor: ${entry.tutorName}`;
       if (entry.comments) description += `\nComments: ${entry.comments}`;
       if (entry.lectureEndTimestamp_ms) {
         events.push({
@@ -215,6 +214,8 @@ async function getUserEvents(
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  return res.status(501).end('Calendar feed temporarily disabled');
+  /*
   const userId = req.query.userId as string;
   if (!userId) {
     res.status(400).json({
@@ -246,4 +247,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   res.status(200).send(calendar.toString());
+  */
 }

@@ -344,6 +344,8 @@ export function UserFilterBar({
     </Box>
   );
 }
+
+
 export function InlineStudentMergeButton({
   courseId,
   instanceId,
@@ -359,6 +361,7 @@ export function InlineStudentMergeButton({
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 
   const buildUrl = () =>
     `/api/cheatsheet/merge-cheatsheet?courseId=${encodeURIComponent(

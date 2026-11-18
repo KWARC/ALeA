@@ -30,14 +30,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).end('Failed to parse lecture schedule JSON');
   }
 
+  const omitTutorName = (entries: any[]) =>
+    (Array.isArray(entries) ? entries : []).map(({ tutorName: _tutorName, ...rest }) => rest);
+
   const hasHomework = !!(result[0].hasHomework ?? false);
   const hasQuiz = !!(result[0].hasQuiz ?? false);
   const livestreamUrl = result[0].livestreamUrl ?? null;
   res.status(200).json({
     courseId,
     instanceId,
-    lectureSchedule,
-    tutorialSchedule,
+    lectureSchedule: omitTutorName(lectureSchedule),
+    tutorialSchedule: omitTutorName(tutorialSchedule),
     hasHomework,
     hasQuiz,
     seriesId: result[0].seriesId,
