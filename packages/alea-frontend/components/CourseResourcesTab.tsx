@@ -240,7 +240,7 @@ export default function CourseResourcesTab({
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mt: 2 }}>
-      <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
+      <Typography variant="h6" fontWeight="bold" color="text.primary" mb={2}>
         {t.title}
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
@@ -356,6 +356,8 @@ export default function CourseResourcesTab({
       <Box sx={{ mb: 2 }}>
         <Tabs
           value={selectedSemesterIndex}
+          textColor="inherit"
+          sx={{ '& .MuiTabs-indicator': { bgcolor: 'text.primary' } }}
           onChange={(_e, newValue) => {
             setSelectedSemesterIndex(newValue);
             setCurrentPage(0);
@@ -412,9 +414,9 @@ export default function CourseResourcesTab({
                   {resource.type === 'FILE' ? (
                     getIconByExtension(getExtensionFromMime(resource?.mimeType), {
                       fontSize: 'small',
-                    }) ?? <InsertDriveFileIcon color="primary" fontSize="small" />
+                    }) ?? <InsertDriveFileIcon color="action" fontSize="small" />
                   ) : (
-                    <InsertLinkIcon color="primary" fontSize="small" />
+                    <InsertLinkIcon color="action" fontSize="small" />
                   )}
                   <Typography
                     variant="body2"
@@ -494,7 +496,7 @@ export default function CourseResourcesTab({
                       window.open(getMaterialFileUrl(resource.id), '_blank');
                     }}
                     title={t.view}
-                    sx={{ color: 'palette.secondary.main' }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     <VisibilityIcon fontSize="small" />
                   </IconButton>
@@ -503,7 +505,7 @@ export default function CourseResourcesTab({
                     size="small"
                     onClick={() => window.open(resource.url, '_blank')}
                     title={t.openLink}
-                    sx={{ color: 'palette.info.main' }}
+                    sx={{ color: 'info.main' }}
                   >
                     <LinkIcon fontSize="small" />
                   </IconButton>
@@ -554,10 +556,10 @@ export default function CourseResourcesTab({
             disabled={currentPage === 0}
             size="small"
             sx={{
-              color: currentPage === 0 ? 'action.disabled' : 'primary.main',
+              color: currentPage === 0 ? 'action.disabled' : 'text.primary',
               '&:hover:not(:disabled)': {
-                color: 'primary.dark',
-                backgroundColor: 'primary.light',
+                color: 'text.primary',
+                backgroundColor: 'action.hover',
               },
             }}
           >
@@ -574,10 +576,10 @@ export default function CourseResourcesTab({
             disabled={currentPage === totalPages - 1}
             size="small"
             sx={{
-              color: currentPage === totalPages - 1 ? 'action.disabled' : 'primary.main',
+              color: currentPage === totalPages - 1 ? 'action.disabled' : 'text.primary',
               '&:hover:not(:disabled)': {
-                color: 'primary.dark',
-                backgroundColor: 'primary.light',
+                color: 'text.primary',
+                backgroundColor: 'action.hover',
               },
             }}
           >

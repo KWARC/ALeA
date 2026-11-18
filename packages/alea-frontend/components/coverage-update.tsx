@@ -209,7 +209,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
           <Box
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
           >
-            <Typography variant="h4" component="h1" color="primary">
+            <Typography variant="h4" component="h1" color="text.primary">
               Syllabus for {courseId}
             </Typography>
 
@@ -222,7 +222,7 @@ const CoverageUpdateTab = ({ courseId, instanceId }: CoverageUpdateTabProps) => 
                 <IconButton
                   sx={{
                     color: 'text.secondary',
-                    '&:hover': { color: 'primary.main' },
+                    '&:hover': { color: 'text.primary' },
                   }}
                 >
                   <MenuBook />

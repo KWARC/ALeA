@@ -182,7 +182,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight="bold" color="primary">
+        <Typography variant="h6" fontWeight="bold" color="text.primary">
           {t.announcementsHeader.replace('{{courseId}}', courseId)}
         </Typography>
         <Button
@@ -204,9 +204,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
         size="small"
         sx={{
           mt: 1,
-          backgroundColor: '#fafbfc',
-          '& thead': { backgroundColor: '#f5f7fa' },
-          '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+          backgroundColor: 'background.default',
+          '& thead': { backgroundColor: 'background.paper' },
+          '& tbody tr:hover': { backgroundColor: 'action.hover' },
           borderRadius: 2,
           overflow: 'hidden',
         }}
@@ -247,7 +247,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                 <TableCell>
                   <Tooltip title={t.edit}>
                     <IconButton size="small" onClick={() => handleEditOpen(a)}>
-                      <EditIcon fontSize="small" color="primary" />
+                      <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title={t.delete}>
@@ -261,7 +261,13 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
         </TableBody>
       </Table>
 
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        fullWidth
+        maxWidth="sm"
+        sx={{ colorScheme: (theme) => theme.palette.mode }}
+      >
         <DialogTitle sx={{ fontWeight: 'bold' }}>
           {editingAnnouncement ? t.dialogEditAnnouncementTitle : t.dialogNewAnnouncementTitle}
         </DialogTitle>

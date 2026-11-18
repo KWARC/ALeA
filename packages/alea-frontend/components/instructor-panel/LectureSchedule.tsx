@@ -353,7 +353,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
   return (
     <>
       <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
+        <Typography variant="h6" fontWeight="bold" color="text.primary" mb={2}>
           {t.title.replace('{{courseId}}', courseId)}
         </Typography>
 
@@ -361,7 +361,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           sx={{
             display: 'flex',
             justifyContent: 'center',
-            borderBottom: '2px solid #684848ff',
+            borderBottom: 2,
+            borderColor: 'divider',
             mb: 2,
           }}
         >
@@ -384,12 +385,13 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   cursor: 'pointer',
                   fontWeight: isActive ? 700 : 500,
                   fontSize: '17px',
-                  color: isActive ? 'primary.main' : '#7a7a7a',
-                  borderBottom: isActive ? '3px solid primary.main' : '3px solid transparent',
+                  color: isActive ? 'text.primary' : 'grey.700',
+                  borderBottom: '3px solid',
+                  borderColor: isActive ? 'text.primary' : 'transparent',
                   transition: '0.25s',
                   mr: 3,
                   '&:hover': {
-                    color: '#primary.main',
+                    color: 'text.primary',
                   },
                 }}
               >
@@ -510,7 +512,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   flexWrap: 'wrap',
                   mt: 1,
                   pl: 1,
-                  borderLeft: '3px solid primary.main',
+                  borderLeft: 3,
+                  borderColor: 'divider',
                 }}
               >
                 <Typography fontWeight="bold" sx={{ width: '100%' }}>
@@ -618,9 +621,9 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
           size="small"
           sx={{
             mt: 1,
-            backgroundColor: '#fafbfc',
-            '& thead': { backgroundColor: '#f5f7fa' },
-            '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+            backgroundColor: 'background.default',
+            '& thead': { backgroundColor: 'background.paper' },
+            '& tbody tr:hover': { backgroundColor: 'action.hover' },
             borderRadius: 2,
             overflow: 'hidden',
           }}
@@ -663,9 +666,15 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                   <TableCell>{entry.lectureEndTime}</TableCell>
                   <TableCell>{entry.venue}</TableCell>
                   <TableCell>
-                    <a href={entry.venueLink} target="_blank" rel="noreferrer">
+                    <Box
+                      component="a"
+                      href={entry.venueLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      sx={{ color: 'text.primary' }}
+                    >
                       {t.link}
-                    </a>
+                    </Box>
                   </TableCell>
                   {selectedScheduleType === 'tutorial' && (
                     <>
@@ -742,7 +751,7 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                             });
                           }}
                         >
-                          <EditIcon fontSize="small" color="primary" />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title={t.delete}>
@@ -758,7 +767,13 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
         </Table>
       </Paper>
 
-      <Dialog open={!!editEntry} onClose={() => setEditEntry(null)} fullWidth maxWidth="sm">
+      <Dialog
+        open={!!editEntry}
+        onClose={() => setEditEntry(null)}
+        fullWidth
+        maxWidth="sm"
+        sx={{ colorScheme: (theme) => theme.palette.mode }}
+      >
         <DialogTitle>
           {t.editDialogTitle.replace(
             '{{type}}',
@@ -827,7 +842,8 @@ const LectureScheduleTab: React.FC<LectureScheduleTabProps> = ({ courseId, insta
                 flexWrap: 'wrap',
                 mt: 1,
                 pl: 1,
-                borderLeft: '3px solid primary.main',
+                borderLeft: 3,
+                borderColor: 'divider',
               }}
             >
               <Typography fontWeight="bold" sx={{ width: '100%' }}>
