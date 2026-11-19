@@ -204,9 +204,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
         size="small"
         sx={{
           mt: 1,
-          backgroundColor: '#fafbfc',
-          '& thead': { backgroundColor: '#f5f7fa' },
-          '& tbody tr:hover': { backgroundColor: '#f0f4ff' },
+          backgroundColor: 'background.paper',
+          '& thead': { backgroundColor: 'action.hover' },
+          '& tbody tr:hover': { backgroundColor: 'action.selected' },
           borderRadius: 2,
           overflow: 'hidden',
         }}

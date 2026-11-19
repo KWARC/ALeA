@@ -517,7 +517,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-        Instructors
+        {t.instructorsLabel}
       </Typography>
 
       {instructorsLoading ? (
