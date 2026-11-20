@@ -16,6 +16,8 @@ import {
   Action,
   getCoursePdfUrl,
   INSTRUCTOR_RESOURCE_AND_ACTION,
+  hasNotesPdf,
+  hasSlidesPdf,
   pathToCheatSheet,
   pathToCourseNotes,
   pathToCourseResource,
@@ -885,7 +887,7 @@ const CourseHomePage: NextPage = () => {
               {t.notes}
               <ArticleIcon fontSize="large" />
             </Button>
-            {notes && (
+            {notes && hasNotesPdf(courseId) && (
               <Tooltip title={tCourseHome.viewAsPdf} arrow>
                 <Button
                   onClick={() => {
@@ -908,7 +910,7 @@ const CourseHomePage: NextPage = () => {
               {t.slides}
               <SlideshowIcon fontSize="large" />
             </Button>
-            {slides && (
+            {slides && hasSlidesPdf(courseId) && (
               <Tooltip title={tCourseHome.viewAsPdf} arrow>
                 <Button
                   onClick={() => {

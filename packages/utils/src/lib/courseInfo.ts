@@ -65,7 +65,18 @@ export function getCoursePdfUrl(notesUri: string): string {
     return notesUri.replace('mathhub.info', 'mathhub.info/doc') + '&format=pdf';
   }
 }
+export const COURSES_WITHOUT_SLIDES_PDF: readonly string[] = ['gdp'];
+export const COURSES_WITHOUT_NOTES_PDF: readonly string[] = ['gdp'];
 
+export function hasSlidesPdf(courseId?: string | null): boolean {
+  if (!courseId) return false;
+  return !COURSES_WITHOUT_SLIDES_PDF.includes(courseId.toLowerCase());
+}
+
+export function hasNotesPdf(courseId?: string | null): boolean {
+  if (!courseId) return false;
+  return !COURSES_WITHOUT_NOTES_PDF.includes(courseId.toLowerCase());
+}
 export const CURRENT_TERM = 'WS26-27';
 
 export function createCourseInfo(
