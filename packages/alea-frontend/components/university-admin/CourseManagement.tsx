@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { getLocaleObject } from '../../lang/utils';
 import InfoIcon from '@mui/icons-material/Info';
 import { aclExists } from 'packages/utils/src/lib/semester-helper';
 import Link from 'next/link';
@@ -39,6 +40,7 @@ import {
   isUserMember,
 } from '@alea/spec';
 import { ResourceName, Action, getResourceId } from '@alea/utils';
+import { useRouter } from 'next/router';
 
 interface CourseManagementProps {
   semester: string;
@@ -51,6 +53,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   universityId,
   disabled = false,
 }) => {
+  const router = useRouter();
+  const { courseInfo: t } = getLocaleObject(router);
   const [courses, setCourses] = useState<string[]>([]);
   const [availableCourses, setAvailableCourses] = useState<string[]>([]);
   const [aclPresence, setAclPresence] = useState<Record<string, boolean>>({});
@@ -178,7 +182,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   const handleRemoveCourse = async (courseId: string, confirmedCourseId?: string) => {
     if (!semester || !universityId) return;
-    
+
     if (!confirmedCourseId) {
       try {
         const courseMetadata = await getCourseInfoMetadata(courseId, semester);
@@ -187,10 +191,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           setConfirmationCourseIdInput('');
           return;
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
-    
+
     try {
       await removeCourseFromSemester({
         universityId,
@@ -211,12 +214,15 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   const handleConfirmDeleteWithNotes = async () => {
     if (!notesConfirmationCourseId) return;
-    
-    if (confirmationCourseIdInput.trim().toLowerCase() !== notesConfirmationCourseId.trim().toLowerCase()) {
-      setSnackbar({ 
-        open: true, 
-        message: 'Course ID does not match. Please type the correct course ID.', 
-        severity: 'error' 
+
+    if (
+      confirmationCourseIdInput.trim().toLowerCase() !==
+      notesConfirmationCourseId.trim().toLowerCase()
+    ) {
+      setSnackbar({
+        open: true,
+        message: 'Course ID does not match. Please type the correct course ID.',
+        severity: 'error',
       });
       return;
     }
@@ -366,7 +372,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           <TableHead>
             <TableRow sx={{ background: '#e3f0ff' }}>
               <TableCell sx={{ fontWeight: 600 }}>CourseId</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Instructors</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>{t.instructorsLabel}</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -508,7 +514,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Alert severity="warning">
-              Notes are present for course <strong>{notesConfirmationCourseId}</strong>. If you really want to delete this course, please type the course ID in the box below.
+              Notes are present for course <strong>{notesConfirmationCourseId}</strong>. If you
+              really want to delete this course, please type the course ID in the box below.
             </Alert>
             <TextField
               label="Course ID"
@@ -522,9 +529,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeNotesConfirmationDialog}>
-            Cancel
-          </Button>
+          <Button onClick={closeNotesConfirmationDialog}>Cancel</Button>
           <Button
             color="error"
             variant="contained"

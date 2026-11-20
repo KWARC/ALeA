@@ -162,8 +162,9 @@ export function SlidePicker({
         elevation={3}
         sx={{
           mb: 2,
-          backgroundColor: '#f5f5f5',
-          borderLeft: `4px solid ${'primary.main'}`,
+          backgroundColor: 'background.paper',
+          borderLeft: 4,
+          borderColor: 'divider',
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 2,
@@ -175,8 +176,9 @@ export function SlidePicker({
             justifyContent: 'space-between',
             alignItems: 'center',
             p: 2,
-            backgroundColor: '#f0f0f0',
-            borderBottom: '1px solid #ddd',
+            backgroundColor: 'action.hover',
+            borderBottom: 1,
+            borderColor: 'divider',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -198,7 +200,9 @@ export function SlidePicker({
             <>
               {selectedSlide && (
                 <Card sx={{ mb: 3, overflow: 'hidden' }}>
-                  <Box sx={{ height: '300px', overflow: 'auto', borderBottom: '1px solid #eee' }}>
+                  <Box
+                    sx={{ height: '300px', overflow: 'auto', borderBottom: 1, borderColor: 'divider' }}
+                  >
                     {selectedSlide.slide?.html ? (
                       <SafeFTMLFragment
                         key={selectedSlide.uri}
@@ -212,7 +216,7 @@ export function SlidePicker({
                       <i>No content</i>
                     )}
                   </Box>
-                  <CardContent sx={{ p: 1, backgroundColor: '#f9f9f9' }}>
+                  <CardContent sx={{ p: 1, backgroundColor: 'action.hover' }}>
                     <Typography variant="subtitle1">{selectedSlide.title}</Typography>
                   </CardContent>
                 </Card>

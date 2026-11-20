@@ -364,7 +364,16 @@ export function CoverageUpdater({
           </Typography>
         </Box>
       )}
-      <Dialog open={editDialogOpen} onClose={handleEditDialogClose} maxWidth="md" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={handleEditDialogClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          colorScheme: (theme) => theme.palette.mode,
+          '& .MuiCheckbox-colorPrimary.Mui-checked:not(.Mui-disabled)': { color: 'text.primary' },
+        }}
+      >
         <DialogTitle
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
@@ -379,10 +388,11 @@ export function CoverageUpdater({
                   <Box
                     sx={{
                       maxWidth: '600px',
-                      backgroundColor: 'white',
-                      color: '#1a237e',
+                      backgroundColor: 'background.paper',
+                      color: 'text.primary',
                       p: 2,
-                      border: '1px solid #ccc',
+                      border: 1,
+                      borderColor: 'divider',
                     }}
                   >
                     <Box sx={{ fontSize: '0.85rem', lineHeight: 1.5 }}>

@@ -350,7 +350,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', mt: 2 }}>
-      <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
+      <Typography variant="h6" fontWeight="bold" color="text.primary" mb={2}>
         {t.title}
       </Typography>
 
@@ -479,10 +479,10 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <span>{t.canStudentUploadCheatsheet}</span>
                   {courseInfo.cheatsheetConfig?.canStudentUploadCheatsheet && (
-                    <span style={{ fontSize: '0.85em', color: '#666' }}>
+                    <Box component="span" sx={{ fontSize: '0.85em', color: 'grey.700' }}>
                       ({courseInfo.cheatsheetConfig?.uploadStartTime} -{' '}
                       {courseInfo.cheatsheetConfig?.uploadEndTime})
-                    </span>
+                    </Box>
                   )}
                 </Box>
               }
@@ -517,7 +517,7 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
       <Divider sx={{ my: 3 }} />
       <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-        Instructors
+        {t.instructorsLabel}
       </Typography>
 
       {instructorsLoading ? (
@@ -544,7 +544,8 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
                           p: 1,
                           mb: 1,
-                          borderBottom: '1px solid #ddd',
+                          borderBottom: 1,
+                          borderColor: 'divider',
                         }}
                       >
                         <Box
@@ -560,7 +561,9 @@ export default function CourseInfoTab({ courseId, instanceId }: CourseInfoTabPro
 
                         <Typography sx={{ minWidth: 260 }}>
                           <strong>{inst.id}</strong> &nbsp;
-                          <span style={{ color: '#666' }}>({inst.name})</span>
+                          <Box component="span" sx={{ color: 'grey.700' }}>
+                            ({inst.name})
+                          </Box>
                         </Typography>
 
                         <FormControlLabel

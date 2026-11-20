@@ -67,12 +67,13 @@ const formatSectionWithSlide = (sectionName?: string, slideNumber?: number, slid
 
 const tooltipBoxProps = {
   maxWidth: '600px',
-  color: '#1a237e',
-  border: '2px solid #3f51b5',
+  color: 'text.primary',
+  border: 2,
+  borderColor: 'divider',
   p: '12px',
   borderRadius: '8px',
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-  bgcolor: 'white',
+  bgcolor: 'background.paper',
 };
 
 function SectionTooltipContent({
@@ -123,16 +124,12 @@ function CoverageRow({
   const shouldHighlightNoSection = isNoSection && (isPast || isToday);
 
   let backgroundColor = 'inherit';
-  let hoverBackgroundColor = 'action.hover';
   if (shouldHighlightNoSection) {
-    backgroundColor = 'rgba(244, 67, 54, 0.15)';
-    hoverBackgroundColor = 'rgba(244, 67, 54, 0.20)';
+    backgroundColor = 'error.50';
   } else if (isPast) {
-    backgroundColor = 'rgba(237, 247, 237, 0.5)';
-    hoverBackgroundColor = 'rgba(237, 247, 237, 0.7)';
+    backgroundColor = 'success.50';
   } else if (isFuture) {
-    backgroundColor = 'rgba(255, 243, 224, 0.5)';
-    hoverBackgroundColor = 'rgba(255, 243, 224, 0.7)';
+    backgroundColor = 'warning.50';
   }
 
   const sectionTitle = secInfo[item.sectionUri]?.title;
@@ -143,7 +140,7 @@ function CoverageRow({
       sx={{
         backgroundColor,
         '&:hover': {
-          backgroundColor: hoverBackgroundColor,
+          backgroundColor: 'action.hover',
         },
       }}
     >
@@ -171,7 +168,7 @@ function CoverageRow({
                       target="_blank"
                       rel="noopener noreferrer"
                       sx={{
-                        color: 'blue.sky',
+                        color: 'info.main',
                         textDecoration: 'underline',
                         fontWeight: 'bold',
                         fontSize: '0.85rem',
@@ -192,7 +189,7 @@ function CoverageRow({
             variant="body2"
             fontWeight="medium"
             sx={{
-              color: isPast ? 'success.main' : isFuture ? 'warning.main' : 'text.primary',
+              color: isPast ? 'success.900' : isFuture ? 'warning.900' : 'text.primary',
               fontWeight: 'bold',
             }}
           >
@@ -304,7 +301,6 @@ function CoverageRow({
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            color="primary"
             onClick={() => {
               const useAutoDetected = !item.sectionUri;
               onEdit(originalIndex, useAutoDetected ? item.autoDetected : undefined);
@@ -340,8 +336,10 @@ function CoverageRow({
             title={
               <Box
                 maxWidth="600px"
-                color="#1a237e"
-                border="1px solid #CCC"
+                color="text.primary"
+                bgcolor="background.paper"
+                border={1}
+                borderColor="divider"
                 p="10px"
                 borderRadius="5px"
                 boxShadow="2px 7px 31px 8px rgba(0, 0, 0, 0.33)"
@@ -616,13 +614,13 @@ export function CoverageTable({
       <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2, mb: 3 }}>
         <Table sx={{ minWidth: 650 }} size="medium">
           <TableHead>
-            <TableRow sx={{ bgcolor: 'primary.light' }}>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Section Completed</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Target Section</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Clip</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Quiz</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Actions</TableCell>
+            <TableRow sx={{ bgcolor: 'background.default' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Section Completed</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Target Section</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Clip</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Quiz</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

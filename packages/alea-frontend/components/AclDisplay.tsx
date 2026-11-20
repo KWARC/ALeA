@@ -55,7 +55,7 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
     return (
       <Box
         maxWidth="600px"
-        color="black"
+        color="text.primary"
         border="1px solid #CCC"
         p="8px"
         borderRadius="5px"
@@ -72,14 +72,14 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
   return (
     <Box
       maxWidth="600px"
-      color="black"
+      color="text.primary"
       border="1px solid #CCC"
       p="8px"
       borderRadius="5px"
       boxShadow="1px 4px 10px 4px rgba(0,0,0,0.33)"
     >
       <Box display={'flex'}>
-        <Typography variant="subtitle1" color="primary">
+        <Typography variant="subtitle1" color="text.primary">
           {aclId}
         </Typography>
         {aclDetails.isOpen ? (
@@ -90,7 +90,7 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
       </Box>
       {aclDetails.updaterACLId && (
         <Box>
-          <Typography variant="body2" color="secondary">
+          <Typography variant="body2" color="text.secondary">
             Updater ACL:
             <AclDisplay aclId={aclDetails.updaterACLId} />
           </Typography>
@@ -98,7 +98,7 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
       )}
       {directMembersNamesAndIds.length > 0 && (
         <Box>
-          <Typography color="secondary">Direct Members:</Typography>
+          <Typography color="text.secondary">Direct Members:</Typography>
           {directMembersNamesAndIds.map((member) => (
             <Typography fontSize={14} key={member.userId}>
               {member.fullName == '' ? <i>unknown</i> : member.fullName} ({member.userId})
@@ -108,7 +108,7 @@ function AclHoverPopup({ aclId }: { aclId: string }) {
       )}
       {aclDetails.memberAcls.length > 0 && (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="body2" color="secondary">
+          <Typography variant="body2" color="text.secondary">
             MembersAcls:
           </Typography>
           {aclDetails.memberAcls.map((member) => (
@@ -141,7 +141,8 @@ function AclDisplay({ aclId }: { aclId: string }) {
             maxWidth: 'none',
             margin: '0',
             padding: '0',
-            backgroundColor: 'white',
+            backgroundColor: 'background.paper',
+            color: 'text.primary',
           },
         },
       }}
@@ -158,7 +159,7 @@ function AclDisplay({ aclId }: { aclId: string }) {
           cursor: 'pointer',
           fontSize: '0.875rem',
           ':hover': {
-            backgroundColor: '#f5f5f5',
+            backgroundColor: 'action.hover',
           },
         }}
         onClick={(e) => router.push(`/acl/${aclId}`)}
