@@ -120,7 +120,7 @@ export const de = {
     practiceProblems: 'Übungsprobleme',
     enrollmentMessage:
       'Bitte melden Sie sich für den Kurs an, um auf Quiz und Hausaufgaben zuzugreifen.',
-    getEnrolled: 'einschreiben',
+    getEnrolled: 'Mich einschreiben',
     numberofStudentEnrolled: 'Studenten sind bereits eingeschrieben',
   },
   homework: {
