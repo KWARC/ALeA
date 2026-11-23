@@ -564,7 +564,7 @@ export function ProblemDisplay({
       sx={{
         border: '1px solid #CCC',
         p: '10px',
-        userSelect: 'none',
+        userSelect: isEffectivelyFrozen ? 'text' : 'none',
         maxWidth: '1000px',
         overflowX: 'auto',
       }}

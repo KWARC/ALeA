@@ -3,10 +3,7 @@ import fs from 'fs';
 import { executeDontEndSet500OnError, executeAndEndSet500OnError } from '../comment-utils';
 import { Holiday, LectureSchedule } from '@alea/spec';
 import { toWeekdayIndex } from '@alea/utils';
-import {
-  ensureInstanceSyllabusDir,
-  getInstanceSyllabusFilePath,
-} from '../get-coverage-timeline';
+import { ensureInstanceSyllabusDir, getInstanceSyllabusFilePath } from '../get-coverage-timeline';
 
 function parseDate(dateInput: string | Date): Date {
   if (dateInput instanceof Date) {
@@ -71,18 +68,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const lectureResult = await executeAndEndSet500OnError(
-      `SELECT lectureSchedule, tutorialSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
+      `SELECT lectureSchedule FROM courseMetadata WHERE courseId = ? AND instanceId = ?`,
       [courseId, instanceId],
       res
     );
     if (!lectureResult) return;
 
     let lectureSchedule: LectureSchedule[] = [];
-    let tutorialSchedule: LectureSchedule[] = [];
     if (Array.isArray(lectureResult) && lectureResult.length > 0) {
       try {
         lectureSchedule = lectureResult[0].lectureSchedule || [];
-        tutorialSchedule = lectureResult[0].tutorialSchedule || [];
       } catch (e) {
         console.error('Failed to parse schedules:', e);
       }
@@ -142,48 +137,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const generatedEntries: any[] = [];
 
-    // Process both Lectures and Tutorials
-    const allSchedules = [
-      { data: lectureSchedule, type: 'Lecture' },
-      { data: tutorialSchedule, type: 'Tutorial' },
-    ];
+    // Process Lectures
+    for (const item of lectureSchedule) {
+      const weekdayIdx = toWeekdayIndex(item.lectureDay);
+      if (weekdayIdx === undefined) {
+        console.warn(`Invalid weekday: ${item.lectureDay}`);
+        continue;
+      }
 
-    for (const schedule of allSchedules) {
-      for (const item of schedule.data) {
-        const weekdayIdx = toWeekdayIndex(item.lectureDay);
-        if (weekdayIdx === undefined) {
-          console.warn(`Invalid weekday: ${item.lectureDay}`);
-          continue;
-        }
+      for (const lectureDate of generateLectureDates(
+        lectureStartDate,
+        lectureEndDate,
+        weekdayIdx,
+        holidays
+      )) {
+        const startTime = setTimeOnDate(lectureDate, item.lectureStartTime);
+        const endTime = setTimeOnDate(lectureDate, item.lectureEndTime);
 
-        for (const lectureDate of generateLectureDates(
-          lectureStartDate,
-          lectureEndDate,
-          weekdayIdx,
-          holidays
-        )) {
-          const startTime = setTimeOnDate(lectureDate, item.lectureStartTime);
-          const endTime = setTimeOnDate(lectureDate, item.lectureEndTime);
-
-          generatedEntries.push({
-            timestamp_ms: startTime.getTime(),
-            sectionUri: '',
-            targetSectionUri: '',
+        generatedEntries.push({
+          timestamp_ms: startTime.getTime(),
+          sectionUri: '',
+          targetSectionUri: '',
+          clipId: '',
+          isQuizScheduled: !!item.hasQuiz,
+          slideUri: '',
+          autoDetected: {
             clipId: '',
-            isQuizScheduled: !!item.hasQuiz,
+            sectionUri: '',
             slideUri: '',
-            autoDetected: {
-              clipId: '',
-              sectionUri: '',
-              slideUri: '',
-            },
-            lectureEndTimestamp_ms: endTime.getTime(),
-            venue: item.venue || '',
-            venueLink: item.venueLink || '',
-            comments: item.comments || '',
-            type: schedule.type,
-          });
-        }
+          },
+          lectureEndTimestamp_ms: endTime.getTime(),
+          venue: item.venue || '',
+          venueLink: item.venueLink || '',
+          comments: item.comments || '',
+          type: 'Lecture',
+        });
       }
     }
 

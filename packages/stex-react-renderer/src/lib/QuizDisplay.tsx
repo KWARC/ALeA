@@ -453,7 +453,13 @@ export function QuizDisplay({
       showDashboard={showDashboard}
       setShowDashboard={setShowDashboard}
     >
-      <Box px="10px" maxWidth="800px" m="auto">
+      <Box
+        px="10px"
+        maxWidth="800px"
+        m="auto"
+        fragment-uri={currentProblemId}
+        fragment-kind="Problem"
+      >
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <h2>
             {t.problem} {problemIdx + 1} {t.of} {problemIds.length}&nbsp;
@@ -494,7 +500,14 @@ export function QuizDisplay({
               responsesRef.current = { ...responsesRef.current, [problemId]: response };
               onResponse?.(problemId, response);
             }}
-            onFreezeResponse={onProblemFreeze ? () => onProblemFreeze(currentProblemId) : undefined}
+            onFreezeResponse={
+              onProblemFreeze
+                ? () => {
+                    setResponses(responsesRef.current);
+                    onProblemFreeze(currentProblemId);
+                  }
+                : undefined
+            }
             onUnsavedAnswerChange={handleUnsavedAnswerChange}
             revealSolutionOnSave={isExamProblem || revealSolutionOnSave}
           />
