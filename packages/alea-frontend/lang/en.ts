@@ -149,7 +149,7 @@ export const en = {
       'This page gives you an overview over the upcoming quizzes in the {courseId} lectures. Note that start and end times are strict. So be on time.',
     practiceProblems: 'Practice Problems',
     enrollmentMessage: 'Please enroll in the course to access quizzes and homework.',
-    getEnrolled: 'Get Enrolled',
+    getEnrolled: 'Enrol me',
     numberofStudentEnrolled: 'students are already enrolled',
   },
   homework: {

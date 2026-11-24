@@ -260,15 +260,19 @@ const InstructorDashPage: NextPage = () => {
           width: '100%',
           margin: 'auto',
           maxWidth: TAB_MAX_WIDTH[accessibleTabs[currentTabIdx]],
+          colorScheme: (theme) => theme.palette.mode,
+          '& .MuiCheckbox-colorPrimary.Mui-checked:not(.Mui-disabled)': { color: 'text.primary' },
         }}
       >
         <Tabs
           value={currentTabIdx}
+          textColor="inherit"
           onChange={handleChange}
           variant="scrollable"
           scrollButtons="auto"
           aria-label="Instructor Dashboard Tabs"
           sx={{
+            '& .MuiTabs-indicator': { bgcolor: 'text.primary' },
             '& .MuiTab-root': {
               fontSize: '14px',
               minWidth: '120px',
