@@ -29,7 +29,7 @@ import { useCurrentUser } from '@alea/react-utils';
 import { getParamFromUri } from '@alea/utils';
 import Router, { useRouter } from 'next/router';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { ForMe } from './ForMe';
+import { ForMe, getForMeProblemUris } from './ForMe';
 import { getLocaleObject } from './lang/utils';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
@@ -347,6 +347,24 @@ export function PerSectionQuiz({
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [allProblemUris, setAllProblemUris] = useState<string[]>([]);
   const [formeUris, setFormeUris] = useState<string[] | null>(null);
+  const [isLoadingForMe, setIsLoadingForMe] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFormeUris(null);
+    setIsLoadingForMe(true);
+    getForMeProblemUris(sectionUri)
+      .then((uris) => {
+        if (!cancelled) setFormeUris(uris);
+      })
+      .catch((error) => console.error('Error fetching problem URIs:', error))
+      .finally(() => {
+        if (!cancelled) setIsLoadingForMe(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sectionUri]);
 
   const orderedCategoryKeys = useMemo(() => {
     const knownOrder = ['syllabus', 'adventurous'];
@@ -521,7 +539,7 @@ export function PerSectionQuiz({
     fetchProblems();
   }, [sectionUri, courseId]);
 
-  if (isLoadingProblemUris) return <LinearProgress />;
+  if (isLoadingProblemUris || isLoadingForMe) return <LinearProgress />;
 
   if (!startQuiz) {
     return (
