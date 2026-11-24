@@ -1,13 +1,13 @@
 import { Action, LectureEntry } from '@alea/utils';
 import ical, { ICalEventData } from 'ical-generator';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { checkIfGetOrSetError, executeQuery } from '../comment-utils';
+import { getAllCoursesFromDb } from '../get-all-courses';
 import { getCoverageData } from '../get-coverage-timeline';
 import {
   filterNamedInstructorResources,
   getAuthorizedCourseResources,
 } from '../get-resources-for-user';
-import { executeQuery } from '../comment-utils';
-import { getAllCoursesFromDb } from '../get-all-courses';
 interface SemesterInfo {
   semesterStart: string;
   semesterEnd: string;
@@ -214,38 +214,50 @@ async function getUserEvents(
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  return res.status(501).end('Calendar feed temporarily disabled');
-  /*
-  const userId = req.query.userId as string;
-  if (!userId) {
-    res.status(400).json({
-      error: 'Missing userId. Please provide userId as a query parameter.',
-    });
-    return;
+  res.setHeader('Cache-Control', 'no-store');
+  if (!checkIfGetOrSetError(req, res)) return;
+
+  const { calendarSecret } = req.query;
+  const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  if (typeof calendarSecret !== 'string' || !uuidV4.test(calendarSecret)) {
+    return res.status(404).send('Calendar not found');
   }
 
-  const calendar = ical({
-    name: `ALeA Calendar for ${userId}`,
-    timezone: 'Europe/Berlin',
-  });
+  try {
+    const rows = await executeQuery<{ userId: string }[]>(
+      'SELECT userId FROM userInfo WHERE calendarSecret = ?',
+      [calendarSecret]
+    );
+    if ('error' in rows) throw rows.error;
+    if (!rows.length) return res.status(404).send('Calendar not found');
 
-  const { events, universityId, instanceIds } = await getUserEvents(userId);
+    const { userId } = rows[0];
+    const calendar = ical({
+      name: 'ALeA Personal Calendar',
+      timezone: 'Europe/Berlin',
+    });
 
-  const semesterAndHolidayEvents =
-    universityId && instanceIds.length
-      ? (
-          await Promise.all(
-            instanceIds.map((instanceId) =>
-              generateSemesterAndHolidayEvents(universityId, instanceId)
+    const { events, universityId, instanceIds } = await getUserEvents(userId);
+
+    const semesterAndHolidayEvents =
+      universityId && instanceIds.length
+        ? (
+            await Promise.all(
+              instanceIds.map((instanceId) =>
+                generateSemesterAndHolidayEvents(universityId, instanceId)
+              )
             )
-          )
-        ).flat()
-      : [];
+          ).flat()
+        : [];
 
-  [...events, ...semesterAndHolidayEvents].forEach((event) => {
-    calendar.createEvent(event);
-  });
+    [...events, ...semesterAndHolidayEvents].forEach((event) => {
+      calendar.createEvent(event);
+    });
 
-  res.status(200).send(calendar.toString());
-  */
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    return res.status(200).send(calendar.toString());
+  } catch {
+    console.error('Could not generate personal calendar feed');
+    return res.status(500).send('Could not generate personal calendar feed');
+  }
 }

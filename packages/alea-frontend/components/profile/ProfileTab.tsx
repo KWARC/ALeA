@@ -9,7 +9,7 @@ import { UserInfo, UserProfile } from '@alea/spec';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getLocaleObject } from '../../lang/utils';
-// import { PersonalCalendarSection } from '../PersonalCalendar';
+import { PersonalCalendarSection } from '../PersonalCalendar';
 import { EditProfileDialog } from './EditProfileDialog';
 
 export const ProfileTab = ({
@@ -80,20 +80,14 @@ export const ProfileTab = ({
                     </Typography>
                   </Box>
                 ))}
-                {/* Calendar feed disabled (API returns 501)
-                {userInfo?.userId && (
-                  <Box sx={{ mt: 2 }}>
-                    <PersonalCalendarSection
-                      userId={userInfo.userId}
-                      hintGoogle={c.howToUseHintGoogle}
-                      hintApple={c.howToUseHintApple}
-                    />
-                  </Box>
-                )}
-                */}
               </Stack>
             ) : (
               <Typography sx={{ color: 'text.secondary' }}>Loading...</Typography>
+            )}
+            {userInfo?.userId && (
+              <Box sx={{ mt: 2 }}>
+                <PersonalCalendarSection key={userInfo.userId} />
+              </Box>
             )}
           </Box>
         </Card>
