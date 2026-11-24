@@ -232,6 +232,8 @@ export function ProblemViewer({
           onResponseUpdate?.(response); //todo: make it free from nap because problem response does not looks for naps.
         }}
         problemWrap={(problemUri, isSubProblem, autogradable) => {
+          const subProblemObj = problem.problem?.subProblems?.find((s) => s.id === problemUri);
+          const solutionPayload = isSubProblem ? subProblemObj?.solution : problem.solution;
           return (ch: ReactNode) => (
             <Box>
               {ch}
@@ -241,6 +243,7 @@ export function ProblemViewer({
                   problemTitle={problem.problem.title_html ?? ''}
                   isFrozen={isFrozen}
                   problemId={problemUri}
+                  solutionPayload={solutionPayload}
                   pointsNode={
                     isSubProblem ? (
                       <SubProblemPointsInfo
@@ -323,15 +326,24 @@ function getSolutionHtmlFromFtmlPayload(payload?: string): string | undefined {
 function MasterSolutionDisplay({
   problemId,
   shouldShow,
+  solutionPayload,
 }: {
   problemId: string;
   shouldShow: boolean;
+  solutionPayload?: string;
 }) {
-  const [solutionHtml, setSolutionHtml] = useState<string | undefined>();
+  const [solutionHtml, setSolutionHtml] = useState<string | undefined>(() =>
+    getSolutionHtmlFromFtmlPayload(solutionPayload)
+  );
 
   useEffect(() => {
     if (!shouldShow || !problemId) {
       setSolutionHtml(undefined);
+      return;
+    }
+    const localHtml = getSolutionHtmlFromFtmlPayload(solutionPayload);
+    if (localHtml) {
+      setSolutionHtml(localHtml);
       return;
     }
     let cancelled = false;
@@ -344,7 +356,7 @@ function MasterSolutionDisplay({
     return () => {
       cancelled = true;
     };
-  }, [shouldShow, problemId]);
+  }, [shouldShow, problemId, solutionPayload]);
 
   if (!solutionHtml) return null;
   return (
@@ -367,6 +379,7 @@ function AnswerAccepter({
   pointsNode,
   onUnsavedAnswerChange,
   revealSolutionOnSave,
+  solutionPayload,
 }: {
   problemId: string;
   masterProblemId: string;
@@ -375,6 +388,7 @@ function AnswerAccepter({
   pointsNode?: ReactNode;
   onUnsavedAnswerChange?: (answerId: string, hasUnsavedChanges: boolean) => void;
   revealSolutionOnSave: boolean;
+  solutionPayload?: string;
 }) {
   const showMasterSolution = useContext(MasterSolutionVisibilityContext);
   const previousAnswer = useContext(AnswerContext);
@@ -402,8 +416,7 @@ function AnswerAccepter({
   const unsavedAnswerId = getUnsavedAnswerId(masterProblemId, problemId);
   const shouldRenderMasterSolution =
     showMasterSolution &&
-    !!answer &&
-    (isFrozen || isAnswerGraded || (revealSolutionOnSave && hasSavedAnswer));
+    (isFrozen || isAnswerGraded || (revealSolutionOnSave && hasSavedAnswer && !!answer));
 
   useEffect(() => {
     setAnswer(getAnswerValue(name, serverAnswer));
@@ -454,26 +467,29 @@ function AnswerAccepter({
   return (
     <Box display="flex" alignItems="flex-start">
       <Box flexGrow={1}>
-        {(isFrozen || isAnswerGraded) && answer ? (
+        {isFrozen || isAnswerGraded ? (
           <Tooltip title={isAnswerGraded ? 'Already graded' : ''} arrow placement="top">
             <Box sx={problemDisplayStyles.frozenAnswerBox}>
               <Box sx={problemDisplayStyles.frozenAnswerLabel}>
                 <Typography variant="caption" sx={problemDisplayStyles.frozenAnswerLabelText}>
-                  Submitted answer
+                  {answer ? 'Submitted answer' : 'No answer submitted'}
                 </Typography>
               </Box>
-              <Box sx={problemDisplayStyles.frozenAnswerContent}>
-                <MdEditor
-                  name={name}
-                  editingEnabled={false}
-                  placeholder={'...'}
-                  value={answer}
-                  onValueChange={onAnswerChange}
-                />
-              </Box>
+              {answer ? (
+                <Box sx={problemDisplayStyles.frozenAnswerContent}>
+                  <MdEditor
+                    name={name}
+                    editingEnabled={false}
+                    placeholder={'...'}
+                    value={answer}
+                    onValueChange={onAnswerChange}
+                  />
+                </Box>
+              ) : null}
               <MasterSolutionDisplay
                 problemId={problemId}
                 shouldShow={shouldRenderMasterSolution}
+                solutionPayload={solutionPayload}
               />
             </Box>
           </Tooltip>
