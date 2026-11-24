@@ -1093,7 +1093,7 @@ const CourseHomePage: NextPage = () => {
           </Box>
         )}
 
-        <Box bgcolor={'background.paper'}>
+        <Box bgcolor="white">
           {hasLanding ? (
             <Box fragment-uri={landing} fragment-kind="Section">
               <SafeFTMLDocument

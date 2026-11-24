@@ -9,6 +9,20 @@ import { handleViewSource, UriProblemViewer } from './PerSectionQuiz';
 import { ProblemFilter } from './ProblemFilter';
 import { ListStepper } from './QuizDisplay';
 
+export async function getForMeProblemUris(sectionUri: string): Promise<string[]> {
+  const data = await getDefiniedaInSectionAgg(sectionUri);
+  const uris = data?.flatMap((item) => item.conceptUri) || [];
+  const response = await getLearningObjects(
+    uris,
+    100,
+    ['problem'],
+    undefined,
+    { remember: 0.2, understand: 0.2 },
+    { remember: 0.85, understand: 0.85 }
+  );
+  return response?.['learning-objects']?.map((lo) => lo['learning-object']) || [];
+}
+
 export function ForMe({
   sectionUri,
   showButtonFirst = true,
@@ -40,19 +54,7 @@ export function ForMe({
     setIsLoadingProblemUris(true);
     const fetchProblemUris = async () => {
       try {
-        const data = await getDefiniedaInSectionAgg(sectionUri);
-        const URIs = data?.flatMap((item) => item.conceptUri) || [];
-        const fetchedResponse = await getLearningObjects(
-          URIs,
-          100,
-          ['problem'],
-          undefined,
-          { remember: 0.2, understand: 0.2 },
-          { remember: 0.85, understand: 0.85 }
-        );
-        const extractedProblemIds =
-          fetchedResponse?.['learning-objects']?.map((lo: any) => lo['learning-object']) || [];
-
+        const extractedProblemIds = await getForMeProblemUris(sectionUri);
         setProblemUris(extractedProblemIds);
         setAllProblemUris(extractedProblemIds);
         setCachedProblemUris(extractedProblemIds);
