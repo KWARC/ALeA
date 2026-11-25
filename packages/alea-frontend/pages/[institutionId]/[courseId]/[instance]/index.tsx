@@ -66,7 +66,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CourseNotFound } from '../../../../components/CourseNotFound';
 import InstructorDetails from '../../../../components/InstructorDetails';
 import { MoreResourcesAccordion } from '../../../../components/MoreResourcesAccordion';
-// import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
+import { PersonalCalendarSection } from '../../../../components/PersonalCalendar';
 import { RecordedSyllabus } from '../../../../components/RecordedSyllabus';
 import { RouteErrorDisplay } from '../../../../components/RouteErrorDisplay';
 import { handleEnrollment, handleUnEnrollment } from '../../../../components/courseHelpers';
@@ -629,15 +629,7 @@ function CourseScheduleSection({
           )}
         </Box>
 
-        {/* Calendar feed disabled (API returns 501)
-        {userId && (
-          <PersonalCalendarSection
-            userId={userId}
-            hintGoogle={t.howToUseHintGoogle}
-            hintApple={t.howToUseHintApple}
-          />
-        )}
-        */}
+        {userId && <PersonalCalendarSection key={userId} />}
       </Box>
     </Box>
   );
