@@ -66,9 +66,9 @@ const HomeworkDocPage: React.FC = () => {
         setProblems(hwInfo.homework.problems);
         setAnswers(hwInfo.responses);
         const mildleToMapProblemResponse: Record<string, FTML.ProblemResponse> = {};
-        Object.entries(hwInfo.responses ?? {}).forEach(([id, item]) => {
+        Object.entries(hwInfo.responses ?? {}).forEach(([id, userResponse]) => {
           mildleToMapProblemResponse[id] = { uri: id, responses: [] };
-          item.responses.forEach(
+          userResponse.responses.forEach(
             (c) => (mildleToMapProblemResponse[id].responses[c.subProblemId] = c.answer)
           );
         });

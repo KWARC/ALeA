@@ -341,9 +341,9 @@ function MasterSolutionDisplay({
       setSolutionHtml(undefined);
       return;
     }
-    const localHtml = getSolutionHtmlFromFtmlPayload(solutionPayload);
-    if (localHtml) {
-      setSolutionHtml(localHtml);
+    const existingSolutionHtml = getSolutionHtmlFromFtmlPayload(solutionPayload);
+    if (existingSolutionHtml) {
+      setSolutionHtml(existingSolutionHtml);
       return;
     }
     let cancelled = false;
