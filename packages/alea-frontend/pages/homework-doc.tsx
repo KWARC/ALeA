@@ -43,7 +43,7 @@ const HomeworkDocPage: React.FC = () => {
     getUserInformation()
       .then((info) => setForceFauLogin(!isCampusAccount(info)))
       .catch(() => setForceFauLogin(true));
-  }, [user,isUserLoading]);
+  }, [user, isUserLoading]);
   const courseId = hwInfo?.homework.courseId;
   const instanceId = hwInfo?.homework.courseInstance;
 
@@ -66,9 +66,9 @@ const HomeworkDocPage: React.FC = () => {
         setProblems(hwInfo.homework.problems);
         setAnswers(hwInfo.responses);
         const mildleToMapProblemResponse: Record<string, FTML.ProblemResponse> = {};
-        Object.entries(answers).forEach(([id, answers]) => {
+        Object.entries(hwInfo.responses ?? {}).forEach(([id, userResponse]) => {
           mildleToMapProblemResponse[id] = { uri: id, responses: [] };
-          answers.responses.forEach(
+          userResponse.responses.forEach(
             (c) => (mildleToMapProblemResponse[id].responses[c.subProblemId] = c.answer)
           );
         });
