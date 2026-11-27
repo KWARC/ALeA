@@ -154,7 +154,9 @@ function SyllabusTable({
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ textAlign: 'left' }}>{t.date}</TableCell>
+            <TableCell sx={{ textAlign: 'left', minWidth: 130, whiteSpace: 'nowrap' }}>
+              {t.date}
+            </TableCell>
             <TableCell sx={{ textAlign: 'left' }}>{t.topics}</TableCell>
             {hasAnyVideoClip && <TableCell style={{ textAlign: 'left' }}>{t.video}</TableCell>}
           </TableRow>
@@ -162,7 +164,7 @@ function SyllabusTable({
         <TableBody>
           {rows.map(({ timestamp_ms, topics, clipId }, idx) => (
             <TableRow key={`${timestamp_ms}`}>
-              <TableCell sx={{ textAlign: 'center', minWidth: 110 }}>
+              <TableCell sx={{ textAlign: 'center', minWidth: 130, whiteSpace: 'nowrap' }}>
                 <b>{idx + 1}.&nbsp;</b>
                 {dayjs(timestamp_ms).format(showYear ? 'DD-MMM-YY' : 'DD-MMM')}
               </TableCell>
@@ -191,7 +193,13 @@ function SyllabusTable({
   );
 }
 
-export function RecordedSyllabus({ courseId, instanceId }: { courseId: string; instanceId?: string }) {
+export function RecordedSyllabus({
+  courseId,
+  instanceId,
+}: {
+  courseId: string;
+  instanceId?: string;
+}) {
   const { courseHome: t } = getLocaleObject(useRouter());
   const { currentTermByCourseId, loadingTermByCourseId } = useCurrentTermContext();
   const currentTerm = currentTermByCourseId[courseId];
